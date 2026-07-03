@@ -8,6 +8,7 @@ import { createHud, showUnsupported } from './ui/hud';
 import {
   createEnemyMesh,
   createEnvironment,
+  createPost,
   createProjectileMesh,
   createReticle,
   installVisualEventHandlers,
@@ -50,6 +51,7 @@ async function bootstrap() {
 
   createEnvironment(scene);
   installVisualEventHandlers(events, scene);
+  const post = createPost(renderer, scene, camera);
 
   const game = createGame({
     scene,
@@ -75,7 +77,7 @@ async function bootstrap() {
     last = now;
     game.update(dt);
     updateVisuals(dt, { scene, camera, elapsed: now / 1000 });
-    renderer.render(scene, camera);
+    post.render();
   });
 
   window.addEventListener('resize', () => {

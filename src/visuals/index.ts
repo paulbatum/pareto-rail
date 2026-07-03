@@ -1,38 +1,35 @@
 import {
-  BoxGeometry,
-  ConeGeometry,
+  AdditiveBlending,
+  CircleGeometry,
+  Color,
   DoubleSide,
   Group,
   Mesh,
   MeshBasicMaterial,
   Object3D,
+  OctahedronGeometry,
+  PerspectiveCamera,
+  PlaneGeometry,
   RingGeometry,
   Scene,
-  SphereGeometry,
-  TorusGeometry,
-  Vector3,
 } from 'three';
 import type { Camera } from 'three';
 import type { EnemyKind, EventBus } from '../events';
+import { createCrystal, setCrystalLocked, type ShardSpec } from './crystal';
+import { beatUniform, createEnvironmentInternal, type Environment } from './environment';
+import {
+  burstShatter,
+  burstSparks,
+  createEffects,
+  dropTrail,
+  resetEffects,
+  spawnFlash,
+  spawnRing,
+  updateEffects,
+} from './effects';
+import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 
-const enemyMaterials = {
-  node: new MeshBasicMaterial({ color: 0x3bdcff }),
-  drifter: new MeshBasicMaterial({ color: 0xff5bd6 }),
-  orbiter: new MeshBasicMaterial({ color: 0xffe45b }),
-};
-
-const lockedMaterial = new MeshBasicMaterial({ color: 0xffffff });
-const projectileMaterial = new MeshBasicMaterial({ color: 0xb8ff6a });
-const reticleMaterial = new MeshBasicMaterial({ color: 0x78e7ff, transparent: true, opacity: 0.82, side: DoubleSide });
-const reticleActiveMaterial = new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1, side: DoubleSide });
-
-const impactGeometry = new SphereGeometry(0.45, 12, 8);
-const killGeometry = new TorusGeometry(0.8, 0.08, 8, 24);
-const projectileGeometry = new ConeGeometry(0.16, 0.8, 8);
-
-const effects: Array<{ mesh: Mesh; age: number; lifetime: number }> = [];
-let environmentRoot: Group | null = null;
-let beatPulse = 0;
+export { createPost } from './post';
 
 export type VisualContext = {
   scene: Scene;
@@ -40,109 +37,291 @@ export type VisualContext = {
   elapsed: number;
 };
 
+type EnemyRecord = {
+  mesh: Group;
+  bornAt: number | null;
+  lockRing: Group | null;
+};
+
+type ProjectileRecord = {
+  mesh: Object3D;
+  trailColor: Color;
+};
+
+let environment: Environment | null = null;
+let sceneRef: Scene | null = null;
+let baseFov: number | null = null;
+let beatEnergy = 0;
+let elapsedNow = 0;
+
+// createEnemyMesh() has no id, but the game emits `spawn` synchronously right
+// after calling it — pairing the queue with spawn events links mesh to id.
+const pendingEnemyMeshes: Group[] = [];
+const pendingProjectileMeshes: ProjectileRecord[] = [];
+const enemyRecords = new Map<number, EnemyRecord>();
+const projectileRecords = new Map<number, ProjectileRecord>();
+
 export function createEnvironment(scene: Scene) {
-  const root = new Group();
-  environmentRoot = root;
-
-  const railMaterial = new MeshBasicMaterial({ color: 0x16364f });
-  for (let i = 0; i < 18; i += 1) {
-    const marker = new Mesh(new BoxGeometry(26, 0.08, 0.08), railMaterial);
-    marker.position.set(0, -4, -i * 15);
-    root.add(marker);
-  }
-
-  const sideMaterial = new MeshBasicMaterial({ color: 0x07182c });
-  for (let i = 0; i < 12; i += 1) {
-    const left = new Mesh(new BoxGeometry(0.12, 12, 0.12), sideMaterial);
-    left.position.set(-14, 0, -i * 22);
-    const right = left.clone();
-    right.position.x = 14;
-    root.add(left, right);
-  }
-
-  scene.add(root);
-  return root;
+  sceneRef = scene;
+  environment = createEnvironmentInternal(scene);
+  createEffects(scene);
+  return environment.root;
 }
 
 export function createEnemyMesh(kind: EnemyKind) {
-  const geometry = kind === 'node'
-    ? new BoxGeometry(1.35, 1.35, 1.35)
-    : kind === 'drifter'
-      ? new ConeGeometry(0.95, 1.7, 4)
-      : new TorusGeometry(0.75, 0.18, 8, 18);
-  const mesh = new Mesh(geometry, enemyMaterials[kind].clone());
-  mesh.userData.baseMaterial = enemyMaterials[kind].clone();
+  const mesh = createCrystal(kind);
+  mesh.scale.setScalar(0.001);
+  pendingEnemyMeshes.push(mesh);
   return mesh;
 }
 
 export function setEnemyLocked(mesh: Object3D, locked: boolean) {
-  mesh.traverse((child) => {
-    if (child instanceof Mesh) {
-      child.material = locked ? lockedMaterial : child.userData.baseMaterial;
-    }
-  });
+  setCrystalLocked(mesh as Group, locked);
 }
 
 export function createProjectileMesh() {
-  const mesh = new Mesh(projectileGeometry, projectileMaterial.clone());
-  mesh.rotation.x = Math.PI / 2;
-  return mesh;
+  const group = new Group();
+  const core = new Mesh(
+    new OctahedronGeometry(0.34, 0),
+    new MeshBasicMaterial({ color: hdr(CORE_WHITE, 2.8) }),
+  );
+  core.scale.set(0.4, 0.4, 2.1);
+  const shell = new Mesh(
+    new OctahedronGeometry(0.52, 0),
+    new MeshBasicMaterial({
+      color: hdr(MAGENTA, 0.9),
+      transparent: true,
+      opacity: 0.5,
+      blending: AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  shell.scale.set(0.5, 0.5, 1.9);
+  group.add(core, shell);
+  pendingProjectileMeshes.push({ mesh: group, trailColor: MAGENTA.clone().multiplyScalar(0.95) });
+  return group;
 }
 
 export function createReticle() {
   const group = new Group();
-  const ring = new Mesh(new RingGeometry(0.58, 0.68, 32), reticleMaterial.clone());
-  const vertical = new Mesh(new BoxGeometry(0.05, 1.9, 0.05), reticleMaterial.clone());
-  const horizontal = new Mesh(new BoxGeometry(1.9, 0.05, 0.05), reticleMaterial.clone());
-  group.add(ring, vertical, horizontal);
+  const parts: Array<{ material: MeshBasicMaterial; base: Color; active: Color }> = [];
+
+  const addPart = (mesh: Mesh, base: Color, active: Color) => {
+    const material = mesh.material as MeshBasicMaterial;
+    material.transparent = true;
+    material.blending = AdditiveBlending;
+    material.depthWrite = false;
+    material.side = DoubleSide;
+    material.color.copy(base);
+    parts.push({ material, base, active });
+  };
+
+  const outer = new Mesh(new RingGeometry(0.6, 0.645, 48), new MeshBasicMaterial());
+  addPart(outer, hdr(CYAN, 1.1), hdr(MAGENTA, 1.7));
+
+  const spinner = new Group();
+  const inner = new Mesh(new RingGeometry(0.33, 0.36, 3), new MeshBasicMaterial());
+  addPart(inner, hdr(CYAN, 0.8), hdr(CORE_WHITE, 1.6));
+  spinner.add(inner);
+
+  const brackets = new Group();
+  for (let i = 0; i < 4; i += 1) {
+    const tick = new Mesh(new PlaneGeometry(0.18, 0.035), new MeshBasicMaterial());
+    addPart(tick, hdr(CYAN, 1.3), hdr(MAGENTA, 2));
+    const angle = (i / 4) * Math.PI * 2;
+    tick.position.set(Math.cos(angle) * 0.78, Math.sin(angle) * 0.78, 0);
+    tick.rotation.z = angle;
+    brackets.add(tick);
+  }
+
+  const dot = new Mesh(new CircleGeometry(0.05, 20), new MeshBasicMaterial());
+  addPart(dot, hdr(CORE_WHITE, 2), hdr(CORE_WHITE, 3));
+
+  group.add(outer, spinner, brackets, dot);
+  group.userData.parts = parts;
+  group.userData.spinner = spinner;
+  group.userData.brackets = brackets;
   group.userData.active = false;
   return group;
 }
 
 export function setReticleActive(reticle: Object3D, active: boolean, lockCount: number) {
   reticle.userData.active = active;
-  reticle.scale.setScalar(1 + lockCount * 0.055);
-  reticle.traverse((child) => {
-    if (child instanceof Mesh) {
-      child.material = active ? reticleActiveMaterial : reticleMaterial;
-    }
-  });
+  reticle.scale.setScalar(1 + lockCount * 0.07 + (active ? 0.06 : 0));
+  const parts = reticle.userData.parts as Array<{ material: MeshBasicMaterial; base: Color; active: Color }>;
+  for (const part of parts) {
+    part.material.color.copy(active ? part.active : part.base);
+  }
 }
 
 export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
-  bus.on('hit', ({ worldPosition }) => addEffect(scene, impactGeometry, worldPosition, 0x88f7ff, 0.22));
-  bus.on('kill', ({ worldPosition }) => addEffect(scene, killGeometry, worldPosition, 0xffffff, 0.34));
+  bus.on('spawn', ({ enemyId, worldPosition }) => {
+    const mesh = pendingEnemyMeshes.shift();
+    if (!mesh) return;
+    enemyRecords.set(enemyId, { mesh, bornAt: null, lockRing: null });
+    spawnRing(worldPosition, hdr(CYAN, 0.9), 3.2, 0.5);
+  });
+
+  bus.on('lock', ({ enemyId, worldPosition }) => {
+    const record = enemyRecords.get(enemyId);
+    if (record && !record.lockRing) {
+      record.lockRing = makeLockRing();
+      scene.add(record.lockRing);
+    }
+    spawnRing(worldPosition, hdr(MAGENTA, 1.4), 2.4, 0.3);
+  });
+
+  bus.on('unlock', ({ enemyId }) => {
+    const record = enemyRecords.get(enemyId);
+    if (record) removeLockRing(record, scene);
+  });
+
+  bus.on('fire', ({ projectileId, worldPosition }) => {
+    const record = pendingProjectileMeshes.shift();
+    if (record) projectileRecords.set(projectileId, record);
+    spawnFlash(worldPosition, hdr(CORE_WHITE, 2), 0.8, 0.12);
+  });
+
+  bus.on('hit', ({ projectileId, worldPosition }) => {
+    projectileRecords.delete(projectileId);
+    burstSparks(worldPosition, hdr(CORE_WHITE, 1.6), 10, 14);
+  });
+
+  bus.on('kill', ({ enemyId, worldPosition }) => {
+    const record = enemyRecords.get(enemyId);
+    if (record) {
+      const specs = record.mesh.userData.shardSpecs as ShardSpec[] | undefined;
+      if (specs) burstShatter(worldPosition, specs);
+      const accent = (record.mesh.userData.accent as Color | undefined) ?? CYAN;
+      spawnRing(worldPosition, hdr(accent, 1.6), 7, 0.6);
+      spawnFlash(worldPosition, hdr(CORE_WHITE, 3.2), 2.2, 0.26);
+      removeLockRing(record, scene);
+      enemyRecords.delete(enemyId);
+    }
+  });
+
+  bus.on('miss', ({ enemyId, worldPosition }) => {
+    const record = enemyRecords.get(enemyId);
+    if (record) {
+      removeLockRing(record, scene);
+      enemyRecords.delete(enemyId);
+    }
+    burstSparks(worldPosition, AMBER.clone().multiplyScalar(0.5), 4, 3);
+  });
+
   bus.on('beat', ({ isDownbeat }) => {
-    beatPulse = isDownbeat ? 1 : 0.45;
+    beatEnergy = isDownbeat ? 1 : 0.45;
+  });
+
+  bus.on('runstart', () => {
+    resetEffects();
+    for (const record of enemyRecords.values()) removeLockRing(record, scene);
+    enemyRecords.clear();
+    projectileRecords.clear();
+    pendingEnemyMeshes.length = 0;
+    pendingProjectileMeshes.length = 0;
   });
 }
 
 export function updateVisuals(dt: number, ctx: VisualContext) {
-  beatPulse = Math.max(0, beatPulse - dt * 3.2);
-  if (environmentRoot) {
-    environmentRoot.scale.setScalar(1 + beatPulse * 0.018);
+  elapsedNow = ctx.elapsed;
+  beatEnergy = Math.max(0, beatEnergy - dt * 4.2);
+  beatUniform.value = beatEnergy;
+
+  if (ctx.camera instanceof PerspectiveCamera) {
+    if (baseFov === null) baseFov = ctx.camera.fov;
+    ctx.camera.fov = baseFov + beatEnergy * 1.1;
+    ctx.camera.updateProjectionMatrix();
   }
 
-  for (let i = effects.length - 1; i >= 0; i -= 1) {
-    const effect = effects[i];
-    effect.age += dt;
-    const progress = effect.age / effect.lifetime;
-    effect.mesh.scale.setScalar(1 + progress * 2.5);
-    const material = effect.mesh.material;
-    if (material instanceof MeshBasicMaterial) material.opacity = Math.max(0, 1 - progress);
-    if (effect.age >= effect.lifetime) {
-      ctx.scene.remove(effect.mesh);
-      effects.splice(i, 1);
+  if (environment) {
+    for (const item of environment.debris) {
+      item.lines.rotation.x += item.spin.x * dt;
+      item.lines.rotation.y += item.spin.y * dt;
+      item.lines.rotation.z += item.spin.z * dt;
     }
+  }
+
+  for (const [enemyId, record] of enemyRecords) {
+    if (!record.mesh.parent) {
+      if (sceneRef) removeLockRing(record, sceneRef);
+      enemyRecords.delete(enemyId);
+      continue;
+    }
+    if (record.bornAt === null) record.bornAt = elapsedNow;
+    const age = elapsedNow - record.bornAt;
+    record.mesh.scale.setScalar(easeOutBack(Math.min(1, age / 0.4)));
+
+    if (record.lockRing) {
+      record.mesh.getWorldPosition(record.lockRing.position);
+      record.lockRing.quaternion.copy(ctx.camera.quaternion);
+      record.lockRing.rotation.z += dt * 2.6;
+      const pulse = 1 + Math.sin(elapsedNow * 9) * 0.05;
+      record.lockRing.scale.setScalar(pulse * 1.9);
+    }
+  }
+
+  for (const [projectileId, record] of projectileRecords) {
+    if (!record.mesh.parent) {
+      projectileRecords.delete(projectileId);
+      continue;
+    }
+    dropTrail(record.mesh.position, record.trailColor);
+  }
+
+  const reticleSpinner = findReticleSpinner(ctx.scene);
+  if (reticleSpinner) {
+    const active = reticleSpinner.parent?.userData.active === true;
+    reticleSpinner.rotation.z += dt * (active ? 5 : 1.4);
+    const brackets = reticleSpinner.parent?.userData.brackets as Group | undefined;
+    if (brackets) brackets.rotation.z -= dt * (active ? 3.2 : 0.8);
+  }
+
+  updateEffects(dt, ctx.camera);
+}
+
+function findReticleSpinner(scene: Scene): Group | null {
+  for (const child of scene.children) {
+    if (child.userData.spinner) return child.userData.spinner as Group;
+  }
+  return null;
+}
+
+function makeLockRing(): Group {
+  const group = new Group();
+  const ring = new Mesh(
+    new RingGeometry(0.86, 0.92, 4),
+    new MeshBasicMaterial({
+      color: hdr(MAGENTA, 1.8),
+      transparent: true,
+      blending: AdditiveBlending,
+      depthWrite: false,
+      side: DoubleSide,
+    }),
+  );
+  const innerRing = new Mesh(
+    new RingGeometry(0.68, 0.71, 32),
+    new MeshBasicMaterial({
+      color: hdr(CORE_WHITE, 1.4),
+      transparent: true,
+      blending: AdditiveBlending,
+      depthWrite: false,
+      side: DoubleSide,
+    }),
+  );
+  group.add(ring, innerRing);
+  return group;
+}
+
+function removeLockRing(record: EnemyRecord, scene: Scene) {
+  if (record.lockRing) {
+    scene.remove(record.lockRing);
+    record.lockRing = null;
   }
 }
 
-function addEffect(scene: Scene, geometry: SphereGeometry | TorusGeometry, position: Vector3, color: number, lifetime: number) {
-  const mesh = new Mesh(
-    geometry,
-    new MeshBasicMaterial({ color, transparent: true, opacity: 1, side: DoubleSide }),
-  );
-  mesh.position.copy(position);
-  scene.add(mesh);
-  effects.push({ mesh, age: 0, lifetime });
+function easeOutBack(t: number): number {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
 }
