@@ -62,8 +62,8 @@
       "angleSpread": 1.6,
       "zTilt": 0.35,
       "lengthMult": [
-        0.8,
-        1.3
+        0.749,
+        0.749
       ],
       "baseWidth": [
         0.13,
@@ -94,8 +94,8 @@
       ],
       "shardPairs": 5,
       "finPairs": 2,
-      "shellRadius": 0.85,
-      "elongation": 1.6
+      "shellRadius": 0.913,
+      "elongation": 1.367
     },
     "drifter": {
       "weights": [

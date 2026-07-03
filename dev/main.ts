@@ -17,11 +17,12 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { WebGPURenderer } from 'three/webgpu';
 import { createCrystal, defaultCrystalTemplate, type CrystalKind, type CrystalColorRole, type CrystalTemplate, type NumericRange } from '../src/visuals/crystal';
-import { createPost } from '../src/visuals/post';
+import { createPost, getBloomLevel, setBloomLevel } from '../src/visuals/post';
 
 const KINDS: CrystalKind[] = ['node', 'drifter', 'orbiter'];
 const GRID_COUNT = 12;
-const GRID_COLUMNS = 4;
+const GRID_COLUMNS = 3;
+const WEIGHT_SLIDER_MAX = 18;
 
 let selectedKind: CrystalKind = 'node';
 let selectedSeed = 0;
@@ -57,6 +58,9 @@ app.innerHTML = `
         <label>Kind
           <select id="kind-select"></select>
         </label>
+        <label class="bloom-control">Bloom
+          <span class="bloom-slider"><input id="bloom-slider" type="range" min="0" max="150" step="1" value="100" /><output id="bloom-readout">100%</output></span>
+        </label>
         <div class="actions">
           <button id="reset-button" type="button">Reset to saved</button>
           <button id="save-button" type="button" class="primary">Save</button>
@@ -82,6 +86,8 @@ const statusEl = mustGet<HTMLDivElement>('save-status');
 const kindSelect = mustGet<HTMLSelectElement>('kind-select');
 const resetButton = mustGet<HTMLButtonElement>('reset-button');
 const saveButton = mustGet<HTMLButtonElement>('save-button');
+const bloomSlider = mustGet<HTMLInputElement>('bloom-slider');
+const bloomReadout = mustGet<HTMLOutputElement>('bloom-readout');
 const inspectLabel = mustGet<HTMLSpanElement>('inspect-label');
 
 for (const kind of KINDS) {
@@ -91,6 +97,13 @@ for (const kind of KINDS) {
   kindSelect.append(option);
 }
 kindSelect.value = selectedKind;
+bloomSlider.value = `${Math.round(getBloomLevel() * 100)}`;
+bloomReadout.value = `${bloomSlider.value}%`;
+bloomSlider.addEventListener('input', () => {
+  const value = bloomSlider.valueAsNumber;
+  setBloomLevel(value / 100);
+  bloomReadout.value = `${Math.round(value)}%`;
+});
 kindSelect.addEventListener('change', () => {
   selectedKind = kindSelect.value as CrystalKind;
   renderControls();
@@ -244,9 +257,9 @@ function addKindControls() {
   const body = addDetails('Kind');
   const kind = editedTemplate.kinds[selectedKind];
   const defaults = savedTemplate.kinds[selectedKind];
-  addNumber(body, 'cyan weight', kind.weights[0], defaults.weights[0], (value) => (kind.weights[0] = value));
-  addNumber(body, 'magenta weight', kind.weights[1], defaults.weights[1], (value) => (kind.weights[1] = value));
-  addNumber(body, 'amber weight', kind.weights[2], defaults.weights[2], (value) => (kind.weights[2] = value));
+  addNumber(body, 'cyan weight', kind.weights[0], defaults.weights[0], (value) => (kind.weights[0] = value), { max: WEIGHT_SLIDER_MAX });
+  addNumber(body, 'magenta weight', kind.weights[1], defaults.weights[1], (value) => (kind.weights[1] = value), { max: WEIGHT_SLIDER_MAX });
+  addNumber(body, 'amber weight', kind.weights[2], defaults.weights[2], (value) => (kind.weights[2] = value), { max: WEIGHT_SLIDER_MAX });
   addNumber(body, 'shard pairs', kind.shardPairs, defaults.shardPairs, (value) => (kind.shardPairs = value), { integer: true, min: 0 });
   addNumber(body, 'fin pairs', kind.finPairs, defaults.finPairs, (value) => (kind.finPairs = value), { integer: true, min: 0 });
   addNumber(body, 'shell radius', kind.shellRadius, defaults.shellRadius, (value) => (kind.shellRadius = value));
@@ -373,18 +386,19 @@ function regenerateGallery() {
   selectionRing = makeSelectionRing();
   galleryRoot.add(selectionRing);
 
+  const rows = Math.ceil(GRID_COUNT / GRID_COLUMNS);
   for (let seed = 0; seed < GRID_COUNT; seed += 1) {
     const crystal = createCrystal(selectedKind, { seed, template: editedTemplate });
     const col = seed % GRID_COLUMNS;
     const row = Math.floor(seed / GRID_COLUMNS);
-    crystal.position.set((col - 1.5) * 2.35, (1 - row) * 2.15, 0);
-    crystal.scale.setScalar(0.85);
+    crystal.position.set((col - (GRID_COLUMNS - 1) / 2) * 2.55, ((rows - 1) / 2 - row) * 2.325, 0);
+    crystal.scale.setScalar(0.52);
     crystal.userData.gallerySeed = seed;
     galleryRoot.add(crystal);
     galleryCrystals.push(crystal);
   }
 
-  gallery.camera.position.set(0, 0, 8.2);
+  gallery.camera.position.set(0, 0, 13.5);
   gallery.camera.lookAt(0, 0, 0);
   gallery.camera.updateProjectionMatrix();
   updateSelectionRing();
