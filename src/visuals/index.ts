@@ -28,7 +28,7 @@ import {
   spawnRing,
   updateEffects,
 } from './effects';
-import { createLetterMesh } from './letters';
+import { createLetterMesh, setLetterLocked } from './letters';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 
 export { createPost, getGlowLevel, setGlowLevel } from './post';
@@ -79,7 +79,7 @@ export function createEnemyMesh(kind: EnemyKind, letter?: string) {
 
 export function setEnemyLocked(mesh: Object3D, locked: boolean) {
   if (mesh.userData.isLetter) {
-    mesh.userData.locked = locked;
+    setLetterLocked(mesh as Group, locked);
     return;
   }
   setCrystalLocked(mesh as Group, locked);
