@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>raild</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud" class="hud">
+      <div>Score <span data-hud="score">0</span></div>
+      <div>Time <span data-hud="time">30.0</span></div>
+      <div>Locks <span data-hud="locks">0</span>/8</div>
+    </div>
+    <div id="end-screen" class="end-screen hidden">
+      <div class="end-panel">
+        <div class="label">SCORE</div>
+        <div class="score" data-end="score">0</div>
+        <div data-end="kills">Kills 0/0</div>
+        <div>Rank <span data-end="rank">D</span></div>
+        <div class="replay">Press R to replay</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

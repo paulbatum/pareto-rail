@@ -1,0 +1,19 @@
+{
+  "name": "raild",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "latest"
+  },
+  "devDependencies": {
+    "@types/three": "^0.185.0",
+    "typescript": "latest",
+    "vite": "latest"
+  }
+}
