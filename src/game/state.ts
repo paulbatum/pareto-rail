@@ -299,8 +299,13 @@ export function createGame(options: GameOptions) {
     for (const enemy of [...enemies.values()]) {
       if (enemy.purpose !== 'enemy') continue;
       enemy.mesh.position.copy(enemyPosition(enemy));
-      enemy.mesh.rotation.x += 0.01;
-      enemy.mesh.rotation.y += 0.018;
+      // Crystals present their hex face to the camera — the concept art is a
+      // frontal read, and a free tumble hides it edge-on half the time. A
+      // slow per-enemy roll plus a gentle tilt wobble keeps them alive.
+      enemy.mesh.quaternion.copy(camera.quaternion);
+      enemy.mesh.rotateZ(runTime * (0.3 + (enemy.id % 5) * 0.09) + enemy.id * 1.7);
+      enemy.mesh.rotateY(Math.sin(runTime * 0.8 + enemy.id * 1.3) * 0.4);
+      enemy.mesh.rotateX(Math.cos(runTime * 0.65 + enemy.id * 2.1) * 0.3);
 
       if (railU > enemy.anchorU + 0.018) {
         missEnemy(enemy);
