@@ -40,8 +40,8 @@ const KIND_PARAMS: Record<EnemyKind, KindParams> = {
   orbiter: { weights: [4.5, 1.5, 4], shardPairs: 7, spikePairs: 2, shellRadius: 0.95, elongation: 1.2, seedBase: 83 },
 };
 
-const coreGeometry = new OctahedronGeometry(0.3, 0);
-const coreGlowGeometry = new OctahedronGeometry(0.52, 1);
+const coreGeometry = new OctahedronGeometry(0.19, 0);
+const coreGlowGeometry = new OctahedronGeometry(0.34, 1);
 
 let nextSeed = 1;
 
@@ -122,14 +122,14 @@ export function createCrystal(kind: EnemyKind): Group {
     }),
   );
 
-  const coreMaterial = new MeshBasicMaterial({ color: hdr(CORE_WHITE, 2.4) });
+  const coreMaterial = new MeshBasicMaterial({ color: hdr(CORE_WHITE, 1.05) });
   const core = new Mesh(coreGeometry, coreMaterial);
   const coreGlow = new Mesh(
     coreGlowGeometry,
     new MeshBasicMaterial({
-      color: hdr(CYAN, 0.55),
+      color: hdr(CYAN, 0.3),
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.4,
       blending: AdditiveBlending,
       depthWrite: false,
     }),
@@ -143,19 +143,21 @@ export function createCrystal(kind: EnemyKind): Group {
   group.userData.shardSpecs = shardSpecs;
   group.userData.coreMaterial = coreMaterial;
   group.userData.coreGlow = coreGlow;
+  // Base colors + material handles for the per-frame distance falloff:
+  // far away, hot elements are dimmed so bloom can't swallow the silhouette.
+  group.userData.coreBase = hdr(CORE_WHITE, 1.05);
+  group.userData.glowBase = hdr(CYAN, 0.3);
+  group.userData.edgeMaterial = edgeLines.material;
+  group.userData.fillMaterial = fillMesh.material;
   group.userData.accent = kind === 'drifter' ? MAGENTA : kind === 'orbiter' ? AMBER : CYAN;
   return group;
 }
 
 export function setCrystalLocked(group: Group, locked: boolean) {
-  const coreMaterial = group.userData.coreMaterial as MeshBasicMaterial | undefined;
-  if (coreMaterial) {
-    coreMaterial.color.copy(locked ? hdr(MAGENTA, 3.2) : hdr(CORE_WHITE, 2.4));
-  }
-  const coreGlow = group.userData.coreGlow as Mesh | undefined;
-  if (coreGlow) {
-    (coreGlow.material as MeshBasicMaterial).color.copy(locked ? hdr(MAGENTA, 1.1) : hdr(CYAN, 0.55));
-  }
+  // Update the base colors; the per-frame distance falloff in updateVisuals
+  // multiplies these onto the materials.
+  (group.userData.coreBase as Color).copy(locked ? hdr(MAGENTA, 1.7) : hdr(CORE_WHITE, 1.05));
+  (group.userData.glowBase as Color).copy(locked ? hdr(MAGENTA, 0.7) : hdr(CYAN, 0.3));
 }
 
 function paintVertexColor(geometry: BufferGeometry, color: Color, intensity: number) {

@@ -4,6 +4,7 @@ import {
   Color,
   DoubleSide,
   Group,
+  LineBasicMaterial,
   Mesh,
   MeshBasicMaterial,
   Object3D,
@@ -23,7 +24,7 @@ import {
   createEffects,
   dropTrail,
   resetEffects,
-  spawnFlash,
+  spawnGlint,
   spawnRing,
   updateEffects,
 } from './effects';
@@ -179,12 +180,12 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
   bus.on('fire', ({ projectileId, worldPosition }) => {
     const record = pendingProjectileMeshes.shift();
     if (record) projectileRecords.set(projectileId, record);
-    spawnFlash(worldPosition, hdr(CORE_WHITE, 2), 0.8, 0.12);
+    spawnGlint(worldPosition, hdr(CORE_WHITE, 1.2), 0.5, 0.12);
   });
 
   bus.on('hit', ({ projectileId, worldPosition }) => {
     projectileRecords.delete(projectileId);
-    burstSparks(worldPosition, hdr(CORE_WHITE, 1.6), 10, 14);
+    burstSparks(worldPosition, hdr(CORE_WHITE, 0.9), 6, 12);
   });
 
   bus.on('kill', ({ enemyId, worldPosition }) => {
@@ -193,8 +194,9 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
       const specs = record.mesh.userData.shardSpecs as ShardSpec[] | undefined;
       if (specs) burstShatter(worldPosition, specs);
       const accent = (record.mesh.userData.accent as Color | undefined) ?? CYAN;
-      spawnRing(worldPosition, hdr(accent, 1.6), 7, 0.6);
-      spawnFlash(worldPosition, hdr(CORE_WHITE, 3.2), 2.2, 0.26);
+      spawnRing(worldPosition, hdr(accent, 0.9), 5.5, 0.5);
+      spawnRing(worldPosition, hdr(CYAN, 0.55), 3.2, 0.34);
+      spawnGlint(worldPosition, hdr(CORE_WHITE, 1.8), 1.4, 0.2);
       removeLockRing(record, scene);
       enemyRecords.delete(enemyId);
     }
@@ -251,6 +253,19 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
     if (record.bornAt === null) record.bornAt = elapsedNow;
     const age = elapsedNow - record.bornAt;
     record.mesh.scale.setScalar(easeOutBack(Math.min(1, age / 0.4)));
+
+    // Distance falloff: bloom halos are screen-space, so a far crystal fits
+    // inside its own halo and reads as a blob. Dim the hot elements with
+    // distance; full energy only arrives as the enemy closes in.
+    const distance = record.mesh.position.distanceTo(ctx.camera.position);
+    const closeness = smootherstep(1 - clamp01((distance - 14) / (48 - 14)));
+    const userData = record.mesh.userData;
+    (userData.edgeMaterial as LineBasicMaterial).color.setScalar(0.32 + 0.68 * closeness);
+    (userData.fillMaterial as MeshBasicMaterial).color.setScalar(0.5 + 0.5 * closeness);
+    const hotScale = 0.22 + 0.78 * closeness;
+    (userData.coreMaterial as MeshBasicMaterial).color.copy(userData.coreBase as Color).multiplyScalar(hotScale);
+    const coreGlow = userData.coreGlow as Mesh;
+    (coreGlow.material as MeshBasicMaterial).color.copy(userData.glowBase as Color).multiplyScalar(hotScale);
 
     if (record.lockRing) {
       record.mesh.getWorldPosition(record.lockRing.position);
@@ -324,4 +339,12 @@ function easeOutBack(t: number): number {
   const c1 = 1.70158;
   const c3 = c1 + 1;
   return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
+}
+
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+function smootherstep(t: number): number {
+  return t * t * (3 - 2 * t);
 }

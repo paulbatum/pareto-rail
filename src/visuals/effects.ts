@@ -3,29 +3,28 @@ import {
   Camera,
   Color,
   DoubleSide,
+  Group,
   InstancedMesh,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
-  Object3D,
+  PlaneGeometry,
   Quaternion,
   RingGeometry,
   Scene,
-  SphereGeometry,
   TetrahedronGeometry,
   Vector3,
 } from 'three';
 import type { ShardSpec } from './crystal';
-import { CORE_WHITE, hdr } from './palette';
 
 const SHARD_CAPACITY = 1024;
-const RING_CAPACITY = 20;
-const FLASH_CAPACITY = 10;
+const RING_CAPACITY = 24;
+const GLINT_CAPACITY = 12;
 
 type ShardParticle = {
   position: Vector3;
   velocity: Vector3;
-  axis: Vector3;
+  axis: Vector3; // must be unit length: it feeds setFromAxisAngle every frame
   rotation: Quaternion;
   spin: number;
   color: Color;
@@ -44,8 +43,9 @@ type RingEffect = {
   toScale: number;
 };
 
-type FlashEffect = {
-  mesh: Mesh;
+type GlintEffect = {
+  group: Group;
+  materials: MeshBasicMaterial[];
   color: Color;
   age: number;
   life: number;
@@ -54,7 +54,7 @@ type FlashEffect = {
 
 const shards: ShardParticle[] = [];
 const rings: RingEffect[] = [];
-const flashes: FlashEffect[] = [];
+const glints: GlintEffect[] = [];
 
 let shardMesh: InstancedMesh | null = null;
 const scratchMatrix = new Matrix4();
@@ -72,7 +72,9 @@ export function createEffects(scene: Scene) {
   shardMesh.frustumCulled = false;
   scene.add(shardMesh);
 
-  const ringGeometry = new RingGeometry(0.92, 1, 48);
+  // Thin ring: reads as a clean expanding ripple; a fat ring under bloom
+  // reads as a wall of light.
+  const ringGeometry = new RingGeometry(0.965, 1, 56);
   for (let i = 0; i < RING_CAPACITY; i += 1) {
     const mesh = new Mesh(
       ringGeometry,
@@ -88,15 +90,27 @@ export function createEffects(scene: Scene) {
     rings.push({ mesh, color: new Color(), age: 0, life: -1, fromScale: 0, toScale: 1 });
   }
 
-  const flashGeometry = new SphereGeometry(0.5, 12, 8);
-  for (let i = 0; i < FLASH_CAPACITY; i += 1) {
-    const mesh = new Mesh(
-      flashGeometry,
-      new MeshBasicMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false }),
-    );
-    mesh.visible = false;
-    scene.add(mesh);
-    flashes.push({ mesh, color: new Color(), age: 0, life: -1, scale: 1 });
+  // Star glint: two crossed thin quads, billboarded. Tiny screen area means
+  // bloom turns it into a sharp four-point sparkle instead of a white wash.
+  const bladeGeometry = new PlaneGeometry(1.7, 0.055);
+  for (let i = 0; i < GLINT_CAPACITY; i += 1) {
+    const group = new Group();
+    const materials: MeshBasicMaterial[] = [];
+    for (const rotation of [0, Math.PI / 2]) {
+      const material = new MeshBasicMaterial({
+        transparent: true,
+        blending: AdditiveBlending,
+        depthWrite: false,
+        side: DoubleSide,
+      });
+      const blade = new Mesh(bladeGeometry, material);
+      blade.rotation.z = rotation;
+      group.add(blade);
+      materials.push(material);
+    }
+    group.visible = false;
+    scene.add(group);
+    glints.push({ group, materials, color: new Color(), age: 0, life: -1, scale: 1 });
   }
 }
 
@@ -105,43 +119,43 @@ function spawnShard(particle: ShardParticle) {
   shards.push(particle);
 }
 
-// The enemy explodes into its *own* shards: each facet of the crystal flies
-// outward along the direction it was mounted on.
+// The enemy decompresses into its *own* facets: each shard flies outward
+// along the direction it was mounted on, tumbling as it fades.
 export function burstShatter(position: Vector3, specs: ShardSpec[], rng: () => number = Math.random) {
   for (const spec of specs) {
-    const velocity = spec.direction
+    const outward = spec.direction.clone().normalize();
+    const velocity = outward
       .clone()
-      .normalize()
-      .multiplyScalar(9 + rng() * 8)
-      .add(new Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).multiplyScalar(4));
+      .multiplyScalar(8 + rng() * 7)
+      .add(new Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).multiplyScalar(3.5));
     spawnShard({
-      position: position.clone(),
+      position: position.clone().addScaledVector(outward, 0.4),
       velocity,
-      axis: new Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).normalize(),
+      axis: randomUnit(rng),
       rotation: new Quaternion(),
-      spin: 6 + rng() * 14,
-      color: spec.color.clone().multiplyScalar(1.7),
-      size: 1.6 + spec.size * 2.4,
+      spin: 5 + rng() * 10,
+      color: spec.color.clone().multiplyScalar(0.9),
+      size: 1.4 + spec.size * 2,
       age: 0,
-      life: 0.75 + rng() * 0.45,
-      drag: 2.2,
+      life: 0.7 + rng() * 0.4,
+      drag: 2.4,
     });
   }
 }
 
 export function burstSparks(position: Vector3, color: Color, count: number, speed: number) {
   for (let i = 0; i < count; i += 1) {
-    const direction = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+    const direction = randomUnit(Math.random);
     spawnShard({
       position: position.clone(),
-      velocity: direction.multiplyScalar(speed * (0.4 + Math.random() * 0.9)),
-      axis: direction.clone(),
+      velocity: direction.clone().multiplyScalar(speed * (0.4 + Math.random() * 0.9)),
+      axis: direction,
       rotation: new Quaternion(),
-      spin: 10 + Math.random() * 20,
-      color: color.clone().multiplyScalar(1.5),
-      size: 0.5 + Math.random() * 0.7,
+      spin: 8 + Math.random() * 14,
+      color: color.clone(),
+      size: 0.45 + Math.random() * 0.5,
       age: 0,
-      life: 0.3 + Math.random() * 0.3,
+      life: 0.25 + Math.random() * 0.25,
       drag: 3.5,
     });
   }
@@ -152,10 +166,10 @@ export function dropTrail(position: Vector3, color: Color) {
   spawnShard({
     position: position.clone(),
     velocity: new Vector3((Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2),
-    axis: new Vector3(0, 1, 0),
+    axis: randomUnit(Math.random),
     rotation: new Quaternion(),
     spin: 4,
-    color: color.clone().multiplyScalar(1.1),
+    color: color.clone(),
     size: 0.55,
     age: 0,
     life: 0.28,
@@ -167,23 +181,27 @@ export function spawnRing(position: Vector3, color: Color, toScale: number, life
   const ring = rings.find((r) => r.life < 0);
   if (!ring) return;
   ring.mesh.position.copy(position);
+  ring.mesh.scale.setScalar(0.01);
+  (ring.mesh.material as MeshBasicMaterial).color.set(0, 0, 0);
   ring.mesh.visible = true;
   ring.color.copy(color);
   ring.age = 0;
   ring.life = life;
-  ring.fromScale = toScale * 0.15;
+  ring.fromScale = toScale * 0.12;
   ring.toScale = toScale;
 }
 
-export function spawnFlash(position: Vector3, color: Color = hdr(CORE_WHITE, 3), scale = 1.6, life = 0.22) {
-  const flash = flashes.find((f) => f.life < 0);
-  if (!flash) return;
-  flash.mesh.position.copy(position);
-  flash.mesh.visible = true;
-  flash.color.copy(color);
-  flash.age = 0;
-  flash.life = life;
-  flash.scale = scale;
+export function spawnGlint(position: Vector3, color: Color, scale = 1, life = 0.18) {
+  const glint = glints.find((g) => g.life < 0);
+  if (!glint) return;
+  glint.group.position.copy(position);
+  glint.group.scale.setScalar(0.01);
+  for (const material of glint.materials) material.color.set(0, 0, 0);
+  glint.group.visible = true;
+  glint.color.copy(color);
+  glint.age = 0;
+  glint.life = life;
+  glint.scale = scale;
 }
 
 export function updateEffects(dt: number, camera: Camera) {
@@ -199,7 +217,7 @@ export function updateEffects(dt: number, camera: Camera) {
       shard.velocity.multiplyScalar(Math.max(0, 1 - shard.drag * dt));
       shard.position.addScaledVector(shard.velocity, dt);
       scratchQuaternion.setFromAxisAngle(shard.axis, shard.spin * dt);
-      shard.rotation.premultiply(scratchQuaternion);
+      shard.rotation.premultiply(scratchQuaternion).normalize();
 
       const fade = 1 - shard.age / shard.life;
       scratchScale.setScalar(shard.size * (0.35 + fade * 0.65));
@@ -230,17 +248,23 @@ export function updateEffects(dt: number, camera: Camera) {
     (ring.mesh.material as MeshBasicMaterial).color.copy(ring.color).multiplyScalar((1 - progress) ** 1.5);
   }
 
-  for (const flash of flashes) {
-    if (flash.life < 0) continue;
-    flash.age += dt;
-    if (flash.age >= flash.life) {
-      flash.life = -1;
-      flash.mesh.visible = false;
+  for (const glint of glints) {
+    if (glint.life < 0) continue;
+    glint.age += dt;
+    if (glint.age >= glint.life) {
+      glint.life = -1;
+      glint.group.visible = false;
       continue;
     }
-    const progress = flash.age / flash.life;
-    flash.mesh.scale.setScalar(flash.scale * (0.4 + progress * 1.4));
-    (flash.mesh.material as MeshBasicMaterial).color.copy(flash.color).multiplyScalar((1 - progress) ** 2);
+    const progress = glint.age / glint.life;
+    // Sharp pop out, quick shrink back: a camera-flash sparkle.
+    const envelope = Math.sin(Math.min(1, progress * 1.15) * Math.PI);
+    glint.group.scale.setScalar(Math.max(0.01, glint.scale * envelope));
+    glint.group.quaternion.copy(camera.quaternion);
+    glint.group.rotation.z += dt * 3;
+    for (const material of glint.materials) {
+      material.color.copy(glint.color).multiplyScalar(envelope);
+    }
   }
 }
 
@@ -251,8 +275,15 @@ export function resetEffects() {
     ring.life = -1;
     ring.mesh.visible = false;
   }
-  for (const flash of flashes) {
-    flash.life = -1;
-    flash.mesh.visible = false;
+  for (const glint of glints) {
+    glint.life = -1;
+    glint.group.visible = false;
   }
+}
+
+function randomUnit(rng: () => number): Vector3 {
+  const z = rng() * 2 - 1;
+  const angle = rng() * Math.PI * 2;
+  const r = Math.sqrt(Math.max(0, 1 - z * z));
+  return new Vector3(Math.cos(angle) * r, Math.sin(angle) * r, z);
 }
