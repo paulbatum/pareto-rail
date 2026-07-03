@@ -30,6 +30,7 @@ let editedTemplate = clone(defaultCrystalTemplate);
 let gallery: RenderView | null = null;
 let inspect: RenderView | null = null;
 let inspectControls: OrbitControls | null = null;
+let inspectUserControlled = false;
 let galleryRoot = new Group();
 let inspectRoot = new Group();
 let galleryCrystals: Group[] = [];
@@ -131,6 +132,9 @@ async function bootstrap() {
   inspectControls.dampingFactor = 0.08;
   inspectControls.minDistance = 2;
   inspectControls.maxDistance = 10;
+  inspectControls.addEventListener('start', () => {
+    inspectUserControlled = true;
+  });
 
   installGalleryPicking(gallery);
   regenerateGallery();
@@ -487,7 +491,7 @@ function animate() {
     crystal.rotation.set(Math.sin(now * 0.35) * 0.12, now * 0.45, Math.sin(now * 0.2) * 0.08);
   }
   if (selectionRing) selectionRing.rotation.z = now * -0.9;
-  if (inspectCrystal) inspectCrystal.rotation.y += 0.002;
+  if (inspectCrystal && !inspectUserControlled) inspectCrystal.rotation.y += 0.002;
   inspectControls?.update();
   gallery?.post.render();
   inspect?.post.render();

@@ -12,7 +12,7 @@
 
 body {
   margin: 0;
-  min-width: 1180px;
+  min-width: 1320px;
   min-height: 100vh;
   background:
     radial-gradient(circle at 20% 0%, rgba(77, 224, 255, 0.18), transparent 30rem),
@@ -60,7 +60,7 @@ h2 {
 
 .shell {
   display: grid;
-  grid-template-columns: 390px minmax(760px, 1fr);
+  grid-template-columns: 390px minmax(560px, 1fr);
   gap: 1rem;
   height: calc(100vh - 5.25rem);
   padding: 0 1rem 1rem;
@@ -232,8 +232,9 @@ input[type='range'] {
 
 .views {
   display: grid;
-  grid-template-rows: minmax(360px, 1.08fr) minmax(260px, 0.92fr);
+  grid-template-columns: minmax(520px, 1fr) minmax(360px, 0.72fr);
   gap: 1rem;
+  min-width: 0;
   min-height: 0;
 }
 
