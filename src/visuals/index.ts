@@ -266,9 +266,12 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
     const closeness = smootherstep(1 - clamp01((distance - 14) / (48 - 14)));
     const userData = record.mesh.userData;
     if (userData.edgeMaterial && userData.fillMaterial && userData.coreMaterial && userData.coreGlow) {
-      (userData.edgeMaterial as LineBasicMaterial).color.setScalar(0.32 + 0.68 * closeness);
-      (userData.fillMaterial as MeshBasicMaterial).color.setScalar(0.5 + 0.5 * closeness);
-      const hotScale = 0.22 + 0.78 * closeness;
+      // Edges are thin lines with small bloom halos — keep them readable at
+      // range. The additive fill is what stacks into a white blob when the
+      // whole crystal fits in a few pixels, so it dims much harder.
+      (userData.edgeMaterial as LineBasicMaterial).color.setScalar(0.5 + 0.5 * closeness);
+      (userData.fillMaterial as MeshBasicMaterial).color.setScalar(0.22 + 0.78 * closeness);
+      const hotScale = 0.3 + 0.7 * closeness;
       (userData.coreMaterial as MeshBasicMaterial).color.copy(userData.coreBase as Color).multiplyScalar(hotScale);
       const coreGlow = userData.coreGlow as Mesh;
       (coreGlow.material as MeshBasicMaterial).color.copy(userData.glowBase as Color).multiplyScalar(hotScale);

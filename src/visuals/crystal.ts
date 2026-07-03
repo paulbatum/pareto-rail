@@ -5,6 +5,7 @@ import {
   EdgesGeometry,
   Float32BufferAttribute,
   Group,
+  IcosahedronGeometry,
   LineBasicMaterial,
   LineSegments,
   Matrix4,
@@ -37,13 +38,15 @@ type KindParams = {
 };
 
 const KIND_PARAMS: Record<CrystalKind, KindParams> = {
-  node: { weights: [6, 2.5, 1.5], shardPairs: 6, spikePairs: 2, shellRadius: 0.85, elongation: 1.6, seedBase: 11 },
-  drifter: { weights: [3, 6, 1], shardPairs: 5, spikePairs: 3, shellRadius: 0.75, elongation: 2.4, seedBase: 47 },
-  orbiter: { weights: [4.5, 1.5, 4], shardPairs: 7, spikePairs: 2, shellRadius: 0.95, elongation: 1.2, seedBase: 83 },
+  node: { weights: [6, 2.5, 1.5], shardPairs: 5, spikePairs: 2, shellRadius: 0.85, elongation: 1.6, seedBase: 11 },
+  drifter: { weights: [3, 6, 1], shardPairs: 4, spikePairs: 3, shellRadius: 0.75, elongation: 2.4, seedBase: 47 },
+  orbiter: { weights: [4.5, 1.5, 4], shardPairs: 6, spikePairs: 2, shellRadius: 0.95, elongation: 1.2, seedBase: 83 },
 };
 
-const coreGeometry = new OctahedronGeometry(0.19, 0);
-const coreGlowGeometry = new OctahedronGeometry(0.34, 1);
+const FORWARD = new Vector3(0, 0, 1);
+
+const coreGeometry = new OctahedronGeometry(0.21, 0);
+const coreGlowGeometry = new OctahedronGeometry(0.4, 1);
 
 let nextSeed = 1;
 
@@ -60,35 +63,73 @@ export function createCrystal(kind: CrystalKind): Group {
   const fillGeometries: BufferGeometry[] = [];
   const edgeGeometries: BufferGeometry[] = [];
 
-  const addShard = (direction: Vector3, distance: number, scale: Vector3, color: Color) => {
+  // Shards point outward (+Z aligned with their direction) with a random roll
+  // and a little tilt jitter — radiating from the center is what makes the
+  // cluster read as one creature instead of a scatter of triangles.
+  const addShard = (
+    direction: Vector3,
+    distance: number,
+    scale: Vector3,
+    color: Color,
+    fillIntensity: number,
+    edgeIntensity: number,
+    tiltJitter: number,
+  ) => {
     const geometry = new TetrahedronGeometry(0.42, 0);
-    const rotation = new Quaternion().setFromAxisAngle(
-      new Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).normalize(),
-      rng() * Math.PI * 2,
-    );
-    const matrix = new Matrix4().compose(direction.clone().multiplyScalar(distance), rotation, scale);
+    const outward = direction.clone().normalize();
+    const rotation = new Quaternion().setFromUnitVectors(FORWARD, outward);
+    rotation.premultiply(new Quaternion().setFromAxisAngle(outward, rng() * Math.PI * 2));
+    if (tiltJitter > 0) {
+      rotation.premultiply(new Quaternion().setFromAxisAngle(randomDirection(rng), (rng() - 0.5) * tiltJitter));
+    }
+    const matrix = new Matrix4().compose(outward.clone().multiplyScalar(distance), rotation, scale);
 
     const fill = geometry.clone().applyMatrix4(matrix);
-    paintVertexColor(fill, color, 0.16);
+    paintVertexColor(fill, color, fillIntensity);
     fillGeometries.push(fill);
 
     const edges = new EdgesGeometry(geometry, 12).applyMatrix4(matrix);
-    paintVertexColor(edges, color, 1.35);
+    paintVertexColor(edges, color, edgeIntensity);
     edgeGeometries.push(edges);
 
-    shardSpecs.push({ direction: direction.clone(), color, size: (scale.x + scale.y + scale.z) / 3 });
+    shardSpecs.push({ direction: outward.clone(), color, size: (scale.x + scale.y + scale.z) / 3 });
   };
 
+  // Central body — a faceted polyhedron with a bright wireframe and an inner
+  // counter-rotated frame. This is the anchor the shards radiate from; dark
+  // glass fill so the neon edges carry the read.
+  const accent = kind === 'drifter' ? MAGENTA : kind === 'orbiter' ? AMBER : CYAN;
+  const contrast = kind === 'drifter' ? CYAN : MAGENTA;
+  const bodyGeometry = new IcosahedronGeometry(0.5, 0);
+  const bodyMatrix = new Matrix4().makeRotationFromQuaternion(
+    new Quaternion().setFromAxisAngle(randomDirection(rng), rng() * Math.PI * 2),
+  );
+  const bodyFill = bodyGeometry.clone().applyMatrix4(bodyMatrix);
+  paintVertexColor(bodyFill, accent, 0.1);
+  fillGeometries.push(bodyFill);
+  const bodyEdges = new EdgesGeometry(bodyGeometry).applyMatrix4(bodyMatrix);
+  paintVertexColor(bodyEdges, accent, 1.6);
+  edgeGeometries.push(bodyEdges);
+
+  const innerFrame = new EdgesGeometry(new OctahedronGeometry(0.33, 0)).applyMatrix4(
+    new Matrix4().makeRotationFromQuaternion(
+      new Quaternion().setFromAxisAngle(randomDirection(rng), rng() * Math.PI * 2),
+    ),
+  );
+  paintVertexColor(innerFrame, contrast, 1.3);
+  edgeGeometries.push(innerFrame);
+
   // Facet shell — generated on one side, mirrored across X for the bilateral
-  // symmetry that makes the scatter read as a designed creature.
+  // symmetry that makes the scatter read as a designed creature. Pushed out
+  // past the body so facets ring the core instead of piling up over it.
   for (let i = 0; i < params.shardPairs; i += 1) {
     const direction = randomDirection(rng);
     direction.x = Math.abs(direction.x) * 0.85 + 0.15;
     const color = pickColor(rng, params.weights);
-    const scale = new Vector3(0.7 + rng() * 0.9, 0.7 + rng() * 0.9, 0.7 + rng() * 0.9);
-    const distance = params.shellRadius * (0.55 + rng() * 0.65);
-    addShard(direction, distance, scale, color);
-    addShard(mirrorX(direction), distance, scale, color);
+    const scale = new Vector3(0.6 + rng() * 0.7, 0.6 + rng() * 0.7, 0.7 + rng() * 0.8);
+    const distance = params.shellRadius * (0.8 + rng() * 0.55);
+    addShard(direction, distance, scale, color, 0.07, 1.7, 0.9);
+    addShard(mirrorX(direction), distance, scale, color, 0.07, 1.7, 0.9);
   }
 
   // Spike clusters — long thin shards thrusting outward, the "claws".
@@ -99,8 +140,8 @@ export function createCrystal(kind: CrystalKind): Group {
     const color = pickColor(rng, params.weights);
     const scale = new Vector3(0.28 + rng() * 0.2, 0.28 + rng() * 0.2, params.elongation + rng() * 1.1);
     const distance = params.shellRadius * (1.15 + rng() * 0.5);
-    addShard(direction, distance, scale, color);
-    addShard(mirrorX(direction), distance, scale, color);
+    addShard(direction, distance, scale, color, 0.05, 1.9, 0.25);
+    addShard(mirrorX(direction), distance, scale, color, 0.05, 1.9, 0.25);
   }
 
   const fillMesh = new Mesh(
@@ -124,12 +165,12 @@ export function createCrystal(kind: CrystalKind): Group {
     }),
   );
 
-  const coreMaterial = new MeshBasicMaterial({ color: hdr(CORE_WHITE, 1.05) });
+  const coreMaterial = new MeshBasicMaterial({ color: hdr(CORE_WHITE, 1.2) });
   const core = new Mesh(coreGeometry, coreMaterial);
   const coreGlow = new Mesh(
     coreGlowGeometry,
     new MeshBasicMaterial({
-      color: hdr(CYAN, 0.3),
+      color: hdr(CYAN, 0.42),
       transparent: true,
       opacity: 0.4,
       blending: AdditiveBlending,
@@ -147,19 +188,19 @@ export function createCrystal(kind: CrystalKind): Group {
   group.userData.coreGlow = coreGlow;
   // Base colors + material handles for the per-frame distance falloff:
   // far away, hot elements are dimmed so bloom can't swallow the silhouette.
-  group.userData.coreBase = hdr(CORE_WHITE, 1.05);
-  group.userData.glowBase = hdr(CYAN, 0.3);
+  group.userData.coreBase = hdr(CORE_WHITE, 1.2);
+  group.userData.glowBase = hdr(CYAN, 0.42);
   group.userData.edgeMaterial = edgeLines.material;
   group.userData.fillMaterial = fillMesh.material;
-  group.userData.accent = kind === 'drifter' ? MAGENTA : kind === 'orbiter' ? AMBER : CYAN;
+  group.userData.accent = accent;
   return group;
 }
 
 export function setCrystalLocked(group: Group, locked: boolean) {
   // Update the base colors; the per-frame distance falloff in updateVisuals
   // multiplies these onto the materials.
-  (group.userData.coreBase as Color).copy(locked ? hdr(MAGENTA, 1.7) : hdr(CORE_WHITE, 1.05));
-  (group.userData.glowBase as Color).copy(locked ? hdr(MAGENTA, 0.7) : hdr(CYAN, 0.3));
+  (group.userData.coreBase as Color).copy(locked ? hdr(MAGENTA, 1.7) : hdr(CORE_WHITE, 1.2));
+  (group.userData.glowBase as Color).copy(locked ? hdr(MAGENTA, 0.7) : hdr(CYAN, 0.42));
 }
 
 function paintVertexColor(geometry: BufferGeometry, color: Color, intensity: number) {
