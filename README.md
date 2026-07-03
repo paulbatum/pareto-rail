@@ -1,11 +1,14 @@
 # raild
 
-A short browser rail shooter scaffold built with Vite, TypeScript, three.js, and WebGPU-only rendering.
+A 30-second Rez-inspired rail shooter for the browser. WebGPU only, everything procedural — geometry, effects, and the soundtrack are all generated in code.
 
-## Commands
+Hold the mouse button and sweep across targets to lock up to eight, then release to fire a homing volley. Lock all five letters of START to begin. Esc pauses (volume and glow settings).
 
-- `npm run dev`
-- `npm run typecheck`
-- `npm run build`
+## Run it
 
-WebGPU is required at runtime. Browsers without `navigator.gpu` show a full-screen unsupported message.
+```sh
+npm install
+npm run dev
+```
+
+Requires a WebGPU-capable browser (recent Chrome/Edge).
