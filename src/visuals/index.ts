@@ -28,6 +28,7 @@ import {
   spawnRing,
   updateEffects,
 } from './effects';
+import { createLetterMesh } from './letters';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 
 export { createPost, getGlowLevel, setGlowLevel } from './post';
@@ -69,14 +70,18 @@ export function createEnvironment(scene: Scene) {
   return environment.root;
 }
 
-export function createEnemyMesh(kind: EnemyKind) {
-  const mesh = createCrystal(kind);
+export function createEnemyMesh(kind: EnemyKind, letter?: string) {
+  const mesh = kind === 'letter' ? createLetterMesh(letter ?? '?') : createCrystal(kind);
   mesh.scale.setScalar(0.001);
   pendingEnemyMeshes.push(mesh);
   return mesh;
 }
 
 export function setEnemyLocked(mesh: Object3D, locked: boolean) {
+  if (mesh.userData.isLetter) {
+    mesh.userData.locked = locked;
+    return;
+  }
   setCrystalLocked(mesh as Group, locked);
 }
 
@@ -260,12 +265,14 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
     const distance = record.mesh.position.distanceTo(ctx.camera.position);
     const closeness = smootherstep(1 - clamp01((distance - 14) / (48 - 14)));
     const userData = record.mesh.userData;
-    (userData.edgeMaterial as LineBasicMaterial).color.setScalar(0.32 + 0.68 * closeness);
-    (userData.fillMaterial as MeshBasicMaterial).color.setScalar(0.5 + 0.5 * closeness);
-    const hotScale = 0.22 + 0.78 * closeness;
-    (userData.coreMaterial as MeshBasicMaterial).color.copy(userData.coreBase as Color).multiplyScalar(hotScale);
-    const coreGlow = userData.coreGlow as Mesh;
-    (coreGlow.material as MeshBasicMaterial).color.copy(userData.glowBase as Color).multiplyScalar(hotScale);
+    if (userData.edgeMaterial && userData.fillMaterial && userData.coreMaterial && userData.coreGlow) {
+      (userData.edgeMaterial as LineBasicMaterial).color.setScalar(0.32 + 0.68 * closeness);
+      (userData.fillMaterial as MeshBasicMaterial).color.setScalar(0.5 + 0.5 * closeness);
+      const hotScale = 0.22 + 0.78 * closeness;
+      (userData.coreMaterial as MeshBasicMaterial).color.copy(userData.coreBase as Color).multiplyScalar(hotScale);
+      const coreGlow = userData.coreGlow as Mesh;
+      (coreGlow.material as MeshBasicMaterial).color.copy(userData.glowBase as Color).multiplyScalar(hotScale);
+    }
 
     if (record.lockRing) {
       record.mesh.getWorldPosition(record.lockRing.position);

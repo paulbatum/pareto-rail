@@ -26,7 +26,22 @@
         <div class="score" data-end="score">0</div>
         <div class="end-detail" data-end="kills">Kills 0/0</div>
         <div class="rank" data-end="rank">D</div>
-        <div class="replay">Press R to replay</div>
+        <div class="replay">Lock all six to replay</div>
+      </div>
+    </div>
+    <div id="tip" class="tip hidden">HOLD to charge — SWEEP across all five letters — RELEASE to fire</div>
+    <div id="pause" class="pause-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="pause-panel">
+        <h1 id="pause-title">Paused</h1>
+        <button type="button" data-pause="resume">Resume</button>
+        <label>
+          <span>Volume</span>
+          <input data-pause="volume" type="range" min="0" max="100" value="80" />
+        </label>
+        <label>
+          <span>Glow</span>
+          <input data-pause="glow" type="range" min="0" max="100" value="100" />
+        </label>
       </div>
     </div>
     <div class="scanlines" aria-hidden="true"></div>

@@ -25,6 +25,8 @@ export type ShardSpec = {
   size: number;
 };
 
+type CrystalKind = Exclude<EnemyKind, 'letter'>;
+
 type KindParams = {
   weights: [number, number, number];
   shardPairs: number;
@@ -34,7 +36,7 @@ type KindParams = {
   seedBase: number;
 };
 
-const KIND_PARAMS: Record<EnemyKind, KindParams> = {
+const KIND_PARAMS: Record<CrystalKind, KindParams> = {
   node: { weights: [6, 2.5, 1.5], shardPairs: 6, spikePairs: 2, shellRadius: 0.85, elongation: 1.6, seedBase: 11 },
   drifter: { weights: [3, 6, 1], shardPairs: 5, spikePairs: 3, shellRadius: 0.75, elongation: 2.4, seedBase: 47 },
   orbiter: { weights: [4.5, 1.5, 4], shardPairs: 7, spikePairs: 2, shellRadius: 0.95, elongation: 1.2, seedBase: 83 },
@@ -48,7 +50,7 @@ let nextSeed = 1;
 // Assembles a crystalline enemy in the concept-art language: a blazing core,
 // a translucent facet shell, a neon wireframe layer, and mirrored spike
 // clusters — all seeded so every enemy is a distinct sibling, not a clone.
-export function createCrystal(kind: EnemyKind): Group {
+export function createCrystal(kind: CrystalKind): Group {
   const params = KIND_PARAMS[kind];
   const rng = mulberry32(params.seedBase + nextSeed * 7919);
   nextSeed += 1;

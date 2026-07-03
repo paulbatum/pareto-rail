@@ -6,7 +6,13 @@ export type InputState = {
   justReleased: boolean;
 };
 
-export function createInput(target: HTMLElement, onRestart: () => void) {
+export type InputHandlers = {
+  onRestart: () => void;
+  onPause: () => void;
+  onPointerDown?: () => void;
+};
+
+export function createInput(target: HTMLElement, handlers: InputHandlers) {
   const state: InputState = {
     pointerNdc: new Vector2(0, 0),
     pointerDown: false,
@@ -24,6 +30,7 @@ export function createInput(target: HTMLElement, onRestart: () => void) {
   const onPointerDown = (event: PointerEvent) => {
     updatePointer(event);
     state.pointerDown = true;
+    handlers.onPointerDown?.();
     target.setPointerCapture?.(event.pointerId);
   };
   const onPointerUp = (event: PointerEvent) => {
@@ -33,7 +40,8 @@ export function createInput(target: HTMLElement, onRestart: () => void) {
     target.releasePointerCapture?.(event.pointerId);
   };
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key.toLowerCase() === 'r') onRestart();
+    if (event.key === 'Escape') handlers.onPause();
+    if (event.key.toLowerCase() === 'r') handlers.onRestart();
   };
 
   target.addEventListener('pointermove', onPointerMove);

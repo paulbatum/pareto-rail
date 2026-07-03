@@ -93,6 +93,10 @@ canvas {
     0 0 30px rgb(70 232 255 / 50%);
 }
 
+.hud-inactive .hud-cell {
+  opacity: 0;
+}
+
 .end-screen,
 .unsupported {
   position: fixed;
@@ -103,6 +107,13 @@ canvas {
   background:
     radial-gradient(ellipse at center, rgb(10 20 40 / 55%), rgb(1 2 6 / 88%));
   cursor: auto;
+}
+
+.end-screen {
+  align-items: end;
+  padding-bottom: 28px;
+  background: linear-gradient(to top, rgb(1 2 6 / 72%), transparent 58%);
+  pointer-events: none;
 }
 
 .hidden {
@@ -126,6 +137,24 @@ canvas {
   box-shadow:
     0 0 45px rgb(70 232 255 / 18%),
     inset 0 0 60px rgb(70 232 255 / 6%);
+}
+
+.end-screen .end-panel {
+  padding: 16px 28px 14px;
+  min-width: min(560px, calc(100vw - 32px));
+}
+
+.end-screen .score {
+  margin: 4px 0 8px;
+  font-size: 36px;
+}
+
+.end-screen .rank {
+  position: absolute;
+  right: 24px;
+  top: 16px;
+  font-size: 42px;
+  margin: 0;
 }
 
 .label,
@@ -168,6 +197,81 @@ canvas {
 @keyframes replay-pulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
+}
+
+.tip {
+  position: fixed;
+  left: 50%;
+  bottom: 58px;
+  transform: translateX(-50%);
+  max-width: min(760px, calc(100vw - 32px));
+  padding: 14px 20px;
+  color: #fff;
+  background: rgb(3 8 18 / 82%);
+  border: 1px solid var(--cyan-dim);
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow: 0 0 12px rgb(70 232 255 / 65%);
+}
+
+.pause-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgb(1 2 6 / 78%);
+  cursor: auto;
+}
+
+.pause-panel {
+  display: grid;
+  gap: 18px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 28px 32px;
+  background: rgb(3 8 18 / 92%);
+  border: 1px solid var(--cyan-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow:
+    0 0 45px rgb(70 232 255 / 18%),
+    inset 0 0 60px rgb(70 232 255 / 6%);
+}
+
+.pause-panel h1 {
+  margin: 0;
+  color: #fff;
+  text-align: center;
+}
+
+.pause-panel button {
+  padding: 10px 14px;
+  color: var(--ink);
+  background: var(--cyan);
+  border: 0;
+  font: inherit;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pause-panel label {
+  display: grid;
+  gap: 8px;
+  color: var(--cyan);
+  font-size: 13px;
+}
+
+.pause-panel input {
+  accent-color: var(--magenta);
+  cursor: pointer;
+}
+
+.pause-overlay.hidden,
+.tip.hidden {
+  display: none;
 }
 
 .unsupported-panel h1 {

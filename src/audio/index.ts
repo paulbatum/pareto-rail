@@ -390,6 +390,9 @@ export function createAudio(bus: EventBus) {
     getMasterVolume() {
       return masterVolume / 0.8;
     },
+    async suspend() {
+      if (ctx && ctx.state === 'running') await ctx.suspend();
+    },
     dispose() {
       if (intervalId) window.clearInterval(intervalId);
       void ctx?.close();

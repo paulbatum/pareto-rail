@@ -3,7 +3,7 @@ import type { EnemyKind, EventBus } from '../events';
 import type { Hud } from '../ui/hud';
 
 export type VisualFactories = {
-  createEnemyMesh(kind: EnemyKind): Object3D;
+  createEnemyMesh(kind: EnemyKind, letter?: string): Object3D;
   setEnemyLocked(mesh: Object3D, locked: boolean): void;
   createProjectileMesh(): Object3D;
   createReticle(): Object3D;
@@ -17,4 +17,5 @@ export type GameOptions = {
   bus: EventBus;
   hud: Hud;
   visuals: VisualFactories;
+  onPause: () => void;
 };

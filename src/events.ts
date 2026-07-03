@@ -1,21 +1,22 @@
 import type { Vector3 } from 'three';
 
-export type EnemyKind = 'node' | 'drifter' | 'orbiter';
+export type EnemyKind = 'node' | 'drifter' | 'orbiter' | 'letter';
 
 export type GameEvents = {
-  spawn: { enemyId: number; kind: EnemyKind; worldPosition: Vector3 };
-  lock: { enemyId: number; lockCount: number; worldPosition: Vector3 };
-  unlock: { enemyId: number; lockCount: number; worldPosition: Vector3 };
+  spawn: { enemyId: number; kind: EnemyKind; worldPosition: Vector3; letter?: string };
+  lock: { enemyId: number; lockCount: number; worldPosition: Vector3; letter?: string };
+  unlock: { enemyId: number; lockCount: number; worldPosition: Vector3; letter?: string };
   fire: {
     projectileId: number;
     enemyId: number;
     volleySize: number;
     worldPosition: Vector3;
     targetPosition: Vector3;
+    letter?: string;
   };
-  hit: { enemyId: number; projectileId: number; worldPosition: Vector3 };
-  kill: { enemyId: number; worldPosition: Vector3; scoreAwarded: number };
-  miss: { enemyId: number; worldPosition: Vector3 };
+  hit: { enemyId: number; projectileId: number; worldPosition: Vector3; letter?: string };
+  kill: { enemyId: number; worldPosition: Vector3; scoreAwarded: number; letter?: string };
+  miss: { enemyId: number; worldPosition: Vector3; letter?: string };
   beat: { beatNumber: number; isDownbeat: boolean; audioTime: number };
   runstart: { runNumber: number; duration: number; totalEnemies: number };
   runend: { score: number; kills: number; missed: number; totalEnemies: number; rank: string };

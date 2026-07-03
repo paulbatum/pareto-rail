@@ -9,10 +9,12 @@ function requireElement<T extends HTMLElement>(selector: string): T {
 export type Hud = ReturnType<typeof createHud>;
 
 export function createHud() {
+  const hud = requireElement<HTMLElement>('#hud');
   const score = requireElement<HTMLElement>('[data-hud="score"]');
   const time = requireElement<HTMLElement>('[data-hud="time"]');
   const locks = requireElement<HTMLElement>('[data-hud="locks"]');
   const endScreen = requireElement<HTMLElement>('#end-screen');
+  const tip = requireElement<HTMLElement>('#tip');
   const endScore = requireElement<HTMLElement>('[data-end="score"]');
   const endKills = requireElement<HTMLElement>('[data-end="kills"]');
   const endRank = requireElement<HTMLElement>('[data-end="rank"]');
@@ -33,6 +35,18 @@ export function createHud() {
 
     hideEnd() {
       endScreen.classList.add('hidden');
+    },
+
+    setHudActive(active: boolean) {
+      hud.classList.toggle('hud-inactive', !active);
+    },
+
+    showTip() {
+      tip.classList.remove('hidden');
+    },
+
+    hideTip() {
+      tip.classList.add('hidden');
     },
   };
 }

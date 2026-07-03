@@ -5,14 +5,17 @@ import { createAudio } from './audio';
 import { events } from './events';
 import { createGame } from './game/state';
 import { createHud, showUnsupported } from './ui/hud';
+import { createPauseMenu } from './ui/pause';
 import {
   createEnemyMesh,
   createEnvironment,
   createPost,
   createProjectileMesh,
+  getGlowLevel,
   createReticle,
   installVisualEventHandlers,
   setEnemyLocked,
+  setGlowLevel,
   setReticleActive,
   updateVisuals,
 } from './visuals';
@@ -47,11 +50,40 @@ async function bootstrap() {
   const camera = new PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
   const hud = createHud();
   const audio = createAudio(events);
+  audio.setMasterVolume(readStoredPercent('raild-volume', audio.getMasterVolume() * 100) / 100);
+  setGlowLevel(readStoredPercent('raild-glow', getGlowLevel() * 100) / 100);
   audio.installGestureStart();
 
   createEnvironment(scene);
   installVisualEventHandlers(events, scene);
   const post = createPost(renderer, scene, camera);
+
+  let paused = false;
+  let last = performance.now();
+  let setPaused = (_paused: boolean) => {};
+  const togglePause = () => setPaused(!paused);
+
+  const pauseMenu = createPauseMenu({
+    initialVolume: audio.getMasterVolume() * 100,
+    initialGlow: getGlowLevel() * 100,
+    onResume: () => setPaused(false),
+    onVolume: (value) => {
+      localStorage.setItem('raild-volume', `${value}`);
+      audio.setMasterVolume(value / 100);
+    },
+    onGlow: (value) => {
+      localStorage.setItem('raild-glow', `${value}`);
+      setGlowLevel(value / 100);
+    },
+  });
+
+  setPaused = (nextPaused: boolean) => {
+    paused = nextPaused;
+    pauseMenu.setPaused(paused);
+    if (paused) void audio.suspend();
+    else void audio.start();
+    last = performance.now();
+  };
 
   const game = createGame({
     scene,
@@ -59,6 +91,7 @@ async function bootstrap() {
     canvas: renderer.domElement,
     bus: events,
     hud,
+    onPause: togglePause,
     visuals: {
       createEnemyMesh,
       setEnemyLocked,
@@ -68,15 +101,14 @@ async function bootstrap() {
     },
   });
 
-  let last = performance.now();
-  game.start();
-
   renderer.setAnimationLoop(() => {
     const now = performance.now();
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    game.update(dt);
-    updateVisuals(dt, { scene, camera, elapsed: now / 1000 });
+    if (!paused) {
+      game.update(dt);
+      updateVisuals(dt, { scene, camera, elapsed: now / 1000 });
+    }
     post.render();
   });
 
@@ -86,6 +118,12 @@ async function bootstrap() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
+}
+
+function readStoredPercent(key: string, fallback: number) {
+  const stored = Number(localStorage.getItem(key));
+  if (!Number.isFinite(stored)) return fallback;
+  return Math.min(100, Math.max(0, stored));
 }
 
 void bootstrap();
