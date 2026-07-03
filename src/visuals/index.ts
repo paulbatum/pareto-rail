@@ -31,7 +31,7 @@ import {
 import { createLetterMesh, setLetterLocked } from './letters';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 
-export { createPost, getGlowLevel, setGlowLevel } from './post';
+export { createPost, getBloomLevel, setBloomLevel } from './post';
 
 export type VisualContext = {
   scene: Scene;

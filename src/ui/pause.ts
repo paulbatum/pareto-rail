@@ -6,24 +6,24 @@ function requireElement<T extends HTMLElement>(selector: string): T {
 
 export type PauseMenuOptions = {
   initialVolume: number;
-  initialGlow: number;
+  initialBloom: number;
   onResume: () => void;
   onVolume: (value: number) => void;
-  onGlow: (value: number) => void;
+  onBloom: (value: number) => void;
 };
 
 export function createPauseMenu(options: PauseMenuOptions) {
   const overlay = requireElement<HTMLElement>('#pause');
   const resume = requireElement<HTMLButtonElement>('[data-pause="resume"]');
   const volume = requireElement<HTMLInputElement>('[data-pause="volume"]');
-  const glow = requireElement<HTMLInputElement>('[data-pause="glow"]');
+  const bloom = requireElement<HTMLInputElement>('[data-pause="bloom"]');
 
   volume.value = `${Math.round(options.initialVolume)}`;
-  glow.value = `${Math.round(options.initialGlow)}`;
+  bloom.value = `${Math.round(options.initialBloom)}`;
 
   resume.addEventListener('click', options.onResume);
   volume.addEventListener('input', () => options.onVolume(Number(volume.value)));
-  glow.addEventListener('input', () => options.onGlow(Number(glow.value)));
+  bloom.addEventListener('input', () => options.onBloom(Number(bloom.value)));
 
   return {
     setPaused(paused: boolean) {

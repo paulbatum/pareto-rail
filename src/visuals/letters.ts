@@ -10,11 +10,10 @@ import {
   Matrix4,
   Mesh,
   MeshBasicMaterial,
-  OctahedronGeometry,
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
+import { CYAN, hdr, MAGENTA } from './palette';
 
 const GLYPHS: Record<string, string[]> = {
   A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
@@ -29,7 +28,6 @@ const GLYPHS: Record<string, string[]> = {
 
 const CELL = 0.34;
 const cellGeometry = new BoxGeometry(0.3, 0.3, 0.14);
-const coreGeometry = new OctahedronGeometry(0.12, 0);
 
 export type LetterShardSpec = {
   direction: Vector3;
@@ -37,9 +35,8 @@ export type LetterShardSpec = {
   size: number;
 };
 
-// Letters in the crystal language: translucent cell fills, hot wireframe
-// edges, a small core at the heart of the glyph. Lock turns the whole glyph
-// magenta, matching the crystals' lock flare.
+// Letters in the crystal language: translucent cell fills and hot wireframe
+// edges. Lock turns the whole glyph magenta, matching the crystals' lock flare.
 export function createLetterMesh(char: string) {
   const glyph = GLYPHS[char.toUpperCase()] ?? GLYPHS.A;
   const group = new Group();
@@ -73,13 +70,9 @@ export function createLetterMesh(char: string) {
     blending: AdditiveBlending,
     depthWrite: false,
   });
-  const coreMaterial = new MeshBasicMaterial({ color: hdr(CORE_WHITE, 0.9) });
-
   const fillMesh = new Mesh(mergeGeometries(fills), fillMaterial);
   const edgeLines = new LineSegments(mergeGeometries(edges), edgeMaterial);
-  const core = new Mesh(coreGeometry, coreMaterial);
-  core.position.set(0, -0.1, 0.12);
-  group.add(fillMesh, edgeLines, core);
+  group.add(fillMesh, edgeLines);
 
   for (const geometry of fills) geometry.dispose();
   for (const geometry of edges) geometry.dispose();
@@ -88,16 +81,15 @@ export function createLetterMesh(char: string) {
   group.userData.letter = char.toUpperCase();
   group.userData.shardSpecs = shardSpecs;
   group.userData.accent = CYAN.clone();
-  group.userData.letterMaterials = { fillMaterial, edgeMaterial, coreMaterial };
+  group.userData.letterMaterials = { fillMaterial, edgeMaterial };
   return group;
 }
 
 export function setLetterLocked(group: Group, locked: boolean) {
   const materials = group.userData.letterMaterials as
-    | { fillMaterial: MeshBasicMaterial; edgeMaterial: LineBasicMaterial; coreMaterial: MeshBasicMaterial }
+    | { fillMaterial: MeshBasicMaterial; edgeMaterial: LineBasicMaterial }
     | undefined;
   if (!materials) return;
   materials.edgeMaterial.color.copy(locked ? hdr(MAGENTA, 1.6) : hdr(CYAN, 1.1));
   materials.fillMaterial.color.copy(locked ? MAGENTA.clone().multiplyScalar(0.2) : CYAN.clone().multiplyScalar(0.12));
-  materials.coreMaterial.color.copy(locked ? hdr(MAGENTA, 1.5) : hdr(CORE_WHITE, 0.9));
 }

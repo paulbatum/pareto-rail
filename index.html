@@ -4,8 +4,80 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>raild</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        overflow: hidden;
+        background: #02040a;
+        color: #e8f6ff;
+        font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
+      }
+
+      body.booting #app,
+      body.booting #hud,
+      body.booting #end-screen,
+      body.booting #tip,
+      body.booting #pause,
+      body.booting .scanlines {
+        visibility: hidden;
+      }
+
+      #loading {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(ellipse at center, rgb(10 20 40 / 55%), rgb(1 2 6 / 92%));
+      }
+
+      body:not(.booting) #loading {
+        display: none;
+      }
+
+      .loading-panel {
+        width: min(360px, calc(100vw - 48px));
+        letter-spacing: 0.22em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .loading-label {
+        margin-bottom: 14px;
+        color: #46e8ff;
+        text-shadow: 0 0 14px rgb(70 232 255 / 65%);
+      }
+
+      .loading-track {
+        height: 2px;
+        overflow: hidden;
+        background: rgb(70 232 255 / 18%);
+      }
+
+      .loading-bar {
+        width: 45%;
+        height: 100%;
+        background: #46e8ff;
+        box-shadow: 0 0 18px rgb(70 232 255 / 90%);
+        animation: loading-sweep 1.05s ease-in-out infinite;
+      }
+
+      @keyframes loading-sweep {
+        0% { transform: translateX(-110%); }
+        100% { transform: translateX(250%); }
+      }
+    </style>
   </head>
-  <body>
+  <body class="booting">
+    <div id="loading" aria-live="polite">
+      <div class="loading-panel">
+        <div class="loading-label">Loading</div>
+        <div class="loading-track"><div class="loading-bar"></div></div>
+      </div>
+    </div>
     <div id="app"></div>
     <div id="hud" class="hud">
       <div class="hud-cell">
@@ -39,8 +111,8 @@
           <input data-pause="volume" type="range" min="0" max="100" value="80" />
         </label>
         <label>
-          <span>Glow</span>
-          <input data-pause="glow" type="range" min="0" max="100" value="100" />
+          <span>Bloom</span>
+          <input data-pause="bloom" type="range" min="0" max="100" value="100" />
         </label>
       </div>
     </div>

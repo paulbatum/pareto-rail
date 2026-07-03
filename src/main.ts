@@ -11,11 +11,11 @@ import {
   createEnvironment,
   createPost,
   createProjectileMesh,
-  getGlowLevel,
+  getBloomLevel,
   createReticle,
   installVisualEventHandlers,
   setEnemyLocked,
-  setGlowLevel,
+  setBloomLevel,
   setReticleActive,
   updateVisuals,
 } from './visuals';
@@ -50,8 +50,8 @@ async function bootstrap() {
   const camera = new PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
   const hud = createHud();
   const audio = createAudio(events);
-  audio.setMasterVolume(readStoredPercent('raild-volume', audio.getMasterVolume() * 100) / 100);
-  setGlowLevel(readStoredPercent('raild-glow', getGlowLevel() * 100) / 100);
+  audio.setMasterVolume(readStoredPercent('raild-volume', 50) / 100);
+  setBloomLevel(readStoredPercent('raild-bloom', 100) / 100);
   audio.installGestureStart();
 
   createEnvironment(scene);
@@ -65,15 +65,15 @@ async function bootstrap() {
 
   const pauseMenu = createPauseMenu({
     initialVolume: audio.getMasterVolume() * 100,
-    initialGlow: getGlowLevel() * 100,
+    initialBloom: getBloomLevel() * 100,
     onResume: () => setPaused(false),
     onVolume: (value) => {
       localStorage.setItem('raild-volume', `${value}`);
       audio.setMasterVolume(value / 100);
     },
-    onGlow: (value) => {
-      localStorage.setItem('raild-glow', `${value}`);
-      setGlowLevel(value / 100);
+    onBloom: (value) => {
+      localStorage.setItem('raild-bloom', `${value}`);
+      setBloomLevel(value / 100);
     },
   });
 
@@ -101,6 +101,8 @@ async function bootstrap() {
     },
   });
 
+  document.body.classList.remove('booting');
+
   renderer.setAnimationLoop(() => {
     const now = performance.now();
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -121,7 +123,9 @@ async function bootstrap() {
 }
 
 function readStoredPercent(key: string, fallback: number) {
-  const stored = Number(localStorage.getItem(key));
+  const raw = localStorage.getItem(key);
+  if (raw === null) return fallback;
+  const stored = Number(raw);
   if (!Number.isFinite(stored)) return fallback;
   return Math.min(100, Math.max(0, stored));
 }
