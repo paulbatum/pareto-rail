@@ -28,7 +28,9 @@ export function createAudio(bus: EventBus) {
   let nextTickTime = 0;
   let sixteenthIndex = 0;
   let arrangementStart = 0;
-  let mode: 'run' | 'ambient' = 'run';
+  // Boots in ambient (attract screen); runstart switches to the full arrangement.
+  let mode: 'run' | 'ambient' = 'ambient';
+  let masterVolume = 0.8;
 
   let master: GainNode | null = null;
   let duck: GainNode | null = null;
@@ -53,7 +55,7 @@ export function createAudio(bus: EventBus) {
 
   function buildGraph(context: AudioContext) {
     master = context.createGain();
-    master.gain.value = 0.8;
+    master.gain.value = masterVolume;
     const compressor = context.createDynamicsCompressor();
     compressor.threshold.value = -18;
     compressor.ratio.value = 5;
@@ -380,6 +382,14 @@ export function createAudio(bus: EventBus) {
   return {
     start,
     installGestureStart,
+    // 0..1; safe to call before the AudioContext exists.
+    setMasterVolume(volume: number) {
+      masterVolume = Math.min(1, Math.max(0, volume)) * 0.8;
+      if (ctx && master) master.gain.setTargetAtTime(masterVolume, ctx.currentTime, 0.05);
+    },
+    getMasterVolume() {
+      return masterVolume / 0.8;
+    },
     dispose() {
       if (intervalId) window.clearInterval(intervalId);
       void ctx?.close();

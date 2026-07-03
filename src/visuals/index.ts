@@ -30,7 +30,7 @@ import {
 } from './effects';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 
-export { createPost } from './post';
+export { createPost, getGlowLevel, setGlowLevel } from './post';
 
 export type VisualContext = {
   scene: Scene;
