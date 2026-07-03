@@ -18,6 +18,7 @@ import {
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { EnemyKind } from '../events';
+import crystalTemplateJson from './crystal-template.json';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA, mulberry32, pickColor, type Rng } from './palette';
 
 export type ShardSpec = {
@@ -26,28 +27,87 @@ export type ShardSpec = {
   size: number;
 };
 
-type CrystalKind = Exclude<EnemyKind, 'letter'>;
+export type CrystalKind = Exclude<EnemyKind, 'letter'>;
+export type NumericRange = [number, number];
+export type CrystalColorRole = 'accent' | 'contrast';
 
-type KindParams = {
-  weights: [number, number, number];
-  shardPairs: number;
-  finPairs: number;
-  shellRadius: number;
-  elongation: number;
-  seedBase: number;
+export type CrystalTemplate = {
+  shared: {
+    hexRings: Array<{
+      radius: number;
+      zOffset: number;
+      intensity: number;
+      colorRole: CrystalColorRole;
+      spinOffset: number;
+    }>;
+    spokes: {
+      count: number;
+      radius: number;
+      length: number;
+      centerDistance: number;
+      fillIntensity: number;
+      edgeIntensity: number;
+    };
+    shards: {
+      baseRadius: number;
+      scale: {
+        x: NumericRange;
+        y: NumericRange;
+        z: NumericRange;
+      };
+      xBiasScale: number;
+      xBiasOffset: number;
+      distanceMult: NumericRange;
+      flatten: number;
+      tiltJitter: number;
+      fillIntensity: number;
+      edgeIntensity: number;
+    };
+    fins: {
+      angleSpread: number;
+      zTilt: number;
+      lengthMult: NumericRange;
+      baseWidth: NumericRange;
+      tipWidth: number;
+      baseDistanceMult: NumericRange;
+      fillIntensity: number;
+      edgeIntensity: number;
+    };
+    core: {
+      coreRadius: number;
+      glowRadius: number;
+      coreIntensity: number;
+      glowIntensity: number;
+      glowOpacity: number;
+    };
+  };
+  kinds: Record<
+    CrystalKind,
+    {
+      weights: [number, number, number];
+      shardPairs: number;
+      finPairs: number;
+      shellRadius: number;
+      elongation: number;
+    }
+  >;
 };
 
-const KIND_PARAMS: Record<CrystalKind, KindParams> = {
-  node: { weights: [6, 2.5, 1.5], shardPairs: 5, finPairs: 2, shellRadius: 0.85, elongation: 1.6, seedBase: 11 },
-  drifter: { weights: [3, 6, 1], shardPairs: 4, finPairs: 3, shellRadius: 0.75, elongation: 2.4, seedBase: 47 },
-  orbiter: { weights: [4.5, 1.5, 4], shardPairs: 6, finPairs: 2, shellRadius: 0.95, elongation: 1.2, seedBase: 83 },
+export type CreateCrystalOptions = {
+  seed?: number;
+  template?: CrystalTemplate;
+};
+
+export const defaultCrystalTemplate = crystalTemplateJson as CrystalTemplate;
+
+const KIND_SEED_BASES: Record<CrystalKind, number> = {
+  node: 11,
+  drifter: 47,
+  orbiter: 83,
 };
 
 const FORWARD = new Vector3(0, 0, 1);
 const UP = new Vector3(0, 1, 0);
-
-const coreGeometry = new OctahedronGeometry(0.17, 2);
-const coreGlowGeometry = new OctahedronGeometry(0.38, 2);
 
 let nextSeed = 1;
 
@@ -56,10 +116,13 @@ let nextSeed = 1;
 // visual anchor) → a disk of tetrahedral shards clustered around it → large
 // blade fins angled for thrust. Everything lives in the local XY plane facing
 // +Z; the game billboards crystals toward the camera so the hex face reads.
-export function createCrystal(kind: CrystalKind): Group {
-  const params = KIND_PARAMS[kind];
-  const rng = mulberry32(params.seedBase + nextSeed * 7919);
-  nextSeed += 1;
+export function createCrystal(kind: CrystalKind, opts: CreateCrystalOptions = {}): Group {
+  const template = opts.template ?? defaultCrystalTemplate;
+  const params = template.kinds[kind];
+  const shared = template.shared;
+  const seedIndex = opts.seed ?? nextSeed;
+  const rng = mulberry32(KIND_SEED_BASES[kind] + seedIndex * 7919);
+  if (opts.seed === undefined) nextSeed += 1;
 
   const group = new Group();
   const shardSpecs: ShardSpec[] = [];
@@ -90,58 +153,76 @@ export function createCrystal(kind: CrystalKind): Group {
   // Hex frames — concentric hexagon outlines, layered with slight z offsets
   // and a rotated second pass for depth. This is the anchor of the read.
   const frameSpin = rng() * Math.PI * 2;
-  addEdges(hexRing(0.3, 0.05, frameSpin + Math.PI / 6), contrast, 1.6);
-  addEdges(hexRing(0.5, 0, frameSpin), accent, 1.7);
-  addEdges(hexRing(0.56, -0.06, frameSpin + Math.PI / 6), accent, 0.8);
+  for (const ring of shared.hexRings) {
+    addEdges(
+      hexRing(ring.radius, ring.zOffset, frameSpin + ring.spinOffset),
+      ring.colorRole === 'accent' ? accent : contrast,
+      ring.intensity,
+    );
+  }
 
-  // Radial prism spokes on six sides, hex vertex to just past the outer ring.
-  const spokeGeometry = new CylinderGeometry(0.045, 0.045, 0.3, 3).toNonIndexed();
-  for (let i = 0; i < 6; i += 1) {
-    const angle = frameSpin + (i / 6) * Math.PI * 2;
+  // Radial prism spokes on each side, hex vertex to just past the outer ring.
+  const spokeCount = Math.max(0, Math.round(shared.spokes.count));
+  const spokeGeometry = new CylinderGeometry(shared.spokes.radius, shared.spokes.radius, shared.spokes.length, 3).toNonIndexed();
+  for (let i = 0; i < spokeCount; i += 1) {
+    const angle = frameSpin + (i / spokeCount) * Math.PI * 2;
     const outward = new Vector3(Math.cos(angle), Math.sin(angle), 0);
     const matrix = new Matrix4().compose(
-      outward.clone().multiplyScalar(0.46),
+      outward.clone().multiplyScalar(shared.spokes.centerDistance),
       new Quaternion().setFromUnitVectors(UP, outward),
       new Vector3(1, 1, 1),
     );
-    addSolid(spokeGeometry, matrix, i % 2 === 0 ? accent : contrast, 0.12, 1.4);
+    addSolid(spokeGeometry, matrix, i % 2 === 0 ? accent : contrast, shared.spokes.fillIntensity, shared.spokes.edgeIntensity);
   }
+  spokeGeometry.dispose();
 
   // Shard disk — tetrahedra clustered around the core, flattened toward the
   // hex plane so the silhouette reads as a snowflake, not a ball. Generated
   // on one side and mirrored across X for bilateral symmetry; outward
   // alignment with random roll keeps them radiating rather than tumbling.
-  const shardGeometry = new TetrahedronGeometry(0.42, 0);
+  const shardGeometry = new TetrahedronGeometry(shared.shards.baseRadius, 0);
   const addShard = (direction: Vector3, distance: number, scale: Vector3, color: Color) => {
     const outward = direction.clone().normalize();
     const rotation = new Quaternion().setFromUnitVectors(FORWARD, outward);
     rotation.premultiply(new Quaternion().setFromAxisAngle(outward, rng() * Math.PI * 2));
-    rotation.premultiply(new Quaternion().setFromAxisAngle(randomDirection(rng), (rng() - 0.5) * 0.7));
+    rotation.premultiply(new Quaternion().setFromAxisAngle(randomDirection(rng), (rng() - 0.5) * shared.shards.tiltJitter));
     const matrix = new Matrix4().compose(outward.clone().multiplyScalar(distance), rotation, scale);
-    addSolid(shardGeometry, matrix, color, 0.07, 1.7);
+    addSolid(shardGeometry, matrix, color, shared.shards.fillIntensity, shared.shards.edgeIntensity);
     shardSpecs.push({ direction: outward.clone(), color, size: (scale.x + scale.y + scale.z) / 3 });
   };
 
-  for (let i = 0; i < params.shardPairs; i += 1) {
+  const shardPairs = Math.max(0, Math.round(params.shardPairs));
+  for (let i = 0; i < shardPairs; i += 1) {
     const direction = randomDirection(rng);
-    direction.x = Math.abs(direction.x) * 0.85 + 0.15;
-    direction.z *= 0.35;
+    direction.x = Math.abs(direction.x) * shared.shards.xBiasScale + shared.shards.xBiasOffset;
+    direction.z *= shared.shards.flatten;
     const color = pickColor(rng, params.weights);
-    const scale = new Vector3(0.55 + rng() * 0.6, 0.55 + rng() * 0.6, 0.6 + rng() * 0.7);
-    const distance = params.shellRadius * (0.62 + rng() * 0.5);
+    const scale = new Vector3(
+      randomInRange(rng, shared.shards.scale.x),
+      randomInRange(rng, shared.shards.scale.y),
+      randomInRange(rng, shared.shards.scale.z),
+    );
+    const distance = params.shellRadius * randomInRange(rng, shared.shards.distanceMult);
     addShard(direction, distance, scale, color);
     addShard(mirrorX(direction), distance, scale, color);
   }
+  shardGeometry.dispose();
 
   // Fins — large tapered triangular prisms thrusting out sideways, mostly
   // in-plane, mirrored. These give the creature its wingspan and direction.
-  for (let i = 0; i < params.finPairs; i += 1) {
-    const angle = (rng() - 0.5) * 1.6;
-    const direction = new Vector3(Math.cos(angle), Math.sin(angle), (rng() - 0.5) * 0.35).normalize();
+  const finPairs = Math.max(0, Math.round(params.finPairs));
+  for (let i = 0; i < finPairs; i += 1) {
+    const angle = (rng() - 0.5) * shared.fins.angleSpread;
+    const direction = new Vector3(Math.cos(angle), Math.sin(angle), (rng() - 0.5) * shared.fins.zTilt).normalize();
     const color = pickColor(rng, params.weights);
-    const length = params.elongation * (0.8 + rng() * 0.5);
-    const finGeometry = new CylinderGeometry(0.02, 0.13 + rng() * 0.06, length, 3).toNonIndexed();
-    const baseDistance = params.shellRadius * (0.75 + rng() * 0.3);
+    const length = params.elongation * randomInRange(rng, shared.fins.lengthMult);
+    const finGeometry = new CylinderGeometry(
+      shared.fins.tipWidth,
+      randomInRange(rng, shared.fins.baseWidth),
+      length,
+      3,
+    ).toNonIndexed();
+    const baseDistance = params.shellRadius * randomInRange(rng, shared.fins.baseDistanceMult);
     for (const outward of [direction, mirrorX(direction)]) {
       const rotation = new Quaternion().setFromUnitVectors(UP, outward);
       rotation.premultiply(new Quaternion().setFromAxisAngle(outward, rng() * Math.PI * 2));
@@ -150,13 +231,14 @@ export function createCrystal(kind: CrystalKind): Group {
         rotation,
         new Vector3(1, 1, 1),
       );
-      addSolid(finGeometry, matrix, color, 0.05, 1.9);
+      addSolid(finGeometry, matrix, color, shared.fins.fillIntensity, shared.fins.edgeIntensity);
       shardSpecs.push({ direction: outward.clone(), color, size: length * 0.4 });
     }
+    finGeometry.dispose();
   }
 
   const fillMesh = new Mesh(
-    mergeGeometries(fillGeometries),
+    fillGeometries.length > 0 ? mergeGeometries(fillGeometries) : new BufferGeometry(),
     new MeshBasicMaterial({
       vertexColors: true,
       transparent: true,
@@ -167,7 +249,7 @@ export function createCrystal(kind: CrystalKind): Group {
   );
 
   const edgeLines = new LineSegments(
-    mergeGeometries(edgeGeometries),
+    edgeGeometries.length > 0 ? mergeGeometries(edgeGeometries) : new BufferGeometry(),
     new LineBasicMaterial({
       vertexColors: true,
       transparent: true,
@@ -176,14 +258,16 @@ export function createCrystal(kind: CrystalKind): Group {
     }),
   );
 
-  const coreMaterial = new MeshBasicMaterial({ color: hdr(CORE_WHITE, 1.2) });
-  const core = new Mesh(coreGeometry, coreMaterial);
+  const coreBase = hdr(CORE_WHITE, shared.core.coreIntensity);
+  const glowBase = hdr(CYAN, shared.core.glowIntensity);
+  const coreMaterial = new MeshBasicMaterial({ color: coreBase.clone() });
+  const core = new Mesh(new OctahedronGeometry(shared.core.coreRadius, 2), coreMaterial);
   const coreGlow = new Mesh(
-    coreGlowGeometry,
+    new OctahedronGeometry(shared.core.glowRadius, 2),
     new MeshBasicMaterial({
-      color: hdr(CYAN, 0.42),
+      color: glowBase.clone(),
       transparent: true,
-      opacity: 0.4,
+      opacity: shared.core.glowOpacity,
       blending: AdditiveBlending,
       depthWrite: false,
     }),
@@ -197,10 +281,12 @@ export function createCrystal(kind: CrystalKind): Group {
   group.userData.shardSpecs = shardSpecs;
   group.userData.coreMaterial = coreMaterial;
   group.userData.coreGlow = coreGlow;
+  group.userData.coreUnlockedBase = coreBase;
+  group.userData.glowUnlockedBase = glowBase;
   // Base colors + material handles for the per-frame distance falloff:
   // far away, hot elements are dimmed so bloom can't swallow the silhouette.
-  group.userData.coreBase = hdr(CORE_WHITE, 1.2);
-  group.userData.glowBase = hdr(CYAN, 0.42);
+  group.userData.coreBase = coreBase.clone();
+  group.userData.glowBase = glowBase.clone();
   group.userData.edgeMaterial = edgeLines.material;
   group.userData.fillMaterial = fillMesh.material;
   group.userData.accent = accent;
@@ -210,8 +296,10 @@ export function createCrystal(kind: CrystalKind): Group {
 export function setCrystalLocked(group: Group, locked: boolean) {
   // Update the base colors; the per-frame distance falloff in updateVisuals
   // multiplies these onto the materials.
-  (group.userData.coreBase as Color).copy(locked ? hdr(MAGENTA, 1.7) : hdr(CORE_WHITE, 1.2));
-  (group.userData.glowBase as Color).copy(locked ? hdr(MAGENTA, 0.7) : hdr(CYAN, 0.42));
+  const unlockedCore = (group.userData.coreUnlockedBase as Color | undefined) ?? hdr(CORE_WHITE, 1.2);
+  const unlockedGlow = (group.userData.glowUnlockedBase as Color | undefined) ?? hdr(CYAN, 0.42);
+  (group.userData.coreBase as Color).copy(locked ? hdr(MAGENTA, 1.7) : unlockedCore);
+  (group.userData.glowBase as Color).copy(locked ? hdr(MAGENTA, 0.7) : unlockedGlow);
 }
 
 // A hexagon outline in the XY plane as line segments.
@@ -244,6 +332,10 @@ function randomDirection(rng: Rng): Vector3 {
   const angle = rng() * Math.PI * 2;
   const r = Math.sqrt(Math.max(0, 1 - z * z));
   return new Vector3(Math.cos(angle) * r, Math.sin(angle) * r, z);
+}
+
+function randomInRange(rng: Rng, [min, max]: NumericRange): number {
+  return min + rng() * (max - min);
 }
 
 function mirrorX(direction: Vector3): Vector3 {
