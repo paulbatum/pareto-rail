@@ -20,6 +20,14 @@ const CONTROL_TIP = 'HOLD to charge — SWEEP across all six targets — RELEASE
 const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 const REPEAT_LOCK_DELAY = 0.18;
 
+declare global {
+  interface Window {
+    __raildDebug?: {
+      immortal?: boolean;
+    };
+  }
+}
+
 type RunState = 'attract' | 'running' | 'ended';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
 type ReleaseRejectReason = 'incomplete-word' | 'level-rule';
@@ -1022,8 +1030,13 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (state !== 'running' || !hasPlayerHealth) return;
     if (worldTime < invulnerableUntil) return;
     const damage = Math.max(0, amount);
-    health = Math.max(0, health - damage);
     invulnerableUntil = worldTime + PLAYER_INVULNERABILITY_SECONDS;
+    if (window.__raildDebug?.immortal === true) {
+      bus.emit('playerhit', { damage, healthRemaining: health });
+      hud.flashDamage();
+      return;
+    }
+    health = Math.max(0, health - damage);
     bus.emit('playerhit', { damage, healthRemaining: health });
     hud.flashDamage();
     if (health <= 0) endRun(true);
