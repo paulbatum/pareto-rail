@@ -73,7 +73,7 @@ async function main() {
 
 async function captureStill(browser, baseUrl, outDir, options, time) {
   const result = await captureWithFallbacks(browser, baseUrl, options, time);
-  const outputPath = path.join(outDir, `${safeName(options.level)}-${formatTime(time)}-${result.fidelity}${projectileSuffix(options)}.png`);
+  const outputPath = path.join(outDir, `${safeName(options.level)}-${formatTime(time)}-${result.fidelity}${projectileSuffix(options)}${mortalitySuffix(options)}.png`);
   await fs.writeFile(outputPath, decodePngDataUrl(result.dataUrl));
   logCapture(outputPath, result);
 }
@@ -95,7 +95,7 @@ async function captureSheet(browser, baseUrl, outDir, options) {
   const lastTime = captures[captures.length - 1].time;
   const outputPath = path.join(
     outDir,
-    `${safeName(options.level)}-thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}.png`,
+    `${safeName(options.level)}-thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}${mortalitySuffix(options)}.png`,
   );
   await fs.writeFile(outputPath, decodePngDataUrl(dataUrl));
   console.log(`${path.relative(process.cwd(), outputPath)} thumbnails=${captures.length} fidelity=${fidelityLabel}`);
@@ -247,7 +247,7 @@ function parseArgs(argv) {
     height: DEFAULT_HEIGHT,
     dt: DEFAULT_DT,
     fidelity: 'auto',
-    immortal: false,
+    immortal: true,
     projectiles: false,
     debugValue: undefined,
     sheet: false,
@@ -269,6 +269,11 @@ function parseArgs(argv) {
       } else {
         parsed.immortal = true;
       }
+      continue;
+    }
+
+    if (key === 'mortal') {
+      parsed.immortal = false;
       continue;
     }
 
@@ -399,6 +404,10 @@ function uniqueValues(values) {
 
 function projectileSuffix(options) {
   return options.projectiles ? '-projectiles' : '';
+}
+
+function mortalitySuffix(options) {
+  return options.immortal ? '' : '-mortal';
 }
 
 function formatTime(seconds) {
