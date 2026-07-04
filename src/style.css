@@ -217,6 +217,15 @@ canvas {
   margin-bottom: 18px;
 }
 
+.end-extra {
+  max-width: min(620px, calc(100vw - 72px));
+  margin: -6px auto 14px;
+  color: var(--cyan-dim);
+  font-size: 11px;
+  line-height: 1.55;
+  letter-spacing: 0.14em;
+}
+
 .rank {
   font-size: 96px;
   line-height: 1;
@@ -235,6 +244,35 @@ canvas {
 @keyframes replay-pulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
+}
+
+.callout {
+  position: fixed;
+  left: 50%;
+  bottom: 34vh;
+  z-index: 3;
+  transform: translateX(-50%);
+  max-width: min(620px, calc(100vw - 48px));
+  padding: 10px 18px;
+  color: #fff;
+  background: rgb(3 8 18 / 68%);
+  border: 1px solid rgb(70 232 255 / 35%);
+  letter-spacing: 0.22em;
+  text-align: center;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow:
+    0 0 10px rgb(255 255 255 / 70%),
+    0 0 22px rgb(70 232 255 / 50%);
+}
+
+.callout-pop {
+  animation: callout-pop 220ms ease-out;
+}
+
+@keyframes callout-pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.82); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
 }
 
 .tip {

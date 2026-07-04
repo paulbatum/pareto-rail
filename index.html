@@ -21,6 +21,7 @@
       body.booting #app,
       body.booting #hud,
       body.booting #end-screen,
+      body.booting #callout,
       body.booting #tip,
       body.booting #pause,
       body.booting .scanlines {
@@ -100,9 +101,11 @@
         <div class="score" data-end="score">0</div>
         <div class="end-detail" data-end="kills">Kills 0/0</div>
         <div class="rank" data-end="rank">D</div>
+        <div class="end-extra hidden" data-end="details"></div>
         <div class="replay">Lock all six to replay</div>
       </div>
     </div>
+    <div id="callout" class="callout hidden" aria-live="polite"></div>
     <div id="tip" class="tip hidden">HOLD to charge — SWEEP across all five letters — RELEASE to fire</div>
     <div id="pause" class="pause-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
       <div class="pause-panel">

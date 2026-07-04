@@ -25,6 +25,7 @@ export type LockOnSpawnEntry<TKind extends string = string, TData = unknown> = {
   time: number;
   kind: TKind;
   data: TData;
+  letter?: string;
 };
 
 export type LockOnEnemy<TKind extends string = string, TData = unknown> = {
@@ -33,6 +34,7 @@ export type LockOnEnemy<TKind extends string = string, TData = unknown> = {
   mesh: Object3D;
   spawnTime: number;
   entry: LockOnSpawnEntry<TKind, TData>;
+  letter?: string;
 };
 
 export type LockOnEnemyUpdate<TKind extends string = string, TData = unknown> = {
@@ -59,7 +61,10 @@ export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = 
   updateAttractCamera?(context: LockOnAttractCameraUpdate): void;
   easeRunProgress?(time: number, duration: number): number;
   scoreForKill?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
+  scoreForVolley?(results: Array<{ enemy: LockOnEnemy<TKind, TData>; killed: boolean }>): number;
   rankForRun?(score: number, kills: number, totalEnemies: number): string;
+  detailsForRun?(): string[] | undefined;
+  lockRadiusNdc?: number;
   startWord?: string;
   replayWord?: string;
 };
@@ -83,6 +88,8 @@ type PendingShot = {
   volleySize: number;
   fireAt: number;
   origin: Vector3;
+  volleyId?: number;
+  indexInVolley?: number;
 };
 
 type Projectile = {
@@ -91,6 +98,14 @@ type Projectile = {
   volleySize: number;
   mesh: Object3D;
   velocity: Vector3;
+  volleyId?: number;
+  indexInVolley?: number;
+};
+
+type Volley<TKind extends string, TData> = {
+  id: number;
+  members: Array<{ enemy: LockOnEnemy<TKind, TData>; killed?: boolean }>;
+  unresolved: number;
 };
 
 export type LockOnRunnerOptions<TKind extends string = string, TData = unknown> = {
@@ -113,6 +128,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const duration = level.duration;
   const startWord = level.startWord ?? START_WORD;
   const replayWord = level.replayWord ?? REPLAY_WORD;
+  const lockRadiusNdc = level.lockRadiusNdc ?? LOCK_RADIUS_NDC;
   const curve = level.createRail();
   const easeRunProgress = level.easeRunProgress ?? smoothRunProgress;
   const input = createInput(canvas, {
@@ -135,6 +151,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   let missed = 0;
   let nextEnemyId = 1;
   let nextProjectileId = 1;
+  let nextVolleyId = 1;
   let failedAttractReleases = 0;
   let attractPointerDowns = 0;
   let attractReachedFullLocks = false;
@@ -150,6 +167,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const locks: number[] = [];
   const pendingShots: PendingShot[] = [];
   const projectiles = new Map<number, Projectile>();
+  const volleys = new Map<number, Volley<TKind, TData>>();
   const reticlePoint = new Vector3();
 
   scene.add(reticle);
@@ -187,6 +205,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     missed = 0;
     spawnIndex = 0;
     hud.hideEnd();
+    hud.setCallout('');
     showStartTip();
     hud.setHudActive(false);
     hud.update({ score, timeRemaining: duration, lockCount: 0 });
@@ -210,11 +229,13 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     missed = 0;
     nextEnemyId = 1;
     nextProjectileId = 1;
+    nextVolleyId = 1;
     startWhenLettersClear = false;
     replayWhenLettersClear = false;
     startDelay = -1;
     hud.hideEnd();
     hud.hideTip();
+    hud.setCallout('');
     hud.setHudActive(true);
     hud.update({ score, timeRemaining: duration, lockCount: 0 });
     bus.emit('runstart', { runNumber, duration, totalEnemies: level.spawnTimeline.length });
@@ -325,7 +346,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function spawnEnemy(entry: LockOnSpawnEntry<TKind, TData>) {
     const id = nextEnemyId;
     nextEnemyId += 1;
-    const mesh = visuals.createEnemyMesh(entry.kind);
+    const mesh = visuals.createEnemyMesh(entry.kind, entry.letter);
     const enemy: Enemy<TKind, TData> = {
       id,
       kind: entry.kind,
@@ -334,11 +355,12 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       spawnTime: runTime,
       locked: false,
       entry,
+      letter: entry.letter,
     };
     scene.add(mesh);
     enemies.set(id, enemy);
     updateEnemy(enemy, easeRunProgress(runTime, duration));
-    bus.emit('spawn', { enemyId: id, kind: enemy.kind, worldPosition: mesh.position.clone() });
+    bus.emit('spawn', { enemyId: id, kind: enemy.kind, worldPosition: mesh.position.clone(), letter: enemy.letter });
   }
 
   function spawnWord(word: string, purpose: Extract<TargetPurpose, 'start-letter' | 'replay-letter'>) {
@@ -373,21 +395,26 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function updateEnemy(enemy: Enemy<TKind, TData>, runProgress: number) {
     if (!enemy.entry || enemy.kind === 'letter') return false;
-    const publicEnemy: LockOnEnemy<TKind, TData> = {
-      id: enemy.id,
-      kind: enemy.kind,
-      mesh: enemy.mesh,
-      spawnTime: enemy.spawnTime,
-      entry: enemy.entry,
-    };
     return level.updateEnemy({
-      enemy: publicEnemy,
+      enemy: toPublicEnemy(enemy),
       runTime,
       runProgress,
       age: Math.max(0, runTime - enemy.spawnTime),
       curve,
       camera,
     }) === true;
+  }
+
+  function toPublicEnemy(enemy: Enemy<TKind, TData>): LockOnEnemy<TKind, TData> {
+    if (!enemy.entry || enemy.kind === 'letter') throw new Error('Enemy entry is required');
+    return {
+      id: enemy.id,
+      kind: enemy.kind,
+      mesh: enemy.mesh,
+      spawnTime: enemy.spawnTime,
+      entry: enemy.entry,
+      letter: enemy.letter,
+    };
   }
 
   function updateLetterTargets() {
@@ -422,7 +449,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       if (projected.z < -1 || projected.z > 1) continue;
       const dx = projected.x - input.state.pointerNdc.x;
       const dy = projected.y - input.state.pointerNdc.y;
-      if (Math.hypot(dx, dy) <= LOCK_RADIUS_NDC) lockEnemy(enemy);
+      if (Math.hypot(dx, dy) <= lockRadiusNdc) lockEnemy(enemy);
     }
 
     if (state === 'attract' && countLockedLetters('start-letter') === startWord.length) {
@@ -479,27 +506,80 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function fireLocks(released: number[]) {
     locks.length = 0;
+    const releasedEnemies = released.map((enemyId) => enemies.get(enemyId)).filter((enemy) => enemy !== undefined);
+    if (releasedEnemies.length === 0) return;
+    const volleyId = state === 'running' ? createVolley(releasedEnemies) : undefined;
 
-    released.forEach((enemyId, index) => {
-      const enemy = enemies.get(enemyId);
-      if (!enemy) return;
+    releasedEnemies.forEach((enemy, index) => {
       enemy.locked = false;
       visuals.setEnemyLocked(enemy.mesh, false);
       bus.emit('unlock', {
-        enemyId,
+        enemyId: enemy.id,
         lockCount: locks.length,
         worldPosition: enemy.mesh.position.clone(),
         letter: enemy.letter,
       });
       pendingShots.push({
         projectileId: nextProjectileId,
-        enemyId,
-        volleySize: released.length,
+        enemyId: enemy.id,
+        volleySize: releasedEnemies.length,
         fireAt: worldTime + index * FIRE_STAGGER,
         origin: reticlePoint.clone(),
+        volleyId,
+        indexInVolley: volleyId === undefined ? undefined : index,
       });
       nextProjectileId += 1;
     });
+  }
+
+  function createVolley(releasedEnemies: Array<Enemy<TKind, TData>>) {
+    const volleyId = nextVolleyId;
+    nextVolleyId += 1;
+    volleys.set(volleyId, {
+      id: volleyId,
+      members: releasedEnemies.map((enemy) => ({ enemy: toPublicEnemy(enemy) })),
+      unresolved: releasedEnemies.length,
+    });
+    return volleyId;
+  }
+
+  function resolveVolleyMember(volleyId: number | undefined, indexInVolley: number | undefined, killed: boolean) {
+    if (volleyId === undefined || indexInVolley === undefined) return;
+    const volley = volleys.get(volleyId);
+    if (!volley) return;
+    const member = volley.members[indexInVolley];
+    if (!member || member.killed !== undefined) return;
+    member.killed = killed;
+    volley.unresolved -= 1;
+    if (volley.unresolved > 0) return;
+    volleys.delete(volleyId);
+    if (state !== 'running') return;
+    const results = volley.members.map((resolved) => ({
+      enemy: resolved.enemy,
+      killed: resolved.killed === true,
+    }));
+    const scoreAwarded = level.scoreForVolley?.(results) ?? 0;
+    score += scoreAwarded;
+    bus.emit('volley', {
+      volleyId,
+      size: volley.members.length,
+      kills: results.filter((result) => result.killed).length,
+      scoreAwarded,
+    });
+  }
+
+  function resolveTargetLoss(enemyId: number) {
+    for (let i = pendingShots.length - 1; i >= 0; i -= 1) {
+      const shot = pendingShots[i];
+      if (shot.enemyId !== enemyId) continue;
+      pendingShots.splice(i, 1);
+      resolveVolleyMember(shot.volleyId, shot.indexInVolley, false);
+    }
+    for (const projectile of [...projectiles.values()]) {
+      if (projectile.enemyId !== enemyId) continue;
+      removeProjectile(projectile);
+      resolveVolleyMember(projectile.volleyId, projectile.indexInVolley, false);
+    }
   }
 
   function unlockReleased(released: number[]) {
@@ -524,7 +604,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       if (shot.fireAt > worldTime) continue;
       pendingShots.splice(i, 1);
       const enemy = enemies.get(shot.enemyId);
-      if (!enemy) continue;
+      if (!enemy) {
+        resolveVolleyMember(shot.volleyId, shot.indexInVolley, false);
+        continue;
+      }
       const mesh = visuals.createProjectileMesh();
       mesh.position.copy(shot.origin);
       scene.add(mesh);
@@ -534,6 +617,8 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         volleySize: shot.volleySize,
         mesh,
         velocity: enemy.mesh.position.clone().sub(shot.origin).normalize().multiplyScalar(PROJECTILE_SPEED),
+        volleyId: shot.volleyId,
+        indexInVolley: shot.indexInVolley,
       });
       bus.emit('fire', {
         projectileId: shot.projectileId,
@@ -542,6 +627,8 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         worldPosition: shot.origin.clone(),
         targetPosition: enemy.mesh.position.clone(),
         letter: enemy.letter,
+        volleyId: shot.volleyId,
+        indexInVolley: shot.indexInVolley,
       });
     }
   }
@@ -551,6 +638,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       const enemy = enemies.get(projectile.enemyId);
       if (!enemy) {
         removeProjectile(projectile);
+        resolveVolleyMember(projectile.volleyId, projectile.indexInVolley, false);
         continue;
       }
 
@@ -575,27 +663,44 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       projectileId: projectile.id,
       worldPosition: worldPosition.clone(),
       letter: enemy.letter,
+      volleyId: projectile.volleyId,
+      indexInVolley: projectile.indexInVolley,
     });
     removeProjectile(projectile);
     removeEnemy(enemy);
 
     if (enemy.kind === 'letter') {
-      bus.emit('kill', { enemyId: enemy.id, worldPosition, scoreAwarded: 0, letter: enemy.letter });
+      bus.emit('kill', {
+        enemyId: enemy.id,
+        worldPosition,
+        scoreAwarded: 0,
+        letter: enemy.letter,
+        volleyId: projectile.volleyId,
+        indexInVolley: projectile.indexInVolley,
+      });
+      resolveVolleyMember(projectile.volleyId, projectile.indexInVolley, true);
       return;
     }
 
     kills += 1;
-    const publicEnemy = enemy.entry
-      ? { id: enemy.id, kind: enemy.kind, mesh: enemy.mesh, spawnTime: enemy.spawnTime, entry: enemy.entry }
-      : undefined;
-    const award = publicEnemy ? (level.scoreForKill?.(projectile.volleySize, publicEnemy) ?? defaultScoreForKill(projectile.volleySize)) : 0;
+    const publicEnemy = toPublicEnemy(enemy);
+    const award = level.scoreForKill?.(projectile.volleySize, publicEnemy) ?? defaultScoreForKill(projectile.volleySize);
     score += award;
-    bus.emit('kill', { enemyId: enemy.id, worldPosition, scoreAwarded: award });
+    bus.emit('kill', {
+      enemyId: enemy.id,
+      worldPosition,
+      scoreAwarded: award,
+      letter: enemy.letter,
+      volleyId: projectile.volleyId,
+      indexInVolley: projectile.indexInVolley,
+    });
+    resolveVolleyMember(projectile.volleyId, projectile.indexInVolley, true);
   }
 
   function missEnemy(enemy: Enemy<TKind, TData>) {
     const worldPosition = enemy.mesh.position.clone();
     if (enemy.locked) unlockEnemy(enemy);
+    resolveTargetLoss(enemy.id);
     removeEnemy(enemy);
     if (enemy.kind !== 'letter') missed += 1;
     bus.emit('miss', { enemyId: enemy.id, worldPosition, letter: enemy.letter });
@@ -657,19 +762,22 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function endRun() {
     if (state === 'ended') return;
-    for (const enemy of [...enemies.values()]) missEnemy(enemy);
     state = 'ended';
+    volleys.clear();
+    for (const enemy of [...enemies.values()]) missEnemy(enemy);
     modeTime = 0;
     locks.length = 0;
     pendingShots.length = 0;
     for (const projectile of [...projectiles.values()]) removeProjectile(projectile);
     const totalEnemies = level.spawnTimeline.length;
+    const details = level.detailsForRun?.();
     const summary: RunSummary = {
       score,
       kills,
       missed,
       totalEnemies,
       rank: level.rankForRun?.(score, kills, totalEnemies) ?? defaultRankForRun(score, kills, totalEnemies),
+      details: details && details.length > 0 ? details : undefined,
     };
     hud.setHudActive(false);
     hud.update({ score, timeRemaining: 0, lockCount: 0 });
@@ -684,6 +792,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     enemies.clear();
     projectiles.clear();
     pendingShots.length = 0;
+    volleys.clear();
     locks.length = 0;
   }
 

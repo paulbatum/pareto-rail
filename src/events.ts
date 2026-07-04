@@ -13,13 +13,30 @@ export type GameEvents = {
     worldPosition: Vector3;
     targetPosition: Vector3;
     letter?: string;
+    volleyId?: number;
+    indexInVolley?: number;
   };
-  hit: { enemyId: number; projectileId: number; worldPosition: Vector3; letter?: string };
-  kill: { enemyId: number; worldPosition: Vector3; scoreAwarded: number; letter?: string };
+  hit: {
+    enemyId: number;
+    projectileId: number;
+    worldPosition: Vector3;
+    letter?: string;
+    volleyId?: number;
+    indexInVolley?: number;
+  };
+  kill: {
+    enemyId: number;
+    worldPosition: Vector3;
+    scoreAwarded: number;
+    letter?: string;
+    volleyId?: number;
+    indexInVolley?: number;
+  };
   miss: { enemyId: number; worldPosition: Vector3; letter?: string };
+  volley: { volleyId: number; size: number; kills: number; scoreAwarded: number };
   beat: { beatNumber: number; isDownbeat: boolean; audioTime: number };
   runstart: { runNumber: number; duration: number; totalEnemies: number };
-  runend: { score: number; kills: number; missed: number; totalEnemies: number; rank: string };
+  runend: { score: number; kills: number; missed: number; totalEnemies: number; rank: string; details?: string[] };
 };
 
 type Handler<K extends keyof GameEvents> = (payload: GameEvents[K]) => void;

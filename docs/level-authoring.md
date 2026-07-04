@@ -24,10 +24,10 @@ Pass a `LockOnRunnerLevel` to `createLockOnRunner`:
 
 - `duration`: run length in seconds.
 - `createRail()`: returns the level's `CatmullRomCurve3`.
-- `spawnTimeline`: ordered enemy entries. Its length is the run's `totalEnemies`.
+- `spawnTimeline`: ordered enemy entries. Its length is the run's `totalEnemies`. Entries may include `letter?: string`; the runner passes it to `createEnemyMesh`, exposes it on public enemies, and includes it in target events.
 - `updateEnemy(context)`: owns all enemy motion every frame. Position, rotation, and any per-frame mesh state are the level's responsibility. Return `true` to despawn that enemy as a miss; return `false` or nothing to keep it alive.
 
-Optional overrides are `updateAttractCamera`, `easeRunProgress`, `scoreForKill`, `rankForRun`, `startWord`, and `replayWord`. See `src/engine/lock-on-runner.ts` for exact types.
+Optional overrides are `updateAttractCamera`, `easeRunProgress`, `scoreForKill`, `scoreForVolley`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, and `replayWord`. `scoreForVolley` scores a released group after all members resolve, `detailsForRun` adds compact end-screen lines, and `lockRadiusNdc` changes the screen-space lock threshold from the default. See `src/engine/lock-on-runner.ts` for exact types.
 
 ## Visual factories
 

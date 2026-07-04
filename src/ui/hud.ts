@@ -14,10 +14,12 @@ export function createHud() {
   const time = requireElement<HTMLElement>('[data-hud="time"]');
   const locks = requireElement<HTMLElement>('[data-hud="locks"]');
   const endScreen = requireElement<HTMLElement>('#end-screen');
+  const callout = requireElement<HTMLElement>('#callout');
   const tip = requireElement<HTMLElement>('#tip');
   const endScore = requireElement<HTMLElement>('[data-end="score"]');
   const endKills = requireElement<HTMLElement>('[data-end="kills"]');
   const endRank = requireElement<HTMLElement>('[data-end="rank"]');
+  const endDetails = requireElement<HTMLElement>('[data-end="details"]');
 
   return {
     update(values: { score: number; timeRemaining: number; lockCount: number }) {
@@ -30,6 +32,9 @@ export function createHud() {
       endScore.textContent = `${summary.score}`;
       endKills.textContent = `Kills ${summary.kills}/${summary.totalEnemies} · Missed ${summary.missed}`;
       endRank.textContent = summary.rank;
+      const details = summary.details?.filter((line) => line.trim().length > 0) ?? [];
+      endDetails.textContent = details.join(' · ');
+      endDetails.classList.toggle('hidden', details.length === 0);
       endScreen.classList.remove('hidden');
     },
 
@@ -39,6 +44,16 @@ export function createHud() {
 
     setHudActive(active: boolean) {
       hud.classList.toggle('hud-inactive', !active);
+    },
+
+    setCallout(message: string) {
+      callout.textContent = message;
+      callout.classList.toggle('hidden', message.length === 0);
+      callout.classList.remove('callout-pop');
+      if (message.length > 0) {
+        void callout.offsetWidth;
+        callout.classList.add('callout-pop');
+      }
     },
 
     setTip(message: string) {

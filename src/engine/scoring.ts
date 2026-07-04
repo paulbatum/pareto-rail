@@ -4,6 +4,7 @@ export type RunSummary = {
   missed: number;
   totalEnemies: number;
   rank: string;
+  details?: string[];
 };
 
 export function scoreForKill(volleySize: number) {
