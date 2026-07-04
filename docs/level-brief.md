@@ -47,4 +47,4 @@ Your output will be compared against levels built by other agents from this same
 
 ## Handoff
 
-Report what you verified and what still needs human eyes. Use the visual inspection tools in `docs/level-authoring.md` to capture model snapshots, gameplay stills, and thumbnail sheets when useful. If your environment cannot render WebGPU, say so plainly and describe what a playtester should look at first — visual and audio quality can only be confirmed by a human run-through.
+Report what you verified and what still needs human eyes. Use the visual inspection tools in `docs/visual-tools.md` to capture model snapshots, gameplay stills, and thumbnail sheets when useful. If your environment cannot render WebGPU, say so plainly and describe what a playtester should look at first — visual and audio quality can only be confirmed by a human run-through.
