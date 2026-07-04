@@ -1,5 +1,6 @@
 import type { EventBus } from '../../events';
 import { createLevelAudioKit } from '../../engine/audio-kit';
+import { createAudioTraceSink, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
@@ -23,6 +24,29 @@ const CHORDS = [
 const LOCK_SCALE = [69, 72, 74, 76, 79, 81, 84, 88]; // A minor pentatonic, rising per lock
 
 export function createAudio(bus: EventBus) {
+  return createCrystalDebugAudio(bus).audio;
+}
+
+export function traceCrystalDebugAudio(options: { seconds?: number } = {}): AudioTraceResult {
+  const seconds = options.seconds ?? 45;
+  const events: AudioTraceResult['events'] = [];
+  const trace = createAudioTraceSink(events);
+  const bus = createNoopTraceBus();
+  const tracedAudio = createCrystalDebugAudio(bus, trace);
+  tracedAudio.traceRun(seconds);
+  return {
+    metadata: {
+      level: 'crystal-debug',
+      bpm: BPM,
+      seconds,
+      stepSeconds: SIXTEENTH,
+      mode: 'run',
+    },
+    events,
+  };
+}
+
+function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
   let nextTickTime = 0;
   let sixteenthIndex = 0;
@@ -100,6 +124,20 @@ export function createAudio(bus: EventBus) {
     }
   }
 
+  function traceRun(seconds: number) {
+    mode = 'run';
+    arrangementStart = 0;
+    sixteenthIndex = 0;
+    nextTickTime = 0.06;
+    ctx = { currentTime: 0 } as AudioContext;
+    while (nextTickTime < seconds) {
+      scheduleStep(sixteenthIndex, nextTickTime);
+      nextTickTime += SIXTEENTH;
+      sixteenthIndex += 1;
+    }
+    ctx = null;
+  }
+
   function scheduleStep(index: number, time: number) {
     const position = Math.max(0, index - arrangementStart);
     const step = position % 16;
@@ -144,6 +182,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
+    if (trace) {
+      trace.record(time, 'beat', { beatNumber, isDownbeat });
+      return;
+    }
     if (!ctx) return;
     emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
   }
@@ -153,6 +195,10 @@ export function createAudio(bus: EventBus) {
   // ---- instruments --------------------------------------------------------
 
   function kick(time: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'kick', { vel });
+      return;
+    }
     if (!ctx || !master || !duck) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -172,17 +218,29 @@ export function createAudio(bus: EventBus) {
   }
 
   function clap(time: number) {
+    if (trace) {
+      trace.record(time, 'clap');
+      return;
+    }
     if (!master) return;
     noiseHit(time, 0.16, 0.05, 'bandpass', 1900, master);
     noiseHit(time + 0.013, 0.1, 0.07, 'bandpass', 2200, master);
   }
 
   function hat(time: number, vel: number, decay: number) {
+    if (trace) {
+      trace.record(time, 'hat', { vel, decay });
+      return;
+    }
     if (!duck) return;
     noiseHit(time, vel, decay, 'highpass', 7200, duck);
   }
 
   function bass(time: number, midi: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'bass', { midi, vel });
+      return;
+    }
     if (!ctx || !duck) return;
     const osc = ctx.createOscillator();
     const filter = ctx.createBiquadFilter();
@@ -202,6 +260,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function pad(time: number, midis: number[], duration: number) {
+    if (trace) {
+      trace.record(time, 'pad', { midis, duration });
+      return;
+    }
     if (!ctx || !duck || !delaySend) return;
     for (const midi of midis) {
       for (const detune of [-7, 7]) {
@@ -229,6 +291,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function arpNote(time: number, midi: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'arp', { midi, vel });
+      return;
+    }
     if (!ctx || !duck || !delaySend) return;
     const osc = ctx.createOscillator();
     const filter = ctx.createBiquadFilter();
@@ -249,6 +315,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function riser(time: number, duration: number) {
+    if (trace) {
+      trace.record(time, 'riser', { duration });
+      return;
+    }
     if (!ctx || !master || !noiseBuffer) return;
     const source = ctx.createBufferSource();
     source.buffer = noiseBuffer;
@@ -496,5 +566,15 @@ export function createAudio(bus: EventBus) {
     pad(ctx.currentTime + 0.05, [57, 64, 69, 76], 5);
   });
 
-  return audio;
+  return { audio, traceRun };
+}
+
+function createNoopTraceBus(): EventBus {
+  return {
+    on() {
+      return () => false;
+    },
+    emit() {},
+    clear() {},
+  } as EventBus;
 }

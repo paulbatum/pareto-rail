@@ -91,7 +91,18 @@ export const post: LevelPostConfig = {
 
 The bloom slider goes to 0. A level must stay playable and legible with bloom fully off. Do not rely on bloom alone to make targets, letters, or the reticle visible; HDR colors control how hard things glow when bloom is on, but base geometry and color must carry readability when it is off.
 
-## Visual inspection tools
+## Audio and visual inspection tools
+
+Use the audio trace tool to inspect procedural music structure without relying on human listening for every iteration:
+
+```sh
+npm run trace:audio -- --level crystal-debug
+npm run trace:audio -- --level crystal-debug --verbose
+npm run trace:audio -- --level crystal-debug --write test-fixtures/audio/crystal-debug.json
+npm run trace:audio -- --level crystal-debug --compare test-fixtures/audio/crystal-debug.json
+```
+
+The default output is a compact summary for level authoring. Use `--verbose` or `--compare` when characterizing a refactor. The trace is semantic rather than waveform-based: it captures scheduled musical events, beat events, and voice calls, not browser compressor output or final mix quality. It currently covers `crystal-debug`.
 
 Use the visual tools while building levels to inspect models and gameplay composition:
 

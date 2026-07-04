@@ -1,0 +1,8548 @@
+{
+  "metadata": {
+    "level": "crystal-debug",
+    "bpm": 126,
+    "seconds": 45,
+    "stepSeconds": 0.11904761904761904,
+    "mode": "run"
+  },
+  "events": [
+    {
+      "time": 0.06,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 0,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 0.06,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          57,
+          60,
+          64,
+          67
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 0.06,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 0.536,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 1,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 0.536,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 1.012,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 2,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 1.012,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 1.489,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 3,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 1.489,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 1.965,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 4,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 1.965,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 1.965,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 1
+      }
+    },
+    {
+      "time": 2.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 2.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 2.322,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 2.441,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 5,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 2.441,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 2.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 2.679,
+      "kind": "bass",
+      "data": {
+        "midi": 45,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 2.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 2.917,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 6,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 2.917,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 2.917,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 3.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 3.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 3.274,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 3.393,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 7,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 3.393,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 3.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 3.631,
+      "kind": "bass",
+      "data": {
+        "midi": 40,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 3.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 3.87,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 8,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 3.87,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          53,
+          57,
+          60,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 3.87,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 3.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 3.87,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 1
+      }
+    },
+    {
+      "time": 3.87,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 3.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 3.989,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 4.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 4.108,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 4.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 4.227,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 4.227,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 4.346,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 9,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 4.346,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 4.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 4.346,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 4.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 4.465,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 4.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 4.584,
+      "kind": "bass",
+      "data": {
+        "midi": 41,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 4.584,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 4.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 4.703,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 4.822,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 10,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 4.822,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 4.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 4.822,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 4.822,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 4.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 4.941,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 5.06,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 5.06,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 5.179,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 5.179,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 5.179,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 5.298,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 11,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 5.298,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 5.298,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 5.298,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 5.417,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 5.417,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 5.536,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 5.536,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 5.536,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 5.655,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 5.655,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 5.774,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 12,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 5.774,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 5.774,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 5.774,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 1
+      }
+    },
+    {
+      "time": 5.774,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 5.893,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 5.893,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.012,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.012,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.131,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.131,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 6.131,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.25,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 13,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 6.25,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 6.25,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.25,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.37,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.37,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.489,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.489,
+      "kind": "bass",
+      "data": {
+        "midi": 41,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 6.489,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.608,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.608,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.727,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 14,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 6.727,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 6.727,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.727,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 6.727,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.846,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.846,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 6.965,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 6.965,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 7.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 7.084,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 7.084,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 7.203,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 15,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 7.203,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 7.203,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 7.203,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 7.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 7.322,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 7.441,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 7.441,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 7.441,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 7.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 7.56,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 7.679,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 16,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 7.679,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          52,
+          55,
+          60,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 7.679,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 7.679,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 7.679,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 1
+      }
+    },
+    {
+      "time": 7.679,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 7.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 7.798,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 7.917,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 7.917,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.036,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 8.036,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.155,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 17,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 8.155,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 8.155,
+      "kind": "clap"
+    },
+    {
+      "time": 8.155,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.155,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.274,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.393,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.393,
+      "kind": "bass",
+      "data": {
+        "midi": 48,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 8.393,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.512,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.631,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 18,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 8.631,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 8.631,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.631,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 8.631,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.75,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.87,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 8.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 8.989,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 8.989,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 9.108,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 19,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 9.108,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 9.108,
+      "kind": "clap"
+    },
+    {
+      "time": 9.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 9.108,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 9.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 9.227,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 9.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 9.346,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 9.346,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 9.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 9.465,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 9.584,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 20,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 9.584,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 9.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 9.584,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 1
+      }
+    },
+    {
+      "time": 9.584,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 9.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 9.703,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 9.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 9.822,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 9.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 9.941,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 9.941,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 10.06,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 21,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 10.06,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 10.06,
+      "kind": "clap"
+    },
+    {
+      "time": 10.06,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 10.06,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 10.179,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 10.179,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 10.298,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 10.298,
+      "kind": "bass",
+      "data": {
+        "midi": 48,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 10.298,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 10.417,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 10.417,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 10.536,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 22,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 10.536,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 10.536,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 10.536,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 10.536,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 10.655,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 10.655,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 10.774,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 10.774,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 10.893,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 10.893,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 10.893,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.012,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 23,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 11.012,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 11.012,
+      "kind": "clap"
+    },
+    {
+      "time": 11.012,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 11.012,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.131,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 11.131,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.25,
+      "kind": "hat",
+      "data": {
+        "vel": 0.09,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 11.25,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 11.25,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.37,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 11.37,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.489,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 24,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 11.489,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          55,
+          59,
+          62,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 11.489,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 11.489,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 11.489,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 1
+      }
+    },
+    {
+      "time": 11.489,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.608,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 11.608,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.727,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 11.727,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.846,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 11.846,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 11.846,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 11.965,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 25,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 11.965,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 11.965,
+      "kind": "clap"
+    },
+    {
+      "time": 11.965,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 11.965,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 12.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 12.084,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 12.203,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 12.203,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 12.203,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 12.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 12.322,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 12.441,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 26,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 12.441,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 12.441,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 12.441,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 12.441,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 12.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 12.56,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 12.679,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 12.679,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 12.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 12.798,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 12.798,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 12.917,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 27,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 12.917,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 12.917,
+      "kind": "clap"
+    },
+    {
+      "time": 12.917,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 12.917,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 13.036,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.155,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 13.155,
+      "kind": "bass",
+      "data": {
+        "midi": 38,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 13.155,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 13.274,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.393,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 28,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 13.393,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 13.393,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 13.393,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 1
+      }
+    },
+    {
+      "time": 13.393,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 13.512,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.631,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 13.631,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 13.75,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 13.75,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.87,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 29,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 13.87,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 13.87,
+      "kind": "clap"
+    },
+    {
+      "time": 13.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 13.87,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 13.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 13.989,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 14.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 14.108,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 14.108,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 14.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 14.227,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 14.346,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 30,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 14.346,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 14.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 14.346,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 14.346,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 14.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 14.465,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 14.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 14.584,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 14.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 14.703,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 14.703,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 14.822,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 31,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 14.822,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 14.822,
+      "kind": "clap"
+    },
+    {
+      "time": 14.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 14.822,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 14.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 14.941,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 15.06,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 15.06,
+      "kind": "bass",
+      "data": {
+        "midi": 38,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 15.06,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 15.179,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 15.179,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.6
+      }
+    },
+    {
+      "time": 15.298,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 32,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 15.298,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          57,
+          60,
+          64,
+          67
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 15.298,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 15.298,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 15.298,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 1
+      }
+    },
+    {
+      "time": 15.298,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 15.417,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 15.417,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 15.536,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 15.536,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 15.655,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 15.655,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 15.655,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 15.774,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 33,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 15.774,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 15.774,
+      "kind": "clap"
+    },
+    {
+      "time": 15.774,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 15.774,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 15.893,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 15.893,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.012,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 16.012,
+      "kind": "bass",
+      "data": {
+        "midi": 45,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 16.012,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.131,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 16.131,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.25,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 34,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 16.25,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 16.25,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 16.25,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 16.25,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.37,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 16.37,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.489,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 16.489,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.608,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 16.608,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 16.608,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.727,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 35,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 16.727,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 16.727,
+      "kind": "clap"
+    },
+    {
+      "time": 16.727,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 16.727,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.846,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 16.846,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 16.965,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 16.965,
+      "kind": "bass",
+      "data": {
+        "midi": 40,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 16.965,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 17.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 17.084,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 17.203,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 36,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 17.203,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 17.203,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 17.203,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 1
+      }
+    },
+    {
+      "time": 17.203,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 17.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 17.322,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 17.441,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 17.441,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 17.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 17.56,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 17.56,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 17.679,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 37,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 17.679,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 17.679,
+      "kind": "clap"
+    },
+    {
+      "time": 17.679,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 17.679,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 17.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 17.798,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 17.917,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 17.917,
+      "kind": "bass",
+      "data": {
+        "midi": 45,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 17.917,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 18.036,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.155,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 38,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 18.155,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 18.155,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 18.155,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 18.155,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 18.274,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.393,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 18.393,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 18.512,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 18.512,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.631,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 39,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 18.631,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 18.631,
+      "kind": "clap"
+    },
+    {
+      "time": 18.631,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 18.631,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 18.75,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 18.87,
+      "kind": "bass",
+      "data": {
+        "midi": 40,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 18.87,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 18.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 18.989,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 19.108,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 40,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 19.108,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          53,
+          57,
+          60,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 19.108,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 19.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 19.108,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 1
+      }
+    },
+    {
+      "time": 19.108,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 19.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 19.227,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 19.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 19.346,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 19.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 19.465,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 19.465,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 19.584,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 41,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 19.584,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 19.584,
+      "kind": "clap"
+    },
+    {
+      "time": 19.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 19.584,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 19.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 19.703,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 19.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 19.822,
+      "kind": "bass",
+      "data": {
+        "midi": 41,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 19.822,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 19.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 19.941,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 20.06,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 42,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 20.06,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 20.06,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 20.06,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 20.06,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 20.179,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 20.179,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 20.298,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 20.298,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 20.417,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 20.417,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 20.417,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 20.536,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 43,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 20.536,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 20.536,
+      "kind": "clap"
+    },
+    {
+      "time": 20.536,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 20.536,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 20.655,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 20.655,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 20.774,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 20.774,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 20.774,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 20.893,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 20.893,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.012,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 44,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 21.012,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 21.012,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 21.012,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 1
+      }
+    },
+    {
+      "time": 21.012,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.131,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 21.131,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.25,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 21.25,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.37,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 21.37,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 21.37,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.489,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 45,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 21.489,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 21.489,
+      "kind": "clap"
+    },
+    {
+      "time": 21.489,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 21.489,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.608,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 21.608,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.727,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 21.727,
+      "kind": "bass",
+      "data": {
+        "midi": 41,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 21.727,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.846,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 21.846,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 21.965,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 46,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 21.965,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 21.965,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 21.965,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 21.965,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 22.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 22.084,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 22.203,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 22.203,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 22.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 22.322,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 22.322,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 22.441,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 47,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 22.441,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 22.441,
+      "kind": "clap"
+    },
+    {
+      "time": 22.441,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 22.441,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 22.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 22.56,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 22.679,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 22.679,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 22.679,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 22.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 22.798,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 22.917,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 48,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 22.917,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          52,
+          55,
+          60,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 22.917,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 22.917,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 22.917,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 1
+      }
+    },
+    {
+      "time": 22.917,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 23.036,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.155,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 23.155,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 23.274,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 23.274,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.393,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 49,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 23.393,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 23.393,
+      "kind": "clap"
+    },
+    {
+      "time": 23.393,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 23.393,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 23.512,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.631,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 23.631,
+      "kind": "bass",
+      "data": {
+        "midi": 48,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 23.631,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 23.75,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.87,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 50,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 23.87,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 23.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 23.87,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 23.87,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 23.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 23.989,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 24.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 24.108,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 24.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 24.227,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 24.227,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 24.346,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 51,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 24.346,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 24.346,
+      "kind": "clap"
+    },
+    {
+      "time": 24.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 24.346,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 24.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 24.465,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 24.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 24.584,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 24.584,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 24.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 24.703,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 24.822,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 52,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 24.822,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 24.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 24.822,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 1
+      }
+    },
+    {
+      "time": 24.822,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 24.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 24.941,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 25.06,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 25.06,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 25.179,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 25.179,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 25.179,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 25.298,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 53,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 25.298,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 25.298,
+      "kind": "clap"
+    },
+    {
+      "time": 25.298,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 25.298,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 25.417,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 25.417,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 25.536,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 25.536,
+      "kind": "bass",
+      "data": {
+        "midi": 48,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 25.536,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 25.655,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 25.655,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 25.774,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 54,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 25.774,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 25.774,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 25.774,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 25.774,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 25.893,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 25.893,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.012,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 26.012,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.131,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 26.131,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 26.131,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.25,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 55,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 26.25,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 26.25,
+      "kind": "clap"
+    },
+    {
+      "time": 26.25,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 26.25,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.37,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 26.37,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.489,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 26.489,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 26.489,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.608,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 26.608,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.727,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 56,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 26.727,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          55,
+          59,
+          62,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 26.727,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 26.727,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 26.727,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 1
+      }
+    },
+    {
+      "time": 26.727,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.727,
+      "kind": "riser",
+      "data": {
+        "duration": 3.8095238095238093
+      }
+    },
+    {
+      "time": 26.846,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 26.846,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 26.965,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 26.965,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 27.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 27.084,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 27.084,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 27.203,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 57,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 27.203,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 27.203,
+      "kind": "clap"
+    },
+    {
+      "time": 27.203,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 27.203,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 27.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 27.322,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 27.441,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 27.441,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 27.441,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 27.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 27.56,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 27.679,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 58,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 27.679,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 27.679,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 27.679,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 27.679,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 27.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 27.798,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 27.917,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 27.917,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 28.036,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 28.036,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.155,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 59,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 28.155,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 28.155,
+      "kind": "clap"
+    },
+    {
+      "time": 28.155,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 28.155,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 28.274,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.393,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 28.393,
+      "kind": "bass",
+      "data": {
+        "midi": 38,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 28.393,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 28.512,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.631,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 60,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 28.631,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 28.631,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 28.631,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 1
+      }
+    },
+    {
+      "time": 28.631,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 28.75,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 28.87,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 28.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 28.989,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 28.989,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 29.108,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 61,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 29.108,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 29.108,
+      "kind": "clap"
+    },
+    {
+      "time": 29.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 29.108,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 29.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 29.227,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 29.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 29.346,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 29.346,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 29.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 29.465,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 29.584,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 62,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 29.584,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 29.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 29.584,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 29.584,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 29.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 29.703,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 29.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 29.822,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 29.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 29.941,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 29.941,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 30.06,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 63,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 30.06,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 30.06,
+      "kind": "clap"
+    },
+    {
+      "time": 30.06,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 30.06,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 30.179,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 30.179,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 30.298,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 30.298,
+      "kind": "bass",
+      "data": {
+        "midi": 38,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 30.298,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 30.417,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 30.417,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 30.536,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 64,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 30.536,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          57,
+          60,
+          64,
+          67
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 30.536,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 30.536,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 30.536,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 1
+      }
+    },
+    {
+      "time": 30.536,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 30.655,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 30.655,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 30.774,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 30.774,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 30.893,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 30.893,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 30.893,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.012,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 65,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 31.012,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 31.012,
+      "kind": "clap"
+    },
+    {
+      "time": 31.012,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 31.012,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.131,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 31.131,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.25,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 31.25,
+      "kind": "bass",
+      "data": {
+        "midi": 45,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 31.25,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.37,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 31.37,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.489,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 66,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 31.489,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 31.489,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 31.489,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 31.489,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.608,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 31.608,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.727,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 31.727,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 31.727,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.846,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 31.846,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 31.846,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 31.965,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 67,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 31.965,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 31.965,
+      "kind": "clap"
+    },
+    {
+      "time": 31.965,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 31.965,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 32.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 32.084,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 32.203,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 32.203,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 32.203,
+      "kind": "bass",
+      "data": {
+        "midi": 40,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 32.203,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 32.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 32.322,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 32.441,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 68,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 32.441,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 32.441,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 32.441,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 1
+      }
+    },
+    {
+      "time": 32.441,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 32.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 32.56,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 32.679,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 32.679,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 32.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 32.798,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 32.798,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 32.917,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 69,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 32.917,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 32.917,
+      "kind": "clap"
+    },
+    {
+      "time": 32.917,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 32.917,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 33.036,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.155,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 33.155,
+      "kind": "bass",
+      "data": {
+        "midi": 45,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 33.155,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 33.274,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.393,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 70,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 33.393,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 33.393,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 33.393,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 33.393,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 33.512,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.631,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 33.631,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 33.631,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 33.75,
+      "kind": "bass",
+      "data": {
+        "midi": 33,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 33.75,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.87,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 71,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 33.87,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 33.87,
+      "kind": "clap"
+    },
+    {
+      "time": 33.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 33.87,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 33.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 33.989,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 34.108,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 34.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 34.108,
+      "kind": "bass",
+      "data": {
+        "midi": 40,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 34.108,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 34.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 34.227,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 34.346,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 72,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 34.346,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          53,
+          57,
+          60,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 34.346,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 34.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 34.346,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 1
+      }
+    },
+    {
+      "time": 34.346,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 34.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 34.465,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 34.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 34.584,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 34.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 34.703,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 34.703,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 34.822,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 73,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 34.822,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 34.822,
+      "kind": "clap"
+    },
+    {
+      "time": 34.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 34.822,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 34.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 34.941,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 35.06,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 35.06,
+      "kind": "bass",
+      "data": {
+        "midi": 41,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 35.06,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 35.179,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 35.179,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 35.298,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 74,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 35.298,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 35.298,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 35.298,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 35.298,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 35.417,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 35.417,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 35.536,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 35.536,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 35.536,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 35.655,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 35.655,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 35.655,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 35.774,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 75,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 35.774,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 35.774,
+      "kind": "clap"
+    },
+    {
+      "time": 35.774,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 35.774,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 35.893,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 35.893,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.012,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 36.012,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 36.012,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 36.012,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.131,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 36.131,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.25,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 76,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 36.25,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 36.25,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 36.25,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 1
+      }
+    },
+    {
+      "time": 36.25,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.37,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 36.37,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.489,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 36.489,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.608,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 36.608,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 36.608,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.727,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 77,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 36.727,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 36.727,
+      "kind": "clap"
+    },
+    {
+      "time": 36.727,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 36.727,
+      "kind": "arp",
+      "data": {
+        "midi": 77,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.846,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 36.846,
+      "kind": "arp",
+      "data": {
+        "midi": 69,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 36.965,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 36.965,
+      "kind": "bass",
+      "data": {
+        "midi": 41,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 36.965,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 37.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 37.084,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 37.203,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 78,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 37.203,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 37.203,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 37.203,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 37.203,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 37.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 37.322,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 37.441,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 37.441,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 37.441,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 37.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 37.56,
+      "kind": "bass",
+      "data": {
+        "midi": 29,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 37.56,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 37.679,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 79,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 37.679,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 37.679,
+      "kind": "clap"
+    },
+    {
+      "time": 37.679,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 37.679,
+      "kind": "arp",
+      "data": {
+        "midi": 89,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 37.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 37.798,
+      "kind": "arp",
+      "data": {
+        "midi": 81,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 37.917,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 37.917,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 37.917,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 37.917,
+      "kind": "arp",
+      "data": {
+        "midi": 93,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 38.036,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.155,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 80,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 38.155,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          52,
+          55,
+          60,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 38.155,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 38.155,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 38.155,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 1
+      }
+    },
+    {
+      "time": 38.155,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 38.274,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.393,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 38.393,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 38.512,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 38.512,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.631,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 81,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 38.631,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 38.631,
+      "kind": "clap"
+    },
+    {
+      "time": 38.631,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 38.631,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 38.75,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 38.87,
+      "kind": "bass",
+      "data": {
+        "midi": 48,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 38.87,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 38.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 38.989,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 39.108,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 82,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 39.108,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 39.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 39.108,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 39.108,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 39.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 39.227,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 39.346,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 39.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 39.346,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 39.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 39.465,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 39.465,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 39.584,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 83,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 39.584,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 39.584,
+      "kind": "clap"
+    },
+    {
+      "time": 39.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 39.584,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 39.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 39.703,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 39.822,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 39.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 39.822,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 39.822,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 39.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 39.941,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 40.06,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 84,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 40.06,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 40.06,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 40.06,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 1
+      }
+    },
+    {
+      "time": 40.06,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 40.06,
+      "kind": "riser",
+      "data": {
+        "duration": 3.8095238095238093
+      }
+    },
+    {
+      "time": 40.179,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 40.179,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 40.298,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 40.298,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 40.417,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 40.417,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 40.417,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 40.536,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 85,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 40.536,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 40.536,
+      "kind": "clap"
+    },
+    {
+      "time": 40.536,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 40.536,
+      "kind": "arp",
+      "data": {
+        "midi": 76,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 40.655,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 40.655,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 40.774,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 40.774,
+      "kind": "bass",
+      "data": {
+        "midi": 48,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 40.774,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 40.893,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 40.893,
+      "kind": "arp",
+      "data": {
+        "midi": 72,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.012,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 86,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 41.012,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 41.012,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 41.012,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 41.012,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.131,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 41.131,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.25,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 41.25,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 41.25,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.37,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 41.37,
+      "kind": "bass",
+      "data": {
+        "midi": 36,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 41.37,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.489,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 87,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 41.489,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 41.489,
+      "kind": "clap"
+    },
+    {
+      "time": 41.489,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 41.489,
+      "kind": "arp",
+      "data": {
+        "midi": 88,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.608,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 41.608,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.727,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 41.727,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 41.727,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 41.727,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.846,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 41.846,
+      "kind": "arp",
+      "data": {
+        "midi": 84,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 41.965,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 88,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 41.965,
+      "kind": "pad",
+      "data": {
+        "midis": [
+          55,
+          59,
+          62,
+          64
+        ],
+        "duration": 4
+      }
+    },
+    {
+      "time": 41.965,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 41.965,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 41.965,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 1
+      }
+    },
+    {
+      "time": 41.965,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 42.084,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 42.084,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 42.203,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 42.203,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 42.322,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 42.322,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 42.322,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 42.441,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 89,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 42.441,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 42.441,
+      "kind": "clap"
+    },
+    {
+      "time": 42.441,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 42.441,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 42.56,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 42.56,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 42.679,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 42.679,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 42.679,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 42.798,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 42.798,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 42.917,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 90,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 42.917,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 42.917,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 42.917,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 42.917,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.036,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 43.036,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.155,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 43.155,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 43.155,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.274,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 43.274,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 43.274,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.393,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 91,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 43.393,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 43.393,
+      "kind": "clap"
+    },
+    {
+      "time": 43.393,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 43.393,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.512,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 43.512,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.631,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 43.631,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 43.631,
+      "kind": "bass",
+      "data": {
+        "midi": 38,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 43.631,
+      "kind": "arp",
+      "data": {
+        "midi": 91,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.75,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 43.75,
+      "kind": "arp",
+      "data": {
+        "midi": 83,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.87,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 92,
+        "isDownbeat": true
+      }
+    },
+    {
+      "time": 43.87,
+      "kind": "kick",
+      "data": {
+        "vel": 1
+      }
+    },
+    {
+      "time": 43.87,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 43.87,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 1
+      }
+    },
+    {
+      "time": 43.87,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 43.989,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 43.989,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 44.108,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 44.108,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 44.227,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 44.227,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 44.227,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 44.346,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 93,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 44.346,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 44.346,
+      "kind": "clap"
+    },
+    {
+      "time": 44.346,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 44.346,
+      "kind": "arp",
+      "data": {
+        "midi": 74,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 44.465,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 44.465,
+      "kind": "arp",
+      "data": {
+        "midi": 67,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 44.584,
+      "kind": "hat",
+      "data": {
+        "vel": 0.14,
+        "decay": 0.2
+      }
+    },
+    {
+      "time": 44.584,
+      "kind": "bass",
+      "data": {
+        "midi": 43,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 44.584,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 44.703,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 44.703,
+      "kind": "arp",
+      "data": {
+        "midi": 71,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 44.822,
+      "kind": "beat",
+      "data": {
+        "beatNumber": 94,
+        "isDownbeat": false
+      }
+    },
+    {
+      "time": 44.822,
+      "kind": "kick",
+      "data": {
+        "vel": 0.9
+      }
+    },
+    {
+      "time": 44.822,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 44.822,
+      "kind": "bass",
+      "data": {
+        "midi": 31,
+        "vel": 0.75
+      }
+    },
+    {
+      "time": 44.822,
+      "kind": "arp",
+      "data": {
+        "midi": 79,
+        "vel": 0.85
+      }
+    },
+    {
+      "time": 44.941,
+      "kind": "hat",
+      "data": {
+        "vel": 0.045,
+        "decay": 0.03
+      }
+    },
+    {
+      "time": 44.941,
+      "kind": "arp",
+      "data": {
+        "midi": 86,
+        "vel": 0.85
+      }
+    }
+  ]
+}

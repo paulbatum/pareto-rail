@@ -10,6 +10,7 @@
     "check:scope": "bash scripts/check-level-scope.sh",
     "snapshot": "node scripts/snapshot.mjs",
     "snapshot:gameplay": "node scripts/gameplay-snapshot.mjs",
+    "trace:audio": "node scripts/audio-trace.mjs",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",
     "sim:crystal-debug:verbose": "node scripts/run-crystal-debug-sim.mjs --verbose"
   },
