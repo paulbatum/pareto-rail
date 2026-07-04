@@ -1,4 +1,5 @@
 import type { Object3D, PerspectiveCamera, Scene } from 'three';
+import type { Node, PassNode } from 'three/webgpu';
 import type { EventBus } from '../events';
 import type { Hud } from '../ui/hud';
 
@@ -28,6 +29,20 @@ export type LevelContext = {
   debugValue?: string;
 };
 
+export type LevelPostColorNode = Node<'vec4'>;
+export type LevelPostUvNode = Node<'vec2'>;
+
+export type LevelPostComposeInput = {
+  /** Bloom-composited frame (scenePass.add(bloomPass)) — the default output. */
+  base: LevelPostColorNode;
+  /** Raw scene pass node; use getTextureNode().sample(uv) for blur/distortion taps. */
+  scenePass: PassNode;
+  /** Bloom pass node. */
+  bloomPass: LevelPostColorNode;
+  /** Screen UV node from three/tsl. */
+  screenUV: LevelPostUvNode;
+};
+
 export type LevelPostConfig = {
   clearColor?: number;
   bloom?: {
@@ -40,6 +55,7 @@ export type LevelPostConfig = {
     outer?: number;
     strength?: number;
   } | false;
+  composeOutput?: (input: LevelPostComposeInput) => LevelPostColorNode;
 };
 
 export type LevelDebugSelector = {

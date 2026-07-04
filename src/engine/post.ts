@@ -41,9 +41,10 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
   bloomRefs.set(bloomPass, baseStrength);
 
   const post = new RenderPipeline(renderer);
-  const output = scenePass.add(bloomPass);
+  const base = scenePass.add(bloomPass);
+  const composed = config.composeOutput?.({ base, scenePass, bloomPass, screenUV }) ?? base;
   if (config.vignette === false) {
-    post.outputNode = output;
+    post.outputNode = composed;
   } else {
     const vignetteStrength = config.vignette?.strength ?? DEFAULT_VIGNETTE_STRENGTH;
     const vignetteFloor = config.vignette?.strength === undefined ? DEFAULT_VIGNETTE_FLOOR : 1 - vignetteStrength;
@@ -54,7 +55,7 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
     )
       .mul(vignetteStrength)
       .add(vignetteFloor);
-    post.outputNode = output.mul(vignette);
+    post.outputNode = composed.mul(vignette);
   }
 
   return {

@@ -53,17 +53,41 @@ Every level must also express rejected releases in its own visual and audio lang
 
 ## Post-processing
 
-`LevelDefinition.post` is optional and declarative:
+`LevelDefinition.post` is optional. Most levels only tune the shared bloom and vignette:
 
 ```ts
 post?: {
   clearColor?: number;
   bloom?: { strength?: number; threshold?: number; radius?: number };
   vignette?: { inner?: number; outer?: number; strength?: number } | false;
+  composeOutput?: (input: LevelPostComposeInput) => LevelPostColorNode;
 };
 ```
 
 Omitting it preserves the shared default frame. The engine always multiplies the level bloom strength by the player's bloom slider, so levels cannot bypass the pause-menu bloom setting.
+
+A level can use `composeOutput` to add a small TSL screen-space effect while leaving the shared pipeline in `src/engine/post.ts`. Keep effect uniforms at module scope, write them from the level runtime, and sample the raw scene with `scenePass.getTextureNode().sample(customUv)`. The hook receives `base`, which is already `scenePass.add(bloomPass)`, and the engine applies the shared vignette after the hook returns.
+
+```ts
+import { mix, uniform, vec2, vec4 } from 'three/tsl';
+import type { LevelPostConfig } from '../../engine/types';
+
+const speedBlur = uniform(0);
+const flash = uniform(0);
+
+export const post: LevelPostConfig = {
+  composeOutput({ base, scenePass, screenUV }) {
+    const sceneTexture = scenePass.getTextureNode();
+    const centerPull = vec2(0.5).sub(screenUV).mul(speedBlur);
+    const tap1 = sceneTexture.sample(screenUV.add(centerPull.mul(0.20)));
+    const tap2 = sceneTexture.sample(screenUV.add(centerPull.mul(0.45)));
+    const tap3 = sceneTexture.sample(screenUV.add(centerPull.mul(0.70)));
+    const blurred = base.add(tap1).add(tap2).add(tap3).mul(0.25);
+
+    return mix(base, blurred, speedBlur).add(vec4(1, 0.7, 0.35, 0).mul(flash));
+  },
+};
+```
 
 The bloom slider goes to 0. A level must stay playable and legible with bloom fully off. Do not rely on bloom alone to make targets, letters, or the reticle visible; HDR colors control how hard things glow when bloom is on, but base geometry and color must carry readability when it is off.
 
