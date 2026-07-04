@@ -25,6 +25,19 @@ export type GameEvents = {
     indexInVolley?: number;
     lethal: boolean;
     hitPointsRemaining: number;
+    hitStageIndex: number;
+    hitStageCount: number;
+    stageCompleted: boolean;
+    stageHitPointsRemaining: number;
+  };
+  stage: {
+    enemyId: number;
+    worldPosition: Vector3;
+    previousStageIndex: number;
+    stageIndex: number;
+    hitStageCount: number;
+    stageHitPoints: number;
+    letter?: string;
   };
   kill: {
     enemyId: number;

@@ -223,16 +223,23 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     spawnGlint(worldPosition, hdr(CORE_WHITE, 1.2), 0.5, 0.12);
   });
 
-  bus.on('hit', ({ enemyId, projectileId, worldPosition, lethal, hitPointsRemaining }) => {
+  bus.on('hit', ({ enemyId, projectileId, worldPosition, lethal }) => {
     projectileRecords.delete(projectileId);
     burstSparks(worldPosition, hdr(CORE_WHITE, 0.9), 6, 12);
     const record = enemyRecords.get(enemyId);
-    if (record?.mesh.userData.kind === 'warden-shield' && !lethal) {
-      record.mesh.userData.damageLevel = Math.max(record.mesh.userData.damageLevel ?? 0, 2 - hitPointsRemaining);
+    if ((record?.mesh.userData.kind === 'warden-shield' || record?.mesh.userData.kind === 'warden-core') && !lethal) {
       record.mesh.userData.damageFlashUntil = elapsedNow + 0.42;
       spawnRing(worldPosition, hdr(CYAN, 1.35), 4.2, 0.34);
       spawnGlint(worldPosition, hdr(CORE_WHITE, 2.0), 1.3, 0.18);
     }
+  });
+
+  bus.on('stage', ({ enemyId, worldPosition, stageIndex }) => {
+    const record = enemyRecords.get(enemyId);
+    if (record?.mesh.userData.kind !== 'warden-shield' && record?.mesh.userData.kind !== 'warden-core') return;
+    if (record) record.mesh.userData.damageLevel = Math.max(record.mesh.userData.damageLevel ?? 0, stageIndex);
+    spawnRing(worldPosition, hdr(AMBER, 1.5), 5.8, 0.5);
+    spawnGlint(worldPosition, hdr(CORE_WHITE, 2.2), 1.8, 0.22);
   });
 
   bus.on('kill', ({ enemyId, worldPosition }) => {

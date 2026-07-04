@@ -92,7 +92,7 @@ function debugWave(kind: Exclude<CrystalDebugTarget, 'warden'>): CrystalSpawnEnt
   return {
     time: 1.0,
     kind,
-    hitPoints: 999,
+    hitStages: Array.from({ length: 12 }, () => 6),
     data: {
       role: 'wave',
       lead: 0,
@@ -107,10 +107,10 @@ function debugWave(kind: Exclude<CrystalDebugTarget, 'warden'>): CrystalSpawnEnt
 function createDebugTimeline(target: CrystalDebugTarget): CrystalSpawnEntry[] {
   const timeline: CrystalSpawnEntry[] = target === 'warden'
     ? [
-      { time: 1.0, kind: 'warden-core', hitPoints: 4, lockable: false, data: { role: 'core' } },
-      { time: 1.2, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 0 } },
-      { time: 1.3, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 1 } },
-      { time: 1.4, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 2 } },
+      { time: 1.0, kind: 'warden-core', hitStages: [6, 6], lockable: false, data: { role: 'core' } },
+      { time: 1.2, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 0 } },
+      { time: 1.3, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 1 } },
+      { time: 1.4, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 2 } },
     ]
     : [debugWave(target)];
   return timeline.sort((a, b) => a.time - b.time);
@@ -325,10 +325,13 @@ export function createCrystalGameplay(
     const { enemy, runTime, age, runProgress, curve, camera } = context;
     // Anchored a fixed distance ahead of the camera (tangent offset, not a
     // timeline anchor) so the Warden holds the screen to the end of the rail.
+    const exposedJuke = boss.exposed ? 1 : 0;
     const sway = new Vector3(
-      Math.sin(runTime * 0.5) * 3.4,
-      2.1 + Math.sin(runTime * 0.8) * 1.5,
-      28,
+      Math.sin(runTime * 0.5) * 3.4
+        + exposedJuke * (Math.sin(runTime * 2.9) * 2.1 + Math.sin(runTime * 5.1) * 0.9),
+      2.1 + Math.sin(runTime * 0.8) * 1.5
+        + exposedJuke * (Math.cos(runTime * 2.6) * 1.4 + Math.sin(runTime * 4.7) * 0.65),
+      28 + exposedJuke * Math.sin(runTime * 3.7) * 2.2,
     );
     boss.corePosition.copy(offsetFromRail(curve, MathUtils.clamp(runProgress, 0, 1), sway));
     enemy.mesh.position.copy(boss.corePosition);

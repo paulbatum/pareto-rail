@@ -18,6 +18,7 @@ const START_WORD = 'START!';
 const REPLAY_WORD = 'REPLAY';
 const CONTROL_TIP = 'HOLD to charge — SWEEP across all six targets — RELEASE to fire';
 const PLAYER_INVULNERABILITY_SECONDS = 0.9;
+const REPEAT_LOCK_DELAY = 0.18;
 
 type RunState = 'attract' | 'running' | 'ended';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
@@ -38,6 +39,7 @@ export type LockOnSpawnEntry<TKind extends string = string, TData = unknown> = {
   data: TData;
   letter?: string;
   hitPoints?: number;
+  hitStages?: number[];
   lockable?: boolean;
   countsTowardTotal?: boolean;
 };
@@ -50,6 +52,9 @@ export type LockOnEnemy<TKind extends string = string, TData = unknown> = {
   entry: LockOnSpawnEntry<TKind, TData>;
   letter?: string;
   hitPointsRemaining: number;
+  hitStageIndex: number;
+  hitStageCount: number;
+  stageHitPointsRemaining: number;
 };
 
 export type LockOnEnemyUpdate<TKind extends string = string, TData = unknown> = {
@@ -97,6 +102,9 @@ type Enemy<TKind extends string, TData> = {
   mesh: Object3D;
   spawnTime: number;
   locked: boolean;
+  lastLockedAt: number;
+  hitStages: number[];
+  hitStageIndex: number;
   hitPointsRemaining: number;
   entry?: LockOnSpawnEntry<TKind, TData>;
   letter?: string;
@@ -398,6 +406,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     const id = nextEnemyId;
     nextEnemyId += 1;
     if (dynamic && countsEntryTowardTotal(entry)) dynamicCountedEnemies += 1;
+    const hitStages = normalizedHitStages(entry);
     const mesh = visuals.createEnemyMesh(entry.kind, entry.letter);
     const enemy: Enemy<TKind, TData> = {
       id,
@@ -406,7 +415,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       mesh,
       spawnTime: runTime,
       locked: false,
-      hitPointsRemaining: normalizedHitPoints(entry),
+      lastLockedAt: -Infinity,
+      hitStages,
+      hitStageIndex: 0,
+      hitPointsRemaining: hitStages[0],
       entry,
       letter: entry.letter,
     };
@@ -429,6 +441,9 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         mesh,
         spawnTime: worldTime,
         locked: false,
+        lastLockedAt: -Infinity,
+        hitStages: [1],
+        hitStageIndex: 0,
         hitPointsRemaining: 1,
         letter,
         letterIndex: index,
@@ -476,7 +491,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       spawnTime: enemy.spawnTime,
       entry: enemy.entry,
       letter: enemy.letter,
-      hitPointsRemaining: enemy.hitPointsRemaining,
+      hitPointsRemaining: totalHitPointsRemaining(enemy),
+      hitStageIndex: enemy.hitStageIndex,
+      hitStageCount: enemy.hitStages.length,
+      stageHitPointsRemaining: enemy.hitPointsRemaining,
     };
   }
 
@@ -507,8 +525,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
     for (const enemy of enemies.values()) {
       if (locks.length >= MAX_LOCKS) return;
-      if (enemy.locked) continue;
-      if (enemy.purpose === 'enemy' && enemy.entry?.lockable === false) continue;
+      if (!canLockEnemy(enemy)) continue;
       const projected = enemy.mesh.position.clone().project(camera);
       if (projected.z < -1 || projected.z > 1) continue;
       const dx = projected.x - input.state.pointerNdc.x;
@@ -522,8 +539,28 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     }
   }
 
+  function canLockEnemy(enemy: Enemy<TKind, TData>) {
+    if (enemy.purpose === 'enemy' && enemy.entry?.lockable === false) return false;
+    const existingLocks = lockCountForEnemy(enemy.id);
+    if (existingLocks >= lockCapacityForEnemy(enemy)) return false;
+    if (existingLocks > 0 && worldTime - enemy.lastLockedAt < REPEAT_LOCK_DELAY) return false;
+    return true;
+  }
+
+  function lockCapacityForEnemy(enemy: Enemy<TKind, TData>) {
+    if (enemy.purpose !== 'enemy') return 1;
+    return Math.min(MAX_LOCKS, Math.max(1, enemy.hitPointsRemaining));
+  }
+
+  function lockCountForEnemy(enemyId: number) {
+    let count = 0;
+    for (const lockedId of locks) if (lockedId === enemyId) count += 1;
+    return count;
+  }
+
   function lockEnemy(enemy: Enemy<TKind, TData>) {
     enemy.locked = true;
+    enemy.lastLockedAt = worldTime;
     locks.push(enemy.id);
     visuals.setEnemyLocked(enemy.mesh, true, locks.length);
     bus.emit('lock', {
@@ -626,7 +663,16 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (enemyId === undefined) return;
     const enemy = enemies.get(enemyId);
     if (!enemy) return;
-    unlockEnemy(enemy);
+    if (lockCountForEnemy(enemy.id) === 0) {
+      enemy.locked = false;
+      visuals.setEnemyLocked(enemy.mesh, false);
+    }
+    bus.emit('unlock', {
+      enemyId: enemy.id,
+      lockCount: locks.length,
+      worldPosition: enemy.mesh.position.clone(),
+      letter: enemy.letter,
+    });
   }
 
   function fireLocks(released: number[]) {
@@ -635,7 +681,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (releasedEnemies.length === 0) return;
     const volleyId = state === 'running' ? createVolley(releasedEnemies) : undefined;
 
-    releasedEnemies.forEach((enemy, index) => {
+    for (const enemy of uniqueTargets(releasedEnemies)) {
       enemy.locked = false;
       visuals.setEnemyLocked(enemy.mesh, false);
       bus.emit('unlock', {
@@ -644,6 +690,9 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         worldPosition: enemy.mesh.position.clone(),
         letter: enemy.letter,
       });
+    }
+
+    releasedEnemies.forEach((enemy, index) => {
       pendingShots.push({
         projectileId: nextProjectileId,
         enemyId: enemy.id,
@@ -708,19 +757,18 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   }
 
   function unlockReleased(released: number[]) {
-    for (const enemyId of released) {
-      const enemy = enemies.get(enemyId);
-      if (!enemy) continue;
+    const releasedEnemies = uniqueTargets(released.map((enemyId) => enemies.get(enemyId)).filter((enemy) => enemy !== undefined));
+    locks.length = 0;
+    for (const enemy of releasedEnemies) {
       enemy.locked = false;
       visuals.setEnemyLocked(enemy.mesh, false);
       bus.emit('unlock', {
-        enemyId,
-        lockCount: Math.max(0, locks.length - 1),
+        enemyId: enemy.id,
+        lockCount: locks.length,
         worldPosition: enemy.mesh.position.clone(),
         letter: enemy.letter,
       });
     }
-    locks.length = 0;
   }
 
   function updatePendingShots() {
@@ -794,6 +842,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         indexInVolley: projectile.indexInVolley,
         lethal: true,
         hitPointsRemaining: 0,
+        hitStageIndex: 0,
+        hitStageCount: 1,
+        stageCompleted: true,
+        stageHitPointsRemaining: 0,
       });
       removeProjectile(projectile);
       removeEnemy(enemy);
@@ -810,7 +862,8 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     }
 
     enemy.hitPointsRemaining = Math.max(0, enemy.hitPointsRemaining - 1);
-    const lethal = enemy.hitPointsRemaining <= 0;
+    const stageCompleted = enemy.hitPointsRemaining <= 0;
+    const lethal = stageCompleted && enemy.hitStageIndex >= enemy.hitStages.length - 1;
     bus.emit('hit', {
       enemyId: enemy.id,
       projectileId: projectile.id,
@@ -819,7 +872,11 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       volleyId: projectile.volleyId,
       indexInVolley: projectile.indexInVolley,
       lethal,
-      hitPointsRemaining: enemy.hitPointsRemaining,
+      hitPointsRemaining: lethal ? 0 : totalHitPointsRemaining(enemy),
+      hitStageIndex: enemy.hitStageIndex,
+      hitStageCount: enemy.hitStages.length,
+      stageCompleted,
+      stageHitPointsRemaining: enemy.hitPointsRemaining,
     });
     removeProjectile(projectile);
 
@@ -827,6 +884,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (!lethal) {
       const award = level.scoreForHit?.(projectile.volleySize, publicEnemy) ?? 0;
       score += award;
+      if (stageCompleted) advanceEnemyStage(enemy, worldPosition);
       resolveVolleyMember(projectile.volleyId, projectile.indexInVolley, true);
       return;
     }
@@ -846,6 +904,21 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     resolveVolleyMember(projectile.volleyId, projectile.indexInVolley, true);
   }
 
+  function advanceEnemyStage(enemy: Enemy<TKind, TData>, worldPosition: Vector3) {
+    const previousStageIndex = enemy.hitStageIndex;
+    enemy.hitStageIndex += 1;
+    enemy.hitPointsRemaining = enemy.hitStages[enemy.hitStageIndex];
+    bus.emit('stage', {
+      enemyId: enemy.id,
+      worldPosition: worldPosition.clone(),
+      previousStageIndex,
+      stageIndex: enemy.hitStageIndex,
+      hitStageCount: enemy.hitStages.length,
+      stageHitPoints: enemy.hitPointsRemaining,
+      letter: enemy.letter,
+    });
+  }
+
   function missEnemy(enemy: Enemy<TKind, TData>) {
     const worldPosition = enemy.mesh.position.clone();
     if (enemy.locked) unlockEnemy(enemy);
@@ -857,8 +930,9 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function unlockEnemy(enemy: Enemy<TKind, TData>) {
     enemy.locked = false;
-    const index = locks.indexOf(enemy.id);
-    if (index >= 0) locks.splice(index, 1);
+    for (let i = locks.length - 1; i >= 0; i -= 1) {
+      if (locks[i] === enemy.id) locks.splice(i, 1);
+    }
     visuals.setEnemyLocked(enemy.mesh, false);
     bus.emit('unlock', {
       enemyId: enemy.id,
@@ -917,8 +991,21 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     return enemy.purpose === 'enemy' && enemy.entry !== undefined && countsEntryTowardTotal(enemy.entry);
   }
 
-  function normalizedHitPoints(entry: LockOnSpawnEntry<TKind, TData>) {
-    return Math.max(1, entry.hitPoints ?? 1);
+  function normalizedHitStages(entry: LockOnSpawnEntry<TKind, TData>) {
+    const stages = entry.hitStages ?? [entry.hitPoints ?? 1];
+    if (stages.length === 0) throw new Error(`Enemy ${entry.kind} has no hit stages`);
+    return stages.map((stageHitPoints) => {
+      const normalized = Math.floor(stageHitPoints);
+      if (normalized < 1) throw new Error(`Enemy ${entry.kind} has a hit stage below 1 HP`);
+      if (normalized > MAX_LOCKS) throw new Error(`Enemy ${entry.kind} has a hit stage above ${MAX_LOCKS} HP`);
+      return normalized;
+    });
+  }
+
+  function totalHitPointsRemaining(enemy: Enemy<TKind, TData>) {
+    let total = enemy.hitPointsRemaining;
+    for (let i = enemy.hitStageIndex + 1; i < enemy.hitStages.length; i += 1) total += enemy.hitStages[i];
+    return total;
   }
 
   function currentHealthForHud() {

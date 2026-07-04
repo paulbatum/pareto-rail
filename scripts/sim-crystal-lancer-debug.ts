@@ -22,6 +22,9 @@ class SimEnemy implements Enemy {
   entry: Entry;
   letter?: string;
   hitPointsRemaining: number;
+  hitStageIndex = 0;
+  hitStageCount: number;
+  stageHitPointsRemaining: number;
 
   constructor(id: number, entry: Entry, runTime: number) {
     this.id = id;
@@ -29,7 +32,10 @@ class SimEnemy implements Enemy {
     this.spawnTime = runTime;
     this.entry = entry;
     this.letter = entry.letter;
-    this.hitPointsRemaining = Math.max(1, entry.hitPoints ?? 1);
+    const stages = entry.hitStages ?? [entry.hitPoints ?? 1];
+    this.hitStageCount = stages.length;
+    this.hitPointsRemaining = Math.max(1, stages[0] ?? 1);
+    this.stageHitPointsRemaining = this.hitPointsRemaining;
   }
 }
 

@@ -129,11 +129,11 @@ const TIMELINE: CrystalSpawnEntry[] = [
   ]),
 
   // --- Act 3 (30s–end): the Crystal Warden. Core is unlockable until all three
-  // shield plates are cracked (2 hits each); then 4 hits to the heart.
-  { time: BOSS_TIME, kind: 'warden-core', hitPoints: 4, lockable: false, data: { role: 'core' } },
-  { time: BOSS_TIME + 0.2, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 0 } },
-  { time: BOSS_TIME + 0.3, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 1 } },
-  { time: BOSS_TIME + 0.4, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 2 } },
+  // shield plates break through two 1-HP stages; then the heart takes two full volleys.
+  { time: BOSS_TIME, kind: 'warden-core', hitStages: [6, 6], lockable: false, data: { role: 'core' } },
+  { time: BOSS_TIME + 0.2, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 0 } },
+  { time: BOSS_TIME + 0.3, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 1 } },
+  { time: BOSS_TIME + 0.4, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 2 } },
 ];
 
 export const CRYSTAL_TIMELINE: CrystalSpawnEntry[] = TIMELINE.sort((a, b) => a.time - b.time);
@@ -340,10 +340,13 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     const { enemy, runTime, age, runProgress, curve, camera } = context;
     // Anchored a fixed distance ahead of the camera (tangent offset, not a
     // timeline anchor) so the Warden holds the screen to the end of the rail.
+    const exposedJuke = boss.exposed ? 1 : 0;
     const sway = new Vector3(
-      Math.sin(runTime * 0.5) * 3.4,
-      2.1 + Math.sin(runTime * 0.8) * 1.5,
-      28,
+      Math.sin(runTime * 0.5) * 3.4
+        + exposedJuke * (Math.sin(runTime * 2.9) * 2.1 + Math.sin(runTime * 5.1) * 0.9),
+      2.1 + Math.sin(runTime * 0.8) * 1.5
+        + exposedJuke * (Math.cos(runTime * 2.6) * 1.4 + Math.sin(runTime * 4.7) * 0.65),
+      28 + exposedJuke * Math.sin(runTime * 3.7) * 2.2,
     );
     boss.corePosition.copy(offsetFromRail(curve, MathUtils.clamp(runProgress, 0, 1), sway));
     enemy.mesh.position.copy(boss.corePosition);
