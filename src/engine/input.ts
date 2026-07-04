@@ -9,6 +9,7 @@ export type InputState = {
 export type InputHandlers = {
   onRestart: () => void;
   onPause: () => void;
+  onFullscreen?: () => void;
   onPointerDown?: () => void;
 };
 
@@ -41,6 +42,7 @@ export function createInput(target: HTMLElement, handlers: InputHandlers) {
   };
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') handlers.onPause();
+    if (event.key.toLowerCase() === 'f') handlers.onFullscreen?.();
     if (event.key.toLowerCase() === 'r') handlers.onRestart();
   };
 

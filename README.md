@@ -11,4 +11,4 @@ npm install
 npm run dev
 ```
 
-Requires a WebGPU-capable browser (recent Chrome/Edge). Esc pauses and opens volume/glow settings.
+Requires a WebGPU-capable browser (recent Chrome/Edge). Esc pauses and opens volume/glow/fullscreen settings. On iPhone/iPad Safari, use Share → Add to Home Screen for the closest fullscreen experience.

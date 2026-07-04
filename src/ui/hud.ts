@@ -41,6 +41,10 @@ export function createHud() {
       hud.classList.toggle('hud-inactive', !active);
     },
 
+    setTip(message: string) {
+      tip.textContent = message;
+    },
+
     showTip() {
       tip.classList.remove('hidden');
     },

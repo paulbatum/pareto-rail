@@ -1,4 +1,5 @@
 import type { EventBus } from '../../events';
+import { createBrowserAudioContext, installAudioUnlock } from '../../engine/audio-unlock';
 import { emitBeatAt, midiToFreq, quantizeToGrid, secondsPerStep } from '../../engine/music';
 
 const BPM = 96;
@@ -11,6 +12,7 @@ const SCALE = [62, 65, 69, 72, 74, 77, 81, 84];
 export function createAudio(bus: EventBus) {
   let ctx: AudioContext | null = null;
   let intervalId = 0;
+  let unlockGestureStart: (() => void) | null = null;
   let nextTickTime = 0;
   let sixteenthIndex = 0;
   let runStart = 0;
@@ -22,7 +24,7 @@ export function createAudio(bus: EventBus) {
 
   const start = async () => {
     if (!ctx) {
-      ctx = new AudioContext();
+      ctx = createBrowserAudioContext();
       buildGraph(ctx);
       nextTickTime = ctx.currentTime + 0.06;
       intervalId = window.setInterval(schedule, SCHEDULER_MS);
@@ -31,9 +33,8 @@ export function createAudio(bus: EventBus) {
   };
 
   const installGestureStart = () => {
-    const wake = () => void start();
-    window.addEventListener('pointerdown', wake, { once: true });
-    window.addEventListener('keydown', wake, { once: true });
+    unlockGestureStart?.();
+    unlockGestureStart = installAudioUnlock(start);
   };
 
   function buildGraph(context: AudioContext) {
@@ -191,6 +192,8 @@ export function createAudio(bus: EventBus) {
       if (ctx && ctx.state === 'running') await ctx.suspend();
     },
     dispose() {
+      unlockGestureStart?.();
+      unlockGestureStart = null;
       if (intervalId) window.clearInterval(intervalId);
       void ctx?.close();
       ctx = null;

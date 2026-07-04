@@ -23,6 +23,8 @@ export type LevelContext = {
   bus: EventBus;
   hud: Hud;
   onPause: () => void;
+  onFullscreen: () => void;
+  startTip: string;
 };
 
 export type LevelDefinition = {

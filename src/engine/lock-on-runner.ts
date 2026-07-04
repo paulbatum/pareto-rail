@@ -16,6 +16,7 @@ const FIRE_STAGGER = 0.06;
 const WORD_DISTANCE = 20;
 const START_WORD = 'START';
 const REPLAY_WORD = 'REPLAY';
+const CONTROL_TIP = 'HOLD to charge — SWEEP across all five letters — RELEASE to fire';
 
 type RunState = 'attract' | 'running' | 'ended';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
@@ -100,13 +101,15 @@ export type LockOnRunnerOptions<TKind extends string = string, TData = unknown> 
   hud: Hud;
   visuals: VisualFactories;
   onPause: () => void;
+  onFullscreen: () => void;
+  startTip: string;
   level: LockOnRunnerLevel<TKind, TData>;
 };
 
 export function createLockOnRunner<TKind extends string = string, TData = unknown>(
   options: LockOnRunnerOptions<TKind, TData>,
 ) {
-  const { scene, camera, canvas, bus, hud, visuals, onPause, level } = options;
+  const { scene, camera, canvas, bus, hud, visuals, onPause, onFullscreen, startTip, level } = options;
   const duration = level.duration;
   const startWord = level.startWord ?? START_WORD;
   const replayWord = level.replayWord ?? REPLAY_WORD;
@@ -115,6 +118,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const input = createInput(canvas, {
     onRestart: () => startRun(),
     onPause,
+    onFullscreen,
     onPointerDown: () => recordAttractPointerDown(),
   });
   const raycaster = new Raycaster();
@@ -165,7 +169,8 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     missed = 0;
     spawnIndex = 0;
     hud.hideEnd();
-    hud.hideTip();
+    hud.setTip(startTip);
+    hud.showTip();
     hud.setHudActive(false);
     hud.update({ score, timeRemaining: duration, lockCount: 0 });
     updateAttractCamera(0);
@@ -441,7 +446,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       unlockReleased(released);
       if (purpose === 'start-letter') {
         failedAttractReleases += 1;
-        if (failedAttractReleases >= 3) hud.showTip();
+        if (failedAttractReleases >= 3) {
+          hud.setTip(CONTROL_TIP);
+          hud.showTip();
+        }
       }
       return;
     }
@@ -622,7 +630,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function recordAttractPointerDown() {
     if (state !== 'attract' || attractReachedFullLocks) return;
     attractPointerDowns += 1;
-    if (attractPointerDowns >= 8) hud.showTip();
+    if (attractPointerDowns >= 8) {
+      hud.setTip(CONTROL_TIP);
+      hud.showTip();
+    }
   }
 
   function endRun() {

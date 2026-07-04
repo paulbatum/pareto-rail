@@ -4,6 +4,7 @@ import { WebGPURenderer } from 'three/webgpu';
 import { createEventBus } from './events';
 import { createPost, getBloomLevel, setBloomLevel } from './engine/post';
 import { getLevelById, levels } from './levels';
+import { getStartScreenTip } from './ui/client-tip';
 import { createHud, showUnsupported } from './ui/hud';
 import { createPauseMenu } from './ui/pause';
 
@@ -51,12 +52,19 @@ async function bootstrap() {
   let paused = false;
   let last = performance.now();
   let setPaused = (_paused: boolean) => {};
+  const fullscreenAvailable = canUseFullscreen();
   const togglePause = () => setPaused(!paused);
+  const toggleFullscreen = () => {
+    if (!fullscreenAvailable) return;
+    void setFullscreen(!document.fullscreenElement);
+  };
 
   const pauseMenu = createPauseMenu({
+    fullscreenAvailable,
     initialVolume: audio.getMasterVolume() * 100,
     initialBloom: getBloomLevel() * 100,
     onResume: () => setPaused(false),
+    onFullscreen: toggleFullscreen,
     onVolume: (value) => {
       localStorage.setItem('raild-volume', `${value}`);
       audio.setMasterVolume(value / 100);
@@ -82,6 +90,8 @@ async function bootstrap() {
     bus,
     hud,
     onPause: togglePause,
+    onFullscreen: toggleFullscreen,
+    startTip: getStartScreenTip(fullscreenAvailable),
   });
 
   document.body.classList.remove('booting');
@@ -127,6 +137,19 @@ function installLevelPicker(activeId: string) {
   });
   host.append(select);
   document.body.append(host);
+}
+
+function canUseFullscreen() {
+  return Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen);
+}
+
+async function setFullscreen(enabled: boolean) {
+  try {
+    if (enabled) await document.documentElement.requestFullscreen();
+    else if (document.fullscreenElement) await document.exitFullscreen();
+  } catch (error) {
+    console.warn('Fullscreen request failed', error);
+  }
 }
 
 function readStoredPercent(key: string, fallback: number) {

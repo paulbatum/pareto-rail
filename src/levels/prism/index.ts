@@ -18,7 +18,7 @@ export const prismBloomLevel: LevelDefinition = {
   title: 'Prism Bloom',
   description: 'A separate glassy level with its own rail, targets, visual language, and soundtrack.',
   createAudio,
-  createRuntime({ scene, camera, canvas, bus, hud, onPause }) {
+  createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
     createEnvironment(scene);
     installVisualEventHandlers(bus, scene);
     const game = createLockOnRunner({
@@ -28,6 +28,8 @@ export const prismBloomLevel: LevelDefinition = {
       bus,
       hud,
       onPause,
+      onFullscreen,
+      startTip,
       level: prismGameplay,
       visuals: {
         createEnemyMesh,

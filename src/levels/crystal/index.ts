@@ -18,7 +18,7 @@ export const crystalCorridorLevel: LevelDefinition = {
   title: 'Crystal Corridor',
   description: 'The original neon crystal rail run.',
   createAudio,
-  createRuntime({ scene, camera, canvas, bus, hud, onPause }) {
+  createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
     createEnvironment(scene);
     installVisualEventHandlers(bus, scene);
     const game = createLockOnRunner({
@@ -28,6 +28,8 @@ export const crystalCorridorLevel: LevelDefinition = {
       bus,
       hud,
       onPause,
+      onFullscreen,
+      startTip,
       level: crystalGameplay,
       visuals: {
         createEnemyMesh,

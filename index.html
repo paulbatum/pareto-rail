@@ -2,14 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>raild</title>
     <style>
       html,
       body {
         margin: 0;
         min-width: 320px;
-        min-height: 100vh;
+        min-height: 100dvh;
         overflow: hidden;
         background: #02040a;
         color: #e8f6ff;
@@ -106,6 +108,7 @@
       <div class="pause-panel">
         <h1 id="pause-title">Paused</h1>
         <button type="button" data-pause="resume">Resume</button>
+        <button type="button" data-pause="fullscreen">Fullscreen</button>
         <label>
           <span>Volume</span>
           <input data-pause="volume" type="range" min="0" max="100" value="80" />
