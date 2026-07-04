@@ -75,6 +75,7 @@ export function createEnvironment(scene: Scene) {
 
 export function createEnemyMesh(kind: string, letter?: string) {
   const mesh = buildEnemyMesh(kind, letter);
+  mesh.userData.kind = kind;
   mesh.scale.setScalar(0.001);
   pendingEnemyMeshes.push(mesh);
   return mesh;
@@ -110,6 +111,11 @@ export function setEnemyLocked(mesh: Object3D, locked: boolean) {
     return;
   }
   setCrystalLocked(mesh as Group, locked);
+}
+
+export function setEnemyDenied(mesh: Object3D) {
+  mesh.userData.deniedUntil = elapsedNow + 0.45;
+  spawnRing(mesh.position, hdr(AMBER, 1.0), 2.8, 0.32);
 }
 
 export function createProjectileMesh() {
@@ -216,9 +222,16 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     spawnGlint(worldPosition, hdr(CORE_WHITE, 1.2), 0.5, 0.12);
   });
 
-  bus.on('hit', ({ projectileId, worldPosition }) => {
+  bus.on('hit', ({ enemyId, projectileId, worldPosition, lethal, hitPointsRemaining }) => {
     projectileRecords.delete(projectileId);
     burstSparks(worldPosition, hdr(CORE_WHITE, 0.9), 6, 12);
+    const record = enemyRecords.get(enemyId);
+    if (record?.mesh.userData.kind === 'warden-shield' && !lethal) {
+      record.mesh.userData.damageLevel = Math.max(record.mesh.userData.damageLevel ?? 0, 2 - hitPointsRemaining);
+      record.mesh.userData.damageFlashUntil = elapsedNow + 0.42;
+      spawnRing(worldPosition, hdr(CYAN, 1.35), 4.2, 0.34);
+      spawnGlint(worldPosition, hdr(CORE_WHITE, 2.0), 1.3, 0.18);
+    }
   });
 
   bus.on('kill', ({ enemyId, worldPosition }) => {
@@ -242,6 +255,16 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
       enemyRecords.delete(enemyId);
     }
     burstSparks(worldPosition, AMBER.clone().multiplyScalar(0.5), 4, 3);
+  });
+
+  bus.on('shielded', ({ shields }) => {
+    for (const shield of shields) {
+      const record = enemyRecords.get(shield.enemyId);
+      if (record) record.mesh.userData.shieldFlashUntil = elapsedNow + 0.65;
+      spawnRing(shield.worldPosition, hdr(AMBER, 1.5), 4.8, 0.45);
+      spawnRing(shield.worldPosition, hdr(MAGENTA, 0.8), 2.6, 0.28);
+      spawnGlint(shield.worldPosition, hdr(CORE_WHITE, 1.7), 1.6, 0.2);
+    }
   });
 
   bus.on('beat', ({ isDownbeat }) => {
@@ -311,6 +334,37 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
       (userData.coreMaterial as MeshBasicMaterial).color.copy(coreColor).multiplyScalar(hotScale);
       const coreGlow = userData.coreGlow as Mesh;
       (coreGlow.material as MeshBasicMaterial).color.copy(glowColor).multiplyScalar(hotScale);
+    }
+
+    const damageLevel = userData.damageLevel as number | undefined;
+    if ((damageLevel ?? 0) > 0) {
+      if (userData.edgeMaterial) (userData.edgeMaterial as LineBasicMaterial).color.copy(hdr(AMBER, 1.05));
+      if (userData.fillMaterial) (userData.fillMaterial as MeshBasicMaterial).color.copy(hdr(AMBER, 0.26));
+      if (userData.coreMaterial) (userData.coreMaterial as MeshBasicMaterial).color.copy(hdr(CORE_WHITE, 1.15));
+      const coreGlow = userData.coreGlow as Mesh | undefined;
+      if (coreGlow) (coreGlow.material as MeshBasicMaterial).color.copy(hdr(AMBER, 0.55));
+    }
+
+    const deniedUntil = userData.deniedUntil as number | undefined;
+    const shieldFlashUntil = userData.shieldFlashUntil as number | undefined;
+    const shieldFlashUntilMax = Math.max(deniedUntil ?? -Infinity, shieldFlashUntil ?? -Infinity);
+    if (shieldFlashUntilMax > elapsedNow) {
+      const flash = Math.max(0, Math.min(1, (shieldFlashUntilMax - elapsedNow) / 0.65));
+      if (userData.edgeMaterial) (userData.edgeMaterial as LineBasicMaterial).color.copy(hdr(AMBER, 1.2 + flash * 1.4));
+      if (userData.fillMaterial) (userData.fillMaterial as MeshBasicMaterial).color.copy(hdr(MAGENTA, 0.25 + flash * 0.45));
+      if (userData.coreMaterial) (userData.coreMaterial as MeshBasicMaterial).color.copy(hdr(CORE_WHITE, 1.2 + flash * 1.8));
+      const coreGlow = userData.coreGlow as Mesh | undefined;
+      if (coreGlow) (coreGlow.material as MeshBasicMaterial).color.copy(hdr(AMBER, 0.8 + flash * 1.2));
+    }
+
+    const damageFlashUntil = userData.damageFlashUntil as number | undefined;
+    if ((damageFlashUntil ?? -Infinity) > elapsedNow) {
+      const flash = Math.max(0, Math.min(1, ((damageFlashUntil ?? 0) - elapsedNow) / 0.42));
+      if (userData.edgeMaterial) (userData.edgeMaterial as LineBasicMaterial).color.copy(hdr(CORE_WHITE, 1.1 + flash * 1.8));
+      if (userData.fillMaterial) (userData.fillMaterial as MeshBasicMaterial).color.copy(hdr(CYAN, 0.28 + flash * 0.4));
+      if (userData.coreMaterial) (userData.coreMaterial as MeshBasicMaterial).color.copy(hdr(CORE_WHITE, 1.5 + flash * 1.6));
+      const coreGlow = userData.coreGlow as Mesh | undefined;
+      if (coreGlow) (coreGlow.material as MeshBasicMaterial).color.copy(hdr(CYAN, 0.8 + flash * 1.4));
     }
 
     const halo = record.mesh.userData.lancerHalo as Group | undefined;

@@ -8,6 +8,7 @@ import {
   createProjectileMesh,
   createReticle,
   installVisualEventHandlers,
+  setEnemyDenied,
   setEnemyLocked,
   setReticleActive,
   updateVisuals,
@@ -61,6 +62,7 @@ export const crystalCorridorLevel: LevelDefinition = {
       visuals: {
         createEnemyMesh,
         setEnemyLocked,
+        setEnemyDenied,
         createProjectileMesh,
         createReticle,
         setReticleActive,

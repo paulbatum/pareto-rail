@@ -327,6 +327,64 @@ export function createAudio(bus: EventBus) {
     noiseHit(time, 0.05, 0.02, 'highpass', 3000, master);
   });
 
+  bus.on('hit', ({ lethal }) => {
+    if (lethal || !ctx || !duck || !delaySend) return;
+    const time = quantize(ctx.currentTime);
+    for (const [midi, at, vel] of [
+      [81, time, 0.08],
+      [84, time + THIRTYSECOND, 0.07],
+      [88, time + THIRTYSECOND * 2, 0.06],
+    ] as const) {
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = midiToFreq(midi);
+      filter.type = 'lowpass';
+      filter.frequency.value = 4200;
+      gain.gain.setValueAtTime(vel, at);
+      gain.gain.exponentialRampToValueAtTime(0.001, at + 0.14);
+      osc.connect(filter).connect(gain);
+      gain.connect(duck);
+      const send = ctx.createGain();
+      send.gain.value = 0.38;
+      gain.connect(send).connect(delaySend);
+      osc.start(at);
+      osc.stop(at + 0.16);
+    }
+    noiseHit(time, 0.035, 0.035, 'highpass', 5600, duck);
+  });
+
+  bus.on('shielded', () => {
+    if (!ctx || !master) return;
+    const time = ctx.currentTime;
+
+    // Negative feedback: a dry, dissonant shield thunk that cuts through the
+    // music without sounding like a successful hit sparkle.
+    for (const [start, end, at, vel] of [
+      [330, 92, time, 0.18],
+      [233, 61, time + 0.028, 0.13],
+    ] as const) {
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(start, at);
+      osc.frequency.exponentialRampToValueAtTime(end, at + 0.2);
+      filter.type = 'bandpass';
+      filter.Q.value = 5;
+      filter.frequency.setValueAtTime(1100, at);
+      filter.frequency.exponentialRampToValueAtTime(430, at + 0.18);
+      gain.gain.setValueAtTime(vel, at);
+      gain.gain.exponentialRampToValueAtTime(0.001, at + 0.24);
+      osc.connect(filter).connect(gain).connect(master);
+      osc.start(at);
+      osc.stop(at + 0.26);
+    }
+    noiseHit(time, 0.15, 0.09, 'bandpass', 720, master);
+    noiseHit(time + 0.025, 0.07, 0.12, 'highpass', 2400, master);
+  });
+
   bus.on('kill', () => {
     if (!ctx || !duck || !delaySend) return;
     const time = quantize(ctx.currentTime);

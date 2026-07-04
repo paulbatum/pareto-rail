@@ -147,6 +147,7 @@ export function createCrystalGameplay(
     coreKilled: false,
     exposed: false,
     shieldIds: new Set<number>(),
+    shieldPositions: new Map<number, Vector3>(),
   };
   // Fire cadence per live enemy (lancers, shields, core), reset every run.
   const fireState = new Map<number, { nextAt: number; shotsLeft: number }>();
@@ -159,6 +160,7 @@ export function createCrystalGameplay(
     boss.coreKilled = false;
     boss.exposed = false;
     boss.shieldIds.clear();
+    boss.shieldPositions.clear();
     fireState.clear();
     boltInterceptions.clear();
     hitsTaken = 0;
@@ -183,6 +185,7 @@ export function createCrystalGameplay(
 
   const onShieldGone = (enemyId: number) => {
     if (!boss.shieldIds.delete(enemyId)) return;
+    boss.shieldPositions.delete(enemyId);
     if (boss.shieldIds.size === 0 && boss.coreSpawned && !boss.exposed && coreEntry) {
       boss.exposed = true;
       coreEntry.lockable = true;
@@ -318,6 +321,7 @@ export function createCrystalGameplay(
       .copy(boss.corePosition)
       .addScaledVector(right, Math.cos(angle) * 4.7)
       .addScaledVector(up, Math.sin(angle) * 4.0);
+    boss.shieldPositions.set(enemy.id, enemy.mesh.position.clone());
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(angle + Math.PI / 2);
 
@@ -380,6 +384,24 @@ export function createCrystalGameplay(
         case 'core':
           return updateCore(context, data);
       }
+    },
+    validateRelease(enemies) {
+      const releasedShieldIds = new Set(
+        enemies.filter((enemy) => enemy.kind === 'warden-shield').map((enemy) => enemy.id),
+      );
+      if (releasedShieldIds.size === 0 || boss.shieldIds.size === 0) return true;
+
+      const missingShieldIds = [...boss.shieldIds].filter((enemyId) => !releasedShieldIds.has(enemyId));
+      if (missingShieldIds.length === 0) return true;
+
+      bus.emit('shielded', {
+        shields: missingShieldIds.map((enemyId) => ({
+          enemyId,
+          worldPosition: boss.shieldPositions.get(enemyId)?.clone() ?? boss.corePosition.clone(),
+        })),
+        blockedEnemyIds: [...releasedShieldIds],
+      });
+      return false;
     },
     scoreForKill(volleySize, enemy) {
       const multiplier = 1 + Math.max(0, volleySize - 1) * 0.15;
