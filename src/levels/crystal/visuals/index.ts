@@ -30,6 +30,7 @@ import {
 } from './effects';
 import { createLetterMesh, setLetterLocked } from './letters';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
+import { createBoltMesh, createLancerHalo, createWardenCoreMesh, createWardenShieldMesh } from './warden';
 
 
 export type VisualContext = {
@@ -70,10 +71,34 @@ export function createEnvironment(scene: Scene) {
 }
 
 export function createEnemyMesh(kind: string, letter?: string) {
-  const mesh = kind === 'letter' ? createLetterMesh(letter ?? '?') : createCrystal(kind as CrystalKind);
+  const mesh = buildEnemyMesh(kind, letter);
   mesh.scale.setScalar(0.001);
   pendingEnemyMeshes.push(mesh);
   return mesh;
+}
+
+function buildEnemyMesh(kind: string, letter?: string): Group {
+  switch (kind) {
+    case 'letter':
+      return createLetterMesh(letter ?? '?');
+    case 'bolt':
+      return createBoltMesh();
+    case 'lancer': {
+      // A lancer is an orbiter-class crystal wearing an amber targeting halo:
+      // the halo is the "shoots back" read.
+      const mesh = createCrystal('orbiter');
+      const halo = createLancerHalo();
+      mesh.add(halo);
+      mesh.userData.lancerHalo = halo;
+      return mesh;
+    }
+    case 'warden-shield':
+      return createWardenShieldMesh();
+    case 'warden-core':
+      return createWardenCoreMesh();
+    default:
+      return createCrystal(kind as CrystalKind);
+  }
 }
 
 export function setEnemyLocked(mesh: Object3D, locked: boolean) {
@@ -219,6 +244,11 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     beatEnergy = isDownbeat ? 1 : 0.45;
   });
 
+  // Taking a hit punches the FOV hard (the HUD supplies the red flash).
+  bus.on('playerhit', () => {
+    beatEnergy = 1.6;
+  });
+
   bus.on('runstart', () => {
     resetEffects();
     for (const record of enemyRecords.values()) removeLockRing(record, scene);
@@ -276,12 +306,34 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
       (coreGlow.material as MeshBasicMaterial).color.copy(userData.glowBase as Color).multiplyScalar(hotScale);
     }
 
+    const halo = record.mesh.userData.lancerHalo as Group | undefined;
+    if (halo) {
+      const spinParts = halo.userData.spinParts as Mesh[];
+      spinParts[0].rotation.z += dt * 1.7;
+      spinParts[1].rotation.z -= dt * 1.1;
+    }
+
+    // Warden shell: spins while up; once gameplay flags the core exposed it
+    // bursts and collapses inward.
+    const shell = record.mesh.userData.shell as Group | undefined;
+    if (shell && shell.visible && record.mesh.userData.exposed === true) {
+      if (record.mesh.userData.shellBurst !== true) {
+        record.mesh.userData.shellBurst = true;
+        spawnRing(record.mesh.position, hdr(AMBER, 1.2), 9, 0.6);
+        spawnGlint(record.mesh.position, hdr(CORE_WHITE, 1.6), 2.4, 0.25);
+      }
+      const next = shell.scale.x - dt * 2.4;
+      if (next <= 0.02) shell.visible = false;
+      else shell.scale.setScalar(next);
+    }
+
     if (record.lockRing) {
       record.mesh.getWorldPosition(record.lockRing.position);
       record.lockRing.quaternion.copy(ctx.camera.quaternion);
       record.lockRing.rotation.z += dt * 2.6;
       const pulse = 1 + Math.sin(elapsedNow * 9) * 0.05;
-      record.lockRing.scale.setScalar(pulse * 1.9);
+      const fit = (record.mesh.userData.lockRingScale as number | undefined) ?? 1;
+      record.lockRing.scale.setScalar(pulse * 1.9 * fit);
     }
   }
 

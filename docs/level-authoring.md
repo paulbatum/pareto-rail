@@ -24,10 +24,12 @@ Pass a `LockOnRunnerLevel` to `createLockOnRunner`:
 
 - `duration`: run length in seconds.
 - `createRail()`: returns the level's `CatmullRomCurve3`.
-- `spawnTimeline`: ordered enemy entries. Its length is the run's `totalEnemies`. Entries may include `letter?: string`; the runner passes it to `createEnemyMesh`, exposes it on public enemies, and includes it in target events.
-- `updateEnemy(context)`: owns all enemy motion every frame. Position, rotation, and any per-frame mesh state are the level's responsibility. Return `true` to despawn that enemy as a miss; return `false` or nothing to keep it alive.
+- `spawnTimeline`: ordered enemy entries. Entries may include `letter?: string`; the runner passes it to `createEnemyMesh`, exposes it on public enemies, and includes it in target events. Entries may also set `hitPoints` (default 1 — multi-hit enemies survive non-lethal hits and stay targetable), `lockable: false` (read live each frame, so a level may mutate it mid-run to gate a boss phase), and `countsTowardTotal: false` (excluded from the kills/missed/total stats while still scoring and emitting events — use for hazards like enemy projectiles).
+- `updateEnemy(context)`: owns all enemy motion every frame. Position, rotation, and any per-frame mesh state are the level's responsibility. Return `true` to despawn that enemy as a miss; return `false` or nothing to keep it alive. The context also provides `spawnEnemy(entry)` to spawn enemies at runtime (returns the new enemy id; running state only), `damagePlayer(amount?)`, and the current `playerHealth`.
 
-Optional overrides are `updateAttractCamera`, `easeRunProgress`, `scoreForKill`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, and `replayWord`. `scoreForVolley` scores a released group after all members resolve, `validateRelease` can reject a running-state release before shots are created, `detailsForRun` adds compact end-screen lines, and `lockRadiusNdc` changes the screen-space lock threshold from the default. See `src/engine/lock-on-runner.ts` for exact types.
+Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`, `scoreForKill`, `scoreForHit`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, and `replayWord`. `scoreForVolley` scores a released group after all members resolve, `scoreForHit` scores non-lethal hits on multi-hit enemies, `validateRelease` can reject a running-state release before shots are created, `detailsForRun` adds compact end-screen lines, and `lockRadiusNdc` changes the screen-space lock threshold from the default. See `src/engine/lock-on-runner.ts` for exact types.
+
+Setting `playerHealth` enables the hull system: `damagePlayer` calls take a point off (with a short invulnerability window between hits), the HUD shows hull pips and a red damage flash, and reaching zero ends the run with `died: true` in the summary and a forced `—` rank. Related events: `playerhit` fires on accepted damage, `hit` carries `lethal`/`hitPointsRemaining`, and `runend` carries `died`.
 
 ## Visual factories
 

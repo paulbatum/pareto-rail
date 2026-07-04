@@ -302,7 +302,7 @@ export function setCrystalLocked(group: Group, locked: boolean) {
 }
 
 // A hexagon outline in the XY plane as line segments.
-function hexRing(radius: number, z: number, spin: number): BufferGeometry {
+export function hexRing(radius: number, z: number, spin: number): BufferGeometry {
   const positions: number[] = [];
   for (let i = 0; i < 6; i += 1) {
     const a0 = spin + (i / 6) * Math.PI * 2;
@@ -315,7 +315,7 @@ function hexRing(radius: number, z: number, spin: number): BufferGeometry {
   return geometry;
 }
 
-function paintVertexColor(geometry: BufferGeometry, color: Color, intensity: number) {
+export function paintVertexColor(geometry: BufferGeometry, color: Color, intensity: number) {
   const count = geometry.getAttribute('position').count;
   const colors = new Float32Array(count * 3);
   for (let i = 0; i < count; i += 1) {

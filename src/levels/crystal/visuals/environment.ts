@@ -18,7 +18,7 @@ import { sampleRailFrame } from '../../../engine/rail';
 import { createCrystalRail } from '../gameplay';
 import { AMBER, BACKGROUND, CYAN, MAGENTA, mulberry32 } from './palette';
 
-const RING_COUNT = 150;
+const RING_COUNT = 220;
 const RING_SIDES = 8;
 const TUNNEL_RADIUS = 11;
 
@@ -121,8 +121,8 @@ export function createEnvironmentInternal(scene: Scene): Environment {
 
   // --- Drifting wireframe debris outside the tunnel for parallax depth.
   const debris: Array<{ lines: LineSegments; spin: Vector3 }> = [];
-  for (let i = 0; i < 14; i += 1) {
-    const u = (i + 0.5) / 14;
+  for (let i = 0; i < 20; i += 1) {
+    const u = (i + 0.5) / 20;
     const frame = sampleRailFrame(curve, u);
     const geometry = new EdgesGeometry(new IcosahedronGeometry(2.2 + rng() * 4, 0));
     const roll = rng();

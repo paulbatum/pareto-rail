@@ -3,9 +3,9 @@ import { createBrowserAudioContext, installAudioUnlock } from '../../engine/audi
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
-// 30-second run (kick → bass/hats → arp → claps/open hats → riser), with
-// game SFX pitched in A minor and quantized to the 32nd-note grid so player
-// actions land inside the music, Rez-style.
+// 45-second run (kick → bass/hats → arp → claps/open hats → riser into the
+// Warden fight), with game SFX pitched in A minor and quantized to the
+// 32nd-note grid so player actions land inside the music, Rez-style.
 
 const BPM = 126;
 const SIXTEENTH = 60 / BPM / 4;
@@ -117,7 +117,8 @@ export function createAudio(bus: EventBus) {
       return;
     }
 
-    const isFillBar = bar >= 14;
+    // Bar 16 lands near the Warden's entrance (~30s); bar 22 rides out the end.
+    const isFillBar = bar >= 16;
     if (step % 4 === 0 || (isFillBar && step % 2 === 0 && step >= 8)) {
       kick(time, step === 0 ? 1 : 0.9);
     }
@@ -136,7 +137,7 @@ export function createAudio(bus: EventBus) {
       const octave = step >= 8 ? 12 : 0;
       arpNote(time, chord.arp[order[step % order.length]] + octave, bar >= 8 ? 0.85 : 0.6);
     }
-    if (bar === 14 && step === 0) riser(time, 16 * 2 * SIXTEENTH);
+    if ((bar === 14 || bar === 21) && step === 0) riser(time, 16 * 2 * SIXTEENTH);
   }
 
   function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
@@ -348,6 +349,62 @@ export function createAudio(bus: EventBus) {
       osc.stop(time + 0.25);
     }
     noiseHit(time, 0.06, 0.09, 'highpass', 5200, duck);
+  });
+
+  // Hull hit: a low impact boom under a dissonant tritone stab — the one
+  // sound in the level that is deliberately out of key.
+  bus.on('playerhit', () => {
+    if (!ctx || !master) return;
+    const time = ctx.currentTime;
+    const boom = ctx.createOscillator();
+    const boomGain = ctx.createGain();
+    boom.type = 'sine';
+    boom.frequency.setValueAtTime(96, time);
+    boom.frequency.exponentialRampToValueAtTime(34, time + 0.28);
+    boomGain.gain.setValueAtTime(0.42, time);
+    boomGain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
+    boom.connect(boomGain).connect(master);
+    boom.start(time);
+    boom.stop(time + 0.45);
+    for (const midi of [63, 69]) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = midiToFreq(midi);
+      gain.gain.setValueAtTime(0.07, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.24);
+      osc.connect(gain).connect(master);
+      osc.start(time);
+      osc.stop(time + 0.28);
+    }
+    noiseHit(time, 0.2, 0.14, 'bandpass', 900, master);
+  });
+
+  // Warden entrance: a rising two-note alarm over a long riser.
+  bus.on('spawn', ({ kind }) => {
+    if (kind !== 'warden-core' || !ctx || !duck || !delaySend) return;
+    const time = quantize(ctx.currentTime);
+    riser(time, 1.8);
+    [57, 63].forEach((midi, index) => {
+      if (!ctx || !duck || !delaySend) return;
+      const at = time + index * 0.42;
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.value = midiToFreq(midi);
+      filter.type = 'lowpass';
+      filter.frequency.value = 1600;
+      gain.gain.setValueAtTime(0.16, at);
+      gain.gain.exponentialRampToValueAtTime(0.001, at + 0.5);
+      osc.connect(filter).connect(gain);
+      gain.connect(duck);
+      const send = ctx.createGain();
+      send.gain.value = 0.5;
+      gain.connect(send).connect(delaySend);
+      osc.start(at);
+      osc.stop(at + 0.55);
+    });
   });
 
   bus.on('miss', () => {
