@@ -18,4 +18,6 @@ Requires a WebGPU-capable browser (recent Chrome/Edge). Esc pauses and opens vol
 ```sh
 npm run snapshot -- --module src/levels/crystal/visuals/crystal.ts --export createCrystalNode
 npm run snapshot:gameplay -- --level crystal-corridor --time 12 --immortal
+npm run snapshot:gameplay -- --level helios --thumbnails 8 --immortal
+npm run snapshot:gameplay -- --level helios --sheet --times 4,12,24,48 --immortal
 ```

@@ -20,6 +20,7 @@ type Fidelity = 'full' | 'postless' | 'flat';
 type GameplaySnapshotApi = {
   ready: Promise<void>;
   capture(): Promise<{ dataUrl: string; luminance: number; fidelity: Fidelity; state: string }>;
+  metadata(): { duration: number | null; fidelity: Fidelity; state: string };
 };
 
 type SnapshotRenderer = WebGPURenderer & {
@@ -65,6 +66,7 @@ let post: PostRenderer | null = null;
 let scene: Scene | null = null;
 let camera: PerspectiveCamera | null = null;
 let runtimeState = 'unknown';
+let runDuration: number | null = null;
 
 window.__raildDebug = {
   ...window.__raildDebug,
@@ -84,6 +86,9 @@ window.__gameplaySnapshot = {
       fidelity,
       state: runtimeState,
     };
+  },
+  metadata() {
+    return { duration: runDuration, fidelity, state: runtimeState };
   },
 };
 
@@ -109,8 +114,9 @@ async function bootstrap() {
 
   const bus = createEventBus();
   runtimeState = 'attract';
-  bus.on('runstart', () => {
+  bus.on('runstart', ({ duration }) => {
     runtimeState = 'running';
+    runDuration = duration;
   });
   bus.on('runend', () => {
     runtimeState = 'ended';
