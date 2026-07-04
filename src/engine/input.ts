@@ -11,6 +11,7 @@ export type InputHandlers = {
   onPause: () => void;
   onFullscreen?: () => void;
   onPointerDown?: () => void;
+  onUndoLock?: () => void;
 };
 
 export function createInput(target: HTMLElement, handlers: InputHandlers) {
@@ -30,16 +31,23 @@ export function createInput(target: HTMLElement, handlers: InputHandlers) {
   const onPointerMove = (event: PointerEvent) => updatePointer(event);
   const onPointerDown = (event: PointerEvent) => {
     updatePointer(event);
+    if (event.button === 2) {
+      handlers.onUndoLock?.();
+      return;
+    }
+    if (event.button !== 0) return;
     state.pointerDown = true;
     handlers.onPointerDown?.();
     target.setPointerCapture?.(event.pointerId);
   };
   const onPointerUp = (event: PointerEvent) => {
     updatePointer(event);
+    if (event.button !== 0 && event.type !== 'pointercancel') return;
     if (state.pointerDown) state.justReleased = true;
     state.pointerDown = false;
     target.releasePointerCapture?.(event.pointerId);
   };
+  const onContextMenu = (event: MouseEvent) => event.preventDefault();
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') handlers.onPause();
     if (event.key.toLowerCase() === 'f') handlers.onFullscreen?.();
@@ -50,6 +58,7 @@ export function createInput(target: HTMLElement, handlers: InputHandlers) {
   target.addEventListener('pointerdown', onPointerDown);
   target.addEventListener('pointerup', onPointerUp);
   target.addEventListener('pointercancel', onPointerUp);
+  target.addEventListener('contextmenu', onContextMenu);
   window.addEventListener('keydown', onKeyDown);
 
   return {
@@ -64,6 +73,7 @@ export function createInput(target: HTMLElement, handlers: InputHandlers) {
       target.removeEventListener('pointerdown', onPointerDown);
       target.removeEventListener('pointerup', onPointerUp);
       target.removeEventListener('pointercancel', onPointerUp);
+      target.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('keydown', onKeyDown);
     },
   };

@@ -15,11 +15,14 @@ export function getStartScreenTip(fullscreenAvailable: boolean) {
     return 'Fullscreen recommended. Home Screen mode is active. Audio starts after first tap.';
   }
 
-  if (fullscreenAvailable) {
-    return coarsePointer ? 'Fullscreen recommended: open pause and tap Fullscreen.' : 'Fullscreen recommended: press F.';
+  if (coarsePointer) {
+    return fullscreenAvailable ? 'Fullscreen recommended: open pause and tap Fullscreen.' : '';
   }
 
-  return '';
+  const undoTip = 'Right-click removes your last lock.';
+  if (fullscreenAvailable) return `Fullscreen recommended: press F. ${undoTip}`;
+
+  return undoTip;
 }
 
 function isIOS() {

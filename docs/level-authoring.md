@@ -27,7 +27,7 @@ Pass a `LockOnRunnerLevel` to `createLockOnRunner`:
 - `spawnTimeline`: ordered enemy entries. Its length is the run's `totalEnemies`. Entries may include `letter?: string`; the runner passes it to `createEnemyMesh`, exposes it on public enemies, and includes it in target events.
 - `updateEnemy(context)`: owns all enemy motion every frame. Position, rotation, and any per-frame mesh state are the level's responsibility. Return `true` to despawn that enemy as a miss; return `false` or nothing to keep it alive.
 
-Optional overrides are `updateAttractCamera`, `easeRunProgress`, `scoreForKill`, `scoreForVolley`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, and `replayWord`. `scoreForVolley` scores a released group after all members resolve, `detailsForRun` adds compact end-screen lines, and `lockRadiusNdc` changes the screen-space lock threshold from the default. See `src/engine/lock-on-runner.ts` for exact types.
+Optional overrides are `updateAttractCamera`, `easeRunProgress`, `scoreForKill`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, and `replayWord`. `scoreForVolley` scores a released group after all members resolve, `validateRelease` can reject a running-state release before shots are created, `detailsForRun` adds compact end-screen lines, and `lockRadiusNdc` changes the screen-space lock threshold from the default. See `src/engine/lock-on-runner.ts` for exact types.
 
 ## Visual factories
 
@@ -35,9 +35,12 @@ Pass `VisualFactories` to `createLockOnRunner`:
 
 - `createEnemyMesh(kind, letter?)`: returns a target mesh. The runner also calls this with `kind === 'letter'` for START/REPLAY targets.
 - `setEnemyLocked(mesh, locked)`: applies and clears locked visuals.
+- `setEnemyDenied(mesh)`: optional feedback for a rejected release.
 - `createProjectileMesh()`: returns a homing shot mesh.
 - `createReticle()`: returns the reticle object.
 - `setReticleActive(reticle, active, lockCount)`: updates reticle state each frame.
+
+The runner includes right-click undo-lock on fine-pointer devices; it removes the most recent lock and emits normal unlock feedback.
 
 Every level must render legible procedural glyphs for at least the characters in its start/replay words. The defaults require S, T, A, R, E, P, L, and Y. A reader must be able to tell the letters apart at gameplay distance. `src/levels/crystal/visuals/letters.ts` shows the reference approach: 5×7 pixel-grid glyphs. Avoid 7-segment-style approximations; they cannot render R, T, and Y distinctly enough.
 

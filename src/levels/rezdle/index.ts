@@ -28,6 +28,7 @@ import { sampleRailFrame } from '../../engine/rail';
 import { createAudio } from './audio';
 import { createGlyphMesh, setGlyphLocked } from './glyphs';
 import { createRezdleGameplay, createRezdleRail } from './gameplay';
+import { loadWords } from './words';
 import { BONE, BRASS, hdr, INK_BLACK, PLATE, SMOKE, VERMILLION } from './palette';
 
 export const rezdleLevel: LevelDefinition = {
@@ -41,6 +42,7 @@ export const rezdleLevel: LevelDefinition = {
   },
   createAudio,
   createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
+    void loadWords();
     const environment = createEnvironment(scene);
     const effects = createEffects(scene, bus, environment);
     const game = createLockOnRunner({

@@ -33,6 +33,7 @@ export type GameEvents = {
     indexInVolley?: number;
   };
   miss: { enemyId: number; worldPosition: Vector3; letter?: string };
+  reject: { enemyIds: number[]; size: number };
   volley: { volleyId: number; size: number; kills: number; scoreAwarded: number };
   beat: { beatNumber: number; isDownbeat: boolean; audioTime: number };
   runstart: { runNumber: number; duration: number; totalEnemies: number };

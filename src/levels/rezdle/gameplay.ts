@@ -175,6 +175,11 @@ export function createRezdleGameplay(bus: EventBus, hud: Hud): LockOnRunnerLevel
       return 20;
     },
 
+    validateRelease(enemies) {
+      const candidate = enemies.map((enemy) => enemy.letter ?? '').join('');
+      return candidate.length >= 3 && isWord(candidate);
+    },
+
     scoreForVolley(results) {
       const candidate = results
         .filter((result) => result.killed)

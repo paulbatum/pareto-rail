@@ -62,6 +62,7 @@ export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = 
   easeRunProgress?(time: number, duration: number): number;
   scoreForKill?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
   scoreForVolley?(results: Array<{ enemy: LockOnEnemy<TKind, TData>; killed: boolean }>): number;
+  validateRelease?(enemies: Array<LockOnEnemy<TKind, TData>>): boolean;
   rankForRun?(score: number, kills: number, totalEnemies: number): string;
   detailsForRun?(): string[] | undefined;
   lockRadiusNdc?: number;
@@ -136,6 +137,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     onPause,
     onFullscreen,
     onPointerDown: () => recordAttractPointerDown(),
+    onUndoLock: () => undoLastLock(),
   });
   const raycaster = new Raycaster();
   const reticle = visuals.createReticle();
@@ -480,7 +482,15 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       releaseLetterLocks('replay-letter', replayWord.length);
       return;
     }
-    fireLocks([...locks]);
+    const released = [...locks];
+    const releasedEnemies = released.map((enemyId) => enemies.get(enemyId)).filter((enemy) => enemy !== undefined);
+    if (level.validateRelease && !level.validateRelease(releasedEnemies.map((enemy) => toPublicEnemy(enemy)))) {
+      unlockReleased(released);
+      for (const enemy of releasedEnemies) visuals.setEnemyDenied?.(enemy.mesh);
+      bus.emit('reject', { enemyIds: releasedEnemies.map((enemy) => enemy.id), size: releasedEnemies.length });
+      return;
+    }
+    fireLocks(released);
   }
 
   function releaseLetterLocks(purpose: Extract<TargetPurpose, 'start-letter' | 'replay-letter'>, required: number) {
@@ -502,6 +512,14 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (purpose === 'start-letter') startWhenLettersClear = true;
     if (purpose === 'replay-letter') replayWhenLettersClear = true;
     fireLocks(matching);
+  }
+
+  function undoLastLock() {
+    const enemyId = locks.pop();
+    if (enemyId === undefined) return;
+    const enemy = enemies.get(enemyId);
+    if (!enemy) return;
+    unlockEnemy(enemy);
   }
 
   function fireLocks(released: number[]) {
