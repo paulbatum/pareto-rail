@@ -24,6 +24,7 @@
       body.booting #callout,
       body.booting #tip,
       body.booting #pause,
+      body.booting #damage-flash,
       body.booting .scanlines {
         visibility: hidden;
       }
@@ -72,6 +73,77 @@
         0% { transform: translateX(-110%); }
         100% { transform: translateX(250%); }
       }
+
+      .hud-left {
+        display: grid;
+        gap: 8px;
+        min-width: 140px;
+      }
+
+      .hud-hull .hud-value {
+        display: flex;
+        gap: 5px;
+        min-height: 22px;
+        align-items: center;
+      }
+
+      .hull-pip {
+        transition: color 120ms ease, opacity 120ms ease, text-shadow 120ms ease;
+      }
+
+      .hull-pip.filled {
+        color: #46e8ff;
+        opacity: 1;
+        text-shadow: 0 0 10px rgb(70 232 255 / 80%);
+      }
+
+      .hull-pip.empty {
+        color: #526270;
+        opacity: 0.48;
+        text-shadow: none;
+      }
+
+      .damage-flash {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+        opacity: 0;
+        background: radial-gradient(ellipse at center, transparent 32%, rgb(255 36 64 / 36%) 100%);
+        mix-blend-mode: screen;
+      }
+
+      .damage-flash-pop {
+        animation: damage-flash 350ms ease-out;
+      }
+
+      @keyframes damage-flash {
+        0% { opacity: 0; }
+        18% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+
+      .death-status {
+        margin: 0 0 8px;
+        color: #ff4964;
+        font-size: 13px;
+        text-shadow: 0 0 14px rgb(255 73 100 / 70%);
+      }
+
+      .end-screen .end-panel.died {
+        border-color: rgb(255 73 100 / 65%);
+        box-shadow:
+          0 0 45px rgb(255 73 100 / 22%),
+          inset 0 0 60px rgb(255 73 100 / 10%);
+      }
+
+      .end-screen .end-panel.died .rank {
+        background: none;
+        -webkit-background-clip: initial;
+        background-clip: initial;
+        color: #ff4964;
+        filter: drop-shadow(0 0 18px rgb(255 73 100 / 45%));
+      }
     </style>
   </head>
   <body class="booting">
@@ -83,12 +155,18 @@
     </div>
     <div id="app"></div>
     <div id="hud" class="hud">
-      <div class="hud-cell">
-        <span class="hud-label">Score</span>
-        <span class="hud-value" data-hud="score">0</span>
+      <div class="hud-left">
+        <div class="hud-cell">
+          <span class="hud-label">Score</span>
+          <span class="hud-value" data-hud="score">0</span>
+        </div>
+        <div class="hud-cell hud-hull hidden" data-hud="hull-cell">
+          <span class="hud-label">Hull</span>
+          <span class="hud-value" data-hud="hull-pips"></span>
+        </div>
       </div>
       <div class="hud-cell hud-time">
-        <span class="hud-value hud-time-value" data-hud="time">30.0</span>
+        <span class="hud-value hud-time-value" data-hud="time">45.0</span>
       </div>
       <div class="hud-cell hud-right">
         <span class="hud-label">Lock</span>
@@ -99,12 +177,14 @@
       <div class="end-panel">
         <div class="label">Score</div>
         <div class="score" data-end="score">0</div>
+        <div class="death-status hidden" data-end="death">Signal lost</div>
         <div class="end-detail" data-end="kills">Kills 0/0</div>
         <div class="rank" data-end="rank">D</div>
         <div class="end-extra hidden" data-end="details"></div>
         <div class="replay">Lock all six to replay</div>
       </div>
     </div>
+    <div id="damage-flash" class="damage-flash" aria-hidden="true"></div>
     <div id="callout" class="callout hidden" aria-live="polite"></div>
     <div id="tip" class="tip hidden">HOLD to charge — SWEEP across all five letters — RELEASE to fire</div>
     <div id="pause" class="pause-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">

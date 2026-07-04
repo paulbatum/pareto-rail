@@ -8,24 +8,67 @@ function requireElement<T extends HTMLElement>(selector: string): T {
 
 export type Hud = ReturnType<typeof createHud>;
 
+type HudHealth = { current: number; max: number };
+
 export function createHud() {
   const hud = requireElement<HTMLElement>('#hud');
   const score = requireElement<HTMLElement>('[data-hud="score"]');
   const time = requireElement<HTMLElement>('[data-hud="time"]');
   const locks = requireElement<HTMLElement>('[data-hud="locks"]');
+  const hullCell = requireElement<HTMLElement>('[data-hud="hull-cell"]');
+  const hullPips = requireElement<HTMLElement>('[data-hud="hull-pips"]');
+  const damageFlash = requireElement<HTMLElement>('#damage-flash');
   const endScreen = requireElement<HTMLElement>('#end-screen');
+  const endPanel = requireElement<HTMLElement>('#end-screen .end-panel');
   const callout = requireElement<HTMLElement>('#callout');
   const tip = requireElement<HTMLElement>('#tip');
   const endScore = requireElement<HTMLElement>('[data-end="score"]');
   const endKills = requireElement<HTMLElement>('[data-end="kills"]');
   const endRank = requireElement<HTMLElement>('[data-end="rank"]');
   const endDetails = requireElement<HTMLElement>('[data-end="details"]');
+  const endDeath = requireElement<HTMLElement>('[data-end="death"]');
+  let hullMax = -1;
+  let hullCurrent = -1;
+
+  function rebuildHullPips(max: number) {
+    hullPips.replaceChildren(
+      ...Array.from({ length: max }, () => {
+        const pip = document.createElement('span');
+        pip.className = 'hull-pip';
+        pip.textContent = '◆';
+        return pip;
+      }),
+    );
+    hullMax = max;
+    hullCurrent = -1;
+  }
+
+  function updateHull(health: HudHealth | undefined) {
+    hullCell.classList.toggle('hidden', health === undefined);
+    if (!health) return;
+    const max = Math.max(0, Math.ceil(health.max));
+    const current = Math.max(0, Math.ceil(health.current));
+    if (max !== hullMax) rebuildHullPips(max);
+    if (current === hullCurrent) return;
+    hullCurrent = current;
+    [...hullPips.children].forEach((pip, index) => {
+      pip.classList.toggle('filled', index < current);
+      pip.classList.toggle('empty', index >= current);
+    });
+  }
 
   return {
-    update(values: { score: number; timeRemaining: number; lockCount: number }) {
+    update(values: { score: number; timeRemaining: number; lockCount: number; health?: HudHealth }) {
       score.textContent = `${values.score}`;
       time.textContent = values.timeRemaining.toFixed(1);
       locks.textContent = `${values.lockCount}`;
+      updateHull(values.health);
+    },
+
+    flashDamage() {
+      damageFlash.classList.remove('damage-flash-pop');
+      void damageFlash.offsetWidth;
+      damageFlash.classList.add('damage-flash-pop');
     },
 
     showEnd(summary: RunSummary) {
@@ -35,11 +78,15 @@ export function createHud() {
       const details = summary.details?.filter((line) => line.trim().length > 0) ?? [];
       endDetails.textContent = details.join(' · ');
       endDetails.classList.toggle('hidden', details.length === 0);
+      endDeath.classList.toggle('hidden', summary.died !== true);
+      endPanel.classList.toggle('died', summary.died === true);
       endScreen.classList.remove('hidden');
     },
 
     hideEnd() {
       endScreen.classList.add('hidden');
+      endPanel.classList.remove('died');
+      endDeath.classList.add('hidden');
     },
 
     setHudActive(active: boolean) {

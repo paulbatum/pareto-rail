@@ -5,6 +5,7 @@ export type RunSummary = {
   totalEnemies: number;
   rank: string;
   details?: string[];
+  died?: boolean;
 };
 
 export function scoreForKill(volleySize: number) {

@@ -23,6 +23,8 @@ export type GameEvents = {
     letter?: string;
     volleyId?: number;
     indexInVolley?: number;
+    lethal: boolean;
+    hitPointsRemaining: number;
   };
   kill: {
     enemyId: number;
@@ -37,7 +39,16 @@ export type GameEvents = {
   volley: { volleyId: number; size: number; kills: number; scoreAwarded: number };
   beat: { beatNumber: number; isDownbeat: boolean; audioTime: number };
   runstart: { runNumber: number; duration: number; totalEnemies: number };
-  runend: { score: number; kills: number; missed: number; totalEnemies: number; rank: string; details?: string[] };
+  playerhit: { damage: number; healthRemaining: number };
+  runend: {
+    score: number;
+    kills: number;
+    missed: number;
+    totalEnemies: number;
+    rank: string;
+    details?: string[];
+    died?: boolean;
+  };
 };
 
 type Handler<K extends keyof GameEvents> = (payload: GameEvents[K]) => void;
