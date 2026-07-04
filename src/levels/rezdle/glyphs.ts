@@ -1,12 +1,15 @@
 import {
   AdditiveBlending,
   BoxGeometry,
-  Color,
+  BufferGeometry,
   Group,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   Object3D,
 } from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { BONE, hdr, VERMILLION } from './palette';
 
 export const GLYPHS: Record<string, string[]> = {
   A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
@@ -38,47 +41,51 @@ export const GLYPHS: Record<string, string[]> = {
 };
 
 const CELL = 0.28;
-const CELL_GEOMETRY = new BoxGeometry(0.22, 0.22, 0.08);
-const BASE = new Color(0.72, 0.95, 1.0);
-const LOCKED = new Color(1.0, 0.55, 0.18);
+const CELL_GEOMETRY = new BoxGeometry(0.24, 0.24, 0.1);
 
-type GlyphMaterialSet = {
-  materials: MeshBasicMaterial[];
-};
+export type GlyphStyle = 'solid' | 'print';
 
-export function createGlyphMesh(letter: string): Group {
+// A raised letter face, merged into a single mesh. 'solid' is the readable
+// bone face used on live type; 'print' is an additive ink impression used
+// for stamped afterimages.
+export function createGlyphMesh(letter: string, style: GlyphStyle = 'solid'): Group {
   const char = letter.toUpperCase()[0] ?? 'A';
   const glyph = GLYPHS[char] ?? GLYPHS.A;
   const group = new Group();
-  const material = new MeshBasicMaterial({
-    color: BASE.clone().multiplyScalar(1.2),
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const material =
+    style === 'solid'
+      ? new MeshBasicMaterial({ color: BONE.clone() })
+      : new MeshBasicMaterial({
+          color: hdr(VERMILLION, 1.6),
+          transparent: true,
+          blending: AdditiveBlending,
+          depthWrite: false,
+        });
+
   const width = (glyph[0].length - 1) * CELL;
   const height = (glyph.length - 1) * CELL;
+  const cells: BufferGeometry[] = [];
 
   for (let y = 0; y < glyph.length; y += 1) {
     for (let x = 0; x < glyph[y].length; x += 1) {
       if (glyph[y][x] !== '1') continue;
-      const cell = new Mesh(CELL_GEOMETRY, material);
-      cell.position.set(x * CELL - width / 2, height / 2 - y * CELL, 0);
-      group.add(cell);
+      const matrix = new Matrix4().makeTranslation(x * CELL - width / 2, height / 2 - y * CELL, 0);
+      cells.push(CELL_GEOMETRY.clone().applyMatrix4(matrix));
     }
   }
 
+  const merged = mergeGeometries(cells);
+  for (const cell of cells) cell.dispose();
+  group.add(new Mesh(merged, material));
+
   group.userData.letter = char;
-  group.userData.glyphMaterials = { materials: [material] } satisfies GlyphMaterialSet;
+  group.userData.glyphMaterial = material;
   return group;
 }
 
+// Rubrication: a locked letter is inked vermillion like a rubric initial.
 export function setGlyphLocked(mesh: Object3D, locked: boolean) {
-  const data = mesh.userData.glyphMaterials as GlyphMaterialSet | undefined;
-  if (data) {
-    for (const material of data.materials) {
-      material.color.copy(locked ? LOCKED.clone().multiplyScalar(1.8) : BASE.clone().multiplyScalar(1.2));
-    }
-  }
+  const material = mesh.userData.glyphMaterial as MeshBasicMaterial | undefined;
+  if (material) material.color.copy(locked ? hdr(VERMILLION, 2.4) : BONE);
   for (const child of mesh.children) setGlyphLocked(child, locked);
 }
