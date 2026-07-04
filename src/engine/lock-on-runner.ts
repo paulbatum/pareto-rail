@@ -790,6 +790,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         continue;
       }
       const mesh = visuals.createProjectileMesh();
+      mesh.userData.raildRole = 'projectile';
       mesh.position.copy(shot.origin);
       scene.add(mesh);
       projectiles.set(shot.projectileId, {

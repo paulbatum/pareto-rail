@@ -60,6 +60,7 @@ const height = readPositiveNumber(params.get('height')) ?? DEFAULT_HEIGHT;
 const targetTime = readNonNegativeNumber(params.get('time')) ?? 0;
 const fixedDt = readPositiveNumber(params.get('dt')) ?? DEFAULT_DT;
 const fidelity = readFidelity(params.get('fidelity'));
+const showProjectiles = params.get('projectiles') === '1';
 
 let renderer: SnapshotRenderer | null = null;
 let post: PostRenderer | null = null;
@@ -137,6 +138,7 @@ async function bootstrap() {
   startRunViaInput();
   advanceRuntime(runtime.update, targetTime, fixedDt);
 
+  if (!showProjectiles) hideProjectiles(scene);
   if (fidelity === 'flat') replaceSceneMaterials(scene);
   if (fidelity === 'full') post = createPost(renderer, scene, camera, selectedLevel.post);
 }
@@ -167,6 +169,12 @@ function createSnapshotHud(): Hud {
     showTip: () => {},
     hideTip: () => {},
   };
+}
+
+function hideProjectiles(root: Scene) {
+  root.traverse((object) => {
+    if (object.userData.raildRole === 'projectile') object.visible = false;
+  });
 }
 
 function replaceSceneMaterials(root: Scene) {

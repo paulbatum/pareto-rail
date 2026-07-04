@@ -20,4 +20,5 @@ npm run snapshot -- --module src/levels/crystal/visuals/crystal.ts --export crea
 npm run snapshot:gameplay -- --level crystal-corridor --time 12 --immortal
 npm run snapshot:gameplay -- --level helios --thumbnails 8 --immortal
 npm run snapshot:gameplay -- --level helios --sheet --times 4,12,24,48 --immortal
+npm run snapshot:gameplay -- --level helios --time 12 --immortal --projectiles
 ```

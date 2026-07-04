@@ -73,7 +73,7 @@ async function main() {
 
 async function captureStill(browser, baseUrl, outDir, options, time) {
   const result = await captureWithFallbacks(browser, baseUrl, options, time);
-  const outputPath = path.join(outDir, `${safeName(options.level)}-${formatTime(time)}-${result.fidelity}.png`);
+  const outputPath = path.join(outDir, `${safeName(options.level)}-${formatTime(time)}-${result.fidelity}${projectileSuffix(options)}.png`);
   await fs.writeFile(outputPath, decodePngDataUrl(result.dataUrl));
   logCapture(outputPath, result);
 }
@@ -95,7 +95,7 @@ async function captureSheet(browser, baseUrl, outDir, options) {
   const lastTime = captures[captures.length - 1].time;
   const outputPath = path.join(
     outDir,
-    `${safeName(options.level)}-thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}.png`,
+    `${safeName(options.level)}-thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}.png`,
   );
   await fs.writeFile(outputPath, decodePngDataUrl(dataUrl));
   console.log(`${path.relative(process.cwd(), outputPath)} thumbnails=${captures.length} fidelity=${fidelityLabel}`);
@@ -172,6 +172,7 @@ function newGameplaySnapshotUrl(baseUrl, options, time, fidelity) {
   url.searchParams.set('height', String(options.height));
   url.searchParams.set('fidelity', fidelity);
   if (options.immortal) url.searchParams.set('immortal', '1');
+  if (options.projectiles) url.searchParams.set('projectiles', '1');
   if (options.debugValue !== undefined) url.searchParams.set('debugValue', options.debugValue);
   return url;
 }
@@ -247,6 +248,7 @@ function parseArgs(argv) {
     dt: DEFAULT_DT,
     fidelity: 'auto',
     immortal: false,
+    projectiles: false,
     debugValue: undefined,
     sheet: false,
     thumbnailCount: undefined,
@@ -272,6 +274,17 @@ function parseArgs(argv) {
 
     if (key === 'sheet') {
       parsed.sheet = true;
+      continue;
+    }
+
+    if (key === 'projectiles') {
+      const next = argv[i + 1];
+      if (next !== undefined && !next.startsWith('--')) {
+        parsed.projectiles = readBoolean(next, '--projectiles');
+        i += 1;
+      } else {
+        parsed.projectiles = true;
+      }
       continue;
     }
 
@@ -382,6 +395,10 @@ function defaultColumns(count) {
 
 function uniqueValues(values) {
   return [...new Set(values)];
+}
+
+function projectileSuffix(options) {
+  return options.projectiles ? '-projectiles' : '';
 }
 
 function formatTime(seconds) {
