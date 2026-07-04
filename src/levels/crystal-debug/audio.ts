@@ -355,12 +355,12 @@ export function createAudio(bus: EventBus) {
     noiseHit(time, 0.035, 0.035, 'highpass', 5600, duck);
   });
 
-  bus.on('shielded', () => {
+  bus.on('reject', () => {
     if (!ctx || !master) return;
     const time = ctx.currentTime;
 
-    // Negative feedback: a dry, dissonant shield thunk that cuts through the
-    // music without sounding like a successful hit sparkle.
+    // Negative feedback: a dry, dissonant rejection thunk that cuts through
+    // the music without sounding like a successful hit sparkle.
     for (const [start, end, at, vel] of [
       [330, 92, time, 0.18],
       [233, 61, time + 0.028, 0.13],

@@ -106,6 +106,7 @@ function buildEnemyMesh(kind: string, letter?: string): Group {
 }
 
 export function setEnemyLocked(mesh: Object3D, locked: boolean) {
+  mesh.userData.locked = locked;
   if (mesh.userData.isLetter) {
     setLetterLocked(mesh as Group, locked);
     return;
@@ -355,6 +356,15 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
       if (userData.coreMaterial) (userData.coreMaterial as MeshBasicMaterial).color.copy(hdr(CORE_WHITE, 1.2 + flash * 1.8));
       const coreGlow = userData.coreGlow as Mesh | undefined;
       if (coreGlow) (coreGlow.material as MeshBasicMaterial).color.copy(hdr(AMBER, 0.8 + flash * 1.2));
+      const letterMaterials = userData.letterMaterials as
+        | { fillMaterial: MeshBasicMaterial; edgeMaterial: LineBasicMaterial }
+        | undefined;
+      if (letterMaterials) {
+        letterMaterials.edgeMaterial.color.copy(hdr(AMBER, 1.6 + flash * 1.2));
+        letterMaterials.fillMaterial.color.copy(AMBER.clone().multiplyScalar(0.16 + flash * 0.16));
+      }
+    } else if (userData.isLetter && userData.locked !== true) {
+      setLetterLocked(record.mesh, false);
     }
 
     const damageFlashUntil = userData.damageFlashUntil as number | undefined;

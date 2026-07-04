@@ -35,7 +35,13 @@ export type GameEvents = {
     indexInVolley?: number;
   };
   miss: { enemyId: number; worldPosition: Vector3; letter?: string };
-  reject: { enemyIds: number[]; size: number };
+  reject: {
+    enemyIds: number[];
+    size: number;
+    reason?: 'incomplete-word' | 'level-rule';
+    requiredEnemyIds?: number[];
+    missingEnemyIds?: number[];
+  };
   shielded: { shields: Array<{ enemyId: number; worldPosition: Vector3 }>; blockedEnemyIds: number[] };
   volley: { volleyId: number; size: number; kills: number; scoreAwarded: number };
   beat: { beatNumber: number; isDownbeat: boolean; audioTime: number };

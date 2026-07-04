@@ -21,6 +21,16 @@ const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 
 type RunState = 'attract' | 'running' | 'ended';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
+type ReleaseRejectReason = 'incomplete-word' | 'level-rule';
+type ReleaseValidation<TKind extends string, TData> =
+  | { valid: true; fireIds: number[] }
+  | {
+    valid: false;
+    reason: ReleaseRejectReason;
+    released: Array<Enemy<TKind, TData>>;
+    missing: Array<Enemy<TKind, TData>>;
+    required: Array<Enemy<TKind, TData>>;
+  };
 
 export type LockOnSpawnEntry<TKind extends string = string, TData = unknown> = {
   time: number;
@@ -535,44 +545,80 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function releaseLocks() {
     if (locks.length === 0) return;
-    if (state === 'attract') {
-      releaseLetterLocks('start-letter', startWord.length);
-      return;
-    }
-    if (state === 'ended') {
-      releaseLetterLocks('replay-letter', replayWord.length);
-      return;
-    }
     const released = [...locks];
-    const releasedEnemies = released.map((enemyId) => enemies.get(enemyId)).filter((enemy) => enemy !== undefined);
-    if (level.validateRelease && !level.validateRelease(releasedEnemies.map((enemy) => toPublicEnemy(enemy)))) {
-      unlockReleased(released);
-      for (const enemy of releasedEnemies) visuals.setEnemyDenied?.(enemy.mesh);
-      bus.emit('reject', { enemyIds: releasedEnemies.map((enemy) => enemy.id), size: releasedEnemies.length });
+    const validation = validateRelease(released);
+    if (!validation.valid) {
+      denyRelease(validation);
       return;
     }
-    fireLocks(released);
+    fireLocks(validation.fireIds);
   }
 
-  function releaseLetterLocks(purpose: Extract<TargetPurpose, 'start-letter' | 'replay-letter'>, required: number) {
-    const released = [...locks];
-    const matching = released.filter((enemyId) => enemies.get(enemyId)?.purpose === purpose);
-    if (matching.length !== required) {
-      unlockReleased(released);
-      if (purpose === 'start-letter') {
-        failedAttractReleases += 1;
-        if (failedAttractReleases >= 3) {
-          showingStartTip = false;
-          hud.setTip(CONTROL_TIP);
-          hud.showTip();
-        }
-      }
-      return;
+  function validateRelease(releasedIds: number[]): ReleaseValidation<TKind, TData> {
+    const releasedTargets = targetsForIds(releasedIds);
+    if (state === 'attract') return validateLetterRelease('start-letter', startWord.length, releasedTargets);
+    if (state === 'ended') return validateLetterRelease('replay-letter', replayWord.length, releasedTargets);
+
+    const releasedEnemies = releasedTargets.filter((enemy) => enemy.purpose === 'enemy');
+    if (level.validateRelease && !level.validateRelease(releasedEnemies.map((enemy) => toPublicEnemy(enemy)))) {
+      return { valid: false, reason: 'level-rule', released: releasedEnemies, missing: [], required: [] };
+    }
+    return { valid: true, fireIds: releasedEnemies.map((enemy) => enemy.id) };
+  }
+
+  function validateLetterRelease(
+    purpose: Extract<TargetPurpose, 'start-letter' | 'replay-letter'>,
+    required: number,
+    releasedTargets: Array<Enemy<TKind, TData>>,
+  ): ReleaseValidation<TKind, TData> {
+    const requiredTargets = [...enemies.values()].filter((enemy) => enemy.purpose === purpose);
+    const releasedLetters = releasedTargets.filter((enemy) => enemy.purpose === purpose);
+    if (releasedLetters.length === required) {
+      if (purpose === 'start-letter') startWhenLettersClear = true;
+      if (purpose === 'replay-letter') replayWhenLettersClear = true;
+      return { valid: true, fireIds: releasedLetters.map((enemy) => enemy.id) };
     }
 
-    if (purpose === 'start-letter') startWhenLettersClear = true;
-    if (purpose === 'replay-letter') replayWhenLettersClear = true;
-    fireLocks(matching);
+    const releasedLetterIds = new Set(releasedLetters.map((enemy) => enemy.id));
+    return {
+      valid: false,
+      reason: 'incomplete-word',
+      released: releasedTargets,
+      missing: requiredTargets.filter((enemy) => !releasedLetterIds.has(enemy.id)),
+      required: requiredTargets,
+    };
+  }
+
+  function denyRelease(rejection: Extract<ReleaseValidation<TKind, TData>, { valid: false }>) {
+    unlockReleased(rejection.released.map((enemy) => enemy.id));
+    const deniedTargets = uniqueTargets([...rejection.released, ...rejection.missing]);
+    for (const enemy of deniedTargets) visuals.setEnemyDenied?.(enemy.mesh);
+    bus.emit('reject', {
+      enemyIds: rejection.released.map((enemy) => enemy.id),
+      size: rejection.released.length,
+      reason: rejection.reason,
+      requiredEnemyIds: rejection.required.map((enemy) => enemy.id),
+      missingEnemyIds: rejection.missing.map((enemy) => enemy.id),
+    });
+
+    if (rejection.reason === 'incomplete-word' && state === 'attract') {
+      failedAttractReleases += 1;
+      if (failedAttractReleases >= 3) {
+        showingStartTip = false;
+        hud.setTip(CONTROL_TIP);
+        hud.showTip();
+      }
+    }
+  }
+
+  function targetsForIds(ids: number[]) {
+    return ids.map((enemyId) => enemies.get(enemyId)).filter((enemy) => enemy !== undefined);
+  }
+
+  function uniqueTargets(targets: Array<Enemy<TKind, TData>>) {
+    const unique = new Map<number, Enemy<TKind, TData>>();
+    for (const target of targets) unique.set(target.id, target);
+    return [...unique.values()];
   }
 
   function undoLastLock() {
