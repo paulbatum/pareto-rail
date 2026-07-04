@@ -142,6 +142,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   let replayWhenLettersClear = false;
   let startDelay = -1;
   let runEase = 0;
+  let showingStartTip = false;
   const easeFromPosition = new Vector3();
   const easeFromLook = new Vector3(0, 0, -1);
 
@@ -152,6 +153,23 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const reticlePoint = new Vector3();
 
   scene.add(reticle);
+  document.addEventListener('fullscreenchange', updateStartTipVisibility);
+
+  function showStartTip() {
+    if (startTip && !document.fullscreenElement) {
+      hud.setTip(startTip);
+      hud.showTip();
+      showingStartTip = true;
+    } else {
+      hud.hideTip();
+      showingStartTip = false;
+    }
+  }
+
+  function updateStartTipVisibility() {
+    if (state !== 'attract' || !showingStartTip) return;
+    showStartTip();
+  }
 
   function enterAttract() {
     clearRunObjects();
@@ -169,12 +187,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     missed = 0;
     spawnIndex = 0;
     hud.hideEnd();
-    if (startTip) {
-      hud.setTip(startTip);
-      hud.showTip();
-    } else {
-      hud.hideTip();
-    }
+    showStartTip();
     hud.setHudActive(false);
     hud.update({ score, timeRemaining: duration, lockCount: 0 });
     updateAttractCamera(0);
@@ -451,6 +464,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       if (purpose === 'start-letter') {
         failedAttractReleases += 1;
         if (failedAttractReleases >= 3) {
+          showingStartTip = false;
           hud.setTip(CONTROL_TIP);
           hud.showTip();
         }
@@ -635,6 +649,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (state !== 'attract' || attractReachedFullLocks) return;
     attractPointerDowns += 1;
     if (attractPointerDowns >= 8) {
+      showingStartTip = false;
       hud.setTip(CONTROL_TIP);
       hud.showTip();
     }
@@ -678,6 +693,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     start: startRun,
     update,
     dispose() {
+      document.removeEventListener('fullscreenchange', updateStartTipVisibility);
       input.dispose();
       scene.remove(reticle);
       clearRunObjects();
