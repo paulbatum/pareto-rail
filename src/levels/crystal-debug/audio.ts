@@ -1,5 +1,5 @@
 import type { EventBus } from '../../events';
-import { createLevelAudioKit } from '../../engine/audio-kit';
+import { createLevelAudioKit, createStepTransport } from '../../engine/audio-kit';
 import { createAudioTraceSink, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
@@ -48,8 +48,6 @@ export function traceCrystalDebugAudio(options: { seconds?: number } = {}): Audi
 
 function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
-  let nextTickTime = 0;
-  let sixteenthIndex = 0;
   let arrangementStart = 0;
   // Boots in ambient (attract screen); runstart switches to the full arrangement.
   let mode: 'run' | 'ambient' = 'ambient';
@@ -59,15 +57,26 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   let delaySend: GainNode | null = null;
   let noiseBuffer: AudioBuffer | null = null;
 
+  const transport = createStepTransport({
+    stepSeconds: SIXTEENTH,
+    scheduleAhead: SCHEDULE_AHEAD,
+    startDelay: 0.06,
+    onStep({ index, time }) {
+      scheduleStep(index, time);
+    },
+  });
+
   const audio = createLevelAudioKit({
     volumeScale: 0.8,
     schedulerMs: SCHEDULER_MS,
     onCreateContext(context, masterVolume) {
       ctx = context;
       buildGraph(context, masterVolume);
-      nextTickTime = context.currentTime + 0.06;
+      transport.start(context);
     },
-    onSchedule: schedule,
+    onSchedule(context) {
+      transport.schedule(context);
+    },
     onVolumeChange(context, masterVolume) {
       if (master) master.gain.setTargetAtTime(masterVolume, context.currentTime, 0.05);
     },
@@ -115,26 +124,12 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   // ---- scheduler ----------------------------------------------------------
 
-  function schedule() {
-    if (!ctx) return;
-    while (nextTickTime < ctx.currentTime + SCHEDULE_AHEAD) {
-      scheduleStep(sixteenthIndex, nextTickTime);
-      nextTickTime += SIXTEENTH;
-      sixteenthIndex += 1;
-    }
-  }
-
   function traceRun(seconds: number) {
     mode = 'run';
     arrangementStart = 0;
-    sixteenthIndex = 0;
-    nextTickTime = 0.06;
+    transport.reset(0.06, 0);
     ctx = { currentTime: 0 } as AudioContext;
-    while (nextTickTime < seconds) {
-      scheduleStep(sixteenthIndex, nextTickTime);
-      nextTickTime += SIXTEENTH;
-      sixteenthIndex += 1;
-    }
+    transport.runUntil(seconds);
     ctx = null;
   }
 
@@ -557,7 +552,7 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
     mode = 'run';
     // Restart the arrangement on the next bar boundary so the build-up
     // tracks the new run.
-    arrangementStart = sixteenthIndex + ((16 - (sixteenthIndex % 16)) % 16);
+    arrangementStart = transport.stepIndex + ((16 - (transport.stepIndex % 16)) % 16);
   });
 
   bus.on('runend', () => {

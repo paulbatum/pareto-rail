@@ -1,6 +1,27 @@
 import type { LevelAudio } from './types';
 import { createBrowserAudioContext, installAudioUnlock } from './audio-unlock';
 
+export type StepTransportStep = {
+  index: number;
+  time: number;
+};
+
+export type StepTransportOptions = {
+  stepSeconds: number;
+  scheduleAhead: number;
+  startDelay?: number;
+  onStep(step: StepTransportStep): void;
+};
+
+export type StepTransport = {
+  readonly stepIndex: number;
+  readonly nextStepTime: number;
+  start(context: Pick<AudioContext, 'currentTime'>): void;
+  reset(nextStepTime?: number, stepIndex?: number): void;
+  schedule(context: Pick<AudioContext, 'currentTime'>): void;
+  runUntil(seconds: number): void;
+};
+
 export type LevelAudioKitOptions = {
   /** Player-facing volume value before scaling. Defaults to 1. */
   initialVolume?: number;
@@ -17,6 +38,41 @@ export type LevelAudioKitOptions = {
   /** Called before the AudioContext is closed. */
   onDispose?(context: AudioContext): void;
 };
+
+export function createStepTransport(options: StepTransportOptions): StepTransport {
+  const startDelay = options.startDelay ?? 0;
+  let nextStepTime = 0;
+  let stepIndex = 0;
+
+  const emitNextStep = () => {
+    options.onStep({ index: stepIndex, time: nextStepTime });
+    nextStepTime += options.stepSeconds;
+    stepIndex += 1;
+  };
+
+  return {
+    get stepIndex() {
+      return stepIndex;
+    },
+    get nextStepTime() {
+      return nextStepTime;
+    },
+    start(context) {
+      nextStepTime = context.currentTime + startDelay;
+      stepIndex = 0;
+    },
+    reset(nextTime = startDelay, index = 0) {
+      nextStepTime = nextTime;
+      stepIndex = index;
+    },
+    schedule(context) {
+      while (nextStepTime < context.currentTime + options.scheduleAhead) emitNextStep();
+    },
+    runUntil(seconds) {
+      while (nextStepTime < seconds) emitNextStep();
+    },
+  };
+}
 
 export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
   const volumeScale = options.volumeScale ?? 1;
