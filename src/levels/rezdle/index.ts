@@ -24,6 +24,7 @@ import {
 import type { EventBus } from '../../events';
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
+import { colorForLockCount } from '../../engine/locks';
 import { sampleRailFrame } from '../../engine/rail';
 import { createAudio } from './audio';
 import { createGlyphMesh, setGlyphLocked } from './glyphs';
@@ -129,14 +130,22 @@ function createEnemyMesh(kind: string, letter?: string) {
   return group;
 }
 
-function setEnemyLocked(mesh: Object3D, locked: boolean) {
+function setEnemyLocked(mesh: Object3D, locked: boolean, lockCount?: number) {
   mesh.userData.locked = locked;
   setGlyphLocked(mesh, locked);
+  const lockColor = lockCount === undefined ? VERMILLION : colorForLockCount(lockCount, [BRASS, VERMILLION, BONE]);
+  tintGlyph(mesh, locked ? lockColor : undefined);
   const edgeMaterial = mesh.userData.edgeMaterial as LineBasicMaterial | MeshBasicMaterial | undefined;
   if (edgeMaterial) {
     const base = edgeMaterial.userData.baseColor as Color | undefined;
-    edgeMaterial.color.copy(locked ? hdr(VERMILLION, 2.2) : (base ?? edgeMaterial.color));
+    edgeMaterial.color.copy(locked ? hdr(lockColor, 2.2) : (base ?? edgeMaterial.color));
   }
+}
+
+function tintGlyph(mesh: Object3D, color: Color | undefined) {
+  const material = mesh.userData.glyphMaterial as MeshBasicMaterial | undefined;
+  if (material && color) material.color.copy(hdr(color, 2.4));
+  for (const child of mesh.children) tintGlyph(child, color);
 }
 
 // A rejected release marks the mesh; the per-frame red blink runs in the
@@ -437,7 +446,9 @@ function createEffects(scene: Scene, bus: EventBus, environment: Environment) {
   }
 
   unsubscribes.push(
-    bus.on('lock', ({ worldPosition }) => ringPulse(worldPosition, VERMILLION, 2.0, 0.3, 1.6)),
+    bus.on('lock', ({ worldPosition, lockCount }) => {
+      ringPulse(worldPosition, colorForLockCount(lockCount, [BRASS, VERMILLION, BONE]), 2.0, 0.3, 1.6);
+    }),
     bus.on('unlock', ({ worldPosition }) => ringPulse(worldPosition, SMOKE, 1.0, 0.25, 0.9)),
     bus.on('fire', ({ worldPosition }) => ringPulse(worldPosition, BRASS, 1.6, 0.2, 1.1)),
     bus.on('miss', ({ worldPosition }) => ringPulse(worldPosition, SMOKE, 0.7, 0.3, 0.7)),

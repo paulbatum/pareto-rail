@@ -28,6 +28,7 @@ import {
   spawnRing,
   updateEffects,
 } from './effects';
+import { colorForLockCount } from '../../../engine/locks';
 import { createLetterMesh, setLetterLocked } from './letters';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 import { createBoltMesh, createLancerHalo, createWardenCoreMesh, createWardenShieldMesh } from './warden';
@@ -194,13 +195,14 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     spawnRing(worldPosition, hdr(CYAN, 0.9), 3.2, 0.5);
   });
 
-  bus.on('lock', ({ enemyId, worldPosition }) => {
+  bus.on('lock', ({ enemyId, worldPosition, lockCount }) => {
+    const lockColor = colorForLockCount(lockCount, [CYAN, MAGENTA, AMBER]);
     const record = enemyRecords.get(enemyId);
     if (record && !record.lockRing) {
-      record.lockRing = makeLockRing();
+      record.lockRing = makeLockRing(lockColor);
       scene.add(record.lockRing);
     }
-    spawnRing(worldPosition, hdr(MAGENTA, 1.4), 2.4, 0.3);
+    spawnRing(worldPosition, hdr(lockColor, 1.4), 2.4, 0.3);
   });
 
   bus.on('unlock', ({ enemyId }) => {
@@ -368,12 +370,12 @@ function findReticleSpinner(scene: Scene): Group | null {
   return null;
 }
 
-function makeLockRing(): Group {
+function makeLockRing(color: Color): Group {
   const group = new Group();
   const ring = new Mesh(
     new RingGeometry(0.86, 0.92, 4),
     new MeshBasicMaterial({
-      color: hdr(MAGENTA, 1.8),
+      color: hdr(color, 1.8),
       transparent: true,
       blending: AdditiveBlending,
       depthWrite: false,
@@ -383,7 +385,7 @@ function makeLockRing(): Group {
   const innerRing = new Mesh(
     new RingGeometry(0.68, 0.71, 32),
     new MeshBasicMaterial({
-      color: hdr(CORE_WHITE, 1.4),
+      color: hdr(color.clone().lerp(CORE_WHITE, 0.55), 1.4),
       transparent: true,
       blending: AdditiveBlending,
       depthWrite: false,

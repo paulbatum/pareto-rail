@@ -18,6 +18,7 @@ export function createHud() {
   const hullCell = requireElement<HTMLElement>('[data-hud="hull-cell"]');
   const hullPips = requireElement<HTMLElement>('[data-hud="hull-pips"]');
   const damageFlash = requireElement<HTMLElement>('#damage-flash');
+  const maxLockFlash = requireElement<HTMLElement>('#max-lock-flash');
   const endScreen = requireElement<HTMLElement>('#end-screen');
   const endPanel = requireElement<HTMLElement>('#end-screen .end-panel');
   const callout = requireElement<HTMLElement>('#callout');
@@ -69,6 +70,14 @@ export function createHud() {
       damageFlash.classList.remove('damage-flash-pop');
       void damageFlash.offsetWidth;
       damageFlash.classList.add('damage-flash-pop');
+    },
+
+    flashMaxLock(x: number, y: number) {
+      maxLockFlash.style.left = `${x}px`;
+      maxLockFlash.style.top = `${y}px`;
+      maxLockFlash.classList.remove('hidden', 'max-lock-flash-pop');
+      void maxLockFlash.offsetWidth;
+      maxLockFlash.classList.add('max-lock-flash-pop');
     },
 
     showEnd(summary: RunSummary) {

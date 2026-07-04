@@ -41,7 +41,7 @@ Your output will be compared against levels built by other agents from this same
 
 - **Cohesion** — palette, geometry, motion, and sound feel like one idea, not a collection of features.
 - **Musicality** — the run feels scored rather than accompanied; downbeats and phrase boundaries mean something on screen.
-- **Game feel** — locking is tactile, volleys land with weight, a full 8-lock release feels like an event.
+- **Game feel** — locking is tactile, volleys land with weight, a full 6-lock release feels like an event.
 - **Choreography** — waves read as designed moments with build and payoff, not a stream of targets.
 - **Distinctiveness** — the level is recognizable at a glance and by ear as its own thing. Imitating an existing level's visual or musical language is a losing move.
 

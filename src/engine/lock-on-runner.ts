@@ -1,22 +1,22 @@
 import { MathUtils, Object3D, PerspectiveCamera, Raycaster, Scene, Vector3 } from 'three';
 import type { CatmullRomCurve3 } from 'three';
 import { createInput } from './input';
+import { MAX_LOCKS } from './locks';
 import { smoothRunProgress } from './rail';
 import { scoreForKill as defaultScoreForKill, rankForRun as defaultRankForRun, type RunSummary } from './scoring';
 import type { VisualFactories } from './types';
 import type { EventBus } from '../events';
 import type { Hud } from '../ui/hud';
 
-const MAX_LOCKS = 8;
 const RETICLE_DISTANCE = 24;
 const LOCK_RADIUS_NDC = 0.085;
 const PROJECTILE_SPEED = 82;
 const PROJECTILE_HIT_RADIUS = 1.15;
 const FIRE_STAGGER = 0.06;
 const WORD_DISTANCE = 20;
-const START_WORD = 'START';
+const START_WORD = 'START!';
 const REPLAY_WORD = 'REPLAY';
-const CONTROL_TIP = 'HOLD to charge — SWEEP across all five letters — RELEASE to fire';
+const CONTROL_TIP = 'HOLD to charge — SWEEP across all six targets — RELEASE to fire';
 const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 
 type RunState = 'attract' | 'running' | 'ended';
@@ -515,13 +515,22 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function lockEnemy(enemy: Enemy<TKind, TData>) {
     enemy.locked = true;
     locks.push(enemy.id);
-    visuals.setEnemyLocked(enemy.mesh, true);
+    visuals.setEnemyLocked(enemy.mesh, true, locks.length);
     bus.emit('lock', {
       enemyId: enemy.id,
       lockCount: locks.length,
       worldPosition: enemy.mesh.position.clone(),
       letter: enemy.letter,
     });
+    if (locks.length === MAX_LOCKS) flashMaxLock();
+  }
+
+  function flashMaxLock() {
+    const rect = canvas.getBoundingClientRect();
+    hud.flashMaxLock(
+      rect.left + ((input.state.pointerNdc.x + 1) / 2) * rect.width,
+      rect.top + ((1 - input.state.pointerNdc.y) / 2) * rect.height,
+    );
   }
 
   function releaseLocks() {

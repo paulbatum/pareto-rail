@@ -1,6 +1,6 @@
 # raild
 
-A procedural WebGPU rail shooter for the browser. Hold the mouse button and sweep across targets to lock up to eight, then release to fire a homing volley. Lock all five START letters to begin.
+A procedural WebGPU rail shooter for the browser. Hold the mouse button and sweep across targets to lock up to six, then release to fire a homing volley. Lock all six START! targets to begin.
 
 Use the level picker in the lower-left corner, or open `?level=crystal-corridor` or `?level=prism-bloom` directly.
 

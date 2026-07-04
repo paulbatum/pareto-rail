@@ -23,6 +23,7 @@ import {
 } from 'three';
 import type { Camera } from 'three';
 import type { EventBus } from '../../events';
+import { colorForLockCount } from '../../engine/locks';
 import { createPrismRail } from './gameplay';
 import { sampleRailFrame } from '../../engine/rail';
 
@@ -154,6 +155,7 @@ const LETTER_GLYPHS: Record<string, string[]> = {
   S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
   T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
   Y: ['10001', '10001', '01010', '00100', '00100', '00100', '00100'],
+  '!': ['00100', '00100', '00100', '00100', '00100', '00000', '00100'],
 };
 
 const LETTER_CELL = 0.24;
@@ -194,13 +196,18 @@ function createLetter(letter: string) {
   return group;
 }
 
-export function setEnemyLocked(mesh: Object3D, locked: boolean) {
+export function setEnemyLocked(mesh: Object3D, locked: boolean, lockCount?: number) {
   mesh.userData.locked = locked;
-  const materials = mesh.userData.materials as MeshBasicMaterial[] | undefined;
   const fallback = hdr(mesh.userData.accent ?? ICE, 1.5);
+  const color = lockCount === undefined ? ROSE : colorForLockCount(lockCount, [LIME, VIOLET, ROSE]);
+  tintEnemyMaterials(mesh, locked ? color : undefined, fallback);
+}
+
+function tintEnemyMaterials(mesh: Object3D, color: Color | undefined, fallback: Color) {
+  const materials = mesh.userData.materials as MeshBasicMaterial[] | undefined;
   for (const material of materials ?? []) {
     const baseColor = material.userData.baseColor as Color | undefined;
-    material.color.copy(locked ? hdr(ROSE, 2.4) : (baseColor ?? fallback));
+    material.color.copy(color ? hdr(color, 2.4) : (baseColor ?? fallback));
   }
 }
 
@@ -234,7 +241,9 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     if (mesh) enemies.set(enemyId, { mesh, bornAt: performance.now() / 1000, locked: false });
     pulse(scene, worldPosition, ICE, 2.4, 0.35);
   });
-  bus.on('lock', ({ worldPosition }) => pulse(scene, worldPosition, ROSE, 1.6, 0.22));
+  bus.on('lock', ({ worldPosition, lockCount }) => {
+    pulse(scene, worldPosition, colorForLockCount(lockCount, [LIME, VIOLET, ROSE]), 1.6, 0.22);
+  });
   bus.on('fire', ({ projectileId, worldPosition }) => {
     const projectile = pendingProjectiles.shift();
     if (projectile) projectiles.set(projectileId, projectile);

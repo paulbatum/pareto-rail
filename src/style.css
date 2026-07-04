@@ -246,6 +246,39 @@ canvas {
   50% { opacity: 1; }
 }
 
+.max-lock-flash {
+  position: fixed;
+  z-index: 6;
+  transform: translate(-50%, 28px) scale(0.92);
+  padding: 3px 7px 4px;
+  color: #fff;
+  background: rgb(3 8 18 / 58%);
+  border: 1px solid rgb(255 255 255 / 48%);
+  box-shadow:
+    0 0 9px rgb(255 255 255 / 28%),
+    0 0 22px rgb(255 61 191 / 42%);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.23em;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow:
+    0 0 8px rgb(255 255 255 / 90%),
+    0 0 18px rgb(255 61 191 / 82%),
+    0 0 28px rgb(70 232 255 / 58%);
+}
+
+.max-lock-flash-pop {
+  animation: max-lock-flash-pop 740ms ease-out forwards;
+}
+
+@keyframes max-lock-flash-pop {
+  0% { opacity: 0; transform: translate(-50%, 18px) scale(0.62); }
+  16% { opacity: 1; transform: translate(-50%, 28px) scale(1.13); }
+  64% { opacity: 1; transform: translate(-50%, 31px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 38px) scale(0.92); }
+}
+
 .callout {
   position: fixed;
   left: 50%;
