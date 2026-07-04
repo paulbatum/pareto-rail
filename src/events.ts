@@ -50,4 +50,3 @@ export function createEventBus() {
   };
 }
 
-export const events = createEventBus();

@@ -26,7 +26,7 @@ async function bootstrap() {
   (renderer as WebGPURenderer & { _getFallback: null })._getFallback = null;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0x02040a, 1);
+  renderer.setClearColor(selectedLevel.post?.clearColor ?? 0x02040a, 1);
 
   try {
     await renderer.init();
@@ -47,7 +47,7 @@ async function bootstrap() {
   setBloomLevel(readStoredPercent('raild-bloom', 100) / 100);
   audio.installGestureStart();
 
-  const post = createPost(renderer, scene, camera);
+  const post = createPost(renderer, scene, camera, selectedLevel.post);
 
   let paused = false;
   let last = performance.now();

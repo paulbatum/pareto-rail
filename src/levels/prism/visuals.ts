@@ -145,52 +145,63 @@ function createPrismEnemy(kind: string) {
   return group;
 }
 
+const LETTER_GLYPHS: Record<string, string[]> = {
+  A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
+  L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
+  P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
+  R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
+  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
+  T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+  Y: ['10001', '10001', '01010', '00100', '00100', '00100', '00100'],
+};
+
+const LETTER_CELL = 0.24;
+const LETTER_DOT = new PlaneGeometry(0.19, 0.19);
+const LETTER_CORE = new PlaneGeometry(0.105, 0.105);
+
 function createLetter(letter: string) {
   const group = new Group();
-  const material = new MeshBasicMaterial({ color: hdr(ICE, 1.9), transparent: true, blending: AdditiveBlending, depthWrite: false });
-  const hot = new MeshBasicMaterial({ color: hdr(LIME, 2.2), transparent: true, blending: AdditiveBlending, depthWrite: false });
-  const segmentGeometry = new PlaneGeometry(0.72, 0.12);
-  const verticalGeometry = new PlaneGeometry(0.12, 0.72);
-  const segments = segmentMap[letter.toUpperCase()] ?? segmentMap.A;
-  const add = (index: number, x: number, y: number, rotation = 0) => {
-    if (!segments.includes(index)) return;
-    const mesh = new Mesh(rotation === 0 ? segmentGeometry : verticalGeometry, material.clone());
-    mesh.position.set(x, y, 0);
-    mesh.rotation.z = rotation;
-    group.add(mesh);
-  };
-  add(0, 0, 0.8);
-  add(1, -0.42, 0.4, Math.PI / 2);
-  add(2, 0.42, 0.4, Math.PI / 2);
-  add(3, 0, 0);
-  add(4, -0.42, -0.4, Math.PI / 2);
-  add(5, 0.42, -0.4, Math.PI / 2);
-  add(6, 0, -0.8);
-  const core = new Mesh(new RingGeometry(0.58, 0.62, 5), hot);
-  core.scale.set(1.2, 1.2, 1);
-  group.add(core);
+  const fillColor = hdr(ICE, 1.45);
+  const hotColor = hdr(LIME, 2.05);
+  const fillMaterial = new MeshBasicMaterial({ color: fillColor.clone(), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide });
+  const hotMaterial = new MeshBasicMaterial({ color: hotColor.clone(), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide });
+  fillMaterial.userData.baseColor = fillColor;
+  hotMaterial.userData.baseColor = hotColor;
+
+  const glyph = LETTER_GLYPHS[letter.toUpperCase()] ?? LETTER_GLYPHS.A;
+  const width = (glyph[0].length - 1) * LETTER_CELL;
+  const height = (glyph.length - 1) * LETTER_CELL;
+
+  for (let y = 0; y < glyph.length; y += 1) {
+    for (let x = 0; x < glyph[y].length; x += 1) {
+      if (glyph[y][x] !== '1') continue;
+      const cell = new Mesh(LETTER_DOT, fillMaterial);
+      cell.position.set(x * LETTER_CELL - width / 2, height / 2 - y * LETTER_CELL, 0);
+      cell.rotation.z = Math.PI / 4;
+      const core = new Mesh(LETTER_CORE, hotMaterial);
+      core.position.copy(cell.position);
+      core.position.z = 0.01;
+      core.rotation.z = Math.PI / 4;
+      group.add(cell, core);
+    }
+  }
+
   group.userData.isLetter = true;
-  group.userData.materials = [material, hot];
+  group.userData.letter = letter.toUpperCase();
+  group.userData.accent = ICE;
+  group.userData.materials = [fillMaterial, hotMaterial];
   return group;
 }
-
-const segmentMap: Record<string, number[]> = {
-  A: [0, 1, 2, 3, 4, 5],
-  B: [1, 3, 4, 5, 6],
-  E: [0, 1, 3, 4, 6],
-  L: [1, 4, 6],
-  O: [0, 1, 2, 4, 5, 6],
-  P: [0, 1, 2, 3, 4],
-  R: [0, 1, 2, 3, 4, 5],
-  S: [0, 1, 3, 5, 6],
-  T: [0, 2, 5],
-  Y: [1, 2, 3, 5, 6],
-};
 
 export function setEnemyLocked(mesh: Object3D, locked: boolean) {
   mesh.userData.locked = locked;
   const materials = mesh.userData.materials as MeshBasicMaterial[] | undefined;
-  for (const material of materials ?? []) material.color.copy(locked ? hdr(ROSE, 2.4) : hdr(mesh.userData.accent ?? ICE, 1.5));
+  const fallback = hdr(mesh.userData.accent ?? ICE, 1.5);
+  for (const material of materials ?? []) {
+    const baseColor = material.userData.baseColor as Color | undefined;
+    material.color.copy(locked ? hdr(ROSE, 2.4) : (baseColor ?? fallback));
+  }
 }
 
 export function createProjectileMesh() {

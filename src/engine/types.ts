@@ -27,10 +27,25 @@ export type LevelContext = {
   startTip: string;
 };
 
+export type LevelPostConfig = {
+  clearColor?: number;
+  bloom?: {
+    strength?: number;
+    threshold?: number;
+    radius?: number;
+  };
+  vignette?: {
+    inner?: number;
+    outer?: number;
+    strength?: number;
+  } | false;
+};
+
 export type LevelDefinition = {
   id: string;
   title: string;
   description: string;
+  post?: LevelPostConfig;
   createAudio(bus: EventBus): LevelAudio;
   createRuntime(context: LevelContext): LevelRuntime;
 };
