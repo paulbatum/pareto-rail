@@ -3,11 +3,13 @@ import type { EventBus } from '../../events';
 import type { Hud } from '../../ui/hud';
 import type { LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { sampleRailFrame, smoothRunProgress } from '../../engine/rail';
+import { setGlyphLocked } from './glyphs';
 import { isWord } from './words';
 
 // 84 BPM: one 4/4 bar is 60/84*4 s, so 21 bars land on exactly 60 seconds.
 export const BPM = 84;
 export const BAR = (60 / BPM) * 4;
+const BEAT = 60 / BPM;
 export const REZDLE_RUN_DURATION = 60;
 
 export type RezdleEnemyKind = 'vowel' | 'consonant' | 'bonus';
@@ -15,7 +17,7 @@ export type RezdleEnemyKind = 'vowel' | 'consonant' | 'bonus';
 export type RezdleSpawnData = {
   slot: Vector3;
   flyFrom: Vector3;
-  holdEnd: number;
+  exitAt: number;
   anchorU: number;
   seed: number;
 };
@@ -25,9 +27,11 @@ type RezdleSpawnEntry = LockOnSpawnEntry<RezdleEnemyKind, RezdleSpawnData>;
 const VOWELS = new Set([...'AEIOU']);
 const RARE = new Set([...'JKQVWXZ']);
 const WORD_BONUS = [0, 0, 0, 100, 250, 500, 900, 1400, 2200];
-const FLY_IN = 1.0;
-const EXIT_LIFE = 1.15;
-const RACK_DISTANCE = 18;
+const FLY_IN = 1.3;
+const EXIT_LIFE = 1.4;
+const LIFETIME = 4.5 * BAR;
+const MAX_LOCK_HOLD = BAR;
+const FLOW_DISTANCE = 17;
 
 export function kindForLetter(letter: string): RezdleEnemyKind {
   if (VOWELS.has(letter)) return 'vowel';
@@ -37,7 +41,7 @@ export function kindForLetter(letter: string): RezdleEnemyKind {
 
 export function createRezdleRail() {
   // Long and gentle: slow S-curves and shallow rises so aim stays steady
-  // while a rack is on screen.
+  // while letters drift through.
   return new CatmullRomCurve3(
     [
       new Vector3(0, 0.6, 0),
@@ -55,22 +59,31 @@ export function createRezdleRail() {
   );
 }
 
-// Racks of type: each is one intended word plus decoy letters, arriving on a
-// phrase boundary of the 84 BPM score and holding in formation while the
-// camera closes in.
-type RackShape = 'line' | 'arch' | 'stagger';
-type Rack = { bar: number; holdBars: number; word: string; decoys: string; shape: RackShape };
-
-const RACKS: Rack[] = [
-  { bar: 1, holdBars: 2.5, word: 'MOON', decoys: 'TS', shape: 'line' },
-  { bar: 3.5, holdBars: 2.5, word: 'TRAIN', decoys: 'EO', shape: 'arch' },
-  { bar: 6, holdBars: 2.5, word: 'LIGHT', decoys: 'SAE', shape: 'stagger' },
-  { bar: 8.5, holdBars: 2.5, word: 'STORM', decoys: 'EAI', shape: 'arch' },
-  { bar: 11, holdBars: 2.5, word: 'WINTER', decoys: 'AOS', shape: 'stagger' },
-  { bar: 13.5, holdBars: 2.5, word: 'SILVER', decoys: 'TAO', shape: 'stagger' },
-  { bar: 16, holdBars: 2.25, word: 'MACHINE', decoys: 'ORS', shape: 'stagger' },
-  { bar: 18.25, holdBars: 2.5, word: 'MIDNIGHT', decoys: 'EA', shape: 'arch' },
+// The letter stream: authored words flow through the case in order, each
+// followed by a decoy that extends it (MOON→S, RAIN→T for TRAIN, SILVER→Y).
+// Trios of consecutive letters float in every bar and each letter floats out
+// ~4.5 bars later, so the pool slowly flows instead of arriving in racks.
+const STREAM: string[] = [
+  ...'MOON', 'S',
+  ...'RAIN', 'T',
+  ...'LIGHT', 'S',
+  ...'STORM', 'E',
+  ...'WINTER', 'S',
+  ...'SILVER', 'Y',
+  ...'MACHINE',
+  ...'MIDNIGHT',
 ];
+
+// 18 hand-scattered slots with comfortable lock spacing; consecutive letters
+// take consecutive slots, so a trio lands as a loose neighborhood cluster.
+// With ~14 letters alive at once, a slot is long vacant before it recurs.
+const SLOTS: Array<[number, number]> = [
+  [-8.2, 2.8], [-4.6, 3.2], [-1.0, 2.6], [2.6, 3.3], [6.2, 2.7], [9.0, 1.4],
+  [-9.6, 0.6], [-6.0, 0.9], [-2.6, 0.4], [0.8, 1.0], [4.2, 0.6], [7.4, -0.6],
+  [-7.8, -1.6], [-4.2, -1.9], [-0.8, -1.4], [2.4, -1.8], [5.8, -2.4], [9.8, -3.0],
+];
+
+const TRIO_OFFSETS = [0, BEAT * (2 / 3), BEAT];
 
 function lcg(seed: number) {
   let state = seed >>> 0 || 1;
@@ -80,78 +93,35 @@ function lcg(seed: number) {
   };
 }
 
-function shuffled<T>(items: T[], rand: () => number) {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(rand() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
-function slotOffsets(shape: RackShape, count: number): Array<{ x: number; y: number }> {
-  const offsets: Array<{ x: number; y: number }> = [];
-  if (shape === 'stagger') {
-    const columns = Math.ceil(count / 2);
-    for (let i = 0; i < count; i += 1) {
-      const column = Math.floor(i / 2);
-      const top = i % 2 === 0;
-      offsets.push({
-        x: (column - (columns - 1) / 2) * 2.7 + (top ? 0 : 1.1),
-        y: top ? 1.9 : -0.9,
-      });
-    }
-    return offsets;
-  }
-  const spacing = count >= 10 ? 2.1 : 2.35;
-  for (let i = 0; i < count; i += 1) {
-    const centered = i - (count - 1) / 2;
-    const arc = (centered / Math.max(1, (count - 1) / 2)) * (Math.PI / 2);
-    offsets.push({
-      x: centered * spacing,
-      y: shape === 'arch' ? Math.cos(arc) * 2.2 - 0.4 : (i % 2 === 0 ? 0.35 : -0.35),
-    });
-  }
-  return offsets;
-}
-
 function buildTimeline(): RezdleSpawnEntry[] {
   const rail = createRezdleRail();
-  const entries: RezdleSpawnEntry[] = [];
 
-  RACKS.forEach((rack, rackIndex) => {
-    const rand = lcg(rackIndex * 7919 + 17);
-    const letters = shuffled([...(rack.word + rack.decoys)], rand);
-    const spawnTime = rack.bar * BAR;
-    const holdEnd = (rack.bar + rack.holdBars) * BAR;
-    const anchorU = smoothRunProgress(holdEnd, REZDLE_RUN_DURATION);
+  return STREAM.map((letter, index) => {
+    const rand = lcg(index * 7919 + 29);
+    const trio = Math.floor(index / 3);
+    const time = (1 + trio) * BAR + TRIO_OFFSETS[index % 3];
+    const exitAt = time + LIFETIME;
+    const anchorU = smoothRunProgress(exitAt, REZDLE_RUN_DURATION);
     const frame = sampleRailFrame(rail, anchorU);
-    const anchor = frame.position.clone().addScaledVector(frame.tangent, RACK_DISTANCE);
-    const offsets = slotOffsets(rack.shape, letters.length);
-
-    letters.forEach((letter, index) => {
-      const offset = offsets[index];
-      const slot = anchor
-        .clone()
-        .addScaledVector(frame.right, offset.x)
-        .addScaledVector(frame.up, offset.y + 0.5);
-      const side = rand() > 0.5 ? 1 : -1;
-      const flyFrom = slot
-        .clone()
-        .addScaledVector(frame.right, side * (7 + rand() * 6))
-        .addScaledVector(frame.up, 4 + rand() * 5)
-        .addScaledVector(frame.tangent, -6 - rand() * 4);
-      entries.push({
-        // Letters ripple in left to right like a line of type being set.
-        time: spawnTime + (offset.x + 12) * 0.028,
-        kind: kindForLetter(letter),
-        letter,
-        data: { slot, flyFrom, holdEnd, anchorU, seed: rand() * Math.PI * 2 },
-      });
-    });
+    const [slotX, slotY] = SLOTS[index % SLOTS.length];
+    const slot = frame.position
+      .clone()
+      .addScaledVector(frame.tangent, FLOW_DISTANCE)
+      .addScaledVector(frame.right, slotX)
+      .addScaledVector(frame.up, slotY + 0.5);
+    const side = rand() > 0.5 ? 1 : -1;
+    const flyFrom = slot
+      .clone()
+      .addScaledVector(frame.right, side * (6 + rand() * 5))
+      .addScaledVector(frame.up, 5 + rand() * 4)
+      .addScaledVector(frame.tangent, -8 - rand() * 4);
+    return {
+      time,
+      kind: kindForLetter(letter),
+      letter,
+      data: { slot, flyFrom, exitAt, anchorU, seed: rand() * Math.PI * 2 },
+    };
   });
-
-  return entries.sort((a, b) => a.time - b.time);
 }
 
 export const REZDLE_TIMELINE: RezdleSpawnEntry[] = buildTimeline();
@@ -205,14 +175,36 @@ export function createRezdleGameplay(bus: EventBus, hud: Hud): LockOnRunnerLevel
     },
 
     updateEnemy({ enemy, runTime, runProgress, age, camera }) {
-      const { slot, flyFrom, holdEnd, anchorU, seed } = enemy.entry.data;
+      const { slot, flyFrom, exitAt, anchorU, seed } = enemy.entry.data;
       const mesh = enemy.mesh;
       const locked = mesh.userData.locked === true;
-      const exitAge = runTime - holdEnd;
+
+      // Rejected release: the type jams — blink the ink red, then settle.
+      if (mesh.userData.denied === true) {
+        const deniedAt = (mesh.userData.deniedAt as number | undefined) ?? runTime;
+        mesh.userData.deniedAt = deniedAt;
+        const deniedFor = runTime - deniedAt;
+        if (deniedFor > 0.55) {
+          mesh.userData.denied = false;
+          mesh.userData.deniedAt = undefined;
+          setGlyphLocked(mesh, locked);
+        } else {
+          setGlyphLocked(mesh, Math.floor(deniedFor * 9) % 2 === 0);
+        }
+      }
+
+      // A locked letter waits (up to a bar) before floating out, so a word
+      // in progress does not dissolve under the reticle.
+      let exitDelay = (mesh.userData.exitDelay as number | undefined) ?? 0;
+      if (locked) {
+        exitDelay = Math.min(Math.max(exitDelay, runTime + 0.25 - exitAt), MAX_LOCK_HOLD);
+        mesh.userData.exitDelay = exitDelay;
+      }
+      const exitAge = runTime - (exitAt + exitDelay);
 
       if (exitAge <= 0) {
         if (age < FLY_IN) {
-          // Ease into the rack slot.
+          // Float in from above the case.
           const t = age / FLY_IN;
           const eased = t * t * (3 - 2 * t);
           mesh.position.copy(flyFrom).lerp(slot, eased);
@@ -241,14 +233,14 @@ export function createRezdleGameplay(bus: EventBus, hud: Hud): LockOnRunnerLevel
         return false;
       }
 
-      // Rack expired: loose type falls off the press.
+      // Time's up: the letter floats up and away, back into the dark.
       mesh.position.copy(slot);
-      mesh.position.y -= exitAge * exitAge * 7;
-      mesh.position.x += Math.sin(seed) * exitAge * 2.2;
+      mesh.position.y += exitAge * 2.2;
+      mesh.position.x += Math.sin(seed) * exitAge * 1.5;
       mesh.quaternion.copy(camera.quaternion);
-      mesh.rotateZ(exitAge * (1.5 + Math.sin(seed)) * (seed > Math.PI ? 1 : -1));
-      mesh.scale.setScalar(Math.max(0.05, 1 - exitAge * 0.55));
-      return exitAge > EXIT_LIFE || runProgress > MathUtils.clamp(anchorU + 0.05, 0, 1);
+      mesh.rotateZ(exitAge * 0.8 * (seed > Math.PI ? 1 : -1));
+      mesh.scale.setScalar(Math.max(0.05, 1 - exitAge * 0.65));
+      return exitAge > EXIT_LIFE || runProgress > MathUtils.clamp(anchorU + 0.045, 0, 1);
     },
   };
 }

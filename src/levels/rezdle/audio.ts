@@ -261,6 +261,15 @@ export function createAudio(bus: EventBus) {
     }
   });
 
+  bus.on('reject', () => {
+    if (!ctx) return;
+    // The type jams: two dull clunks and a rattle, no bell.
+    const time = now();
+    thump(time, 130, 72, 0.055, 0.11);
+    thump(time + 0.08, 95, 58, 0.045, 0.13);
+    noise(time + 0.02, 0.13, 0.02, 'lowpass', 520);
+  });
+
   bus.on('miss', () => {
     if (!ctx) return;
     tickNoise(now(), 0.01, 2400);

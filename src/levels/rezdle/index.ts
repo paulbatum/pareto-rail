@@ -58,6 +58,7 @@ export const rezdleLevel: LevelDefinition = {
       visuals: {
         createEnemyMesh,
         setEnemyLocked,
+        setEnemyDenied,
         createProjectileMesh,
         createReticle,
         setReticleActive,
@@ -136,6 +137,13 @@ function setEnemyLocked(mesh: Object3D, locked: boolean) {
     const base = edgeMaterial.userData.baseColor as Color | undefined;
     edgeMaterial.color.copy(locked ? hdr(VERMILLION, 2.2) : (base ?? edgeMaterial.color));
   }
+}
+
+// A rejected release marks the mesh; the per-frame red blink runs in the
+// level's updateEnemy, which owns glyph state.
+function setEnemyDenied(mesh: Object3D) {
+  mesh.userData.denied = true;
+  mesh.userData.deniedAt = undefined;
 }
 
 // --- Projectile and reticle ---------------------------------------------
