@@ -21,7 +21,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { hexRing, paintVertexColor, type ShardSpec } from './crystal';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 
-// Threat visuals for the challenge pass: lancer bolts, and the Prism Warden
+// Threat visuals for the challenge pass: lancer bolts, and the Crystal Warden
 // miniboss (shielded core + orbiting hex plates). Every group honors the same
 // userData contract as createCrystal (core/glow/edge/fill materials, base
 // colors, shardSpecs) so lock tint, distance falloff, and kill shatter in
@@ -227,7 +227,7 @@ export function createWardenShieldMesh(): Group {
   return group;
 }
 
-// The Prism Warden core: a large hex mandala with a hot heart, wrapped in an
+// The Crystal Warden core: a large hex mandala with a hot heart, wrapped in an
 // amber shield shell (userData.shell) that visuals/index.ts dissolves once
 // gameplay marks userData.exposed.
 export function createWardenCoreMesh(): Group {

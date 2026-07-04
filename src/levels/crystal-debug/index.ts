@@ -43,7 +43,7 @@ export const crystalDebugLevel: LevelDefinition = {
       if (kind === 'warden-shield') shieldIds.add(enemyId);
       if (kind === 'warden-core') {
         coreId = enemyId;
-        say('PRISM WARDEN', 2.6);
+        say('CRYSTAL WARDEN', 2.6);
       }
     });
     bus.on('kill', ({ enemyId }) => {

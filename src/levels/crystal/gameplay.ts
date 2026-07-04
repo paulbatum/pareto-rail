@@ -5,7 +5,7 @@ import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import type { EventBus } from '../../events';
 
 // A 45-second run in three acts: a familiar warm-up third, a dense middle
-// where lancers start shooting back, and the Prism Warden holding the final
+// where lancers start shooting back, and the Crystal Warden holding the final
 // stretch. The player has a 3-point hull; shard bolts home in on the camera
 // and must be shot down before they land.
 
@@ -127,7 +127,7 @@ const TIMELINE: CrystalSpawnEntry[] = [
     [-4, 2], [0, 4], [4, 2],
   ]),
 
-  // --- Act 3 (30s–end): the Prism Warden. Core is unlockable until all three
+  // --- Act 3 (30s–end): the Crystal Warden. Core is unlockable until all three
   // shield plates are cracked (2 hits each); then 4 hits to the heart.
   { time: BOSS_TIME, kind: 'warden-core', hitPoints: 4, lockable: false, data: { role: 'core' } },
   { time: BOSS_TIME + 0.2, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 0 } },
@@ -413,7 +413,7 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     detailsForRun() {
       const hull = Math.max(0, CRYSTAL_PLAYER_HEALTH - hitsTaken);
       const lines = [`Hull ${hull}/${CRYSTAL_PLAYER_HEALTH}`];
-      if (boss.coreSpawned) lines.push(boss.coreKilled ? 'Warden destroyed' : 'Warden escaped');
+      if (boss.coreSpawned) lines.push(boss.coreKilled ? 'Crystal Warden destroyed' : 'Crystal Warden escaped');
       return lines;
     },
   };

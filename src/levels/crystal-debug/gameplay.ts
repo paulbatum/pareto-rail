@@ -25,7 +25,7 @@ export type CrystalDebugTarget = 'node' | 'drifter' | 'orbiter' | 'lancer' | 'wa
 
 export const CRYSTAL_DEBUG_TARGETS: Array<{ id: CrystalDebugTarget; title: string }> = [
   { id: 'lancer', title: 'Lancer' },
-  { id: 'warden', title: 'Prism Warden' },
+  { id: 'warden', title: 'Crystal Warden' },
   { id: 'node', title: 'Node' },
   { id: 'drifter', title: 'Drifter' },
   { id: 'orbiter', title: 'Orbiter' },
@@ -398,7 +398,7 @@ export function createCrystalGameplay(
     detailsForRun() {
       const hull = Math.max(0, CRYSTAL_PLAYER_HEALTH - hitsTaken);
       const lines = [`Hull ${hull}/${CRYSTAL_PLAYER_HEALTH}`];
-      if (boss.coreSpawned) lines.push(boss.coreKilled ? 'Warden destroyed' : 'Warden escaped');
+      if (boss.coreSpawned) lines.push(boss.coreKilled ? 'Crystal Warden destroyed' : 'Crystal Warden escaped');
       return lines;
     },
   };
