@@ -45,6 +45,7 @@ export type LevelDefinition = {
   id: string;
   title: string;
   description: string;
+  debugOnly?: boolean;
   post?: LevelPostConfig;
   createAudio(bus: EventBus): LevelAudio;
   createRuntime(context: LevelContext): LevelRuntime;

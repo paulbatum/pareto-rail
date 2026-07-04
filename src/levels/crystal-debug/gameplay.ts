@@ -4,12 +4,11 @@ import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import type { EventBus } from '../../events';
 
-// A 45-second run in three acts: a familiar warm-up third, a dense middle
-// where lancers start shooting back, and the Prism Warden holding the final
-// stretch. The player has a 3-point hull; shard bolts home in on the camera
-// and must be shot down before they land.
+// Temporary copy of Crystal Corridor for debugging lancer behavior. The run is
+// slowed down and starts with an untargetable high-health lancer that remains
+// ahead of the camera long enough to make repeated firing easy to observe.
 
-export const CRYSTAL_RUN_DURATION = 45;
+export const CRYSTAL_RUN_DURATION = 90;
 export const CRYSTAL_PLAYER_HEALTH = 3;
 
 export type CrystalEnemyKind =
@@ -67,73 +66,15 @@ export function createCrystalRail() {
   );
 }
 
-const wave = (
-  time: number,
-  lead: number,
-  pattern: CrystalMovementPattern,
-  kind: CrystalEnemyKind,
-  offsets: Array<[number, number]>,
-): CrystalSpawnEntry[] => offsets.map((offset, index) => ({
-  time: time + index * 0.18,
-  kind,
-  data: { role: 'wave', lead, pattern, offset: new Vector3(offset[0], offset[1], 0) },
-}));
+const DEBUG_LANCER: CrystalSpawnEntry = {
+  time: 1.0,
+  kind: 'lancer',
+  hitPoints: 999,
+  lockable: false,
+  data: { role: 'wave', lead: 0, pattern: 'hold', offset: new Vector3(0, 2.8, 0) },
+};
 
-const lancers = (time: number, lead: number, offsets: Array<[number, number]>): CrystalSpawnEntry[] =>
-  wave(time, lead, 'hold', 'lancer', offsets);
-
-const BOSS_TIME = 30.2;
-
-const TIMELINE: CrystalSpawnEntry[] = [
-  // --- Act 1 (0–10s): the familiar opening. Room to learn the sweep.
-  ...wave(1.2, 4.0, 'hold', 'node', [
-    [-5, 1], [-2, 3], [2, 3], [5, 1],
-  ]),
-  ...wave(4.2, 4.6, 'drift', 'drifter', [
-    [-8, -1], [-4, 2], [0, 3], [4, 2], [8, -1],
-  ]),
-  ...wave(7.4, 4.8, 'orbit', 'orbiter', [
-    [-6, 4], [-3, 0], [3, 0], [6, 4],
-  ]),
-
-  // --- Act 2 (10–30s): the corridor wakes up. Denser waves, and lancers —
-  // haloed crystals that fire homing shard bolts at the hull.
-  ...wave(10.6, 4.3, 'drift', 'drifter', [
-    [-7, 2], [-3, -2], [2, 1], [7, -1],
-  ]),
-  ...wave(13.2, 4.6, 'hold', 'node', [
-    [-7, -1], [-3.5, 2], [0, 3.5], [3.5, 2], [7, -1],
-  ]),
-  ...lancers(14.4, 5.0, [[0, 5.4]]),
-  ...wave(16.4, 4.7, 'orbit', 'orbiter', [
-    [-9, 2], [-4.5, 5], [0, 2], [4.5, 5], [9, 2],
-  ]),
-  ...wave(18.8, 4.4, 'drift', 'drifter', [
-    [-7, 0], [-2, 3], [2, -1], [7, 2],
-  ]),
-  ...lancers(19.6, 5.2, [[-6, 4], [6, 4]]),
-  ...wave(21.6, 4.5, 'hold', 'node', [
-    [-7.5, 4], [-5, 1.5], [-2.5, -1], [2.5, -1], [5, 1.5], [7.5, 4],
-  ]),
-  ...wave(23.8, 4.6, 'orbit', 'orbiter', [
-    [-8, -1], [-3, 3], [3, 3], [8, -1],
-  ]),
-  ...lancers(24.6, 4.8, [[-5, -2], [5, -2]]),
-  ...wave(26.2, 4.2, 'drift', 'drifter', [
-    [-8, 1], [-5, -2], [-1.5, 3], [1.5, -1], [5, 2], [8, -1],
-  ]),
-  ...lancers(28.2, 4.4, [[-3, 5], [3, 5]]),
-  ...wave(29.2, 3.4, 'hold', 'node', [
-    [-4, 2], [0, 4], [4, 2],
-  ]),
-
-  // --- Act 3 (30s–end): the Prism Warden. Core is unlockable until all three
-  // shield plates are cracked (2 hits each); then 4 hits to the heart.
-  { time: BOSS_TIME, kind: 'warden-core', hitPoints: 4, lockable: false, data: { role: 'core' } },
-  { time: BOSS_TIME + 0.2, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 0 } },
-  { time: BOSS_TIME + 0.3, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 1 } },
-  { time: BOSS_TIME + 0.4, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 2 } },
-];
+const TIMELINE: CrystalSpawnEntry[] = [DEBUG_LANCER];
 
 export const CRYSTAL_TIMELINE: CrystalSpawnEntry[] = TIMELINE.sort((a, b) => a.time - b.time);
 
@@ -155,7 +96,6 @@ const BOLT_MAX_AGE = 14;
 
 export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalEnemyKind, CrystalSpawnData> {
   const coreEntry = CRYSTAL_TIMELINE.find((entry) => entry.kind === 'warden-core');
-  if (!coreEntry) throw new Error('Crystal timeline is missing the warden core');
 
   const boss = {
     corePosition: new Vector3(),
@@ -179,7 +119,7 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     fireState.clear();
     boltInterceptions.clear();
     hitsTaken = 0;
-    coreEntry.lockable = false;
+    if (coreEntry) coreEntry.lockable = false;
   });
 
   bus.on('playerhit', () => {
@@ -200,7 +140,7 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
 
   const onShieldGone = (enemyId: number) => {
     if (!boss.shieldIds.delete(enemyId)) return;
-    if (boss.shieldIds.size === 0 && boss.coreSpawned && !boss.exposed) {
+    if (boss.shieldIds.size === 0 && boss.coreSpawned && !boss.exposed && coreEntry) {
       boss.exposed = true;
       coreEntry.lockable = true;
     }
@@ -238,10 +178,12 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
 
   function updateWave(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'wave' }>) {
     const { enemy, runTime, runProgress, age, curve, camera } = context;
-    const anchorU = smoothRunProgress(
-      Math.min(CRYSTAL_RUN_DURATION, enemy.entry.time + data.lead),
-      CRYSTAL_RUN_DURATION,
-    );
+    const anchorU = enemy.kind === 'lancer'
+      ? MathUtils.clamp(runProgress + 0.08, 0, 1)
+      : smoothRunProgress(
+        Math.min(CRYSTAL_RUN_DURATION, enemy.entry.time + data.lead),
+        CRYSTAL_RUN_DURATION,
+      );
     const offset = data.offset.clone();
     if (data.pattern === 'drift') {
       offset.x += Math.sin(age * 0.85 + enemy.id) * 1.3 + age * 0.55;
@@ -254,10 +196,10 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     if (enemy.kind === 'lancer') {
       // Menace pulse: a slow push toward the camera sells intent.
       offset.z = Math.sin(age * 1.5) * 0.9;
-      const fire = cadence(enemy.id, 1.4, 2);
+      const fire = cadence(enemy.id, 0.8, Number.POSITIVE_INFINITY);
       if (fire.shotsLeft > 0 && age >= fire.nextAt) {
         fire.shotsLeft -= 1;
-        fire.nextAt = age + 3.2;
+        fire.nextAt = age + 1.8;
         fireBolt(context, enemy.mesh.position);
       }
     }
@@ -268,7 +210,7 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     enemy.mesh.rotateY(Math.sin(runTime * 0.8 + enemy.id * 1.3) * 0.4);
     enemy.mesh.rotateX(Math.cos(runTime * 0.65 + enemy.id * 2.1) * 0.3);
 
-    return runProgress > anchorU + 0.018;
+    return enemy.kind !== 'lancer' && runProgress > anchorU + 0.018;
   }
 
   function updateBolt(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'bolt' }>) {

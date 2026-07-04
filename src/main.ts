@@ -3,12 +3,14 @@ import { PerspectiveCamera, Scene } from 'three';
 import { WebGPURenderer } from 'three/webgpu';
 import { createEventBus } from './events';
 import { createPost, getBloomLevel, setBloomLevel } from './engine/post';
-import { getLevelById, levels } from './levels';
+import { getLevelById, selectableLevels } from './levels';
 import { getStartScreenTip } from './ui/client-tip';
+import { installDevErrorOverlay } from './ui/dev-error-overlay';
 import { createHud, showUnsupported } from './ui/hud';
 import { createPauseMenu } from './ui/pause';
 
 async function bootstrap() {
+  if (import.meta.env.DEV) installDevErrorOverlay();
   if (!('gpu' in navigator)) {
     showUnsupported('This game requires WebGPU');
     return;
@@ -19,7 +21,7 @@ async function bootstrap() {
 
   const selectedLevel = getLevelById(new URLSearchParams(window.location.search).get('level'));
   document.title = `raild — ${selectedLevel.title}`;
-  installLevelPicker(selectedLevel.id);
+  installLevelPicker(selectedLevel.id, import.meta.env.DEV);
 
   const renderer = new WebGPURenderer({ antialias: true, alpha: false });
   // three.js installs a WebGL fallback internally; this project is intentionally WebGPU-only.
@@ -118,12 +120,12 @@ async function bootstrap() {
   });
 }
 
-function installLevelPicker(activeId: string) {
+function installLevelPicker(activeId: string, includeDebug: boolean) {
   const host = document.createElement('label');
   host.className = 'level-picker';
   host.textContent = 'Level ';
   const select = document.createElement('select');
-  for (const level of levels) {
+  for (const level of selectableLevels(includeDebug)) {
     const option = document.createElement('option');
     option.value = level.id;
     option.textContent = level.title;
