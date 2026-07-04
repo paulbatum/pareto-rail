@@ -8,6 +8,7 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "check:scope": "bash scripts/check-level-scope.sh",
+    "snapshot": "node scripts/snapshot.mjs",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",
     "sim:crystal-debug:verbose": "node scripts/run-crystal-debug-sim.mjs --verbose"
   },
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.185.0",
+    "puppeteer": "^25.3.0",
     "typescript": "latest",
     "vite": "latest"
   }

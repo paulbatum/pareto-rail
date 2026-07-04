@@ -24,3 +24,5 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 ## Verification
 
 `npm run typecheck` and `npm run build` must pass. Level-building tasks must also pass `npm run check:scope -- <level-id>`. `npm run dev` to playtest.
+
+Use `npm run snapshot -- --module <path> --export <factory>` to capture PNGs of procedural models under `snapshots/` from headless Chrome's SwiftShader WebGL backend.
