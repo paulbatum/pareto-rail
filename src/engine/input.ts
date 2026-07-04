@@ -28,13 +28,23 @@ export function createInput(target: HTMLElement, handlers: InputHandlers) {
     state.pointerNdc.set(x * 2 - 1, -(y * 2 - 1));
   };
 
-  const onPointerMove = (event: PointerEvent) => updatePointer(event);
+  // While the primary button is held, pressing the secondary button fires
+  // pointermove with a changed buttons bitmask — not pointerdown — so undo
+  // detection must watch the bitmask on every pointer event.
+  let secondaryHeld = false;
+  const checkSecondary = (event: PointerEvent) => {
+    const secondary = (event.buttons & 2) !== 0;
+    if (secondary && !secondaryHeld) handlers.onUndoLock?.();
+    secondaryHeld = secondary;
+  };
+
+  const onPointerMove = (event: PointerEvent) => {
+    updatePointer(event);
+    checkSecondary(event);
+  };
   const onPointerDown = (event: PointerEvent) => {
     updatePointer(event);
-    if (event.button === 2) {
-      handlers.onUndoLock?.();
-      return;
-    }
+    checkSecondary(event);
     if (event.button !== 0) return;
     state.pointerDown = true;
     handlers.onPointerDown?.();
@@ -42,6 +52,7 @@ export function createInput(target: HTMLElement, handlers: InputHandlers) {
   };
   const onPointerUp = (event: PointerEvent) => {
     updatePointer(event);
+    checkSecondary(event);
     if (event.button !== 0 && event.type !== 'pointercancel') return;
     if (state.pointerDown) state.justReleased = true;
     state.pointerDown = false;
