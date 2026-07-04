@@ -8,7 +8,8 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "check:scope": "bash scripts/check-level-scope.sh",
-    "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs"
+    "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",
+    "sim:crystal-debug:verbose": "node scripts/run-crystal-debug-sim.mjs --verbose"
   },
   "dependencies": {
     "three": "latest"

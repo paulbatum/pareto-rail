@@ -175,4 +175,16 @@ export function runCrystalLancerDebugSim(options: SimOptions) {
 }
 
 const result = runCrystalLancerDebugSim({ dt: 1 / 120 });
-console.log(JSON.stringify(result, null, 2));
+const verbose = process.argv.includes('--verbose') || process.argv.includes('-v');
+
+if (verbose) {
+  console.log(JSON.stringify(result, null, 2));
+} else {
+  const spawnCounts = Object.entries(result.spawnCounts)
+    .map(([kind, count]) => `${kind}:${count}`)
+    .join(' ');
+  const outcome = result.endedByDeath ? `death at ${result.secondsSimulated.toFixed(2)}s` : `${result.secondsSimulated.toFixed(2)}s`;
+  console.log(
+    `crystal-debug sim: ${outcome}; health ${result.healthRemaining}; spawns ${spawnCounts}; hits ${result.playerHits.length}; misses ${result.misses.length}; active ${result.activeEnemies.length}`,
+  );
+}

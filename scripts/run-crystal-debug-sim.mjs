@@ -3,7 +3,7 @@ import { createServer } from 'vite';
 const server = await createServer({
   appType: 'custom',
   logLevel: 'warn',
-  server: { middlewareMode: true },
+  server: { middlewareMode: true, hmr: false },
 });
 
 try {
