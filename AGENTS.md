@@ -10,10 +10,10 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 - `src/engine/` — reusable mechanics and utilities. `lock-on-runner.ts` provides the shared lock-on rail-shooter flow; `input.ts`, `rail.ts`, `scoring.ts`, and `music.ts` are level-agnostic helpers; `post.ts` owns shared bloom/vignette.
 - `src/events.ts` — typed event bus (`spawn`, `lock`, `fire`, `hit`, `kill`, `beat`, `runstart`, …). Gameplay, visuals, and audio coordinate through events.
 - `src/levels/<level-id>/` — independent level modules. A level owns its gameplay design, rail, enemy types, visual language, effects, environment, and procedural music/SFX. Do not turn an existing level into a parameterized template for new levels.
-- `src/levels/index.ts` — level registry used by the in-game picker and `?level=<id>` URL parameter.
+- `src/levels/index.ts` — level registry used by the in-game picker and `?level=<id>` URL parameter. The first entry is the default level a visitor lands on; keep the most polished level first.
 - `src/ui/` — DOM HUD, pause menu, end panel.
 - The enemy tuning gallery lives at `/dev` during `npm run dev`; it is specifically for `crystal-corridor` and edits `src/levels/crystal/visuals/crystal-template.json`.
-- See `docs/level-authoring.md` before adding or reshaping levels.
+- See `docs/level-authoring.md` before adding or reshaping levels. New levels are built to the standing brief in `docs/level-brief.md`.
 
 ## Gotchas
 
