@@ -54,7 +54,7 @@ function addFacetMesh(
   return fill;
 }
 
-function addCore(group: Group, radius: number, color: Color, intensity: number, glowScale = 1.9, glowOpacity = 0.4) {
+function addCore(group: Group, radius: number, color: Color, intensity: number, glowScale = 1.55, glowOpacity = 0.26) {
   const coreMaterial = new MeshBasicMaterial({ color: hdr(color, intensity) });
   const core = new Mesh(new OctahedronGeometry(radius, 1), coreMaterial);
   const glowMaterial = new MeshBasicMaterial({
@@ -87,7 +87,7 @@ export function createCinderMesh() {
   ];
   for (const [offset, size, twist] of placements) {
     const geometry = new TetrahedronGeometry(size, 0);
-    const fill = addFacetMesh(group, geometry, OBSIDIAN.clone().multiplyScalar(1.6), EMBER, 1.0);
+    const fill = addFacetMesh(group, geometry, OBSIDIAN.clone().multiplyScalar(0.55), EMBER, 1.0);
     fill.position.copy(offset);
     fill.rotation.set(twist, twist * 1.7, twist * 0.6);
     shardSpecs.push({ direction: offset.clone().normalize(), color: EMBER.clone(), size: size * 0.7 });
@@ -105,27 +105,29 @@ export function createMoteMesh() {
   const group = new Group();
   const head = new OctahedronGeometry(0.42, 0);
   head.scale(1, 1, 2.2);
-  addFacetMesh(group, head, OBSIDIAN.clone().multiplyScalar(2), GOLD, 1.3);
-  addCore(group, 0.2, WHITE_HOT, 2.1, 1.7, 0.5);
+  addFacetMesh(group, head, OBSIDIAN.clone().multiplyScalar(0.7), GOLD, 1.3);
+  addCore(group, 0.16, WHITE_HOT, 1.9, 1.5, 0.3);
 
   const tailMaterial = new MeshBasicMaterial({
-    color: hdr(EMBER, 0.85),
+    color: hdr(EMBER, 1.2),
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.75,
     blending: AdditiveBlending,
     depthWrite: false,
+    side: 2,
   });
+  // Wide at the head, tapering to a point behind: a comet tail.
   for (const [radius, length, z] of [
-    [0.3, 2.4, -1.5],
-    [0.16, 3.6, -2.2],
+    [0.42, 3.0, -1.8],
+    [0.2, 4.4, -2.5],
   ] as const) {
-    const cone = new CylinderGeometry(0.01, radius, length, 6, 1, true);
+    const cone = new CylinderGeometry(0.012, radius, length, 7, 1, true);
     const tail = new Mesh(cone, tailMaterial);
     tail.rotation.x = -Math.PI / 2;
     tail.position.z = z;
     group.add(tail);
   }
-  tintable(group).push({ material: tailMaterial, base: hdr(EMBER, 0.85), kind: 'core' });
+  tintable(group).push({ material: tailMaterial, base: hdr(EMBER, 1.2), kind: 'core' });
 
   group.userData.accent = GOLD.clone();
   group.userData.shardSpecs = [
@@ -143,18 +145,18 @@ export function createScorcherMesh() {
   const group = new Group();
   const body = new OctahedronGeometry(0.85, 0);
   body.scale(1.25, 0.6, 0.75);
-  addFacetMesh(group, body, OBSIDIAN.clone().multiplyScalar(1.8), EMBER, 1.1);
+  addFacetMesh(group, body, OBSIDIAN.clone().multiplyScalar(0.6), EMBER, 1.1);
 
   // Mandible fins sweeping forward.
   for (const side of [-1, 1]) {
     const fin = new TetrahedronGeometry(0.66, 0);
     fin.scale(0.5, 0.28, 1.9);
-    const mesh = addFacetMesh(group, fin, OBSIDIAN.clone().multiplyScalar(1.5), GOLD, 1.25);
+    const mesh = addFacetMesh(group, fin, OBSIDIAN.clone().multiplyScalar(0.5), GOLD, 1.25);
     mesh.position.set(side * 0.82, -0.05, 0.75);
     mesh.rotation.set(0.15, side * -0.35, side * 0.5);
   }
 
-  addCore(group, 0.3, WHITE_HOT, 1.9, 1.8, 0.45);
+  addCore(group, 0.2, WHITE_HOT, 1.55, 1.45, 0.28);
 
   // The tell: a broken halo that spins while it hunts.
   const halo = new Group();
@@ -202,7 +204,7 @@ export function createPyreMesh() {
   const coreGlowMaterial = new MeshBasicMaterial({
     color: hdr(GOLD, 0.4),
     transparent: true,
-    opacity: 0.35,
+    opacity: 0.24,
     blending: AdditiveBlending,
     depthWrite: false,
   });
@@ -220,8 +222,8 @@ export function createPyreMesh() {
   for (let i = 0; i < 6; i += 1) {
     const angle = (i / 6) * Math.PI * 2;
     const plateGroup = new Group();
-    const plate = new BoxGeometry(1.16, 3.1, 0.3);
-    const fill = addFacetMesh(group, plate, OBSIDIAN.clone().multiplyScalar(1.4), EMBER, 0.95);
+    const plate = new BoxGeometry(0.98, 3.1, 0.3);
+    const fill = addFacetMesh(group, plate, OBSIDIAN.clone().multiplyScalar(0.5), EMBER, 0.95);
     fill.removeFromParent();
     plateGroup.add(fill);
     plateGroup.position.set(Math.cos(angle) * 1.32, 0, Math.sin(angle) * 1.32);
@@ -241,7 +243,7 @@ export function createPyreMesh() {
     const cap = addFacetMesh(
       group,
       new CylinderGeometry(1.5, 1.15, 0.5, 6),
-      OBSIDIAN.clone().multiplyScalar(1.2),
+      OBSIDIAN.clone().multiplyScalar(0.45),
       GOLD,
       1.05,
     );

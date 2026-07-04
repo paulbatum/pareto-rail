@@ -56,14 +56,14 @@ export function createFangMesh() {
   const group = new Group();
   const segments: Array<[number, number, number, number]> = [
     [1.05, 0, 0, 0],
-    [0.78, 0.28, 1.15, 0.28],
-    [0.5, 0.62, 2.1, 0.55],
-    [0.26, 1.05, 2.85, 0.85],
+    [0.78, 0.3, 1.0, 0.28],
+    [0.52, 0.64, 1.8, 0.55],
+    [0.3, 0.95, 2.35, 0.85],
   ];
   for (const [size, x, y, tilt] of segments) {
     const tooth = new TetrahedronGeometry(size, 0);
     tooth.scale(0.85, 1.7, 0.85);
-    const mesh = facet(group, tooth, OBSIDIAN.clone().multiplyScalar(1.5), GOLD, 1.15);
+    const mesh = facet(group, tooth, OBSIDIAN.clone().multiplyScalar(0.55), GOLD, 1.15);
     mesh.position.set(x, y, 0);
     mesh.rotation.set(0, 0.6, -tilt);
   }
@@ -75,8 +75,8 @@ export function createFangMesh() {
   ((group.userData.parts ??= []) as TintPart[]).push({ material: socketMaterial, base: hdr(EMBER, 1.5), kind: 'core' });
   // White-hot tip.
   const tipMaterial = new MeshBasicMaterial({ color: hdr(WHITE_HOT, 2.2) });
-  const tip = new Mesh(new OctahedronGeometry(0.24, 0), tipMaterial);
-  tip.position.set(1.35, 3.6, 0);
+  const tip = new Mesh(new OctahedronGeometry(0.22, 0), tipMaterial);
+  tip.position.set(1.18, 2.9, 0);
   group.add(tip);
   ((group.userData.parts ??= []) as TintPart[]).push({ material: tipMaterial, base: hdr(WHITE_HOT, 2.2), kind: 'core' });
 
@@ -95,69 +95,98 @@ export function createFangMesh() {
 
 export function createHeadMesh() {
   const group = new Group();
+  const dark = OBSIDIAN.clone().multiplyScalar(0.38);
 
-  // Skull: a huge faceted wedge.
-  const skullGeometry = new IcosahedronGeometry(5.2, 0);
-  skullGeometry.scale(1.3, 0.95, 1.2);
-  facet(group, skullGeometry, OBSIDIAN.clone().multiplyScalar(1.3), EMBER, 0.85);
+  // Skull: a long viper wedge, nose toward the player.
+  const skullGeometry = new IcosahedronGeometry(4.6, 0);
+  skullGeometry.scale(1.25, 0.72, 1.9);
+  const skull = facet(group, skullGeometry, dark, EMBER, 0.85);
+  skull.position.set(0, 0.6, -0.5);
 
-  // Brow crown: a fan of horns over the top rim.
-  for (let i = 0; i < 5; i += 1) {
-    const angle = (i / 4 - 0.5) * Math.PI * 0.9;
-    const horn = new TetrahedronGeometry(1.5, 0);
-    horn.scale(0.55, 2.4, 0.55);
-    const mesh = facet(group, horn, OBSIDIAN.clone().multiplyScalar(1.15), GOLD, 1.1);
-    mesh.position.set(Math.sin(angle) * 5.4, 3.4 + Math.cos(angle) * 2.4, -0.8);
-    mesh.rotation.z = -angle * 0.9;
+  // Snout ridge.
+  const ridgeGeometry = new OctahedronGeometry(1.5, 0);
+  ridgeGeometry.scale(0.75, 0.45, 2.6);
+  const ridge = facet(group, ridgeGeometry, dark, GOLD, 0.95);
+  ridge.position.set(0, 2.6, 3.2);
+
+  // Brow plates: angled slabs shadowing the eyes.
+  for (const side of [-1, 1]) {
+    const brow = facet(group, new BoxGeometry(3.1, 0.55, 1.6), dark, GOLD, 1.05);
+    brow.position.set(side * 2.0, 2.0, 4.6);
+    brow.rotation.set(-0.4, 0, side * -0.3);
   }
 
-  // Jaw: a split lower wedge.
+  // Eyes: white-hot slits slanted inward. The anger is load-bearing.
   for (const side of [-1, 1]) {
-    const jawGeometry = new TetrahedronGeometry(2.6, 0);
-    jawGeometry.scale(1.15, 0.6, 1.6);
-    const jaw = facet(group, jawGeometry, OBSIDIAN.clone().multiplyScalar(1.2), EMBER, 0.9);
-    jaw.position.set(side * 2.2, -4.2, 1.4);
-    jaw.rotation.set(0.35, side * 0.4, side * 0.2);
-  }
-
-  // Eyes.
-  for (const side of [-1, 1]) {
-    const eyeMaterial = new MeshBasicMaterial({ color: hdr(WHITE_HOT, 2.4) });
-    const eye = new Mesh(new OctahedronGeometry(0.55, 0), eyeMaterial);
-    eye.position.set(side * 2.9, 1.7, 3.6);
+    const eyeGeometry = new OctahedronGeometry(1, 0);
+    eyeGeometry.scale(1.05, 0.22, 0.4);
+    const eyeMaterial = new MeshBasicMaterial({ color: hdr(WHITE_HOT, 2.2) });
+    const eye = new Mesh(eyeGeometry, eyeMaterial);
+    eye.position.set(side * 2.0, 1.75, 5.3);
+    eye.rotation.z = side * 0.42;
     group.add(eye);
-    ((group.userData.parts ??= []) as TintPart[]).push({ material: eyeMaterial, base: hdr(WHITE_HOT, 2.4), kind: 'core' });
+    ((group.userData.parts ??= []) as TintPart[]).push({ material: eyeMaterial, base: hdr(WHITE_HOT, 2.2), kind: 'core' });
   }
 
-  // The heart: a molten orb behind four rib bars. Sealed = dim behind closed
-  // ribs; exposed = the ribs hinge open and the orb runs white-hot.
-  const heartMaterial = new MeshBasicMaterial({ color: hdr(GOLD, 0.55) });
-  const heart = new Mesh(new OctahedronGeometry(1.75, 1), heartMaterial);
-  heart.position.set(0, -0.6, 3.4);
+  // Horns: six blades raked up and back — a crown visible over the skull
+  // from the player's head-on view.
+  for (let i = 0; i < 6; i += 1) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const rank = Math.floor(i / 2);
+    const horn = new TetrahedronGeometry(1.35, 0);
+    horn.scale(0.42, 0.62, 3.9 - rank * 0.7);
+    const mesh = facet(group, horn, dark, GOLD, 1.1);
+    mesh.position.set(side * (1.5 + rank * 1.9), 3.3 + rank * 0.35, -3.0 - rank * 0.9);
+    mesh.rotation.set(-0.85, side * (0.28 + rank * 0.2), side * -0.25);
+  }
+
+  // Cheek mandibles flaring sideways.
+  for (const side of [-1, 1]) {
+    const cheekGeometry = new TetrahedronGeometry(2.4, 0);
+    cheekGeometry.scale(1.5, 0.35, 1.1);
+    const cheek = facet(group, cheekGeometry, dark, EMBER, 0.95);
+    cheek.position.set(side * 5.0, -0.4, 1.6);
+    cheek.rotation.set(0, side * -0.5, side * 0.55);
+  }
+
+  // Split jaw, hanging open.
+  for (const side of [-1, 1]) {
+    const jawGeometry = new IcosahedronGeometry(2.2, 0);
+    jawGeometry.scale(0.85, 0.5, 2.1);
+    const jaw = facet(group, jawGeometry, dark, EMBER, 0.9);
+    jaw.position.set(side * 1.7, -3.9, 2.6);
+    jaw.rotation.set(0.5, side * 0.22, side * 0.12);
+  }
+
+  // The heart burns in the gullet — the open mouth is the target. Sealed, a
+  // grate of obsidian teeth covers it; exposed, the teeth hinge apart and the
+  // orb runs white-hot.
+  const heartMaterial = new MeshBasicMaterial({ color: hdr(EMBER, 0.8) });
+  const heart = new Mesh(new OctahedronGeometry(1.6, 1), heartMaterial);
+  heart.position.set(0, -1.9, 3.4);
   group.add(heart);
   const heartGlowMaterial = new MeshBasicMaterial({
-    color: hdr(GOLD, 0.25),
+    color: hdr(EMBER, 0.35),
     transparent: true,
     opacity: 0.4,
     blending: AdditiveBlending,
     depthWrite: false,
   });
-  const heartGlow = new Mesh(new OctahedronGeometry(2.6, 1), heartGlowMaterial);
+  const heartGlow = new Mesh(new OctahedronGeometry(2.5, 1), heartGlowMaterial);
   heart.add(heartGlow);
 
   const ribs = new Group();
   ribs.position.copy(heart.position);
-  for (let i = 0; i < 4; i += 1) {
-    const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+  for (let i = 0; i < 5; i += 1) {
+    const offset = (i - 2) * 1.05;
     const hinge = new Group();
-    hinge.rotation.z = angle;
-    const ribGeometry = new BoxGeometry(0.55, 4.6, 0.5);
-    const rib = facet(group, ribGeometry, OBSIDIAN.clone().multiplyScalar(1.35), EMBER, 1.0);
+    const ribGeometry = new BoxGeometry(0.5, 4.4, 0.45);
+    const rib = facet(group, ribGeometry, OBSIDIAN.clone().multiplyScalar(0.5), EMBER, 1.0);
     rib.removeFromParent();
-    rib.position.y = 0;
-    rib.position.z = 1.1;
+    rib.position.set(offset, 0, 1.2);
     hinge.add(rib);
-    hinge.userData.baseAngle = angle;
+    hinge.userData.spreadSign = i === 2 ? 0 : Math.sign(offset);
+    hinge.userData.rib = rib;
     ribs.add(hinge);
   }
   group.add(ribs);
@@ -188,16 +217,18 @@ export function updateHeadMesh(head: Object3D, elapsed: number) {
   const ribs = head.userData.ribs as Group | undefined;
   if (!heartMaterial || !heartGlowMaterial || !ribs) return;
 
-  const pulse = exposed ? 1.9 + Math.sin(elapsed * 7.5) * 0.7 : 0.55 + Math.sin(elapsed * 2.2) * 0.1;
-  heartMaterial.color.copy(hdr(GOLD, pulse));
-  heartGlowMaterial.color.copy(hdr(exposed ? WHITE_HOT : GOLD, pulse * 0.35));
+  const pulse = exposed ? 1.9 + Math.sin(elapsed * 7.5) * 0.7 : 0.7 + Math.sin(elapsed * 2.2) * 0.12;
+  heartMaterial.color.copy(hdr(exposed ? GOLD : EMBER, pulse));
+  heartGlowMaterial.color.copy(hdr(exposed ? WHITE_HOT : EMBER, pulse * 0.35));
 
+  // Teeth grate hinges apart when the heart is exposed.
   let spread = (head.userData.ribSpread as number | undefined) ?? 0;
   spread += ((exposed ? 1 : 0) - spread) * 0.06;
   head.userData.ribSpread = spread;
   for (const hinge of ribs.children) {
-    const baseAngle = hinge.userData.baseAngle as number;
-    hinge.rotation.z = baseAngle + spread * 0.95;
+    const sign = hinge.userData.spreadSign as number;
+    hinge.rotation.z = sign * spread * 0.85;
+    hinge.position.x = sign * spread * 1.6;
   }
 }
 
@@ -219,11 +250,11 @@ function createNeckSegment(index: number): Group {
   const t = index / (NECK_SEGMENTS - 1);
   const radius = 5.4 * (1 - t * 0.55);
   const ringGeometry = new CylinderGeometry(radius, radius * 0.92, radius * 1.15, 7);
-  facet(group, ringGeometry, OBSIDIAN.clone().multiplyScalar(1.25 - t * 0.3), EMBER, 0.75 - t * 0.25);
+  facet(group, ringGeometry, OBSIDIAN.clone().multiplyScalar(0.5 - t * 0.12), EMBER, 0.75 - t * 0.25);
   // Dorsal fin.
   const finGeometry = new TetrahedronGeometry(radius * 0.55, 0);
   finGeometry.scale(0.4, 2.1, 0.7);
-  const fin = facet(group, finGeometry, OBSIDIAN.clone().multiplyScalar(1.1), GOLD, 0.9);
+  const fin = facet(group, finGeometry, OBSIDIAN.clone().multiplyScalar(0.42), GOLD, 0.9);
   fin.position.y = radius * 1.15;
   group.rotation.x = Math.PI / 2; // cylinder axis along z — travel direction
   const wrap = new Group();
@@ -261,7 +292,7 @@ export function createSerpentBody(starCenter: Vector3, starRadius: number): Serp
 
     const coilGroup = new Group();
     const torus = new TorusGeometry(placement.major, placement.tube, 9, 64, placement.arc);
-    const fillMaterial = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(0.85) });
+    const fillMaterial = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(0.32) });
     coilGroup.add(new Mesh(torus, fillMaterial));
     // Dorsal seam: a glowing line along the coil's spine.
     const seam = new TorusGeometry(placement.major + placement.tube * 0.92, placement.tube * 0.08, 5, 64, placement.arc);
