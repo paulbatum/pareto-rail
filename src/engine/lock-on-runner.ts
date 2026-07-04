@@ -169,8 +169,12 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     missed = 0;
     spawnIndex = 0;
     hud.hideEnd();
-    hud.setTip(startTip);
-    hud.showTip();
+    if (startTip) {
+      hud.setTip(startTip);
+      hud.showTip();
+    } else {
+      hud.hideTip();
+    }
     hud.setHudActive(false);
     hud.update({ score, timeRemaining: duration, lockCount: 0 });
     updateAttractCamera(0);

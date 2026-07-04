@@ -8,20 +8,18 @@ export function getStartScreenTip(fullscreenAvailable: boolean) {
   const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
 
   if (isiOS && !standalone) {
-    return 'Hold + sweep START. Fullscreen on iPhone/iPad: Share → Add to Home Screen. Audio starts after first tap.';
+    return 'Fullscreen recommended on iPhone/iPad: Share → Add to Home Screen. Audio starts after first tap.';
   }
 
   if (isiOS) {
-    return 'Hold + sweep START. Home Screen mode is fullscreen. Audio starts after first tap.';
+    return 'Fullscreen recommended. Home Screen mode is active. Audio starts after first tap.';
   }
 
   if (fullscreenAvailable) {
-    return coarsePointer
-      ? 'Hold + sweep START. Use Fullscreen from pause for a bigger view.'
-      : 'Hold + sweep START. Press F for fullscreen.';
+    return coarsePointer ? 'Fullscreen recommended: open pause and tap Fullscreen.' : 'Fullscreen recommended: press F.';
   }
 
-  return 'Hold + sweep START. Release to fire.';
+  return '';
 }
 
 function isIOS() {
