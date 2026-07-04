@@ -1,5 +1,5 @@
 import type { EventBus } from '../../events';
-import { createBrowserAudioContext, installAudioUnlock } from '../../engine/audio-unlock';
+import { createLevelAudioKit } from '../../engine/audio-kit';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
@@ -24,36 +24,39 @@ const LOCK_SCALE = [69, 72, 74, 76, 79, 81, 84, 88]; // A minor pentatonic, risi
 
 export function createAudio(bus: EventBus) {
   let ctx: AudioContext | null = null;
-  let intervalId = 0;
-  let unlockGestureStart: (() => void) | null = null;
   let nextTickTime = 0;
   let sixteenthIndex = 0;
   let arrangementStart = 0;
   // Boots in ambient (attract screen); runstart switches to the full arrangement.
   let mode: 'run' | 'ambient' = 'ambient';
-  let masterVolume = 0.8;
 
   let master: GainNode | null = null;
   let duck: GainNode | null = null;
   let delaySend: GainNode | null = null;
   let noiseBuffer: AudioBuffer | null = null;
 
-  const start = async () => {
-    if (!ctx) {
-      ctx = createBrowserAudioContext();
-      buildGraph(ctx);
-      nextTickTime = ctx.currentTime + 0.06;
-      intervalId = window.setInterval(schedule, SCHEDULER_MS);
-    }
-    if (ctx.state === 'suspended') await ctx.resume();
-  };
+  const audio = createLevelAudioKit({
+    volumeScale: 0.8,
+    schedulerMs: SCHEDULER_MS,
+    onCreateContext(context, masterVolume) {
+      ctx = context;
+      buildGraph(context, masterVolume);
+      nextTickTime = context.currentTime + 0.06;
+    },
+    onSchedule: schedule,
+    onVolumeChange(context, masterVolume) {
+      if (master) master.gain.setTargetAtTime(masterVolume, context.currentTime, 0.05);
+    },
+    onDispose() {
+      ctx = null;
+      master = null;
+      duck = null;
+      delaySend = null;
+      noiseBuffer = null;
+    },
+  });
 
-  const installGestureStart = () => {
-    unlockGestureStart?.();
-    unlockGestureStart = installAudioUnlock(start);
-  };
-
-  function buildGraph(context: AudioContext) {
+  function buildGraph(context: AudioContext, masterVolume: number) {
     master = context.createGain();
     master.gain.value = masterVolume;
     const compressor = context.createDynamicsCompressor();
@@ -493,26 +496,5 @@ export function createAudio(bus: EventBus) {
     pad(ctx.currentTime + 0.05, [57, 64, 69, 76], 5);
   });
 
-  return {
-    start,
-    installGestureStart,
-    // 0..1; safe to call before the AudioContext exists.
-    setMasterVolume(volume: number) {
-      masterVolume = Math.min(1, Math.max(0, volume)) * 0.8;
-      if (ctx && master) master.gain.setTargetAtTime(masterVolume, ctx.currentTime, 0.05);
-    },
-    getMasterVolume() {
-      return masterVolume / 0.8;
-    },
-    async suspend() {
-      if (ctx && ctx.state === 'running') await ctx.suspend();
-    },
-    dispose() {
-      unlockGestureStart?.();
-      unlockGestureStart = null;
-      if (intervalId) window.clearInterval(intervalId);
-      void ctx?.close();
-      ctx = null;
-    },
-  };
+  return audio;
 }
