@@ -17,7 +17,6 @@ import {
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import type { EnemyKind } from '../events';
 import crystalTemplateJson from './crystal-template.json';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA, mulberry32, pickColor, type Rng } from './palette';
 
@@ -27,7 +26,7 @@ export type ShardSpec = {
   size: number;
 };
 
-export type CrystalKind = Exclude<EnemyKind, 'letter'>;
+export type CrystalKind = 'node' | 'drifter' | 'orbiter';
 export type NumericRange = [number, number];
 export type CrystalColorRole = 'accent' | 'contrast';
 

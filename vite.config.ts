@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 
-const templatePath = path.resolve(process.cwd(), 'src/visuals/crystal-template.json');
+const templatePath = path.resolve(process.cwd(), 'src/levels/crystal/visuals/crystal-template.json');
 
 export default defineConfig({
   plugins: [crystalTemplateDevPlugin()],

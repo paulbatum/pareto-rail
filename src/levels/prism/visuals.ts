@@ -1,0 +1,300 @@
+import {
+  AdditiveBlending,
+  BufferGeometry,
+  Color,
+  DoubleSide,
+  Float32BufferAttribute,
+  Group,
+  IcosahedronGeometry,
+  LineBasicMaterial,
+  LineSegments,
+  Mesh,
+  MeshBasicMaterial,
+  Object3D,
+  OctahedronGeometry,
+  PerspectiveCamera,
+  PlaneGeometry,
+  Points,
+  PointsMaterial,
+  RingGeometry,
+  Scene,
+  TorusGeometry,
+  Vector3,
+} from 'three';
+import type { Camera } from 'three';
+import type { EventBus } from '../../events';
+import { createPrismRail } from './gameplay';
+import { sampleRailFrame } from '../../engine/rail';
+
+const INDIGO = new Color(0.13, 0.08, 0.38);
+const LIME = new Color(0.62, 1.0, 0.38);
+const VIOLET = new Color(0.72, 0.32, 1.0);
+const ICE = new Color(0.72, 1.0, 0.94);
+const ROSE = new Color(1.0, 0.26, 0.46);
+
+const hdr = (color: Color, intensity: number) => color.clone().multiplyScalar(intensity);
+
+type EnemyRecord = { mesh: Group; bornAt: number; locked: boolean };
+type Pulse = { ring: Mesh; age: number; life: number; color: Color };
+
+const pendingEnemies: Group[] = [];
+const pendingProjectiles: Object3D[] = [];
+const enemies = new Map<number, EnemyRecord>();
+const projectiles = new Map<number, Object3D>();
+const pulses: Pulse[] = [];
+let beatEnergy = 0;
+let environmentRoot: Group | null = null;
+let baseFov: number | null = null;
+
+export function createEnvironment(scene: Scene) {
+  scene.background = INDIGO;
+  const root = new Group();
+  const rail = createPrismRail();
+  const positions: number[] = [];
+  const colors: number[] = [];
+
+  const push = (a: Vector3, b: Vector3, color: Color, intensity: number) => {
+    positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+    for (let i = 0; i < 2; i += 1) colors.push(color.r * intensity, color.g * intensity, color.b * intensity);
+  };
+
+  for (let i = 0; i < 86; i += 1) {
+    const u = i / 85;
+    const frame = sampleRailFrame(rail, u);
+    const skew = Math.sin(u * Math.PI * 8) * 3;
+    const a = frame.position.clone().addScaledVector(frame.right, -14 - skew).addScaledVector(frame.up, -8);
+    const b = frame.position.clone().addScaledVector(frame.right, 14 - skew).addScaledVector(frame.up, 8);
+    const c = frame.position.clone().addScaledVector(frame.right, -14 + skew).addScaledVector(frame.up, 8);
+    const d = frame.position.clone().addScaledVector(frame.right, 14 + skew).addScaledVector(frame.up, -8);
+    push(a, b, i % 3 === 0 ? LIME : VIOLET, i % 5 === 0 ? 0.9 : 0.28);
+    if (i % 2 === 0) push(c, d, ICE, 0.18);
+  }
+
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+  const prismField = new LineSegments(
+    geometry,
+    new LineBasicMaterial({ vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false }),
+  );
+  prismField.frustumCulled = false;
+  root.add(prismField);
+
+  const starGeometry = new BufferGeometry();
+  const starPositions = new Float32Array(900 * 3);
+  const starColors = new Float32Array(900 * 3);
+  for (let i = 0; i < 900; i += 1) {
+    const u = (Math.sin(i * 12.9898) * 43758.5453) % 1;
+    const frame = sampleRailFrame(rail, Math.abs(u));
+    const angle = i * 2.399963;
+    const radius = 24 + ((i * 37) % 120);
+    const p = frame.position.clone()
+      .addScaledVector(frame.right, Math.cos(angle) * radius)
+      .addScaledVector(frame.up, Math.sin(angle) * radius)
+      .addScaledVector(frame.tangent, ((i * 19) % 50) - 25);
+    starPositions.set([p.x, p.y, p.z], i * 3);
+    const color = i % 7 === 0 ? LIME : i % 5 === 0 ? ROSE : ICE;
+    const intensity = i % 17 === 0 ? 1.5 : 0.22;
+    starColors.set([color.r * intensity, color.g * intensity, color.b * intensity], i * 3);
+  }
+  starGeometry.setAttribute('position', new Float32BufferAttribute(starPositions, 3));
+  starGeometry.setAttribute('color', new Float32BufferAttribute(starColors, 3));
+  root.add(new Points(starGeometry, new PointsMaterial({ size: 0.48, vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false })));
+
+  scene.add(root);
+  environmentRoot = root;
+  return root;
+}
+
+export function createEnemyMesh(kind: string, letter?: string) {
+  const mesh = kind === 'letter' ? createLetter(letter ?? '?') : createPrismEnemy(kind);
+  mesh.scale.setScalar(0.001);
+  pendingEnemies.push(mesh);
+  return mesh;
+}
+
+function createPrismEnemy(kind: string) {
+  const group = new Group();
+  const accent = kind === 'comet' ? ROSE : kind === 'echo' ? LIME : VIOLET;
+  const material = new MeshBasicMaterial({ color: hdr(accent, 1.4), transparent: true, blending: AdditiveBlending, depthWrite: false });
+  const coreMaterial = new MeshBasicMaterial({ color: hdr(ICE, 2.4), transparent: true, blending: AdditiveBlending, depthWrite: false });
+
+  if (kind === 'gate') {
+    group.add(new Mesh(new TorusGeometry(0.8, 0.035, 6, 5), material));
+    const cross = new Mesh(new PlaneGeometry(1.7, 0.045), coreMaterial);
+    const cross2 = cross.clone();
+    cross2.rotation.z = Math.PI / 2;
+    group.add(cross, cross2);
+  } else if (kind === 'comet') {
+    const core = new Mesh(new OctahedronGeometry(0.52, 0), coreMaterial);
+    core.scale.set(0.7, 0.7, 1.35);
+    const tail = new Mesh(new PlaneGeometry(0.18, 2.6), material);
+    tail.position.y = -1.2;
+    group.add(core, tail);
+  } else {
+    group.add(new Mesh(new IcosahedronGeometry(0.52, 1), coreMaterial));
+    for (let i = 0; i < 3; i += 1) {
+      const ring = new Mesh(new TorusGeometry(0.85 + i * 0.24, 0.025, 6, 48), material.clone());
+      ring.rotation.z = (i / 3) * Math.PI;
+      group.add(ring);
+    }
+  }
+
+  group.userData.materials = [material, coreMaterial];
+  group.userData.accent = accent;
+  return group;
+}
+
+function createLetter(letter: string) {
+  const group = new Group();
+  const material = new MeshBasicMaterial({ color: hdr(ICE, 1.9), transparent: true, blending: AdditiveBlending, depthWrite: false });
+  const hot = new MeshBasicMaterial({ color: hdr(LIME, 2.2), transparent: true, blending: AdditiveBlending, depthWrite: false });
+  const segmentGeometry = new PlaneGeometry(0.72, 0.12);
+  const verticalGeometry = new PlaneGeometry(0.12, 0.72);
+  const segments = segmentMap[letter.toUpperCase()] ?? segmentMap.A;
+  const add = (index: number, x: number, y: number, rotation = 0) => {
+    if (!segments.includes(index)) return;
+    const mesh = new Mesh(rotation === 0 ? segmentGeometry : verticalGeometry, material.clone());
+    mesh.position.set(x, y, 0);
+    mesh.rotation.z = rotation;
+    group.add(mesh);
+  };
+  add(0, 0, 0.8);
+  add(1, -0.42, 0.4, Math.PI / 2);
+  add(2, 0.42, 0.4, Math.PI / 2);
+  add(3, 0, 0);
+  add(4, -0.42, -0.4, Math.PI / 2);
+  add(5, 0.42, -0.4, Math.PI / 2);
+  add(6, 0, -0.8);
+  const core = new Mesh(new RingGeometry(0.58, 0.62, 5), hot);
+  core.scale.set(1.2, 1.2, 1);
+  group.add(core);
+  group.userData.isLetter = true;
+  group.userData.materials = [material, hot];
+  return group;
+}
+
+const segmentMap: Record<string, number[]> = {
+  A: [0, 1, 2, 3, 4, 5],
+  B: [1, 3, 4, 5, 6],
+  E: [0, 1, 3, 4, 6],
+  L: [1, 4, 6],
+  O: [0, 1, 2, 4, 5, 6],
+  P: [0, 1, 2, 3, 4],
+  R: [0, 1, 2, 3, 4, 5],
+  S: [0, 1, 3, 5, 6],
+  T: [0, 2, 5],
+  Y: [1, 2, 3, 5, 6],
+};
+
+export function setEnemyLocked(mesh: Object3D, locked: boolean) {
+  mesh.userData.locked = locked;
+  const materials = mesh.userData.materials as MeshBasicMaterial[] | undefined;
+  for (const material of materials ?? []) material.color.copy(locked ? hdr(ROSE, 2.4) : hdr(mesh.userData.accent ?? ICE, 1.5));
+}
+
+export function createProjectileMesh() {
+  const group = new Group();
+  const core = new Mesh(new OctahedronGeometry(0.22, 0), new MeshBasicMaterial({ color: hdr(LIME, 2.6), transparent: true, blending: AdditiveBlending, depthWrite: false }));
+  core.scale.set(0.6, 0.6, 2.8);
+  const halo = new Mesh(new RingGeometry(0.42, 0.46, 4), new MeshBasicMaterial({ color: hdr(ICE, 1.4), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+  group.add(core, halo);
+  pendingProjectiles.push(group);
+  return group;
+}
+
+export function createReticle() {
+  const group = new Group();
+  const ring = new Mesh(new RingGeometry(0.48, 0.53, 4), new MeshBasicMaterial({ color: hdr(LIME, 1.5), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+  const ring2 = new Mesh(new RingGeometry(0.72, 0.74, 4), new MeshBasicMaterial({ color: hdr(VIOLET, 1.2), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+  ring2.rotation.z = Math.PI / 4;
+  group.add(ring, ring2);
+  return group;
+}
+
+export function setReticleActive(reticle: Object3D, active: boolean, lockCount: number) {
+  reticle.userData.active = active;
+  reticle.scale.setScalar(1 + lockCount * 0.08 + (active ? 0.1 : 0));
+}
+
+export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
+  bus.on('spawn', ({ enemyId, worldPosition }) => {
+    const mesh = pendingEnemies.shift();
+    if (mesh) enemies.set(enemyId, { mesh, bornAt: performance.now() / 1000, locked: false });
+    pulse(scene, worldPosition, ICE, 2.4, 0.35);
+  });
+  bus.on('lock', ({ worldPosition }) => pulse(scene, worldPosition, ROSE, 1.6, 0.22));
+  bus.on('fire', ({ projectileId, worldPosition }) => {
+    const projectile = pendingProjectiles.shift();
+    if (projectile) projectiles.set(projectileId, projectile);
+    pulse(scene, worldPosition, LIME, 1.1, 0.18);
+  });
+  bus.on('hit', ({ projectileId, worldPosition }) => {
+    projectiles.delete(projectileId);
+    pulse(scene, worldPosition, ICE, 3.2, 0.28);
+  });
+  bus.on('kill', ({ enemyId, worldPosition }) => {
+    enemies.delete(enemyId);
+    pulse(scene, worldPosition, LIME, 4.8, 0.5);
+    pulse(scene, worldPosition, ROSE, 2.6, 0.34);
+  });
+  bus.on('miss', ({ enemyId, worldPosition }) => {
+    enemies.delete(enemyId);
+    pulse(scene, worldPosition, ROSE, 1.6, 0.24);
+  });
+  bus.on('beat', ({ isDownbeat }) => {
+    beatEnergy = isDownbeat ? 1 : 0.45;
+  });
+  bus.on('runstart', () => {
+    enemies.clear();
+    projectiles.clear();
+  });
+}
+
+function pulse(scene: Scene, position: Vector3, color: Color, scale: number, life: number) {
+  const ring = new Mesh(new RingGeometry(0.96, 1, 36), new MeshBasicMaterial({ color: hdr(color, 1.5), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+  ring.position.copy(position);
+  scene.add(ring);
+  pulses.push({ ring, age: 0, life, color: color.clone().multiplyScalar(1.5 * scale) });
+}
+
+export function updateVisuals(dt: number, context: { scene: Scene; camera: Camera; elapsed: number }) {
+  beatEnergy = Math.max(0, beatEnergy - dt * 3.8);
+  if (environmentRoot) {
+    environmentRoot.rotation.z = Math.sin(context.elapsed * 0.13) * 0.035;
+    environmentRoot.scale.setScalar(1 + beatEnergy * 0.012);
+  }
+  if (context.camera instanceof PerspectiveCamera) {
+    if (baseFov === null) baseFov = context.camera.fov;
+    context.camera.fov = baseFov + beatEnergy * 1.7;
+    context.camera.updateProjectionMatrix();
+  }
+
+  for (const record of enemies.values()) {
+    const age = context.elapsed - record.bornAt;
+    const intro = Math.min(1, age / 0.28);
+    const pulseScale = record.mesh.userData.locked ? 1 + Math.sin(context.elapsed * 12) * 0.07 : 1;
+    record.mesh.scale.setScalar((intro * intro * (3 - 2 * intro)) * pulseScale);
+    record.mesh.children.forEach((child, index) => {
+      child.rotation.z += dt * (0.4 + index * 0.18) * (record.mesh.userData.locked ? 2 : 1);
+    });
+  }
+
+  for (const projectile of projectiles.values()) projectile.rotateZ(dt * 8);
+
+  for (let i = pulses.length - 1; i >= 0; i -= 1) {
+    const item = pulses[i];
+    item.age += dt;
+    if (item.age >= item.life) {
+      context.scene.remove(item.ring);
+      item.ring.geometry.dispose();
+      (item.ring.material as MeshBasicMaterial).dispose();
+      pulses.splice(i, 1);
+      continue;
+    }
+    const progress = item.age / item.life;
+    item.ring.quaternion.copy(context.camera.quaternion);
+    item.ring.scale.setScalar(0.2 + progress * 3.8);
+    (item.ring.material as MeshBasicMaterial).color.copy(item.color).multiplyScalar((1 - progress) ** 1.6);
+  }
+}

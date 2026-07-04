@@ -1,17 +1,11 @@
-import {
-  MathUtils,
-  Object3D,
-  PerspectiveCamera,
-  Raycaster,
-  Scene,
-  Vector3,
-} from 'three';
-import type { EnemyKind } from '../events';
+import { MathUtils, Object3D, PerspectiveCamera, Raycaster, Scene, Vector3 } from 'three';
+import type { CatmullRomCurve3 } from 'three';
 import { createInput } from './input';
-import { createRail, easeRailTime, offsetFromRail, RUN_DURATION } from './rail';
-import { scoreForKill, rankForRun, type RunSummary } from './scoring';
-import { SPAWN_TIMELINE, type MovementPattern, type SpawnEntry } from './timeline';
-import type { GameOptions } from './types';
+import { smoothRunProgress } from './rail';
+import { scoreForKill as defaultScoreForKill, rankForRun as defaultRankForRun, type RunSummary } from './scoring';
+import type { VisualFactories } from './types';
+import type { EventBus } from '../events';
+import type { Hud } from '../ui/hud';
 
 const MAX_LOCKS = 8;
 const RETICLE_DISTANCE = 24;
@@ -26,16 +20,57 @@ const REPLAY_WORD = 'REPLAY';
 type RunState = 'attract' | 'running' | 'ended';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
 
-type Enemy = {
+export type LockOnSpawnEntry<TKind extends string = string, TData = unknown> = {
+  time: number;
+  kind: TKind;
+  data: TData;
+};
+
+export type LockOnEnemy<TKind extends string = string, TData = unknown> = {
   id: number;
-  kind: EnemyKind;
-  purpose: TargetPurpose;
-  pattern?: MovementPattern;
+  kind: TKind;
   mesh: Object3D;
   spawnTime: number;
-  anchorU: number;
-  offset: Vector3;
+  entry: LockOnSpawnEntry<TKind, TData>;
+};
+
+export type LockOnEnemyUpdate<TKind extends string = string, TData = unknown> = {
+  enemy: LockOnEnemy<TKind, TData>;
+  runTime: number;
+  runProgress: number;
+  age: number;
+  curve: CatmullRomCurve3;
+  camera: PerspectiveCamera;
+};
+
+export type LockOnAttractCameraUpdate = {
+  camera: PerspectiveCamera;
+  curve: CatmullRomCurve3;
+  modeTime: number;
+  dt: number;
+};
+
+export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = {
+  duration: number;
+  createRail(): CatmullRomCurve3;
+  spawnTimeline: Array<LockOnSpawnEntry<TKind, TData>>;
+  updateEnemy(context: LockOnEnemyUpdate<TKind, TData>): boolean | void;
+  updateAttractCamera?(context: LockOnAttractCameraUpdate): void;
+  easeRunProgress?(time: number, duration: number): number;
+  scoreForKill?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
+  rankForRun?(score: number, kills: number, totalEnemies: number): string;
+  startWord?: string;
+  replayWord?: string;
+};
+
+type Enemy<TKind extends string, TData> = {
+  id: number;
+  kind: TKind | 'letter';
+  purpose: TargetPurpose;
+  mesh: Object3D;
+  spawnTime: number;
   locked: boolean;
+  entry?: LockOnSpawnEntry<TKind, TData>;
   letter?: string;
   letterIndex?: number;
   wordLength?: number;
@@ -57,9 +92,26 @@ type Projectile = {
   velocity: Vector3;
 };
 
-export function createGame(options: GameOptions) {
-  const { scene, camera, canvas, bus, hud, visuals, onPause } = options;
-  const curve = createRail();
+export type LockOnRunnerOptions<TKind extends string = string, TData = unknown> = {
+  scene: Scene;
+  camera: PerspectiveCamera;
+  canvas: HTMLCanvasElement;
+  bus: EventBus;
+  hud: Hud;
+  visuals: VisualFactories;
+  onPause: () => void;
+  level: LockOnRunnerLevel<TKind, TData>;
+};
+
+export function createLockOnRunner<TKind extends string = string, TData = unknown>(
+  options: LockOnRunnerOptions<TKind, TData>,
+) {
+  const { scene, camera, canvas, bus, hud, visuals, onPause, level } = options;
+  const duration = level.duration;
+  const startWord = level.startWord ?? START_WORD;
+  const replayWord = level.replayWord ?? REPLAY_WORD;
+  const curve = level.createRail();
+  const easeRunProgress = level.easeRunProgress ?? smoothRunProgress;
   const input = createInput(canvas, {
     onRestart: () => startRun(),
     onPause,
@@ -86,10 +138,10 @@ export function createGame(options: GameOptions) {
   let replayWhenLettersClear = false;
   let startDelay = -1;
   let runEase = 0;
-  let easeFromPosition = new Vector3();
-  let easeFromLook = new Vector3(0, 0, -1);
+  const easeFromPosition = new Vector3();
+  const easeFromLook = new Vector3(0, 0, -1);
 
-  const enemies = new Map<number, Enemy>();
+  const enemies = new Map<number, Enemy<TKind, TData>>();
   const locks: number[] = [];
   const pendingShots: PendingShot[] = [];
   const projectiles = new Map<number, Projectile>();
@@ -115,10 +167,10 @@ export function createGame(options: GameOptions) {
     hud.hideEnd();
     hud.hideTip();
     hud.setHudActive(false);
-    hud.update({ score, timeRemaining: RUN_DURATION, lockCount: 0 });
+    hud.update({ score, timeRemaining: duration, lockCount: 0 });
     updateAttractCamera(0);
     updateReticle();
-    spawnWord(START_WORD, 'start-letter');
+    spawnWord(startWord, 'start-letter');
   }
 
   function startRun() {
@@ -142,21 +194,17 @@ export function createGame(options: GameOptions) {
     hud.hideEnd();
     hud.hideTip();
     hud.setHudActive(true);
-    hud.update({ score, timeRemaining: RUN_DURATION, lockCount: 0 });
-    bus.emit('runstart', { runNumber, duration: RUN_DURATION, totalEnemies: SPAWN_TIMELINE.length });
+    hud.update({ score, timeRemaining: duration, lockCount: 0 });
+    bus.emit('runstart', { runNumber, duration, totalEnemies: level.spawnTimeline.length });
   }
 
   function update(dt: number) {
     worldTime += dt;
     modeTime += dt;
 
-    if (state === 'attract') {
-      updateAttract(dt);
-    } else if (state === 'running') {
-      updateRunning(dt);
-    } else {
-      updateEnded(dt);
-    }
+    if (state === 'attract') updateAttract(dt);
+    else if (state === 'running') updateRunning(dt);
+    else updateEnded(dt);
   }
 
   function updateAttract(dt: number) {
@@ -168,24 +216,24 @@ export function createGame(options: GameOptions) {
     updatePendingShots();
     updateProjectiles(dt);
     updateLetterStartDelay(dt);
-    hud.update({ score, timeRemaining: RUN_DURATION, lockCount: locks.length });
+    hud.update({ score, timeRemaining: duration, lockCount: locks.length });
   }
 
   function updateRunning(dt: number) {
-    runTime = Math.min(RUN_DURATION, runTime + dt);
-    const railU = easeRailTime(runTime);
-    updateRunCamera(railU, dt);
+    runTime = Math.min(duration, runTime + dt);
+    const runProgress = easeRunProgress(runTime, duration);
+    updateRunCamera(runProgress, dt);
     updateReticle();
     spawnDueEnemies();
-    updateEnemies(railU);
+    updateEnemies(runProgress);
     updateLocks();
     if (input.consumeRelease()) releaseLocks();
     updatePendingShots();
     updateProjectiles(dt);
 
-    hud.update({ score, timeRemaining: Math.max(0, RUN_DURATION - runTime), lockCount: locks.length });
+    hud.update({ score, timeRemaining: Math.max(0, duration - runTime), lockCount: locks.length });
 
-    if (runTime >= RUN_DURATION) endRun();
+    if (runTime >= duration) endRun();
   }
 
   function updateEnded(dt: number) {
@@ -199,7 +247,11 @@ export function createGame(options: GameOptions) {
     hud.update({ score, timeRemaining: 0, lockCount: locks.length });
   }
 
-  function updateAttractCamera(_dt: number) {
+  function updateAttractCamera(dt: number) {
+    if (level.updateAttractCamera) {
+      level.updateAttractCamera({ camera, curve, modeTime, dt });
+      return;
+    }
     const base = curve.getPointAt(0);
     const lookBase = curve.getPointAt(0.03);
     const drift = new Vector3(
@@ -217,9 +269,9 @@ export function createGame(options: GameOptions) {
     camera.updateMatrixWorld();
   }
 
-  function updateRunCamera(railU: number, dt: number) {
-    const position = curve.getPointAt(railU);
-    const lookAt = curve.getPointAt(MathUtils.clamp(railU + 0.025, 0, 1));
+  function updateRunCamera(runProgress: number, dt: number) {
+    const position = curve.getPointAt(runProgress);
+    const lookAt = curve.getPointAt(MathUtils.clamp(runProgress + 0.025, 0, 1));
     if (runEase < 1) {
       runEase = Math.min(1, runEase + dt);
       const eased = runEase * runEase * (3 - 2 * runEase);
@@ -242,31 +294,28 @@ export function createGame(options: GameOptions) {
   }
 
   function spawnDueEnemies() {
-    while (spawnIndex < SPAWN_TIMELINE.length && SPAWN_TIMELINE[spawnIndex].time <= runTime) {
-      spawnEnemy(SPAWN_TIMELINE[spawnIndex]);
+    while (spawnIndex < level.spawnTimeline.length && level.spawnTimeline[spawnIndex].time <= runTime) {
+      spawnEnemy(level.spawnTimeline[spawnIndex]);
       spawnIndex += 1;
     }
   }
 
-  function spawnEnemy(entry: SpawnEntry) {
+  function spawnEnemy(entry: LockOnSpawnEntry<TKind, TData>) {
     const id = nextEnemyId;
     nextEnemyId += 1;
     const mesh = visuals.createEnemyMesh(entry.kind);
-    const anchorU = easeRailTime(Math.min(RUN_DURATION, entry.time + entry.lead));
-    const enemy: Enemy = {
+    const enemy: Enemy<TKind, TData> = {
       id,
       kind: entry.kind,
       purpose: 'enemy',
-      pattern: entry.pattern,
       mesh,
       spawnTime: runTime,
-      anchorU,
-      offset: entry.offset.clone(),
       locked: false,
+      entry,
     };
-    mesh.position.copy(enemyPosition(enemy));
     scene.add(mesh);
     enemies.set(id, enemy);
+    updateEnemy(enemy, easeRunProgress(runTime, duration));
     bus.emit('spawn', { enemyId: id, kind: enemy.kind, worldPosition: mesh.position.clone() });
   }
 
@@ -275,14 +324,12 @@ export function createGame(options: GameOptions) {
       const id = nextEnemyId;
       nextEnemyId += 1;
       const mesh = visuals.createEnemyMesh('letter', letter);
-      const target: Enemy = {
+      const target: Enemy<TKind, TData> = {
         id,
         kind: 'letter',
         purpose,
         mesh,
         spawnTime: worldTime,
-        anchorU: 0,
-        offset: new Vector3(),
         locked: false,
         letter,
         letterIndex: index,
@@ -295,31 +342,37 @@ export function createGame(options: GameOptions) {
     });
   }
 
-  function updateEnemies(railU: number) {
+  function updateEnemies(runProgress: number) {
     for (const enemy of [...enemies.values()]) {
       if (enemy.purpose !== 'enemy') continue;
-      enemy.mesh.position.copy(enemyPosition(enemy));
-      // Crystals present their hex face to the camera — the concept art is a
-      // frontal read, and a free tumble hides it edge-on half the time. A
-      // slow per-enemy roll plus a gentle tilt wobble keeps them alive.
-      enemy.mesh.quaternion.copy(camera.quaternion);
-      enemy.mesh.rotateZ(runTime * (0.3 + (enemy.id % 5) * 0.09) + enemy.id * 1.7);
-      enemy.mesh.rotateY(Math.sin(runTime * 0.8 + enemy.id * 1.3) * 0.4);
-      enemy.mesh.rotateX(Math.cos(runTime * 0.65 + enemy.id * 2.1) * 0.3);
-
-      if (railU > enemy.anchorU + 0.018) {
-        missEnemy(enemy);
-      }
+      if (updateEnemy(enemy, runProgress)) missEnemy(enemy);
     }
+  }
+
+  function updateEnemy(enemy: Enemy<TKind, TData>, runProgress: number) {
+    if (!enemy.entry || enemy.kind === 'letter') return false;
+    const publicEnemy: LockOnEnemy<TKind, TData> = {
+      id: enemy.id,
+      kind: enemy.kind,
+      mesh: enemy.mesh,
+      spawnTime: enemy.spawnTime,
+      entry: enemy.entry,
+    };
+    return level.updateEnemy({
+      enemy: publicEnemy,
+      runTime,
+      runProgress,
+      age: Math.max(0, runTime - enemy.spawnTime),
+      curve,
+      camera,
+    }) === true;
   }
 
   function updateLetterTargets() {
-    for (const enemy of enemies.values()) {
-      if (enemy.kind === 'letter') updateLetterPosition(enemy);
-    }
+    for (const enemy of enemies.values()) if (enemy.kind === 'letter') updateLetterPosition(enemy);
   }
 
-  function updateLetterPosition(enemy: Enemy) {
+  function updateLetterPosition(enemy: Enemy<TKind, TData>) {
     const forward = new Vector3();
     camera.getWorldDirection(forward);
     const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
@@ -337,19 +390,6 @@ export function createGame(options: GameOptions) {
     enemy.mesh.rotateZ(Math.sin(modeTime * 1.15 + index * 0.7) * 0.15);
   }
 
-  function enemyPosition(enemy: Enemy) {
-    const age = Math.max(0, runTime - enemy.spawnTime);
-    const offset = enemy.offset.clone();
-    if (enemy.pattern === 'drift') {
-      offset.x += Math.sin(age * 0.85 + enemy.id) * 1.3 + age * 0.55;
-      offset.y += Math.cos(age * 0.65 + enemy.id * 0.5) * 0.55;
-    } else if (enemy.pattern === 'orbit') {
-      offset.x += Math.cos(age * 2.2 + enemy.id) * 2.1;
-      offset.y += Math.sin(age * 2.2 + enemy.id) * 2.1;
-    }
-    return offsetFromRail(curve, enemy.anchorU, offset);
-  }
-
   function updateLocks() {
     if (!input.state.pointerDown || locks.length >= MAX_LOCKS) return;
 
@@ -363,13 +403,13 @@ export function createGame(options: GameOptions) {
       if (Math.hypot(dx, dy) <= LOCK_RADIUS_NDC) lockEnemy(enemy);
     }
 
-    if (state === 'attract' && countLockedLetters('start-letter') === START_WORD.length) {
+    if (state === 'attract' && countLockedLetters('start-letter') === startWord.length) {
       attractReachedFullLocks = true;
       hud.hideTip();
     }
   }
 
-  function lockEnemy(enemy: Enemy) {
+  function lockEnemy(enemy: Enemy<TKind, TData>) {
     enemy.locked = true;
     locks.push(enemy.id);
     visuals.setEnemyLocked(enemy.mesh, true);
@@ -384,11 +424,11 @@ export function createGame(options: GameOptions) {
   function releaseLocks() {
     if (locks.length === 0) return;
     if (state === 'attract') {
-      releaseLetterLocks('start-letter', START_WORD.length);
+      releaseLetterLocks('start-letter', startWord.length);
       return;
     }
     if (state === 'ended') {
-      releaseLetterLocks('replay-letter', REPLAY_WORD.length);
+      releaseLetterLocks('replay-letter', replayWord.length);
       return;
     }
     fireLocks([...locks]);
@@ -502,7 +542,7 @@ export function createGame(options: GameOptions) {
     }
   }
 
-  function hitEnemy(projectile: Projectile, enemy: Enemy) {
+  function hitEnemy(projectile: Projectile, enemy: Enemy<TKind, TData>) {
     const worldPosition = enemy.mesh.position.clone();
     bus.emit('hit', {
       enemyId: enemy.id,
@@ -519,12 +559,15 @@ export function createGame(options: GameOptions) {
     }
 
     kills += 1;
-    const award = scoreForKill(projectile.volleySize);
+    const publicEnemy = enemy.entry
+      ? { id: enemy.id, kind: enemy.kind, mesh: enemy.mesh, spawnTime: enemy.spawnTime, entry: enemy.entry }
+      : undefined;
+    const award = publicEnemy ? (level.scoreForKill?.(projectile.volleySize, publicEnemy) ?? defaultScoreForKill(projectile.volleySize)) : 0;
     score += award;
     bus.emit('kill', { enemyId: enemy.id, worldPosition, scoreAwarded: award });
   }
 
-  function missEnemy(enemy: Enemy) {
+  function missEnemy(enemy: Enemy<TKind, TData>) {
     const worldPosition = enemy.mesh.position.clone();
     if (enemy.locked) unlockEnemy(enemy);
     removeEnemy(enemy);
@@ -532,7 +575,7 @@ export function createGame(options: GameOptions) {
     bus.emit('miss', { enemyId: enemy.id, worldPosition, letter: enemy.letter });
   }
 
-  function unlockEnemy(enemy: Enemy) {
+  function unlockEnemy(enemy: Enemy<TKind, TData>) {
     enemy.locked = false;
     const index = locks.indexOf(enemy.id);
     if (index >= 0) locks.splice(index, 1);
@@ -545,7 +588,7 @@ export function createGame(options: GameOptions) {
     });
   }
 
-  function removeEnemy(enemy: Enemy) {
+  function removeEnemy(enemy: Enemy<TKind, TData>) {
     enemies.delete(enemy.id);
     scene.remove(enemy.mesh);
   }
@@ -590,18 +633,19 @@ export function createGame(options: GameOptions) {
     locks.length = 0;
     pendingShots.length = 0;
     for (const projectile of [...projectiles.values()]) removeProjectile(projectile);
+    const totalEnemies = level.spawnTimeline.length;
     const summary: RunSummary = {
       score,
       kills,
       missed,
-      totalEnemies: SPAWN_TIMELINE.length,
-      rank: rankForRun(score, kills, SPAWN_TIMELINE.length),
+      totalEnemies,
+      rank: level.rankForRun?.(score, kills, totalEnemies) ?? defaultRankForRun(score, kills, totalEnemies),
     };
     hud.setHudActive(false);
     hud.update({ score, timeRemaining: 0, lockCount: 0 });
     hud.showEnd(summary);
     bus.emit('runend', summary);
-    spawnWord(REPLAY_WORD, 'replay-letter');
+    spawnWord(replayWord, 'replay-letter');
   }
 
   function clearRunObjects() {

@@ -1,6 +1,6 @@
 import type { Vector3 } from 'three';
 
-export type EnemyKind = 'node' | 'drifter' | 'orbiter' | 'letter';
+export type EnemyKind = string;
 
 export type GameEvents = {
   spawn: { enemyId: number; kind: EnemyKind; worldPosition: Vector3; letter?: string };

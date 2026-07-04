@@ -1,4 +1,5 @@
-import type { EventBus } from '../events';
+import type { EventBus } from '../../events';
+import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
 // 30-second run (kick → bass/hats → arp → claps/open hats → riser), with
@@ -19,8 +20,6 @@ const CHORDS = [
   { bass: 31, pad: [55, 59, 62, 64], arp: [67, 71, 74, 79] }, // G6
 ];
 const LOCK_SCALE = [69, 72, 74, 76, 79, 81, 84, 88]; // A minor pentatonic, rising per lock
-
-const midiToFreq = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
 
 export function createAudio(bus: EventBus) {
   let ctx: AudioContext | null = null;
@@ -105,7 +104,7 @@ export function createAudio(bus: EventBus) {
 
     if (step % 4 === 0) {
       const beatNumber = Math.floor(index / 4);
-      emitBeatAt(time, beatNumber, step === 0);
+      scheduleBeat(time, beatNumber, step === 0);
     }
 
     if (step === 0 && bar % 2 === 0) {
@@ -139,13 +138,12 @@ export function createAudio(bus: EventBus) {
     if (bar === 14 && step === 0) riser(time, 16 * 2 * SIXTEENTH);
   }
 
-  function emitBeatAt(time: number, beatNumber: number, isDownbeat: boolean) {
+  function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
     if (!ctx) return;
-    const delay = Math.max(0, (time - ctx.currentTime) * 1000);
-    window.setTimeout(() => bus.emit('beat', { beatNumber, isDownbeat, audioTime: time }), delay);
+    emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
   }
 
-  const quantize = (time: number) => Math.ceil(time / THIRTYSECOND) * THIRTYSECOND;
+  const quantize = (time: number) => quantizeToGrid(time, THIRTYSECOND);
 
   // ---- instruments --------------------------------------------------------
 

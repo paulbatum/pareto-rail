@@ -1,4 +1,4 @@
-import type { RunSummary } from '../game/scoring';
+import type { RunSummary } from '../engine/scoring';
 
 function requireElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);

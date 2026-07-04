@@ -15,8 +15,8 @@ import {
   Scene,
 } from 'three';
 import type { Camera } from 'three';
-import type { EnemyKind, EventBus } from '../events';
-import { createCrystal, setCrystalLocked, type ShardSpec } from './crystal';
+import type { EventBus } from '../../../events';
+import { createCrystal, setCrystalLocked, type CrystalKind, type ShardSpec } from './crystal';
 import { beatUniform, createEnvironmentInternal, type Environment } from './environment';
 import {
   burstShatter,
@@ -31,7 +31,6 @@ import {
 import { createLetterMesh, setLetterLocked } from './letters';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 
-export { createPost, getBloomLevel, setBloomLevel } from './post';
 
 export type VisualContext = {
   scene: Scene;
@@ -70,8 +69,8 @@ export function createEnvironment(scene: Scene) {
   return environment.root;
 }
 
-export function createEnemyMesh(kind: EnemyKind, letter?: string) {
-  const mesh = kind === 'letter' ? createLetterMesh(letter ?? '?') : createCrystal(kind);
+export function createEnemyMesh(kind: string, letter?: string) {
+  const mesh = kind === 'letter' ? createLetterMesh(letter ?? '?') : createCrystal(kind as CrystalKind);
   mesh.scale.setScalar(0.001);
   pendingEnemyMeshes.push(mesh);
   return mesh;

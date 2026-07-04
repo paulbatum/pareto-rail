@@ -16,8 +16,8 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { WebGPURenderer } from 'three/webgpu';
-import { createCrystal, defaultCrystalTemplate, type CrystalKind, type CrystalColorRole, type CrystalTemplate, type NumericRange } from '../src/visuals/crystal';
-import { createPost, getBloomLevel, setBloomLevel } from '../src/visuals/post';
+import { createPost, getBloomLevel, setBloomLevel } from '../src/engine/post';
+import { createCrystal, defaultCrystalTemplate, type CrystalKind, type CrystalColorRole, type CrystalTemplate, type NumericRange } from '../src/levels/crystal/visuals/crystal';
 
 const KINDS: CrystalKind[] = ['node', 'drifter', 'orbiter'];
 const GRID_COUNT = 12;
@@ -513,7 +513,7 @@ function animate() {
 
 async function resetToSaved() {
   try {
-    const response = await fetch(`/src/visuals/crystal-template.json?cache=${Date.now()}`);
+    const response = await fetch(`/src/levels/crystal/visuals/crystal-template.json?cache=${Date.now()}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     savedTemplate = (await response.json()) as CrystalTemplate;
     editedTemplate = clone(savedTemplate);
@@ -539,7 +539,7 @@ async function saveTemplate() {
     if (!response.ok || !body.ok) throw new Error(body.error ?? `HTTP ${response.status}`);
     savedTemplate = clone(editedTemplate);
     renderControls();
-    setStatus('Saved to src/visuals/crystal-template.json.', 'ok');
+    setStatus('Saved to src/levels/crystal/visuals/crystal-template.json.', 'ok');
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? `Save failed: ${error.message}` : 'Save failed.', 'error');

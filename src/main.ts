@@ -1,24 +1,11 @@
 import './style.css';
 import { PerspectiveCamera, Scene } from 'three';
 import { WebGPURenderer } from 'three/webgpu';
-import { createAudio } from './audio';
-import { events } from './events';
-import { createGame } from './game/state';
+import { createEventBus } from './events';
+import { createPost, getBloomLevel, setBloomLevel } from './engine/post';
+import { getLevelById, levels } from './levels';
 import { createHud, showUnsupported } from './ui/hud';
 import { createPauseMenu } from './ui/pause';
-import {
-  createEnemyMesh,
-  createEnvironment,
-  createPost,
-  createProjectileMesh,
-  getBloomLevel,
-  createReticle,
-  installVisualEventHandlers,
-  setEnemyLocked,
-  setBloomLevel,
-  setReticleActive,
-  updateVisuals,
-} from './visuals';
 
 async function bootstrap() {
   if (!('gpu' in navigator)) {
@@ -28,6 +15,10 @@ async function bootstrap() {
 
   const app = document.querySelector<HTMLDivElement>('#app');
   if (!app) throw new Error('Missing #app root');
+
+  const selectedLevel = getLevelById(new URLSearchParams(window.location.search).get('level'));
+  document.title = `raild — ${selectedLevel.title}`;
+  installLevelPicker(selectedLevel.id);
 
   const renderer = new WebGPURenderer({ antialias: true, alpha: false });
   // three.js installs a WebGL fallback internally; this project is intentionally WebGPU-only.
@@ -49,13 +40,12 @@ async function bootstrap() {
   const scene = new Scene();
   const camera = new PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
   const hud = createHud();
-  const audio = createAudio(events);
+  const bus = createEventBus();
+  const audio = selectedLevel.createAudio(bus);
   audio.setMasterVolume(readStoredPercent('raild-volume', 50) / 100);
   setBloomLevel(readStoredPercent('raild-bloom', 100) / 100);
   audio.installGestureStart();
 
-  createEnvironment(scene);
-  installVisualEventHandlers(events, scene);
   const post = createPost(renderer, scene, camera);
 
   let paused = false;
@@ -85,20 +75,13 @@ async function bootstrap() {
     last = performance.now();
   };
 
-  const game = createGame({
+  const runtime = selectedLevel.createRuntime({
     scene,
     camera,
     canvas: renderer.domElement,
-    bus: events,
+    bus,
     hud,
     onPause: togglePause,
-    visuals: {
-      createEnemyMesh,
-      setEnemyLocked,
-      createProjectileMesh,
-      createReticle,
-      setReticleActive,
-    },
   });
 
   document.body.classList.remove('booting');
@@ -107,10 +90,7 @@ async function bootstrap() {
     const now = performance.now();
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!paused) {
-      game.update(dt);
-      updateVisuals(dt, { scene, camera, elapsed: now / 1000 });
-    }
+    if (!paused) runtime.update(dt, now / 1000);
     post.render();
   });
 
@@ -120,6 +100,33 @@ async function bootstrap() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
+
+  window.addEventListener('pagehide', () => {
+    runtime.dispose();
+    audio.dispose();
+    bus.clear();
+  });
+}
+
+function installLevelPicker(activeId: string) {
+  const host = document.createElement('label');
+  host.className = 'level-picker';
+  host.textContent = 'Level ';
+  const select = document.createElement('select');
+  for (const level of levels) {
+    const option = document.createElement('option');
+    option.value = level.id;
+    option.textContent = level.title;
+    option.selected = level.id === activeId;
+    select.append(option);
+  }
+  select.addEventListener('change', () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('level', select.value);
+    window.location.href = url.toString();
+  });
+  host.append(select);
+  document.body.append(host);
 }
 
 function readStoredPercent(key: string, fallback: number) {

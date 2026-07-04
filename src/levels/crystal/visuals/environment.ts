@@ -14,7 +14,8 @@ import {
 } from 'three';
 import { LineBasicNodeMaterial } from 'three/webgpu';
 import { attribute, float, positionView, positionWorld, smoothstep, time, uniform, vec3 } from 'three/tsl';
-import { createRail, sampleRailFrame } from '../game/rail';
+import { sampleRailFrame } from '../../../engine/rail';
+import { createCrystalRail } from '../gameplay';
 import { AMBER, BACKGROUND, CYAN, MAGENTA, mulberry32 } from './palette';
 
 const RING_COUNT = 150;
@@ -33,7 +34,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
   scene.background = BACKGROUND;
   const root = new Group();
   const rng = mulberry32(20260703);
-  const curve = createRail();
+  const curve = createCrystalRail();
 
   // --- Wireframe tunnel: octagonal ribs along the rail + longitudinal rails,
   // one merged LineSegments. Vertex colors carry the palette; the node
@@ -149,7 +150,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
 }
 
 function makeStars(rng: () => number, count: number, minRadius: number, maxRadius: number, size: number): Points {
-  const curve = createRail();
+  const curve = createCrystalRail();
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   for (let i = 0; i < count; i += 1) {
