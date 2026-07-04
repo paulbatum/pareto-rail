@@ -1,5 +1,6 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from 'three';
 import type { Object3D } from 'three';
+import { updateHostileShotImpact } from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import type { EventBus } from '../../events';
@@ -127,10 +128,6 @@ const KILL_SCORE: Record<CrystalEnemyKind, number> = {
   'warden-core': 1500,
 };
 
-const BOLT_HIT_DISTANCE = 2.4;
-const BOLT_IMPACT_BRAKE = 0.35;
-const BOLT_DAMAGE_DISTANCE = 0.65;
-const BOLT_INTERCEPT_GRACE = 0.45;
 const BOLT_MAX_AGE = 14;
 
 export function createCrystalGameplay(
@@ -264,24 +261,19 @@ export function createCrystalGameplay(
     const dt = Math.max(0, age - data.lastAge);
     data.lastAge = age;
 
-    const forward = new Vector3();
-    camera.getWorldDirection(forward);
-    if (boltInterceptions.delete(enemy.id)) {
-      data.interceptUntil = Math.max(data.interceptUntil ?? 0, age + BOLT_INTERCEPT_GRACE);
-    }
-
-    if (data.impactAt !== undefined) {
-      const direction = data.impactDirection ?? forward;
-      const brakeStart = data.impactAt - BOLT_IMPACT_BRAKE;
-      const t = MathUtils.clamp((age - brakeStart) / BOLT_IMPACT_BRAKE, 0, 1);
-      const eased = 1 - (1 - t) ** 2;
-      const distance = MathUtils.lerp(BOLT_HIT_DISTANCE * 0.92, BOLT_DAMAGE_DISTANCE, eased);
-      data.position.copy(camera.position).addScaledVector(direction, distance);
-      data.velocity.set(0, 0, 0);
+    const impact = updateHostileShotImpact({
+      age,
+      camera,
+      position: data.position,
+      velocity: data.velocity,
+      state: data,
+      intercepted: boltInterceptions.delete(enemy.id),
+    });
+    if (impact.phase === 'braking') {
       enemy.mesh.position.copy(data.position);
       enemy.mesh.quaternion.copy(camera.quaternion);
       enemy.mesh.rotateZ(age * 8);
-      if (age >= data.impactAt && age >= (data.interceptUntil ?? -Infinity)) {
+      if (impact.damaged) {
         damagePlayer(1);
         return true;
       }
@@ -299,12 +291,8 @@ export function createCrystalGameplay(
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(age * 3.1);
 
-    if (data.position.distanceTo(camera.position) <= BOLT_HIT_DISTANCE) {
-      const toBolt = data.position.clone().sub(camera.position);
-      data.impactDirection = toBolt.lengthSq() > 0.0001 ? toBolt.normalize() : forward.clone();
-      data.impactAt = age + BOLT_IMPACT_BRAKE;
-      return false;
-    }
+    const forward = new Vector3();
+    camera.getWorldDirection(forward);
     const toBolt = data.position.clone().sub(camera.position);
     if (toBolt.dot(forward) < -3) return true;
     return age > BOLT_MAX_AGE;

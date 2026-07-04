@@ -7,6 +7,7 @@ Shared code lives in `src/engine/`:
 - `lock-on-runner.ts` contains the START/RUN/REPLAY flow, pointer input, lock-on targeting, homing shots, scoring hooks, and HUD updates;
 - `rail.ts` contains rail sampling helpers, not a level rail;
 - `music.ts` contains small timing helpers for beat emission, MIDI conversion, and grid quantization;
+- `hostile-shot.ts` contains shared approach/impact timing for lockable enemy shots and hazards;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting.
 
 ## Adding a level
@@ -30,6 +31,8 @@ Pass a `LockOnRunnerLevel` to `createLockOnRunner`:
 Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`, `scoreForKill`, `scoreForHit`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, and `replayWord`. `scoreForVolley` scores a released group after all members resolve, `scoreForHit` scores non-lethal hits on multi-hit enemies, `validateRelease` can reject a running-state release before shots are created, `detailsForRun` adds compact end-screen lines, and `lockRadiusNdc` changes the screen-space lock threshold from the default. See `src/engine/lock-on-runner.ts` for exact types.
 
 Setting `playerHealth` enables the hull system: `damagePlayer` calls take a point off (with a short invulnerability window between hits), the HUD shows hull pips and a red damage flash, and reaching zero ends the run with `died: true` in the summary and a forced `—` rank. Related events: `playerhit` fires on accepted damage, `hit` carries `lethal`/`hitPointsRemaining`, and `runend` carries `died`.
+
+For lockable enemy shots and hazards, prefer `updateHostileShotImpact` from `src/engine/hostile-shot.ts` once a projectile is close enough to threaten the player. It gives levels common defaults for hit distance, impact brake, damage distance, and intercept grace, while allowing per-level overrides for feel. Levels still own launch motion, visuals, audio, and when to call `damagePlayer`.
 
 ## Visual factories
 
