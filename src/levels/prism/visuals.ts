@@ -46,6 +46,7 @@ const pulses: Pulse[] = [];
 let beatEnergy = 0;
 let environmentRoot: Group | null = null;
 let baseFov: number | null = null;
+let elapsedNow = 0;
 
 export function createEnvironment(scene: Scene) {
   scene.background = INDIGO;
@@ -203,6 +204,11 @@ export function setEnemyLocked(mesh: Object3D, locked: boolean, lockCount?: numb
   tintEnemyMaterials(mesh, locked ? color : undefined, fallback);
 }
 
+export function setEnemyDenied(mesh: Object3D) {
+  mesh.userData.deniedUntil = elapsedNow + 0.45;
+  tintEnemyMaterials(mesh, ROSE, hdr(mesh.userData.accent ?? ICE, 1.5));
+}
+
 function tintEnemyMaterials(mesh: Object3D, color: Color | undefined, fallback: Color) {
   const materials = mesh.userData.materials as MeshBasicMaterial[] | undefined;
   for (const material of materials ?? []) {
@@ -262,6 +268,15 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     enemies.delete(enemyId);
     pulse(scene, worldPosition, ROSE, 1.6, 0.24);
   });
+  bus.on('reject', ({ enemyIds, missingEnemyIds }) => {
+    const deniedIds = new Set([...enemyIds, ...(missingEnemyIds ?? [])]);
+    for (const enemyId of deniedIds) {
+      const record = enemies.get(enemyId);
+      if (!record) continue;
+      pulse(scene, record.mesh.position, ROSE, 2.6, 0.28);
+      pulse(scene, record.mesh.position, ICE, 1.5, 0.18);
+    }
+  });
   bus.on('beat', ({ isDownbeat }) => {
     beatEnergy = isDownbeat ? 1 : 0.45;
   });
@@ -279,6 +294,7 @@ function pulse(scene: Scene, position: Vector3, color: Color, scale: number, lif
 }
 
 export function updateVisuals(dt: number, context: { scene: Scene; camera: Camera; elapsed: number }) {
+  elapsedNow = context.elapsed;
   beatEnergy = Math.max(0, beatEnergy - dt * 3.8);
   if (environmentRoot) {
     environmentRoot.rotation.z = Math.sin(context.elapsed * 0.13) * 0.035;
@@ -293,8 +309,17 @@ export function updateVisuals(dt: number, context: { scene: Scene; camera: Camer
   for (const record of enemies.values()) {
     const age = context.elapsed - record.bornAt;
     const intro = Math.min(1, age / 0.28);
-    const pulseScale = record.mesh.userData.locked ? 1 + Math.sin(context.elapsed * 12) * 0.07 : 1;
+    const deniedUntil = record.mesh.userData.deniedUntil as number | undefined;
+    const denied = (deniedUntil ?? -Infinity) > context.elapsed;
+    const lockedPulse = record.mesh.userData.locked ? 1 + Math.sin(context.elapsed * 12) * 0.07 : 1;
+    const deniedPulse = denied ? 1 + Math.sin(context.elapsed * 48) * 0.08 : 1;
+    const pulseScale = lockedPulse * deniedPulse;
     record.mesh.scale.setScalar((intro * intro * (3 - 2 * intro)) * pulseScale);
+    if (denied) {
+      tintEnemyMaterials(record.mesh, ROSE.clone().lerp(ICE, 0.35), hdr(record.mesh.userData.accent ?? ICE, 1.5));
+    } else if (record.mesh.userData.locked !== true) {
+      tintEnemyMaterials(record.mesh, undefined, hdr(record.mesh.userData.accent ?? ICE, 1.5));
+    }
     record.mesh.children.forEach((child, index) => {
       child.rotation.z += dt * (0.4 + index * 0.18) * (record.mesh.userData.locked ? 2 : 1);
     });

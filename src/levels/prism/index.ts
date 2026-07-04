@@ -8,6 +8,7 @@ import {
   createProjectileMesh,
   createReticle,
   installVisualEventHandlers,
+  setEnemyDenied,
   setEnemyLocked,
   setReticleActive,
   updateVisuals,
@@ -34,6 +35,7 @@ export const prismBloomLevel: LevelDefinition = {
       visuals: {
         createEnemyMesh,
         setEnemyLocked,
+        setEnemyDenied,
         createProjectileMesh,
         createReticle,
         setReticleActive,

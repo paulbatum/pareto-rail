@@ -592,7 +592,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function denyRelease(rejection: Extract<ReleaseValidation<TKind, TData>, { valid: false }>) {
     unlockReleased(rejection.released.map((enemy) => enemy.id));
     const deniedTargets = uniqueTargets([...rejection.released, ...rejection.missing]);
-    for (const enemy of deniedTargets) visuals.setEnemyDenied?.(enemy.mesh);
+    for (const enemy of deniedTargets) visuals.setEnemyDenied(enemy.mesh);
     bus.emit('reject', {
       enemyIds: rejection.released.map((enemy) => enemy.id),
       size: rejection.released.length,

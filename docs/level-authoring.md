@@ -37,7 +37,7 @@ Pass `VisualFactories` to `createLockOnRunner`:
 
 - `createEnemyMesh(kind, letter?)`: returns a target mesh. The runner also calls this with `kind === 'letter'` for START/REPLAY targets.
 - `setEnemyLocked(mesh, locked)`: applies and clears locked visuals.
-- `setEnemyDenied(mesh)`: optional feedback for a rejected release.
+- `setEnemyDenied(mesh)`: applies level-specific feedback for a rejected release. This is required because START/REPLAY words and level-specific release rules share the same rejection mechanism.
 - `createProjectileMesh()`: returns a homing shot mesh.
 - `createReticle()`: returns the reticle object.
 - `setReticleActive(reticle, active, lockCount)`: updates reticle state each frame.
@@ -45,6 +45,8 @@ Pass `VisualFactories` to `createLockOnRunner`:
 The runner includes right-click undo-lock on fine-pointer devices; it removes the most recent lock and emits normal unlock feedback.
 
 Every level must render legible procedural glyphs for at least the characters in its start/replay words. The defaults require S, T, A, R, E, P, L, and Y. A reader must be able to tell the letters apart at gameplay distance. `src/levels/crystal/visuals/letters.ts` shows the reference approach: 5×7 pixel-grid glyphs. Avoid 7-segment-style approximations; they cannot render R, T, and Y distinctly enough.
+
+Every level must also express rejected releases in its own visual and audio language. The runner emits `reject` when a release fails, including incomplete START/REPLAY words and any level-specific `validateRelease` rule. Visuals receive `setEnemyDenied` for released targets and any required targets that were missing. Levels that need additional context, such as a boss shield plate blocking a shot, may emit and handle their own richer event as well.
 
 ## Post-processing
 

@@ -63,7 +63,7 @@ export type LevelDefinition = {
 export type VisualFactories = {
   createEnemyMesh(kind: string, letter?: string): Object3D;
   setEnemyLocked(mesh: Object3D, locked: boolean, lockCount?: number): void;
-  setEnemyDenied?(mesh: Object3D): void;
+  setEnemyDenied(mesh: Object3D): void;
   createProjectileMesh(): Object3D;
   createReticle(): Object3D;
   setReticleActive(reticle: Object3D, active: boolean, lockCount: number): void;

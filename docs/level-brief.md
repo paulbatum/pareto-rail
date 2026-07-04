@@ -31,7 +31,7 @@ Every level must have, at minimum:
 - A spawn timeline choreographed against the soundtrack, not evenly spaced filler.
 - Legible START/REPLAY letter glyphs (see the glyph guidance in `docs/level-authoring.md`).
 - A composed soundtrack that emits `beat` events, plus sound design for locks, fire, hits, and kills that sits in the mix rather than on top of it.
-- A visual response to every gameplay event: `spawn`, `lock`, `unlock`, `fire`, `hit`, `kill`, `miss`.
+- A visual and audio response to rejected releases, plus visual responses to the core gameplay events: `spawn`, `lock`, `unlock`, `fire`, `hit`, `kill`, and `miss`.
 - Full playability and legibility with the player's bloom slider at zero.
 - A run length between 30 and 90 seconds — your call within that range, shaped to the music.
 

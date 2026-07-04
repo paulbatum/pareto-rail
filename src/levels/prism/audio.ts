@@ -168,6 +168,14 @@ export function createAudio(bus: EventBus) {
     lowPulse(ctx.currentTime, 34);
   });
 
+  bus.on('reject', () => {
+    if (!ctx) return;
+    const time = ctx.currentTime;
+    lowPulse(time, 31);
+    noiseTick(time + 0.02, 0.11, 0.08);
+    bell(time + 0.035, 61, 0.055, 0.2);
+  });
+
   bus.on('runstart', () => {
     mode = 'run';
     runStart = sixteenthIndex + ((16 - (sixteenthIndex % 16)) % 16);
