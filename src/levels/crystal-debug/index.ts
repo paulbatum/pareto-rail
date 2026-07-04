@@ -1,7 +1,7 @@
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
-import { createCrystalGameplay } from './gameplay';
+import { CRYSTAL_DEBUG_TARGETS, createCrystalGameplay, normalizeCrystalDebugTarget } from './gameplay';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -13,13 +13,20 @@ import {
   updateVisuals,
 } from './visuals';
 
-export const crystalLancerDebugLevel: LevelDefinition = {
-  id: 'crystal-lancer-debug',
-  title: 'Crystal Lancer Debug',
-  description: 'Temporary lancer firing testbed with a long-lived early lancer.',
+export const crystalDebugLevel: LevelDefinition = {
+  id: 'crystal-debug',
+  title: 'Crystal Debug',
+  description: 'Crystal Corridor enemy and boss testbed.',
+  aliases: ['crystal-lancer-debug'],
   debugOnly: true,
+  debugSelector: {
+    queryParam: 'debugEnemy',
+    label: 'Debug',
+    options: CRYSTAL_DEBUG_TARGETS,
+  },
   createAudio,
-  createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
+  createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip, debugValue }) {
+    const debugTarget = normalizeCrystalDebugTarget(debugValue);
     createEnvironment(scene);
     installVisualEventHandlers(bus, scene);
 
@@ -58,7 +65,7 @@ export const crystalLancerDebugLevel: LevelDefinition = {
       onPause,
       onFullscreen,
       startTip,
-      level: createCrystalGameplay(bus),
+      level: createCrystalGameplay(bus, debugTarget),
       visuals: {
         createEnemyMesh,
         setEnemyLocked,

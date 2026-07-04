@@ -135,6 +135,10 @@ canvas {
   cursor: pointer;
 }
 
+.debug-picker {
+  bottom: 58px;
+}
+
 .end-screen,
 .unsupported {
   position: fixed;

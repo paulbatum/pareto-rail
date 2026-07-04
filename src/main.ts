@@ -19,9 +19,12 @@ async function bootstrap() {
   const app = document.querySelector<HTMLDivElement>('#app');
   if (!app) throw new Error('Missing #app root');
 
-  const selectedLevel = getLevelById(new URLSearchParams(window.location.search).get('level'));
+  const urlParams = new URLSearchParams(window.location.search);
+  const selectedLevel = getLevelById(urlParams.get('level'));
+  const debugValue = selectedLevel.debugSelector ? urlParams.get(selectedLevel.debugSelector.queryParam) ?? undefined : undefined;
   document.title = `raild — ${selectedLevel.title}`;
   installLevelPicker(selectedLevel.id, import.meta.env.DEV);
+  installDebugPicker(selectedLevel, urlParams);
 
   const renderer = new WebGPURenderer({ antialias: true, alpha: false });
   // three.js installs a WebGL fallback internally; this project is intentionally WebGPU-only.
@@ -94,6 +97,7 @@ async function bootstrap() {
     onPause: togglePause,
     onFullscreen: toggleFullscreen,
     startTip: getStartScreenTip(fullscreenAvailable),
+    debugValue,
   });
 
   document.body.classList.remove('booting');
@@ -135,6 +139,32 @@ function installLevelPicker(activeId: string, includeDebug: boolean) {
   select.addEventListener('change', () => {
     const url = new URL(window.location.href);
     url.searchParams.set('level', select.value);
+    window.location.href = url.toString();
+  });
+  host.append(select);
+  document.body.append(host);
+}
+
+function installDebugPicker(level: ReturnType<typeof getLevelById>, urlParams: URLSearchParams) {
+  const selector = level.debugSelector;
+  if (!selector) return;
+
+  const host = document.createElement('label');
+  host.className = 'level-picker debug-picker';
+  host.textContent = `${selector.label} `;
+  const select = document.createElement('select');
+  const activeValue = urlParams.get(selector.queryParam) ?? selector.options[0]?.id;
+  for (const optionDefinition of selector.options) {
+    const option = document.createElement('option');
+    option.value = optionDefinition.id;
+    option.textContent = optionDefinition.title;
+    option.selected = optionDefinition.id === activeValue;
+    select.append(option);
+  }
+  select.addEventListener('change', () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('level', level.id);
+    url.searchParams.set(selector.queryParam, select.value);
     window.location.href = url.toString();
   });
   host.append(select);

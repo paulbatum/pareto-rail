@@ -25,6 +25,7 @@ export type LevelContext = {
   onPause: () => void;
   onFullscreen: () => void;
   startTip: string;
+  debugValue?: string;
 };
 
 export type LevelPostConfig = {
@@ -41,11 +42,19 @@ export type LevelPostConfig = {
   } | false;
 };
 
+export type LevelDebugSelector = {
+  queryParam: string;
+  label: string;
+  options: Array<{ id: string; title: string }>;
+};
+
 export type LevelDefinition = {
   id: string;
   title: string;
   description: string;
+  aliases?: string[];
   debugOnly?: boolean;
+  debugSelector?: LevelDebugSelector;
   post?: LevelPostConfig;
   createAudio(bus: EventBus): LevelAudio;
   createRuntime(context: LevelContext): LevelRuntime;

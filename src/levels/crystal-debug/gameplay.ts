@@ -4,9 +4,9 @@ import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import type { EventBus } from '../../events';
 
-// Temporary copy of Crystal Corridor for debugging lancer behavior. The run is
-// slowed down and starts with an untargetable high-health lancer that remains
-// ahead of the camera long enough to make repeated firing easy to observe.
+// Crystal Corridor debug testbed. The selected target spawns early and stays
+// ahead of the camera so individual enemies and the Warden fight can be tested
+// without playing through the full level.
 
 export const CRYSTAL_RUN_DURATION = 90;
 export const CRYSTAL_PLAYER_HEALTH = 3;
@@ -21,6 +21,19 @@ export type CrystalEnemyKind =
   | 'warden-core';
 export type CrystalTargetKind = CrystalEnemyKind | 'letter';
 export type CrystalMovementPattern = 'hold' | 'drift' | 'orbit';
+export type CrystalDebugTarget = 'node' | 'drifter' | 'orbiter' | 'lancer' | 'warden';
+
+export const CRYSTAL_DEBUG_TARGETS: Array<{ id: CrystalDebugTarget; title: string }> = [
+  { id: 'lancer', title: 'Lancer' },
+  { id: 'warden', title: 'Prism Warden' },
+  { id: 'node', title: 'Node' },
+  { id: 'drifter', title: 'Drifter' },
+  { id: 'orbiter', title: 'Orbiter' },
+];
+
+export function normalizeCrystalDebugTarget(value: string | undefined): CrystalDebugTarget {
+  return CRYSTAL_DEBUG_TARGETS.find((target) => target.id === value)?.id ?? 'lancer';
+}
 
 // Timeline entries carry immutable config only — the engine reuses the
 // timeline across runs. Per-enemy runtime state (fire cadence) lives in a
@@ -36,7 +49,14 @@ export type CrystalSpawnData =
     impactDirection?: Vector3;
     interceptUntil?: number;
   }
-  | { role: 'wave'; lead: number; pattern: CrystalMovementPattern; offset: Vector3 }
+  | {
+    role: 'wave';
+    lead: number;
+    pattern: CrystalMovementPattern;
+    offset: Vector3;
+    debugHold?: boolean;
+    fireForever?: boolean;
+  }
   | { role: 'shield'; index: number }
   | { role: 'core' };
 
@@ -66,17 +86,36 @@ export function createCrystalRail() {
   );
 }
 
-const DEBUG_LANCER: CrystalSpawnEntry = {
-  time: 1.0,
-  kind: 'lancer',
-  hitPoints: 999,
-  lockable: false,
-  data: { role: 'wave', lead: 0, pattern: 'hold', offset: new Vector3(0, 2.8, 0) },
-};
+function debugWave(kind: Exclude<CrystalDebugTarget, 'warden'>): CrystalSpawnEntry {
+  const pattern: CrystalMovementPattern = kind === 'drifter' ? 'drift' : kind === 'orbiter' ? 'orbit' : 'hold';
+  return {
+    time: 1.0,
+    kind,
+    hitPoints: 999,
+    data: {
+      role: 'wave',
+      lead: 0,
+      pattern,
+      offset: new Vector3(0, kind === 'lancer' ? 2.8 : 1.8, 0),
+      debugHold: true,
+      fireForever: kind === 'lancer',
+    },
+  };
+}
 
-const TIMELINE: CrystalSpawnEntry[] = [DEBUG_LANCER];
+function createDebugTimeline(target: CrystalDebugTarget): CrystalSpawnEntry[] {
+  const timeline: CrystalSpawnEntry[] = target === 'warden'
+    ? [
+      { time: 1.0, kind: 'warden-core', hitPoints: 4, lockable: false, data: { role: 'core' } },
+      { time: 1.2, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 0 } },
+      { time: 1.3, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 1 } },
+      { time: 1.4, kind: 'warden-shield', hitPoints: 2, data: { role: 'shield', index: 2 } },
+    ]
+    : [debugWave(target)];
+  return timeline.sort((a, b) => a.time - b.time);
+}
 
-export const CRYSTAL_TIMELINE: CrystalSpawnEntry[] = TIMELINE.sort((a, b) => a.time - b.time);
+export const CRYSTAL_TIMELINE: CrystalSpawnEntry[] = createDebugTimeline('lancer');
 
 const KILL_SCORE: Record<CrystalEnemyKind, number> = {
   node: 100,
@@ -94,8 +133,12 @@ const BOLT_DAMAGE_DISTANCE = 0.65;
 const BOLT_INTERCEPT_GRACE = 0.45;
 const BOLT_MAX_AGE = 14;
 
-export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalEnemyKind, CrystalSpawnData> {
-  const coreEntry = CRYSTAL_TIMELINE.find((entry) => entry.kind === 'warden-core');
+export function createCrystalGameplay(
+  bus: EventBus,
+  target: CrystalDebugTarget = 'lancer',
+): LockOnRunnerLevel<CrystalEnemyKind, CrystalSpawnData> {
+  const timeline = createDebugTimeline(target);
+  const coreEntry = timeline.find((entry) => entry.kind === 'warden-core');
 
   const boss = {
     corePosition: new Vector3(),
@@ -178,7 +221,7 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
 
   function updateWave(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'wave' }>) {
     const { enemy, runTime, runProgress, age, curve, camera } = context;
-    const anchorU = enemy.kind === 'lancer'
+    const anchorU = data.debugHold
       ? MathUtils.clamp(runProgress + 0.08, 0, 1)
       : smoothRunProgress(
         Math.min(CRYSTAL_RUN_DURATION, enemy.entry.time + data.lead),
@@ -196,10 +239,10 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     if (enemy.kind === 'lancer') {
       // Menace pulse: a slow push toward the camera sells intent.
       offset.z = Math.sin(age * 1.5) * 0.9;
-      const fire = cadence(enemy.id, 0.8, Number.POSITIVE_INFINITY);
+      const fire = cadence(enemy.id, data.fireForever ? 0.8 : 1.4, data.fireForever ? Number.POSITIVE_INFINITY : 2);
       if (fire.shotsLeft > 0 && age >= fire.nextAt) {
         fire.shotsLeft -= 1;
-        fire.nextAt = age + 1.8;
+        fire.nextAt = age + (data.fireForever ? 1.8 : 3.2);
         fireBolt(context, enemy.mesh.position);
       }
     }
@@ -210,7 +253,7 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     enemy.mesh.rotateY(Math.sin(runTime * 0.8 + enemy.id * 1.3) * 0.4);
     enemy.mesh.rotateX(Math.cos(runTime * 0.65 + enemy.id * 2.1) * 0.3);
 
-    return enemy.kind !== 'lancer' && runProgress > anchorU + 0.018;
+    return !data.debugHold && runProgress > anchorU + 0.018;
   }
 
   function updateBolt(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'bolt' }>) {
@@ -323,7 +366,7 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     duration: CRYSTAL_RUN_DURATION,
     playerHealth: CRYSTAL_PLAYER_HEALTH,
     createRail: createCrystalRail,
-    spawnTimeline: CRYSTAL_TIMELINE,
+    spawnTimeline: timeline,
     easeRunProgress: smoothRunProgress,
     updateEnemy(context) {
       const data = context.enemy.entry.data;
