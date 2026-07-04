@@ -1,0 +1,262 @@
+{
+  "metadata": {
+    "mode": "webaudio-graph",
+    "level": "crystal-debug",
+    "graphMs": 0,
+    "contexts": 1,
+    "rawEvents": 42
+  },
+  "nodes": [
+    {
+      "alias": "AudioDestination#1",
+      "type": "AudioDestination",
+      "inputs": 1,
+      "outputs": 0,
+      "channelCount": 2,
+      "channelCountMode": "explicit",
+      "channelInterpretation": "speakers"
+    },
+    {
+      "alias": "Gain#1",
+      "type": "Gain",
+      "inputs": 1,
+      "outputs": 1,
+      "channelCount": 2,
+      "channelCountMode": "max",
+      "channelInterpretation": "speakers"
+    },
+    {
+      "alias": "DynamicsCompressor#1",
+      "type": "DynamicsCompressor",
+      "inputs": 1,
+      "outputs": 1,
+      "channelCount": 2,
+      "channelCountMode": "clamped-max",
+      "channelInterpretation": "speakers"
+    },
+    {
+      "alias": "Gain#2",
+      "type": "Gain",
+      "inputs": 1,
+      "outputs": 1,
+      "channelCount": 2,
+      "channelCountMode": "max",
+      "channelInterpretation": "speakers"
+    },
+    {
+      "alias": "Gain#3",
+      "type": "Gain",
+      "inputs": 1,
+      "outputs": 1,
+      "channelCount": 2,
+      "channelCountMode": "max",
+      "channelInterpretation": "speakers"
+    },
+    {
+      "alias": "Delay#1",
+      "type": "Delay",
+      "inputs": 1,
+      "outputs": 1,
+      "channelCount": 2,
+      "channelCountMode": "max",
+      "channelInterpretation": "speakers"
+    },
+    {
+      "alias": "Gain#4",
+      "type": "Gain",
+      "inputs": 1,
+      "outputs": 1,
+      "channelCount": 2,
+      "channelCountMode": "max",
+      "channelInterpretation": "speakers"
+    },
+    {
+      "alias": "BiquadFilter#1",
+      "type": "BiquadFilter",
+      "inputs": 1,
+      "outputs": 1,
+      "channelCount": 2,
+      "channelCountMode": "max",
+      "channelInterpretation": "speakers"
+    }
+  ],
+  "params": [
+    {
+      "alias": "Gain#1.gain",
+      "node": "Gain#1",
+      "type": "gain",
+      "rate": "a-rate",
+      "defaultValue": 1,
+      "minValue": -3.4028234663852886e+38,
+      "maxValue": 3.4028234663852886e+38
+    },
+    {
+      "alias": "DynamicsCompressor#1.attack",
+      "node": "DynamicsCompressor#1",
+      "type": "attack",
+      "rate": "k-rate",
+      "defaultValue": 0.003000000026077032,
+      "minValue": 0,
+      "maxValue": 1
+    },
+    {
+      "alias": "DynamicsCompressor#1.knee",
+      "node": "DynamicsCompressor#1",
+      "type": "knee",
+      "rate": "k-rate",
+      "defaultValue": 30,
+      "minValue": 0,
+      "maxValue": 40
+    },
+    {
+      "alias": "DynamicsCompressor#1.ratio",
+      "node": "DynamicsCompressor#1",
+      "type": "ratio",
+      "rate": "k-rate",
+      "defaultValue": 12,
+      "minValue": 1,
+      "maxValue": 20
+    },
+    {
+      "alias": "DynamicsCompressor#1.release",
+      "node": "DynamicsCompressor#1",
+      "type": "release",
+      "rate": "k-rate",
+      "defaultValue": 0.25,
+      "minValue": 0,
+      "maxValue": 1
+    },
+    {
+      "alias": "DynamicsCompressor#1.threshold",
+      "node": "DynamicsCompressor#1",
+      "type": "threshold",
+      "rate": "k-rate",
+      "defaultValue": -24,
+      "minValue": -100,
+      "maxValue": 0
+    },
+    {
+      "alias": "Gain#2.gain",
+      "node": "Gain#2",
+      "type": "gain",
+      "rate": "a-rate",
+      "defaultValue": 1,
+      "minValue": -3.4028234663852886e+38,
+      "maxValue": 3.4028234663852886e+38
+    },
+    {
+      "alias": "Gain#3.gain",
+      "node": "Gain#3",
+      "type": "gain",
+      "rate": "a-rate",
+      "defaultValue": 1,
+      "minValue": -3.4028234663852886e+38,
+      "maxValue": 3.4028234663852886e+38
+    },
+    {
+      "alias": "Delay#1.delayTime",
+      "node": "Delay#1",
+      "type": "delayTime",
+      "rate": "a-rate",
+      "defaultValue": 0,
+      "minValue": 0,
+      "maxValue": 1
+    },
+    {
+      "alias": "Gain#4.gain",
+      "node": "Gain#4",
+      "type": "gain",
+      "rate": "a-rate",
+      "defaultValue": 1,
+      "minValue": -3.4028234663852886e+38,
+      "maxValue": 3.4028234663852886e+38
+    },
+    {
+      "alias": "BiquadFilter#1.detune",
+      "node": "BiquadFilter#1",
+      "type": "detune",
+      "rate": "a-rate",
+      "defaultValue": 0,
+      "minValue": -153600,
+      "maxValue": 153600
+    },
+    {
+      "alias": "BiquadFilter#1.frequency",
+      "node": "BiquadFilter#1",
+      "type": "frequency",
+      "rate": "a-rate",
+      "defaultValue": 350,
+      "minValue": 0,
+      "maxValue": 22050
+    },
+    {
+      "alias": "BiquadFilter#1.gain",
+      "node": "BiquadFilter#1",
+      "type": "gain",
+      "rate": "a-rate",
+      "defaultValue": 0,
+      "minValue": -3.4028234663852886e+38,
+      "maxValue": 1541.273681640625
+    },
+    {
+      "alias": "BiquadFilter#1.Q",
+      "node": "BiquadFilter#1",
+      "type": "Q",
+      "rate": "a-rate",
+      "defaultValue": 1,
+      "minValue": -3.4028234663852886e+38,
+      "maxValue": 3.4028234663852886e+38
+    }
+  ],
+  "connections": [
+    {
+      "from": "Gain#1",
+      "to": "DynamicsCompressor#1",
+      "output": 0,
+      "input": 0
+    },
+    {
+      "from": "DynamicsCompressor#1",
+      "to": "AudioDestination#1",
+      "output": 0,
+      "input": 0
+    },
+    {
+      "from": "Gain#2",
+      "to": "Gain#1",
+      "output": 0,
+      "input": 0
+    },
+    {
+      "from": "Gain#3",
+      "to": "Delay#1",
+      "output": 0,
+      "input": 0
+    },
+    {
+      "from": "Delay#1",
+      "to": "BiquadFilter#1",
+      "output": 0,
+      "input": 0
+    },
+    {
+      "from": "BiquadFilter#1",
+      "to": "Gain#4",
+      "output": 0,
+      "input": 0
+    },
+    {
+      "from": "Gain#4",
+      "to": "Delay#1",
+      "output": 0,
+      "input": 0
+    },
+    {
+      "from": "BiquadFilter#1",
+      "to": "Gain#2",
+      "output": 0,
+      "input": 0
+    }
+  ],
+  "paramConnections": []
+}

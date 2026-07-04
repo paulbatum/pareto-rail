@@ -22,6 +22,31 @@ export type StepTransport = {
   runUntil(seconds: number): void;
 };
 
+export type CompressorOptions = {
+  threshold?: number;
+  knee?: number;
+  ratio?: number;
+  attack?: number;
+  release?: number;
+};
+
+export type BiquadFilterOptions = {
+  type?: BiquadFilterType;
+  frequency?: number;
+  Q?: number;
+  gain?: number;
+  detune?: number;
+};
+
+export type AudioGraphBuilder = {
+  gain(initialValue?: number): GainNode;
+  compressor(options: CompressorOptions): DynamicsCompressorNode;
+  delay(maxDelayTime: number, delayTime: number): DelayNode;
+  biquadFilter(options: BiquadFilterOptions): BiquadFilterNode;
+  noiseBuffer(seconds: number, channels?: number): AudioBuffer;
+  connect(source: AudioNode, destination: AudioNode | AudioParam): AudioNode | AudioParam;
+};
+
 export type LevelAudioKitOptions = {
   /** Player-facing volume value before scaling. Defaults to 1. */
   initialVolume?: number;
@@ -70,6 +95,55 @@ export function createStepTransport(options: StepTransportOptions): StepTranspor
     },
     runUntil(seconds) {
       while (nextStepTime < seconds) emitNextStep();
+    },
+  };
+}
+
+export function createAudioGraphBuilder(context: AudioContext): AudioGraphBuilder {
+  return {
+    gain(initialValue = 1) {
+      const node = context.createGain();
+      node.gain.value = initialValue;
+      return node;
+    },
+    compressor(options) {
+      const node = context.createDynamicsCompressor();
+      if (options.threshold !== undefined) node.threshold.value = options.threshold;
+      if (options.knee !== undefined) node.knee.value = options.knee;
+      if (options.ratio !== undefined) node.ratio.value = options.ratio;
+      if (options.attack !== undefined) node.attack.value = options.attack;
+      if (options.release !== undefined) node.release.value = options.release;
+      return node;
+    },
+    delay(maxDelayTime, delayTime) {
+      const node = context.createDelay(maxDelayTime);
+      node.delayTime.value = delayTime;
+      return node;
+    },
+    biquadFilter(options) {
+      const node = context.createBiquadFilter();
+      if (options.type !== undefined) node.type = options.type;
+      if (options.frequency !== undefined) node.frequency.value = options.frequency;
+      if (options.Q !== undefined) node.Q.value = options.Q;
+      if (options.gain !== undefined) node.gain.value = options.gain;
+      if (options.detune !== undefined) node.detune.value = options.detune;
+      return node;
+    },
+    noiseBuffer(seconds, channels = 1) {
+      const buffer = context.createBuffer(channels, Math.floor(context.sampleRate * seconds), context.sampleRate);
+      for (let channel = 0; channel < channels; channel += 1) {
+        const data = buffer.getChannelData(channel);
+        for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
+      }
+      return buffer;
+    },
+    connect(source: AudioNode, destination: AudioNode | AudioParam) {
+      if (destination instanceof AudioParam) {
+        source.connect(destination);
+        return destination;
+      }
+      source.connect(destination);
+      return destination;
     },
   };
 }

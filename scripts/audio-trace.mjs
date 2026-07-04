@@ -22,7 +22,7 @@ main().catch((error) => {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const result = await captureTrace(options);
+  const result = options.graph ? await captureWebAudioGraph(options) : await captureTrace(options);
 
   if (options.write) {
     const outPath = path.resolve(root, options.write);
@@ -32,7 +32,7 @@ async function main() {
   }
 
   if (options.compare) {
-    await compareTrace(result, options.compare);
+    await compareResult(result, options.compare);
   }
 
   if (options.json) {
@@ -89,7 +89,166 @@ async function captureTrace(options) {
   }
 }
 
+async function captureWebAudioGraph(options) {
+  assertSafeLevelId(options.level);
+  const modulePath = `/src/levels/${options.level}/audio.ts`;
+  const rawEvents = [];
+
+  const server = await createServer({
+    root,
+    logLevel: 'error',
+    server: { host: '127.0.0.1', port: 0, strictPort: false },
+  });
+
+  let browser;
+  try {
+    await server.listen();
+    const address = server.httpServer?.address();
+    if (!address || typeof address === 'string') throw new Error('Could not determine Vite dev server port');
+    const baseUrl = `http://127.0.0.1:${address.port}`;
+
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath: findChromeExecutable(),
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--autoplay-policy=no-user-gesture-required'],
+    });
+
+    const page = await browser.newPage();
+    page.on('console', (message) => {
+      if (message.type() === 'error') console.error(`[page] ${message.text()}`);
+    });
+    page.on('pageerror', (error) => console.error(`[page] ${error.message}`));
+
+    const client = await page.target().createCDPSession();
+    const record = (method) => (params) => rawEvents.push({ method, params });
+    client.on('WebAudio.contextCreated', record('contextCreated'));
+    client.on('WebAudio.contextChanged', record('contextChanged'));
+    client.on('WebAudio.audioNodeCreated', record('audioNodeCreated'));
+    client.on('WebAudio.audioParamCreated', record('audioParamCreated'));
+    client.on('WebAudio.nodesConnected', record('nodesConnected'));
+    client.on('WebAudio.nodeParamConnected', record('nodeParamConnected'));
+    client.on('WebAudio.nodesDisconnected', record('nodesDisconnected'));
+    client.on('WebAudio.nodeParamDisconnected', record('nodeParamDisconnected'));
+    await client.send('WebAudio.enable');
+
+    await page.goto(new URL('/audio-trace.html', baseUrl).href, { waitUntil: 'networkidle0' });
+    await page.evaluate(
+      async ({ audioModulePath, graphMs }) => {
+        const [audioModule, eventsModule] = await Promise.all([import(audioModulePath), import('/src/events.ts')]);
+        if (typeof audioModule.createAudio !== 'function') throw new Error(`Missing createAudio export in ${audioModulePath}`);
+        const audio = audioModule.createAudio(eventsModule.createEventBus());
+        audio.setMasterVolume(0.5);
+        await audio.start();
+        await new Promise((resolve) => window.setTimeout(resolve, graphMs));
+        audio.dispose();
+      },
+      { audioModulePath: modulePath, graphMs: options.graphMs },
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    await client.send('WebAudio.disable').catch(() => {});
+    return normalizeWebAudioGraph(options, rawEvents);
+  } finally {
+    if (browser) await browser.close();
+    await server.close();
+  }
+}
+
+function normalizeWebAudioGraph(options, rawEvents) {
+  const nodeMap = new Map();
+  const params = [];
+  const connections = [];
+  const paramConnections = [];
+  const contexts = [];
+  const typeCounts = new Map();
+
+  for (const event of rawEvents) {
+    if (event.method === 'contextCreated' || event.method === 'contextChanged') {
+      const context = event.params.context;
+      if (context?.contextId && !contexts.some((existing) => existing.contextId === context.contextId)) contexts.push(context);
+      continue;
+    }
+
+    if (event.method === 'audioNodeCreated') {
+      const node = event.params.node;
+      if (!node?.nodeId) continue;
+      const type = node.nodeType ?? 'UnknownNode';
+      const count = (typeCounts.get(type) ?? 0) + 1;
+      typeCounts.set(type, count);
+      nodeMap.set(node.nodeId, { ...node, alias: `${type}#${count}` });
+      continue;
+    }
+
+    if (event.method === 'audioParamCreated') {
+      const param = event.params.param;
+      if (param?.paramId) params.push(param);
+      continue;
+    }
+
+    if (event.method === 'nodesConnected') {
+      connections.push(event.params);
+      continue;
+    }
+
+    if (event.method === 'nodeParamConnected') {
+      paramConnections.push(event.params);
+    }
+  }
+
+  const aliasForNode = (id) => nodeMap.get(id)?.alias ?? id;
+  const nodeForParam = new Map(params.map((param) => [param.paramId, param]));
+  const aliasForParam = (id) => {
+    const param = nodeForParam.get(id);
+    if (!param) return id;
+    return `${aliasForNode(param.nodeId)}.${param.paramType ?? 'param'}`;
+  };
+
+  const nodes = [...nodeMap.values()].map((node) => ({
+    alias: node.alias,
+    type: node.nodeType,
+    inputs: node.numberOfInputs,
+    outputs: node.numberOfOutputs,
+    channelCount: node.channelCount,
+    channelCountMode: node.channelCountMode,
+    channelInterpretation: node.channelInterpretation,
+  }));
+
+  return {
+    metadata: {
+      mode: 'webaudio-graph',
+      level: options.level,
+      graphMs: options.graphMs,
+      contexts: contexts.length,
+      rawEvents: rawEvents.length,
+    },
+    nodes,
+    params: params
+      .filter((param) => nodeMap.has(param.nodeId))
+      .map((param) => ({
+        alias: aliasForParam(param.paramId),
+        node: aliasForNode(param.nodeId),
+        type: param.paramType,
+        rate: param.rate,
+        defaultValue: param.defaultValue,
+        minValue: param.minValue,
+        maxValue: param.maxValue,
+      })),
+    connections: connections.map((connection) => ({
+      from: aliasForNode(connection.sourceId),
+      to: aliasForNode(connection.destinationId),
+      output: connection.sourceOutputIndex ?? 0,
+      input: connection.destinationInputIndex ?? 0,
+    })),
+    paramConnections: paramConnections.map((connection) => ({
+      from: aliasForNode(connection.sourceId),
+      to: aliasForParam(connection.destinationId),
+      output: connection.sourceOutputIndex ?? 0,
+    })),
+  };
+}
+
 function formatSummary(result) {
+  if (result.metadata?.mode === 'webaudio-graph') return formatGraphSummary(result);
   const { metadata, events } = result;
   const counts = countBy(events, (event) => event.kind);
   const sortedKinds = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
@@ -122,8 +281,44 @@ function formatSummary(result) {
   return lines.join('\n');
 }
 
+function formatGraphSummary(result) {
+  const nodeCounts = countBy(result.nodes, (node) => node.type);
+  const nodeTypes = Object.keys(nodeCounts).sort((a, b) => nodeCounts[b] - nodeCounts[a] || a.localeCompare(b));
+  const lines = [];
+  lines.push(`${result.metadata.level} WebAudio graph summary`);
+  lines.push(`Contexts: ${result.metadata.contexts} · Nodes: ${result.nodes.length}${nodeTypes.length ? ` · ${nodeTypes.map((type) => `${type}=${nodeCounts[type]}`).join(', ')}` : ''}`);
+  lines.push(`Connections: ${result.connections.length} node, ${result.paramConnections.length} param · Params: ${result.params.length}`);
+  if (result.connections.length) {
+    lines.push('Node connections:');
+    for (const connection of result.connections) lines.push(`- ${connection.from} -> ${connection.to}`);
+  }
+  if (result.paramConnections.length) {
+    lines.push('Param connections:');
+    for (const connection of result.paramConnections) lines.push(`- ${connection.from} -> ${connection.to}`);
+  }
+  return lines.join('\n');
+}
+
 function formatVerbose(result) {
+  if (result.metadata?.mode === 'webaudio-graph') return formatGraphVerbose(result);
   return result.events.map(formatEventLine).join('\n');
+}
+
+function formatGraphVerbose(result) {
+  const lines = [];
+  for (const node of result.nodes) {
+    lines.push(`node ${node.alias} type=${node.type} inputs=${node.inputs} outputs=${node.outputs} channels=${node.channelCount} mode=${node.channelCountMode}`);
+  }
+  for (const param of result.params) {
+    lines.push(`param ${param.alias} type=${param.type} rate=${param.rate} default=${formatValue(param.defaultValue)} min=${formatValue(param.minValue)} max=${formatValue(param.maxValue)}`);
+  }
+  for (const connection of result.connections) {
+    lines.push(`connect ${connection.from} -> ${connection.to} out=${connection.output} in=${connection.input}`);
+  }
+  for (const connection of result.paramConnections) {
+    lines.push(`connect-param ${connection.from} -> ${connection.to} out=${connection.output}`);
+  }
+  return lines.join('\n');
 }
 
 function formatEventLine(event) {
@@ -140,13 +335,13 @@ function formatValue(value) {
   return String(value);
 }
 
-async function compareTrace(result, comparePath) {
+async function compareResult(result, comparePath) {
   const expectedPath = path.resolve(root, comparePath);
   const expected = JSON.parse(await fs.readFile(expectedPath, 'utf8'));
   const expectedLines = formatVerbose(expected).split('\n');
   const actualLines = formatVerbose(result).split('\n');
   if (expectedLines.join('\n') === actualLines.join('\n')) {
-    console.log(`trace matches ${path.relative(process.cwd(), expectedPath)}`);
+    console.log(`${result.metadata?.mode === 'webaudio-graph' ? 'graph' : 'trace'} matches ${path.relative(process.cwd(), expectedPath)}`);
     return;
   }
 
@@ -155,7 +350,7 @@ async function compareTrace(result, comparePath) {
   while (firstDiff < max && expectedLines[firstDiff] === actualLines[firstDiff]) firstDiff += 1;
   const start = Math.max(0, firstDiff - 4);
   const end = Math.min(max, firstDiff + 8);
-  console.error(`trace differs from ${path.relative(process.cwd(), expectedPath)} at line ${firstDiff + 1}`);
+  console.error(`${result.metadata?.mode === 'webaudio-graph' ? 'graph' : 'trace'} differs from ${path.relative(process.cwd(), expectedPath)} at line ${firstDiff + 1}`);
   for (let i = start; i < end; i += 1) {
     const expectedLine = expectedLines[i] ?? '<missing>';
     const actualLine = actualLines[i] ?? '<missing>';
@@ -185,6 +380,8 @@ function parseArgs(argv) {
     json: false,
     compare: undefined,
     write: undefined,
+    graph: false,
+    graphMs: 0,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -204,6 +401,12 @@ function parseArgs(argv) {
         break;
       case 'write':
         options.write = readValue(argv, ++i, '--write');
+        break;
+      case 'graph-ms':
+        options.graphMs = readNonNegativeNumber(readValue(argv, ++i, '--graph-ms'), '--graph-ms');
+        break;
+      case 'graph':
+        options.graph = true;
         break;
       case 'verbose':
         options.verbose = true;
@@ -229,6 +432,16 @@ function readPositiveNumber(value, flag) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) throw new Error(`${flag} must be a positive number`);
   return parsed;
+}
+
+function readNonNegativeNumber(value, flag) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`${flag} must be a non-negative number`);
+  return parsed;
+}
+
+function assertSafeLevelId(level) {
+  if (!/^[a-z0-9-]+$/.test(level)) throw new Error(`Invalid level id: ${level}`);
 }
 
 function formatSeconds(seconds) {

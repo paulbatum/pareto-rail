@@ -1,5 +1,5 @@
 import type { EventBus } from '../../events';
-import { createLevelAudioKit, createStepTransport } from '../../engine/audio-kit';
+import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport } from '../../engine/audio-kit';
 import { createAudioTraceSink, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
@@ -90,36 +90,28 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   });
 
   function buildGraph(context: AudioContext, masterVolume: number) {
-    master = context.createGain();
-    master.gain.value = masterVolume;
-    const compressor = context.createDynamicsCompressor();
-    compressor.threshold.value = -18;
-    compressor.ratio.value = 5;
-    compressor.attack.value = 0.005;
-    compressor.release.value = 0.22;
-    master.connect(compressor).connect(context.destination);
+    const graph = createAudioGraphBuilder(context);
 
-    duck = context.createGain();
-    duck.connect(master);
+    master = graph.gain(masterVolume);
+    const compressor = graph.compressor({ threshold: -18, ratio: 5, attack: 0.005, release: 0.22 });
+    graph.connect(master, compressor);
+    graph.connect(compressor, context.destination);
+
+    duck = graph.gain();
+    graph.connect(duck, master);
 
     // Feedback delay tuned to a dotted eighth: the space the arp lives in.
-    delaySend = context.createGain();
-    const delay = context.createDelay(1);
-    delay.delayTime.value = SIXTEENTH * 3;
-    const feedback = context.createGain();
-    feedback.gain.value = 0.34;
-    const damp = context.createBiquadFilter();
-    damp.type = 'lowpass';
-    damp.frequency.value = 2600;
-    delaySend.connect(delay);
-    delay.connect(damp);
-    damp.connect(feedback);
-    feedback.connect(delay);
-    damp.connect(duck);
+    delaySend = graph.gain();
+    const delay = graph.delay(1, SIXTEENTH * 3);
+    const feedback = graph.gain(0.34);
+    const damp = graph.biquadFilter({ type: 'lowpass', frequency: 2600 });
+    graph.connect(delaySend, delay);
+    graph.connect(delay, damp);
+    graph.connect(damp, feedback);
+    graph.connect(feedback, delay);
+    graph.connect(damp, duck);
 
-    noiseBuffer = context.createBuffer(1, Math.floor(context.sampleRate * 2), context.sampleRate);
-    const data = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
+    noiseBuffer = graph.noiseBuffer(2);
   }
 
   // ---- scheduler ----------------------------------------------------------

@@ -100,9 +100,13 @@ npm run trace:audio -- --level crystal-debug
 npm run trace:audio -- --level crystal-debug --verbose
 npm run trace:audio -- --level crystal-debug --write test-fixtures/audio/crystal-debug.json
 npm run trace:audio -- --level crystal-debug --compare test-fixtures/audio/crystal-debug.json
+npm run trace:audio -- --level crystal-debug --graph
+npm run trace:audio -- --level helios --graph
 ```
 
 The default output is a compact summary for level authoring. Use `--verbose` or `--compare` when characterizing a refactor. The trace is semantic rather than waveform-based: it captures scheduled musical events, beat events, and voice calls, not browser compressor output or final mix quality. It currently covers `crystal-debug`.
+
+Use `--graph` to inspect the actual Web Audio graph that a level creates in Chrome via the DevTools Protocol. Graph capture can run for levels that export `createAudio` from `src/levels/<level-id>/audio.ts`, even if they do not have semantic trace support yet. It captures node topology and node/parameter defaults; it does not capture every later parameter assignment in a stable authoring-friendly form.
 
 Use the visual tools while building levels to inspect models and gameplay composition:
 
