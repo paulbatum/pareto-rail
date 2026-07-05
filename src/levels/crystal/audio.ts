@@ -7,7 +7,7 @@ import {
   playNoiseHit,
   playOscillatorVoice,
 } from '../../engine/audio-kit';
-import { createAudioTraceSink, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
+import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
@@ -592,12 +592,3 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   return { audio, traceRun };
 }
 
-function createNoopTraceBus(): EventBus {
-  return {
-    on() {
-      return () => false;
-    },
-    emit() {},
-    clear() {},
-  } as EventBus;
-}

@@ -1,3 +1,5 @@
+import type { EventBus } from '../events';
+
 export type AudioTraceValue = string | number | boolean | null | AudioTraceValue[];
 
 export type AudioTraceEvent = {
@@ -31,4 +33,14 @@ export function createAudioTraceSink(events: AudioTraceEvent[]): AudioTraceSink 
 
 export function roundTraceTime(time: number) {
   return Math.round(time * 1000) / 1000;
+}
+
+export function createNoopTraceBus(): EventBus {
+  return {
+    on() {
+      return () => false;
+    },
+    emit() {},
+    clear() {},
+  } as EventBus;
 }

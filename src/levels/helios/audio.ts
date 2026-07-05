@@ -7,8 +7,9 @@ import {
   playNoiseHit,
   playOscillatorVoice,
 } from '../../engine/audio-kit';
+import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
-import { HELIOS_BPM } from './gameplay';
+import { HELIOS_BPM, HELIOS_DURATION } from './gameplay';
 
 // The Helios score: 172 BPM drum & bass in E minor, 86 bars = exactly the
 // 120-second run. Sections land on the run's set pieces — drop 1 at the gate
@@ -54,6 +55,28 @@ const LEAD_THEME: Array<[number, number, number, number]> = [
 ];
 
 export function createAudio(bus: EventBus) {
+  return createHeliosAudio(bus).audio;
+}
+
+export function traceHeliosAudio(options: { seconds?: number } = {}): AudioTraceResult {
+  const seconds = options.seconds ?? HELIOS_DURATION;
+  const events: AudioTraceResult['events'] = [];
+  const trace = createAudioTraceSink(events);
+  const tracedAudio = createHeliosAudio(createNoopTraceBus(), trace);
+  tracedAudio.traceRun(seconds);
+  return {
+    metadata: {
+      level: 'helios',
+      bpm: HELIOS_BPM,
+      seconds,
+      stepSeconds: SIXTEENTH,
+      mode: 'run',
+    },
+    events,
+  };
+}
+
+function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
   let arrangementStart = 0;
   let mode: 'run' | 'ambient' = 'ambient';
@@ -163,6 +186,16 @@ export function createAudio(bus: EventBus) {
     return impulse;
   }
 
+  function traceRun(seconds: number) {
+    mode = 'run';
+    heartId = -1;
+    arrangementStart = 0;
+    transport.reset(0.06, 0);
+    ctx = { currentTime: 0 } as AudioContext;
+    transport.runUntil(seconds);
+    ctx = null;
+  }
+
   // ---- scheduler ------------------------------------------------------------
 
   function scheduleStep(index: number, time: number) {
@@ -170,8 +203,10 @@ export function createAudio(bus: EventBus) {
     const step = position % 16;
     const barIndex = Math.floor(position / 16);
 
+    if (trace && step === 0) recordSection(time, barIndex);
+
     if (position % 4 === 0) {
-      emitBeatAt(bus, ctx as AudioContext, time, Math.floor(position / 4), step === 0);
+      scheduleBeat(time, Math.floor(position / 4), step === 0);
     }
 
     if (mode === 'ambient') {
@@ -297,9 +332,38 @@ export function createAudio(bus: EventBus) {
 
   const quantize = (time: number) => quantizeToGrid(time, THIRTYSECOND);
 
+  function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
+    if (trace) {
+      trace.record(time, 'beat', { beatNumber, isDownbeat });
+      return;
+    }
+    if (ctx) emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
+  }
+
+  function recordSection(time: number, barIndex: number) {
+    const section = sectionForBar(barIndex);
+    if (section) trace?.record(time, 'section', { section, bar: barIndex });
+  }
+
+  function sectionForBar(barIndex: number) {
+    if (barIndex === 0) return 'intro';
+    if (barIndex === 8) return 'build';
+    if (barIndex === 16) return 'drop-1';
+    if (barIndex === 32) return 'shift';
+    if (barIndex === 40) return 'drop-2';
+    if (barIndex === 56) return 'breakdown';
+    if (barIndex === 64) return 'boss';
+    if (barIndex === 80) return 'outro';
+    return null;
+  }
+
   // ---- instruments ------------------------------------------------------------
 
   function kick(time: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'kick', { vel });
+      return;
+    }
     if (!ctx || !master || !duck) return;
     playOscillatorVoice({
       context: ctx,
@@ -321,6 +385,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function snare(time: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'snare', { vel });
+      return;
+    }
     if (!ctx || !master) return;
     noiseHit(time, 0.2 * vel, 0.075, 'bandpass', 1750, master);
     noiseHit(time, 0.1 * vel, 0.03, 'highpass', 5200, master);
@@ -340,21 +408,37 @@ export function createAudio(bus: EventBus) {
   }
 
   function hat(time: number, vel: number, decay: number) {
+    if (trace) {
+      trace.record(time, 'hat', { vel, decay });
+      return;
+    }
     if (!duck) return;
     noiseHit(time, vel, decay, 'highpass', 8200, duck);
   }
 
   function openHat(time: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'openHat', { vel });
+      return;
+    }
     if (!duck) return;
     noiseHit(time, vel, 0.18, 'highpass', 7400, duck);
   }
 
   function ride(time: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'ride', { vel });
+      return;
+    }
     if (!duck) return;
     noiseHit(time, vel, 0.14, 'bandpass', 9800, duck);
   }
 
   function crash(time: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'crash', { vel });
+      return;
+    }
     if (!master || !reverbSend) return;
     noiseHit(time, vel, 0.9, 'highpass', 4600, master);
     noiseHit(time, vel * 0.5, 1.4, 'bandpass', 7200, reverbSend);
@@ -362,6 +446,10 @@ export function createAudio(bus: EventBus) {
 
   // Reese + sub: two saws detuned ±14 cents an octave up, sine at the root.
   function bass(time: number, midi: number, vel: number, growl: number) {
+    if (trace) {
+      trace.record(time, 'bass', { midi, vel, growl });
+      return;
+    }
     if (!ctx || !duck) return;
     const dur = 0.21;
     const sub = ctx.createOscillator();
@@ -399,6 +487,10 @@ export function createAudio(bus: EventBus) {
 
   // Choir: detuned saw stack through a vowel-ish bandpass. The epic bed.
   function choir(time: number, midis: number[], duration: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'choir', { midis, duration, vel });
+      return;
+    }
     if (!ctx || !duck || !reverbSend) return;
     for (const midi of midis) {
       for (const detune of [-9, 9]) {
@@ -433,6 +525,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function arp(time: number, midi: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'arp', { midi, vel });
+      return;
+    }
     if (!ctx || !duck || !delaySend) return;
     playOscillatorVoice({
       context: ctx,
@@ -455,6 +551,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function stab(time: number, midis: number[], vel: number) {
+    if (trace) {
+      trace.record(time, 'stab', { midis, vel });
+      return;
+    }
     if (!ctx || !duck || !reverbSend) return;
     for (const midi of midis) {
       for (const detune of [-11, 11]) {
@@ -482,6 +582,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function lead(time: number, midi: number, duration: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'lead', { midi, duration, vel });
+      return;
+    }
     if (!ctx || !duck || !delaySend || !reverbSend) return;
     const gain = ctx.createGain();
     const filter = ctx.createBiquadFilter();
@@ -520,6 +624,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function alarmSwell(time: number, midi: number, duration: number) {
+    if (trace) {
+      trace.record(time, 'alarm', { midi, duration });
+      return;
+    }
     if (!ctx || !duck || !reverbSend) return;
     playOscillatorVoice({
       context: ctx,
@@ -543,6 +651,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function riser(time: number, duration: number, level: number) {
+    if (trace) {
+      trace.record(time, 'riser', { duration, level });
+      return;
+    }
     if (!ctx || !master || !noiseBuffer) return;
     playBufferSourceVoice({
       context: ctx,
@@ -566,6 +678,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function impact(time: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'impact', { vel });
+      return;
+    }
     if (!ctx || !master) return;
     playOscillatorVoice({
       context: ctx,
@@ -610,6 +726,10 @@ export function createAudio(bus: EventBus) {
 
   // Icy FM pluck: sine carrier + bright partial, quick sparkle on top.
   function icePluck(time: number, midi: number, vel: number) {
+    if (trace) {
+      trace.record(time, 'icePluck', { midi, vel });
+      return;
+    }
     if (!ctx || !duck || !delaySend) return;
     for (const [ratio, level, decay] of [[1, 1, 0.14], [2.01, 0.35, 0.07], [3.98, 0.12, 0.04]] as const) {
       playOscillatorVoice({
@@ -906,5 +1026,5 @@ export function createAudio(bus: EventBus) {
     choir(ctx.currentTime + 0.05, [52, 59, 64, 66, 71], 6, 0.9);
   });
 
-  return audio;
+  return { audio, traceRun };
 }

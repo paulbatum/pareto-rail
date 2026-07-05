@@ -21,6 +21,22 @@ const TRACE_TARGETS = {
     module: '/src/levels/crystal-debug/audio.ts',
     exportName: 'traceCrystalDebugAudio',
   },
+  helios: {
+    module: '/src/levels/helios/audio.ts',
+    exportName: 'traceHeliosAudio',
+  },
+  prism: {
+    module: '/src/levels/prism/audio.ts',
+    exportName: 'tracePrismAudio',
+  },
+  'prism-bloom': {
+    module: '/src/levels/prism/audio.ts',
+    exportName: 'tracePrismAudio',
+  },
+  rezdle: {
+    module: '/src/levels/rezdle/audio.ts',
+    exportName: 'traceRezdleAudio',
+  },
 };
 
 main().catch((error) => {
@@ -274,7 +290,33 @@ function formatSummary(result) {
       const end = Math.min(metadata.seconds, start + sectionSeconds);
       const sectionEvents = events.filter((event) => event.time >= start && event.time < end);
       const sectionCounts = countBy(sectionEvents, (event) => event.kind);
-      const musicKinds = ['kick', 'clap', 'hat', 'bass', 'arp', 'pad', 'riser', 'beat'];
+      const musicKinds = [
+        'section',
+        'kick',
+        'snare',
+        'clap',
+        'hat',
+        'openHat',
+        'ride',
+        'crash',
+        'tick',
+        'clack',
+        'noiseTick',
+        'bass',
+        'lowPulse',
+        'arp',
+        'bell',
+        'ding',
+        'pad',
+        'choir',
+        'stab',
+        'lead',
+        'alarm',
+        'riser',
+        'impact',
+        'icePluck',
+        'beat',
+      ];
       const summary = musicKinds.filter((kind) => sectionCounts[kind]).map((kind) => `${kind}=${sectionCounts[kind]}`).join(', ');
       lines.push(`- ${formatSeconds(start)}–${formatSeconds(end)}: ${summary || 'no traced events'}`);
     }
@@ -383,7 +425,7 @@ function countBy(values, keyForValue) {
 function parseArgs(argv) {
   const options = {
     level: 'crystal-debug',
-    seconds: 45,
+    seconds: undefined,
     verbose: false,
     json: false,
     compare: undefined,

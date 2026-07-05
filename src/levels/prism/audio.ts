@@ -1,6 +1,8 @@
 import type { EventBus } from '../../events';
 import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playNoiseHit, playOscillatorVoice } from '../../engine/audio-kit';
+import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid, secondsPerStep } from '../../engine/music';
+import { PRISM_RUN_DURATION } from './gameplay';
 
 const BPM = 96;
 const SIXTEENTH = secondsPerStep(BPM, 4);
@@ -10,6 +12,28 @@ const SCHEDULER_MS = 25;
 const SCALE = [62, 65, 69, 72, 74, 77, 81, 84];
 
 export function createAudio(bus: EventBus) {
+  return createPrismAudio(bus).audio;
+}
+
+export function tracePrismAudio(options: { seconds?: number } = {}): AudioTraceResult {
+  const seconds = options.seconds ?? PRISM_RUN_DURATION;
+  const events: AudioTraceResult['events'] = [];
+  const trace = createAudioTraceSink(events);
+  const tracedAudio = createPrismAudio(createNoopTraceBus(), trace);
+  tracedAudio.traceRun(seconds);
+  return {
+    metadata: {
+      level: 'prism-bloom',
+      bpm: BPM,
+      seconds,
+      stepSeconds: SIXTEENTH,
+      mode: 'run',
+    },
+    events,
+  };
+}
+
+function createPrismAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
   let runStart = 0;
   let mode: 'ambient' | 'run' = 'ambient';
@@ -69,11 +93,20 @@ export function createAudio(bus: EventBus) {
     noiseBuffer = graph.noiseBuffer(2);
   }
 
+  function traceRun(seconds: number) {
+    mode = 'run';
+    runStart = 0;
+    transport.reset(0.06, 0);
+    ctx = { currentTime: 0 } as AudioContext;
+    transport.runUntil(seconds);
+    ctx = null;
+  }
+
   function scheduleStep(index: number, time: number) {
     const position = Math.max(0, index - runStart);
     const step = position % 16;
     const bar = Math.floor(position / 16);
-    if (step % 4 === 0 && ctx) emitBeatAt(bus, ctx, time, Math.floor(index / 4), step === 0);
+    if (step % 4 === 0) scheduleBeat(time, Math.floor(index / 4), step === 0);
 
     const note = SCALE[(step / 2 + bar * 2) % SCALE.length | 0];
     if (mode === 'ambient') {
@@ -87,7 +120,19 @@ export function createAudio(bus: EventBus) {
     if (bar >= 6 && step % 4 === 3) noiseTick(time, 0.045, 0.11);
   }
 
+  function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
+    if (trace) {
+      trace.record(time, 'beat', { beatNumber, isDownbeat });
+      return;
+    }
+    if (ctx) emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
+  }
+
   function bell(time: number, midi: number, velocity: number, decay: number) {
+    if (trace) {
+      trace.record(time, 'bell', { midi, velocity, decay });
+      return;
+    }
     if (!ctx || !master || !shimmer) return;
     const carrier = ctx.createOscillator();
     const mod = ctx.createOscillator();
@@ -112,6 +157,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function lowPulse(time: number, midi: number) {
+    if (trace) {
+      trace.record(time, 'lowPulse', { midi });
+      return;
+    }
     if (!ctx || !master) return;
     playOscillatorVoice({
       context: ctx,
@@ -133,6 +182,10 @@ export function createAudio(bus: EventBus) {
   }
 
   function noiseTick(time: number, velocity: number, decay: number) {
+    if (trace) {
+      trace.record(time, 'noiseTick', { velocity, decay });
+      return;
+    }
     if (!ctx || !master || !noiseBuffer) return;
     playNoiseHit({
       context: ctx,
@@ -187,5 +240,5 @@ export function createAudio(bus: EventBus) {
     if (ctx) bell(ctx.currentTime + 0.05, 74, 0.13, 1.4);
   });
 
-  return audio;
+  return { audio, traceRun };
 }

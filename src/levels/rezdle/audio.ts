@@ -1,7 +1,8 @@
 import type { EventBus } from '../../events';
 import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playBufferSourceVoice, playOscillatorVoice } from '../../engine/audio-kit';
+import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq } from '../../engine/music';
-import { BPM } from './gameplay';
+import { BPM, REZDLE_RUN_DURATION } from './gameplay';
 
 // A midnight print-shop chamber piece: swung 8ths at 84 BPM, felt-piano pad
 // and celesta over typewriter percussion. Every four bars the carriage
@@ -23,6 +24,28 @@ const LOCK_STEPS = [65, 69, 72, 74, 77, 79, 81, 84];
 const BELL_RUN = [77, 79, 81, 84, 86, 89, 91, 93];
 
 export function createAudio(bus: EventBus) {
+  return createRezdleAudio(bus).audio;
+}
+
+export function traceRezdleAudio(options: { seconds?: number } = {}): AudioTraceResult {
+  const seconds = options.seconds ?? REZDLE_RUN_DURATION;
+  const events: AudioTraceResult['events'] = [];
+  const trace = createAudioTraceSink(events);
+  const tracedAudio = createRezdleAudio(createNoopTraceBus(), trace);
+  tracedAudio.traceRun(seconds);
+  return {
+    metadata: {
+      level: 'rezdle',
+      bpm: BPM,
+      seconds,
+      stepSeconds: BEAT / 2,
+      mode: 'run',
+    },
+    events,
+  };
+}
+
+function createRezdleAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
   let master: GainNode | null = null;
   let noiseBuffer: AudioBuffer | null = null;
@@ -67,10 +90,17 @@ export function createAudio(bus: EventBus) {
     noiseBuffer = graph.noiseBuffer(1);
   }
 
+  function traceRun(seconds: number) {
+    arpCounter = 0;
+    transport.reset(0.08, 0);
+    ctx = { currentTime: 0 } as AudioContext;
+    transport.runUntil(seconds);
+    ctx = null;
+  }
+
   // --- Scheduler: swung 8th steps ---------------------------------------
 
   function scheduleStep(step: number, time: number) {
-    if (!ctx) return;
     const eighth = step % 8;
     const bar = Math.floor(step / 8);
     const chord = CHORDS[bar % CHORDS.length];
@@ -80,7 +110,7 @@ export function createAudio(bus: EventBus) {
     if (step % 2 === 0) {
       const beatNumber = step / 2;
       const isDownbeat = beatNumber % 4 === 0;
-      emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
+      scheduleBeat(time, beatNumber, isDownbeat);
       tickNoise(time, isDownbeat ? 0.028 : 0.016, 5200);
       if (eighth === 0) {
         padChord(time, chord.pad);
@@ -95,15 +125,23 @@ export function createAudio(bus: EventBus) {
     if (arpMask.includes(eighth)) {
       const note = chord.arp[arpCounter % chord.arp.length] + 12 * Math.floor((arpCounter % 10) / 5);
       arpCounter += 1;
-      bell(time, note, density === 2 ? 0.032 : 0.024, 0.4);
+      bell(time, note, density === 2 ? 0.032 : 0.024, 0.4, 'arp');
     }
 
     // Carriage return into every 4th bar: zip through the last beat, ding on
     // the turnaround.
     if (bar % 4 === 3 && eighth === 6) {
       zip(time, 0.3, 0.024);
-      bell(time + BEAT * 0.95, 96, 0.045, 0.9);
+      bell(time + BEAT * 0.95, 96, 0.045, 0.9, 'ding');
     }
+  }
+
+  function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
+    if (trace) {
+      trace.record(time, 'beat', { beatNumber, isDownbeat });
+      return;
+    }
+    if (ctx) emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
   }
 
   // --- Voices ------------------------------------------------------------
@@ -131,15 +169,27 @@ export function createAudio(bus: EventBus) {
   }
 
   function tickNoise(time: number, gainValue: number, frequency: number) {
+    if (trace) {
+      trace.record(time, 'tick', { gain: gainValue, frequency });
+      return;
+    }
     noise(time, 0.03, gainValue, 'highpass', frequency);
   }
 
   function clack(time: number, gainValue: number) {
+    if (trace) {
+      trace.record(time, 'clack', { gain: gainValue });
+      return;
+    }
     noise(time, 0.028, gainValue, 'bandpass', 1900);
     noise(time + 0.014, 0.02, gainValue * 0.6, 'bandpass', 2600);
   }
 
   function zip(time: number, duration: number, gainValue: number) {
+    if (trace) {
+      trace.record(time, 'zip', { duration, gain: gainValue });
+      return;
+    }
     noise(time, duration, gainValue, 'bandpass', 480, 2800);
   }
 
@@ -161,13 +211,21 @@ export function createAudio(bus: EventBus) {
   }
 
   // Celesta-ish: fundamental plus a quiet detuned twelfth.
-  function bell(time: number, midi: number, gainValue: number, duration: number) {
+  function bell(time: number, midi: number, gainValue: number, duration: number, kind = 'bell') {
+    if (trace) {
+      trace.record(time, kind, { midi, gain: gainValue, duration });
+      return;
+    }
     const frequency = midiToFreq(midi);
     tone(time, frequency, gainValue, duration, 'sine');
     tone(time, frequency * 3.01, gainValue * 0.22, duration * 0.55, 'sine');
   }
 
   function padChord(time: number, midis: number[]) {
+    if (trace) {
+      trace.record(time, 'pad', { midis });
+      return;
+    }
     if (!ctx || !master) return;
     for (const midi of midis) {
       playOscillatorVoice({
@@ -190,10 +248,18 @@ export function createAudio(bus: EventBus) {
   }
 
   function bassNote(time: number, midi: number, velocity: number) {
+    if (trace) {
+      trace.record(time, 'bass', { midi, velocity });
+      return;
+    }
     tone(time, midiToFreq(midi), 0.065 * velocity, 0.55, 'sine', 0.01);
   }
 
   function thump(time: number, from: number, to: number, gainValue: number, duration: number) {
+    if (trace) {
+      trace.record(time, 'thump', { from, to, gain: gainValue, duration });
+      return;
+    }
     if (!ctx || !master) return;
     playOscillatorVoice({
       context: ctx,
@@ -219,7 +285,7 @@ export function createAudio(bus: EventBus) {
     const time = now();
     // Keystrike: a pitched typewriter key, climbing with each lock.
     noise(time, 0.016, 0.05, 'bandpass', 1500 + lockCount * 160);
-    bell(time + 0.004, LOCK_STEPS[Math.min(Math.max(lockCount, 1), 8) - 1], 0.038, 0.14);
+    bell(time + 0.004, LOCK_STEPS[Math.min(Math.max(lockCount, 1), 8) - 1], 0.038, 0.14, 'lockBell');
   });
 
   bus.on('unlock', () => {
@@ -248,7 +314,7 @@ export function createAudio(bus: EventBus) {
     if (!ctx) return;
     const time = now();
     thump(time, 240, 120, 0.04, 0.08);
-    bell(time + 0.01, 89, 0.016, 0.12);
+    bell(time + 0.01, 89, 0.016, 0.12, 'killBell');
   });
 
   bus.on('volley', ({ kills, scoreAwarded, size }) => {
@@ -259,9 +325,9 @@ export function createAudio(bus: EventBus) {
       // with the carriage ding.
       const notes = Math.min(kills, BELL_RUN.length);
       for (let i = 0; i < notes; i += 1) {
-        bell(time + i * 0.07, BELL_RUN[i], 0.042, 0.35);
+        bell(time + i * 0.07, BELL_RUN[i], 0.042, 0.35, 'wordBell');
       }
-      bell(time + notes * 0.07 + 0.05, 96, 0.05, 1.1);
+      bell(time + notes * 0.07 + 0.05, 96, 0.05, 1.1, 'ding');
     } else if (size >= 3) {
       // Set type that spells nothing: shuffled back into the case.
       noise(time, 0.16, 0.02, 'lowpass', 620);
@@ -286,15 +352,15 @@ export function createAudio(bus: EventBus) {
     if (!ctx) return;
     const time = now();
     zip(time, 0.25, 0.03);
-    bell(time + 0.28, 96, 0.05, 1.0);
+    bell(time + 0.28, 96, 0.05, 1.0, 'ding');
   });
 
   bus.on('runend', () => {
     if (!ctx) return;
     const time = now();
     padChord(time, CHORDS[0].pad);
-    bell(time + 0.15, 89, 0.04, 1.4);
+    bell(time + 0.15, 89, 0.04, 1.4, 'ding');
   });
 
-  return audio;
+  return { audio, traceRun };
 }
