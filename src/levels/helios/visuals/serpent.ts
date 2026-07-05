@@ -75,8 +75,8 @@ export function createFangMesh() {
   ((group.userData.parts ??= []) as TintPart[]).push({ material: socketMaterial, base: hdr(EMBER, 1.5), kind: 'core' });
   // White-hot tip.
   const tipMaterial = new MeshBasicMaterial({ color: hdr(WHITE_HOT, 2.2) });
-  const tip = new Mesh(new OctahedronGeometry(0.22, 0), tipMaterial);
-  tip.position.set(1.18, 2.9, 0);
+  const tip = new Mesh(new OctahedronGeometry(0.16, 0), tipMaterial);
+  tip.position.set(1.06, 2.62, 0);
   group.add(tip);
   ((group.userData.parts ??= []) as TintPart[]).push({ material: tipMaterial, base: hdr(WHITE_HOT, 2.2), kind: 'core' });
 
