@@ -1,5 +1,12 @@
 import type { EventBus } from '../../events';
-import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playNoiseHit, playOscillatorVoice } from '../../engine/audio-kit';
+import {
+  createAudioGraphBuilder,
+  createLevelAudioKit,
+  createStepTransport,
+  playBufferSourceVoice,
+  playNoiseHit,
+  playOscillatorVoice,
+} from '../../engine/audio-kit';
 import { createAudioTraceSink, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
@@ -232,21 +239,27 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
       return;
     }
     if (!ctx || !duck) return;
-    const osc = ctx.createOscillator();
-    const filter = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.value = midiToFreq(midi);
-    filter.type = 'lowpass';
-    filter.Q.value = 6;
-    filter.frequency.setValueAtTime(200 + vel * 800, time);
-    filter.frequency.exponentialRampToValueAtTime(160, time + 0.2);
-    gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(0.3 * vel, time + 0.006);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.24);
-    osc.connect(filter).connect(gain).connect(duck);
-    osc.start(time);
-    osc.stop(time + 0.28);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.28,
+      oscillatorType: 'sawtooth',
+      frequency: midiToFreq(midi),
+      filter: {
+        type: 'lowpass',
+        Q: 6,
+        frequencyAutomation: [
+          { type: 'set', value: 200 + vel * 800, time },
+          { type: 'exponentialRamp', value: 160, time: time + 0.2 },
+        ],
+      },
+      gainAutomation: [
+        { type: 'set', value: 0, time },
+        { type: 'linearRamp', value: 0.3 * vel, time: time + 0.006 },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.24 },
+      ],
+      destination: duck,
+    });
   }
 
   function pad(time: number, midis: number[], duration: number) {
@@ -257,25 +270,29 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (!ctx || !duck || !delaySend) return;
     for (const midi of midis) {
       for (const detune of [-7, 7]) {
-        const osc = ctx.createOscillator();
-        const filter = ctx.createBiquadFilter();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.value = midiToFreq(midi);
-        osc.detune.value = detune;
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(420, time);
-        filter.frequency.linearRampToValueAtTime(760, time + duration * 0.5);
-        filter.frequency.linearRampToValueAtTime(420, time + duration);
-        gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(0.045, time + 0.5);
-        gain.gain.setValueAtTime(0.045, time + duration - 0.4);
-        gain.gain.linearRampToValueAtTime(0, time + duration);
-        osc.connect(filter).connect(gain);
-        gain.connect(duck);
-        gain.connect(delaySend);
-        osc.start(time);
-        osc.stop(time + duration + 0.05);
+        playOscillatorVoice({
+          context: ctx,
+          time,
+          stopTime: time + duration + 0.05,
+          oscillatorType: 'sawtooth',
+          frequency: midiToFreq(midi),
+          detune,
+          filter: {
+            type: 'lowpass',
+            frequencyAutomation: [
+              { type: 'set', value: 420, time },
+              { type: 'linearRamp', value: 760, time: time + duration * 0.5 },
+              { type: 'linearRamp', value: 420, time: time + duration },
+            ],
+          },
+          gainAutomation: [
+            { type: 'set', value: 0, time },
+            { type: 'linearRamp', value: 0.045, time: time + 0.5 },
+            { type: 'set', value: 0.045, time: time + duration - 0.4 },
+            { type: 'linearRamp', value: 0, time: time + duration },
+          ],
+          destination: [duck, delaySend],
+        });
       }
     }
   }
@@ -308,21 +325,27 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
       return;
     }
     if (!ctx || !master || !noiseBuffer) return;
-    const source = ctx.createBufferSource();
-    source.buffer = noiseBuffer;
-    source.loop = true;
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.Q.value = 1.2;
-    filter.frequency.setValueAtTime(300, time);
-    filter.frequency.exponentialRampToValueAtTime(6400, time + duration);
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.001, time);
-    gain.gain.exponentialRampToValueAtTime(0.14, time + duration);
-    gain.gain.linearRampToValueAtTime(0, time + duration + 0.05);
-    source.connect(filter).connect(gain).connect(master);
-    source.start(time);
-    source.stop(time + duration + 0.1);
+    playBufferSourceVoice({
+      context: ctx,
+      buffer: noiseBuffer,
+      time,
+      stopTime: time + duration + 0.1,
+      loop: true,
+      filter: {
+        type: 'bandpass',
+        Q: 1.2,
+        frequencyAutomation: [
+          { type: 'set', value: 300, time },
+          { type: 'exponentialRamp', value: 6400, time: time + duration },
+        ],
+      },
+      gainAutomation: [
+        { type: 'set', value: 0.001, time },
+        { type: 'exponentialRamp', value: 0.14, time: time + duration },
+        { type: 'linearRamp', value: 0, time: time + duration + 0.05 },
+      ],
+      destination: master,
+    });
   }
 
   function noiseHit(
@@ -425,21 +448,27 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
       [330, 92, time, 0.18],
       [233, 61, time + 0.028, 0.13],
     ] as const) {
-      const osc = ctx.createOscillator();
-      const filter = ctx.createBiquadFilter();
-      const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(start, at);
-      osc.frequency.exponentialRampToValueAtTime(end, at + 0.2);
-      filter.type = 'bandpass';
-      filter.Q.value = 5;
-      filter.frequency.setValueAtTime(1100, at);
-      filter.frequency.exponentialRampToValueAtTime(430, at + 0.18);
-      gain.gain.setValueAtTime(vel, at);
-      gain.gain.exponentialRampToValueAtTime(0.001, at + 0.24);
-      osc.connect(filter).connect(gain).connect(master);
-      osc.start(at);
-      osc.stop(at + 0.26);
+      playOscillatorVoice({
+        context: ctx,
+        time: at,
+        stopTime: at + 0.26,
+        oscillatorType: 'sawtooth',
+        frequency: start,
+        frequencyAutomation: [{ type: 'exponentialRamp', value: end, time: at + 0.2 }],
+        filter: {
+          type: 'bandpass',
+          Q: 5,
+          frequencyAutomation: [
+            { type: 'set', value: 1100, time: at },
+            { type: 'exponentialRamp', value: 430, time: at + 0.18 },
+          ],
+        },
+        gainAutomation: [
+          { type: 'set', value: vel, time: at },
+          { type: 'exponentialRamp', value: 0.001, time: at + 0.24 },
+        ],
+        destination: master,
+      });
     }
     noiseHit(time, 0.15, 0.09, 'bandpass', 720, master);
     noiseHit(time + 0.025, 0.07, 0.12, 'highpass', 2400, master);

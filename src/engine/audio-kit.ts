@@ -67,6 +67,17 @@ export type OscillatorVoiceOptions = {
   sends?: Array<{ destination: AudioNode; gain: number }>;
 };
 
+export type BufferSourceVoiceOptions = {
+  context: AudioContext;
+  buffer: AudioBuffer;
+  time: number;
+  stopTime: number;
+  loop?: boolean;
+  filter?: BiquadFilterOptions & { frequencyAutomation?: AutomationStep[] };
+  gainAutomation: AutomationStep[];
+  destination: AudioNode;
+};
+
 export type NoiseHitOptions = {
   context: AudioContext;
   buffer: AudioBuffer;
@@ -222,6 +233,33 @@ export function playOscillatorVoice(options: OscillatorVoiceOptions) {
   oscillator.start(options.time);
   oscillator.stop(options.stopTime);
   return { oscillator, gain };
+}
+
+export function playBufferSourceVoice(options: BufferSourceVoiceOptions) {
+  const source = options.context.createBufferSource();
+  source.buffer = options.buffer;
+  source.loop = options.loop ?? false;
+
+  const gain = options.context.createGain();
+  applyAutomation(gain.gain, options.gainAutomation);
+
+  let voiceOutput: AudioNode = source;
+  if (options.filter) {
+    const filter = options.context.createBiquadFilter();
+    if (options.filter.type !== undefined) filter.type = options.filter.type;
+    if (options.filter.frequency !== undefined) filter.frequency.value = options.filter.frequency;
+    if (options.filter.Q !== undefined) filter.Q.value = options.filter.Q;
+    if (options.filter.gain !== undefined) filter.gain.value = options.filter.gain;
+    if (options.filter.detune !== undefined) filter.detune.value = options.filter.detune;
+    if (options.filter.frequencyAutomation) applyAutomation(filter.frequency, options.filter.frequencyAutomation);
+    source.connect(filter);
+    voiceOutput = filter;
+  }
+
+  voiceOutput.connect(gain).connect(options.destination);
+  source.start(options.time);
+  source.stop(options.stopTime);
+  return { source, gain };
 }
 
 export function playNoiseHit(options: NoiseHitOptions) {
