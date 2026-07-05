@@ -3,15 +3,13 @@ import { quantizeToGrid } from './music';
 export type ShotDelayPattern = 'linear' | 'grid-ramp';
 
 export type ShotDelaySettings = {
-  /** Delay unit used by the linear pattern. */
-  gapSeconds: number;
+  /** Delay unit used by the linear pattern, measured in 32nd notes. */
+  gapThirtyseconds: number;
   /** 0 = all delay is travel time; 1 = all delay is before launch. */
   releaseShare: number;
   pattern: ShotDelayPattern;
-  /** Musical beat length used to reconstruct music time from beat events. */
-  beatSeconds: number;
-  /** Grid-ramp minimum growth between consecutive shot gaps. */
-  gridRampGapGrowthSeconds: number;
+  /** Grid-ramp minimum growth between consecutive shot gaps, measured in 32nd notes. */
+  gridRampGapGrowthThirtyseconds: number;
 };
 
 export type ShotDelayContext = {
@@ -20,6 +18,7 @@ export type ShotDelayContext = {
   releaseTime: number;
   baselineTravelTime: number;
   baselineTravelTimes: number[];
+  thirtysecondSeconds: number;
 };
 
 export type ActionSfxQuantizationSettings = {
@@ -32,15 +31,14 @@ const DEFAULT_GRID_THIRTYSECONDS = 1; // 32nd note
 const GRID_RAMP_THIRTYSECONDS = [1, 2, 4, 8, 16, 32, 32, 32];
 
 const shotDelaySettings: ShotDelaySettings = {
-  gapSeconds: 0.06,
+  gapThirtyseconds: 1,
   releaseShare: 1,
   pattern: 'linear',
-  beatSeconds: 60 / 126,
-  gridRampGapGrowthSeconds: 0,
+  gridRampGapGrowthThirtyseconds: 0,
 };
 
 const settings: ActionSfxQuantizationSettings = {
-  enabled: true,
+  enabled: false,
   gridThirtyseconds: DEFAULT_GRID_THIRTYSECONDS,
 };
 
@@ -49,11 +47,12 @@ export function getShotDelaySettings() {
 }
 
 export function setShotDelaySettings(next: Partial<ShotDelaySettings>) {
-  if (next.gapSeconds !== undefined) shotDelaySettings.gapSeconds = Math.max(0, next.gapSeconds);
+  if (next.gapThirtyseconds !== undefined) shotDelaySettings.gapThirtyseconds = Math.max(0, Math.round(next.gapThirtyseconds));
   if (next.releaseShare !== undefined) shotDelaySettings.releaseShare = Math.min(1, Math.max(0, next.releaseShare));
   if (next.pattern !== undefined) shotDelaySettings.pattern = next.pattern;
-  if (next.beatSeconds !== undefined) shotDelaySettings.beatSeconds = Math.max(0.001, next.beatSeconds);
-  if (next.gridRampGapGrowthSeconds !== undefined) shotDelaySettings.gridRampGapGrowthSeconds = Math.max(0, next.gridRampGapGrowthSeconds);
+  if (next.gridRampGapGrowthThirtyseconds !== undefined) {
+    shotDelaySettings.gridRampGapGrowthThirtyseconds = Math.max(0, Math.round(next.gridRampGapGrowthThirtyseconds));
+  }
 }
 
 export function shotDelayForIndex(context: ShotDelayContext) {
@@ -66,23 +65,26 @@ export function shotDelayForIndex(context: ShotDelayContext) {
 
 function totalDelayForShot(context: ShotDelayContext) {
   if (shotDelaySettings.pattern === 'grid-ramp' && context.volleySize > 1) return gridRampDelayForShot(context);
-  return delayStepForIndex(Math.max(0, context.index)) * shotDelaySettings.gapSeconds;
+  return delayStepForIndex(Math.max(0, context.index)) * shotDelaySettings.gapThirtyseconds * context.thirtysecondSeconds;
 }
 
 function gridRampDelayForShot(context: ShotDelayContext) {
   const hitTimes = rawGridRampHitTimes(context);
-  enforceIncreasingGaps(hitTimes, thirtysecondSeconds(), shotDelaySettings.gridRampGapGrowthSeconds);
+  enforceIncreasingGaps(
+    hitTimes,
+    context.thirtysecondSeconds,
+    shotDelaySettings.gridRampGapGrowthThirtyseconds * context.thirtysecondSeconds,
+  );
   const hitTime = hitTimes[context.index] ?? context.releaseTime + context.baselineTravelTime;
   return Math.max(0, hitTime - context.releaseTime - context.baselineTravelTime);
 }
 
 function rawGridRampHitTimes(context: ShotDelayContext) {
   const times: number[] = [];
-  const thirtysecond = thirtysecondSeconds();
   for (let index = 0; index < context.volleySize; index += 1) {
     const travelTime = context.baselineTravelTimes[index] ?? context.baselineTravelTime;
     const gridThirtyseconds = GRID_RAMP_THIRTYSECONDS[Math.min(index, GRID_RAMP_THIRTYSECONDS.length - 1)] ?? 32;
-    const gridSeconds = gridThirtyseconds * thirtysecond;
+    const gridSeconds = gridThirtyseconds * context.thirtysecondSeconds;
     times.push(quantizeToGrid(context.releaseTime + travelTime, gridSeconds));
   }
   return times;
@@ -96,10 +98,6 @@ function enforceIncreasingGaps(hitTimes: number[], minSpacing: number, gapGrowth
     if (hitTimes[index] < earliest) hitTimes[index] = earliest;
     previousGap = hitTimes[index] - hitTimes[index - 1];
   }
-}
-
-function thirtysecondSeconds() {
-  return shotDelaySettings.beatSeconds / 8;
 }
 
 function delayStepForIndex(index: number) {

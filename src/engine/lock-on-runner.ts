@@ -1,6 +1,12 @@
 import { MathUtils, Object3D, PerspectiveCamera, Raycaster, Scene, Vector3 } from 'three';
 import type { CatmullRomCurve3 } from 'three';
-import { getShotDelaySettings, shotDelayForIndex } from './action-sfx-quantization';
+import {
+  setActionSfxQuantization,
+  setShotDelaySettings,
+  shotDelayForIndex,
+  type ActionSfxQuantizationSettings,
+  type ShotDelaySettings,
+} from './action-sfx-quantization';
 import { createInput } from './input';
 import { MAX_LOCKS } from './locks';
 import { smoothRunProgress } from './rail';
@@ -90,6 +96,7 @@ export type LockOnAttractCameraUpdate = {
 
 export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = {
   duration: number;
+  bpm: number;
   createRail(): CatmullRomCurve3;
   spawnTimeline: Array<LockOnSpawnEntry<TKind, TData>>;
   updateEnemy(context: LockOnEnemyUpdate<TKind, TData>): boolean | void;
@@ -106,6 +113,10 @@ export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = 
   replayWord?: string;
   playerHealth?: number;
   allowLockUndo?: boolean;
+  timing?: {
+    shotDelay?: Partial<ShotDelaySettings>;
+    actionSfx?: Partial<ActionSfxQuantizationSettings>;
+  };
 };
 
 type Enemy<TKind extends string, TData> = {
@@ -172,6 +183,11 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 ) {
   const { scene, camera, canvas, bus, hud, visuals, onPause, onFullscreen, startTip, level } = options;
   const duration = level.duration;
+  if (!Number.isFinite(level.bpm) || level.bpm <= 0) throw new Error('Lock-on runner level bpm must be a positive number');
+  const beatSeconds = 60 / level.bpm;
+  const thirtysecondSeconds = beatSeconds / 8;
+  if (level.timing?.shotDelay) setShotDelaySettings(level.timing.shotDelay);
+  if (level.timing?.actionSfx) setActionSfxQuantization(level.timing.actionSfx);
   const startWord = level.startWord ?? START_WORD;
   const replayWord = level.replayWord ?? REPLAY_WORD;
   const lockRadiusNdc = level.lockRadiusNdc ?? LOCK_RADIUS_NDC;
@@ -183,7 +199,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   let lastBeatWorldTime = -Infinity;
   let lastBeatMusicTime = 0;
   const offBeat = bus.on('beat', ({ beatNumber }) => {
-    const { beatSeconds } = getShotDelaySettings();
     lastBeatWorldTime = worldTime;
     lastBeatMusicTime = beatNumber * beatSeconds;
   });
@@ -759,6 +774,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         releaseTime: releaseMusicTime,
         baselineTravelTime: baselineTravelTimes[index] ?? 0,
         baselineTravelTimes,
+        thirtysecondSeconds,
       });
       pendingShots.push({
         projectileId: nextProjectileId,
@@ -775,7 +791,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   }
 
   function currentMusicTime() {
-    const { beatSeconds } = getShotDelaySettings();
     if (Number.isFinite(lastBeatWorldTime) && worldTime - lastBeatWorldTime < beatSeconds * 8) {
       return lastBeatMusicTime + (worldTime - lastBeatWorldTime);
     }

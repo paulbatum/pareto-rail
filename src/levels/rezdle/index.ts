@@ -29,7 +29,7 @@ import { getLockUndoTip } from '../../ui/client-tip';
 import { sampleRailFrame } from '../../engine/rail';
 import { createAudio } from './audio';
 import { createGlyphMesh, setGlyphLocked } from './glyphs';
-import { createRezdleGameplay, createRezdleRail } from './gameplay';
+import { BPM, createRezdleGameplay, createRezdleRail } from './gameplay';
 import { loadWords } from './words';
 import { BONE, BRASS, hdr, INK_BLACK, PLATE, SMOKE, VERMILLION } from './palette';
 
@@ -37,6 +37,7 @@ export const rezdleLevel: LevelDefinition = {
   id: 'rezdle',
   title: 'Rezdle',
   description: 'Set words from loose type drifting off a midnight press.',
+  bpm: BPM,
   post: {
     clearColor: 0x070502,
     bloom: { strength: 0.7, threshold: 0.3, radius: 0.5 },

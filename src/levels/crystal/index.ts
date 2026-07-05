@@ -1,7 +1,7 @@
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
-import { createCrystalGameplay } from './gameplay';
+import { CRYSTAL_BPM, createCrystalGameplay } from './gameplay';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -18,6 +18,7 @@ export const crystalCorridorLevel: LevelDefinition = {
   id: 'crystal-corridor',
   title: 'Crystal Corridor',
   description: 'The neon crystal rail run — and now it shoots back.',
+  bpm: CRYSTAL_BPM,
   createAudio,
   createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
     createEnvironment(scene);

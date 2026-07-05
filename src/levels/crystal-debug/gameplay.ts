@@ -4,6 +4,7 @@ import { shotBehindCamera, steerHomingShot, updateHostileShotImpact } from '../.
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import type { EventBus } from '../../events';
+import { CRYSTAL_BPM, CRYSTAL_TIMING } from '../crystal/gameplay';
 
 // Crystal Corridor debug testbed. The selected target spawns early and stays
 // ahead of the camera so individual enemies and the Warden fight can be tested
@@ -345,7 +346,9 @@ export function createCrystalGameplay(
 
   return {
     duration: CRYSTAL_RUN_DURATION,
+    bpm: CRYSTAL_BPM,
     playerHealth: CRYSTAL_PLAYER_HEALTH,
+    timing: CRYSTAL_TIMING,
     createRail: createCrystalRail,
     spawnTimeline: timeline,
     easeRunProgress: smoothRunProgress,

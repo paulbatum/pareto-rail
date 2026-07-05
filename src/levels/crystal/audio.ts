@@ -10,14 +10,14 @@ import {
 import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { quantizeActionSfxTime } from '../../engine/action-sfx-quantization';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
+import { CRYSTAL_BPM } from './gameplay';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
 // 45-second run (kick → bass/hats → arp → claps/open hats → riser into the
 // Warden fight), with game SFX pitched in A minor and quantized to musical
 // grids so player actions land inside the music, Rez-style.
 
-const BPM = 126;
-const SIXTEENTH = 60 / BPM / 4;
+const SIXTEENTH = 60 / CRYSTAL_BPM / 4;
 const THIRTYSECOND = SIXTEENTH / 2;
 const SCHEDULE_AHEAD = 0.18;
 const SCHEDULER_MS = 25;
@@ -45,7 +45,7 @@ export function traceCrystalAudio(options: { seconds?: number } = {}): AudioTrac
   return {
     metadata: {
       level: 'crystal-corridor',
-      bpm: BPM,
+      bpm: CRYSTAL_BPM,
       seconds,
       stepSeconds: SIXTEENTH,
       mode: 'run',

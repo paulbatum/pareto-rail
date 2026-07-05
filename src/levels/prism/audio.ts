@@ -1,12 +1,12 @@
 import type { EventBus } from '../../events';
 import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playNoiseHit, playOscillatorVoice } from '../../engine/audio-kit';
 import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
+import { quantizeActionSfxTime } from '../../engine/action-sfx-quantization';
 import { emitBeatAt, midiToFreq, quantizeToGrid, secondsPerStep } from '../../engine/music';
-import { PRISM_RUN_DURATION } from './gameplay';
+import { PRISM_BPM, PRISM_RUN_DURATION } from './gameplay';
 
-const BPM = 96;
-const SIXTEENTH = secondsPerStep(BPM, 4);
-const THIRTYSECOND = secondsPerStep(BPM, 8);
+const SIXTEENTH = secondsPerStep(PRISM_BPM, 4);
+const THIRTYSECOND = secondsPerStep(PRISM_BPM, 8);
 const SCHEDULE_AHEAD = 0.16;
 const SCHEDULER_MS = 25;
 const SCALE = [62, 65, 69, 72, 74, 77, 81, 84];
@@ -24,7 +24,7 @@ export function tracePrismAudio(options: { seconds?: number } = {}): AudioTraceR
   return {
     metadata: {
       level: 'prism-bloom',
-      bpm: BPM,
+      bpm: PRISM_BPM,
       seconds,
       stepSeconds: SIXTEENTH,
       mode: 'run',
@@ -202,12 +202,12 @@ function createPrismAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('lock', ({ lockCount }) => {
     if (!ctx) return;
-    bell(quantizeToGrid(ctx.currentTime, THIRTYSECOND), SCALE[Math.min(lockCount - 1, SCALE.length - 1)] + 12, 0.08, 0.22);
+    bell(quantizeActionSfxTime(ctx.currentTime, THIRTYSECOND), SCALE[Math.min(lockCount - 1, SCALE.length - 1)] + 12, 0.08, 0.22);
   });
 
   bus.on('fire', () => {
     if (!ctx) return;
-    lowPulse(quantizeToGrid(ctx.currentTime, THIRTYSECOND), 50);
+    lowPulse(quantizeActionSfxTime(ctx.currentTime, THIRTYSECOND), 50);
   });
 
   bus.on('kill', () => {

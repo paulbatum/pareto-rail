@@ -25,11 +25,6 @@ async function bootstrap() {
   document.title = `raild — ${selectedLevel.title}`;
   installLevelPicker(selectedLevel.id, import.meta.env.DEV);
   installDebugPicker(selectedLevel, urlParams);
-  if (import.meta.env.DEV) {
-    void import('./ui/debug-quant-panel')
-      .then(({ installDebugQuantPanel }) => installDebugQuantPanel(selectedLevel.id))
-      .catch((error) => console.warn('Debug quant panel failed to install', error));
-  }
 
   const renderer = new WebGPURenderer({ antialias: true, alpha: false });
   // three.js installs a WebGL fallback internally; this project is intentionally WebGPU-only.
@@ -111,6 +106,12 @@ async function bootstrap() {
     startTip: getStartScreenTip(fullscreenAvailable),
     debugValue,
   });
+
+  if (import.meta.env.DEV) {
+    void import('./ui/debug-quant-panel')
+      .then(({ installDebugQuantPanel }) => installDebugQuantPanel({ id: selectedLevel.id, bpm: selectedLevel.bpm }))
+      .catch((error) => console.warn('Debug quant panel failed to install', error));
+  }
 
   document.body.classList.remove('booting');
 

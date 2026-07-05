@@ -14,9 +14,10 @@ Shared code lives in `src/engine/`:
 ## Adding a level
 
 1. Create `src/levels/<id>/index.ts` that exports a `LevelDefinition`.
-2. Implement `createAudio(bus)` in that level. The pause menu calls the returned volume, start, suspend, and dispose methods.
-3. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`.
-4. Add the level to `src/levels/index.ts`.
+2. Declare one authoritative BPM constant for the level. Reference it from both the `LevelDefinition` and the runner config; audio should import the same constant instead of repeating the number.
+3. Implement `createAudio(bus)` in that level. The pause menu calls the returned volume, start, suspend, and dispose methods.
+4. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`.
+5. Add the level to `src/levels/index.ts`.
 
 A level task should only touch `src/levels/<id>/` plus one registry line in `src/levels/index.ts`. Use `npm run check:scope -- <level-id>` to verify that boundary.
 
@@ -25,11 +26,12 @@ A level task should only touch `src/levels/<id>/` plus one registry line in `src
 Pass a `LockOnRunnerLevel` to `createLockOnRunner`:
 
 - `duration`: run length in seconds.
+- `bpm`: the level tempo. The runner uses it for beat reconstruction and musical shot timing.
 - `createRail()`: returns the level's `CatmullRomCurve3`.
 - `spawnTimeline`: ordered enemy entries. Entries may include `letter?: string`; the runner passes it to `createEnemyMesh`, exposes it on public enemies, and includes it in target events. Entries may also set `hitPoints` (default 1), `hitStages` (ordered HP stages; each stage must be between 1 and `MAX_LOCKS`), `lockable: false` (read live each frame, so a level may mutate it mid-run to gate a boss phase), and `countsTowardTotal: false` (excluded from the kills/missed/total stats while still scoring and emitting events — use for hazards like enemy projectiles). The current stage's remaining HP determines how many repeat locks the target can accept, capped by the global lock maximum and spaced by the game-wide repeat-lock delay.
 - `updateEnemy(context)`: owns all enemy motion every frame. Position, rotation, and any per-frame mesh state are the level's responsibility. Return `true` to despawn that enemy as a miss; return `false` or nothing to keep it alive. The context also provides `railAnchor(lead)` for eased rail seating, `enemyState(init)` for lazily initialized mutable state scoped to that enemy instance, `spawnEnemy(entry)` to spawn enemies at runtime (returns the new enemy id; running state only), `damagePlayer(amount?)`, and the current `playerHealth`.
 
-Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`, `scoreForKill`, `scoreForHit`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, `replayWord`, and `allowLockUndo`. `scoreForVolley` scores a released group after all members resolve, `scoreForHit` scores non-lethal hits on multi-hit enemies, `validateRelease` can reject a running-state release before shots are created or return the subset of released enemies allowed to fire, `detailsForRun` adds compact end-screen lines, `lockRadiusNdc` changes the screen-space lock threshold from the default, and `allowLockUndo` lets right-click remove the last lock; it is off by default. See `src/engine/lock-on-runner.ts` for exact types.
+Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`, `scoreForKill`, `scoreForHit`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, `replayWord`, `allowLockUndo`, and `timing`. `scoreForVolley` scores a released group after all members resolve, `scoreForHit` scores non-lethal hits on multi-hit enemies, `validateRelease` can reject a running-state release before shots are created or return the subset of released enemies allowed to fire, `detailsForRun` adds compact end-screen lines, `lockRadiusNdc` changes the screen-space lock threshold from the default, and `allowLockUndo` lets right-click remove the last lock; it is off by default. `timing` can declare baseline `shotDelay` and `actionSfx` overrides for the level; shot gap values are counts of 32nd notes, not seconds. See `src/engine/lock-on-runner.ts` for exact types.
 
 Setting `playerHealth` enables the hull system: `damagePlayer` calls take a point off (with a short invulnerability window between hits), the HUD shows hull pips and a red damage flash, and reaching zero ends the run with `died: true` in the summary and a forced `—` rank. Related events: `playerhit` fires on accepted damage, `hit` carries `lethal`, total `hitPointsRemaining`, and current-stage fields, `stage` fires when a non-lethal stage is completed, and `runend` carries `died`.
 
@@ -108,6 +110,8 @@ npm run trace:audio -- --level helios --graph
 ```
 
 The default output is a compact semantic summary for level authoring. Use `--verbose` or `--compare` when characterizing a refactor. The semantic trace is not waveform-based: it captures scheduled musical events, beat events, sections, and important voice calls, not browser compressor output or final mix quality. It currently covers `crystal`, `crystal-debug`, `prism`, `rezdle`, and `helios`.
+
+In dev builds, the timing debug panel is available on every level. It reads the selected level's BPM and current runner timing baseline. To make its action SFX snap control affect a level, route player-action one-shot scheduling for `lock` and `fire` events through `quantizeActionSfxTime(time, thirtysecondSeconds)`. Do not route music, ambient, hit, or kill sounds through that control.
 
 Use `--graph` to inspect the actual Web Audio graph that a level creates in Chrome via the DevTools Protocol. Graph capture can run for level modules that export `createAudio` from `src/levels/<module-folder>/audio.ts`; use the module folder name when it differs from the picker id. It captures node topology and node/parameter defaults; it does not capture every later parameter assignment in a stable authoring-friendly form.
 

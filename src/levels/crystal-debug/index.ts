@@ -2,6 +2,7 @@ import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
 import { CRYSTAL_DEBUG_TARGETS, createCrystalGameplay, normalizeCrystalDebugTarget } from './gameplay';
+import { CRYSTAL_BPM } from '../crystal/gameplay';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -18,6 +19,7 @@ export const crystalDebugLevel: LevelDefinition = {
   id: 'crystal-debug',
   title: 'Crystal Debug',
   description: 'Crystal Corridor enemy and boss testbed.',
+  bpm: CRYSTAL_BPM,
   aliases: ['crystal-lancer-debug'],
   debugOnly: true,
   debugSelector: {

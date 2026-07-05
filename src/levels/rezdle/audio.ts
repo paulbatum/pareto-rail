@@ -1,6 +1,7 @@
 import type { EventBus } from '../../events';
 import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playBufferSourceVoice, playOscillatorVoice } from '../../engine/audio-kit';
 import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
+import { quantizeActionSfxTime } from '../../engine/action-sfx-quantization';
 import { emitBeatAt, midiToFreq } from '../../engine/music';
 import { BPM, REZDLE_RUN_DURATION } from './gameplay';
 
@@ -8,6 +9,7 @@ import { BPM, REZDLE_RUN_DURATION } from './gameplay';
 // and celesta over typewriter percussion. Every four bars the carriage
 // returns — zip and ding — which is also when a new rack of type arrives.
 const BEAT = 60 / BPM;
+const THIRTYSECOND = BEAT / 8;
 const SWING = (2 / 3) * BEAT;
 const SCHEDULE_AHEAD = 0.2;
 const SCHEDULER_MS = 40;
@@ -282,7 +284,7 @@ function createRezdleAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('lock', ({ lockCount }) => {
     if (!ctx) return;
-    const time = now();
+    const time = quantizeActionSfxTime(now(), THIRTYSECOND);
     // Keystrike: a pitched typewriter key, climbing with each lock.
     noise(time, 0.016, 0.05, 'bandpass', 1500 + lockCount * 160);
     bell(time + 0.004, LOCK_STEPS[Math.min(Math.max(lockCount, 1), 8) - 1], 0.038, 0.14, 'lockBell');
@@ -297,7 +299,7 @@ function createRezdleAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (!ctx || (indexInVolley ?? 0) > 0) return;
     // One carriage-return zip per volley, not per shot. Attract/replay
     // volleys carry no volley index, so throttle those by time instead.
-    const time = now();
+    const time = quantizeActionSfxTime(now(), THIRTYSECOND);
     if (time - lastZipAt < 0.25) return;
     lastZipAt = time;
     zip(time, 0.12, 0.035);

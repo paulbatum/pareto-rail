@@ -2,6 +2,7 @@ import { CatmullRomCurve3, Vector3 } from 'three';
 import type { LockOnRunnerLevel } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 
+export const PRISM_BPM = 96;
 export const PRISM_RUN_DURATION = 30;
 
 export type PrismEnemyKind = 'gate' | 'comet' | 'echo';
@@ -69,6 +70,9 @@ export const PRISM_TIMELINE = PRISM_WAVES.sort((a, b) => a.time - b.time);
 
 export const prismGameplay: LockOnRunnerLevel<PrismEnemyKind, PrismSpawnData> = {
   duration: PRISM_RUN_DURATION,
+  bpm: PRISM_BPM,
+  // Preserve the shipped 32nd-note snap on lock/fire SFX now that the engine default is off.
+  timing: { actionSfx: { enabled: true, gridThirtyseconds: 1 } },
   createRail: createPrismRail,
   spawnTimeline: PRISM_TIMELINE,
   easeRunProgress: smoothRunProgress,

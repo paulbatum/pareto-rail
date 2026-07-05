@@ -8,6 +8,7 @@ import {
   playOscillatorVoice,
 } from '../../engine/audio-kit';
 import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
+import { quantizeActionSfxTime } from '../../engine/action-sfx-quantization';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 import { HELIOS_BPM, HELIOS_DURATION } from './gameplay';
 
@@ -331,6 +332,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   }
 
   const quantize = (time: number) => quantizeToGrid(time, THIRTYSECOND);
+  const quantizeActionSfx = (time: number) => quantizeActionSfxTime(time, THIRTYSECOND);
 
   function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
     if (trace) {
@@ -751,7 +753,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('lock', ({ lockCount }) => {
     if (!ctx) return;
-    const time = quantize(ctx.currentTime);
+    const time = quantizeActionSfx(ctx.currentTime);
     const midi = LOCK_SCALE[Math.min(LOCK_SCALE.length, Math.max(1, lockCount)) - 1];
     icePluck(time, midi, 1);
     if (lockCount >= 6) {
@@ -782,7 +784,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('fire', ({ indexInVolley }) => {
     if (!ctx || !master) return;
-    const time = quantize(ctx.currentTime);
+    const time = quantizeActionSfx(ctx.currentTime);
     playOscillatorVoice({
       context: ctx,
       time,

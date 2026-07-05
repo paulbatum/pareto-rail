@@ -1,7 +1,7 @@
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
-import { BOSS_TIME, CORONA_TIME, createHeliosGameplay, GATE_TIME, REVEAL_TIME } from './gameplay';
+import { BOSS_TIME, CORONA_TIME, createHeliosGameplay, GATE_TIME, HELIOS_BPM, REVEAL_TIME } from './gameplay';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -19,6 +19,7 @@ export const heliosLevel: LevelDefinition = {
   id: 'helios',
   title: 'Helios',
   description: 'Dive into a dying star and kill the thing that is eating it.',
+  bpm: HELIOS_BPM,
   post: {
     clearColor: 0x070204,
     bloom: { strength: 1.2, threshold: 0.52, radius: 0.2 },

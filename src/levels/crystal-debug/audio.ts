@@ -8,15 +8,16 @@ import {
   playOscillatorVoice,
 } from '../../engine/audio-kit';
 import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
+import { quantizeActionSfxTime } from '../../engine/action-sfx-quantization';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
+import { CRYSTAL_BPM } from '../crystal/gameplay';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
 // 45-second run (kick → bass/hats → arp → claps/open hats → riser into the
 // Warden fight), with game SFX pitched in A minor and quantized to the
 // 32nd-note grid so player actions land inside the music, Rez-style.
 
-const BPM = 126;
-const SIXTEENTH = 60 / BPM / 4;
+const SIXTEENTH = 60 / CRYSTAL_BPM / 4;
 const THIRTYSECOND = SIXTEENTH / 2;
 const SCHEDULE_AHEAD = 0.18;
 const SCHEDULER_MS = 25;
@@ -44,7 +45,7 @@ export function traceCrystalDebugAudio(options: { seconds?: number } = {}): Audi
   return {
     metadata: {
       level: 'crystal-debug',
-      bpm: BPM,
+      bpm: CRYSTAL_BPM,
       seconds,
       stepSeconds: SIXTEENTH,
       mode: 'run',
@@ -185,6 +186,7 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   }
 
   const quantize = (time: number) => quantizeToGrid(time, THIRTYSECOND);
+  const quantizeActionSfx = (time: number) => quantizeActionSfxTime(time, THIRTYSECOND);
 
   // ---- instruments --------------------------------------------------------
 
@@ -376,7 +378,7 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   bus.on('lock', ({ lockCount }) => {
     if (!ctx || !duck || !delaySend) return;
     const midi = LOCK_SCALE[Math.min(LOCK_SCALE.length, Math.max(1, lockCount)) - 1];
-    const time = quantize(ctx.currentTime);
+    const time = quantizeActionSfx(ctx.currentTime);
     playOscillatorVoice({
       context: ctx,
       time,
@@ -395,7 +397,7 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('fire', () => {
     if (!ctx || !master) return;
-    const time = quantize(ctx.currentTime);
+    const time = quantizeActionSfx(ctx.currentTime);
     playOscillatorVoice({
       context: ctx,
       time,

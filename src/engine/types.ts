@@ -72,6 +72,7 @@ export type LevelDefinition = {
   id: string;
   title: string;
   description: string;
+  bpm: number;
   aliases?: string[];
   debugOnly?: boolean;
   debugSelector?: LevelDebugSelector;

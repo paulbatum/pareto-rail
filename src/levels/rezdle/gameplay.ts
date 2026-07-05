@@ -136,6 +136,7 @@ export function createRezdleGameplay(bus: EventBus, hud: Hud): LockOnRunnerLevel
 
   return {
     duration: REZDLE_RUN_DURATION,
+    bpm: BPM,
     createRail: createRezdleRail,
     spawnTimeline: REZDLE_TIMELINE,
     lockRadiusNdc: 0.06,

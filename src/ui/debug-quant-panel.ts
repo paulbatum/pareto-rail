@@ -1,12 +1,10 @@
 import {
+  getActionSfxQuantization,
+  getShotDelaySettings,
   setActionSfxQuantization,
   setShotDelaySettings,
   type ShotDelayPattern,
 } from '../engine/action-sfx-quantization';
-
-const CRYSTAL_BPM = 126;
-const CRYSTAL_BEAT_SECONDS = 60 / CRYSTAL_BPM;
-const CRYSTAL_THIRTYSECOND_SECONDS = CRYSTAL_BEAT_SECONDS / 8;
 
 const GRID_OPTIONS = [
   { label: 'Immediate', enabled: false, gridThirtyseconds: 4 },
@@ -54,15 +52,16 @@ const REZER_PRESET: TimingPreset = {
   gridRampGapGrowthThirtyseconds: 2,
 };
 
-export function installDebugQuantPanel(activeLevelId: string) {
-  if (!import.meta.env.DEV || !activeLevelId.startsWith('crystal')) return;
+export function installDebugQuantPanel(level: { id: string; bpm: number }) {
+  if (!import.meta.env.DEV) return;
 
+  const thirtysecondSeconds = 60 / level.bpm / 8;
   const panel = document.createElement('details');
   panel.className = 'debug-quant-panel';
   panel.open = true;
 
   const summary = document.createElement('summary');
-  summary.textContent = 'Crystal Timing';
+  summary.textContent = 'Timing';
   panel.append(summary);
 
   const body = document.createElement('div');
@@ -85,38 +84,42 @@ export function installDebugQuantPanel(activeLevelId: string) {
   const { label: growthLabel, text: growthText, input: growthInput } = range('0', '4', '1');
 
   const help = document.createElement('p');
-  help.textContent = 'Crystal only. Default uses per-shot grid sizes: 32nd, 16th, 8th, quarter, half, bar. Disabled sliders do not affect the active preset.';
+  help.textContent = 'Default uses per-shot grid sizes: 32nd, 16th, 8th, quarter, half, bar. Disabled sliders do not affect the active preset.';
 
   body.append(presets, patternText, gridLabel, gapLabel, splitLabel, growthLabel, help);
   document.body.append(panel);
 
   let activePattern: ShotDelayPattern = 'linear';
 
-  function apply() {
+  function render() {
     const option = GRID_OPTIONS[Number(gridInput.value)] ?? GRID_OPTIONS[0];
     const shotGapThirtyseconds = Number(gapInput.value);
     const releaseShare = Number(splitInput.value) / 100;
     const growthThirtyseconds = Number(growthInput.value);
+    gridText.textContent = `SFX snap grid: ${option.label}`;
+    gapText.textContent = shotGapThirtyseconds === 0
+      ? 'Shot delay unit: off'
+      : `Shot delay unit: ${shotGapThirtyseconds} × 32nd (${Math.round(shotGapThirtyseconds * thirtysecondSeconds * 1000)}ms)`;
+    splitText.textContent = `Delay split: release ${Math.round(releaseShare * 100)}% / travel ${Math.round((1 - releaseShare) * 100)}%`;
+    growthText.textContent = `Grid-ramp gap growth: ${growthThirtyseconds} × 32nd (${Math.round(growthThirtyseconds * thirtysecondSeconds * 1000)}ms)`;
+    setDisabled(gapLabel, gapInput, activePattern === 'grid-ramp');
+    setDisabled(growthLabel, growthInput, activePattern !== 'grid-ramp');
+    patternText.textContent = labelForPattern(activePattern);
+  }
+
+  function apply() {
+    const option = GRID_OPTIONS[Number(gridInput.value)] ?? GRID_OPTIONS[0];
     setActionSfxQuantization({
       enabled: option.enabled,
       gridThirtyseconds: option.gridThirtyseconds,
     });
     setShotDelaySettings({
-      gapSeconds: shotGapThirtyseconds * CRYSTAL_THIRTYSECOND_SECONDS,
-      releaseShare,
+      gapThirtyseconds: Number(gapInput.value),
+      releaseShare: Number(splitInput.value) / 100,
       pattern: activePattern,
-      beatSeconds: CRYSTAL_BEAT_SECONDS,
-      gridRampGapGrowthSeconds: growthThirtyseconds * CRYSTAL_THIRTYSECOND_SECONDS,
+      gridRampGapGrowthThirtyseconds: Number(growthInput.value),
     });
-    gridText.textContent = `SFX snap grid: ${option.label}`;
-    gapText.textContent = shotGapThirtyseconds === 0
-      ? 'Shot delay unit: off'
-      : `Shot delay unit: ${shotGapThirtyseconds} × 32nd (${Math.round(shotGapThirtyseconds * CRYSTAL_THIRTYSECOND_SECONDS * 1000)}ms)`;
-    splitText.textContent = `Delay split: release ${Math.round(releaseShare * 100)}% / travel ${Math.round((1 - releaseShare) * 100)}%`;
-    growthText.textContent = `Grid-ramp gap growth: ${growthThirtyseconds} × 32nd (${Math.round(growthThirtyseconds * CRYSTAL_THIRTYSECOND_SECONDS * 1000)}ms)`;
-    setDisabled(gapLabel, gapInput, activePattern === 'grid-ramp');
-    setDisabled(growthLabel, growthInput, activePattern !== 'grid-ramp');
-    patternText.textContent = labelForPattern(activePattern);
+    render();
   }
 
   function applyPreset(preset: TimingPreset) {
@@ -128,6 +131,17 @@ export function installDebugQuantPanel(activeLevelId: string) {
     apply();
   }
 
+  function initializeFromStore() {
+    const shotDelay = getShotDelaySettings();
+    const sfx = getActionSfxQuantization();
+    activePattern = shotDelay.pattern;
+    gridInput.value = `${optionIndexFor(sfx.enabled, sfx.gridThirtyseconds)}`;
+    gapInput.value = `${shotDelay.gapThirtyseconds}`;
+    splitInput.value = `${Math.round(shotDelay.releaseShare * 100)}`;
+    growthInput.value = `${shotDelay.gridRampGapGrowthThirtyseconds}`;
+    render();
+  }
+
   rezerButton.addEventListener('click', () => applyPreset(REZER_PRESET));
   linearButton.addEventListener('click', () => applyPreset(LINEAR_PRESET));
   oldButton.addEventListener('click', () => applyPreset(OLD_PRESET));
@@ -135,7 +149,7 @@ export function installDebugQuantPanel(activeLevelId: string) {
   gapInput.addEventListener('input', apply);
   splitInput.addEventListener('input', apply);
   growthInput.addEventListener('input', apply);
-  applyPreset(REZER_PRESET);
+  initializeFromStore();
 }
 
 function button(text: string) {
