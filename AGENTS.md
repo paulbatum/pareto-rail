@@ -25,6 +25,8 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 
 `npm run typecheck` and `npm run build` must pass. Level-building tasks must also pass `npm run check:scope -- <level-id>`. `npm run dev` to playtest.
 
+Use `npm run trace:spawns -- --level <level-id>` to dump expanded spawn timelines; use `--write` and `--compare` for timeline-preserving refactors.
+
 Use `npm run snapshot -- --module <path> --export <factory>` to capture PNGs of procedural models under `snapshots/` from headless Chrome's SwiftShader WebGL backend.
 
 Use `npm run snapshot:gameplay -- --level <level-id> --time <seconds>` to capture best-effort gameplay PNGs under `snapshots/gameplay/`. Use `--thumbnails <count>` for an evenly sampled contact sheet, or combine `--sheet --times <seconds,...>` for a contact sheet at specific times. Gameplay snapshots use immortal player mode and hide projectiles by default; pass `--mortal` to allow death or `--projectiles` to include projectiles. Levels remain WebGPU-only; this tool owns its WebGL/SwiftShader fallbacks (`full`, `postless`, `flat`) so level authors do not need to design for WebGL compatibility.
