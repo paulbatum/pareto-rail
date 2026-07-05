@@ -62,7 +62,9 @@ export type OscillatorVoiceOptions = {
   frequencyAutomation?: AutomationStep[];
   detune?: number;
   gainAutomation: AutomationStep[];
+  filter?: BiquadFilterOptions & { frequencyAutomation?: AutomationStep[] };
   destination: AudioNode | AudioNode[];
+  sends?: Array<{ destination: AudioNode; gain: number }>;
 };
 
 export type NoiseHitOptions = {
@@ -197,8 +199,26 @@ export function playOscillatorVoice(options: OscillatorVoiceOptions) {
   const gain = options.context.createGain();
   applyAutomation(gain.gain, options.gainAutomation);
 
-  oscillator.connect(gain);
+  let voiceOutput: AudioNode = oscillator;
+  if (options.filter) {
+    const filter = options.context.createBiquadFilter();
+    if (options.filter.type !== undefined) filter.type = options.filter.type;
+    if (options.filter.frequency !== undefined) filter.frequency.value = options.filter.frequency;
+    if (options.filter.Q !== undefined) filter.Q.value = options.filter.Q;
+    if (options.filter.gain !== undefined) filter.gain.value = options.filter.gain;
+    if (options.filter.detune !== undefined) filter.detune.value = options.filter.detune;
+    if (options.filter.frequencyAutomation) applyAutomation(filter.frequency, options.filter.frequencyAutomation);
+    oscillator.connect(filter);
+    voiceOutput = filter;
+  }
+
+  voiceOutput.connect(gain);
   for (const destination of Array.isArray(options.destination) ? options.destination : [options.destination]) gain.connect(destination);
+  for (const sendDefinition of options.sends ?? []) {
+    const send = options.context.createGain();
+    send.gain.value = sendDefinition.gain;
+    gain.connect(send).connect(sendDefinition.destination);
+  }
   oscillator.start(options.time);
   oscillator.stop(options.stopTime);
   return { oscillator, gain };

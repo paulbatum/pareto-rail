@@ -286,22 +286,20 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
       return;
     }
     if (!ctx || !duck || !delaySend) return;
-    const osc = ctx.createOscillator();
-    const filter = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.value = midiToFreq(midi);
-    filter.type = 'lowpass';
-    filter.frequency.value = 2600;
-    gain.gain.setValueAtTime(0.16 * vel, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-    osc.connect(filter).connect(gain);
-    gain.connect(duck);
-    const send = ctx.createGain();
-    send.gain.value = 0.5;
-    gain.connect(send).connect(delaySend);
-    osc.start(time);
-    osc.stop(time + 0.15);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.15,
+      oscillatorType: 'triangle',
+      frequency: midiToFreq(midi),
+      filter: { type: 'lowpass', frequency: 2600 },
+      gainAutomation: [
+        { type: 'set', value: 0.16 * vel, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.12 },
+      ],
+      destination: duck,
+      sends: [{ destination: delaySend, gain: 0.5 }],
+    });
   }
 
   function riser(time: number, duration: number) {
@@ -356,22 +354,20 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (!ctx || !duck || !delaySend) return;
     const midi = LOCK_SCALE[Math.min(LOCK_SCALE.length, Math.max(1, lockCount)) - 1];
     const time = quantize(ctx.currentTime);
-    const osc = ctx.createOscillator();
-    const filter = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.value = midiToFreq(midi);
-    filter.type = 'lowpass';
-    filter.frequency.value = 3200;
-    gain.gain.setValueAtTime(0.16, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
-    osc.connect(filter).connect(gain);
-    gain.connect(duck);
-    const send = ctx.createGain();
-    send.gain.value = 0.35;
-    gain.connect(send).connect(delaySend);
-    osc.start(time);
-    osc.stop(time + 0.13);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.13,
+      oscillatorType: 'triangle',
+      frequency: midiToFreq(midi),
+      filter: { type: 'lowpass', frequency: 3200 },
+      gainAutomation: [
+        { type: 'set', value: 0.16, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.1 },
+      ],
+      destination: duck,
+      sends: [{ destination: delaySend, gain: 0.35 }],
+    });
   });
 
   bus.on('fire', () => {
@@ -401,22 +397,20 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
       [84, time + THIRTYSECOND, 0.07],
       [88, time + THIRTYSECOND * 2, 0.06],
     ] as const) {
-      const osc = ctx.createOscillator();
-      const filter = ctx.createBiquadFilter();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.value = midiToFreq(midi);
-      filter.type = 'lowpass';
-      filter.frequency.value = 4200;
-      gain.gain.setValueAtTime(vel, at);
-      gain.gain.exponentialRampToValueAtTime(0.001, at + 0.14);
-      osc.connect(filter).connect(gain);
-      gain.connect(duck);
-      const send = ctx.createGain();
-      send.gain.value = 0.38;
-      gain.connect(send).connect(delaySend);
-      osc.start(at);
-      osc.stop(at + 0.16);
+      playOscillatorVoice({
+        context: ctx,
+        time: at,
+        stopTime: at + 0.16,
+        oscillatorType: 'triangle',
+        frequency: midiToFreq(midi),
+        filter: { type: 'lowpass', frequency: 4200 },
+        gainAutomation: [
+          { type: 'set', value: vel, time: at },
+          { type: 'exponentialRamp', value: 0.001, time: at + 0.14 },
+        ],
+        destination: duck,
+        sends: [{ destination: delaySend, gain: 0.38 }],
+      });
     }
     noiseHit(time, 0.035, 0.035, 'highpass', 5600, duck);
   });
@@ -458,19 +452,19 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
       [880, 0.12],
       [1318.5, 0.09],
     ] as const) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = frequency;
-      gain.gain.setValueAtTime(vel, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
-      osc.connect(gain);
-      gain.connect(duck);
-      const send = ctx.createGain();
-      send.gain.value = 0.4;
-      gain.connect(send).connect(delaySend);
-      osc.start(time);
-      osc.stop(time + 0.25);
+      playOscillatorVoice({
+        context: ctx,
+        time,
+        stopTime: time + 0.25,
+        oscillatorType: 'sine',
+        frequency,
+        gainAutomation: [
+          { type: 'set', value: vel, time },
+          { type: 'exponentialRamp', value: 0.001, time: time + 0.22 },
+        ],
+        destination: duck,
+        sends: [{ destination: delaySend, gain: 0.4 }],
+      });
     }
     noiseHit(time, 0.06, 0.09, 'highpass', 5200, duck);
   });
@@ -494,15 +488,18 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
       destination: master,
     });
     for (const midi of [63, 69]) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.value = midiToFreq(midi);
-      gain.gain.setValueAtTime(0.07, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.24);
-      osc.connect(gain).connect(master);
-      osc.start(time);
-      osc.stop(time + 0.28);
+      playOscillatorVoice({
+        context: ctx,
+        time,
+        stopTime: time + 0.28,
+        oscillatorType: 'square',
+        frequency: midiToFreq(midi),
+        gainAutomation: [
+          { type: 'set', value: 0.07, time },
+          { type: 'exponentialRamp', value: 0.001, time: time + 0.24 },
+        ],
+        destination: master,
+      });
     }
     noiseHit(time, 0.2, 0.14, 'bandpass', 900, master);
   });
@@ -515,22 +512,20 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
     [57, 63].forEach((midi, index) => {
       if (!ctx || !duck || !delaySend) return;
       const at = time + index * 0.42;
-      const osc = ctx.createOscillator();
-      const filter = ctx.createBiquadFilter();
-      const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.value = midiToFreq(midi);
-      filter.type = 'lowpass';
-      filter.frequency.value = 1600;
-      gain.gain.setValueAtTime(0.16, at);
-      gain.gain.exponentialRampToValueAtTime(0.001, at + 0.5);
-      osc.connect(filter).connect(gain);
-      gain.connect(duck);
-      const send = ctx.createGain();
-      send.gain.value = 0.5;
-      gain.connect(send).connect(delaySend);
-      osc.start(at);
-      osc.stop(at + 0.55);
+      playOscillatorVoice({
+        context: ctx,
+        time: at,
+        stopTime: at + 0.55,
+        oscillatorType: 'sawtooth',
+        frequency: midiToFreq(midi),
+        filter: { type: 'lowpass', frequency: 1600 },
+        gainAutomation: [
+          { type: 'set', value: 0.16, time: at },
+          { type: 'exponentialRamp', value: 0.001, time: at + 0.5 },
+        ],
+        destination: duck,
+        sends: [{ destination: delaySend, gain: 0.5 }],
+      });
     });
   });
 
