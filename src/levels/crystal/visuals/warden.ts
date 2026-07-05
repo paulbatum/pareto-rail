@@ -197,6 +197,49 @@ export function createLancerHalo(): Group {
   return halo;
 }
 
+// One node of the Warden's outer lattice: six individually lockable pylons
+// that make the boss read as a structure before the inner plates crack.
+export function createWardenOuterTargetMesh(): Group {
+  const parts = hotGroup();
+
+  const hubGeometry = new CylinderGeometry(1.05, 1.05, 0.26, 6);
+  const faceMatrix = new Matrix4().compose(
+    new Vector3(0, 0, 0),
+    new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2),
+    new Vector3(1.2, 1.2, 1),
+  );
+  parts.addFill(hubGeometry, faceMatrix, AMBER, 0.22, 1.1);
+  hubGeometry.dispose();
+
+  const sparGeometry = new CylinderGeometry(0.06, 0.06, 3.1, 3).toNonIndexed();
+  for (let i = 0; i < 3; i += 1) {
+    const angle = (i / 3) * Math.PI * 2 + Math.PI / 6;
+    const outward = new Vector3(Math.cos(angle), Math.sin(angle), 0);
+    const matrix = new Matrix4().compose(
+      outward.clone().multiplyScalar(1.55),
+      new Quaternion().setFromUnitVectors(UP, outward),
+      new Vector3(1, 1, 1),
+    );
+    parts.addFill(sparGeometry, matrix, i === 1 ? MAGENTA : CYAN, 0.38, 1.2);
+  }
+  sparGeometry.dispose();
+
+  parts.addEdge(hexRing(1.55, 0.18, 0.25), CYAN, 1.0);
+  parts.addEdge(hexRing(1.55, -0.18, -0.25), AMBER, 0.85);
+
+  const group = parts.finish({
+    coreRadius: 0.28,
+    glowRadius: 0.5,
+    coreColor: hdr(CORE_WHITE, 1.35),
+    glowColor: hdr(AMBER, 0.75),
+    glowOpacity: 0.36,
+    accent: AMBER,
+    shardSpecs: radialShardSpecs(8, [AMBER, CYAN, MAGENTA], 0.68),
+  });
+  group.userData.lockRingScale = 1.18;
+  return group;
+}
+
 // One of the Warden's orbiting shield plates: a flat hex slab, magenta-edged,
 // two hits to crack.
 export function createWardenShieldMesh(): Group {
@@ -267,25 +310,28 @@ export function createWardenCoreMesh(): Group {
   // of the falloff contract — it stays hot until it dissolves.
   const shell = new Group();
   const shellLineMaterial = new LineBasicMaterial({
-    color: hdr(AMBER, 1.0),
+    color: hdr(AMBER, 0.78),
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.62,
     blending: AdditiveBlending,
     depthWrite: false,
   });
-  for (const [radius, z] of [
-    [4.35, 0.5],
-    [4.6, 0],
-    [4.35, -0.5],
+  for (const [radius, z, twist] of [
+    [8.2, 0.7, 0.12],
+    [8.55, 0, 0],
+    [8.2, -0.7, -0.12],
+    [4.35, 0.5, 0.25],
+    [4.6, 0, 0],
+    [4.35, -0.5, -0.25],
   ] as const) {
-    shell.add(new LineSegments(hexRing(radius, z, 0.25), shellLineMaterial));
+    shell.add(new LineSegments(hexRing(radius, z, twist), shellLineMaterial));
   }
   const cage = new LineSegments(
-    new EdgesGeometry(new IcosahedronGeometry(4.45, 0)),
+    new EdgesGeometry(new IcosahedronGeometry(6.9, 0)),
     new LineBasicMaterial({
-      color: hdr(AMBER, 0.55),
+      color: hdr(AMBER, 0.45),
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.48,
       blending: AdditiveBlending,
       depthWrite: false,
     }),

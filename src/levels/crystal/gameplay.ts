@@ -7,9 +7,9 @@ import { formation, section, sortTimeline } from '../../engine/spawn-patterns';
 import type { EventBus } from '../../events';
 
 // A 45-second run in three acts: a familiar warm-up third, a dense middle
-// where lancers start shooting back, and the Crystal Warden holding the final
-// stretch. The player has a 3-point hull; shard bolts home in on the camera
-// and must be shot down before they land.
+// where lancers start shooting back, and a heavier Crystal Warden finale after
+// a short breath. The player has a 3-point hull; shard bolts home in on the
+// camera and must be shot down before they land.
 
 export const CRYSTAL_BPM = 126;
 export const CRYSTAL_RUN_DURATION = 45;
@@ -21,6 +21,7 @@ export type CrystalEnemyKind =
   | 'orbiter'
   | 'lancer'
   | 'bolt'
+  | 'warden-outer'
   | 'warden-shield'
   | 'warden-core';
 export type CrystalTargetKind = CrystalEnemyKind | 'letter';
@@ -41,6 +42,7 @@ export type CrystalSpawnData =
     interceptUntil?: number;
   }
   | { role: 'wave'; lead: number; pattern: CrystalMovementPattern; offset: Vector3 }
+  | { role: 'outer'; index: number }
   | { role: 'shield'; index: number }
   | { role: 'core' };
 
@@ -84,7 +86,10 @@ const wave = (
 const lancers = (time: number, lead: number, offsets: Array<[number, number]>): CrystalSpawnEntry[] =>
   wave(time, lead, 'hold', 'lancer', offsets);
 
-const BOSS_TIME = 30.2;
+const BOSS_TIME = 31.6;
+const WARDEN_OUTER_COUNT = 6;
+const WARDEN_SHIELD_COUNT = 3;
+export const CRYSTAL_WARDEN_DEFENSE_COUNT = WARDEN_OUTER_COUNT + WARDEN_SHIELD_COUNT;
 
 const TIMELINE: CrystalSpawnEntry[] = [
   // --- Act 1 (0–10s): the familiar opening. Room to learn the sweep.
@@ -133,13 +138,20 @@ const TIMELINE: CrystalSpawnEntry[] = [
     ]),
   ),
 
-  // --- Act 3 (30s–end): the Crystal Warden. Times are relative to BOSS_TIME;
-  // shield plates break through two 1-HP stages before the core takes two full volleys.
+  // --- Act 3 (31.6s–end): the Crystal Warden. The delayed entrance gives the
+  // last corridor wave room to clear, then a six-node outer lattice and three
+  // inner plates must be picked apart before the core takes two full volleys.
   ...section(BOSS_TIME, [
     { time: 0, kind: 'warden-core', hitStages: [6, 6], lockable: false, data: { role: 'core' } },
-    { time: 0.2, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 0 } },
-    { time: 0.3, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 1 } },
-    { time: 0.4, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 2 } },
+    { time: 0.2, kind: 'warden-outer', data: { role: 'outer', index: 0 } },
+    { time: 0.28, kind: 'warden-outer', data: { role: 'outer', index: 1 } },
+    { time: 0.36, kind: 'warden-outer', data: { role: 'outer', index: 2 } },
+    { time: 0.44, kind: 'warden-outer', data: { role: 'outer', index: 3 } },
+    { time: 0.52, kind: 'warden-outer', data: { role: 'outer', index: 4 } },
+    { time: 0.6, kind: 'warden-outer', data: { role: 'outer', index: 5 } },
+    { time: 0.95, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 0 } },
+    { time: 1.08, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 1 } },
+    { time: 1.21, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 2 } },
   ] satisfies CrystalSpawnEntry[]),
 ];
 
@@ -151,6 +163,7 @@ const KILL_SCORE: Record<CrystalEnemyKind, number> = {
   orbiter: 100,
   lancer: 150,
   bolt: 40,
+  'warden-outer': 180,
   'warden-shield': 300,
   'warden-core': 1500,
 };
@@ -167,8 +180,9 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     coreSpawned: false,
     coreKilled: false,
     exposed: false,
-    shieldIds: new Set<number>(),
-    shieldPositions: new Map<number, Vector3>(),
+    defenseIds: new Set<number>(),
+    defensePositions: new Map<number, Vector3>(),
+    defenseSpawned: 0,
   };
   const boltInterceptions = new Set<number>();
   let hitsTaken = 0;
@@ -178,8 +192,9 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     boss.coreSpawned = false;
     boss.coreKilled = false;
     boss.exposed = false;
-    boss.shieldIds.clear();
-    boss.shieldPositions.clear();
+    boss.defenseIds.clear();
+    boss.defensePositions.clear();
+    boss.defenseSpawned = 0;
     boltInterceptions.clear();
     hitsTaken = 0;
     coreEntry.lockable = false;
@@ -194,17 +209,25 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
   });
 
   bus.on('spawn', ({ enemyId, kind }) => {
-    if (kind === 'warden-shield') boss.shieldIds.add(enemyId);
+    if (kind === 'warden-outer' || kind === 'warden-shield') {
+      boss.defenseIds.add(enemyId);
+      boss.defenseSpawned += 1;
+    }
     if (kind === 'warden-core') {
       boss.coreSpawned = true;
       boss.coreId = enemyId;
     }
   });
 
-  const onShieldGone = (enemyId: number) => {
-    if (!boss.shieldIds.delete(enemyId)) return;
-    boss.shieldPositions.delete(enemyId);
-    if (boss.shieldIds.size === 0 && boss.coreSpawned && !boss.exposed) {
+  const onDefenseGone = (enemyId: number) => {
+    if (!boss.defenseIds.delete(enemyId)) return;
+    boss.defensePositions.delete(enemyId);
+    if (
+      boss.defenseSpawned >= CRYSTAL_WARDEN_DEFENSE_COUNT
+      && boss.defenseIds.size === 0
+      && boss.coreSpawned
+      && !boss.exposed
+    ) {
       boss.exposed = true;
       coreEntry.lockable = true;
     }
@@ -212,13 +235,13 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
 
   bus.on('kill', ({ enemyId }) => {
     boltInterceptions.delete(enemyId);
-    onShieldGone(enemyId);
+    onDefenseGone(enemyId);
     if (enemyId === boss.coreId) boss.coreKilled = true;
   });
 
   bus.on('miss', ({ enemyId }) => {
     boltInterceptions.delete(enemyId);
-    onShieldGone(enemyId);
+    onDefenseGone(enemyId);
   });
 
   function fireBolt(context: CrystalUpdate, from: Vector3) {
@@ -303,24 +326,45 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     return shotBehindCamera(camera, data.position) || age > BOLT_MAX_AGE;
   }
 
+  function defenseBasis(camera: CrystalUpdate['camera']) {
+    return {
+      right: new Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize(),
+      up: new Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize(),
+    };
+  }
+
+  function updateOuterDefense(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'outer' }>) {
+    const { enemy, runTime, camera } = context;
+    const { right, up } = defenseBasis(camera);
+    const angle = data.index * ((Math.PI * 2) / WARDEN_OUTER_COUNT) - runTime * 0.42;
+    const breathe = 1 + Math.sin(runTime * 1.25 + data.index) * 0.045;
+    enemy.mesh.position
+      .copy(boss.corePosition)
+      .addScaledVector(right, Math.cos(angle) * 8.4 * breathe)
+      .addScaledVector(up, Math.sin(angle) * 6.25 * breathe);
+    boss.defensePositions.set(enemy.id, enemy.mesh.position.clone());
+    enemy.mesh.quaternion.copy(camera.quaternion);
+    enemy.mesh.rotateZ(angle + runTime * 0.9);
+    return false;
+  }
+
   function updateShield(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'shield' }>) {
     const { enemy, runTime, age, camera } = context;
     // Screen-space orbit around the core so the triangle formation always
     // reads from the rail.
-    const angle = data.index * ((Math.PI * 2) / 3) + runTime * 0.85;
-    const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
-    const up = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+    const angle = data.index * ((Math.PI * 2) / WARDEN_SHIELD_COUNT) + runTime * 0.85;
+    const { right, up } = defenseBasis(camera);
     enemy.mesh.position
       .copy(boss.corePosition)
       .addScaledVector(right, Math.cos(angle) * 4.7)
       .addScaledVector(up, Math.sin(angle) * 4.0);
-    boss.shieldPositions.set(enemy.id, enemy.mesh.position.clone());
+    boss.defensePositions.set(enemy.id, enemy.mesh.position.clone());
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(angle + Math.PI / 2);
 
-    const fire = context.enemyState(() => ({ nextAt: 2.2 + data.index * 1.6, shotsLeft: Number.POSITIVE_INFINITY }));
+    const fire = context.enemyState(() => ({ nextAt: 4.8 + data.index * 1.2, shotsLeft: Number.POSITIVE_INFINITY }));
     if (age >= fire.nextAt) {
-      fire.nextAt = age + 4.6;
+      fire.nextAt = age + 5.4;
       fireBolt(context, enemy.mesh.position);
     }
     return false;
@@ -376,6 +420,8 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
           return updateWave(context, data);
         case 'bolt':
           return updateBolt(context, data);
+        case 'outer':
+          return updateOuterDefense(context, data);
         case 'shield':
           return updateShield(context, data);
         case 'core':
@@ -383,22 +429,21 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
       }
     },
     validateRelease(enemies) {
-      const releasedShieldIds = new Set(
-        enemies.filter((enemy) => enemy.kind === 'warden-shield').map((enemy) => enemy.id),
-      );
-      if (releasedShieldIds.size === 0 || boss.shieldIds.size === 0) return true;
-
-      const missingShieldIds = [...boss.shieldIds].filter((enemyId) => !releasedShieldIds.has(enemyId));
-      if (missingShieldIds.length === 0) return true;
+      // The outer lattice and shield plates are all real targets: the player
+      // may pick them off one by one or sweep several in a volley. Only stale
+      // locks on the core are denied while any defensive node remains alive.
+      if (boss.defenseIds.size === 0) return true;
+      const releasedCoreIds = enemies.filter((enemy) => enemy.kind === 'warden-core').map((enemy) => enemy.id);
+      if (releasedCoreIds.length === 0) return true;
 
       bus.emit('shielded', {
-        shields: missingShieldIds.map((enemyId) => ({
+        shields: [...boss.defenseIds].map((enemyId) => ({
           enemyId,
-          worldPosition: boss.shieldPositions.get(enemyId)?.clone() ?? boss.corePosition.clone(),
+          worldPosition: boss.defensePositions.get(enemyId)?.clone() ?? boss.corePosition.clone(),
         })),
-        blockedEnemyIds: [...releasedShieldIds],
+        blockedEnemyIds: releasedCoreIds,
       });
-      return enemies.filter((enemy) => enemy.kind !== 'warden-shield');
+      return enemies.filter((enemy) => enemy.kind !== 'warden-core');
     },
     scoreForKill(volleySize, enemy) {
       const multiplier = 1 + Math.max(0, volleySize - 1) * 0.15;

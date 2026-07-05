@@ -1,7 +1,7 @@
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
-import { CRYSTAL_BPM, createCrystalGameplay } from './gameplay';
+import { CRYSTAL_BPM, CRYSTAL_WARDEN_DEFENSE_COUNT, createCrystalGameplay } from './gameplay';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -25,7 +25,8 @@ export const crystalCorridorLevel: LevelDefinition = {
     installVisualEventHandlers(bus, scene);
 
     // Boss beat callouts. Gameplay owns the fight; this just narrates it.
-    const shieldIds = new Set<number>();
+    const defenseIds = new Set<number>();
+    let defensesSpawned = 0;
     let coreId = -1;
     let calloutUntil = -1;
     let now = 0;
@@ -34,18 +35,26 @@ export const crystalCorridorLevel: LevelDefinition = {
       calloutUntil = now + seconds;
     };
     bus.on('spawn', ({ enemyId, kind }) => {
-      if (kind === 'warden-shield') shieldIds.add(enemyId);
+      if (kind === 'warden-outer' || kind === 'warden-shield') {
+        defenseIds.add(enemyId);
+        defensesSpawned += 1;
+      }
       if (kind === 'warden-core') {
         coreId = enemyId;
         say('CRYSTAL WARDEN', 2.6);
       }
     });
     bus.on('kill', ({ enemyId }) => {
-      if (shieldIds.delete(enemyId) && shieldIds.size === 0) say('CORE EXPOSED', 2.6);
+      if (
+        defenseIds.delete(enemyId)
+        && defensesSpawned >= CRYSTAL_WARDEN_DEFENSE_COUNT
+        && defenseIds.size === 0
+      ) say('CORE EXPOSED', 2.6);
       if (enemyId === coreId) say('WARDEN DOWN', 3.2);
     });
     bus.on('runstart', () => {
-      shieldIds.clear();
+      defenseIds.clear();
+      defensesSpawned = 0;
       coreId = -1;
       calloutUntil = -1;
     });

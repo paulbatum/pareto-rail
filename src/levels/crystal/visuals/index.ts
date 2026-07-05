@@ -31,7 +31,13 @@ import {
 import { colorForLockCount } from '../../../engine/locks';
 import { createLetterMesh, setLetterLocked } from './letters';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
-import { createBoltMesh, createLancerHalo, createWardenCoreMesh, createWardenShieldMesh } from './warden';
+import {
+  createBoltMesh,
+  createLancerHalo,
+  createWardenCoreMesh,
+  createWardenOuterTargetMesh,
+  createWardenShieldMesh,
+} from './warden';
 
 
 export type VisualContext = {
@@ -96,6 +102,8 @@ function buildEnemyMesh(kind: string, letter?: string): Group {
       mesh.userData.lancerHalo = halo;
       return mesh;
     }
+    case 'warden-outer':
+      return createWardenOuterTargetMesh();
     case 'warden-shield':
       return createWardenShieldMesh();
     case 'warden-core':
@@ -232,7 +240,12 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     } else {
       burstSparks(worldPosition, hdr(CORE_WHITE, 0.9), 6, 12);
     }
-    if ((record?.mesh.userData.kind === 'warden-shield' || record?.mesh.userData.kind === 'warden-core') && !lethal) {
+    if (
+      (record?.mesh.userData.kind === 'warden-outer'
+        || record?.mesh.userData.kind === 'warden-shield'
+        || record?.mesh.userData.kind === 'warden-core')
+      && !lethal
+    ) {
       record.mesh.userData.damageFlashUntil = elapsedNow + 0.42;
       spawnRing(worldPosition, hdr(CYAN, 1.35), 4.2, 0.34);
       spawnGlint(worldPosition, hdr(CORE_WHITE, 2.0), 1.3, 0.18);
@@ -241,7 +254,11 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
 
   bus.on('stage', ({ enemyId, worldPosition, stageIndex }) => {
     const record = enemyRecords.get(enemyId);
-    if (record?.mesh.userData.kind !== 'warden-shield' && record?.mesh.userData.kind !== 'warden-core') return;
+    if (
+      record?.mesh.userData.kind !== 'warden-outer'
+      && record?.mesh.userData.kind !== 'warden-shield'
+      && record?.mesh.userData.kind !== 'warden-core'
+    ) return;
     if (record) record.mesh.userData.damageLevel = Math.max(record.mesh.userData.damageLevel ?? 0, stageIndex);
     spawnRing(worldPosition, hdr(AMBER, 1.5), 5.8, 0.5);
     spawnGlint(worldPosition, hdr(CORE_WHITE, 2.2), 1.8, 0.22);
