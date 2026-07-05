@@ -71,24 +71,27 @@ const KILL_LANES: Record<SectionIndex, number[]> = {
 };
 
 // Per-act voicing for the player's instruments (kill, lock, fire).
+// Lock gains are tuned for equal perceived loudness, not equal numbers: a
+// square or saw at the same gain as a triangle sounds far louder (richer
+// harmonics), and the lock must stay a subtle tick in every act.
 const SECTION_VOICES: Record<SectionIndex, {
   kill: { oscillator: OscillatorType; decay: number; cutoff: number; gain: number; shimmer: number };
-  lock: { oscillator: OscillatorType; cutoff: number };
+  lock: { oscillator: OscillatorType; cutoff: number; gain: number };
   fire: { cutoff: number; noise: number };
 }> = {
   0: {
     kill: { oscillator: 'sine', decay: 0.42, cutoff: 3400, gain: 0.17, shimmer: 0.35 },
-    lock: { oscillator: 'triangle', cutoff: 2800 },
+    lock: { oscillator: 'triangle', cutoff: 2800, gain: 0.14 },
     fire: { cutoff: 1900, noise: 0.03 },
   },
   1: {
     kill: { oscillator: 'square', decay: 0.24, cutoff: 2600, gain: 0.15, shimmer: 0.5 },
-    lock: { oscillator: 'square', cutoff: 2200 },
+    lock: { oscillator: 'square', cutoff: 2000, gain: 0.06 },
     fire: { cutoff: 3200, noise: 0.05 },
   },
   2: {
     kill: { oscillator: 'sawtooth', decay: 0.5, cutoff: 3000, gain: 0.16, shimmer: 0.7 },
-    lock: { oscillator: 'sawtooth', cutoff: 2400 },
+    lock: { oscillator: 'sawtooth', cutoff: 2200, gain: 0.055 },
     fire: { cutoff: 4200, noise: 0.07 },
   },
 };
@@ -750,7 +753,7 @@ function createCrystalResonanceAudio(bus: EventBus, trace?: AudioTraceSink) {
         frequency: midiToFreq(midi),
         filter: { type: 'lowpass', frequency: voice.cutoff + lockCount * 180 },
         gainAutomation: [
-          { type: 'set', value: 0.14 * weight, time },
+          { type: 'set', value: voice.gain * weight, time },
           { type: 'exponentialRamp', value: 0.001, time: time + 0.1 },
         ],
         destination: output,
