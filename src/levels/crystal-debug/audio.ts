@@ -1,5 +1,5 @@
 import type { EventBus } from '../../events';
-import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport } from '../../engine/audio-kit';
+import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playNoiseHit } from '../../engine/audio-kit';
 import { createAudioTraceSink, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
@@ -333,18 +333,18 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
     destination: AudioNode,
   ) {
     if (!ctx || !noiseBuffer) return;
-    const source = ctx.createBufferSource();
-    source.buffer = noiseBuffer;
-    source.loopStart = Math.random();
-    const filter = ctx.createBiquadFilter();
-    filter.type = filterType;
-    filter.frequency.value = frequency;
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(vel, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + Math.max(0.012, decay));
-    source.connect(filter).connect(gain).connect(destination);
-    source.start(time, Math.random() * 1.5);
-    source.stop(time + Math.max(0.02, decay) + 0.03);
+    playNoiseHit({
+      context: ctx,
+      buffer: noiseBuffer,
+      time,
+      velocity: vel,
+      decay,
+      filterType,
+      frequency,
+      destination,
+      loopStart: Math.random(),
+      offset: Math.random() * 1.5,
+    });
   }
 
   // ---- game SFX (all in key, all on the grid) -----------------------------

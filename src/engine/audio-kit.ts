@@ -47,6 +47,19 @@ export type AudioGraphBuilder = {
   connect(source: AudioNode, destination: AudioNode | AudioParam): AudioNode | AudioParam;
 };
 
+export type NoiseHitOptions = {
+  context: AudioContext;
+  buffer: AudioBuffer;
+  time: number;
+  velocity: number;
+  decay: number;
+  filterType: BiquadFilterType;
+  frequency: number;
+  destination: AudioNode;
+  loopStart?: number;
+  offset?: number;
+};
+
 export type LevelAudioKitOptions = {
   /** Player-facing volume value before scaling. Defaults to 1. */
   initialVolume?: number;
@@ -146,6 +159,24 @@ export function createAudioGraphBuilder(context: AudioContext): AudioGraphBuilde
       return destination;
     },
   };
+}
+
+export function playNoiseHit(options: NoiseHitOptions) {
+  const source = options.context.createBufferSource();
+  source.buffer = options.buffer;
+  if (options.loopStart !== undefined) source.loopStart = options.loopStart;
+
+  const filter = options.context.createBiquadFilter();
+  filter.type = options.filterType;
+  filter.frequency.value = options.frequency;
+
+  const gain = options.context.createGain();
+  gain.gain.setValueAtTime(options.velocity, options.time);
+  gain.gain.exponentialRampToValueAtTime(0.001, options.time + Math.max(0.012, options.decay));
+
+  source.connect(filter).connect(gain).connect(options.destination);
+  source.start(options.time, options.offset);
+  source.stop(options.time + Math.max(0.02, options.decay) + 0.03);
 }
 
 export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
