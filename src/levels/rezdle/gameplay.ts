@@ -137,18 +137,9 @@ export function createRezdleGameplay(bus: EventBus, hud: Hud): LockOnRunnerLevel
   return {
     duration: REZDLE_RUN_DURATION,
     bpm: BPM,
-    // Rezdle opts out of the default profile: the score is swung so straight-grid
-    // snapping fights it, grid-ramp late-shot grids stall long word volleys at
-    // 84 BPM, and immediate typewriter keystrikes are deliberate.
-    timing: {
-      shotDelay: {
-        pattern: 'linear',
-        gapThirtyseconds: 1,
-        releaseShare: 1,
-        gridRampGapGrowthThirtyseconds: 0,
-      },
-      actionSfx: { enabled: false },
-    },
+    // Rezdle opts out of action-SFX snapping: the score is swung so straight-grid
+    // snapping fights it, and immediate typewriter keystrikes are deliberate.
+    timing: { actionSfx: { enabled: false } },
     createRail: createRezdleRail,
     spawnTimeline: REZDLE_TIMELINE,
     lockRadiusNdc: 0.06,

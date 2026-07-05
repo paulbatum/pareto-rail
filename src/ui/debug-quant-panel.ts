@@ -84,7 +84,7 @@ export function installDebugQuantPanel(level: { id: string; bpm: number }) {
   const { label: growthLabel, text: growthText, input: growthInput } = range('0', '4', '1');
 
   const help = document.createElement('p');
-  help.textContent = 'Default uses per-shot grid sizes: 32nd, 16th, 8th, quarter, half, bar. Disabled sliders do not affect the active preset.';
+  help.textContent = 'Default doubles the shot grid per shot and adapts to the level tempo so no grid period exceeds about 1.9s. Disabled sliders do not affect the active preset.';
 
   body.append(presets, patternText, gridLabel, gapLabel, splitLabel, growthLabel, help);
   document.body.append(panel);
@@ -178,7 +178,7 @@ function setDisabled(label: HTMLLabelElement, input: HTMLInputElement, disabled:
 
 function labelForPattern(pattern: ShotDelayPattern) {
   if (pattern === 'linear') return 'Shot rhythm: linear';
-  return 'Shot rhythm: default grid ramp (32nd, 16th, 8th, quarter, half, bar)';
+  return 'Shot rhythm: default tempo-adaptive grid ramp (doubles per shot, capped near 1.9s)';
 }
 
 function optionIndexFor(enabled: boolean, gridThirtyseconds: number) {

@@ -29,6 +29,9 @@ export type ActionSfxQuantizationSettings = {
 
 const DEFAULT_GRID_THIRTYSECONDS = 1; // 32nd note
 const GRID_RAMP_THIRTYSECONDS = [1, 2, 4, 8, 16, 32, 32, 32];
+// Crystal's 6th-shot grid: the longest acceptable snap period for any shot.
+const GRID_RAMP_MAX_GRID_SECONDS = (60 / 126 / 8) * 32;
+const GRID_RAMP_EPSILON_SECONDS = 1e-6;
 
 // The game's default quantization profile. Levels can override or opt out via
 // the runner's timing field.
@@ -83,13 +86,23 @@ function gridRampDelayForShot(context: ShotDelayContext) {
 
 function rawGridRampHitTimes(context: ShotDelayContext) {
   const times: number[] = [];
+  const ramp = gridRampForTempo(context.thirtysecondSeconds);
   for (let index = 0; index < context.volleySize; index += 1) {
     const travelTime = context.baselineTravelTimes[index] ?? context.baselineTravelTime;
-    const gridThirtyseconds = GRID_RAMP_THIRTYSECONDS[Math.min(index, GRID_RAMP_THIRTYSECONDS.length - 1)] ?? 32;
+    const gridThirtyseconds = ramp[Math.min(index, ramp.length - 1)] ?? 32;
     const gridSeconds = gridThirtyseconds * context.thirtysecondSeconds;
     times.push(quantizeToGrid(context.releaseTime + travelTime, gridSeconds));
   }
   return times;
+}
+
+function gridRampForTempo(thirtysecondSeconds: number) {
+  let ramp = [...GRID_RAMP_THIRTYSECONDS];
+  while (ramp[ramp.length - 1] * thirtysecondSeconds > GRID_RAMP_MAX_GRID_SECONDS + GRID_RAMP_EPSILON_SECONDS) {
+    if (ramp.every((gridThirtyseconds) => gridThirtyseconds === 1)) break;
+    ramp = [1, ...ramp.slice(0, -1)];
+  }
+  return ramp;
 }
 
 function enforceIncreasingGaps(hitTimes: number[], minSpacing: number, gapGrowth: number) {
