@@ -3,6 +3,7 @@ import type { Object3D } from 'three';
 import { updateHostileShotImpact } from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
+import { formation, section, sortTimeline } from '../../engine/spawn-patterns';
 import type { EventBus } from '../../events';
 
 // A 45-second run in three acts: a familiar warm-up third, a dense middle
@@ -74,8 +75,7 @@ const wave = (
   pattern: CrystalMovementPattern,
   kind: CrystalEnemyKind,
   offsets: Array<[number, number]>,
-): CrystalSpawnEntry[] => offsets.map((offset, index) => ({
-  time: time + index * 0.18,
+): CrystalSpawnEntry[] => formation(time, 0.18, offsets, (offset) => ({
   kind,
   data: { role: 'wave', lead, pattern, offset: new Vector3(offset[0], offset[1], 0) },
 }));
@@ -87,56 +87,62 @@ const BOSS_TIME = 30.2;
 
 const TIMELINE: CrystalSpawnEntry[] = [
   // --- Act 1 (0–10s): the familiar opening. Room to learn the sweep.
-  ...wave(1.2, 4.0, 'hold', 'node', [
-    [-5, 1], [-2, 3], [2, 3], [5, 1],
-  ]),
-  ...wave(4.2, 4.6, 'drift', 'drifter', [
-    [-8, -1], [-4, 2], [0, 3], [4, 2], [8, -1],
-  ]),
-  ...wave(7.4, 4.8, 'orbit', 'orbiter', [
-    [-6, 4], [-3, 0], [3, 0], [6, 4],
-  ]),
+  ...section(0,
+    wave(1.2, 4.0, 'hold', 'node', [
+      [-5, 1], [-2, 3], [2, 3], [5, 1],
+    ]),
+    wave(4.2, 4.6, 'drift', 'drifter', [
+      [-8, -1], [-4, 2], [0, 3], [4, 2], [8, -1],
+    ]),
+    wave(7.4, 4.8, 'orbit', 'orbiter', [
+      [-6, 4], [-3, 0], [3, 0], [6, 4],
+    ]),
+  ),
 
-  // --- Act 2 (10–30s): the corridor wakes up. Denser waves, and lancers —
-  // haloed crystals that fire homing shard bolts at the hull.
-  ...wave(10.6, 4.3, 'drift', 'drifter', [
-    [-7, 2], [-3, -2], [2, 1], [7, -1],
-  ]),
-  ...wave(13.2, 4.6, 'hold', 'node', [
-    [-7, -1], [-3.5, 2], [0, 3.5], [3.5, 2], [7, -1],
-  ]),
-  ...lancers(14.4, 5.0, [[0, 5.4]]),
-  ...wave(16.4, 4.7, 'orbit', 'orbiter', [
-    [-9, 2], [-4.5, 5], [0, 2], [4.5, 5], [9, 2],
-  ]),
-  ...wave(18.8, 4.4, 'drift', 'drifter', [
-    [-7, 0], [-2, 3], [2, -1], [7, 2],
-  ]),
-  ...lancers(19.6, 5.2, [[-6, 4], [6, 4]]),
-  ...wave(21.6, 4.5, 'hold', 'node', [
-    [-7.5, 4], [-5, 1.5], [-2.5, -1], [2.5, -1], [5, 1.5], [7.5, 4],
-  ]),
-  ...wave(23.8, 4.6, 'orbit', 'orbiter', [
-    [-8, -1], [-3, 3], [3, 3], [8, -1],
-  ]),
-  ...lancers(24.6, 4.8, [[-5, -2], [5, -2]]),
-  ...wave(26.2, 4.2, 'drift', 'drifter', [
-    [-8, 1], [-5, -2], [-1.5, 3], [1.5, -1], [5, 2], [8, -1],
-  ]),
-  ...lancers(28.2, 4.4, [[-3, 5], [3, 5]]),
-  ...wave(29.2, 3.4, 'hold', 'node', [
-    [-4, 2], [0, 4], [4, 2],
-  ]),
+  // --- Act 2 (10–30s): the corridor wakes up. Times are relative to the act;
+  // lancers are haloed crystals that fire homing shard bolts at the hull.
+  ...section(10,
+    wave(0.6, 4.3, 'drift', 'drifter', [
+      [-7, 2], [-3, -2], [2, 1], [7, -1],
+    ]),
+    wave(3.2, 4.6, 'hold', 'node', [
+      [-7, -1], [-3.5, 2], [0, 3.5], [3.5, 2], [7, -1],
+    ]),
+    lancers(4.4, 5.0, [[0, 5.4]]),
+    wave(6.4, 4.7, 'orbit', 'orbiter', [
+      [-9, 2], [-4.5, 5], [0, 2], [4.5, 5], [9, 2],
+    ]),
+    wave(8.8, 4.4, 'drift', 'drifter', [
+      [-7, 0], [-2, 3], [2, -1], [7, 2],
+    ]),
+    lancers(9.6, 5.2, [[-6, 4], [6, 4]]),
+    wave(11.6, 4.5, 'hold', 'node', [
+      [-7.5, 4], [-5, 1.5], [-2.5, -1], [2.5, -1], [5, 1.5], [7.5, 4],
+    ]),
+    wave(13.8, 4.6, 'orbit', 'orbiter', [
+      [-8, -1], [-3, 3], [3, 3], [8, -1],
+    ]),
+    lancers(14.6, 4.8, [[-5, -2], [5, -2]]),
+    wave(16.2, 4.2, 'drift', 'drifter', [
+      [-8, 1], [-5, -2], [-1.5, 3], [1.5, -1], [5, 2], [8, -1],
+    ]),
+    lancers(18.2, 4.4, [[-3, 5], [3, 5]]),
+    wave(19.2, 3.4, 'hold', 'node', [
+      [-4, 2], [0, 4], [4, 2],
+    ]),
+  ),
 
-  // --- Act 3 (30s–end): the Crystal Warden. Core is unlockable until all three
-  // shield plates break through two 1-HP stages; then the heart takes two full volleys.
-  { time: BOSS_TIME, kind: 'warden-core', hitStages: [6, 6], lockable: false, data: { role: 'core' } },
-  { time: BOSS_TIME + 0.2, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 0 } },
-  { time: BOSS_TIME + 0.3, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 1 } },
-  { time: BOSS_TIME + 0.4, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 2 } },
+  // --- Act 3 (30s–end): the Crystal Warden. Times are relative to BOSS_TIME;
+  // shield plates break through two 1-HP stages before the core takes two full volleys.
+  ...section(BOSS_TIME, [
+    { time: 0, kind: 'warden-core', hitStages: [6, 6], lockable: false, data: { role: 'core' } },
+    { time: 0.2, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 0 } },
+    { time: 0.3, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 1 } },
+    { time: 0.4, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 2 } },
+  ] satisfies CrystalSpawnEntry[]),
 ];
 
-export const CRYSTAL_TIMELINE: CrystalSpawnEntry[] = TIMELINE.sort((a, b) => a.time - b.time);
+export const CRYSTAL_TIMELINE: CrystalSpawnEntry[] = sortTimeline(TIMELINE);
 
 const KILL_SCORE: Record<CrystalEnemyKind, number> = {
   node: 100,

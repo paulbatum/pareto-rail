@@ -6,7 +6,8 @@ Shared code lives in `src/engine/`:
 
 - `lock-on-runner.ts` contains the START/RUN/REPLAY flow, pointer input, lock-on targeting, homing shots, scoring hooks, and HUD updates;
 - `rail.ts` contains rail sampling helpers, not a level rail;
-- `music.ts` contains small timing helpers for beat emission, MIDI conversion, and grid quantization;
+- `music.ts` contains small timing helpers for beat emission, tempo, MIDI conversion, and grid quantization;
+- `spawn-patterns.ts` contains small helpers for eager spawn timeline construction;
 - `hostile-shot.ts` contains shared approach/impact timing for lockable enemy shots and hazards;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting.
 

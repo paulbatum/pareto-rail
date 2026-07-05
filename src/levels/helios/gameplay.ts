@@ -1,6 +1,7 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from 'three';
 import { updateHostileShotImpact, type HostileShotImpactState } from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
+import { tempo } from '../../engine/music';
 import { offsetFromRail, sampleRailFrame } from '../../engine/rail';
 import type { EventBus } from '../../events';
 
@@ -20,11 +21,12 @@ import type { EventBus } from '../../events';
 // as genuine kicks of acceleration on their musical drops.
 
 export const HELIOS_BPM = 172;
-export const HELIOS_BAR = 240 / HELIOS_BPM;
+const HELIOS_TEMPO = tempo(HELIOS_BPM);
+export const HELIOS_BAR = HELIOS_TEMPO.barSeconds;
 export const HELIOS_DURATION = 120;
 export const HELIOS_PLAYER_HEALTH = 4;
 
-export const bar = (n: number) => n * HELIOS_BAR;
+export const bar = HELIOS_TEMPO.bar;
 
 export const GATE_TIME = bar(16); // 22.33 — drop 1
 export const CORONA_TIME = bar(40); // 55.81 — drop 2
