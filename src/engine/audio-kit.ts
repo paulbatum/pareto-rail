@@ -47,6 +47,24 @@ export type AudioGraphBuilder = {
   connect(source: AudioNode, destination: AudioNode | AudioParam): AudioNode | AudioParam;
 };
 
+export type AutomationStep = {
+  type: 'set' | 'linearRamp' | 'exponentialRamp';
+  value: number;
+  time: number;
+};
+
+export type OscillatorVoiceOptions = {
+  context: AudioContext;
+  time: number;
+  stopTime: number;
+  oscillatorType: OscillatorType;
+  frequency: number;
+  frequencyAutomation?: AutomationStep[];
+  detune?: number;
+  gainAutomation: AutomationStep[];
+  destination: AudioNode | AudioNode[];
+};
+
 export type NoiseHitOptions = {
   context: AudioContext;
   buffer: AudioBuffer;
@@ -159,6 +177,31 @@ export function createAudioGraphBuilder(context: AudioContext): AudioGraphBuilde
       return destination;
     },
   };
+}
+
+export function applyAutomation(param: AudioParam, steps: AutomationStep[]) {
+  for (const step of steps) {
+    if (step.type === 'set') param.setValueAtTime(step.value, step.time);
+    else if (step.type === 'linearRamp') param.linearRampToValueAtTime(step.value, step.time);
+    else param.exponentialRampToValueAtTime(step.value, step.time);
+  }
+}
+
+export function playOscillatorVoice(options: OscillatorVoiceOptions) {
+  const oscillator = options.context.createOscillator();
+  oscillator.type = options.oscillatorType;
+  oscillator.frequency.setValueAtTime(options.frequency, options.time);
+  if (options.detune !== undefined) oscillator.detune.value = options.detune;
+  if (options.frequencyAutomation) applyAutomation(oscillator.frequency, options.frequencyAutomation);
+
+  const gain = options.context.createGain();
+  applyAutomation(gain.gain, options.gainAutomation);
+
+  oscillator.connect(gain);
+  for (const destination of Array.isArray(options.destination) ? options.destination : [options.destination]) gain.connect(destination);
+  oscillator.start(options.time);
+  oscillator.stop(options.stopTime);
+  return { oscillator, gain };
 }
 
 export function playNoiseHit(options: NoiseHitOptions) {

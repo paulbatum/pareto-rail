@@ -1,5 +1,5 @@
 import type { EventBus } from '../../events';
-import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playNoiseHit } from '../../engine/audio-kit';
+import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playNoiseHit, playOscillatorVoice } from '../../engine/audio-kit';
 import { createAudioTraceSink, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
@@ -187,16 +187,19 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
       return;
     }
     if (!ctx || !master || !duck) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(150, time);
-    osc.frequency.exponentialRampToValueAtTime(43, time + 0.11);
-    gain.gain.setValueAtTime(0.5 * vel, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.17);
-    osc.connect(gain).connect(master);
-    osc.start(time);
-    osc.stop(time + 0.2);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.2,
+      oscillatorType: 'sine',
+      frequency: 150,
+      frequencyAutomation: [{ type: 'exponentialRamp', value: 43, time: time + 0.11 }],
+      gainAutomation: [
+        { type: 'set', value: 0.5 * vel, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.17 },
+      ],
+      destination: master,
+    });
     noiseHit(time, 0.1 * vel, 0.004, 'highpass', 1200, master);
     // Sidechain: everything melodic breathes around the kick.
     duck.gain.cancelScheduledValues(time);
@@ -374,16 +377,19 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   bus.on('fire', () => {
     if (!ctx || !master) return;
     const time = quantize(ctx.currentTime);
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(690, time);
-    osc.frequency.exponentialRampToValueAtTime(165, time + 0.07);
-    gain.gain.setValueAtTime(0.09, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
-    osc.connect(gain).connect(master);
-    osc.start(time);
-    osc.stop(time + 0.1);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.1,
+      oscillatorType: 'sawtooth',
+      frequency: 690,
+      frequencyAutomation: [{ type: 'exponentialRamp', value: 165, time: time + 0.07 }],
+      gainAutomation: [
+        { type: 'set', value: 0.09, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.08 },
+      ],
+      destination: master,
+    });
     noiseHit(time, 0.05, 0.02, 'highpass', 3000, master);
   });
 
@@ -474,16 +480,19 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   bus.on('playerhit', () => {
     if (!ctx || !master) return;
     const time = ctx.currentTime;
-    const boom = ctx.createOscillator();
-    const boomGain = ctx.createGain();
-    boom.type = 'sine';
-    boom.frequency.setValueAtTime(96, time);
-    boom.frequency.exponentialRampToValueAtTime(34, time + 0.28);
-    boomGain.gain.setValueAtTime(0.42, time);
-    boomGain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
-    boom.connect(boomGain).connect(master);
-    boom.start(time);
-    boom.stop(time + 0.45);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.45,
+      oscillatorType: 'sine',
+      frequency: 96,
+      frequencyAutomation: [{ type: 'exponentialRamp', value: 34, time: time + 0.28 }],
+      gainAutomation: [
+        { type: 'set', value: 0.42, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.4 },
+      ],
+      destination: master,
+    });
     for (const midi of [63, 69]) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -528,16 +537,19 @@ function createCrystalDebugAudio(bus: EventBus, trace?: AudioTraceSink) {
   bus.on('miss', () => {
     if (!ctx || !master) return;
     const time = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(130, time);
-    osc.frequency.exponentialRampToValueAtTime(68, time + 0.12);
-    gain.gain.setValueAtTime(0.05, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.13);
-    osc.connect(gain).connect(master);
-    osc.start(time);
-    osc.stop(time + 0.15);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.15,
+      oscillatorType: 'sine',
+      frequency: 130,
+      frequencyAutomation: [{ type: 'exponentialRamp', value: 68, time: time + 0.12 }],
+      gainAutomation: [
+        { type: 'set', value: 0.05, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.13 },
+      ],
+      destination: master,
+    });
   });
 
   bus.on('runstart', () => {
