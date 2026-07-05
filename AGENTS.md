@@ -20,8 +20,6 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 - Hot/bright elements use HDR colors (values > 1) so bloom picks them up; large bright screen areas white out the frame. Keep glow on thin lines and small cores, and dim hot elements with camera distance where appropriate.
 - Any axis passed to `setFromAxisAngle` must be unit length; a non-unit axis compounds into exploding instance matrices.
 - Headless Chrome in WSL2 cannot render WebGPU (broken device limits); typecheck/build/HTTP checks work, but visual verification requires a human playtest.
-- Grid-quantized action sounds must snap to the level transport's actual step times (capture the epoch when the transport starts); quantizing against the raw audio clock lands tens of milliseconds off the music. See "Musical action audio" in `docs/level-authoring.md`.
-- At equal gain, square and sawtooth oscillators sound far louder than sine and triangle; tune procedural-audio gains by perceived loudness, especially when crossfading timbres.
 
 ## Verification
 
