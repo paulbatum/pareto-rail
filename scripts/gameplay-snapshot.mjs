@@ -74,7 +74,7 @@ async function main() {
 async function captureStill(browser, baseUrl, outDir, options, time) {
   const result = await captureWithFallbacks(browser, baseUrl, options, time);
   const outputPath = path.join(outDir, `${safeName(options.level)}-${formatTime(time)}-${result.fidelity}${projectileSuffix(options)}${mortalitySuffix(options)}.png`);
-  await fs.writeFile(outputPath, decodePngDataUrl(result.dataUrl));
+  await fs.writeFile(outputPath, addSnapshotSeedTextChunk(decodePngDataUrl(result.dataUrl), result.seed));
   logCapture(outputPath, result);
 }
 
@@ -97,7 +97,7 @@ async function captureSheet(browser, baseUrl, outDir, options) {
     outDir,
     `${safeName(options.level)}-thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}${mortalitySuffix(options)}.png`,
   );
-  await fs.writeFile(outputPath, decodePngDataUrl(dataUrl));
+  await fs.writeFile(outputPath, addSnapshotSeedTextChunk(decodePngDataUrl(dataUrl), captures[0].seed));
   console.log(`${path.relative(process.cwd(), outputPath)} thumbnails=${captures.length} fidelity=${fidelityLabel}`);
 }
 
@@ -174,6 +174,7 @@ function newGameplaySnapshotUrl(baseUrl, options, time, fidelity) {
   if (options.immortal) url.searchParams.set('immortal', '1');
   if (options.projectiles) url.searchParams.set('projectiles', '1');
   if (options.debugValue !== undefined) url.searchParams.set('debugValue', options.debugValue);
+  if (options.seed !== undefined) url.searchParams.set('seed', String(options.seed));
   return url;
 }
 
@@ -250,6 +251,7 @@ function parseArgs(argv) {
     immortal: true,
     projectiles: false,
     debugValue: undefined,
+    seed: undefined,
     sheet: false,
     thumbnailCount: undefined,
     thumbWidth: DEFAULT_THUMB_WIDTH,
@@ -327,6 +329,9 @@ function parseArgs(argv) {
       case 'debugValue':
         parsed.debugValue = value;
         break;
+      case 'seed':
+        parsed.seed = readInteger(value, '--seed');
+        break;
       case 'thumbnails':
       case 'thumbnail-count':
       case 'thumbnailCount':
@@ -367,6 +372,12 @@ function readTimes(value) {
 function readPositiveInteger(value, flag) {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) throw new Error(`${flag} must be a positive integer`);
+  return parsed;
+}
+
+function readInteger(value, flag) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) throw new Error(`${flag} must be an integer`);
   return parsed;
 }
 
@@ -422,6 +433,48 @@ function decodePngDataUrl(dataUrl) {
   const prefix = 'data:image/png;base64,';
   if (typeof dataUrl !== 'string' || !dataUrl.startsWith(prefix)) throw new Error('Capture did not return a PNG data URL');
   return Buffer.from(dataUrl.slice(prefix.length), 'base64');
+}
+
+function addSnapshotSeedTextChunk(png, seed) {
+  if (seed === undefined || seed === null) return png;
+  return addPngTextChunk(png, 'raild.snapshot.seed', String(seed));
+}
+
+function addPngTextChunk(png, keyword, text) {
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (png.length < signature.length || !png.subarray(0, signature.length).equals(signature)) throw new Error('Capture did not return a valid PNG');
+  const iendOffset = findPngChunkOffset(png, 'IEND');
+  const chunk = createPngChunk('tEXt', Buffer.from(`${keyword}\0${text}`, 'latin1'));
+  return Buffer.concat([png.subarray(0, iendOffset), chunk, png.subarray(iendOffset)]);
+}
+
+function findPngChunkOffset(png, targetType) {
+  let offset = 8;
+  while (offset + 12 <= png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.toString('ascii', offset + 4, offset + 8);
+    if (type === targetType) return offset;
+    offset += 12 + length;
+  }
+  throw new Error(`PNG chunk not found: ${targetType}`);
+}
+
+function createPngChunk(type, data) {
+  const typeBuffer = Buffer.from(type, 'ascii');
+  const lengthBuffer = Buffer.alloc(4);
+  lengthBuffer.writeUInt32BE(data.length, 0);
+  const crcBuffer = Buffer.alloc(4);
+  crcBuffer.writeUInt32BE(crc32(Buffer.concat([typeBuffer, data])), 0);
+  return Buffer.concat([lengthBuffer, typeBuffer, data, crcBuffer]);
+}
+
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
+  }
+  return (crc ^ 0xffffffff) >>> 0;
 }
 
 function findChromeExecutable() {

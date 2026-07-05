@@ -19,7 +19,7 @@ type Fidelity = 'full' | 'postless' | 'flat';
 
 type GameplaySnapshotApi = {
   ready: Promise<void>;
-  capture(): Promise<{ dataUrl: string; luminance: number; fidelity: Fidelity; state: string }>;
+  capture(): Promise<{ dataUrl: string; luminance: number; fidelity: Fidelity; state: string; seed: number | null }>;
   metadata(): { duration: number | null; fidelity: Fidelity; state: string };
 };
 
@@ -31,6 +31,18 @@ type SnapshotRenderer = WebGPURenderer & {
 type SnapshotRendererParameters = WebGPURendererParameters & {
   forceWebGL: true;
   preserveDrawingBuffer: true;
+};
+
+type SnapshotRendererInternals = SnapshotRenderer & {
+  _animation?: { stop(): void };
+  _nodes?: {
+    nodeFrame?: {
+      time: number;
+      deltaTime: number;
+      frameId: number;
+      lastTime?: number;
+    };
+  };
 };
 
 type PostRenderer = ReturnType<typeof createPost>;
@@ -45,6 +57,8 @@ type RenderableObject = Object3D & {
 declare global {
   interface Window {
     __gameplaySnapshot: GameplaySnapshotApi;
+    __nativeRandom?: () => number;
+    __snapshotSeed?: number;
   }
 }
 
@@ -78,6 +92,7 @@ window.__gameplaySnapshot = {
   ready: bootstrap(),
   async capture() {
     if (!renderer || !scene || !camera) throw new Error('Gameplay snapshot renderer is not ready');
+    setRendererFrameTime(renderer, targetTime, fixedDt);
     if (post) post.render();
     else renderer.render(scene, camera);
     const luminance = measureLuminance(renderer.domElement);
@@ -86,6 +101,7 @@ window.__gameplaySnapshot = {
       luminance,
       fidelity,
       state: runtimeState,
+      seed: window.__snapshotSeed ?? null,
     };
   },
   metadata() {
@@ -111,6 +127,7 @@ async function bootstrap() {
   renderer.setSize(width, height, false);
   renderer.setClearColor(selectedLevel.post?.clearColor ?? 0x02040a, 1);
   await renderer.init();
+  stopRendererAnimation(renderer);
   document.body.append(renderer.domElement);
 
   const bus = createEventBus();
@@ -145,6 +162,19 @@ async function bootstrap() {
 
 function startRunViaInput() {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r' }));
+}
+
+function stopRendererAnimation(value: SnapshotRenderer) {
+  (value as SnapshotRendererInternals)._animation?.stop();
+}
+
+function setRendererFrameTime(value: SnapshotRenderer, seconds: number, dt: number) {
+  const nodeFrame = (value as SnapshotRendererInternals)._nodes?.nodeFrame;
+  if (!nodeFrame) return;
+  nodeFrame.time = seconds;
+  nodeFrame.deltaTime = dt;
+  nodeFrame.frameId = Math.round(seconds / dt);
+  nodeFrame.lastTime = 0;
 }
 
 function advanceRuntime(update: (dt: number, elapsed: number) => void, seconds: number, dt: number) {
