@@ -29,9 +29,10 @@ export type ActionSfxQuantizationSettings = {
 
 const DEFAULT_GRID_THIRTYSECONDS = 1; // 32nd note
 const GRID_RAMP_THIRTYSECONDS = [1, 2, 4, 8, 16, 32, 32, 32];
-// Crystal's 6th-shot grid: the longest acceptable snap period for any shot.
-const GRID_RAMP_MAX_GRID_SECONDS = (60 / 126 / 8) * 32;
-const GRID_RAMP_EPSILON_SECONDS = 1e-6;
+// The longest acceptable snap period for any shot. Its value comes from the
+// bar grid at 126 BPM (crystal's original tuning), but it is deliberately a
+// literal: retuning a level's tempo must never reshape other levels' ramps.
+const GRID_RAMP_MAX_GRID_SECONDS = 1.905;
 
 // The game's default quantization profile. Levels can override or opt out via
 // the runner's timing field.
@@ -98,7 +99,7 @@ function rawGridRampHitTimes(context: ShotDelayContext) {
 
 function gridRampForTempo(thirtysecondSeconds: number) {
   let ramp = [...GRID_RAMP_THIRTYSECONDS];
-  while (ramp[ramp.length - 1] * thirtysecondSeconds > GRID_RAMP_MAX_GRID_SECONDS + GRID_RAMP_EPSILON_SECONDS) {
+  while (ramp[ramp.length - 1] * thirtysecondSeconds > GRID_RAMP_MAX_GRID_SECONDS) {
     if (ramp.every((gridThirtyseconds) => gridThirtyseconds === 1)) break;
     ramp = [1, ...ramp.slice(0, -1)];
   }
