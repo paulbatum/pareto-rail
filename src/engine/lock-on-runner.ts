@@ -32,7 +32,7 @@ type RunState = 'attract' | 'running' | 'ended';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
 type ReleaseRejectReason = 'incomplete-word' | 'level-rule';
 type ReleaseValidation<TKind extends string, TData> =
-  | { valid: true; fireIds: number[] }
+  | { valid: true; fireIds: number[]; denied?: Array<Enemy<TKind, TData>> }
   | {
     valid: false;
     reason: ReleaseRejectReason;
@@ -98,7 +98,7 @@ export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = 
   scoreForHit?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
   scoreForKill?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
   scoreForVolley?(results: Array<{ enemy: LockOnEnemy<TKind, TData>; killed: boolean }>): number;
-  validateRelease?(enemies: Array<LockOnEnemy<TKind, TData>>): boolean;
+  validateRelease?(enemies: Array<LockOnEnemy<TKind, TData>>): boolean | Array<LockOnEnemy<TKind, TData>>;
   rankForRun?(score: number, kills: number, totalEnemies: number): string;
   detailsForRun?(): string[] | undefined;
   lockRadiusNdc?: number;
@@ -607,6 +607,15 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       denyRelease(validation);
       return;
     }
+    if (validation.denied && validation.denied.length > 0) {
+      denyRelease({
+        valid: false,
+        reason: 'level-rule',
+        released: validation.denied,
+        missing: [],
+        required: [],
+      });
+    }
     fireLocks(validation.fireIds);
   }
 
@@ -616,8 +625,21 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (state === 'ended') return validateLetterRelease('replay-letter', replayWord.length, releasedTargets);
 
     const releasedEnemies = releasedTargets.filter((enemy) => enemy.purpose === 'enemy');
-    if (level.validateRelease && !level.validateRelease(releasedEnemies.map((enemy) => toPublicEnemy(enemy)))) {
+    const releaseVerdict = level.validateRelease?.(releasedEnemies.map((enemy) => toPublicEnemy(enemy))) ?? true;
+    if (releaseVerdict === false) {
       return { valid: false, reason: 'level-rule', released: releasedEnemies, missing: [], required: [] };
+    }
+    if (Array.isArray(releaseVerdict)) {
+      const allowedIds = new Set(releaseVerdict.map((enemy) => enemy.id));
+      const allowedReleased = releasedEnemies.filter((enemy) => allowedIds.has(enemy.id));
+      if (allowedReleased.length === 0) {
+        return { valid: false, reason: 'level-rule', released: releasedEnemies, missing: [], required: [] };
+      }
+      return {
+        valid: true,
+        fireIds: allowedReleased.map((enemy) => enemy.id),
+        denied: releasedEnemies.filter((enemy) => !allowedIds.has(enemy.id)),
+      };
     }
     return { valid: true, fireIds: releasedEnemies.map((enemy) => enemy.id) };
   }

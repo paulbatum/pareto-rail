@@ -378,7 +378,7 @@ export function createCrystalGameplay(
         })),
         blockedEnemyIds: [...releasedShieldIds],
       });
-      return false;
+      return enemies.filter((enemy) => enemy.kind !== 'warden-shield');
     },
     scoreForKill(volleySize, enemy) {
       const multiplier = 1 + Math.max(0, volleySize - 1) * 0.15;
