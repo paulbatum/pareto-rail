@@ -1,6 +1,35 @@
 import { MathUtils, Vector3 } from 'three';
 import type { PerspectiveCamera } from 'three';
 
+export type HomingSteerParams = {
+  baseSpeed: number;
+  maxSpeed: number;
+  accel: number; // speed gain per second of age
+  turnRate: number; // velocity lerp factor per second
+};
+
+/** Advance a homing shot one step: speed ramps with age, velocity turns toward the target, position integrates. */
+export function steerHomingShot(
+  position: Vector3,
+  velocity: Vector3,
+  target: Vector3,
+  age: number,
+  dt: number,
+  params: HomingSteerParams,
+): void {
+  const speed = Math.min(params.maxSpeed, params.baseSpeed + age * params.accel);
+  const desired = target.clone().sub(position).normalize().multiplyScalar(speed);
+  velocity.lerp(desired, Math.min(1, dt * params.turnRate));
+  position.addScaledVector(velocity, dt);
+}
+
+/** True once a shot is far enough behind the camera plane to despawn. */
+export function shotBehindCamera(camera: PerspectiveCamera, position: Vector3, margin = 3): boolean {
+  const forward = new Vector3();
+  camera.getWorldDirection(forward);
+  return position.clone().sub(camera.position).dot(forward) < -margin;
+}
+
 export type HostileShotImpactState = {
   impactAt?: number;
   impactDirection?: Vector3;

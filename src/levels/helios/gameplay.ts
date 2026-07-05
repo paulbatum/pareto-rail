@@ -1,5 +1,10 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from 'three';
-import { updateHostileShotImpact, type HostileShotImpactState } from '../../engine/hostile-shot';
+import {
+  shotBehindCamera,
+  steerHomingShot,
+  updateHostileShotImpact,
+  type HostileShotImpactState,
+} from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { tempo } from '../../engine/music';
 import { offsetFromRail, sampleRailFrame } from '../../engine/rail';
@@ -557,13 +562,15 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
       return false;
     }
 
-    const speed = Math.min(12.5, 5.5 + age * 3.4);
-    const desired = camera.position.clone().sub(data.position).normalize().multiplyScalar(speed);
-    data.velocity.lerp(desired, Math.min(1, dt * 2.4));
-    data.position.addScaledVector(data.velocity, dt);
+    steerHomingShot(data.position, data.velocity, camera.position, age, dt, {
+      baseSpeed: 5.5,
+      maxSpeed: 12.5,
+      accel: 3.4,
+      turnRate: 2.4,
+    });
     enemy.mesh.position.copy(data.position);
     orientAlongVelocity(enemy.mesh.position, data.velocity, context);
-    return age > BOLT_MAX_AGE || behindCamera(context, data.position);
+    return age > BOLT_MAX_AGE || shotBehindCamera(camera, data.position);
   }
 
   function updateFlare(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'flare' }>) {
@@ -602,14 +609,16 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
       state.velocity.set(Math.sin(enemy.id) * 2, 26 - age * 10, 0);
       state.position.addScaledVector(state.velocity, dt);
     } else {
-      const speed = Math.min(13, 6 + (age - RISE) * 2.6);
-      const desired = camera.position.clone().sub(state.position).normalize().multiplyScalar(speed);
-      state.velocity.lerp(desired, Math.min(1, dt * 1.9));
-      state.position.addScaledVector(state.velocity, dt);
+      steerHomingShot(state.position, state.velocity, camera.position, age - RISE, dt, {
+        baseSpeed: 6,
+        maxSpeed: 13,
+        accel: 2.6,
+        turnRate: 1.9,
+      });
     }
     enemy.mesh.position.copy(state.position);
     orientAlongVelocity(enemy.mesh.position, state.velocity, context);
-    return age > FLARE_MAX_AGE || behindCamera(context, state.position);
+    return age > FLARE_MAX_AGE || shotBehindCamera(camera, state.position);
   }
 
   function orientAlongVelocity(position: Vector3, velocity: Vector3, context: HeliosUpdate) {
@@ -617,12 +626,6 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     const target = position.clone().add(velocity);
     const mesh = context.enemy.mesh;
     mesh.lookAt(target);
-  }
-
-  function behindCamera(context: HeliosUpdate, position: Vector3) {
-    const forward = new Vector3();
-    context.camera.getWorldDirection(forward);
-    return position.clone().sub(context.camera.position).dot(forward) < -3;
   }
 
   // ---- the Suneater -----------------------------------------------------------

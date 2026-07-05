@@ -1,6 +1,6 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from 'three';
 import type { Object3D } from 'three';
-import { updateHostileShotImpact } from '../../engine/hostile-shot';
+import { shotBehindCamera, steerHomingShot, updateHostileShotImpact } from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import { formation, section, sortTimeline } from '../../engine/spawn-patterns';
@@ -288,20 +288,18 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
 
     // Ballistic launch that tightens into a homing run; speed ramps so the
     // player gets a beat to read it before it commits.
-    const speed = Math.min(11.5, 5 + age * 3.2);
-    const desired = camera.position.clone().sub(data.position).normalize().multiplyScalar(speed);
-    data.velocity.lerp(desired, Math.min(1, dt * 2.2));
-    data.position.addScaledVector(data.velocity, dt);
+    steerHomingShot(data.position, data.velocity, camera.position, age, dt, {
+      baseSpeed: 5,
+      maxSpeed: 11.5,
+      accel: 3.2,
+      turnRate: 2.2,
+    });
 
     enemy.mesh.position.copy(data.position);
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(age * 3.1);
 
-    const forward = new Vector3();
-    camera.getWorldDirection(forward);
-    const toBolt = data.position.clone().sub(camera.position);
-    if (toBolt.dot(forward) < -3) return true;
-    return age > BOLT_MAX_AGE;
+    return shotBehindCamera(camera, data.position) || age > BOLT_MAX_AGE;
   }
 
   function updateShield(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'shield' }>) {

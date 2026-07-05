@@ -8,7 +8,7 @@ Shared code lives in `src/engine/`:
 - `rail.ts` contains rail sampling helpers, not a level rail;
 - `music.ts` contains small timing helpers for beat emission, tempo, MIDI conversion, and grid quantization;
 - `spawn-patterns.ts` contains small helpers for eager spawn timeline construction;
-- `hostile-shot.ts` contains shared approach/impact timing for lockable enemy shots and hazards;
+- `hostile-shot.ts` contains shared homing steer, behind-camera despawn cull, and approach/impact timing for lockable enemy shots and hazards;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting.
 
 ## Adding a level
@@ -33,7 +33,7 @@ Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`,
 
 Setting `playerHealth` enables the hull system: `damagePlayer` calls take a point off (with a short invulnerability window between hits), the HUD shows hull pips and a red damage flash, and reaching zero ends the run with `died: true` in the summary and a forced `—` rank. Related events: `playerhit` fires on accepted damage, `hit` carries `lethal`, total `hitPointsRemaining`, and current-stage fields, `stage` fires when a non-lethal stage is completed, and `runend` carries `died`.
 
-For lockable enemy shots and hazards, prefer `updateHostileShotImpact` from `src/engine/hostile-shot.ts` once a projectile is close enough to threaten the player. It gives levels common defaults for hit distance, impact brake, damage distance, and intercept grace, while allowing per-level overrides for feel. Levels still own launch motion, visuals, audio, and when to call `damagePlayer`.
+For lockable enemy shots and hazards, prefer `steerHomingShot`, `shotBehindCamera`, and `updateHostileShotImpact` from `src/engine/hostile-shot.ts` for shared flight bookkeeping, despawn culling, and close-range impact timing. Impact timing gives levels common defaults for hit distance, impact brake, damage distance, and intercept grace, while allowing per-level overrides for feel. Levels still own tuning, launch motion, visuals, audio, and when to call `damagePlayer`.
 
 ## Visual factories
 
