@@ -139,6 +139,7 @@ export function createRezdleGameplay(bus: EventBus, hud: Hud): LockOnRunnerLevel
     createRail: createRezdleRail,
     spawnTimeline: REZDLE_TIMELINE,
     lockRadiusNdc: 0.06,
+    allowLockUndo: true,
 
     scoreForKill(_volleySize, enemy) {
       if (enemy.kind === 'vowel') return 10;

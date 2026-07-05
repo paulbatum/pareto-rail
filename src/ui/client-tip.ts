@@ -3,9 +3,7 @@ type NavigatorWithStandalone = Navigator & {
 };
 
 export function getStartScreenTip(fullscreenAvailable: boolean) {
-  const isiOS = isIOS();
-  const standalone = isStandalone();
-  const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  const { isiOS, standalone, coarsePointer } = getClientTipPlatform();
 
   if (isiOS && !standalone) {
     return 'Fullscreen recommended on iPhone/iPad: Share → Add to Home Screen. Audio starts after first tap.';
@@ -19,10 +17,20 @@ export function getStartScreenTip(fullscreenAvailable: boolean) {
     return fullscreenAvailable ? 'Fullscreen recommended: open pause and tap Fullscreen.' : '';
   }
 
-  const undoTip = 'Right-click removes your last lock.';
-  if (fullscreenAvailable) return `Fullscreen recommended: press F. ${undoTip}`;
+  return fullscreenAvailable ? 'Fullscreen recommended: press F.' : '';
+}
 
-  return undoTip;
+export function getLockUndoTip(): string {
+  const { isiOS, coarsePointer } = getClientTipPlatform();
+  return isiOS || coarsePointer ? '' : 'Right-click removes your last lock.';
+}
+
+function getClientTipPlatform() {
+  return {
+    isiOS: isIOS(),
+    standalone: isStandalone(),
+    coarsePointer: window.matchMedia('(pointer: coarse)').matches,
+  };
 }
 
 function isIOS() {

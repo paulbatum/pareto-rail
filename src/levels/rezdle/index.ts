@@ -25,6 +25,7 @@ import type { EventBus } from '../../events';
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { colorForLockCount } from '../../engine/locks';
+import { getLockUndoTip } from '../../ui/client-tip';
 import { sampleRailFrame } from '../../engine/rail';
 import { createAudio } from './audio';
 import { createGlyphMesh, setGlyphLocked } from './glyphs';
@@ -54,7 +55,7 @@ export const rezdleLevel: LevelDefinition = {
       hud,
       onPause,
       onFullscreen,
-      startTip,
+      startTip: [startTip, getLockUndoTip()].filter(Boolean).join(' '),
       level: createRezdleGameplay(bus, hud),
       visuals: {
         createEnemyMesh,

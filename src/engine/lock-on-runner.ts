@@ -105,6 +105,7 @@ export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = 
   startWord?: string;
   replayWord?: string;
   playerHealth?: number;
+  allowLockUndo?: boolean;
 };
 
 type Enemy<TKind extends string, TData> = {
@@ -182,7 +183,9 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     onPause,
     onFullscreen,
     onPointerDown: () => recordAttractPointerDown(),
-    onUndoLock: () => undoLastLock(),
+    onUndoLock: () => {
+      if (level.allowLockUndo) undoLastLock();
+    },
   });
   const raycaster = new Raycaster();
   const reticle = visuals.createReticle();
