@@ -8,6 +8,10 @@ export type LevelAudio = {
   installGestureStart(): void;
   setMasterVolume(volume: number): void;
   getMasterVolume(): number;
+  setMusicVolume(volume: number): void;
+  getMusicVolume(): number;
+  setSfxVolume(volume: number): void;
+  getSfxVolume(): number;
   suspend(): Promise<void>;
   dispose(): void;
 };

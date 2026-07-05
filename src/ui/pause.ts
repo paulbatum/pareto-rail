@@ -5,12 +5,14 @@ function requireElement<T extends HTMLElement>(selector: string): T {
 }
 
 export type PauseMenuOptions = {
-  initialVolume: number;
+  initialMusicVolume: number;
+  initialSfxVolume: number;
   initialBloom: number;
   fullscreenAvailable: boolean;
   onResume: () => void;
   onFullscreen: () => void;
-  onVolume: (value: number) => void;
+  onMusicVolume: (value: number) => void;
+  onSfxVolume: (value: number) => void;
   onBloom: (value: number) => void;
 };
 
@@ -18,10 +20,12 @@ export function createPauseMenu(options: PauseMenuOptions) {
   const overlay = requireElement<HTMLElement>('#pause');
   const resume = requireElement<HTMLButtonElement>('[data-pause="resume"]');
   const fullscreen = requireElement<HTMLButtonElement>('[data-pause="fullscreen"]');
-  const volume = requireElement<HTMLInputElement>('[data-pause="volume"]');
+  const music = requireElement<HTMLInputElement>('[data-pause="music"]');
+  const sfx = requireElement<HTMLInputElement>('[data-pause="sfx"]');
   const bloom = requireElement<HTMLInputElement>('[data-pause="bloom"]');
 
-  volume.value = `${Math.round(options.initialVolume)}`;
+  music.value = `${Math.round(options.initialMusicVolume)}`;
+  sfx.value = `${Math.round(options.initialSfxVolume)}`;
   bloom.value = `${Math.round(options.initialBloom)}`;
 
   fullscreen.classList.toggle('hidden', !options.fullscreenAvailable);
@@ -33,7 +37,8 @@ export function createPauseMenu(options: PauseMenuOptions) {
   resume.addEventListener('click', options.onResume);
   fullscreen.addEventListener('click', options.onFullscreen);
   document.addEventListener('fullscreenchange', updateFullscreenText);
-  volume.addEventListener('input', () => options.onVolume(Number(volume.value)));
+  music.addEventListener('input', () => options.onMusicVolume(Number(music.value)));
+  sfx.addEventListener('input', () => options.onSfxVolume(Number(sfx.value)));
   bloom.addEventListener('input', () => options.onBloom(Number(bloom.value)));
 
   return {

@@ -92,18 +92,26 @@ export type NoiseHitOptions = {
 };
 
 export type LevelAudioKitOptions = {
-  /** Player-facing volume value before scaling. Defaults to 1. */
+  /** Player-facing combined volume value before scaling. Defaults to 1. */
   initialVolume?: number;
+  /** Player-facing music volume value before scaling. Defaults to initialVolume or 1. */
+  initialMusicVolume?: number;
+  /** Player-facing sound-effect volume value before scaling. Defaults to initialVolume or 1. */
+  initialSfxVolume?: number;
   /** Internal gain multiplier applied to player-facing volume. Defaults to 1. */
   volumeScale?: number;
   /** Interval for the level scheduler. Omit to disable interval scheduling. */
   schedulerMs?: number;
   /** Called once, after the browser AudioContext is created. */
-  onCreateContext(context: AudioContext, scaledVolume: number): void;
+  onCreateContext(context: AudioContext, scaledMusicVolume: number, scaledSfxVolume: number): void;
   /** Called every scheduler interval while the AudioContext exists. */
   onSchedule?(context: AudioContext): void;
-  /** Called when setMasterVolume changes after context creation. */
+  /** Backward-compatible combined-volume callback. */
   onVolumeChange?(context: AudioContext, scaledVolume: number): void;
+  /** Called when setMusicVolume changes after context creation. */
+  onMusicVolumeChange?(context: AudioContext, scaledVolume: number): void;
+  /** Called when setSfxVolume changes after context creation. */
+  onSfxVolumeChange?(context: AudioContext, scaledVolume: number): void;
   /** Called before the AudioContext is closed. */
   onDispose?(context: AudioContext): void;
 };
@@ -283,16 +291,20 @@ export function playNoiseHit(options: NoiseHitOptions) {
 export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
   const volumeScale = options.volumeScale ?? 1;
   let playerVolume = clamp01(options.initialVolume ?? 1);
+  let musicVolume = clamp01(options.initialMusicVolume ?? options.initialVolume ?? 1);
+  let sfxVolume = clamp01(options.initialSfxVolume ?? options.initialVolume ?? 1);
   let ctx: AudioContext | null = null;
   let intervalId = 0;
   let unlockGestureStart: (() => void) | null = null;
 
   const scaledVolume = () => playerVolume * volumeScale;
+  const scaledMusicVolume = () => musicVolume * volumeScale;
+  const scaledSfxVolume = () => sfxVolume * volumeScale;
 
   const start = async () => {
     if (!ctx) {
       ctx = createBrowserAudioContext();
-      options.onCreateContext(ctx, scaledVolume());
+      options.onCreateContext(ctx, scaledMusicVolume(), scaledSfxVolume());
       if (options.schedulerMs !== undefined && options.onSchedule) {
         intervalId = window.setInterval(() => {
           if (ctx) options.onSchedule?.(ctx);
@@ -312,10 +324,33 @@ export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
     installGestureStart,
     setMasterVolume(volume: number) {
       playerVolume = clamp01(volume);
-      if (ctx) options.onVolumeChange?.(ctx, scaledVolume());
+      musicVolume = playerVolume;
+      sfxVolume = playerVolume;
+      if (ctx) {
+        options.onVolumeChange?.(ctx, scaledVolume());
+        options.onMusicVolumeChange?.(ctx, scaledMusicVolume());
+        options.onSfxVolumeChange?.(ctx, scaledSfxVolume());
+      }
     },
     getMasterVolume() {
       return playerVolume;
+    },
+    setMusicVolume(volume: number) {
+      musicVolume = clamp01(volume);
+      if (ctx) {
+        options.onVolumeChange?.(ctx, scaledMusicVolume());
+        options.onMusicVolumeChange?.(ctx, scaledMusicVolume());
+      }
+    },
+    getMusicVolume() {
+      return musicVolume;
+    },
+    setSfxVolume(volume: number) {
+      sfxVolume = clamp01(volume);
+      if (ctx) options.onSfxVolumeChange?.(ctx, scaledSfxVolume());
+    },
+    getSfxVolume() {
+      return sfxVolume;
     },
     async suspend() {
       if (ctx && ctx.state === 'running') await ctx.suspend();

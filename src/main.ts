@@ -5,6 +5,7 @@ import { createEventBus } from './events';
 import { createPost, getBloomLevel, setBloomLevel } from './engine/post';
 import { getLevelById, selectableLevels } from './levels';
 import { getStartScreenTip } from './ui/client-tip';
+import { installDebugQuantPanel } from './ui/debug-quant-panel';
 import { installDevErrorOverlay } from './ui/dev-error-overlay';
 import { createHud, showUnsupported } from './ui/hud';
 import { createPauseMenu } from './ui/pause';
@@ -25,6 +26,7 @@ async function bootstrap() {
   document.title = `raild — ${selectedLevel.title}`;
   installLevelPicker(selectedLevel.id, import.meta.env.DEV);
   installDebugPicker(selectedLevel, urlParams);
+  installDebugQuantPanel(selectedLevel.id);
 
   const renderer = new WebGPURenderer({ antialias: true, alpha: false });
   // three.js installs a WebGL fallback internally; this project is intentionally WebGPU-only.
@@ -48,7 +50,9 @@ async function bootstrap() {
   const hud = createHud();
   const bus = createEventBus();
   const audio = selectedLevel.createAudio(bus);
-  audio.setMasterVolume(readStoredPercent('raild-volume', 50) / 100);
+  const legacyVolume = readStoredPercent('raild-volume', 50);
+  audio.setMusicVolume(readStoredPercent('raild-music-volume', legacyVolume) / 100);
+  audio.setSfxVolume(readStoredPercent('raild-sfx-volume', legacyVolume) / 100);
   setBloomLevel(readStoredPercent('raild-bloom', 100) / 100);
   audio.installGestureStart();
 
@@ -66,13 +70,18 @@ async function bootstrap() {
 
   const pauseMenu = createPauseMenu({
     fullscreenAvailable,
-    initialVolume: audio.getMasterVolume() * 100,
+    initialMusicVolume: audio.getMusicVolume() * 100,
+    initialSfxVolume: audio.getSfxVolume() * 100,
     initialBloom: getBloomLevel() * 100,
     onResume: () => setPaused(false),
     onFullscreen: toggleFullscreen,
-    onVolume: (value) => {
-      localStorage.setItem('raild-volume', `${value}`);
-      audio.setMasterVolume(value / 100);
+    onMusicVolume: (value) => {
+      localStorage.setItem('raild-music-volume', `${value}`);
+      audio.setMusicVolume(value / 100);
+    },
+    onSfxVolume: (value) => {
+      localStorage.setItem('raild-sfx-volume', `${value}`);
+      audio.setSfxVolume(value / 100);
     },
     onBloom: (value) => {
       localStorage.setItem('raild-bloom', `${value}`);

@@ -8,6 +8,7 @@ import {
   playOscillatorVoice,
 } from '../../engine/audio-kit';
 import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
+import { quantizeActionSfxTime } from '../../engine/action-sfx-quantization';
 import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
@@ -17,7 +18,6 @@ import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
 const BPM = 126;
 const SIXTEENTH = 60 / BPM / 4;
-const EIGHTH = SIXTEENTH * 2;
 const THIRTYSECOND = SIXTEENTH / 2;
 const SCHEDULE_AHEAD = 0.18;
 const SCHEDULER_MS = 25;
@@ -61,6 +61,8 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   let mode: 'run' | 'ambient' = 'ambient';
 
   let master: GainNode | null = null;
+  let musicGain: GainNode | null = null;
+  let sfxGain: GainNode | null = null;
   let duck: GainNode | null = null;
   let delaySend: GainNode | null = null;
   let noiseBuffer: AudioBuffer | null = null;
@@ -77,36 +79,45 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   const audio = createLevelAudioKit({
     volumeScale: 0.8,
     schedulerMs: SCHEDULER_MS,
-    onCreateContext(context, masterVolume) {
+    onCreateContext(context, musicVolume, sfxVolume) {
       ctx = context;
-      buildGraph(context, masterVolume);
+      buildGraph(context, musicVolume, sfxVolume);
       transport.start(context);
     },
     onSchedule(context) {
       transport.schedule(context);
     },
-    onVolumeChange(context, masterVolume) {
-      if (master) master.gain.setTargetAtTime(masterVolume, context.currentTime, 0.05);
+    onMusicVolumeChange(context, musicVolume) {
+      if (musicGain) musicGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.05);
+    },
+    onSfxVolumeChange(context, sfxVolume) {
+      if (sfxGain) sfxGain.gain.setTargetAtTime(sfxVolume, context.currentTime, 0.02);
     },
     onDispose() {
       ctx = null;
       master = null;
+      musicGain = null;
+      sfxGain = null;
       duck = null;
       delaySend = null;
       noiseBuffer = null;
     },
   });
 
-  function buildGraph(context: AudioContext, masterVolume: number) {
+  function buildGraph(context: AudioContext, musicVolume: number, sfxVolume: number) {
     const graph = createAudioGraphBuilder(context);
 
-    master = graph.gain(masterVolume);
+    master = graph.gain();
+    musicGain = graph.gain(musicVolume);
+    sfxGain = graph.gain(sfxVolume);
     const compressor = graph.compressor({ threshold: -18, ratio: 5, attack: 0.005, release: 0.22 });
+    graph.connect(musicGain, master);
+    graph.connect(sfxGain, master);
     graph.connect(master, compressor);
     graph.connect(compressor, context.destination);
 
     duck = graph.gain();
-    graph.connect(duck, master);
+    graph.connect(duck, musicGain);
 
     // Feedback delay tuned to a dotted eighth: the space the arp lives in.
     delaySend = graph.gain();
@@ -186,6 +197,9 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   }
 
   const quantize = (time: number) => quantizeToGrid(time, THIRTYSECOND);
+  const quantizeActionSfx = (time: number) => quantizeActionSfxTime(time, THIRTYSECOND);
+  const musicDestination = () => musicGain ?? master;
+  const sfxDestination = () => sfxGain ?? master;
 
   // ---- instruments --------------------------------------------------------
 
@@ -194,7 +208,8 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'kick', { vel });
       return;
     }
-    if (!ctx || !master || !duck) return;
+    const output = musicDestination();
+    if (!ctx || !output || !duck) return;
     playOscillatorVoice({
       context: ctx,
       time,
@@ -206,9 +221,9 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.5 * vel, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.17 },
       ],
-      destination: master,
+      destination: output,
     });
-    noiseHit(time, 0.1 * vel, 0.004, 'highpass', 1200, master);
+    noiseHit(time, 0.1 * vel, 0.004, 'highpass', 1200, output);
     // Sidechain: everything melodic breathes around the kick.
     duck.gain.cancelScheduledValues(time);
     duck.gain.setValueAtTime(0.42, time);
@@ -220,9 +235,10 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'clap');
       return;
     }
-    if (!master) return;
-    noiseHit(time, 0.16, 0.05, 'bandpass', 1900, master);
-    noiseHit(time + 0.013, 0.1, 0.07, 'bandpass', 2200, master);
+    const output = musicDestination();
+    if (!output) return;
+    noiseHit(time, 0.16, 0.05, 'bandpass', 1900, output);
+    noiseHit(time + 0.013, 0.1, 0.07, 'bandpass', 2200, output);
   }
 
   function hat(time: number, vel: number, decay: number) {
@@ -325,7 +341,8 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'riser', { duration });
       return;
     }
-    if (!ctx || !master || !noiseBuffer) return;
+    const output = musicDestination();
+    if (!ctx || !output || !noiseBuffer) return;
     playBufferSourceVoice({
       context: ctx,
       buffer: noiseBuffer,
@@ -345,7 +362,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'exponentialRamp', value: 0.14, time: time + duration },
         { type: 'linearRamp', value: 0, time: time + duration + 0.05 },
       ],
-      destination: master,
+      destination: output,
     });
   }
 
@@ -375,9 +392,10 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // ---- game SFX (all in key, quantized to musical grids) ------------------
 
   bus.on('lock', ({ lockCount }) => {
-    if (!ctx || !duck || !delaySend) return;
+    const output = sfxDestination();
+    if (!ctx || !output || !delaySend) return;
     const midi = LOCK_SCALE[Math.min(LOCK_SCALE.length, Math.max(1, lockCount)) - 1];
-    const time = quantizeToGrid(ctx.currentTime, EIGHTH);
+    const time = quantizeActionSfx(ctx.currentTime);
     playOscillatorVoice({
       context: ctx,
       time,
@@ -389,14 +407,15 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.16, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.1 },
       ],
-      destination: duck,
+      destination: output,
       sends: [{ destination: delaySend, gain: 0.35 }],
     });
   });
 
   bus.on('fire', () => {
-    if (!ctx || !master) return;
-    const time = quantizeToGrid(ctx.currentTime, EIGHTH);
+    const output = sfxDestination();
+    if (!ctx || !output) return;
+    const time = quantizeActionSfx(ctx.currentTime);
     playOscillatorVoice({
       context: ctx,
       time,
@@ -408,13 +427,14 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.09, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.08 },
       ],
-      destination: master,
+      destination: output,
     });
-    noiseHit(time, 0.05, 0.02, 'highpass', 3000, master);
+    noiseHit(time, 0.05, 0.02, 'highpass', 3000, output);
   });
 
   bus.on('hit', ({ lethal }) => {
-    if (lethal || !ctx || !duck || !delaySend) return;
+    const output = sfxDestination();
+    if (lethal || !ctx || !output || !delaySend) return;
     const time = quantize(ctx.currentTime);
     for (const [midi, at, vel] of [
       [81, time, 0.08],
@@ -432,15 +452,16 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: vel, time: at },
           { type: 'exponentialRamp', value: 0.001, time: at + 0.14 },
         ],
-        destination: duck,
+        destination: output,
         sends: [{ destination: delaySend, gain: 0.38 }],
       });
     }
-    noiseHit(time, 0.035, 0.035, 'highpass', 5600, duck);
+    noiseHit(time, 0.035, 0.035, 'highpass', 5600, output);
   });
 
   bus.on('reject', () => {
-    if (!ctx || !master) return;
+    const output = sfxDestination();
+    if (!ctx || !output) return;
     const time = ctx.currentTime;
 
     // Negative feedback: a dry, dissonant rejection thunk that cuts through
@@ -468,15 +489,16 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: vel, time: at },
           { type: 'exponentialRamp', value: 0.001, time: at + 0.24 },
         ],
-        destination: master,
+        destination: output,
       });
     }
-    noiseHit(time, 0.15, 0.09, 'bandpass', 720, master);
-    noiseHit(time + 0.025, 0.07, 0.12, 'highpass', 2400, master);
+    noiseHit(time, 0.15, 0.09, 'bandpass', 720, output);
+    noiseHit(time + 0.025, 0.07, 0.12, 'highpass', 2400, output);
   });
 
   bus.on('kill', () => {
-    if (!ctx || !duck || !delaySend) return;
+    const output = sfxDestination();
+    if (!ctx || !output || !delaySend) return;
     const time = quantize(ctx.currentTime);
     for (const [frequency, vel] of [
       [880, 0.12],
@@ -492,17 +514,18 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: vel, time },
           { type: 'exponentialRamp', value: 0.001, time: time + 0.22 },
         ],
-        destination: duck,
+        destination: output,
         sends: [{ destination: delaySend, gain: 0.4 }],
       });
     }
-    noiseHit(time, 0.06, 0.09, 'highpass', 5200, duck);
+    noiseHit(time, 0.06, 0.09, 'highpass', 5200, output);
   });
 
   // Hull hit: a low impact boom under a dissonant tritone stab — the one
   // sound in the level that is deliberately out of key.
   bus.on('playerhit', () => {
-    if (!ctx || !master) return;
+    const output = sfxDestination();
+    if (!ctx || !output) return;
     const time = ctx.currentTime;
     playOscillatorVoice({
       context: ctx,
@@ -515,7 +538,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.42, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.4 },
       ],
-      destination: master,
+      destination: output,
     });
     for (const midi of [63, 69]) {
       playOscillatorVoice({
@@ -528,10 +551,10 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: 0.07, time },
           { type: 'exponentialRamp', value: 0.001, time: time + 0.24 },
         ],
-        destination: master,
+        destination: output,
       });
     }
-    noiseHit(time, 0.2, 0.14, 'bandpass', 900, master);
+    noiseHit(time, 0.2, 0.14, 'bandpass', 900, output);
   });
 
   // Warden entrance: a rising two-note alarm over a long riser.
@@ -560,7 +583,8 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   });
 
   bus.on('miss', () => {
-    if (!ctx || !master) return;
+    const output = sfxDestination();
+    if (!ctx || !output) return;
     const time = ctx.currentTime;
     playOscillatorVoice({
       context: ctx,
@@ -573,7 +597,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.05, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.13 },
       ],
-      destination: master,
+      destination: output,
     });
   });
 
