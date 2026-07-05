@@ -554,7 +554,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function updateLocks() {
     if (!input.state.pointerDown || locks.length >= MAX_LOCKS) return;
 
-    for (const enemy of enemies.values()) {
+    for (const enemy of lockPriorityTargets()) {
       if (locks.length >= MAX_LOCKS) return;
       if (!canLockEnemy(enemy)) continue;
       const projected = enemy.mesh.position.clone().project(camera);
@@ -568,6 +568,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       attractReachedFullLocks = true;
       hud.hideTip();
     }
+  }
+
+  function lockPriorityTargets() {
+    return [...enemies.values()].sort((a, b) => Number(isHostileProjectile(b)) - Number(isHostileProjectile(a)));
   }
 
   function canLockEnemy(enemy: Enemy<TKind, TData>) {
@@ -730,7 +734,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function fireLocks(released: number[]) {
     locks.length = 0;
-    const releasedEnemies = released.map((enemyId) => enemies.get(enemyId)).filter((enemy) => enemy !== undefined);
+    const releasedEnemies = prioritizeVolleyTargets(released.map((enemyId) => enemies.get(enemyId)).filter((enemy) => enemy !== undefined));
     if (releasedEnemies.length === 0) return;
     const volleyId = state === 'running' ? createVolley(releasedEnemies) : undefined;
 
@@ -776,6 +780,26 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       return lastBeatMusicTime + (worldTime - lastBeatWorldTime);
     }
     return worldTime;
+  }
+
+  function prioritizeVolleyTargets(targets: Array<Enemy<TKind, TData>>) {
+    return targets
+      .map((target, index) => ({ target, index }))
+      .sort((a, b) => Number(isHostileProjectile(b.target)) - Number(isHostileProjectile(a.target)) || a.index - b.index)
+      .map(({ target }) => target);
+  }
+
+  function isHostileProjectile(enemy: Enemy<TKind, TData>) {
+    if (enemy.purpose !== 'enemy') return false;
+    const role = roleForEntry(enemy.entry);
+    return role === 'bolt' || role === 'flare' || enemy.kind === 'bolt' || enemy.kind === 'flare';
+  }
+
+  function roleForEntry(entry: LockOnSpawnEntry<TKind, TData> | undefined) {
+    const data = entry?.data;
+    if (typeof data !== 'object' || data === null || !('role' in data)) return undefined;
+    const role = (data as { role?: unknown }).role;
+    return typeof role === 'string' ? role : undefined;
   }
 
   function createVolley(releasedEnemies: Array<Enemy<TKind, TData>>) {
