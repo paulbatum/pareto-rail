@@ -1,4 +1,12 @@
-import { getActionSfxQuantization, setActionSfxQuantization } from '../engine/action-sfx-quantization';
+import {
+  setActionSfxQuantization,
+  setShotDelaySettings,
+  type ShotDelayPattern,
+} from '../engine/action-sfx-quantization';
+
+const CRYSTAL_BPM = 126;
+const CRYSTAL_BEAT_SECONDS = 60 / CRYSTAL_BPM;
+const CRYSTAL_THIRTYSECOND_SECONDS = CRYSTAL_BEAT_SECONDS / 8;
 
 const GRID_OPTIONS = [
   { label: 'Immediate', enabled: false, gridThirtyseconds: 4 },
@@ -10,50 +18,165 @@ const GRID_OPTIONS = [
   { label: 'Bar', enabled: true, gridThirtyseconds: 32 },
 ] as const;
 
+type TimingPreset = {
+  sfxEnabled: boolean;
+  sfxGridThirtyseconds: number;
+  shotGapThirtyseconds: number;
+  releaseShare: number;
+  pattern: ShotDelayPattern;
+  gridRampGapGrowthThirtyseconds: number;
+};
+
+const OLD_PRESET: TimingPreset = {
+  sfxEnabled: true,
+  sfxGridThirtyseconds: 1,
+  shotGapThirtyseconds: 1,
+  releaseShare: 1,
+  pattern: 'linear',
+  gridRampGapGrowthThirtyseconds: 0,
+};
+
+const LINEAR_PRESET: TimingPreset = {
+  sfxEnabled: true,
+  sfxGridThirtyseconds: 1,
+  shotGapThirtyseconds: 2,
+  releaseShare: 0.35,
+  pattern: 'linear',
+  gridRampGapGrowthThirtyseconds: 0,
+};
+
+const REZISH_PRESET: TimingPreset = {
+  sfxEnabled: true,
+  sfxGridThirtyseconds: 1,
+  shotGapThirtyseconds: 3,
+  releaseShare: 0.75,
+  pattern: 'front-tight',
+  gridRampGapGrowthThirtyseconds: 0,
+};
+
+const REZER_PRESET: TimingPreset = {
+  sfxEnabled: true,
+  sfxGridThirtyseconds: 1,
+  shotGapThirtyseconds: 2,
+  releaseShare: 0.75,
+  pattern: 'grid-ramp',
+  gridRampGapGrowthThirtyseconds: 2,
+};
+
 export function installDebugQuantPanel(activeLevelId: string) {
-  if (!import.meta.env.DEV || activeLevelId !== 'crystal-corridor') return;
+  if (!import.meta.env.DEV || !activeLevelId.startsWith('crystal')) return;
 
   const panel = document.createElement('details');
   panel.className = 'debug-quant-panel';
   panel.open = true;
 
   const summary = document.createElement('summary');
-  summary.textContent = 'SFX Quant';
+  summary.textContent = 'Crystal Timing';
   panel.append(summary);
 
   const body = document.createElement('div');
   body.className = 'debug-quant-panel-body';
   panel.append(body);
 
-  const gridLabel = document.createElement('label');
-  const gridText = document.createElement('span');
-  const gridInput = document.createElement('input');
-  gridInput.type = 'range';
-  gridInput.min = '0';
-  gridInput.max = `${GRID_OPTIONS.length - 1}`;
-  gridInput.step = '1';
-  gridLabel.append(gridText, gridInput);
+  const presets = document.createElement('div');
+  presets.className = 'debug-quant-presets';
+  const rezishButton = button('Rez-ish');
+  const rezerButton = button('Rez-er');
+  const linearButton = button('Linear');
+  const oldButton = button('Old');
+  presets.append(rezishButton, rezerButton, linearButton, oldButton);
+
+  const patternText = document.createElement('div');
+  patternText.className = 'debug-quant-readout';
+
+  const { label: gridLabel, text: gridText, input: gridInput } = range('0', `${GRID_OPTIONS.length - 1}`, '1');
+  const { label: gapLabel, text: gapText, input: gapInput } = range('0', '8', '1');
+  const { label: splitLabel, text: splitText, input: splitInput } = range('0', '100', '5');
+  const { label: growthLabel, text: growthText, input: growthInput } = range('0', '4', '1');
 
   const help = document.createElement('p');
-  help.textContent = 'Crystal lock/fire SFX only. Gameplay timing is unchanged.';
+  help.textContent = 'Crystal only. Rez-er uses per-shot grid sizes: 32nd, 16th, 8th, quarter, half, bar. Disabled sliders do not affect the active preset.';
 
-  body.append(gridLabel, help);
+  body.append(presets, patternText, gridLabel, gapLabel, splitLabel, growthLabel, help);
   document.body.append(panel);
 
-  const current = getActionSfxQuantization();
-  gridInput.value = `${optionIndexFor(current.enabled, current.gridThirtyseconds)}`;
+  let activePattern: ShotDelayPattern = 'linear';
 
   function apply() {
     const option = GRID_OPTIONS[Number(gridInput.value)] ?? GRID_OPTIONS[0];
+    const shotGapThirtyseconds = Number(gapInput.value);
+    const releaseShare = Number(splitInput.value) / 100;
+    const growthThirtyseconds = Number(growthInput.value);
     setActionSfxQuantization({
       enabled: option.enabled,
       gridThirtyseconds: option.gridThirtyseconds,
     });
-    gridText.textContent = `Snap grid: ${option.label}`;
+    setShotDelaySettings({
+      gapSeconds: shotGapThirtyseconds * CRYSTAL_THIRTYSECOND_SECONDS,
+      releaseShare,
+      pattern: activePattern,
+      beatSeconds: CRYSTAL_BEAT_SECONDS,
+      gridRampGapGrowthSeconds: growthThirtyseconds * CRYSTAL_THIRTYSECOND_SECONDS,
+    });
+    gridText.textContent = `SFX snap grid: ${option.label}`;
+    gapText.textContent = shotGapThirtyseconds === 0
+      ? 'Shot delay unit: off'
+      : `Shot delay unit: ${shotGapThirtyseconds} × 32nd (${Math.round(shotGapThirtyseconds * CRYSTAL_THIRTYSECOND_SECONDS * 1000)}ms)`;
+    splitText.textContent = `Delay split: release ${Math.round(releaseShare * 100)}% / travel ${Math.round((1 - releaseShare) * 100)}%`;
+    growthText.textContent = `Grid-ramp gap growth: ${growthThirtyseconds} × 32nd (${Math.round(growthThirtyseconds * CRYSTAL_THIRTYSECOND_SECONDS * 1000)}ms)`;
+    setDisabled(gapLabel, gapInput, activePattern === 'grid-ramp');
+    setDisabled(growthLabel, growthInput, activePattern !== 'grid-ramp');
+    patternText.textContent = labelForPattern(activePattern);
   }
 
+  function applyPreset(preset: TimingPreset) {
+    activePattern = preset.pattern;
+    gridInput.value = `${optionIndexFor(preset.sfxEnabled, preset.sfxGridThirtyseconds)}`;
+    gapInput.value = `${preset.shotGapThirtyseconds}`;
+    splitInput.value = `${Math.round(preset.releaseShare * 100)}`;
+    growthInput.value = `${preset.gridRampGapGrowthThirtyseconds}`;
+    apply();
+  }
+
+  rezishButton.addEventListener('click', () => applyPreset(REZISH_PRESET));
+  rezerButton.addEventListener('click', () => applyPreset(REZER_PRESET));
+  linearButton.addEventListener('click', () => applyPreset(LINEAR_PRESET));
+  oldButton.addEventListener('click', () => applyPreset(OLD_PRESET));
   gridInput.addEventListener('input', apply);
-  apply();
+  gapInput.addEventListener('input', apply);
+  splitInput.addEventListener('input', apply);
+  growthInput.addEventListener('input', apply);
+  applyPreset(REZER_PRESET);
+}
+
+function button(text: string) {
+  const element = document.createElement('button');
+  element.type = 'button';
+  element.textContent = text;
+  return element;
+}
+
+function range(min: string, max: string, step: string) {
+  const label = document.createElement('label');
+  const text = document.createElement('span');
+  const input = document.createElement('input');
+  input.type = 'range';
+  input.min = min;
+  input.max = max;
+  input.step = step;
+  label.append(text, input);
+  return { label, text, input };
+}
+
+function setDisabled(label: HTMLLabelElement, input: HTMLInputElement, disabled: boolean) {
+  label.classList.toggle('debug-quant-disabled', disabled);
+  input.disabled = disabled;
+}
+
+function labelForPattern(pattern: ShotDelayPattern) {
+  if (pattern === 'linear') return 'Shot rhythm: linear';
+  if (pattern === 'front-tight') return 'Shot rhythm: Rez-ish non-linear (0, 1, 3, 6...)';
+  return 'Shot rhythm: Rez-er grid ramp (32nd, 16th, 8th, quarter, half, bar)';
 }
 
 function optionIndexFor(enabled: boolean, gridThirtyseconds: number) {

@@ -143,7 +143,7 @@ canvas {
   position: fixed;
   right: 18px;
   bottom: 18px;
-  z-index: 7;
+  z-index: 12;
   width: min(340px, calc(100vw - 36px));
   padding: 8px 10px;
   color: var(--cyan-dim);
@@ -167,6 +167,31 @@ canvas {
   padding-top: 10px;
 }
 
+.debug-quant-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.debug-quant-panel button {
+  padding: 6px 8px;
+  color: var(--ink);
+  background: var(--cyan);
+  border: 0;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.debug-quant-readout {
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
 .debug-quant-panel label {
   display: grid;
   gap: 5px;
@@ -175,6 +200,14 @@ canvas {
 .debug-quant-panel input {
   accent-color: var(--magenta);
   cursor: pointer;
+}
+
+.debug-quant-disabled {
+  opacity: 0.42;
+}
+
+.debug-quant-disabled input {
+  cursor: not-allowed;
 }
 
 .debug-quant-panel p {

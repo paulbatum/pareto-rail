@@ -1,5 +1,6 @@
 import { MathUtils, Object3D, PerspectiveCamera, Raycaster, Scene, Vector3 } from 'three';
 import type { CatmullRomCurve3 } from 'three';
+import { getShotDelaySettings, shotDelayForIndex } from './action-sfx-quantization';
 import { createInput } from './input';
 import { MAX_LOCKS } from './locks';
 import { smoothRunProgress } from './rail';
@@ -12,7 +13,6 @@ const RETICLE_DISTANCE = 24;
 const LOCK_RADIUS_NDC = 0.085;
 const PROJECTILE_SPEED = 82;
 const PROJECTILE_HIT_RADIUS = 1.15;
-const FIRE_STAGGER = 0.06;
 const WORD_DISTANCE = 20;
 const START_WORD = 'START!';
 const REPLAY_WORD = 'REPLAY';
@@ -132,6 +132,7 @@ type PendingShot = {
   volleySize: number;
   fireAt: number;
   origin: Vector3;
+  travelDelay: number;
   volleyId?: number;
   indexInVolley?: number;
 };
@@ -142,6 +143,7 @@ type Projectile = {
   volleySize: number;
   mesh: Object3D;
   velocity: Vector3;
+  speed: number;
   volleyId?: number;
   indexInVolley?: number;
 };
@@ -178,6 +180,13 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const timelineTotalEnemies = level.spawnTimeline.filter((entry) => countsEntryTowardTotal(entry)).length;
   const hasPlayerHealth = level.playerHealth !== undefined;
   const maxPlayerHealth = level.playerHealth ?? Infinity;
+  let lastBeatWorldTime = -Infinity;
+  let lastBeatMusicTime = 0;
+  const offBeat = bus.on('beat', ({ beatNumber }) => {
+    const { beatSeconds } = getShotDelaySettings();
+    lastBeatWorldTime = worldTime;
+    lastBeatMusicTime = beatNumber * beatSeconds;
+  });
   const input = createInput(canvas, {
     onRestart: () => startRun(),
     onPause,
@@ -736,18 +745,37 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       });
     }
 
+    const origin = reticlePoint.clone();
+    const baselineTravelTimes = releasedEnemies.map((enemy) => enemy.mesh.position.distanceTo(origin) / PROJECTILE_SPEED);
+    const releaseMusicTime = currentMusicTime();
     releasedEnemies.forEach((enemy, index) => {
+      const shotDelay = shotDelayForIndex({
+        index,
+        volleySize: releasedEnemies.length,
+        releaseTime: releaseMusicTime,
+        baselineTravelTime: baselineTravelTimes[index] ?? 0,
+        baselineTravelTimes,
+      });
       pendingShots.push({
         projectileId: nextProjectileId,
         enemyId: enemy.id,
         volleySize: releasedEnemies.length,
-        fireAt: worldTime + index * FIRE_STAGGER,
-        origin: reticlePoint.clone(),
+        fireAt: worldTime + shotDelay.releaseDelay,
+        origin: origin.clone(),
+        travelDelay: shotDelay.travelDelay,
         volleyId,
         indexInVolley: volleyId === undefined ? undefined : index,
       });
       nextProjectileId += 1;
     });
+  }
+
+  function currentMusicTime() {
+    const { beatSeconds } = getShotDelaySettings();
+    if (Number.isFinite(lastBeatWorldTime) && worldTime - lastBeatWorldTime < beatSeconds * 8) {
+      return lastBeatMusicTime + (worldTime - lastBeatWorldTime);
+    }
+    return worldTime;
   }
 
   function createVolley(releasedEnemies: Array<Enemy<TKind, TData>>) {
@@ -829,12 +857,17 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       mesh.userData.raildRole = 'projectile';
       mesh.position.copy(shot.origin);
       scene.add(mesh);
+      const toTarget = enemy.mesh.position.clone().sub(shot.origin);
+      const distance = toTarget.length();
+      const baselineTravelTime = distance / PROJECTILE_SPEED;
+      const speed = distance / Math.max(0.001, baselineTravelTime + shot.travelDelay);
       projectiles.set(shot.projectileId, {
         id: shot.projectileId,
         enemyId: shot.enemyId,
         volleySize: shot.volleySize,
         mesh,
-        velocity: enemy.mesh.position.clone().sub(shot.origin).normalize().multiplyScalar(PROJECTILE_SPEED),
+        velocity: toTarget.normalize().multiplyScalar(speed),
+        speed,
         volleyId: shot.volleyId,
         indexInVolley: shot.indexInVolley,
       });
@@ -867,7 +900,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         continue;
       }
 
-      const desired = toTarget.normalize().multiplyScalar(PROJECTILE_SPEED);
+      const desired = toTarget.normalize().multiplyScalar(projectile.speed);
       projectile.velocity.lerp(desired, Math.min(1, dt * 8));
       projectile.mesh.position.addScaledVector(projectile.velocity, dt);
       projectile.mesh.lookAt(enemy.mesh.position);
@@ -1123,6 +1156,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     update,
     dispose() {
       document.removeEventListener('fullscreenchange', updateStartTipVisibility);
+      offBeat();
       input.dispose();
       scene.remove(reticle);
       clearRunObjects();
