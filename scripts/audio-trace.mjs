@@ -9,6 +9,14 @@ import puppeteer from 'puppeteer';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const TRACE_TARGETS = {
+  crystal: {
+    module: '/src/levels/crystal/audio.ts',
+    exportName: 'traceCrystalAudio',
+  },
+  'crystal-corridor': {
+    module: '/src/levels/crystal/audio.ts',
+    exportName: 'traceCrystalAudio',
+  },
   'crystal-debug': {
     module: '/src/levels/crystal-debug/audio.ts',
     exportName: 'traceCrystalDebugAudio',
