@@ -43,7 +43,7 @@ const LINEAR_PRESET: TimingPreset = {
   gridRampGapGrowthThirtyseconds: 0,
 };
 
-const REZER_PRESET: TimingPreset = {
+const DEFAULT_PRESET: TimingPreset = {
   sfxEnabled: true,
   sfxGridThirtyseconds: 1,
   shotGapThirtyseconds: 2,
@@ -70,10 +70,10 @@ export function installDebugQuantPanel(level: { id: string; bpm: number }) {
 
   const presets = document.createElement('div');
   presets.className = 'debug-quant-presets';
-  const rezerButton = button('Default');
+  const defaultButton = button('Default');
   const linearButton = button('Linear');
   const oldButton = button('Old');
-  presets.append(rezerButton, linearButton, oldButton);
+  presets.append(defaultButton, linearButton, oldButton);
 
   const patternText = document.createElement('div');
   patternText.className = 'debug-quant-readout';
@@ -142,7 +142,7 @@ export function installDebugQuantPanel(level: { id: string; bpm: number }) {
     render();
   }
 
-  rezerButton.addEventListener('click', () => applyPreset(REZER_PRESET));
+  defaultButton.addEventListener('click', () => applyPreset(DEFAULT_PRESET));
   linearButton.addEventListener('click', () => applyPreset(LINEAR_PRESET));
   oldButton.addEventListener('click', () => applyPreset(OLD_PRESET));
   gridInput.addEventListener('input', apply);

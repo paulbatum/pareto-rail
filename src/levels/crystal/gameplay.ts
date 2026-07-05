@@ -15,16 +15,6 @@ export const CRYSTAL_BPM = 126;
 export const CRYSTAL_RUN_DURATION = 45;
 export const CRYSTAL_PLAYER_HEALTH = 3;
 
-export const CRYSTAL_TIMING: LockOnRunnerLevel['timing'] = {
-  shotDelay: {
-    pattern: 'grid-ramp',
-    gapThirtyseconds: 2,
-    releaseShare: 0.75,
-    gridRampGapGrowthThirtyseconds: 2,
-  },
-  actionSfx: { enabled: true, gridThirtyseconds: 1 },
-};
-
 export type CrystalEnemyKind =
   | 'node'
   | 'drifter'
@@ -376,7 +366,6 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     duration: CRYSTAL_RUN_DURATION,
     bpm: CRYSTAL_BPM,
     playerHealth: CRYSTAL_PLAYER_HEALTH,
-    timing: CRYSTAL_TIMING,
     createRail: createCrystalRail,
     spawnTimeline: CRYSTAL_TIMELINE,
     easeRunProgress: smoothRunProgress,

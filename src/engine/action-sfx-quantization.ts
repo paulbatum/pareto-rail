@@ -30,15 +30,17 @@ export type ActionSfxQuantizationSettings = {
 const DEFAULT_GRID_THIRTYSECONDS = 1; // 32nd note
 const GRID_RAMP_THIRTYSECONDS = [1, 2, 4, 8, 16, 32, 32, 32];
 
+// The game's default quantization profile. Levels can override or opt out via
+// the runner's timing field.
 const shotDelaySettings: ShotDelaySettings = {
-  gapThirtyseconds: 1,
-  releaseShare: 1,
-  pattern: 'linear',
-  gridRampGapGrowthThirtyseconds: 0,
+  gapThirtyseconds: 2,
+  releaseShare: 0.75,
+  pattern: 'grid-ramp',
+  gridRampGapGrowthThirtyseconds: 2,
 };
 
 const settings: ActionSfxQuantizationSettings = {
-  enabled: false,
+  enabled: true,
   gridThirtyseconds: DEFAULT_GRID_THIRTYSECONDS,
 };
 

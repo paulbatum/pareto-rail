@@ -706,8 +706,6 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   return {
     duration: HELIOS_DURATION,
     bpm: HELIOS_BPM,
-    // Preserve the shipped 32nd-note snap on lock/fire SFX now that the engine default is off.
-    timing: { actionSfx: { enabled: true, gridThirtyseconds: 1 } },
     playerHealth: HELIOS_PLAYER_HEALTH,
     createRail: createHeliosRail,
     spawnTimeline: HELIOS_TIMELINE,
