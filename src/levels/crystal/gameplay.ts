@@ -243,11 +243,8 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
   }
 
   function updateWave(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'wave' }>) {
-    const { enemy, runTime, runProgress, age, curve, camera } = context;
-    const anchorU = smoothRunProgress(
-      Math.min(CRYSTAL_RUN_DURATION, enemy.entry.time + data.lead),
-      CRYSTAL_RUN_DURATION,
-    );
+    const { enemy, runTime, runProgress, age, curve, camera, railAnchor } = context;
+    const anchorU = railAnchor(data.lead);
     const offset = data.offset.clone();
     if (data.pattern === 'drift') {
       offset.x += Math.sin(age * 0.85 + enemy.id) * 1.3 + age * 0.55;

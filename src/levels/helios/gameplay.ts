@@ -466,8 +466,8 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   // ---- movement -------------------------------------------------------------
 
   function updateLattice(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'lattice' }>) {
-    const { enemy, runProgress, age, curve, camera } = context;
-    const anchorU = heliosRunProgress(Math.min(HELIOS_DURATION, enemy.entry.time + data.lead));
+    const { enemy, runProgress, age, curve, camera, railAnchor } = context;
+    const anchorU = railAnchor(data.lead);
     // The whole formation slowly wheels around its center while each ember
     // tumbles in place — a smoldering constellation, not a static wall.
     const angle = age * data.spin;
@@ -482,8 +482,8 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   }
 
   function updateMote(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'mote' }>) {
-    const { enemy, runProgress, age, curve, camera } = context;
-    const anchorU = heliosRunProgress(Math.min(HELIOS_DURATION, enemy.entry.time + data.lead));
+    const { enemy, runProgress, age, curve, camera, railAnchor } = context;
+    const anchorU = railAnchor(data.lead);
     const t = (age - data.delay) / data.crossTime;
     if (t > 1.15 || runProgress > anchorU + 0.012) return true;
     const clamped = MathUtils.clamp(t, 0, 1);
@@ -504,8 +504,8 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   }
 
   function updateScorcher(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'scorcher' }>) {
-    const { enemy, runProgress, age, curve, camera } = context;
-    const anchorU = heliosRunProgress(Math.min(HELIOS_DURATION, enemy.entry.time + data.lead));
+    const { enemy, runProgress, age, curve, camera, railAnchor } = context;
+    const anchorU = railAnchor(data.lead);
     const offset = data.offset.clone();
     offset.x += Math.sin(age * 1.15 + data.seed) * 2.6;
     offset.y += Math.sin(age * 1.75 + data.seed * 2.1) * 1.7;
@@ -527,10 +527,10 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   }
 
   function updatePyre(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'pyre' }>) {
-    const { enemy, runProgress, age, curve, camera } = context;
+    const { enemy, runProgress, age, curve, camera, railAnchor } = context;
     const close = Math.min(1, age / data.closeTime);
     const lead = MathUtils.lerp(data.leadStart, data.leadEnd, close * close * (3 - 2 * close));
-    const anchorU = heliosRunProgress(Math.min(HELIOS_DURATION, enemy.entry.time + lead));
+    const anchorU = railAnchor(lead);
     const offset = data.offset.clone();
     offset.x += Math.sin(age * 0.5) * 1.1;
     offset.y += 2 + Math.sin(age * 0.75) * 0.8;

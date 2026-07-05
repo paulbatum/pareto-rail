@@ -76,9 +76,9 @@ export const prismGameplay: LockOnRunnerLevel<PrismEnemyKind, PrismSpawnData> = 
     const base = enemy.kind === 'echo' ? 140 : enemy.kind === 'comet' ? 115 : 100;
     return Math.round(base * (1 + Math.max(0, volleySize - 1) * 0.12));
   },
-  updateEnemy({ enemy, runTime, runProgress, age, curve, camera }) {
+  updateEnemy({ enemy, runTime, runProgress, age, curve, camera, railAnchor }) {
     const { data } = enemy.entry;
-    const anchorU = smoothRunProgress(Math.min(PRISM_RUN_DURATION, enemy.entry.time + data.lead), PRISM_RUN_DURATION);
+    const anchorU = railAnchor(data.lead);
     const drift = new Vector3();
 
     if (data.pattern === 'spiral') {

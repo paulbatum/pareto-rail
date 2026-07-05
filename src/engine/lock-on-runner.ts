@@ -72,6 +72,8 @@ export type LockOnEnemyUpdate<TKind extends string = string, TData = unknown> = 
   age: number;
   curve: CatmullRomCurve3;
   camera: PerspectiveCamera;
+  /** Eased rail progress where an enemy seats itself: ease(min(duration, entry.time + lead), duration). */
+  railAnchor(lead: number): number;
   spawnEnemy(entry: LockOnSpawnEntry<TKind, TData>): number;
   damagePlayer(amount?: number): void;
   playerHealth: number;
@@ -477,6 +479,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function updateEnemy(enemy: Enemy<TKind, TData>, runProgress: number) {
     if (!enemy.entry || enemy.kind === 'letter') return false;
+    return updateActiveEnemy(enemy as Enemy<TKind, TData> & { entry: LockOnSpawnEntry<TKind, TData> }, runProgress);
+  }
+
+  function updateActiveEnemy(enemy: Enemy<TKind, TData> & { entry: LockOnSpawnEntry<TKind, TData> }, runProgress: number) {
     return level.updateEnemy({
       enemy: toPublicEnemy(enemy),
       runTime,
@@ -484,6 +490,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       age: Math.max(0, runTime - enemy.spawnTime),
       curve,
       camera,
+      railAnchor: (lead) => easeRunProgress(Math.min(duration, enemy.entry.time + lead), duration),
       spawnEnemy: enemyUpdateHelpers.spawnEnemy,
       damagePlayer: enemyUpdateHelpers.damagePlayer,
       playerHealth: hasPlayerHealth ? health : Infinity,
