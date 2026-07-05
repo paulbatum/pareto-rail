@@ -94,6 +94,17 @@ export const post: LevelPostConfig = {
 
 The bloom slider goes to 0. A level must stay playable and legible with bloom fully off. Do not rely on bloom alone to make targets, letters, or the reticle visible; HDR colors control how hard things glow when bloom is on, but base geometry and color must carry readability when it is off.
 
+## Musical action audio
+
+Crystal (`src/levels/crystal/audio.ts`) is the reference for integrating gameplay sounds into the level's music, Rez-style: player actions are notes in the score, not sound effects layered over it. These lessons came out of A/B playtesting and apply to any level with a beat-driven soundtrack:
+
+- **Quantize to the transport's actual grid, not the audio clock.** Capture the audio-clock time of the transport's first step when it starts, and snap player sounds to that epoch plus whole steps. `quantizeToGrid` and `quantizeActionSfxTime` align to clock zero, which sits far enough off the real steps (tens of milliseconds) to blur "on the beat" into "near the beat". Lock and fire should still honor the timing panel's snap settings via `getActionSfxQuantization()`, applied on the epoch-anchored grid — see crystal's `quantizePlayerAction`.
+- **Pitch player sounds from the live harmony.** Derive lock, fire, hit, and kill pitches from the chord sounding at the scheduled step, so an action at any moment is consonant and the player's instrument retunes as the progression moves.
+- **Make kills melodic, not just consonant.** Crystal authors a hidden per-act sequencer lane across its chord cycle; a kill plays the note written at the grid step it lands on, so a chained volley performs a real melodic run. Leave register space for this: during runs the backing arrangement stays out of the register the player's melody owns.
+- **Change player timbres only with cover.** If the player instruments change voice where the arrangement does not change, crossfade over a couple of bars, playing both voices at complementary weights. A hard switch is fine only when the music turns over at the same moment (a boss entrance, a drop).
+- **Tune gains by perceived loudness, not by matching numbers.** At equal gain a square or sawtooth sounds far louder than a sine or triangle. Crossfading between waveforms with equal gain values lets the brighter voice take over halfway through the blend; each voice needs its own gain tuned by ear.
+- **Give a boss its own escalating voice.** Repeated hits on a boss should audibly grow with damage dealt — gain, brightness, a climbing pitch element — and the killing blow deserves a scheduled finale: duck the music for a breath and land a conclusive figure on the grid.
+
 ## Audio and visual inspection tools
 
 Use the audio trace tool while building levels, the same way you use snapshots for visuals. It inspects procedural music structure without relying on human listening for every iteration:
@@ -111,7 +122,7 @@ npm run trace:audio -- --level helios --graph
 
 The default output is a compact semantic summary for level authoring. Use `--verbose` or `--compare` when characterizing a refactor. The semantic trace is not waveform-based: it captures scheduled musical events, beat events, sections, and important voice calls, not browser compressor output or final mix quality. It currently covers `crystal`, `crystal-debug`, `prism`, `rezdle`, and `helios`.
 
-In dev builds, the timing debug panel is available on every level. It reads the selected level's BPM and effective runner timing baseline, including inherited defaults or level overrides. To make its action SFX snap control affect a level, route player-action one-shot scheduling for `lock` and `fire` events through `quantizeActionSfxTime(time, thirtysecondSeconds)`. Do not route music, ambient, hit, or kill sounds through that control.
+In dev builds, the timing debug panel is available on every level. It reads the selected level's BPM and effective runner timing baseline, including inherited defaults or level overrides. To make its action SFX snap control affect a level, honor `getActionSfxQuantization()` when scheduling `lock` and `fire` one-shots — preferably on the level transport's epoch-anchored grid as in crystal's `quantizePlayerAction` (see "Musical action audio" above), or through `quantizeActionSfxTime(time, thirtysecondSeconds)` if the level has no step transport. Do not route music, ambient, hit, or kill sounds through that control.
 
 Use `--graph` to inspect the actual Web Audio graph that a level creates in Chrome via the DevTools Protocol. Graph capture can run for level modules that export `createAudio` from `src/levels/<module-folder>/audio.ts`; use the module folder name when it differs from the picker id. It captures node topology and node/parameter defaults; it does not capture every later parameter assignment in a stable authoring-friendly form.
 

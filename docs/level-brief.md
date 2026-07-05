@@ -40,7 +40,7 @@ Every level must have, at minimum:
 Your output will be compared against levels built by other agents from this same brief. Meeting the floor does not score points; it avoids losing them. Judges reward:
 
 - **Cohesion** — palette, geometry, motion, and sound feel like one idea, not a collection of features.
-- **Musicality** — the run feels scored rather than accompanied; downbeats and phrase boundaries mean something on screen.
+- **Musicality** — the run feels scored rather than accompanied; downbeats and phrase boundaries mean something on screen, and player actions land inside the music (quantized to the transport, pitched from the live harmony) rather than sitting on top of it as generic SFX. See "Musical action audio" in `docs/level-authoring.md`.
 - **Game feel** — locking is tactile, volleys land with weight, a full 6-lock release feels like an event.
 - **Choreography** — waves read as designed moments with build and payoff, not a stream of targets.
 - **Distinctiveness** — the level is recognizable at a glance and by ear as its own thing. Imitating an existing level's visual or musical language is a losing move.
