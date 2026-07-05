@@ -201,7 +201,7 @@ function createGate(curve: ReturnType<typeof createHeliosRail>) {
   gate.position.copy(frame.position);
   gate.lookAt(frame.position.clone().add(frame.tangent));
 
-  const dark = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(1.6) });
+  const dark = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(0.5) });
   const seamMaterial = new MeshBasicNodeMaterial({
     transparent: true,
     blending: AdditiveBlending,
@@ -294,7 +294,7 @@ function createWreckField(rng: Rng, curve: ReturnType<typeof createHeliosRail>) 
     plate.dispose();
   }
   const group = new Group();
-  group.add(new Mesh(mergeGeometries(fills), new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(1.3) })));
+  group.add(new Mesh(mergeGeometries(fills), new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(0.4) })));
   const edgeMaterial = new LineBasicNodeMaterial({
     transparent: true,
     blending: AdditiveBlending,
@@ -390,7 +390,7 @@ function createConduit(curve: ReturnType<typeof createHeliosRail>) {
   group.add(ribs);
 
   // Colossal pylon monoliths off to the sides.
-  const dark = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(1.15) });
+  const dark = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(0.42) });
   const seam = new MeshBasicMaterial({ color: hdr(EMBER, 0.75), transparent: true, blending: AdditiveBlending, depthWrite: false });
   for (let i = 0; i < 8; i += 1) {
     const u = uStart + ((uEnd - uStart) * (i + 0.5)) / 8;

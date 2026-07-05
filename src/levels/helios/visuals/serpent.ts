@@ -350,16 +350,22 @@ export function updateSerpentBody(body: SerpentBody, headPosition: Vector3 | nul
   }
 
   body.state = 'following';
+  // Each segment settles below and *beyond* its leader (down the rail, away from
+  // the player), so the neck reads as the serpent rearing up out of the star.
+  // A pure follow-the-trail chain would drape the neck back through the camera,
+  // because the head paces the camera down the rail.
+  const bias = new Vector3(0, -NECK_SPACING * 0.55, -NECK_SPACING * 0.62);
   let leader = headPosition;
   for (const segment of body.neck) {
+    const target = leader.clone().add(bias);
     if (!segment.visible) {
-      segment.position.copy(leader).add(new Vector3(0, -NECK_SPACING, 6));
+      segment.position.copy(target);
       segment.visible = true;
     }
-    const toLeader = leader.clone().sub(segment.position);
-    const distance = toLeader.length();
+    const toTarget = target.sub(segment.position);
+    const distance = toTarget.length();
     if (distance > NECK_SPACING) {
-      segment.position.addScaledVector(toLeader.normalize(), Math.min(distance - NECK_SPACING, distance * Math.min(1, dt * 4.5)));
+      segment.position.addScaledVector(toTarget.normalize(), Math.min(distance - NECK_SPACING, distance * Math.min(1, dt * 4.5)));
     }
     segment.lookAt(leader);
     leader = segment.position;
