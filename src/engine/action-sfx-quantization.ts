@@ -1,9 +1,9 @@
 import { quantizeToGrid } from './music';
 
-export type ShotDelayPattern = 'linear' | 'front-tight' | 'grid-ramp';
+export type ShotDelayPattern = 'linear' | 'grid-ramp';
 
 export type ShotDelaySettings = {
-  /** Delay unit used by the linear and front-tight patterns. */
+  /** Delay unit used by the linear pattern. */
   gapSeconds: number;
   /** 0 = all delay is travel time; 1 = all delay is before launch. */
   releaseShare: number;
@@ -29,7 +29,6 @@ export type ActionSfxQuantizationSettings = {
 };
 
 const DEFAULT_GRID_THIRTYSECONDS = 1; // 32nd note
-const FRONT_TIGHT_STEPS = [0, 1, 3, 6, 8, 10, 12, 14];
 const GRID_RAMP_THIRTYSECONDS = [1, 2, 4, 8, 16, 32, 32, 32];
 
 const shotDelaySettings: ShotDelaySettings = {
@@ -104,8 +103,7 @@ function thirtysecondSeconds() {
 }
 
 function delayStepForIndex(index: number) {
-  if (shotDelaySettings.pattern === 'linear') return index;
-  return FRONT_TIGHT_STEPS[index] ?? FRONT_TIGHT_STEPS[FRONT_TIGHT_STEPS.length - 1] + (index - FRONT_TIGHT_STEPS.length + 1) * 2;
+  return index;
 }
 
 export function getActionSfxQuantization() {

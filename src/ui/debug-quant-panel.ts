@@ -45,15 +45,6 @@ const LINEAR_PRESET: TimingPreset = {
   gridRampGapGrowthThirtyseconds: 0,
 };
 
-const REZISH_PRESET: TimingPreset = {
-  sfxEnabled: true,
-  sfxGridThirtyseconds: 1,
-  shotGapThirtyseconds: 3,
-  releaseShare: 0.75,
-  pattern: 'front-tight',
-  gridRampGapGrowthThirtyseconds: 0,
-};
-
 const REZER_PRESET: TimingPreset = {
   sfxEnabled: true,
   sfxGridThirtyseconds: 1,
@@ -80,11 +71,10 @@ export function installDebugQuantPanel(activeLevelId: string) {
 
   const presets = document.createElement('div');
   presets.className = 'debug-quant-presets';
-  const rezishButton = button('Rez-ish');
-  const rezerButton = button('Rez-er');
+  const rezerButton = button('Default');
   const linearButton = button('Linear');
   const oldButton = button('Old');
-  presets.append(rezishButton, rezerButton, linearButton, oldButton);
+  presets.append(rezerButton, linearButton, oldButton);
 
   const patternText = document.createElement('div');
   patternText.className = 'debug-quant-readout';
@@ -95,7 +85,7 @@ export function installDebugQuantPanel(activeLevelId: string) {
   const { label: growthLabel, text: growthText, input: growthInput } = range('0', '4', '1');
 
   const help = document.createElement('p');
-  help.textContent = 'Crystal only. Rez-er uses per-shot grid sizes: 32nd, 16th, 8th, quarter, half, bar. Disabled sliders do not affect the active preset.';
+  help.textContent = 'Crystal only. Default uses per-shot grid sizes: 32nd, 16th, 8th, quarter, half, bar. Disabled sliders do not affect the active preset.';
 
   body.append(presets, patternText, gridLabel, gapLabel, splitLabel, growthLabel, help);
   document.body.append(panel);
@@ -138,7 +128,6 @@ export function installDebugQuantPanel(activeLevelId: string) {
     apply();
   }
 
-  rezishButton.addEventListener('click', () => applyPreset(REZISH_PRESET));
   rezerButton.addEventListener('click', () => applyPreset(REZER_PRESET));
   linearButton.addEventListener('click', () => applyPreset(LINEAR_PRESET));
   oldButton.addEventListener('click', () => applyPreset(OLD_PRESET));
@@ -175,8 +164,7 @@ function setDisabled(label: HTMLLabelElement, input: HTMLInputElement, disabled:
 
 function labelForPattern(pattern: ShotDelayPattern) {
   if (pattern === 'linear') return 'Shot rhythm: linear';
-  if (pattern === 'front-tight') return 'Shot rhythm: Rez-ish non-linear (0, 1, 3, 6...)';
-  return 'Shot rhythm: Rez-er grid ramp (32nd, 16th, 8th, quarter, half, bar)';
+  return 'Shot rhythm: default grid ramp (32nd, 16th, 8th, quarter, half, bar)';
 }
 
 function optionIndexFor(enabled: boolean, gridThirtyseconds: number) {
