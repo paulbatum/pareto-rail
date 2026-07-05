@@ -10,9 +10,14 @@ export type Hud = ReturnType<typeof createHud>;
 
 type HudHealth = { current: number; max: number };
 
-export function createHud() {
+type HudOptions = {
+  showTimer?: boolean;
+};
+
+export function createHud(options: HudOptions = {}) {
   const hud = requireElement<HTMLElement>('#hud');
   const score = requireElement<HTMLElement>('[data-hud="score"]');
+  const timeCell = requireElement<HTMLElement>('[data-hud="time-cell"]');
   const time = requireElement<HTMLElement>('[data-hud="time"]');
   const locks = requireElement<HTMLElement>('[data-hud="locks"]');
   const hullCell = requireElement<HTMLElement>('[data-hud="hull-cell"]');
@@ -30,6 +35,8 @@ export function createHud() {
   const endDeath = requireElement<HTMLElement>('[data-end="death"]');
   let hullMax = -1;
   let hullCurrent = -1;
+
+  timeCell.classList.toggle('hidden', options.showTimer !== true);
 
   function rebuildHullPips(max: number) {
     hullPips.replaceChildren(
@@ -59,9 +66,9 @@ export function createHud() {
   }
 
   return {
-    update(values: { score: number; timeRemaining: number; lockCount: number; health?: HudHealth }) {
+    update(values: { score: number; elapsedTime: number; lockCount: number; health?: HudHealth }) {
       score.textContent = `${values.score}`;
-      time.textContent = values.timeRemaining.toFixed(1);
+      time.textContent = values.elapsedTime.toFixed(1);
       locks.textContent = `${values.lockCount}`;
       updateHull(values.health);
     },

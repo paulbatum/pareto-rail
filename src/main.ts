@@ -45,7 +45,7 @@ async function bootstrap() {
 
   const scene = new Scene();
   const camera = new PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
-  const hud = createHud();
+  const hud = createHud({ showTimer: import.meta.env.DEV || selectedLevel.debugOnly === true });
   const bus = createEventBus();
   const audio = selectedLevel.createAudio(bus);
   const legacyVolume = readStoredPercent('raild-volume', 50);
