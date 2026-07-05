@@ -12,11 +12,12 @@ import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
 
 // Procedural synesthesia layer: a 126 BPM arrangement that builds over the
 // 45-second run (kick → bass/hats → arp → claps/open hats → riser into the
-// Warden fight), with game SFX pitched in A minor and quantized to the
-// 32nd-note grid so player actions land inside the music, Rez-style.
+// Warden fight), with game SFX pitched in A minor and quantized to musical
+// grids so player actions land inside the music, Rez-style.
 
 const BPM = 126;
 const SIXTEENTH = 60 / BPM / 4;
+const EIGHTH = SIXTEENTH * 2;
 const THIRTYSECOND = SIXTEENTH / 2;
 const SCHEDULE_AHEAD = 0.18;
 const SCHEDULER_MS = 25;
@@ -371,12 +372,12 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     });
   }
 
-  // ---- game SFX (all in key, all on the grid) -----------------------------
+  // ---- game SFX (all in key, quantized to musical grids) ------------------
 
   bus.on('lock', ({ lockCount }) => {
     if (!ctx || !duck || !delaySend) return;
     const midi = LOCK_SCALE[Math.min(LOCK_SCALE.length, Math.max(1, lockCount)) - 1];
-    const time = quantize(ctx.currentTime);
+    const time = quantizeToGrid(ctx.currentTime, EIGHTH);
     playOscillatorVoice({
       context: ctx,
       time,
@@ -395,7 +396,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('fire', () => {
     if (!ctx || !master) return;
-    const time = quantize(ctx.currentTime);
+    const time = quantizeToGrid(ctx.currentTime, EIGHTH);
     playOscillatorVoice({
       context: ctx,
       time,
