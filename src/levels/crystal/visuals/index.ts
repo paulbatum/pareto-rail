@@ -225,8 +225,13 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
 
   bus.on('hit', ({ enemyId, projectileId, worldPosition, lethal }) => {
     projectileRecords.delete(projectileId);
-    burstSparks(worldPosition, hdr(CORE_WHITE, 0.9), 6, 12);
     const record = enemyRecords.get(enemyId);
+    if (lethal) {
+      const accent = (record?.mesh.userData.accent as Color | undefined) ?? CYAN;
+      burstSparks(worldPosition, accent.clone().multiplyScalar(0.28), 2, 7);
+    } else {
+      burstSparks(worldPosition, hdr(CORE_WHITE, 0.9), 6, 12);
+    }
     if ((record?.mesh.userData.kind === 'warden-shield' || record?.mesh.userData.kind === 'warden-core') && !lethal) {
       record.mesh.userData.damageFlashUntil = elapsedNow + 0.42;
       spawnRing(worldPosition, hdr(CYAN, 1.35), 4.2, 0.34);
@@ -246,11 +251,11 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     const record = enemyRecords.get(enemyId);
     if (record) {
       const specs = record.mesh.userData.shardSpecs as ShardSpec[] | undefined;
-      if (specs) burstShatter(worldPosition, specs);
       const accent = (record.mesh.userData.accent as Color | undefined) ?? CYAN;
+      burstShatter(worldPosition, specs, accent);
       spawnRing(worldPosition, hdr(accent, 0.9), 5.5, 0.5);
       spawnRing(worldPosition, hdr(CYAN, 0.55), 3.2, 0.34);
-      spawnGlint(worldPosition, hdr(CORE_WHITE, 1.8), 1.4, 0.2);
+      spawnGlint(worldPosition, hdr(CORE_WHITE, 0.65), 0.45, 0.12);
       removeLockRing(record, scene);
       enemyRecords.delete(enemyId);
     }
