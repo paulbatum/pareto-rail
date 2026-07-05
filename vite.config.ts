@@ -6,6 +6,9 @@ const templatePath = path.resolve(process.cwd(), 'src/levels/crystal/visuals/cry
 
 export default defineConfig({
   plugins: [crystalTemplateDevPlugin()],
+  build: {
+    chunkSizeWarningLimit: 1200,
+  },
 });
 
 function crystalTemplateDevPlugin(): Plugin {

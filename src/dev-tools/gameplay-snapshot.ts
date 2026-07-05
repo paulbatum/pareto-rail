@@ -110,7 +110,7 @@ window.__gameplaySnapshot = {
 };
 
 async function bootstrap() {
-  const selectedLevel = getLevelById(params.get('level'));
+  const selectedLevel = await getLevelById(params.get('level'));
   document.title = `raild gameplay snapshot — ${selectedLevel.title}`;
 
   scene = new Scene();

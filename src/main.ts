@@ -20,7 +20,7 @@ async function bootstrap() {
   if (!app) throw new Error('Missing #app root');
 
   const urlParams = new URLSearchParams(window.location.search);
-  const selectedLevel = getLevelById(urlParams.get('level'));
+  const selectedLevel = await getLevelById(urlParams.get('level'));
   const debugValue = selectedLevel.debugSelector ? urlParams.get(selectedLevel.debugSelector.queryParam) ?? undefined : undefined;
   document.title = `raild — ${selectedLevel.title}`;
   installLevelPicker(selectedLevel.id, import.meta.env.DEV);
@@ -145,7 +145,7 @@ function installLevelPicker(activeId: string, includeDebug: boolean) {
   document.body.append(host);
 }
 
-function installDebugPicker(level: ReturnType<typeof getLevelById>, urlParams: URLSearchParams) {
+function installDebugPicker(level: Awaited<ReturnType<typeof getLevelById>>, urlParams: URLSearchParams) {
   const selector = level.debugSelector;
   if (!selector) return;
 
