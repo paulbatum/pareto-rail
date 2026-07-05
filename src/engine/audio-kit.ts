@@ -7,7 +7,7 @@ export type StepTransportStep = {
 };
 
 export type StepTransportOptions = {
-  stepSeconds: number;
+  stepSeconds: number | ((nextStepIndex: number) => number);
   scheduleAhead: number;
   startDelay?: number;
   onStep(step: StepTransportStep): void;
@@ -115,8 +115,8 @@ export function createStepTransport(options: StepTransportOptions): StepTranspor
 
   const emitNextStep = () => {
     options.onStep({ index: stepIndex, time: nextStepTime });
-    nextStepTime += options.stepSeconds;
     stepIndex += 1;
+    nextStepTime += typeof options.stepSeconds === 'function' ? options.stepSeconds(stepIndex) : options.stepSeconds;
   };
 
   return {

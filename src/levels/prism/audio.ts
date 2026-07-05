@@ -1,5 +1,5 @@
 import type { EventBus } from '../../events';
-import { createBrowserAudioContext, installAudioUnlock } from '../../engine/audio-unlock';
+import { createAudioGraphBuilder, createLevelAudioKit, createStepTransport, playNoiseHit, playOscillatorVoice } from '../../engine/audio-kit';
 import { emitBeatAt, midiToFreq, quantizeToGrid, secondsPerStep } from '../../engine/music';
 
 const BPM = 96;
@@ -11,65 +11,62 @@ const SCALE = [62, 65, 69, 72, 74, 77, 81, 84];
 
 export function createAudio(bus: EventBus) {
   let ctx: AudioContext | null = null;
-  let intervalId = 0;
-  let unlockGestureStart: (() => void) | null = null;
-  let nextTickTime = 0;
-  let sixteenthIndex = 0;
   let runStart = 0;
   let mode: 'ambient' | 'run' = 'ambient';
-  let masterVolume = 0.8;
   let master: GainNode | null = null;
   let shimmer: GainNode | null = null;
   let noiseBuffer: AudioBuffer | null = null;
 
-  const start = async () => {
-    if (!ctx) {
-      ctx = createBrowserAudioContext();
-      buildGraph(ctx);
-      nextTickTime = ctx.currentTime + 0.06;
-      intervalId = window.setInterval(schedule, SCHEDULER_MS);
-    }
-    if (ctx.state === 'suspended') await ctx.resume();
-  };
+  const transport = createStepTransport({
+    stepSeconds: SIXTEENTH,
+    scheduleAhead: SCHEDULE_AHEAD,
+    startDelay: 0.06,
+    onStep({ index, time }) {
+      scheduleStep(index, time);
+    },
+  });
 
-  const installGestureStart = () => {
-    unlockGestureStart?.();
-    unlockGestureStart = installAudioUnlock(start);
-  };
+  const audio = createLevelAudioKit({
+    volumeScale: 0.8,
+    schedulerMs: SCHEDULER_MS,
+    onCreateContext(context, masterVolume) {
+      ctx = context;
+      buildGraph(context, masterVolume);
+      transport.start(context);
+    },
+    onSchedule(context) {
+      transport.schedule(context);
+    },
+    onVolumeChange(context, masterVolume) {
+      if (master) master.gain.setTargetAtTime(masterVolume, context.currentTime, 0.05);
+    },
+    onDispose() {
+      ctx = null;
+      master = null;
+      shimmer = null;
+      noiseBuffer = null;
+    },
+  });
 
-  function buildGraph(context: AudioContext) {
-    master = context.createGain();
-    master.gain.value = masterVolume;
-    const compressor = context.createDynamicsCompressor();
-    compressor.threshold.value = -20;
-    compressor.ratio.value = 4;
-    master.connect(compressor).connect(context.destination);
+  function buildGraph(context: AudioContext, masterVolume: number) {
+    const graph = createAudioGraphBuilder(context);
 
-    shimmer = context.createGain();
-    shimmer.gain.value = 0.55;
-    const delay = context.createDelay(1.4);
-    delay.delayTime.value = SIXTEENTH * 5;
-    const feedback = context.createGain();
-    feedback.gain.value = 0.42;
-    const filter = context.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.value = 900;
-    shimmer.connect(delay);
-    delay.connect(filter).connect(feedback).connect(delay);
-    filter.connect(master);
+    master = graph.gain(masterVolume);
+    const compressor = graph.compressor({ threshold: -20, ratio: 4 });
+    graph.connect(master, compressor);
+    graph.connect(compressor, context.destination);
 
-    noiseBuffer = context.createBuffer(1, Math.floor(context.sampleRate * 2), context.sampleRate);
-    const data = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
-  }
+    shimmer = graph.gain(0.55);
+    const delay = graph.delay(1.4, SIXTEENTH * 5);
+    const feedback = graph.gain(0.42);
+    const filter = graph.biquadFilter({ type: 'highpass', frequency: 900 });
+    graph.connect(shimmer, delay);
+    graph.connect(delay, filter);
+    graph.connect(filter, feedback);
+    graph.connect(feedback, delay);
+    graph.connect(filter, master);
 
-  function schedule() {
-    if (!ctx) return;
-    while (nextTickTime < ctx.currentTime + SCHEDULE_AHEAD) {
-      scheduleStep(sixteenthIndex, nextTickTime);
-      nextTickTime += SIXTEENTH;
-      sixteenthIndex += 1;
-    }
+    noiseBuffer = graph.noiseBuffer(2);
   }
 
   function scheduleStep(index: number, time: number) {
@@ -116,34 +113,38 @@ export function createAudio(bus: EventBus) {
 
   function lowPulse(time: number, midi: number) {
     if (!ctx || !master) return;
-    const osc = ctx.createOscillator();
-    const filter = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.value = midiToFreq(midi);
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(900, time);
-    filter.frequency.exponentialRampToValueAtTime(120, time + 0.42);
-    gain.gain.setValueAtTime(0.18, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.48);
-    osc.connect(filter).connect(gain).connect(master);
-    osc.start(time);
-    osc.stop(time + 0.52);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.52,
+      oscillatorType: 'triangle',
+      frequency: midiToFreq(midi),
+      filter: {
+        type: 'lowpass',
+        frequency: 900,
+        frequencyAutomation: [{ type: 'exponentialRamp', value: 120, time: time + 0.42 }],
+      },
+      gainAutomation: [
+        { type: 'set', value: 0.18, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.48 },
+      ],
+      destination: master,
+    });
   }
 
   function noiseTick(time: number, velocity: number, decay: number) {
     if (!ctx || !master || !noiseBuffer) return;
-    const source = ctx.createBufferSource();
-    const filter = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-    source.buffer = noiseBuffer;
-    filter.type = 'highpass';
-    filter.frequency.value = 5200;
-    gain.gain.setValueAtTime(velocity, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + decay);
-    source.connect(filter).connect(gain).connect(master);
-    source.start(time, Math.random() * 1.5);
-    source.stop(time + decay + 0.03);
+    playNoiseHit({
+      context: ctx,
+      buffer: noiseBuffer,
+      time,
+      velocity,
+      decay,
+      filterType: 'highpass',
+      frequency: 5200,
+      destination: master,
+      offset: Math.random() * 1.5,
+    });
   }
 
   bus.on('lock', ({ lockCount }) => {
@@ -178,7 +179,7 @@ export function createAudio(bus: EventBus) {
 
   bus.on('runstart', () => {
     mode = 'run';
-    runStart = sixteenthIndex + ((16 - (sixteenthIndex % 16)) % 16);
+    runStart = transport.stepIndex + ((16 - (transport.stepIndex % 16)) % 16);
   });
 
   bus.on('runend', () => {
@@ -186,25 +187,5 @@ export function createAudio(bus: EventBus) {
     if (ctx) bell(ctx.currentTime + 0.05, 74, 0.13, 1.4);
   });
 
-  return {
-    start,
-    installGestureStart,
-    setMasterVolume(volume: number) {
-      masterVolume = Math.min(1, Math.max(0, volume)) * 0.8;
-      if (ctx && master) master.gain.setTargetAtTime(masterVolume, ctx.currentTime, 0.05);
-    },
-    getMasterVolume() {
-      return masterVolume / 0.8;
-    },
-    async suspend() {
-      if (ctx && ctx.state === 'running') await ctx.suspend();
-    },
-    dispose() {
-      unlockGestureStart?.();
-      unlockGestureStart = null;
-      if (intervalId) window.clearInterval(intervalId);
-      void ctx?.close();
-      ctx = null;
-    },
-  };
+  return audio;
 }
