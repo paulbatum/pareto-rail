@@ -146,8 +146,6 @@ export function createCrystalGameplay(
     shieldIds: new Set<number>(),
     shieldPositions: new Map<number, Vector3>(),
   };
-  // Fire cadence per live enemy (lancers, shields, core), reset every run.
-  const fireState = new Map<number, { nextAt: number; shotsLeft: number }>();
   const boltInterceptions = new Set<number>();
   let hitsTaken = 0;
 
@@ -158,7 +156,6 @@ export function createCrystalGameplay(
     boss.exposed = false;
     boss.shieldIds.clear();
     boss.shieldPositions.clear();
-    fireState.clear();
     boltInterceptions.clear();
     hitsTaken = 0;
     if (coreEntry) coreEntry.lockable = false;
@@ -210,15 +207,6 @@ export function createCrystalGameplay(
     });
   }
 
-  function cadence(enemyId: number, firstAt: number, shots: number) {
-    let state = fireState.get(enemyId);
-    if (!state) {
-      state = { nextAt: firstAt, shotsLeft: shots };
-      fireState.set(enemyId, state);
-    }
-    return state;
-  }
-
   function updateWave(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'wave' }>) {
     const { enemy, runTime, runProgress, age, curve, camera, railAnchor } = context;
     const anchorU = data.debugHold
@@ -236,7 +224,10 @@ export function createCrystalGameplay(
     if (enemy.kind === 'lancer') {
       // Menace pulse: a slow push toward the camera sells intent.
       offset.z = Math.sin(age * 1.5) * 0.9;
-      const fire = cadence(enemy.id, data.fireForever ? 0.8 : 1.4, data.fireForever ? Number.POSITIVE_INFINITY : 2);
+      const fire = context.enemyState(() => ({
+        nextAt: data.fireForever ? 0.8 : 1.4,
+        shotsLeft: data.fireForever ? Number.POSITIVE_INFINITY : 2,
+      }));
       if (fire.shotsLeft > 0 && age >= fire.nextAt) {
         fire.shotsLeft -= 1;
         fire.nextAt = age + (data.fireForever ? 1.8 : 3.2);
@@ -310,7 +301,7 @@ export function createCrystalGameplay(
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(angle + Math.PI / 2);
 
-    const fire = cadence(enemy.id, 2.2 + data.index * 1.6, Number.POSITIVE_INFINITY);
+    const fire = context.enemyState(() => ({ nextAt: 2.2 + data.index * 1.6, shotsLeft: Number.POSITIVE_INFINITY }));
     if (age >= fire.nextAt) {
       fire.nextAt = age + 4.6;
       fireBolt(context, enemy.mesh.position);
@@ -343,7 +334,7 @@ export function createCrystalGameplay(
     }
 
     if (boss.exposed) {
-      const fire = cadence(enemy.id, age + 1.2, Number.POSITIVE_INFINITY);
+      const fire = context.enemyState(() => ({ nextAt: age + 1.2, shotsLeft: Number.POSITIVE_INFINITY }));
       if (age >= fire.nextAt) {
         fire.nextAt = age + 2.7;
         const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();

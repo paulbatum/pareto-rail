@@ -74,6 +74,8 @@ export type LockOnEnemyUpdate<TKind extends string = string, TData = unknown> = 
   camera: PerspectiveCamera;
   /** Eased rail progress where an enemy seats itself: ease(min(duration, entry.time + lead), duration). */
   railAnchor(lead: number): number;
+  /** Lazily-initialized mutable state scoped to this enemy instance; created on first call, discarded when the enemy goes away. */
+  enemyState<S>(init: () => S): S;
   spawnEnemy(entry: LockOnSpawnEntry<TKind, TData>): number;
   damagePlayer(amount?: number): void;
   playerHealth: number;
@@ -117,6 +119,7 @@ type Enemy<TKind extends string, TData> = {
   hitStageIndex: number;
   hitPointsRemaining: number;
   entry?: LockOnSpawnEntry<TKind, TData>;
+  updateState?: unknown;
   letter?: string;
   letterIndex?: number;
   wordLength?: number;
@@ -491,6 +494,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       curve,
       camera,
       railAnchor: (lead) => easeRunProgress(Math.min(duration, enemy.entry.time + lead), duration),
+      enemyState: <S>(init: () => S): S => (enemy.updateState ??= init()) as S,
       spawnEnemy: enemyUpdateHelpers.spawnEnemy,
       damagePlayer: enemyUpdateHelpers.damagePlayer,
       playerHealth: hasPlayerHealth ? health : Infinity,

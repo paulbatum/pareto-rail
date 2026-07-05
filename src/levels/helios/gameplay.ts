@@ -45,9 +45,9 @@ export type HeliosEnemyKind =
   | 'heart';
 
 // Timeline data is immutable — the engine reuses the timeline across runs.
-// All per-run mutable state (fire cadence, hostile-shot state, boss phase)
-// lives in closure maps keyed by enemy id and is cleared on `runstart`.
-// Dynamically spawned bolts get fresh data objects each launch.
+// Per-enemy runtime state lives in the runner's enemyState bags, boss/run
+// state lives in this module, and dynamically spawned bolts get fresh data
+// objects each launch.
 export type HeliosSpawnData =
   | { role: 'lattice'; lead: number; offset: Vector3; spin: number }
   | { role: 'mote'; lead: number; fromX: number; toX: number; y: number; arc: number; crossTime: number; delay: number }
@@ -371,8 +371,6 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     headUp: new Vector3(0, 1, 0),
     headForward: new Vector3(0, 0, 1),
   };
-  const fireState = new Map<number, { nextAt: number }>();
-  const shotState = new Map<number, { position: Vector3; velocity: Vector3; lastAge: number; impact: HostileShotImpactState }>();
   const interceptions = new Set<number>();
   let hitsTaken = 0;
   let flaresDowned = 0;
@@ -384,8 +382,6 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     boss.exposed = false;
     boss.diveUntil = -1;
     boss.fangIds.clear();
-    fireState.clear();
-    shotState.clear();
     interceptions.clear();
     hitsTaken = 0;
     flaresDowned = 0;
@@ -454,15 +450,6 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     });
   }
 
-  function cadence(enemyId: number, firstAt: number) {
-    let state = fireState.get(enemyId);
-    if (!state) {
-      state = { nextAt: firstAt };
-      fireState.set(enemyId, state);
-    }
-    return state;
-  }
-
   // ---- movement -------------------------------------------------------------
 
   function updateLattice(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'lattice' }>) {
@@ -511,7 +498,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     offset.y += Math.sin(age * 1.75 + data.seed * 2.1) * 1.7;
 
     // Telegraphed lunge: rear back, dash at the camera, loose a molten bolt.
-    const fire = cadence(enemy.id, 1.6);
+    const fire = context.enemyState(() => ({ nextAt: 1.6 }));
     const untilShot = fire.nextAt - age;
     if (untilShot < 0.9 && untilShot > 0.55) offset.z += (0.9 - untilShot) * 8; // rear back
     else if (untilShot <= 0.55 && untilShot > 0) offset.z -= (0.55 - untilShot) * 14; // lunge in
@@ -544,15 +531,6 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
       enemy.mesh.position.y += Math.cos(age * 17) * 0.12;
     }
     return runProgress > anchorU + 0.014;
-  }
-
-  function shotRuntime(enemyId: number, position: Vector3, velocity: Vector3) {
-    let state = shotState.get(enemyId);
-    if (!state) {
-      state = { position, velocity, lastAge: 0, impact: {} };
-      shotState.set(enemyId, state);
-    }
-    return state;
   }
 
   function updateBolt(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'bolt' }>) {
@@ -591,11 +569,9 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   function updateFlare(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'flare' }>) {
     const { enemy, age, curve, camera, damagePlayer } = context;
     const launchU = heliosRunProgress(Math.min(HELIOS_DURATION, enemy.entry.time + data.targetLead));
-    const state = shotRuntime(
-      enemy.id,
-      offsetFromRail(curve, launchU, new Vector3(data.x, -36, 0)),
-      new Vector3(0, 26, 0),
-    );
+    const position = offsetFromRail(curve, launchU, new Vector3(data.x, -36, 0));
+    const velocity = new Vector3(0, 26, 0);
+    const state = context.enemyState(() => ({ position, velocity, lastAge: 0, impact: {} }));
     const dt = Math.max(0, age - state.lastAge);
     state.lastAge = age;
 
@@ -697,7 +673,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
 
     // Flare volleys: wider and faster once the theme drops, relentless while diving.
     if (age > 3) {
-      const fire = cadence(enemy.id, age + 1.4);
+      const fire = context.enemyState(() => ({ nextAt: age + 1.4 }));
       if (age >= fire.nextAt) {
         const brutal = runTime >= DROP3_TIME;
         fire.nextAt = age + (diving ? 3.2 : brutal ? 4.6 : 5.8);
@@ -744,11 +720,8 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
           return updatePyre(context, data);
         case 'bolt':
           return updateBolt(context, data);
-        case 'flare': {
-          const result = updateFlare(context, data);
-          if (result) shotState.delete(context.enemy.id);
-          return result;
-        }
+        case 'flare':
+          return updateFlare(context, data);
         case 'fang':
           return updateFang(context, data);
         case 'heart':
