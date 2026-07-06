@@ -8,8 +8,17 @@ Shared code lives in `src/engine/`:
 - `rail.ts` contains rail sampling helpers, not a level rail;
 - `music.ts` contains small timing helpers for beat emission, tempo, MIDI conversion, and grid quantization;
 - `spawn-patterns.ts` contains small helpers for eager spawn timeline construction;
+- `glyphs.ts` contains neutral 5×7 glyph grid data and accessors, not rendering;
 - `hostile-shot.ts` contains shared homing steer, behind-camera despawn cull, and approach/impact timing for lockable enemy shots and hazards;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting.
+
+## Module layout: spine and leaves
+
+Default to a spine/leaf split. The **spine** holds decisions: `index.ts` for wiring, `gameplay.ts` for the spawn timeline, enemy motion, and tuning constants, the audio score for arrangement, harmony, and section structure, and `visuals/index.ts` for palette and event choreography. **Leaves** hold construction: mesh factories, environment geometry, and synth voice construction. Leaves take parameters; they decide nothing.
+
+The hard rule is that timelines, tuning constants, and palettes never live in leaf files. The payoff is lower reading cost: a reader calibrating against a level reads its spine only.
+
+This is a default, not a law. Rezdle legitimately decomposes differently, and `check:scope` does not police this convention.
 
 ## Adding a level
 
@@ -31,7 +40,7 @@ Pass a `LockOnRunnerLevel` to `createLockOnRunner`:
 - `spawnTimeline`: ordered enemy entries. Entries may include `letter?: string`; the runner passes it to `createEnemyMesh`, exposes it on public enemies, and includes it in target events. Entries may also set `hitPoints` (default 1), `hitStages` (ordered HP stages; each stage must be between 1 and `MAX_LOCKS`), `lockable: false` (read live each frame, so a level may mutate it mid-run to gate a boss phase), and `countsTowardTotal: false` (excluded from the kills/missed/total stats while still scoring and emitting events — use for hazards like enemy projectiles). The current stage's remaining HP determines how many repeat locks the target can accept, capped by the global lock maximum and spaced by the game-wide repeat-lock delay.
 - `updateEnemy(context)`: owns all enemy motion every frame. Position, rotation, and any per-frame mesh state are the level's responsibility. Return `true` to despawn that enemy as a miss; return `false` or nothing to keep it alive. The context also provides `railAnchor(lead)` for eased rail seating, `enemyState(init)` for lazily initialized mutable state scoped to that enemy instance, `spawnEnemy(entry)` to spawn enemies at runtime (returns the new enemy id; running state only), `damagePlayer(amount?)`, and the current `playerHealth`.
 
-Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`, `scoreForKill`, `scoreForHit`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, `replayWord`, `allowLockUndo`, and `timing`. `scoreForVolley` scores a released group after all members resolve, `scoreForHit` scores non-lethal hits on multi-hit enemies, `validateRelease` can reject a running-state release before shots are created or return the subset of released enemies allowed to fire, `detailsForRun` adds compact end-screen lines, `lockRadiusNdc` changes the screen-space lock threshold from the default, and `allowLockUndo` lets right-click remove the last lock; it is off by default. Levels inherit the default quantization profile: tempo-adaptive grid-ramp shot timing, with the coarsest grid capped in absolute time, plus 32nd-note action-SFX snap at the level tempo. Declare `timing` only to override or opt out; Rezdle only opts out of SFX snapping. Shot gap values are counts of 32nd notes, not seconds. See `src/engine/lock-on-runner.ts` for exact types.
+Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`, `scoreForKill`, `scoreForHit`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, `replayWord`, `allowLockUndo`, and `timing`. `scoreForVolley` scores a released group after all members resolve, `scoreForHit` scores non-lethal hits on multi-hit enemies, `validateRelease` can reject a running-state release before shots are created or return the subset of released enemies allowed to fire, `detailsForRun` adds compact end-screen lines, `lockRadiusNdc` changes the screen-space lock threshold from the default, and `allowLockUndo` lets right-click remove the last lock; it is off by default. Levels inherit the default quantization profile: tempo-adaptive grid-ramp shot timing, with the coarsest grid capped in absolute time, plus 32nd-note action-SFX snap at the level tempo. Declare `timing` only to override or opt out; Rezdle only opts out of SFX snapping. Shot gap values are counts of 32nd notes, not seconds. See `src/engine/lock-on-runner-types.ts` for exact types.
 
 Setting `playerHealth` enables the hull system: `damagePlayer` calls take a point off (with a short invulnerability window between hits), the HUD shows hull pips and a red damage flash, and reaching zero ends the run with `died: true` in the summary and a forced `—` rank. Related events: `playerhit` fires on accepted damage, `hit` carries `lethal`, total `hitPointsRemaining`, and current-stage fields, `stage` fires when a non-lethal stage is completed, and `runend` carries `died`.
 
@@ -50,7 +59,7 @@ Pass `VisualFactories` to `createLockOnRunner`:
 
 Levels that opt into right-click undo-lock should advertise it only in their own start tip.
 
-Every level must render legible procedural glyphs for at least the characters in its start/replay words. The defaults require S, T, A, R, E, P, L, and Y. A reader must be able to tell the letters apart at gameplay distance. `src/levels/crystal/visuals/letters.ts` shows the reference approach: 5×7 pixel-grid glyphs. Avoid 7-segment-style approximations; they cannot render R, T, and Y distinctly enough.
+Every level must render legible procedural glyphs for at least the characters in its start/replay words. The defaults require S, T, A, R, E, P, L, and Y. A reader must be able to tell the letters apart at gameplay distance. `src/levels/crystal/visuals/letters.ts` shows the reference approach: 5×7 pixel-grid glyphs. Levels may use `src/engine/glyphs.ts` for neutral grid data, but rendering and style stay with the level. Avoid 7-segment-style approximations; they cannot render R, T, and Y distinctly enough.
 
 Every level must also express rejected releases in its own visual and audio language. The runner emits `reject` when a release fails, including incomplete START/REPLAY words and any level-specific `validateRelease` rule. Visuals receive `setEnemyDenied` for released targets and any required targets that were missing. Levels that need additional context, such as a boss shield plate blocking a shot, may emit and handle their own richer event as well.
 

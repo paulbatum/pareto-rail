@@ -13,7 +13,7 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 - `src/levels/index.ts` — level registry used by the in-game picker and `?level=<id>` URL parameter. The first entry is the default level a visitor lands on; keep the most polished level first.
 - `src/ui/` — DOM HUD, pause menu, end panel.
 - The enemy tuning gallery lives at `/dev` during `npm run dev`; it is specifically for `crystal-corridor` and edits `src/levels/crystal/visuals/crystal-template.json`.
-- See `docs/level-authoring.md` before adding or reshaping levels. New levels are built to the standing brief in `docs/level-brief.md`.
+- See `docs/level-authoring.md` before adding or reshaping levels; it defines the spine/leaf convention. New levels are built to the standing brief in `docs/level-brief.md`.
 
 ## Gotchas
 
@@ -24,6 +24,10 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 ## Verification
 
 `npm run typecheck` and `npm run build` must pass. Level-building tasks must also pass `npm run check:scope -- <level-id>`. `npm run dev` to playtest.
+
+Use `npm run scaffold -- --id <level-id> [--title <Title>] [--bpm <n>]` to create a blank level scaffold.
+
+Use `npm run gallery` to regenerate `docs/level-gallery.md` from per-level `level.md` cards.
 
 Use `npm run trace:spawns -- --level <level-id>` to dump expanded spawn timelines; use `--write` and `--compare` for timeline-preserving refactors.
 

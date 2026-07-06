@@ -12,6 +12,8 @@
     "snapshot:gameplay": "node scripts/gameplay-snapshot.mjs",
     "trace:audio": "node scripts/audio-trace.mjs",
     "trace:spawns": "node scripts/spawn-trace.mjs",
+    "scaffold": "node scripts/scaffold-level.mjs",
+    "gallery": "node scripts/collect-gallery.mjs",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",
     "sim:crystal-debug:verbose": "node scripts/run-crystal-debug-sim.mjs --verbose"
   },
