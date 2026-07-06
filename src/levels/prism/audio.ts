@@ -3,7 +3,7 @@ import { createBeatLevelAudio, defineInstruments, playNoiseHit, playOscillatorVo
 import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
 import { quantizeActionSfxTime } from '../../engine/action-sfx-quantization';
 import { midiToFreq, quantizeToGrid, secondsPerStep } from '../../engine/music';
-import { PRISM_BPM, PRISM_RUN_DURATION } from './gameplay';
+import { PRISM_BPM, PRISM_RUN_DURATION } from './timing';
 
 const SIXTEENTH = secondsPerStep(PRISM_BPM, 4);
 const THIRTYSECOND = secondsPerStep(PRISM_BPM, 8);

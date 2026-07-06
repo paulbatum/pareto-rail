@@ -8,8 +8,8 @@ import { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';
 import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
 import { midiToFreq } from '../../engine/music';
 import { createScore, lerp, type SectionMix } from '../../engine/score';
-import { HELIOS_BPM, HELIOS_DURATION } from './gameplay';
 import { createHeliosVoices, installHeliosRumble, type HeliosTonalVoice } from './audio-voices';
+import { HELIOS_BARS, HELIOS_BPM, HELIOS_DURATION, HELIOS_SCORE_SECTIONS, HELIOS_STEPS_PER_BAR, HELIOS_TIME } from './timing';
 
 // The Helios score: 172 BPM drum & bass in E minor, 86 bars = exactly the
 // 120-second run. Sections land on the run's set pieces — drop 1 at the gate
@@ -20,9 +20,9 @@ import { createHeliosVoices, installHeliosRumble, type HeliosTonalVoice } from '
 // read the current harmony, while kills unmute a hidden sequencer lane so
 // clean volleys play melodic runs through the arrangement.
 
-const SIXTEENTH = 60 / HELIOS_BPM / 4;
+const SIXTEENTH = HELIOS_TIME.stepSeconds;
 const THIRTYSECOND = SIXTEENTH / 2;
-const STEPS_PER_BAR = 16;
+const STEPS_PER_BAR = HELIOS_STEPS_PER_BAR;
 const KILL_LANE_STEPS = 32;
 
 type Chord = { bass: number; pad: number[]; arp: number[]; stab: number[] };
@@ -135,13 +135,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     stepsPerBar: STEPS_PER_BAR,
     chords: CHORDS,
     barsPerChord: 2,
-    alternateChordSets: [{ fromBar: 64, toBar: 80, chords: BOSS_CHORDS, barsPerChord: 2 }],
-    sections: [
-      { index: 0, fromBar: 0 },
-      { index: 1, fromBar: 16, crossfadeBars: 2 },
-      { index: 2, fromBar: 40, crossfadeBars: 2 },
-      { index: 3, fromBar: 64, crossfadeBars: 2 },
-    ],
+    alternateChordSets: [{ fromBar: HELIOS_BARS.boss, toBar: HELIOS_BARS.outro, chords: BOSS_CHORDS, barsPerChord: 2 }],
+    sections: HELIOS_SCORE_SECTIONS,
     killLanes: KILL_LANES,
   });
 
@@ -203,7 +198,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     sections: [
       {
         name: 'ambient',
-        fromBar: 0,
+        fromBar: HELIOS_BARS.intro,
         tracks: [
           hits(evenBarChoir, { C: 1 }, ({ time, chord }) => choir(time, chord.pad, 32 * SIXTEENTH * 1.06, 0.7)),
           hits(beatArp, { A: 1 }, ({ time, step, chord }) => arp(time, chord.arp[(step / 4) % chord.arp.length], 0.4)),
@@ -220,7 +215,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     sections: [
       {
         name: 'intro',
-        fromBar: 0,
+        fromBar: HELIOS_BARS.intro,
         tracks: [
           hits('C...............................................................', { C: 1 }, ({ time, chord }) => choir(time, chord.pad, 64 * SIXTEENTH * 1.02, 0.8)),
           hits(evenArp, { A: 1 }, ({ time, step, bar, chord }) => arp(time, chord.arp[(step / 2) % chord.arp.length], 0.28 + bar * 0.04)),
@@ -230,7 +225,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       },
       {
         name: 'build',
-        fromBar: 8,
+        fromBar: HELIOS_BARS.build,
         tracks: [
           hits('K.........k.....', { K: 0.95, k: 0.85 }, ({ time }, vel) => kick(time, vel)),
           hits('............S...', { S: 0.8 }, ({ time }, vel) => snare(time, vel)),
@@ -244,7 +239,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       },
       {
         name: 'drop-1',
-        fromBar: 16,
+        fromBar: HELIOS_BARS.gate,
         tracks: [
           oneShot(0, 0, ({ time }) => impact(time, 1)),
           hits('K.........k.....', { K: 1, k: 0.88 }, ({ time }, vel) => kick(time, vel)),
@@ -260,7 +255,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       },
       {
         name: 'shift',
-        fromBar: 32,
+        fromBar: HELIOS_BARS.shift,
         tracks: [
           hits('K.........k.....', { K: 1, k: 0.88 }, ({ time }, vel) => kick(time, vel)),
           hits('....S.......S...', { S: 0.9 }, ({ time }, vel) => snare(time, vel)),
@@ -277,7 +272,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       },
       {
         name: 'drop-2',
-        fromBar: 40,
+        fromBar: HELIOS_BARS.corona,
         tracks: [
           oneShot(0, 0, ({ time }) => impact(time, 1.1)),
           hits('K.....k...k.....', { K: 1, k: 0.88 }, ({ time }, vel) => kick(time, vel)),
@@ -294,7 +289,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       },
       {
         name: 'breakdown',
-        fromBar: 56,
+        fromBar: HELIOS_BARS.reveal,
         tracks: [
           hits('K...............', { K: 0.55 }, ({ time }, vel) => kick(time, vel)),
           hits(evenBarChoir, { C: 1 }, ({ time, chord }) => choir(time, chord.pad, 32 * SIXTEENTH * 1.05, 1)),
@@ -306,7 +301,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       },
       {
         name: 'boss',
-        fromBar: 64,
+        fromBar: HELIOS_BARS.boss,
         tracks: [
           oneShot(0, 0, ({ time }) => {
             impact(time, 1.25);
@@ -322,7 +317,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           hits(evenBarHit, { S: 0.9 }, ({ time, chord }, vel) => stab(time, chord.stab, vel)),
           fn(({ time, step, bar, chord }) => { if (step === 0 && bar % 8 === 0) choir(time, chord.pad, 128 * SIXTEENTH, 0.5); }),
           fn(({ time, step, bar }) => {
-            const themeBar = (bar - 64) % 8;
+            const themeBar = (bar - HELIOS_BARS.boss) % 8;
             if (step % 2 !== 0) return;
             for (const [noteBar, noteStep, midi, beats] of LEAD_THEME) {
               if (noteBar === themeBar && noteStep === step / 2) lead(time, midi, beats * 4 * SIXTEENTH, 0.85);
@@ -332,8 +327,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       },
       {
         name: 'outro',
-        fromBar: 80,
-        toBar: 86,
+        fromBar: HELIOS_BARS.outro,
+        toBar: HELIOS_BARS.end,
         tracks: [
           hits('K.........K.....', { K: 0.85 }, ({ time, bar }, vel) => kick(time, vel * outroFade(bar))),
           hits('............S...', { S: 0.7 }, ({ time, bar }, vel) => snare(time, vel * outroFade(bar))),
@@ -385,7 +380,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   }
 
   function outroFade(bar: number) {
-    return 1 - (bar - 80) / 7;
+    return 1 - (bar - HELIOS_BARS.outro) / 7;
   }
 
   function scheduleStep({ position, time, mode }: BeatLevelAudioStep) {

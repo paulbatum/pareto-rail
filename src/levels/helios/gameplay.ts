@@ -7,12 +7,23 @@ import {
   type HostileShotImpactState,
 } from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
-import { tempo } from '../../engine/music';
 import { offsetFromRail } from '../../engine/rail';
 import { createSpeedProfile } from '../../engine/speed-profile';
 import type { EventBus } from '../../events';
 import { createHeliosDebugTimeline, type HeliosDebugTarget } from './debug';
 import { createSuneater, createSuneaterEntries } from './suneater';
+import {
+  BOSS_TIME,
+  CORONA_TIME,
+  DROP3_TIME,
+  GATE_TIME,
+  HELIOS_BAR,
+  HELIOS_BPM,
+  HELIOS_DURATION,
+  HELIOS_TIME,
+  REVEAL_TIME,
+  bar,
+} from './timing';
 
 // HELIOS — a 120-second dive into a dying star, in four movements scored to a
 // 172 BPM arrangement (one bar = 240/172 s; 86 bars = exactly 120 s):
@@ -29,19 +40,18 @@ import { createSuneater, createSuneaterEntries } from './suneater';
 // normalized integral of speed(t), so the gate transit and corona dive land
 // as genuine kicks of acceleration on their musical drops.
 
-export const HELIOS_BPM = 172;
-const HELIOS_TEMPO = tempo(HELIOS_BPM);
-export const HELIOS_BAR = HELIOS_TEMPO.barSeconds;
-export const HELIOS_DURATION = 120;
+export {
+  BOSS_TIME,
+  CORONA_TIME,
+  DROP3_TIME,
+  GATE_TIME,
+  HELIOS_BAR,
+  HELIOS_BPM,
+  HELIOS_DURATION,
+  REVEAL_TIME,
+  bar,
+} from './timing';
 export const HELIOS_PLAYER_HEALTH = 4;
-
-export const bar = HELIOS_TEMPO.bar;
-
-export const GATE_TIME = bar(16); // 22.33 — drop 1
-export const CORONA_TIME = bar(40); // 55.81 — drop 2
-export const REVEAL_TIME = bar(56); // 78.14 — breakdown, the serpent stirs
-export const BOSS_TIME = bar(60); // 83.72 — the Suneater breaches
-export const DROP3_TIME = bar(64); // 89.30 — boss theme
 
 export type HeliosEnemyKind =
   | 'cinder'
@@ -75,20 +85,20 @@ export type HeliosUpdate = LockOnEnemyUpdate<HeliosEnemyKind, HeliosSpawnData>;
 // Piecewise-linear speed factors over run time. 1.0 ≈ cruise; the spikes at
 // the gate and corona are the acceleration moments.
 const SPEED_KEYS: Array<[number, number]> = [
-  [0, 0.55],
-  [8, 0.82],
-  [21.8, 1.0],
-  [22.4, 1.7],
-  [24.8, 1.15],
-  [40, 1.22],
-  [55.4, 1.32],
-  [56.0, 2.0],
-  [58.6, 1.52],
-  [76, 1.45],
-  [80, 0.95],
-  [84, 0.85],
-  [110, 0.88],
-  [120, 1.3],
+  [HELIOS_TIME.bar(0), 0.55],
+  [HELIOS_TIME.bar(5, 2.933333), 0.82],
+  [HELIOS_TIME.bar(15, 2.493333), 1.0],
+  [HELIOS_TIME.bar(16, 0.213333), 1.7],
+  [HELIOS_TIME.bar(17, 3.093333), 1.15],
+  [HELIOS_TIME.bar(28, 2.666667), 1.22],
+  [HELIOS_TIME.bar(39, 2.786667), 1.32],
+  [HELIOS_TIME.bar(40, 0.533333), 2.0],
+  [HELIOS_TIME.bar(41, 3.986667), 1.52],
+  [HELIOS_TIME.bar(54, 1.866667), 1.45],
+  [HELIOS_TIME.bar(57, 1.333333), 0.95],
+  [HELIOS_TIME.bar(60, 0.8), 0.85],
+  [HELIOS_TIME.bar(78, 3.333333), 0.88],
+  [HELIOS_TIME.bar(86), 1.3],
 ];
 
 const speedProfile = createSpeedProfile(SPEED_KEYS, HELIOS_DURATION);

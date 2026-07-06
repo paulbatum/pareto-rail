@@ -1,9 +1,9 @@
 import { CatmullRomCurve3, Vector3 } from 'three';
 import type { LockOnRunnerLevel } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
+import { PRISM_BPM, PRISM_RUN_DURATION, PRISM_TIME } from './timing';
 
-export const PRISM_BPM = 96;
-export const PRISM_RUN_DURATION = 30;
+export { PRISM_BPM, PRISM_RUN_DURATION } from './timing';
 
 export type PrismEnemyKind = 'gate' | 'comet' | 'echo';
 export type PrismPattern = 'spiral' | 'zipper' | 'bloom';
@@ -41,11 +41,12 @@ type PrismSpawnEntry = {
 };
 
 const PRISM_WAVES: PrismSpawnEntry[] = [];
+const FAN_STAGGER = PRISM_TIME.seconds(0.14);
 
 function addFan(time: number, kind: PrismEnemyKind, pattern: PrismPattern, count: number, radius: number, lead = 4.4) {
   for (let i = 0; i < count; i += 1) {
     PRISM_WAVES.push({
-      time: time + i * 0.14,
+      time: time + i * FAN_STAGGER,
       kind,
       data: {
         lead,
@@ -58,13 +59,13 @@ function addFan(time: number, kind: PrismEnemyKind, pattern: PrismPattern, count
   }
 }
 
-addFan(1.0, 'gate', 'spiral', 5, 4.8, 4.6);
-addFan(4.4, 'comet', 'zipper', 6, 6.4, 4.2);
-addFan(8.2, 'echo', 'bloom', 4, 3.4, 5.0);
-addFan(11.8, 'gate', 'spiral', 7, 6.0, 4.6);
-addFan(16.0, 'comet', 'zipper', 5, 7.2, 4.0);
-addFan(20.2, 'echo', 'bloom', 6, 4.2, 4.8);
-addFan(25.0, 'gate', 'spiral', 8, 6.8, 3.4);
+addFan(PRISM_TIME.beats(1.6), 'gate', 'spiral', 5, 4.8, 4.6);
+addFan(PRISM_TIME.beats(7.04), 'comet', 'zipper', 6, 6.4, 4.2);
+addFan(PRISM_TIME.beats(13.12), 'echo', 'bloom', 4, 3.4, 5.0);
+addFan(PRISM_TIME.beats(18.88), 'gate', 'spiral', 7, 6.0, 4.6);
+addFan(PRISM_TIME.beats(25.6), 'comet', 'zipper', 5, 7.2, 4.0);
+addFan(PRISM_TIME.beats(32.32), 'echo', 'bloom', 6, 4.2, 4.8);
+addFan(PRISM_TIME.beats(40), 'gate', 'spiral', 8, 6.8, 3.4);
 
 export const PRISM_TIMELINE = PRISM_WAVES.sort((a, b) => a.time - b.time);
 

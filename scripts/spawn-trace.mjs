@@ -11,26 +11,36 @@ const TRACE_TARGETS = {
     level: 'crystal',
     module: '/src/levels/crystal/gameplay.ts',
     exportName: 'CRYSTAL_TIMELINE',
+    syncModule: '/src/levels/crystal/timing.ts',
+    syncExportName: 'CRYSTAL_SPAWN_SYNC',
   },
   'crystal-corridor': {
     level: 'crystal',
     module: '/src/levels/crystal/gameplay.ts',
     exportName: 'CRYSTAL_TIMELINE',
+    syncModule: '/src/levels/crystal/timing.ts',
+    syncExportName: 'CRYSTAL_SPAWN_SYNC',
   },
   helios: {
     level: 'helios',
     module: '/src/levels/helios/gameplay.ts',
     exportName: 'HELIOS_TIMELINE',
+    syncModule: '/src/levels/helios/timing.ts',
+    syncExportName: 'HELIOS_SPAWN_SYNC',
   },
   prism: {
     level: 'prism',
     module: '/src/levels/prism/gameplay.ts',
     exportName: 'PRISM_TIMELINE',
+    syncModule: '/src/levels/prism/timing.ts',
+    syncExportName: 'PRISM_SPAWN_SYNC',
   },
   'prism-bloom': {
     level: 'prism',
     module: '/src/levels/prism/gameplay.ts',
     exportName: 'PRISM_TIMELINE',
+    syncModule: '/src/levels/prism/timing.ts',
+    syncExportName: 'PRISM_SPAWN_SYNC',
   },
   rezdle: {
     level: 'rezdle',
@@ -66,6 +76,8 @@ async function main() {
 
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
+  } else if (options.bars) {
+    console.log(formatBars(result));
   } else if (options.verbose) {
     console.log(formatVerbose(result));
   } else if (!options.write || options.compare) {
@@ -90,13 +102,26 @@ async function captureTrace(options) {
     const timeline = mod[target.exportName];
     if (!Array.isArray(timeline)) throw new Error(`Missing timeline export: ${target.exportName}`);
     const entries = timeline.map((entry, index) => serializeEntry(entry, `entries[${index}]`));
+    const sync = options.bars && target.syncModule && target.syncExportName
+      ? await loadSync(server, target)
+      : undefined;
     return {
       metadata: { level: target.level, entryCount: entries.length },
       entries,
+      ...(sync ? { sync } : {}),
     };
   } finally {
     await server.close();
   }
+}
+
+async function loadSync(server, target) {
+  const mod = await server.ssrLoadModule(target.syncModule);
+  const sync = mod[target.syncExportName];
+  if (!isPlainObject(sync)) throw new Error(`Missing sync export: ${target.syncExportName}`);
+  if (typeof sync.bpm !== 'number') throw new Error(`${target.syncExportName}.bpm must be a number`);
+  if (!Array.isArray(sync.sections)) throw new Error(`${target.syncExportName}.sections must be an array`);
+  return sync;
 }
 
 function serializeEntry(entry, pathName) {
@@ -196,6 +221,69 @@ function formatSummary(result) {
   return lines.join('\n');
 }
 
+function formatBars(result) {
+  const sync = result.sync;
+  if (!sync) throw new Error(`No musical sync metadata is available for ${result.metadata.level}`);
+  const beatsPerBar = sync.beatsPerBar ?? 4;
+  const barSeconds = (60 / sync.bpm) * beatsPerBar;
+  const durationBars = sync.durationBars ?? Math.ceil((sync.duration ?? result.entries.at(-1)?.time ?? 0) / barSeconds);
+  const bars = Array.from({ length: durationBars }, (_, index) => ({ index, entries: [] }));
+  for (const entry of result.entries) {
+    const barIndex = Math.max(0, Math.min(bars.length - 1, Math.floor(entry.time / barSeconds)));
+    bars[barIndex]?.entries.push(entry);
+  }
+
+  const emptyRuns = new Map();
+  for (let index = 0; index < bars.length;) {
+    if (bars[index].entries.length > 0) {
+      index += 1;
+      continue;
+    }
+    const start = index;
+    while (index < bars.length && bars[index].entries.length === 0) index += 1;
+    const length = index - start;
+    if (length >= 2) {
+      for (let offset = 0; offset < length; offset += 1) emptyRuns.set(start + offset, { offset, length });
+    }
+  }
+
+  const lines = [];
+  lines.push(`${result.metadata.level} spawn/audio sync by bar`);
+  lines.push('bar | section | spawns | flags');
+  lines.push('----|---------|--------|------');
+  for (const bar of bars) {
+    const section = sectionAt(sync.sections, bar.index)?.name ?? '—';
+    const spawns = formatBarSpawns(bar.entries);
+    const gap = emptyRuns.get(bar.index);
+    const flags = gap ? `long spawn-free gap ${gap.offset + 1}/${gap.length}` : '';
+    lines.push(`${String(bar.index).padStart(3)} | ${section} | ${spawns || '—'} | ${flags}`);
+  }
+  return lines.join('\n');
+}
+
+function sectionAt(sections, bar) {
+  for (let index = sections.length - 1; index >= 0; index -= 1) {
+    const section = sections[index];
+    const toBar = section.toBar ?? sections[index + 1]?.fromBar ?? Infinity;
+    if (bar >= section.fromBar && bar < toBar) return section;
+  }
+  return null;
+}
+
+function formatBarSpawns(entries) {
+  if (!entries.length) return '';
+  const byKind = new Map();
+  for (const entry of entries) {
+    const bucket = byKind.get(entry.kind) ?? [];
+    bucket.push(entry.time);
+    byKind.set(entry.kind, bucket);
+  }
+  return [...byKind.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([kind, times]) => `${kind}×${times.length} (${times.map((time) => time.toFixed(2)).join(',')}s)`)
+    .join('; ');
+}
+
 function formatVerbose(result) {
   return result.entries.map(formatEntryLine).join('\n');
 }
@@ -279,6 +367,7 @@ function parseArgs(argv) {
   const options = {
     level: 'crystal',
     verbose: false,
+    bars: false,
     json: false,
     compare: undefined,
     write: undefined,
@@ -301,6 +390,9 @@ function parseArgs(argv) {
         break;
       case 'verbose':
         options.verbose = true;
+        break;
+      case 'bars':
+        options.bars = true;
         break;
       case 'json':
         options.json = true;

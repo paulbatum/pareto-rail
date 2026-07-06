@@ -8,8 +8,8 @@ import { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';
 import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
 import { midiToFreq } from '../../engine/music';
 import { createScore, lerp, type SectionMix } from '../../engine/score';
-import { CRYSTAL_BPM } from './gameplay';
 import { createCrystalVoices, type CrystalKillVoice } from './audio-voices';
+import { CRYSTAL_BARS, CRYSTAL_BPM, CRYSTAL_SCORE_SECTIONS, CRYSTAL_STEPS_PER_BAR, CRYSTAL_TIME } from './timing';
 
 // Rez-style synesthesia layer: the arrangement carries drums, bass, and
 // pads, while the LEAD MELODY is a hidden two-bar sequencer lane that only
@@ -20,9 +20,9 @@ import { createCrystalVoices, type CrystalKillVoice } from './audio-voices';
 // three acts, and every pitched player sound follows the current chord —
 // the player is the soloist and the gun retunes with the harmony.
 
-const SIXTEENTH = 60 / CRYSTAL_BPM / 4;
+const SIXTEENTH = CRYSTAL_TIME.stepSeconds;
 const THIRTYSECOND = SIXTEENTH / 2;
-const STEPS_PER_BAR = 16;
+const STEPS_PER_BAR = CRYSTAL_STEPS_PER_BAR;
 const LANE_STEPS = 32; // two bars: one full chord
 
 // A natural minor / pentatonic material.
@@ -117,11 +117,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     stepsPerBar: STEPS_PER_BAR,
     chords: CHORDS,
     barsPerChord: 2,
-    sections: [
-      { index: 0, fromBar: 0 },
-      { index: 1, fromBar: 7, crossfadeBars: 2 },
-      { index: 2, fromBar: 18, crossfadeBars: 2 },
-    ],
+    sections: CRYSTAL_SCORE_SECTIONS,
     killLanes: KILL_LANES,
   });
 
@@ -204,15 +200,15 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     stepsPerBar: STEPS_PER_BAR,
     chordAt: score.chordAt,
     sections: [
-      { name: 'bar-0', fromBar: 0, toBar: 1, tracks: [padTrack(0), kickTrack(normalKick)] },
-      { name: 'bar-1', fromBar: 1, toBar: 2, tracks: [padTrack(1), kickTrack(normalKick), hatTrack(oddHat), bassTrack()] },
-      { name: 'warmup', fromBar: 2, toBar: 4, tracks: [padTrack(2), kickTrack(normalKick), hatTrack(tightHat), bassTrack(), arpTrack(0.45)] },
-      { name: 'claps', fromBar: 4, toBar: 6, tracks: [padTrack(4), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(tightHat), bassTrack(), arpTrack(0.45)] },
-      { name: 'open-hats', fromBar: 6, toBar: 8, tracks: [padTrack(6), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.45)] },
-      { name: 'drive', fromBar: 8, toBar: 14, tracks: [padTrack(8), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6)] },
-      { name: 'pre-warden', fromBar: 14, toBar: 16, tracks: [padTrack(14), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6), oneShot(0, 0, ({ time }) => riser(time, 16 * 2 * SIXTEENTH))] },
-      { name: 'warden-fill', fromBar: 16, toBar: 21, tracks: [padTrack(16), kickTrack(fillKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6)] },
-      { name: 'finale', fromBar: 21, tracks: [padTrack(21), kickTrack(fillKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6), oneShot(0, 0, ({ time }) => riser(time, 16 * 2 * SIXTEENTH))] },
+      { name: 'bar-0', fromBar: CRYSTAL_BARS.run, toBar: 1, tracks: [padTrack(CRYSTAL_BARS.run), kickTrack(normalKick)] },
+      { name: 'bar-1', fromBar: 1, toBar: CRYSTAL_BARS.warmup, tracks: [padTrack(1), kickTrack(normalKick), hatTrack(oddHat), bassTrack()] },
+      { name: 'warmup', fromBar: CRYSTAL_BARS.warmup, toBar: CRYSTAL_BARS.claps, tracks: [padTrack(CRYSTAL_BARS.warmup), kickTrack(normalKick), hatTrack(tightHat), bassTrack(), arpTrack(0.45)] },
+      { name: 'claps', fromBar: CRYSTAL_BARS.claps, toBar: CRYSTAL_BARS.openHats, tracks: [padTrack(CRYSTAL_BARS.claps), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(tightHat), bassTrack(), arpTrack(0.45)] },
+      { name: 'open-hats', fromBar: CRYSTAL_BARS.openHats, toBar: CRYSTAL_BARS.drive, tracks: [padTrack(CRYSTAL_BARS.openHats), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.45)] },
+      { name: 'drive', fromBar: CRYSTAL_BARS.drive, toBar: CRYSTAL_BARS.preWarden, tracks: [padTrack(CRYSTAL_BARS.drive), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6)] },
+      { name: 'pre-warden', fromBar: CRYSTAL_BARS.preWarden, toBar: CRYSTAL_BARS.wardenFill, tracks: [padTrack(CRYSTAL_BARS.preWarden), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6), oneShot(0, 0, ({ time }) => riser(time, 16 * 2 * SIXTEENTH))] },
+      { name: 'warden-fill', fromBar: CRYSTAL_BARS.wardenFill, toBar: CRYSTAL_BARS.finale, tracks: [padTrack(CRYSTAL_BARS.wardenFill), kickTrack(fillKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6)] },
+      { name: 'finale', fromBar: CRYSTAL_BARS.finale, tracks: [padTrack(CRYSTAL_BARS.finale), kickTrack(fillKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6), oneShot(0, 0, ({ time }) => riser(time, 16 * 2 * SIXTEENTH))] },
     ],
   });
 

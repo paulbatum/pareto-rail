@@ -10,6 +10,7 @@ import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import { formation, section, sortTimeline } from '../../engine/spawn-patterns';
 import { createEventBus, type EventBus } from '../../events';
 import { createDebugTimeline, type CrystalDebugTarget } from './debug';
+import { CRYSTAL_BPM, CRYSTAL_MARKERS, CRYSTAL_RUN_DURATION, CRYSTAL_TIME } from './timing';
 import { createCrystalWarden, type CrystalWarden, type WardenSpawnData } from './warden';
 
 // A 45-second run in three acts: a familiar warm-up third, a dense middle
@@ -17,8 +18,7 @@ import { createCrystalWarden, type CrystalWarden, type WardenSpawnData } from '.
 // a short breath. The player has a 3-point hull; shard bolts home in on the
 // center of the view and must be shot down before they land.
 
-export const CRYSTAL_BPM = 126;
-export const CRYSTAL_RUN_DURATION = 45;
+export { CRYSTAL_BPM, CRYSTAL_RUN_DURATION } from './timing';
 export const CRYSTAL_PLAYER_HEALTH = 3;
 
 export type CrystalEnemyKind =
@@ -89,7 +89,7 @@ const wave = (
   pattern: CrystalMovementPattern,
   kind: CrystalEnemyKind,
   offsets: Array<[number, number]>,
-): CrystalSpawnEntry[] => formation(time, 0.18, offsets, (offset) => ({
+): CrystalSpawnEntry[] => formation(time, FORMATION_GAP, offsets, (offset) => ({
   kind,
   data: { role: 'wave', lead, pattern, offset: new Vector3(offset[0], offset[1], 0) },
 }));
@@ -97,59 +97,60 @@ const wave = (
 const lancers = (time: number, lead: number, offsets: Array<[number, number]>): CrystalSpawnEntry[] =>
   wave(time, lead, 'hold', 'lancer', offsets);
 
-const BOSS_TIME = 31.6;
+const time = CRYSTAL_TIME;
+const BOSS_TIME = CRYSTAL_MARKERS.bossEntrance;
+const FORMATION_GAP = time.seconds(0.18);
 
 function createCrystalTimeline(warden: CrystalWarden): CrystalSpawnEntry[] {
   return [
-    // --- Act 1 (0–10s): the familiar opening. Room to learn the sweep.
-    ...section(0,
-      wave(1.2, 4.0, 'hold', 'node', [
+    // --- Act 1: the familiar opening. Room to learn the sweep.
+    ...section(CRYSTAL_MARKERS.run,
+      wave(time.beats(2.52), 4.0, 'hold', 'node', [
         [-5, 1], [-2, 3], [2, 3], [5, 1],
       ]),
-      wave(4.2, 4.6, 'drift', 'drifter', [
+      wave(time.beats(8.82), 4.6, 'drift', 'drifter', [
         [-8, -1], [-4, 2], [0, 3], [4, 2], [8, -1],
       ]),
-      wave(7.4, 4.8, 'orbit', 'orbiter', [
+      wave(time.beats(15.54), 4.8, 'orbit', 'orbiter', [
         [-6, 4], [-3, 0], [3, 0], [6, 4],
       ]),
     ),
 
-    // --- Act 2 (10–30s): the corridor wakes up. Times are relative to the act;
+    // --- Act 2: the corridor wakes up. Times are relative to the act marker;
     // lancers are haloed crystals that fire homing shard bolts at the hull.
-    ...section(10,
-      wave(0.6, 4.3, 'drift', 'drifter', [
+    ...section(CRYSTAL_MARKERS.gameplayAct2,
+      wave(time.beats(1.26), 4.3, 'drift', 'drifter', [
         [-7, 2], [-3, -2], [2, 1], [7, -1],
       ]),
-      wave(3.2, 4.6, 'hold', 'node', [
+      wave(time.beats(6.72), 4.6, 'hold', 'node', [
         [-7, -1], [-3.5, 2], [0, 3.5], [3.5, 2], [7, -1],
       ]),
-      lancers(4.4, 5.0, [[0, 5.4]]),
-      wave(6.4, 4.7, 'orbit', 'orbiter', [
+      lancers(time.beats(9.24), 5.0, [[0, 5.4]]),
+      wave(time.beats(13.44), 4.7, 'orbit', 'orbiter', [
         [-9, 2], [-4.5, 5], [0, 2], [4.5, 5], [9, 2],
       ]),
-      wave(8.8, 4.4, 'drift', 'drifter', [
+      wave(time.beats(18.48), 4.4, 'drift', 'drifter', [
         [-7, 0], [-2, 3], [2, -1], [7, 2],
       ]),
-      lancers(9.6, 5.2, [[-6, 4], [6, 4]]),
-      wave(11.6, 4.5, 'hold', 'node', [
+      lancers(time.beats(20.16), 5.2, [[-6, 4], [6, 4]]),
+      wave(time.beats(24.36), 4.5, 'hold', 'node', [
         [-7.5, 4], [-5, 1.5], [-2.5, -1], [2.5, -1], [5, 1.5], [7.5, 4],
       ]),
-      wave(13.8, 4.6, 'orbit', 'orbiter', [
+      wave(time.beats(28.98), 4.6, 'orbit', 'orbiter', [
         [-8, -1], [-3, 3], [3, 3], [8, -1],
       ]),
-      lancers(14.6, 4.8, [[-5, -2], [5, -2]]),
-      wave(16.2, 4.2, 'drift', 'drifter', [
+      lancers(time.beats(30.66), 4.8, [[-5, -2], [5, -2]]),
+      wave(time.beats(34.02), 4.2, 'drift', 'drifter', [
         [-8, 1], [-5, -2], [-1.5, 3], [1.5, -1], [5, 2], [8, -1],
       ]),
-      lancers(18.2, 4.4, [[-3, 5], [3, 5]]),
-      wave(19.2, 3.4, 'hold', 'node', [
+      lancers(time.beats(38.22), 4.4, [[-3, 5], [3, 5]]),
+      wave(time.beats(40.32), 3.4, 'hold', 'node', [
         [-4, 2], [0, 4], [4, 2],
       ]),
     ),
 
-    // --- Act 3 (31.6s–end): the Crystal Warden. The delayed entrance gives the
-    // last corridor wave room to clear, then a six-node outer lattice and three
-    // inner plates must be picked apart before the core takes two full volleys.
+    // --- Act 3: the Crystal Warden. The delayed entrance gives the last
+    // corridor wave room to clear after the bar-16 fill.
     ...warden.entries(BOSS_TIME),
   ];
 }
