@@ -10,6 +10,7 @@ Shared code lives in `src/engine/`:
 - `spawn-patterns.ts` contains small helpers for eager spawn timeline construction;
 - `glyphs.ts` contains neutral 5×7 glyph grid data and accessors, not rendering;
 - `hostile-shot.ts` contains shared homing steer, behind-camera despawn cull, and approach/impact timing for lockable enemy shots and hazards;
+- `visual-kit.ts` contains lifecycle helpers for visual bookkeeping: pending mesh-to-event records, transient effect pools, additive material setup, and attached adornment slots. It owns no look or timing decisions; levels still supply every mesh, color, number, and update rule;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting.
 
 ## Module layout: spine and leaves

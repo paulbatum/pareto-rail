@@ -24,8 +24,9 @@ import {
 import type { Camera } from 'three';
 import type { EventBus } from '../../events';
 import { colorForLockCount } from '../../engine/locks';
-import { createPrismRail } from './gameplay';
 import { sampleRailFrame } from '../../engine/rail';
+import { createAdditiveBasicMaterial, createPendingVisualRecords, createTransientEffectPool } from '../../engine/visual-kit';
+import { createPrismRail } from './gameplay';
 
 const INDIGO = new Color(0.13, 0.08, 0.38);
 const LIME = new Color(0.62, 1.0, 0.38);
@@ -35,14 +36,28 @@ const ROSE = new Color(1.0, 0.26, 0.46);
 
 const hdr = (color: Color, intensity: number) => color.clone().multiplyScalar(intensity);
 
+type VisualContext = { scene: Scene; camera: Camera; elapsed: number };
 type EnemyRecord = { mesh: Group; bornAt: number; locked: boolean };
 type Pulse = { ring: Mesh; age: number; life: number; color: Color };
 
-const pendingEnemies: Group[] = [];
-const pendingProjectiles: Object3D[] = [];
-const enemies = new Map<number, EnemyRecord>();
-const projectiles = new Map<number, Object3D>();
-const pulses: Pulse[] = [];
+const enemies = createPendingVisualRecords<Group, EnemyRecord, [number]>({
+  createRecord: (mesh, bornAt) => ({ mesh, bornAt, locked: false }),
+});
+const projectiles = createPendingVisualRecords<Object3D, Object3D>({
+  createRecord: (mesh) => mesh,
+});
+const pulses = createTransientEffectPool<Pulse, VisualContext>({
+  update(item, progress, _dt, context) {
+    item.ring.quaternion.copy(context.camera.quaternion);
+    item.ring.scale.setScalar(0.2 + progress * 3.8);
+    (item.ring.material as MeshBasicMaterial).color.copy(item.color).multiplyScalar((1 - progress) ** 1.6);
+  },
+  dispose(item, context) {
+    context.scene.remove(item.ring);
+    item.ring.geometry.dispose();
+    (item.ring.material as MeshBasicMaterial).dispose();
+  },
+});
 let beatEnergy = 0;
 let environmentRoot: Group | null = null;
 let baseFov: number | null = null;
@@ -111,15 +126,15 @@ export function createEnvironment(scene: Scene) {
 export function createEnemyMesh(kind: string, letter?: string) {
   const mesh = kind === 'letter' ? createLetter(letter ?? '?') : createPrismEnemy(kind);
   mesh.scale.setScalar(0.001);
-  pendingEnemies.push(mesh);
+  enemies.enqueue(mesh);
   return mesh;
 }
 
 function createPrismEnemy(kind: string) {
   const group = new Group();
   const accent = kind === 'comet' ? ROSE : kind === 'echo' ? LIME : VIOLET;
-  const material = new MeshBasicMaterial({ color: hdr(accent, 1.4), transparent: true, blending: AdditiveBlending, depthWrite: false });
-  const coreMaterial = new MeshBasicMaterial({ color: hdr(ICE, 2.4), transparent: true, blending: AdditiveBlending, depthWrite: false });
+  const material = createAdditiveBasicMaterial({ color: hdr(accent, 1.4) });
+  const coreMaterial = createAdditiveBasicMaterial({ color: hdr(ICE, 2.4) });
 
   if (kind === 'gate') {
     group.add(new Mesh(new TorusGeometry(0.8, 0.035, 6, 5), material));
@@ -167,8 +182,8 @@ function createLetter(letter: string) {
   const group = new Group();
   const fillColor = hdr(ICE, 1.45);
   const hotColor = hdr(LIME, 2.05);
-  const fillMaterial = new MeshBasicMaterial({ color: fillColor.clone(), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide });
-  const hotMaterial = new MeshBasicMaterial({ color: hotColor.clone(), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide });
+  const fillMaterial = createAdditiveBasicMaterial({ color: fillColor.clone(), side: DoubleSide });
+  const hotMaterial = createAdditiveBasicMaterial({ color: hotColor.clone(), side: DoubleSide });
   fillMaterial.userData.baseColor = fillColor;
   hotMaterial.userData.baseColor = hotColor;
 
@@ -219,18 +234,18 @@ function tintEnemyMaterials(mesh: Object3D, color: Color | undefined, fallback: 
 
 export function createProjectileMesh() {
   const group = new Group();
-  const core = new Mesh(new OctahedronGeometry(0.22, 0), new MeshBasicMaterial({ color: hdr(LIME, 2.6), transparent: true, blending: AdditiveBlending, depthWrite: false }));
+  const core = new Mesh(new OctahedronGeometry(0.22, 0), createAdditiveBasicMaterial({ color: hdr(LIME, 2.6) }));
   core.scale.set(0.6, 0.6, 2.8);
-  const halo = new Mesh(new RingGeometry(0.42, 0.46, 4), new MeshBasicMaterial({ color: hdr(ICE, 1.4), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+  const halo = new Mesh(new RingGeometry(0.42, 0.46, 4), createAdditiveBasicMaterial({ color: hdr(ICE, 1.4), side: DoubleSide }));
   group.add(core, halo);
-  pendingProjectiles.push(group);
+  projectiles.enqueue(group);
   return group;
 }
 
 export function createReticle() {
   const group = new Group();
-  const ring = new Mesh(new RingGeometry(0.48, 0.53, 4), new MeshBasicMaterial({ color: hdr(LIME, 1.5), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
-  const ring2 = new Mesh(new RingGeometry(0.72, 0.74, 4), new MeshBasicMaterial({ color: hdr(VIOLET, 1.2), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+  const ring = new Mesh(new RingGeometry(0.48, 0.53, 4), createAdditiveBasicMaterial({ color: hdr(LIME, 1.5), side: DoubleSide }));
+  const ring2 = new Mesh(new RingGeometry(0.72, 0.74, 4), createAdditiveBasicMaterial({ color: hdr(VIOLET, 1.2), side: DoubleSide }));
   ring2.rotation.z = Math.PI / 4;
   group.add(ring, ring2);
   return group;
@@ -243,16 +258,14 @@ export function setReticleActive(reticle: Object3D, active: boolean, lockCount: 
 
 export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
   bus.on('spawn', ({ enemyId, worldPosition }) => {
-    const mesh = pendingEnemies.shift();
-    if (mesh) enemies.set(enemyId, { mesh, bornAt: performance.now() / 1000, locked: false });
+    enemies.claim(enemyId, performance.now() / 1000);
     pulse(scene, worldPosition, ICE, 2.4, 0.35);
   });
   bus.on('lock', ({ worldPosition, lockCount }) => {
     pulse(scene, worldPosition, colorForLockCount(lockCount, [LIME, VIOLET, ROSE]), 1.6, 0.22);
   });
   bus.on('fire', ({ projectileId, worldPosition }) => {
-    const projectile = pendingProjectiles.shift();
-    if (projectile) projectiles.set(projectileId, projectile);
+    projectiles.claim(projectileId);
     pulse(scene, worldPosition, LIME, 1.1, 0.18);
   });
   bus.on('hit', ({ projectileId, worldPosition }) => {
@@ -287,10 +300,10 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
 }
 
 function pulse(scene: Scene, position: Vector3, color: Color, scale: number, life: number) {
-  const ring = new Mesh(new RingGeometry(0.96, 1, 36), new MeshBasicMaterial({ color: hdr(color, 1.5), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+  const ring = new Mesh(new RingGeometry(0.96, 1, 36), createAdditiveBasicMaterial({ color: hdr(color, 1.5), side: DoubleSide }));
   ring.position.copy(position);
   scene.add(ring);
-  pulses.push({ ring, age: 0, life, color: color.clone().multiplyScalar(1.5 * scale) });
+  pulses.add({ ring, age: 0, life, color: color.clone().multiplyScalar(1.5 * scale) });
 }
 
 export function updateVisuals(dt: number, context: { scene: Scene; camera: Camera; elapsed: number }) {
@@ -327,19 +340,5 @@ export function updateVisuals(dt: number, context: { scene: Scene; camera: Camer
 
   for (const projectile of projectiles.values()) projectile.rotateZ(dt * 8);
 
-  for (let i = pulses.length - 1; i >= 0; i -= 1) {
-    const item = pulses[i];
-    item.age += dt;
-    if (item.age >= item.life) {
-      context.scene.remove(item.ring);
-      item.ring.geometry.dispose();
-      (item.ring.material as MeshBasicMaterial).dispose();
-      pulses.splice(i, 1);
-      continue;
-    }
-    const progress = item.age / item.life;
-    item.ring.quaternion.copy(context.camera.quaternion);
-    item.ring.scale.setScalar(0.2 + progress * 3.8);
-    (item.ring.material as MeshBasicMaterial).color.copy(item.color).multiplyScalar((1 - progress) ** 1.6);
-  }
+  pulses.update(dt, context);
 }
