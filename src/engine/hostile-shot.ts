@@ -60,6 +60,7 @@ export type HostileShotImpactResult =
   | { phase: 'braking'; damaged: boolean };
 
 export const DEFAULT_HOSTILE_SHOT_CENTER_IMPACT_HALF_SIZE_NDC = 0.5;
+const HOSTILE_SHOT_CENTERLINE_DEPTH_FRACTION = 0.62;
 
 export const DEFAULT_HOSTILE_SHOT_IMPACT = {
   hitDistance: 2.4,
@@ -70,10 +71,16 @@ export const DEFAULT_HOSTILE_SHOT_IMPACT = {
 } satisfies Required<HostileShotImpactConfig>;
 
 /** Point hostile shots should steer toward so they visibly converge on the center of the player's view. */
-export function hostileShotAimPoint(camera: PerspectiveCamera, distance = DEFAULT_HOSTILE_SHOT_IMPACT.hitDistance): Vector3 {
+export function hostileShotAimPoint(
+  camera: PerspectiveCamera,
+  shotPosition: Vector3,
+  impactDistance = DEFAULT_HOSTILE_SHOT_IMPACT.hitDistance,
+): Vector3 {
   const forward = new Vector3();
   camera.getWorldDirection(forward);
-  return camera.position.clone().addScaledVector(forward, distance);
+  const depth = shotPosition.clone().sub(camera.position).dot(forward);
+  const targetDepth = Math.max(impactDistance, depth * HOSTILE_SHOT_CENTERLINE_DEPTH_FRACTION);
+  return camera.position.clone().addScaledVector(forward, targetDepth);
 }
 
 export function updateHostileShotImpact(context: HostileShotImpactContext): HostileShotImpactResult {

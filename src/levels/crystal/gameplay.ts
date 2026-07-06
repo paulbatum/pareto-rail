@@ -178,7 +178,7 @@ export function createCrystalGameplay(
   let hitsTaken = 0;
 
   function fireBolt(context: CrystalUpdate, from: Vector3) {
-    const initial = hostileShotAimPoint(context.camera).sub(from).normalize().multiplyScalar(4.5);
+    const initial = hostileShotAimPoint(context.camera, from).sub(from).normalize().multiplyScalar(4.5);
     context.spawnEnemy({
       time: context.runTime,
       kind: 'bolt',
@@ -276,7 +276,7 @@ export function createCrystalGameplay(
 
     // Ballistic launch that tightens into a homing run; speed ramps so the
     // player gets a beat to read it before it commits.
-    steerHomingShot(data.position, data.velocity, hostileShotAimPoint(camera), age, dt, {
+    steerHomingShot(data.position, data.velocity, hostileShotAimPoint(camera, data.position), age, dt, {
       baseSpeed: 5,
       maxSpeed: 11.5,
       accel: 3.2,

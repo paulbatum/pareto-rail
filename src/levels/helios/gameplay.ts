@@ -438,7 +438,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   });
 
   function fireBolt(context: HeliosUpdate, from: Vector3) {
-    const initial = hostileShotAimPoint(context.camera).sub(from).normalize().multiplyScalar(5);
+    const initial = hostileShotAimPoint(context.camera, from).sub(from).normalize().multiplyScalar(5);
     context.spawnEnemy({
       time: context.runTime,
       kind: 'bolt',
@@ -563,7 +563,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
       return false;
     }
 
-    steerHomingShot(data.position, data.velocity, hostileShotAimPoint(camera), age, dt, {
+    steerHomingShot(data.position, data.velocity, hostileShotAimPoint(camera, data.position), age, dt, {
       baseSpeed: 5.5,
       maxSpeed: 12.5,
       accel: 3.4,
@@ -610,7 +610,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
       state.velocity.set(Math.sin(enemy.id) * 2, 26 - age * 10, 0);
       state.position.addScaledVector(state.velocity, dt);
     } else {
-      steerHomingShot(state.position, state.velocity, hostileShotAimPoint(camera, 2.6), age - RISE, dt, {
+      steerHomingShot(state.position, state.velocity, hostileShotAimPoint(camera, state.position, 2.6), age - RISE, dt, {
         baseSpeed: 6,
         maxSpeed: 13,
         accel: 2.6,
