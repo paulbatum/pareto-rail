@@ -15,6 +15,7 @@ Variable rail speed, 4-point hull, cinders, motes, scorchers, pyres, flares, hos
 - `src/levels/helios/index.ts`
 - `src/levels/helios/gameplay.ts`
 - `src/levels/helios/audio.ts`
+- `src/levels/helios/audio-voices.ts`
 - `src/levels/helios/visuals/index.ts`
 - `src/levels/helios/suneater.ts`
 

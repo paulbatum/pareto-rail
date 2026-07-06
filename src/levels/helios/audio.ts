@@ -1,16 +1,17 @@
 import type { EventBus } from '../../events';
 import {
-  createAudioGraphBuilder,
   createLevelAudioKit,
+  createMixBus,
   createStepTransport,
-  playBufferSourceVoice,
-  playNoiseHit,
   playOscillatorVoice,
+  type MixBus,
 } from '../../engine/audio-kit';
-import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
-import { getActionSfxQuantization } from '../../engine/action-sfx-quantization';
+import { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';
+import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq } from '../../engine/music';
+import { createScore, lerp, type SectionMix } from '../../engine/score';
 import { HELIOS_BPM, HELIOS_DURATION } from './gameplay';
+import { createHeliosVoices, installHeliosRumble, type HeliosTonalVoice } from './audio-voices';
 
 // The Helios score: 172 BPM drum & bass in E minor, 86 bars = exactly the
 // 120-second run. Sections land on the run's set pieces — drop 1 at the gate
@@ -80,10 +81,9 @@ const KILL_LANES: Record<SectionIndex, number[]> = {
   ],
 };
 
-type TonalVoice = { oscillator: OscillatorType; decay: number; cutoff: number; gain: number; sparkle: number; reverb: number };
 type FireVoice = { oscillator: OscillatorType; cutoff: number; gain: number; fallSemitones: number; noise: number };
 
-const PLAYER_VOICES: Record<SectionIndex, { lock: TonalVoice; kill: TonalVoice; fire: FireVoice }> = {
+const PLAYER_VOICES: Record<SectionIndex, { lock: HeliosTonalVoice; kill: HeliosTonalVoice; fire: FireVoice }> = {
   0: {
     lock: { oscillator: 'sine', decay: 0.11, cutoff: 3600, gain: 0.12, sparkle: 0.5, reverb: 0.18 },
     kill: { oscillator: 'triangle', decay: 0.28, cutoff: 3200, gain: 0.15, sparkle: 0.7, reverb: 0.28 },
@@ -121,39 +121,36 @@ export function createAudio(bus: EventBus) {
   return createHeliosAudio(bus).audio;
 }
 
-export function traceHeliosAudio(options: { seconds?: number } = {}): AudioTraceResult {
-  const seconds = options.seconds ?? HELIOS_DURATION;
-  const events: AudioTraceResult['events'] = [];
-  const trace = createAudioTraceSink(events);
-  const tracedAudio = createHeliosAudio(createNoopTraceBus(), trace);
-  tracedAudio.traceRun(seconds);
-  return {
-    metadata: {
-      level: 'helios',
-      bpm: HELIOS_BPM,
-      seconds,
-      stepSeconds: SIXTEENTH,
-      mode: 'run',
-    },
-    events,
-  };
-}
+export const traceHeliosAudio = createAudioTraceHarness({
+  level: 'helios',
+  bpm: HELIOS_BPM,
+  stepSeconds: SIXTEENTH,
+  defaultSeconds: HELIOS_DURATION,
+  createAudio: createHeliosAudio,
+});
 
 function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
-  let arrangementStart = 0;
   let mode: 'run' | 'ambient' = 'ambient';
-  let transportEpoch = 0;
   let heartId = -1;
   let heartMaxHp = 0;
 
-  let master: GainNode | null = null;
-  let musicGain: GainNode | null = null;
-  let sfxGain: GainNode | null = null;
-  let duck: GainNode | null = null;
-  let delaySend: GainNode | null = null;
-  let reverbSend: GainNode | null = null;
-  let noiseBuffer: AudioBuffer | null = null;
+  let mix: MixBus | null = null;
+
+  const score = createScore<Chord, SectionIndex>({
+    bpm: HELIOS_BPM,
+    stepsPerBar: STEPS_PER_BAR,
+    chords: CHORDS,
+    barsPerChord: 2,
+    alternateChordSets: [{ fromBar: 64, toBar: 80, chords: BOSS_CHORDS, barsPerChord: 2 }],
+    sections: [
+      { index: 0, fromBar: 0 },
+      { index: 1, fromBar: 16, crossfadeBars: 2 },
+      { index: 2, fromBar: 40, crossfadeBars: 2 },
+      { index: 3, fromBar: 64, crossfadeBars: 2 },
+    ],
+    killLanes: KILL_LANES,
+  });
 
   const transport = createStepTransport({
     stepSeconds: SIXTEENTH,
@@ -171,108 +168,44 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       ctx = context;
       buildGraph(context, musicVolume, sfxVolume);
       transport.start(context);
-      transportEpoch = transport.nextStepTime;
+      score.setEpoch(transport.nextStepTime);
     },
     onSchedule(context) {
       transport.schedule(context);
     },
     onMusicVolumeChange(context, musicVolume) {
-      if (musicGain) musicGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.05);
+      mix?.setMusicVolume(musicVolume, context.currentTime, 0.05);
     },
     onSfxVolumeChange(context, sfxVolume) {
-      if (sfxGain) sfxGain.gain.setTargetAtTime(sfxVolume, context.currentTime, 0.02);
+      mix?.setSfxVolume(sfxVolume, context.currentTime, 0.02);
     },
     onDispose() {
       ctx = null;
-      master = null;
-      musicGain = null;
-      sfxGain = null;
-      duck = null;
-      delaySend = null;
-      reverbSend = null;
-      noiseBuffer = null;
+      mix = null;
     },
   });
 
   function buildGraph(context: AudioContext, musicVolume: number, sfxVolume: number) {
-    const graph = createAudioGraphBuilder(context);
-
-    master = graph.gain();
-    musicGain = graph.gain(musicVolume);
-    sfxGain = graph.gain(sfxVolume);
-    const compressor = graph.compressor({ threshold: -16, ratio: 5, attack: 0.004, release: 0.2 });
-    graph.connect(musicGain, master);
-    graph.connect(sfxGain, master);
-    graph.connect(master, compressor);
-    graph.connect(compressor, context.destination);
-
-    duck = graph.gain();
-    graph.connect(duck, musicGain);
-
-    // Dotted-eighth feedback delay: where the arp and lead live.
-    delaySend = graph.gain();
-    const delay = graph.delay(1, SIXTEENTH * 3);
-    const feedback = graph.gain(0.32);
-    const damp = graph.biquadFilter({ type: 'lowpass', frequency: 2400 });
-    graph.connect(delaySend, delay);
-    graph.connect(delay, damp);
-    graph.connect(damp, feedback);
-    graph.connect(feedback, delay);
-    graph.connect(damp, duck);
-
-    // Generated-impulse hall: the "cathedral of fire" space for choir and hits.
-    reverbSend = graph.gain();
-    const convolver = context.createConvolver();
-    convolver.buffer = makeImpulse(context, 2.4, 2.6);
-    const reverbLevel = graph.gain(0.5);
-    graph.connect(reverbSend, convolver);
-    graph.connect(convolver, reverbLevel);
-    graph.connect(reverbLevel, duck);
-
-    noiseBuffer = graph.noiseBuffer(2);
-
-    // The star itself: an endless low rumble under everything.
-    const rumbleSource = context.createBufferSource();
-    rumbleSource.buffer = noiseBuffer;
-    rumbleSource.loop = true;
-    const rumbleFilter = context.createBiquadFilter();
-    rumbleFilter.type = 'lowpass';
-    rumbleFilter.frequency.value = 90;
-    rumbleFilter.Q.value = 0.6;
-    const rumbleGain = context.createGain();
-    rumbleGain.gain.value = 0.16;
-    const rumbleLfo = context.createOscillator();
-    rumbleLfo.frequency.value = 0.11;
-    const rumbleLfoGain = context.createGain();
-    rumbleLfoGain.gain.value = 0.05;
-    rumbleLfo.connect(rumbleLfoGain).connect(rumbleGain.gain);
-    rumbleSource.connect(rumbleFilter).connect(rumbleGain).connect(musicGain);
-    rumbleSource.start();
-    rumbleLfo.start();
+    mix = createMixBus(context, {
+      musicVolume,
+      sfxVolume,
+      compressor: { threshold: -16, ratio: 5, attack: 0.004, release: 0.2 },
+      delay: { time: SIXTEENTH * 3, feedback: 0.32, dampHz: 2400 },
+      reverb: { seconds: 2.4, decay: 2.6, level: 0.5 },
+      noiseSeconds: 2,
+    });
+    installHeliosRumble(context, mix);
   }
 
-  const musicDestination = () => musicGain ?? master;
-  const sfxDestination = () => sfxGain ?? master;
-
-  function makeImpulse(context: AudioContext, seconds: number, decay: number) {
-    const length = Math.floor(context.sampleRate * seconds);
-    const impulse = context.createBuffer(2, length, context.sampleRate);
-    for (let channel = 0; channel < 2; channel += 1) {
-      const data = impulse.getChannelData(channel);
-      for (let i = 0; i < length; i += 1) {
-        data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** decay;
-      }
-    }
-    return impulse;
-  }
+  const sfxDestination = () => mix?.sfx ?? mix?.master ?? null;
 
   function traceRun(seconds: number) {
     mode = 'run';
     heartId = -1;
     heartMaxHp = 0;
-    arrangementStart = 0;
+    score.restartArrangement(0, { align: 'step' });
     transport.reset(0.06, 0);
-    transportEpoch = 0.06;
+    score.setEpoch(0.06);
     ctx = { currentTime: 0 } as AudioContext;
     transport.runUntil(seconds);
     ctx = null;
@@ -280,192 +213,223 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   // ---- scheduler ------------------------------------------------------------
 
-  function scheduleStep(index: number, time: number) {
-    const position = Math.max(0, index - arrangementStart);
-    const step = position % 16;
-    const barIndex = Math.floor(position / 16);
+  const blankBar = '................';
+  const evenArp = 'A.A.A.A.A.A.A.A.';
+  const beatArp = 'A...A...A...A...';
+  const evenHat = 'h.H.h.H.h.H.h.H.';
+  const busyHat = 'hoHohoHohoHohoHo';
+  const dropGhost = '.......G........' + '...............G';
+  const bossGhost = '.......G........' + '...........G....';
+  const evenBarHit = 'S...............' + blankBar;
+  const evenBarChoir = 'C...............................';
 
-    if (trace && step === 0) recordSection(time, barIndex);
+  const ambientArrangement = createArrangement<Chord>({
+    stepsPerBar: STEPS_PER_BAR,
+    chordAt(position) {
+      const bar = Math.floor(position / STEPS_PER_BAR);
+      return CHORDS[Math.floor(bar / 2) % CHORDS.length];
+    },
+    sections: [
+      {
+        name: 'ambient',
+        fromBar: 0,
+        tracks: [
+          hits(evenBarChoir, { C: 1 }, ({ time, chord }) => choir(time, chord.pad, 32 * SIXTEENTH * 1.06, 0.7)),
+          hits(beatArp, { A: 1 }, ({ time, step, chord }) => arp(time, chord.arp[(step / 4) % chord.arp.length], 0.4)),
+        ],
+      },
+    ],
+  });
+
+  const runArrangement = createArrangement<Chord>({
+    stepsPerBar: STEPS_PER_BAR,
+    chordAt: score.chordAt,
+    trace,
+    emitSections: true,
+    sections: [
+      {
+        name: 'intro',
+        fromBar: 0,
+        tracks: [
+          hits('C...............................................................', { C: 1 }, ({ time, chord }) => choir(time, chord.pad, 64 * SIXTEENTH * 1.02, 0.8)),
+          hits(evenArp, { A: 1 }, ({ time, step, bar, chord }) => arp(time, chord.arp[(step / 2) % chord.arp.length], 0.28 + bar * 0.04)),
+          hits([blankBar, blankBar, blankBar, blankBar, 'K...............', 'K...............', 'K.......k.......', 'K.......k.......'].join(''), { K: 0.7, k: 0.5 }, ({ time }, vel) => kick(time, vel)),
+          hits([blankBar, blankBar, blankBar, blankBar, '..H...H...H...H.', '..H...H...H...H.', '..H...H...H...H.', '..H...H...H...H.'].join(''), { H: 0.035 }, ({ time }, vel) => hat(time, vel, 0.025)),
+        ],
+      },
+      {
+        name: 'build',
+        fromBar: 8,
+        tracks: [
+          hits('K.........k.....', { K: 0.95, k: 0.85 }, ({ time }, vel) => kick(time, vel)),
+          hits('............S...', { S: 0.8 }, ({ time }, vel) => snare(time, vel)),
+          hits(evenHat, { h: 0.04, H: 0.07 }, ({ time }, vel) => hat(time, vel, 0.03)),
+          hits('B.....B....B....', { B: 0.72 }, ({ time, chord }, vel) => bass(time, chord.bass, vel, 0.5)),
+          hits(evenArp, { A: 0.55 }, ({ time, step, chord }, vel) => arp(time, chord.arp[(step / 2) % chord.arp.length], vel)),
+          hits('C...............................................................', { C: 1 }, ({ time, chord }) => choir(time, chord.pad, 64 * SIXTEENTH * 1.02, 0.7)),
+          oneShot(6, 0, ({ time }) => riser(time, 32 * SIXTEENTH, 0.2)),
+          fn(({ time, step, bar }) => { if (bar === 15 && step >= 8) snare(time, 0.25 + (step - 8) * 0.07); }),
+        ],
+      },
+      {
+        name: 'drop-1',
+        fromBar: 16,
+        tracks: [
+          oneShot(0, 0, ({ time }) => impact(time, 1)),
+          hits('K.........k.....', { K: 1, k: 0.88 }, ({ time }, vel) => kick(time, vel)),
+          hits('....S.......S...', { S: 0.9 }, ({ time }, vel) => snare(time, vel)),
+          hits(dropGhost, { G: 0.3 }, ({ time }, vel) => snare(time, vel)),
+          hits(evenHat, { h: 0.045, H: 0.085 }, ({ time }, vel) => hat(time, vel, 0.028)),
+          fn(openHatTrack(false)),
+          fn(dropBassTrack(false)),
+          hits(evenArp, { A: 0.62 }, dropArpHit(false)),
+          hits(evenBarHit, { S: 0.65 }, ({ time, chord }, vel) => stab(time, chord.stab, vel)),
+          fn(dropChoirTrack),
+        ],
+      },
+      {
+        name: 'shift',
+        fromBar: 32,
+        tracks: [
+          hits('K.........k.....', { K: 1, k: 0.88 }, ({ time }, vel) => kick(time, vel)),
+          hits('....S.......S...', { S: 0.9 }, ({ time }, vel) => snare(time, vel)),
+          hits(dropGhost, { G: 0.3 }, ({ time }, vel) => snare(time, vel)),
+          hits(blankBar + '..............X.', { X: 0.42 }, ({ time }, vel) => snare(time, vel)),
+          hits(busyHat, { h: 0.045, H: 0.085, o: 0.028 }, ({ time }, vel, symbol) => hat(time, vel, symbol === 'o' ? 0.02 : 0.028)),
+          fn(openHatTrack(false)),
+          fn(dropBassTrack(false)),
+          hits(evenArp, { A: 0.62 }, dropArpHit(false)),
+          hits(evenBarHit, { S: 0.65 }, ({ time, chord }, vel) => stab(time, chord.stab, vel)),
+          fn(dropChoirTrack),
+          oneShot(6, 0, ({ time }) => riser(time, 32 * SIXTEENTH, 0.22)),
+        ],
+      },
+      {
+        name: 'drop-2',
+        fromBar: 40,
+        tracks: [
+          oneShot(0, 0, ({ time }) => impact(time, 1.1)),
+          hits('K.....k...k.....', { K: 1, k: 0.88 }, ({ time }, vel) => kick(time, vel)),
+          hits('....S.......S...', { S: 0.9 }, ({ time }, vel) => snare(time, vel)),
+          hits(dropGhost, { G: 0.3 }, ({ time }, vel) => snare(time, vel)),
+          hits(busyHat, { h: 0.045, H: 0.085, o: 0.028 }, ({ time }, vel, symbol) => hat(time, vel, symbol === 'o' ? 0.02 : 0.028)),
+          hits('R...R...R...R...', { R: 0.05 }, ({ time }, vel) => ride(time, vel)),
+          fn(openHatTrack(true)),
+          fn(dropBassTrack(true)),
+          hits(evenArp, { A: 1 }, dropArpHit(true)),
+          hits(evenBarHit, { S: 0.85 }, ({ time, chord }, vel) => stab(time, chord.stab, vel)),
+          fn(dropChoirTrack),
+        ],
+      },
+      {
+        name: 'breakdown',
+        fromBar: 56,
+        tracks: [
+          hits('K...............', { K: 0.55 }, ({ time }, vel) => kick(time, vel)),
+          hits(evenBarChoir, { C: 1 }, ({ time, chord }) => choir(time, chord.pad, 32 * SIXTEENTH * 1.05, 1)),
+          hits(beatArp, { A: 0.3 }, ({ time, step, chord }, vel) => arp(time, chord.arp[(step / 4) % chord.arp.length], vel)),
+          fn(({ time, step, bar }) => { if (bar >= 58 && step === 0) alarmSwell(time, bar % 2 === 0 ? 47 : 53, 16 * SIXTEENTH); }),
+          oneShot(6, 0, ({ time }) => riser(time, 32 * SIXTEENTH, 0.26)),
+          fn(({ time, step, bar }) => { if (bar === 63) snare(time, 0.16 + step * 0.05); }),
+        ],
+      },
+      {
+        name: 'boss',
+        fromBar: 64,
+        tracks: [
+          oneShot(0, 0, ({ time }) => {
+            impact(time, 1.25);
+            crash(time, 0.3);
+          }),
+          hits('K.........k.....' + 'K.....k...k.....', { K: 1, k: 0.9 }, ({ time }, vel) => kick(time, vel)),
+          hits('....S.......S...', { S: 0.95 }, ({ time }, vel) => snare(time, vel)),
+          hits(bossGhost, { G: 0.32 }, ({ time }, vel) => snare(time, vel)),
+          hits([blankBar, blankBar, blankBar, '..............X.'].join(''), { X: 0.5 }, ({ time }, vel) => snare(time, vel)),
+          hits(busyHat, { h: 0.05, H: 0.09, o: 0.03 }, ({ time }, vel, symbol) => hat(time, vel, symbol === 'o' ? 0.02 : 0.028)),
+          hits('..R...R...R...R.', { R: 0.05 }, ({ time }, vel) => ride(time, vel)),
+          fn(bossBassTrack),
+          hits(evenBarHit, { S: 0.9 }, ({ time, chord }, vel) => stab(time, chord.stab, vel)),
+          fn(({ time, step, bar, chord }) => { if (step === 0 && bar % 8 === 0) choir(time, chord.pad, 128 * SIXTEENTH, 0.5); }),
+          fn(({ time, step, bar }) => {
+            const themeBar = (bar - 64) % 8;
+            if (step % 2 !== 0) return;
+            for (const [noteBar, noteStep, midi, beats] of LEAD_THEME) {
+              if (noteBar === themeBar && noteStep === step / 2) lead(time, midi, beats * 4 * SIXTEENTH, 0.85);
+            }
+          }),
+        ],
+      },
+      {
+        name: 'outro',
+        fromBar: 80,
+        toBar: 86,
+        tracks: [
+          hits('K.........K.....', { K: 0.85 }, ({ time, bar }, vel) => kick(time, vel * outroFade(bar))),
+          hits('............S...', { S: 0.7 }, ({ time, bar }, vel) => snare(time, vel * outroFade(bar))),
+          hits('H.H.H.H.H.H.H.H.', { H: 0.05 }, ({ time, bar }, vel) => hat(time, vel * outroFade(bar), 0.03)),
+          hits('B.......B.......', { B: 0.7 }, ({ time, bar, chord }, vel) => { if (bar < 84) bass(time, chord.bass, vel * outroFade(bar), 0.5); }),
+          hits(evenArp, { A: 0.5 }, ({ time, step, bar, chord }, vel) => arp(time, chord.arp[(step / 2) % chord.arp.length], vel * outroFade(bar))),
+          oneShot(0, 0, ({ time }) => choir(time, [52, 55, 59, 64, 66], 96 * SIXTEENTH, 0.9)),
+          oneShot(5, 0, ({ time }) => {
+            kick(time, 1);
+            crash(time, 0.25);
+          }),
+        ],
+      },
+    ],
+  });
+
+  function dropArpHit(drop2: boolean) {
+    return ({ time, step, chord }: { time: number; step: number; chord: Chord }, vel: number) => {
+      const order = [0, 2, 1, 3, 2, 0, 3, 1];
+      const octave = drop2 && step >= 8 ? 12 : 0;
+      arp(time, chord.arp[order[(step / 2) % order.length]] + octave, drop2 ? 0.8 * vel : vel);
+    };
+  }
+
+  function openHatTrack(drop2: boolean) {
+    return ({ time, step, bar }: { time: number; step: number; bar: number }) => {
+      if (((bar >= 20 && bar % 8 === 4) || (drop2 && bar % 4 === 2)) && step === 2) openHat(time, 0.1);
+    };
+  }
+
+  function dropBassTrack(drop2: boolean) {
+    return ({ time, step, chord }: { time: number; step: number; chord: Chord }) => {
+      const bassSteps: Record<number, [number, number]> = drop2
+        ? { 0: [0, 1], 3: [0, 0.75], 5: [12, 0.6], 6: [7, 0.8], 8: [0, 0.9], 11: [0, 0.7], 13: [3, 0.6], 14: [7, 0.8] }
+        : { 0: [0, 1], 3: [0, 0.75], 6: [7, 0.8], 8: [0, 0.9], 11: [0, 0.7], 14: [7, 0.8] };
+      if (step in bassSteps) bass(time, chord.bass + bassSteps[step][0], bassSteps[step][1], drop2 ? 0.9 : 0.7);
+    };
+  }
+
+  function bossBassTrack({ time, step, chord }: { time: number; step: number; chord: Chord }) {
+    const bossBass: Record<number, [number, number]> = {
+      0: [0, 1], 2: [0, 0.6], 3: [0, 0.8], 6: [7, 0.85], 8: [0, 0.95], 10: [12, 0.6], 11: [0, 0.75], 14: [1, 0.7],
+    };
+    if (step in bossBass) bass(time, chord.bass + bossBass[step][0], bossBass[step][1], 1);
+  }
+
+  function dropChoirTrack({ time, step, bar, chord }: { time: number; step: number; bar: number; chord: Chord }) {
+    if (step === 0 && bar % 8 === 0) choir(time, chord.pad, 64 * SIXTEENTH, 0.55);
+  }
+
+  function outroFade(bar: number) {
+    return 1 - (bar - 80) / 7;
+  }
+
+  function scheduleStep(index: number, time: number) {
+    const position = Math.max(0, index - score.arrangementStart);
+    const step = position % STEPS_PER_BAR;
+    const barIndex = Math.floor(position / STEPS_PER_BAR);
+
+    if (mode === 'run' && step === 0) runArrangement.recordSectionStart(time, barIndex);
 
     if (position % 4 === 0) {
       scheduleBeat(time, Math.floor(position / 4), step === 0);
     }
 
-    if (mode === 'ambient') {
-      const chord = CHORDS[Math.floor(barIndex / 2) % CHORDS.length];
-      if (step === 0 && barIndex % 2 === 0) choir(time, chord.pad, 32 * SIXTEENTH * 1.06, 0.7);
-      if (step % 4 === 0) arp(time, chord.arp[(step / 4) % chord.arp.length], 0.4);
-      return;
-    }
-
-    const inBoss = barIndex >= 64 && barIndex < 80;
-    const chordSet = inBoss ? BOSS_CHORDS : CHORDS;
-    const chord = chordSet[Math.floor(barIndex / 2) % chordSet.length];
-
-    // ---- section router: 0 intro · 8 build · 16 drop1 · 32 shift · 40 drop2
-    //      · 56 breakdown · 64 boss · 80 outro
-    if (barIndex < 8) {
-      if (step === 0 && barIndex % 4 === 0) choir(time, chord.pad, 64 * SIXTEENTH * 1.02, 0.8);
-      if (step % 2 === 0) arp(time, chord.arp[(step / 2) % chord.arp.length], 0.28 + barIndex * 0.04);
-      if (step === 0 && barIndex >= 4) kick(time, 0.7);
-      if (step === 8 && barIndex >= 6) kick(time, 0.5);
-      if (barIndex >= 4 && step % 4 === 2) hat(time, 0.035, 0.025);
-      return;
-    }
-
-    if (barIndex < 16) {
-      if (step === 0 || step === 10) kick(time, step === 0 ? 0.95 : 0.85);
-      if (step === 12) snare(time, 0.8);
-      if (step % 2 === 0) hat(time, step % 4 === 2 ? 0.07 : 0.04, 0.03);
-      if (step === 0 || step === 6 || step === 11) bass(time, chord.bass, 0.72, 0.5);
-      if (step % 2 === 0) arp(time, chord.arp[(step / 2) % chord.arp.length], 0.55);
-      if (step === 0 && barIndex % 4 === 0) choir(time, chord.pad, 64 * SIXTEENTH * 1.02, 0.7);
-      if (barIndex === 14 && step === 0) riser(time, 32 * SIXTEENTH, 0.2);
-      if (barIndex === 15 && step >= 8) snare(time, 0.25 + (step - 8) * 0.07); // roll into the gate
-      return;
-    }
-
-    if (barIndex < 56) {
-      const drop2 = barIndex >= 40;
-      const shift = barIndex >= 32 && barIndex < 40;
-      if (step === 0 && (barIndex === 16 || barIndex === 40)) impact(time, drop2 ? 1.1 : 1);
-
-      // Two-step core; drop 2 adds the third kick and a ride.
-      if (step === 0 || step === 10 || (drop2 && step === 6)) kick(time, step === 0 ? 1 : 0.88);
-      if (step === 4 || step === 12) snare(time, 0.9);
-      const ghostStep = barIndex % 2 === 0 ? 7 : 15;
-      if (step === ghostStep) snare(time, 0.3);
-      if (shift && barIndex % 2 === 1 && step === 14) snare(time, 0.42);
-      if (step % 2 === 0) hat(time, step % 4 === 2 ? 0.085 : 0.045, 0.028);
-      else if (drop2 || shift) hat(time, 0.028, 0.02);
-      if (drop2 && step % 4 === 0) ride(time, 0.05);
-      if ((barIndex >= 20 && barIndex % 8 === 4 || drop2 && barIndex % 4 === 2) && step === 2) openHat(time, 0.1);
-
-      const bassSteps: Record<number, [number, number]> = drop2
-        ? { 0: [0, 1], 3: [0, 0.75], 5: [12, 0.6], 6: [7, 0.8], 8: [0, 0.9], 11: [0, 0.7], 13: [3, 0.6], 14: [7, 0.8] }
-        : { 0: [0, 1], 3: [0, 0.75], 6: [7, 0.8], 8: [0, 0.9], 11: [0, 0.7], 14: [7, 0.8] };
-      if (step in bassSteps) bass(time, chord.bass + bassSteps[step][0], bassSteps[step][1], drop2 ? 0.9 : 0.7);
-
-      const order = [0, 2, 1, 3, 2, 0, 3, 1];
-      const octave = drop2 && step >= 8 ? 12 : 0;
-      if (step % 2 === 0) arp(time, chord.arp[order[(step / 2) % order.length]] + octave, drop2 ? 0.8 : 0.62);
-      if (step === 0 && barIndex % 2 === 0) stab(time, chord.stab, drop2 ? 0.85 : 0.65);
-      if (step === 0 && barIndex % 8 === 0) choir(time, chord.pad, 64 * SIXTEENTH, 0.55);
-      if (barIndex === 38 && step === 0) riser(time, 32 * SIXTEENTH, 0.22);
-      return;
-    }
-
-    if (barIndex < 64) {
-      // Breakdown: the drums die, the serpent stirs.
-      if (step === 0) kick(time, 0.55);
-      if (step === 0 && barIndex % 2 === 0) choir(time, chord.pad, 32 * SIXTEENTH * 1.05, 1);
-      if (step % 4 === 0) arp(time, chord.arp[(step / 4) % chord.arp.length], 0.3);
-      // Alarm: low B against F — the tritone under the reveal.
-      if (barIndex >= 58 && step === 0) alarmSwell(time, barIndex % 2 === 0 ? 47 : 53, 16 * SIXTEENTH);
-      if (barIndex === 62 && step === 0) riser(time, 32 * SIXTEENTH, 0.26);
-      if (barIndex === 63) snare(time, 0.16 + step * 0.05); // full-bar roll into the boss theme
-      return;
-    }
-
-    if (barIndex < 80) {
-      if (step === 0 && barIndex === 64) {
-        impact(time, 1.25);
-        crash(time, 0.3);
-      }
-      if (step === 0 || step === 10 || (barIndex % 2 === 1 && step === 6)) kick(time, step === 0 ? 1 : 0.9);
-      if (step === 4 || step === 12) snare(time, 0.95);
-      if (step === (barIndex % 2 === 0 ? 7 : 11)) snare(time, 0.32);
-      if (barIndex % 4 === 3 && step === 14) snare(time, 0.5);
-      if (step % 2 === 0) hat(time, step % 4 === 2 ? 0.09 : 0.05, 0.028);
-      else hat(time, 0.03, 0.02);
-      if (step % 4 === 2) ride(time, 0.05);
-
-      const bossBass: Record<number, [number, number]> = {
-        0: [0, 1], 2: [0, 0.6], 3: [0, 0.8], 6: [7, 0.85], 8: [0, 0.95], 10: [12, 0.6], 11: [0, 0.75], 14: [1, 0.7],
-      };
-      if (step in bossBass) bass(time, chord.bass + bossBass[step][0], bossBass[step][1], 1);
-      if (step === 0 && barIndex % 2 === 0) stab(time, chord.stab, 0.9);
-      if (step === 0 && barIndex % 8 === 0) choir(time, chord.pad, 128 * SIXTEENTH, 0.5);
-
-      const themeBar = (barIndex - 64) % 8;
-      if (step % 2 === 0) {
-        for (const [noteBar, noteStep, midi, beats] of LEAD_THEME) {
-          if (noteBar === themeBar && noteStep === step / 2) lead(time, midi, beats * 4 * SIXTEENTH, 0.85);
-        }
-      }
-      return;
-    }
-
-    // Outro: ride the wave out.
-    if (barIndex < 86) {
-      const fade = 1 - (barIndex - 80) / 7;
-      if (step === 0 || step === 10) kick(time, 0.85 * fade);
-      if (step === 12) snare(time, 0.7 * fade);
-      if (step % 2 === 0) hat(time, 0.05 * fade, 0.03);
-      if ((step === 0 || step === 8) && barIndex < 84) bass(time, chord.bass, 0.7 * fade, 0.5);
-      if (step % 2 === 0) arp(time, chord.arp[(step / 2) % chord.arp.length], 0.5 * fade);
-      if (step === 0 && barIndex === 80) choir(time, [52, 55, 59, 64, 66], 96 * SIXTEENTH, 0.9); // Em(add9)
-      if (step === 0 && barIndex === 85) {
-        kick(time, 1);
-        crash(time, 0.25);
-      }
-    }
-  }
-
-  function nextGridTime(time: number, gridSixteenths = 0.5) {
-    const grid = SIXTEENTH * gridSixteenths;
-    const stepsFromEpoch = Math.max(0, Math.ceil((time - transportEpoch) / grid - 1e-4));
-    return transportEpoch + stepsFromEpoch * grid;
-  }
-
-  const quantize = (time: number) => nextGridTime(time, 0.5);
-
-  function quantizeActionSfx(time: number) {
-    const { enabled, gridThirtyseconds } = getActionSfxQuantization();
-    if (!enabled) return time;
-    return nextGridTime(time, gridThirtyseconds / 2);
-  }
-
-  function arrangementPositionAt(time: number) {
-    const step = Math.round((time - transportEpoch) / SIXTEENTH);
-    return Math.max(0, step - arrangementStart);
-  }
-
-  function chordAt(position: number) {
-    const barIndex = Math.floor(position / STEPS_PER_BAR);
-    const chordSet = barIndex >= 64 && barIndex < 80 ? BOSS_CHORDS : CHORDS;
-    return chordSet[Math.floor(barIndex / 2) % chordSet.length];
-  }
-
-  function leadSetAt(position: number) {
-    const chord = chordAt(position);
-    return [...chord.arp, ...chord.arp.map((midi) => midi + 12)];
-  }
-
-  function sectionAt(bar: number): SectionIndex {
-    if (bar >= 64) return 3;
-    if (bar >= 40) return 2;
-    if (bar >= 16) return 1;
-    return 0;
-  }
-
-  type SectionMix = { from: SectionIndex; to: SectionIndex; t: number };
-
-  function sectionMixAt(position: number): SectionMix {
-    const bar = position / STEPS_PER_BAR;
-    if (bar >= 62 && bar < 64) return { from: 2, to: 3, t: (bar - 62) / 2 };
-    if (bar >= 38 && bar < 40) return { from: 1, to: 2, t: (bar - 38) / 2 };
-    if (bar >= 14 && bar < 16) return { from: 0, to: 1, t: (bar - 14) / 2 };
-    const section = sectionAt(bar);
-    return { from: section, to: section, t: 1 };
-  }
-
-  function sectionLayers(mix: SectionMix): Array<[SectionIndex, number]> {
-    return mix.from === mix.to ? [[mix.to, 1]] : [[mix.from, 1 - mix.t], [mix.to, mix.t]];
-  }
-
-  function lerp(a: number, b: number, t: number) {
-    return a + (b - a) * t;
+    if (mode === 'ambient') ambientArrangement.schedule(position, time);
+    else runArrangement.schedule(position, time);
   }
 
   function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
@@ -476,392 +440,10 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (ctx) emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
   }
 
-  function recordSection(time: number, barIndex: number) {
-    const section = sectionForBar(barIndex);
-    if (section) trace?.record(time, 'section', { section, bar: barIndex });
-  }
+  // ---- voices -----------------------------------------------------------------
 
-  function sectionForBar(barIndex: number) {
-    if (barIndex === 0) return 'intro';
-    if (barIndex === 8) return 'build';
-    if (barIndex === 16) return 'drop-1';
-    if (barIndex === 32) return 'shift';
-    if (barIndex === 40) return 'drop-2';
-    if (barIndex === 56) return 'breakdown';
-    if (barIndex === 64) return 'boss';
-    if (barIndex === 80) return 'outro';
-    return null;
-  }
-
-  // ---- instruments ------------------------------------------------------------
-
-  function kick(time: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'kick', { vel });
-      return;
-    }
-    const output = musicDestination();
-    if (!ctx || !output || !duck) return;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.18,
-      oscillatorType: 'sine',
-      frequency: 165,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 44, time: time + 0.09 }],
-      gainAutomation: [
-        { type: 'set', value: 0.52 * vel, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.15 },
-      ],
-      destination: output,
-    });
-    noiseHit(time, 0.09 * vel, 0.004, 'highpass', 1500, output);
-    duck.gain.cancelScheduledValues(time);
-    duck.gain.setValueAtTime(0.4, time);
-    duck.gain.linearRampToValueAtTime(1, time + 0.16);
-  }
-
-  function snare(time: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'snare', { vel });
-      return;
-    }
-    const output = musicDestination();
-    if (!ctx || !output) return;
-    noiseHit(time, 0.2 * vel, 0.075, 'bandpass', 1750, output);
-    noiseHit(time, 0.1 * vel, 0.03, 'highpass', 5200, output);
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.09,
-      oscillatorType: 'triangle',
-      frequency: 215,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 130, time: time + 0.05 }],
-      gainAutomation: [
-        { type: 'set', value: 0.14 * vel, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.07 },
-      ],
-      destination: output,
-    });
-  }
-
-  function hat(time: number, vel: number, decay: number) {
-    if (trace) {
-      trace.record(time, 'hat', { vel, decay });
-      return;
-    }
-    if (!duck) return;
-    noiseHit(time, vel, decay, 'highpass', 8200, duck);
-  }
-
-  function openHat(time: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'openHat', { vel });
-      return;
-    }
-    if (!duck) return;
-    noiseHit(time, vel, 0.18, 'highpass', 7400, duck);
-  }
-
-  function ride(time: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'ride', { vel });
-      return;
-    }
-    if (!duck) return;
-    noiseHit(time, vel, 0.14, 'bandpass', 9800, duck);
-  }
-
-  function crash(time: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'crash', { vel });
-      return;
-    }
-    const output = musicDestination();
-    if (!output || !reverbSend) return;
-    noiseHit(time, vel, 0.9, 'highpass', 4600, output);
-    noiseHit(time, vel * 0.5, 1.4, 'bandpass', 7200, reverbSend);
-  }
-
-  // Reese + sub: two saws detuned ±14 cents an octave up, sine at the root.
-  function bass(time: number, midi: number, vel: number, growl: number) {
-    if (trace) {
-      trace.record(time, 'bass', { midi, vel, growl });
-      return;
-    }
-    if (!ctx || !duck) return;
-    const dur = 0.21;
-    const sub = ctx.createOscillator();
-    const subGain = ctx.createGain();
-    sub.type = 'sine';
-    sub.frequency.value = midiToFreq(midi);
-    subGain.gain.setValueAtTime(0, time);
-    subGain.gain.linearRampToValueAtTime(0.26 * vel, time + 0.008);
-    subGain.gain.setValueAtTime(0.26 * vel, time + dur * 0.7);
-    subGain.gain.exponentialRampToValueAtTime(0.001, time + dur);
-    sub.connect(subGain).connect(duck);
-    sub.start(time);
-    sub.stop(time + dur + 0.02);
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.Q.value = 7;
-    filter.frequency.setValueAtTime(300 + growl * 900 * vel, time);
-    filter.frequency.exponentialRampToValueAtTime(170, time + dur);
-    const reeseGain = ctx.createGain();
-    reeseGain.gain.setValueAtTime(0, time);
-    reeseGain.gain.linearRampToValueAtTime(0.1 * vel, time + 0.006);
-    reeseGain.gain.exponentialRampToValueAtTime(0.001, time + dur);
-    for (const detune of [-14, 14]) {
-      const osc = ctx.createOscillator();
-      osc.type = 'sawtooth';
-      osc.frequency.value = midiToFreq(midi + 12);
-      osc.detune.value = detune;
-      osc.connect(filter);
-      osc.start(time);
-      osc.stop(time + dur + 0.02);
-    }
-    filter.connect(reeseGain).connect(duck);
-  }
-
-  // Choir: detuned saw stack through a vowel-ish bandpass. The epic bed.
-  function choir(time: number, midis: number[], duration: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'choir', { midis, duration, vel });
-      return;
-    }
-    if (!ctx || !duck || !reverbSend) return;
-    for (const midi of midis) {
-      for (const detune of [-9, 9]) {
-        const osc = ctx.createOscillator();
-        const vowel = ctx.createBiquadFilter();
-        const lowpass = ctx.createBiquadFilter();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.value = midiToFreq(midi);
-        osc.detune.value = detune + Math.sin(midi * 7.3) * 4;
-        vowel.type = 'bandpass';
-        vowel.frequency.setValueAtTime(620, time);
-        vowel.frequency.linearRampToValueAtTime(950, time + duration * 0.5);
-        vowel.frequency.linearRampToValueAtTime(620, time + duration);
-        vowel.Q.value = 0.9;
-        lowpass.type = 'lowpass';
-        lowpass.frequency.value = 2100;
-        const level = (0.05 * vel) / Math.sqrt(midis.length / 4);
-        gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(level, time + Math.min(0.7, duration * 0.25));
-        gain.gain.setValueAtTime(level, time + duration - Math.min(0.9, duration * 0.3));
-        gain.gain.linearRampToValueAtTime(0, time + duration);
-        osc.connect(vowel).connect(lowpass).connect(gain);
-        gain.connect(duck);
-        const send = ctx.createGain();
-        send.gain.value = 0.6;
-        gain.connect(send).connect(reverbSend);
-        osc.start(time);
-        osc.stop(time + duration + 0.05);
-      }
-    }
-  }
-
-  function arp(time: number, midi: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'arp', { midi, vel });
-      return;
-    }
-    if (!ctx || !duck || !delaySend) return;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.12,
-      oscillatorType: 'square',
-      frequency: midiToFreq(midi),
-      filter: {
-        type: 'lowpass',
-        frequency: 2900,
-        frequencyAutomation: [{ type: 'exponentialRamp', value: 900, time: time + 0.09 }],
-      },
-      gainAutomation: [
-        { type: 'set', value: 0.075 * vel, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.1 },
-      ],
-      destination: duck,
-      sends: [{ destination: delaySend, gain: 0.42 }],
-    });
-  }
-
-  function stab(time: number, midis: number[], vel: number) {
-    if (trace) {
-      trace.record(time, 'stab', { midis, vel });
-      return;
-    }
-    if (!ctx || !duck || !reverbSend) return;
-    for (const midi of midis) {
-      for (const detune of [-11, 11]) {
-        playOscillatorVoice({
-          context: ctx,
-          time,
-          stopTime: time + 0.3,
-          oscillatorType: 'sawtooth',
-          frequency: midiToFreq(midi),
-          detune,
-          filter: {
-            type: 'lowpass',
-            frequency: 3600,
-            frequencyAutomation: [{ type: 'exponentialRamp', value: 500, time: time + 0.22 }],
-          },
-          gainAutomation: [
-            { type: 'set', value: 0.05 * vel, time },
-            { type: 'exponentialRamp', value: 0.001, time: time + 0.26 },
-          ],
-          destination: duck,
-          sends: [{ destination: reverbSend, gain: 0.35 }],
-        });
-      }
-    }
-  }
-
-  function lead(time: number, midi: number, duration: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'lead', { midi, duration, vel });
-      return;
-    }
-    if (!ctx || !duck || !delaySend || !reverbSend) return;
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(2600, time);
-    filter.frequency.linearRampToValueAtTime(1700, time + duration);
-    gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(0.085 * vel, time + 0.02);
-    gain.gain.setValueAtTime(0.085 * vel, time + Math.max(0.02, duration - 0.08));
-    gain.gain.linearRampToValueAtTime(0, time + duration + 0.02);
-    const vibrato = ctx.createOscillator();
-    const vibratoGain = ctx.createGain();
-    vibrato.frequency.value = 5.4;
-    vibratoGain.gain.setValueAtTime(0, time);
-    vibratoGain.gain.linearRampToValueAtTime(6, time + Math.min(0.4, duration * 0.6));
-    for (const [type, detune] of [['sawtooth', -7], ['square', 7]] as const) {
-      const osc = ctx.createOscillator();
-      osc.type = type;
-      osc.frequency.value = midiToFreq(midi);
-      osc.detune.value = detune;
-      vibrato.connect(vibratoGain).connect(osc.detune);
-      osc.connect(filter);
-      osc.start(time);
-      osc.stop(time + duration + 0.05);
-    }
-    vibrato.start(time);
-    vibrato.stop(time + duration + 0.05);
-    filter.connect(gain);
-    gain.connect(duck);
-    const echo = ctx.createGain();
-    echo.gain.value = 0.5;
-    gain.connect(echo).connect(delaySend);
-    const hall = ctx.createGain();
-    hall.gain.value = 0.3;
-    gain.connect(hall).connect(reverbSend);
-  }
-
-  function alarmSwell(time: number, midi: number, duration: number) {
-    if (trace) {
-      trace.record(time, 'alarm', { midi, duration });
-      return;
-    }
-    if (!ctx || !duck || !reverbSend) return;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + duration + 0.05,
-      oscillatorType: 'sawtooth',
-      frequency: midiToFreq(midi),
-      filter: {
-        type: 'lowpass',
-        frequency: 360,
-        frequencyAutomation: [{ type: 'linearRamp', value: 1500, time: time + duration * 0.8 }],
-      },
-      gainAutomation: [
-        { type: 'set', value: 0, time },
-        { type: 'linearRamp', value: 0.15, time: time + duration * 0.7 },
-        { type: 'linearRamp', value: 0, time: time + duration },
-      ],
-      destination: duck,
-      sends: [{ destination: reverbSend, gain: 0.5 }],
-    });
-  }
-
-  function riser(time: number, duration: number, level: number) {
-    if (trace) {
-      trace.record(time, 'riser', { duration, level });
-      return;
-    }
-    const output = musicDestination();
-    if (!ctx || !output || !noiseBuffer) return;
-    playBufferSourceVoice({
-      context: ctx,
-      buffer: noiseBuffer,
-      time,
-      stopTime: time + duration + 0.1,
-      loop: true,
-      filter: {
-        type: 'bandpass',
-        Q: 1.1,
-        frequency: 260,
-        frequencyAutomation: [{ type: 'exponentialRamp', value: 7200, time: time + duration }],
-      },
-      gainAutomation: [
-        { type: 'set', value: 0.001, time },
-        { type: 'exponentialRamp', value: level, time: time + duration },
-        { type: 'linearRamp', value: 0, time: time + duration + 0.06 },
-      ],
-      destination: output,
-    });
-  }
-
-  function impact(time: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'impact', { vel });
-      return;
-    }
-    const output = musicDestination();
-    if (!ctx || !output) return;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.8,
-      oscillatorType: 'sine',
-      frequency: 120,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 30, time: time + 0.5 }],
-      gainAutomation: [
-        { type: 'set', value: 0.5 * vel, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.75 },
-      ],
-      destination: output,
-    });
-    noiseHit(time, 0.26 * vel, 0.3, 'lowpass', 420, output);
-    crash(time, 0.16 * vel);
-  }
-
-  function noiseHit(
-    time: number,
-    vel: number,
-    decay: number,
-    filterType: BiquadFilterType,
-    frequency: number,
-    destination: AudioNode,
-  ) {
-    if (!ctx || !noiseBuffer) return;
-    playNoiseHit({
-      context: ctx,
-      buffer: noiseBuffer,
-      time,
-      velocity: vel,
-      decay,
-      filterType,
-      frequency,
-      destination,
-      offset: Math.random() * 1.5,
-    });
-  }
+  const voices = createHeliosVoices({ trace, context: () => ctx, mix: () => mix });
+  const { kick, snare, hat, openHat, ride, crash, bass, choir, arp, stab, lead, alarmSwell, riser, impact, noiseHit, playerSends, playerTone, playerNoise } = voices;
 
   // ---- player instruments ---------------------------------------------------
   // Player actions are written into the score: every positive action snaps to
@@ -869,57 +451,21 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   // hall as the arrangement. Kills walk a hidden two-bar sequencer lane so a
   // clean volley performs a melody instead of stacking explosion sounds.
 
-  function playerSends(delayGain: number, reverbGain: number) {
-    const sends: Array<{ destination: AudioNode; gain: number }> = [];
-    if (delaySend && delayGain > 0) sends.push({ destination: delaySend, gain: delayGain });
-    if (reverbSend && reverbGain > 0) sends.push({ destination: reverbSend, gain: reverbGain });
-    return sends;
-  }
-
-  function playerTone(time: number, midi: number, voice: TonalVoice, vel: number, weight = 1) {
-    if (trace) {
-      trace.record(time, 'playerTone', { midi, vel, oscillator: voice.oscillator });
-      return;
-    }
-    const output = sfxDestination();
-    if (!ctx || !output) return;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + voice.decay + 0.04,
-      oscillatorType: voice.oscillator,
-      frequency: midiToFreq(midi),
-      filter: { type: 'lowpass', frequency: voice.cutoff },
-      gainAutomation: [
-        { type: 'set', value: voice.gain * vel * weight, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + voice.decay },
-      ],
-      destination: output,
-      sends: playerSends(0.42, voice.reverb),
-    });
-  }
-
-  function playerNoise(time: number, vel: number, decay: number, frequency: number) {
-    const output = sfxDestination();
-    if (!output) return;
-    noiseHit(time, vel, decay, 'highpass', frequency, output);
-  }
-
-  function mixedVoiceValue(mix: SectionMix, slot: 'lock' | 'kill', key: keyof TonalVoice) {
+  function mixedVoiceValue(mix: SectionMix<SectionIndex>, slot: 'lock' | 'kill', key: keyof HeliosTonalVoice) {
     const from = PLAYER_VOICES[mix.from][slot][key];
     const to = PLAYER_VOICES[mix.to][slot][key];
     return typeof from === 'number' && typeof to === 'number' ? lerp(from, to, mix.t) : to;
   }
 
-  function killMelody(time: number, position: number, mix: SectionMix, chain: number) {
+  function killMelody(time: number, position: number, mix: SectionMix<SectionIndex>, chain: number) {
     const output = sfxDestination();
     if (!ctx || !output) return;
     const laneSection = mix.t >= 0.5 ? mix.to : mix.from;
-    const leadSet = leadSetAt(position);
+    const leadSet = score.leadSetAt(position);
     const degree = KILL_LANES[laneSection][position % KILL_LANE_STEPS];
     const midi = leadSet[degree];
     const vel = Math.min(1.45, 1 + chain * 0.14);
-    for (const [section, weight] of sectionLayers(mix)) {
+    for (const [section, weight] of score.sectionLayers(mix)) {
       if (weight < 0.02) continue;
       playerTone(time, midi, PLAYER_VOICES[section].kill, vel, weight);
     }
@@ -959,8 +505,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   function heartChip(time: number, intensity: number) {
     const output = sfxDestination();
     if (!ctx || !output) return;
-    const position = arrangementPositionAt(time);
-    const chord = chordAt(position);
+    const position = score.arrangementPositionAt(time);
+    const chord = score.chordAt(position);
     const root = midiToFreq(chord.bass + 12);
     playOscillatorVoice({
       context: ctx,
@@ -991,23 +537,21 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         sends: playerSends(0.25, 0.35),
       });
     }
-    const beacon = leadSetAt(position)[Math.min(7, Math.floor(intensity * 8))];
+    const beacon = score.leadSetAt(position)[Math.min(7, Math.floor(intensity * 8))];
     playerTone(time + THIRTYSECOND, beacon + 12, PLAYER_VOICES[3].kill, 0.45 + intensity * 0.35, 1);
     playerNoise(time, 0.1 + intensity * 0.08, 0.1, 5200);
   }
 
   function heartFinale(time: number) {
     const output = sfxDestination();
-    if (!ctx || !output || !duck) return;
-    const position = arrangementPositionAt(time);
-    const chord = chordAt(position);
-    duck.gain.cancelScheduledValues(time);
-    duck.gain.setValueAtTime(0.14, time);
-    duck.gain.linearRampToValueAtTime(1, time + 1.4);
+    if (!ctx || !output || !mix?.duck) return;
+    const position = score.arrangementPositionAt(time);
+    const chord = score.chordAt(position);
+    mix.duckAt(time, 0.14, 1.4);
     impact(time, 1.4);
     choir(time + 0.08, [chord.bass, ...chord.pad, ...chord.stab.map((midi) => midi + 12)], 6, 1.15);
     riser(time, 0.8, 0.14);
-    leadSetAt(position).slice().reverse().forEach((midi, index) => {
+    score.leadSetAt(position).slice().reverse().forEach((midi, index) => {
       const at = time + index * THIRTYSECOND;
       playerTone(at, midi + 12, PLAYER_VOICES[3].kill, 0.9 - index * 0.06, 1);
     });
@@ -1015,11 +559,11 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('lock', ({ lockCount }) => {
     if (!ctx) return;
-    const time = quantizeActionSfx(ctx.currentTime);
-    const position = arrangementPositionAt(time);
-    const midi = leadSetAt(position)[Math.min(7, Math.max(0, lockCount - 1))];
-    const mix = sectionMixAt(position);
-    for (const [section, weight] of sectionLayers(mix)) {
+    const time = score.quantizePlayerAction(ctx.currentTime);
+    const position = score.arrangementPositionAt(time);
+    const midi = score.leadSetAt(position)[Math.min(7, Math.max(0, lockCount - 1))];
+    const mix = score.sectionMixAt(position);
+    for (const [section, weight] of score.sectionLayers(mix)) {
       if (weight < 0.02) continue;
       playerTone(time, midi, PLAYER_VOICES[section].lock, 1, weight);
     }
@@ -1034,8 +578,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         time,
         stopTime: time + 0.22,
         oscillatorType: 'sine',
-        frequency: midiToFreq(chordAt(position).bass + 12),
-        frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(chordAt(position).bass), time: time + 0.14 }],
+        frequency: midiToFreq(score.chordAt(position).bass + 12),
+        frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(score.chordAt(position).bass), time: time + 0.14 }],
         gainAutomation: [
           { type: 'set', value: 0.19, time },
           { type: 'exponentialRamp', value: 0.001, time: time + 0.18 },
@@ -1048,19 +592,19 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   bus.on('unlock', () => {
     const output = sfxDestination();
     if (!ctx || !output) return;
-    const time = nextGridTime(ctx.currentTime, 0.5);
-    playerTone(time, chordAt(arrangementPositionAt(time)).bass + 24, PLAYER_VOICES[sectionMixAt(arrangementPositionAt(time)).to].lock, 0.35, 1);
+    const time = score.nextGridTime(ctx.currentTime, 0.5);
+    playerTone(time, score.chordAt(score.arrangementPositionAt(time)).bass + 24, PLAYER_VOICES[score.sectionMixAt(score.arrangementPositionAt(time)).to].lock, 0.35, 1);
   });
 
   bus.on('fire', ({ indexInVolley }) => {
     const output = sfxDestination();
     if (!ctx || !output) return;
-    const time = quantizeActionSfx(ctx.currentTime);
-    const position = arrangementPositionAt(time);
-    const chord = chordAt(position);
-    const mix = sectionMixAt(position);
+    const time = score.quantizePlayerAction(ctx.currentTime);
+    const position = score.arrangementPositionAt(time);
+    const chord = score.chordAt(position);
+    const mix = score.sectionMixAt(position);
     const sourceMidi = chord.arp[(indexInVolley ?? 0) % chord.arp.length] + 24;
-    for (const [section, weight] of sectionLayers(mix)) {
+    for (const [section, weight] of score.sectionLayers(mix)) {
       if (weight < 0.02) continue;
       const voice = PLAYER_VOICES[section].fire;
       playOscillatorVoice({
@@ -1087,13 +631,13 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   bus.on('hit', ({ lethal, enemyId, hitPointsRemaining }) => {
     const output = sfxDestination();
     if (lethal || !ctx || !output) return;
-    const time = nextGridTime(ctx.currentTime, 0.5);
+    const time = score.nextGridTime(ctx.currentTime, 0.5);
     if (enemyId === heartId) {
       heartMaxHp = Math.max(heartMaxHp, hitPointsRemaining + 1);
       heartChip(time, 1 - hitPointsRemaining / Math.max(1, heartMaxHp));
       return;
     }
-    const chord = chordAt(arrangementPositionAt(time));
+    const chord = score.chordAt(score.arrangementPositionAt(time));
     const context = ctx;
     for (const [index, midi] of chord.stab.entries()) {
       const at = time + index * THIRTYSECOND;
@@ -1117,9 +661,9 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('stage', ({ enemyId, stageIndex }) => {
     const output = sfxDestination();
-    if (!ctx || !output || !reverbSend) return;
-    const time = nextGridTime(ctx.currentTime, 1);
-    const chord = chordAt(arrangementPositionAt(time));
+    if (!ctx || !output || !mix?.reverbSend) return;
+    const time = score.nextGridTime(ctx.currentTime, 1);
+    const chord = score.chordAt(score.arrangementPositionAt(time));
     playerNoise(time, 0.2, 0.13, 2600);
     for (const midi of [chord.bass + 12, chord.stab[(stageIndex + 1) % chord.stab.length] + 12]) {
       playOscillatorVoice({
@@ -1139,30 +683,26 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (enemyId === heartId) riser(time, 1.6, 0.18); // it dives — brace
   });
 
-  let lastKillStep = -1;
   bus.on('kill', ({ enemyId, indexInVolley }) => {
     if (!ctx) return;
-    let step = Math.round((nextGridTime(ctx.currentTime, 1) - transportEpoch) / SIXTEENTH);
-    if (step <= lastKillStep) step = lastKillStep + 1;
-    lastKillStep = step;
-    const time = transportEpoch + step * SIXTEENTH;
+    const kill = score.nextKill(ctx.currentTime);
     if (enemyId === heartId) {
-      heartFinale(time);
+      heartFinale(kill.time);
       return;
     }
-    const position = Math.max(0, step - arrangementStart);
-    killMelody(time, position, sectionMixAt(position), indexInVolley ?? 0);
+    const position = Math.max(0, kill.step - score.arrangementStart);
+    killMelody(kill.time, position, score.sectionMixAt(position), indexInVolley ?? 0);
   });
 
   bus.on('volley', ({ size, kills }) => {
-    if (!ctx || size < 4 || kills < size || !duck) return;
-    const time = nextGridTime(ctx.currentTime, 4);
-    const position = arrangementPositionAt(time);
-    const chord = chordAt(position);
+    if (!ctx || size < 4 || kills < size || !mix?.duck) return;
+    const time = score.nextGridTime(ctx.currentTime, 4);
+    const position = score.arrangementPositionAt(time);
+    const chord = score.chordAt(position);
     stab(time, chord.stab.map((midi) => midi + 12), size >= 6 ? 0.95 : 0.72);
-    const leadSet = leadSetAt(position);
+    const leadSet = score.leadSetAt(position);
     [0, 2, 4, 7].forEach((degree, index) => {
-      playerTone(time + index * THIRTYSECOND, leadSet[degree] + 12, PLAYER_VOICES[sectionMixAt(position).to].kill, 0.6 - index * 0.06, 1);
+      playerTone(time + index * THIRTYSECOND, leadSet[degree] + 12, PLAYER_VOICES[score.sectionMixAt(position).to].kill, 0.6 - index * 0.06, 1);
     });
   });
 
@@ -1194,7 +734,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const output = sfxDestination();
     if (!ctx || !output) return;
     const time = ctx.currentTime;
-    const chord = chordAt(arrangementPositionAt(time));
+    const chord = score.chordAt(score.arrangementPositionAt(time));
     playOscillatorVoice({
       context: ctx,
       time,
@@ -1233,7 +773,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const output = sfxDestination();
     if (!ctx || !output) return;
     const time = ctx.currentTime;
-    const chord = chordAt(arrangementPositionAt(time));
+    const chord = score.chordAt(score.arrangementPositionAt(time));
     playOscillatorVoice({
       context: ctx,
       time,
@@ -1255,10 +795,10 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (kind === 'heart') {
       heartId = enemyId;
       // The Suneater breaches: a war-horn triad and a long riser.
-      const time = quantize(ctx.currentTime);
+      const time = score.nextGridTime(ctx.currentTime, 0.5);
       riser(time, 2.2, 0.2);
       [28, 40, 47].forEach((midi, index) => {
-        if (!ctx || !duck || !reverbSend) return;
+        if (!ctx || !mix?.duck || !mix.reverbSend) return;
         const at = time + index * 0.3;
         playOscillatorVoice({
           context: ctx,
@@ -1276,16 +816,16 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
             { type: 'linearRamp', value: 0.2, time: at + 0.05 },
             { type: 'exponentialRamp', value: 0.001, time: at + 1.1 },
           ],
-          destination: duck,
-          sends: [{ destination: reverbSend, gain: 0.55 }],
+          destination: mix.duck,
+          sends: [{ destination: mix.reverbSend, gain: 0.55 }],
         });
       });
     } else if (kind === 'flare') {
       const output = sfxDestination();
       if (!output) return;
       // Prominence warning: a short upward siren voiced from the live arp.
-      const time = nextGridTime(ctx.currentTime, 0.5);
-      const leadSet = leadSetAt(arrangementPositionAt(time));
+      const time = score.nextGridTime(ctx.currentTime, 0.5);
+      const leadSet = score.leadSetAt(score.arrangementPositionAt(time));
       const sourceMidi = leadSet[enemyId % 4];
       playOscillatorVoice({
         context: ctx,
@@ -1309,10 +849,9 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     mode = 'run';
     heartId = -1;
     heartMaxHp = 0;
-    lastKillStep = -1;
     // Restart the arrangement on the next 16th so the drops track the run
     // set pieces to within ~90 ms.
-    arrangementStart = transport.stepIndex;
+    score.restartArrangement(transport.stepIndex, { align: 'step' });
   });
 
   bus.on('runend', () => {
