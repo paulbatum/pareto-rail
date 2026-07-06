@@ -14,6 +14,7 @@ import type { LevelDebugSelector } from '../engine/types';
 
 const CAMERA_EDGE_LOOK_KEY = 'raild-debug-camera-edge-look-degrees';
 const CAMERA_EDGE_ROLL_KEY = 'raild-debug-camera-edge-roll-degrees';
+const CAMERA_EDGE_DEAD_ZONE_KEY = 'raild-debug-camera-edge-dead-zone';
 
 const GRID_OPTIONS = [
   { label: 'Immediate', enabled: false, gridThirtyseconds: 4 },
@@ -183,6 +184,7 @@ function createCameraSection() {
   setPlayerCameraSettings({
     edgeLookDegrees: readStoredNumber(CAMERA_EDGE_LOOK_KEY, defaults.edgeLookDegrees),
     edgeRollDegrees: readStoredNumber(CAMERA_EDGE_ROLL_KEY, defaults.edgeRollDegrees),
+    edgeDeadZone: readStoredNumber(CAMERA_EDGE_DEAD_ZONE_KEY, defaults.edgeDeadZone),
   });
 
   const section = document.createElement('section');
@@ -193,6 +195,7 @@ function createCameraSection() {
 
   const { label: lookLabel, text: lookText, input: lookInput } = range('0', '16', '0.5');
   const { label: rollLabel, text: rollText, input: rollInput } = range('0', '10', '0.5');
+  const { label: deadZoneLabel, text: deadZoneText, input: deadZoneInput } = range('0', '50', '1');
   const resetButton = button('Reset');
   const help = document.createElement('p');
   help.textContent = 'Edge look turns the camera toward the cursor near screen edges, widening the practical lock-on area. Edge roll is cosmetic bank.';
@@ -200,31 +203,37 @@ function createCameraSection() {
   const settings = getPlayerCameraSettings();
   lookInput.value = `${settings.edgeLookDegrees}`;
   rollInput.value = `${settings.edgeRollDegrees}`;
+  deadZoneInput.value = `${Math.round(settings.edgeDeadZone * 100)}`;
 
   function render() {
     lookText.textContent = `Edge look: ${formatDegrees(Number(lookInput.value))}° max`;
     rollText.textContent = `Edge roll: ${formatDegrees(Number(rollInput.value))}° max`;
+    deadZoneText.textContent = `Deadzone: ${Number(deadZoneInput.value)}% from center`;
   }
 
   function apply() {
     const edgeLookDegrees = Number(lookInput.value);
     const edgeRollDegrees = Number(rollInput.value);
-    setPlayerCameraSettings({ edgeLookDegrees, edgeRollDegrees });
+    const edgeDeadZone = Number(deadZoneInput.value) / 100;
+    setPlayerCameraSettings({ edgeLookDegrees, edgeRollDegrees, edgeDeadZone });
     localStorage.setItem(CAMERA_EDGE_LOOK_KEY, `${edgeLookDegrees}`);
     localStorage.setItem(CAMERA_EDGE_ROLL_KEY, `${edgeRollDegrees}`);
+    localStorage.setItem(CAMERA_EDGE_DEAD_ZONE_KEY, `${edgeDeadZone}`);
     render();
   }
 
   resetButton.addEventListener('click', () => {
     lookInput.value = `${defaults.edgeLookDegrees}`;
     rollInput.value = `${defaults.edgeRollDegrees}`;
+    deadZoneInput.value = `${Math.round(defaults.edgeDeadZone * 100)}`;
     apply();
   });
   lookInput.addEventListener('input', apply);
   rollInput.addEventListener('input', apply);
+  deadZoneInput.addEventListener('input', apply);
   render();
 
-  section.append(heading, lookLabel, rollLabel, resetButton, help);
+  section.append(heading, lookLabel, rollLabel, deadZoneLabel, resetButton, help);
   return section;
 }
 

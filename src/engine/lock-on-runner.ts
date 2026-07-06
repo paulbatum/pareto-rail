@@ -26,7 +26,6 @@ const REPLAY_WORD = 'REPLAY';
 const CONTROL_TIP = 'HOLD to charge — SWEEP across all six targets — RELEASE to fire';
 const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 const REPEAT_LOCK_DELAY = 0.18;
-const EDGE_LOOK_DEAD_ZONE = 0.08;
 const EDGE_LOOK_EXPONENT = 1.35;
 const EDGE_LOOK_RESPONSE = 9;
 
@@ -442,7 +441,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function applyEdgeLook(dt: number) {
     const settings = getPlayerCameraSettings();
-    targetEdgeLook.set(edgeCurve(input.state.pointerNdc.x), edgeCurve(input.state.pointerNdc.y));
+    targetEdgeLook.set(
+      edgeCurve(input.state.pointerNdc.x, settings.edgeDeadZone),
+      edgeCurve(input.state.pointerNdc.y, settings.edgeDeadZone),
+    );
     const alpha = dt <= 0 ? 1 : 1 - Math.exp(-EDGE_LOOK_RESPONSE * dt);
     smoothedEdgeLook.lerp(targetEdgeLook, Math.min(1, alpha));
 
@@ -456,9 +458,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     camera.updateMatrixWorld();
   }
 
-  function edgeCurve(value: number) {
+  function edgeCurve(value: number, deadZone: number) {
     const sign = Math.sign(value);
-    const magnitude = Math.max(0, Math.min(1, Math.abs(value)) - EDGE_LOOK_DEAD_ZONE) / (1 - EDGE_LOOK_DEAD_ZONE);
+    const activeRange = 1 - deadZone;
+    const magnitude = activeRange <= 0 ? 1 : Math.max(0, Math.min(1, Math.abs(value)) - deadZone) / activeRange;
     return sign * magnitude ** EDGE_LOOK_EXPONENT;
   }
 
