@@ -1,8 +1,4 @@
-# Level brief: DELUGE (original, historical)
-
-> Historical artifact: the brief Deluge was originally built from, preserved as-is.
-> It is not maintained and may contradict current engine docs. Pending Deluge work
-> is tracked in `docs/briefs/deluge-followups.md`.
+# Level brief: DELUGE
 
 Read `AGENTS.md`, `docs/level-authoring.md`, and `docs/level-brief.md` (the standing brief) before starting. All of the standing brief applies except where this document explicitly overrides it. Study `src/levels/helios/` closely — not to imitate it, but because it is the current quality bar and it exercises every engine contract you will need (variable speed profile, hostile shots, staged multi-hit enemies, a gated boss, debug targets, musical action audio). **Your job is to beat it.**
 
