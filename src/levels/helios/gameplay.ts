@@ -358,6 +358,7 @@ const KILL_SCORE: Record<HeliosEnemyKind, number> = {
 
 const BOLT_MAX_AGE = 13;
 const FLARE_MAX_AGE = 14;
+const DEBUG_HOLD_PROGRESS_OFFSET = 0.014;
 
 export function createHeliosGameplay(
   bus: EventBus,
@@ -416,7 +417,7 @@ export function createHeliosGameplay(
 
   function updateLattice(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'lattice' }>) {
     const { enemy, runProgress, age, curve, camera, railAnchor } = context;
-    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + 0.08, 0, 1) : railAnchor(data.lead);
+    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1) : railAnchor(data.lead);
     // The whole formation slowly wheels around its center while each ember
     // tumbles in place — a smoldering constellation, not a static wall.
     const angle = age * data.spin;
@@ -432,7 +433,7 @@ export function createHeliosGameplay(
 
   function updateMote(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'mote' }>) {
     const { enemy, runProgress, age, curve, camera, railAnchor } = context;
-    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + 0.08, 0, 1) : railAnchor(data.lead);
+    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1) : railAnchor(data.lead);
     const t = (age - data.delay) / data.crossTime;
     if (!data.debugHold && (t > 1.15 || runProgress > anchorU + 0.012)) return true;
     const clamped = MathUtils.clamp(t, 0, 1);
@@ -454,7 +455,7 @@ export function createHeliosGameplay(
 
   function updateScorcher(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'scorcher' }>) {
     const { enemy, runProgress, age, curve, camera, railAnchor } = context;
-    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + 0.08, 0, 1) : railAnchor(data.lead);
+    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1) : railAnchor(data.lead);
     const offset = data.offset.clone();
     offset.x += Math.sin(age * 1.15 + data.seed) * 2.6;
     offset.y += Math.sin(age * 1.75 + data.seed * 2.1) * 1.7;
@@ -479,7 +480,7 @@ export function createHeliosGameplay(
     const { enemy, runProgress, age, curve, camera, railAnchor } = context;
     const close = Math.min(1, age / data.closeTime);
     const lead = MathUtils.lerp(data.leadStart, data.leadEnd, close * close * (3 - 2 * close));
-    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + 0.08, 0, 1) : railAnchor(lead);
+    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1) : railAnchor(lead);
     const offset = data.offset.clone();
     offset.x += Math.sin(age * 0.5) * 1.1;
     offset.y += 2 + Math.sin(age * 0.75) * 0.8;
@@ -533,7 +534,7 @@ export function createHeliosGameplay(
   function updateFlare(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'flare' }>) {
     const { enemy, age, curve, camera, damagePlayer, runProgress } = context;
     if (data.debugHold) {
-      const anchorU = MathUtils.clamp(runProgress + 0.08, 0, 1);
+      const anchorU = MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1);
       enemy.mesh.position.copy(offsetFromRail(curve, anchorU, new Vector3(0, 2.2, 0)));
       enemy.mesh.quaternion.copy(camera.quaternion);
       enemy.mesh.rotateZ(age * 4);

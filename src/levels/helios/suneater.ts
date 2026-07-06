@@ -4,6 +4,7 @@ import type { EventBus } from '../../events';
 import type { HeliosSpawnData, HeliosSpawnEntry, HeliosUpdate } from './gameplay';
 
 const FANG_SOCKETS: Array<[number, number]> = [[-4.1, 2.4], [4.1, 2.4], [-2.6, -2.6], [2.6, -2.6]];
+const DEBUG_HOLD_PROGRESS_OFFSET = 0.014;
 
 type SuneaterEntriesOptions = {
   debugHold?: boolean;
@@ -96,7 +97,8 @@ export function createSuneater(bus: EventBus, options: SuneaterOptions) {
 
   function updateHeart(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'heart' }>) {
     const { enemy, runTime, age, runProgress, curve, camera } = context;
-    const frame = sampleRailFrame(curve, MathUtils.clamp(runProgress + (data.debugHold ? 0.08 : 0.004), 0, 1));
+    const leadOffset = data.debugHold ? DEBUG_HOLD_PROGRESS_OFFSET : 0.004;
+    const frame = sampleRailFrame(curve, MathUtils.clamp(runProgress + leadOffset, 0, 1));
 
     // Breach: the head erupts out of the star over the first 2.6 seconds.
     const breach = MathUtils.clamp(age / 2.6, 0, 1);
