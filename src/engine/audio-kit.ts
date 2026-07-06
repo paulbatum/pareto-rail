@@ -1,4 +1,5 @@
 import type { LevelAudio } from './types';
+import type { AudioTraceSink, AudioTraceValue } from './audio-trace';
 import { createBrowserAudioContext, installAudioUnlock } from './audio-unlock';
 
 export type StepTransportStep = {
@@ -45,6 +46,61 @@ export type AudioGraphBuilder = {
   biquadFilter(options: BiquadFilterOptions): BiquadFilterNode;
   noiseBuffer(seconds: number, channels?: number): AudioBuffer;
   connect(source: AudioNode, destination: AudioNode | AudioParam): AudioNode | AudioParam;
+};
+
+export type MixBusDelayOptions = {
+  time: number;
+  feedback: number;
+  dampHz: number;
+  maxTime?: number;
+  dampType?: BiquadFilterType;
+  sendGain?: number;
+  returnTo?: 'duck' | 'master';
+};
+
+export type MixBusReverbOptions = {
+  seconds: number;
+  decay: number;
+  level: number;
+  returnTo?: 'duck' | 'master';
+};
+
+export type MixBusOptions = {
+  musicVolume?: number;
+  sfxVolume?: number;
+  compressor?: CompressorOptions;
+  delay?: MixBusDelayOptions;
+  reverb?: MixBusReverbOptions;
+  noiseSeconds?: number;
+  /** Prism-style graph: one player volume gain instead of separate music/sfx gains. */
+  combinedVolume?: boolean;
+};
+
+export type MixBus = {
+  master: GainNode;
+  music: GainNode;
+  sfx: GainNode;
+  duck: GainNode;
+  delaySend?: GainNode;
+  reverbSend?: GainNode;
+  noiseBuffer?: AudioBuffer;
+  setMasterVolume(volume: number, time: number, smoothing?: number): void;
+  setMusicVolume(volume: number, time: number, smoothing?: number): void;
+  setSfxVolume(volume: number, time: number, smoothing?: number): void;
+  duckAt(time: number, depth: number, recover: number): void;
+};
+
+export type InstrumentEnvironment = {
+  trace?: AudioTraceSink;
+  context(): AudioContext | null;
+};
+
+type InstrumentDefinition = (context: AudioContext, time: number, ...args: any[]) => void;
+type InstrumentMap = Record<string, InstrumentDefinition>;
+type InstrumentPublic<T> = T extends (context: AudioContext, ...args: infer Args) => void ? (...args: Args) => void : never;
+
+export type InstrumentRegistry<T extends InstrumentMap> = {
+  [K in keyof T]: InstrumentPublic<T[K]>;
 };
 
 export type AutomationStep = {
@@ -198,6 +254,135 @@ export function createAudioGraphBuilder(context: AudioContext): AudioGraphBuilde
       return destination;
     },
   };
+}
+
+export function createMixBus(context: AudioContext, options: MixBusOptions): MixBus {
+  const graph = createAudioGraphBuilder(context);
+  const musicVolume = options.musicVolume ?? 1;
+  const sfxVolume = options.sfxVolume ?? musicVolume;
+  const compressor = graph.compressor(options.compressor ?? {});
+
+  const master = graph.gain(options.combinedVolume ? musicVolume : 1);
+  graph.connect(master, compressor);
+  graph.connect(compressor, context.destination);
+
+  const music = options.combinedVolume ? master : graph.gain(musicVolume);
+  const sfx = options.combinedVolume ? master : graph.gain(sfxVolume);
+  const duck = options.combinedVolume ? master : graph.gain(1);
+  if (!options.combinedVolume) {
+    graph.connect(duck, music);
+    graph.connect(music, master);
+    graph.connect(sfx, master);
+  }
+
+  const delayReturnDestination = (returnTo: 'duck' | 'master' = 'duck') => (returnTo === 'master' ? master : duck);
+  let delaySend: GainNode | undefined;
+  if (options.delay) {
+    delaySend = graph.gain(options.delay.sendGain ?? 1);
+    const delay = graph.delay(options.delay.maxTime ?? Math.max(1, options.delay.time), options.delay.time);
+    const feedback = graph.gain(options.delay.feedback);
+    const damp = graph.biquadFilter({ type: options.delay.dampType ?? 'lowpass', frequency: options.delay.dampHz });
+    graph.connect(delaySend, delay);
+    graph.connect(delay, damp);
+    graph.connect(damp, feedback);
+    graph.connect(feedback, delay);
+    graph.connect(damp, delayReturnDestination(options.delay.returnTo));
+  }
+
+  let reverbSend: GainNode | undefined;
+  if (options.reverb) {
+    reverbSend = graph.gain();
+    const convolver = context.createConvolver();
+    convolver.buffer = createReverbImpulse(context, options.reverb.seconds, options.reverb.decay);
+    const reverbLevel = graph.gain(options.reverb.level);
+    graph.connect(reverbSend, convolver);
+    graph.connect(convolver, reverbLevel);
+    graph.connect(reverbLevel, delayReturnDestination(options.reverb.returnTo));
+  }
+
+  const noiseBuffer = options.noiseSeconds === undefined ? undefined : graph.noiseBuffer(options.noiseSeconds);
+  const smooth = (param: AudioParam, volume: number, time: number, smoothing: number) => {
+    param.setTargetAtTime(volume, time, smoothing);
+  };
+
+  return {
+    master,
+    music,
+    sfx,
+    duck,
+    delaySend,
+    reverbSend,
+    noiseBuffer,
+    setMasterVolume(volume, time, smoothing = 0.05) {
+      smooth(master.gain, volume, time, smoothing);
+    },
+    setMusicVolume(volume, time, smoothing = 0.05) {
+      smooth((options.combinedVolume ? master : music).gain, volume, time, smoothing);
+    },
+    setSfxVolume(volume, time, smoothing = 0.02) {
+      smooth((options.combinedVolume ? master : sfx).gain, volume, time, smoothing);
+    },
+    duckAt(time, depth, recover) {
+      duck.gain.cancelScheduledValues(time);
+      duck.gain.setValueAtTime(depth, time);
+      duck.gain.linearRampToValueAtTime(1, time + recover);
+    },
+  };
+}
+
+export function createReverbImpulse(context: AudioContext, seconds: number, decay: number) {
+  const length = Math.floor(context.sampleRate * seconds);
+  const impulse = context.createBuffer(2, length, context.sampleRate);
+  for (let channel = 0; channel < 2; channel += 1) {
+    const data = impulse.getChannelData(channel);
+    for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** decay;
+  }
+  return impulse;
+}
+
+export function defineInstruments<T extends InstrumentMap>(
+  environment: InstrumentEnvironment,
+  definitions: T,
+  argNames: Partial<Record<keyof T, readonly string[]>> = {},
+): InstrumentRegistry<T> {
+  const instruments: Partial<Record<keyof T, (...args: AudioTraceValue[]) => void>> = {};
+  for (const key of Object.keys(definitions) as Array<keyof T>) {
+    const name = String(key);
+    const body = definitions[key];
+    const dataNames = argNames[key] ?? parseInstrumentArgumentNames(body).slice(2);
+    instruments[key] = ((...args: any[]) => {
+      if (environment.trace) {
+        environment.trace.record(Number(args[0] ?? 0), name, traceDataForArgs(dataNames, args.slice(1)));
+        return;
+      }
+      const context = environment.context();
+      if (!context) return;
+      body(context, Number(args[0] ?? 0), ...args.slice(1));
+    }) as InstrumentRegistry<T>[typeof key];
+  }
+  return instruments as InstrumentRegistry<T>;
+}
+
+function traceDataForArgs(names: readonly string[], values: readonly unknown[]) {
+  const data: Record<string, AudioTraceValue> = {};
+  for (let i = 0; i < values.length; i += 1) data[names[i] ?? `arg${i + 1}`] = toTraceValue(values[i]);
+  return data;
+}
+
+function toTraceValue(value: unknown): AudioTraceValue {
+  if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+  if (Array.isArray(value)) return value.map(toTraceValue);
+  return String(value);
+}
+
+function parseInstrumentArgumentNames(fn: Function) {
+  const source = Function.prototype.toString.call(fn).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+  const match = source.match(/^[^(]*\(([^)]*)\)/);
+  if (!match) return [];
+  return match[1]
+    .split(',')
+    .map((part) => part.trim().replace(/^\.\.\./, '').replace(/\s*=.*$/, ''))
+    .filter(Boolean);
 }
 
 export function applyAutomation(param: AudioParam, steps: AutomationStep[]) {

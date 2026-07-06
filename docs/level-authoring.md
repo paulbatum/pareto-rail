@@ -7,6 +7,9 @@ Shared code lives in `src/engine/`:
 - `lock-on-runner.ts` contains the START/RUN/REPLAY flow, pointer input, lock-on targeting, homing shots, scoring hooks, and HUD updates;
 - `rail.ts` contains rail sampling helpers, not a level rail;
 - `music.ts` contains small timing helpers for beat emission, tempo, MIDI conversion, and grid quantization;
+- `audio-kit.ts` contains Web Audio primitives plus the shared mix bus and instrument registry;
+- `audio-trace.ts` contains semantic audio trace sinks and the reusable trace harness;
+- `score.ts` contains the shared musical-position helper for epoch anchoring, harmony, sections, action quantization, and kill lanes;
 - `spawn-patterns.ts` contains small helpers for eager spawn timeline construction;
 - `glyphs.ts` contains neutral 5×7 glyph grid data and accessors, not rendering;
 - `hostile-shot.ts` contains shared homing steer, behind-camera despawn cull, and approach/impact timing for lockable enemy shots and hazards;
@@ -106,12 +109,14 @@ The bloom slider goes to 0. A level must stay playable and legible with bloom fu
 
 ## Musical action audio
 
-Crystal (`src/levels/crystal/audio.ts`) is the reference for integrating gameplay sounds into the level's music, Rez-style: player actions are notes in the score, not sound effects layered over it. These lessons came out of A/B playtesting and apply to any level with a beat-driven soundtrack:
+Crystal (`src/levels/crystal/audio.ts`) is the reference for integrating gameplay sounds into the level's music, Rez-style: player actions are notes in the score, not sound effects layered over it. New beat-driven levels should build their audio spine from the shared path: `createMixBus` for routing, `createScore` for transport-anchored musical position, `defineInstruments` for traced voices, and the trace harness for `trace:audio` coverage. Raw `audio-kit` primitives remain the escape hatch when a level needs custom synthesis or routing.
 
-- **Quantize to the transport's actual grid, not the audio clock.** Capture the audio-clock time of the transport's first step when it starts, and snap player sounds to that epoch plus whole steps. `quantizeToGrid` and `quantizeActionSfxTime` align to clock zero, which sits far enough off the real steps (tens of milliseconds) to blur "on the beat" into "near the beat". Lock and fire should still honor the timing panel's snap settings via `getActionSfxQuantization()`, applied on the epoch-anchored grid — see crystal's `quantizePlayerAction`.
-- **Pitch player sounds from the live harmony.** Derive lock, fire, hit, and kill pitches from the chord sounding at the scheduled step, so an action at any moment is consonant and the player's instrument retunes as the progression moves.
-- **Make kills melodic, not just consonant.** Crystal authors a hidden per-act sequencer lane across its chord cycle; a kill plays the note written at the grid step it lands on, so a chained volley performs a real melodic run. Leave register space for this: during runs the backing arrangement stays out of the register the player's melody owns.
-- **Change player timbres only with cover.** If the player instruments change voice where the arrangement does not change, crossfade over a couple of bars, playing both voices at complementary weights. A hard switch is fine only when the music turns over at the same moment (a boss entrance, a drop).
+These lessons came out of A/B playtesting and apply to any level with a beat-driven soundtrack:
+
+- **Quantize to the transport's actual grid, not the audio clock.** Use `createScore().setEpoch()` when the step transport starts, then schedule lock and fire through `score.quantizePlayerAction()`. This keeps the timing panel's action-SFX snap on the real transport grid instead of clock zero.
+- **Pitch player sounds from the live harmony.** Ask the score for `chordAt()` / `leadSetAt()` at the scheduled position, so an action at any moment is consonant and the player's instrument retunes as the progression moves.
+- **Make kills melodic, not just consonant.** Author per-section kill lanes in the score; each kill should play the written lane note for its grid step, so a chained volley performs a real melodic run. Leave register space for this: during runs the backing arrangement stays out of the register the player's melody owns.
+- **Change player timbres only with cover.** Use score sections and blend helpers to crossfade over a couple of bars when the arrangement does not change. A hard switch is fine only when the music turns over at the same moment (a boss entrance, a drop).
 - **Tune gains by perceived loudness, not by matching numbers.** At equal gain a square or sawtooth sounds far louder than a sine or triangle. Crossfading between waveforms with equal gain values lets the brighter voice take over halfway through the blend; each voice needs its own gain tuned by ear.
 - **Give a boss its own escalating voice.** Repeated hits on a boss should audibly grow with damage dealt — gain, brightness, a climbing pitch element — and the killing blow deserves a scheduled finale: duck the music for a breath and land a conclusive figure on the grid.
 
