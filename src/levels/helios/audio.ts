@@ -16,13 +16,17 @@ import { HELIOS_BPM, HELIOS_DURATION } from './gameplay';
 // 120-second run. Sections land on the run's set pieces — drop 1 at the gate
 // (bar 16), drop 2 at the corona plunge (bar 40), a breakdown while the
 // serpent breaches (56–63), and the boss theme (64–79) with a phrygian F
-// leaning on the tonic. The player's guns are pitched in E minor pentatonic
-// and quantized to the 32nd grid, so good play sounds like percussion fills.
+// leaning on the tonic. The player's guns are not an effects layer: locks,
+// shots, armor chips, kills, and boss damage all snap to the transport and
+// read the current harmony, while kills unmute a hidden sequencer lane so
+// clean volleys play melodic runs through the arrangement.
 
 const SIXTEENTH = 60 / HELIOS_BPM / 4;
 const THIRTYSECOND = SIXTEENTH / 2;
 const SCHEDULE_AHEAD = 0.18;
 const SCHEDULER_MS = 25;
+const STEPS_PER_BAR = 16;
+const KILL_LANE_STEPS = 32;
 
 type Chord = { bass: number; pad: number[]; arp: number[]; stab: number[] };
 
@@ -41,8 +45,66 @@ const BOSS_CHORDS: Chord[] = [
   CHORDS[3],
 ];
 
-// E minor pentatonic, rising per lock; the sixth lock is ignition.
-const LOCK_SCALE = [64, 67, 69, 71, 74, 76];
+// Lock count is a degree into the current chord's live lead set; the sixth
+// lock is ignition. Kills read a hidden two-bar lane in the same degree space.
+type SectionIndex = 0 | 1 | 2 | 3;
+
+const KILL_LANES: Record<SectionIndex, number[]> = {
+  // Approach: slow glassy arches while the wreck field opens up.
+  0: [
+    0, 1, 2, 3, 2, 1, 2, 3,
+    4, 3, 2, 1, 2, 3, 4, 5,
+    4, 3, 4, 5, 6, 5, 4, 3,
+    4, 5, 6, 7, 6, 5, 4, 2,
+  ],
+  // Furnace road: jump-cut broken chords for dense DnB volleys.
+  1: [
+    0, 4, 1, 5, 2, 6, 3, 7,
+    4, 0, 5, 1, 6, 2, 7, 3,
+    0, 4, 2, 6, 1, 5, 3, 7,
+    4, 7, 6, 5, 4, 3, 2, 1,
+  ],
+  // Corona / burning sea: high, urgent fragments that leave room for the bass.
+  2: [
+    4, 5, 7, 6, 4, 2, 5, 3,
+    6, 7, 5, 4, 6, 3, 5, 2,
+    7, 6, 5, 4, 7, 5, 3, 1,
+    4, 5, 6, 7, 6, 5, 4, 0,
+  ],
+  // Suneater: tolling descents answered by climbs into the phrygian boss harmony.
+  3: [
+    7, 6, 5, 4, 6, 5, 4, 3,
+    5, 4, 3, 2, 4, 3, 2, 1,
+    3, 2, 1, 0, 4, 3, 2, 1,
+    4, 5, 6, 7, 5, 6, 7, 4,
+  ],
+};
+
+type TonalVoice = { oscillator: OscillatorType; decay: number; cutoff: number; gain: number; sparkle: number; reverb: number };
+type FireVoice = { oscillator: OscillatorType; cutoff: number; gain: number; fallSemitones: number; noise: number };
+
+const PLAYER_VOICES: Record<SectionIndex, { lock: TonalVoice; kill: TonalVoice; fire: FireVoice }> = {
+  0: {
+    lock: { oscillator: 'sine', decay: 0.11, cutoff: 3600, gain: 0.12, sparkle: 0.5, reverb: 0.18 },
+    kill: { oscillator: 'triangle', decay: 0.28, cutoff: 3200, gain: 0.15, sparkle: 0.7, reverb: 0.28 },
+    fire: { oscillator: 'triangle', cutoff: 3300, gain: 0.07, fallSemitones: 12, noise: 0.035 },
+  },
+  1: {
+    lock: { oscillator: 'square', decay: 0.085, cutoff: 2600, gain: 0.055, sparkle: 0.35, reverb: 0.12 },
+    kill: { oscillator: 'square', decay: 0.18, cutoff: 3000, gain: 0.11, sparkle: 0.55, reverb: 0.2 },
+    fire: { oscillator: 'sawtooth', cutoff: 3800, gain: 0.065, fallSemitones: 7, noise: 0.045 },
+  },
+  2: {
+    lock: { oscillator: 'sawtooth', decay: 0.075, cutoff: 3900, gain: 0.052, sparkle: 0.45, reverb: 0.18 },
+    kill: { oscillator: 'sawtooth', decay: 0.22, cutoff: 4200, gain: 0.12, sparkle: 0.8, reverb: 0.26 },
+    fire: { oscillator: 'sawtooth', cutoff: 5200, gain: 0.07, fallSemitones: 12, noise: 0.06 },
+  },
+  3: {
+    lock: { oscillator: 'sawtooth', decay: 0.13, cutoff: 2200, gain: 0.06, sparkle: 0.25, reverb: 0.34 },
+    kill: { oscillator: 'sawtooth', decay: 0.38, cutoff: 2800, gain: 0.14, sparkle: 0.65, reverb: 0.42 },
+    fire: { oscillator: 'square', cutoff: 3000, gain: 0.06, fallSemitones: 13, noise: 0.05 },
+  },
+};
 
 // Boss lead theme, one 8-bar phrase played twice. [bar, step(8ths), midi, beats]
 const LEAD_THEME: Array<[number, number, number, number]> = [
@@ -83,6 +145,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   let mode: 'run' | 'ambient' = 'ambient';
   let transportEpoch = 0;
   let heartId = -1;
+  let heartMaxHp = 0;
 
   let master: GainNode | null = null;
   let musicGain: GainNode | null = null;
@@ -206,6 +269,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   function traceRun(seconds: number) {
     mode = 'run';
     heartId = -1;
+    heartMaxHp = 0;
     arrangementStart = 0;
     transport.reset(0.06, 0);
     transportEpoch = 0.06;
@@ -360,6 +424,48 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const { enabled, gridThirtyseconds } = getActionSfxQuantization();
     if (!enabled) return time;
     return nextGridTime(time, gridThirtyseconds / 2);
+  }
+
+  function arrangementPositionAt(time: number) {
+    const step = Math.round((time - transportEpoch) / SIXTEENTH);
+    return Math.max(0, step - arrangementStart);
+  }
+
+  function chordAt(position: number) {
+    const barIndex = Math.floor(position / STEPS_PER_BAR);
+    const chordSet = barIndex >= 64 && barIndex < 80 ? BOSS_CHORDS : CHORDS;
+    return chordSet[Math.floor(barIndex / 2) % chordSet.length];
+  }
+
+  function leadSetAt(position: number) {
+    const chord = chordAt(position);
+    return [...chord.arp, ...chord.arp.map((midi) => midi + 12)];
+  }
+
+  function sectionAt(bar: number): SectionIndex {
+    if (bar >= 64) return 3;
+    if (bar >= 40) return 2;
+    if (bar >= 16) return 1;
+    return 0;
+  }
+
+  type SectionMix = { from: SectionIndex; to: SectionIndex; t: number };
+
+  function sectionMixAt(position: number): SectionMix {
+    const bar = position / STEPS_PER_BAR;
+    if (bar >= 62 && bar < 64) return { from: 2, to: 3, t: (bar - 62) / 2 };
+    if (bar >= 38 && bar < 40) return { from: 1, to: 2, t: (bar - 38) / 2 };
+    if (bar >= 14 && bar < 16) return { from: 0, to: 1, t: (bar - 14) / 2 };
+    const section = sectionAt(bar);
+    return { from: section, to: section, t: 1 };
+  }
+
+  function sectionLayers(mix: SectionMix): Array<[SectionIndex, number]> {
+    return mix.from === mix.to ? [[mix.to, 1]] : [[mix.from, 1 - mix.t], [mix.to, mix.t]];
+  }
+
+  function lerp(a: number, b: number, t: number) {
+    return a + (b - a) * t;
   }
 
   function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
@@ -757,173 +863,306 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     });
   }
 
-  // ---- game SFX (cold player tech, in key, on the 32nd grid) -------------------
+  // ---- player instruments ---------------------------------------------------
+  // Player actions are written into the score: every positive action snaps to
+  // the transport, reads the live chord, and sends tails into the same delay /
+  // hall as the arrangement. Kills walk a hidden two-bar sequencer lane so a
+  // clean volley performs a melody instead of stacking explosion sounds.
 
-  // Icy FM pluck: sine carrier + bright partial, quick sparkle on top.
-  function icePluck(time: number, midi: number, vel: number) {
+  function playerSends(delayGain: number, reverbGain: number) {
+    const sends: Array<{ destination: AudioNode; gain: number }> = [];
+    if (delaySend && delayGain > 0) sends.push({ destination: delaySend, gain: delayGain });
+    if (reverbSend && reverbGain > 0) sends.push({ destination: reverbSend, gain: reverbGain });
+    return sends;
+  }
+
+  function playerTone(time: number, midi: number, voice: TonalVoice, vel: number, weight = 1) {
     if (trace) {
-      trace.record(time, 'icePluck', { midi, vel });
+      trace.record(time, 'playerTone', { midi, vel, oscillator: voice.oscillator });
       return;
     }
     const output = sfxDestination();
-    if (!ctx || !output || !delaySend) return;
-    for (const [ratio, level, decay] of [[1, 1, 0.14], [2.01, 0.35, 0.07], [3.98, 0.12, 0.04]] as const) {
+    if (!ctx || !output) return;
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + voice.decay + 0.04,
+      oscillatorType: voice.oscillator,
+      frequency: midiToFreq(midi),
+      filter: { type: 'lowpass', frequency: voice.cutoff },
+      gainAutomation: [
+        { type: 'set', value: voice.gain * vel * weight, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + voice.decay },
+      ],
+      destination: output,
+      sends: playerSends(0.42, voice.reverb),
+    });
+  }
+
+  function playerNoise(time: number, vel: number, decay: number, frequency: number) {
+    const output = sfxDestination();
+    if (!output) return;
+    noiseHit(time, vel, decay, 'highpass', frequency, output);
+  }
+
+  function mixedVoiceValue(mix: SectionMix, slot: 'lock' | 'kill', key: keyof TonalVoice) {
+    const from = PLAYER_VOICES[mix.from][slot][key];
+    const to = PLAYER_VOICES[mix.to][slot][key];
+    return typeof from === 'number' && typeof to === 'number' ? lerp(from, to, mix.t) : to;
+  }
+
+  function killMelody(time: number, position: number, mix: SectionMix, chain: number) {
+    const output = sfxDestination();
+    if (!ctx || !output) return;
+    const laneSection = mix.t >= 0.5 ? mix.to : mix.from;
+    const leadSet = leadSetAt(position);
+    const degree = KILL_LANES[laneSection][position % KILL_LANE_STEPS];
+    const midi = leadSet[degree];
+    const vel = Math.min(1.45, 1 + chain * 0.14);
+    for (const [section, weight] of sectionLayers(mix)) {
+      if (weight < 0.02) continue;
+      playerTone(time, midi, PLAYER_VOICES[section].kill, vel, weight);
+    }
+    const decay = mixedVoiceValue(mix, 'kill', 'decay') as number;
+    const gain = mixedVoiceValue(mix, 'kill', 'gain') as number;
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + decay + 0.04,
+      oscillatorType: 'sine',
+      frequency: midiToFreq(midi - 12),
+      gainAutomation: [
+        { type: 'set', value: gain * 0.52 * vel, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + decay * 0.8 },
+      ],
+      destination: output,
+    });
+    if (chain >= 2) {
       playOscillatorVoice({
         context: ctx,
         time,
-        stopTime: time + decay + 0.03,
+        stopTime: time + decay + 0.04,
         oscillatorType: 'sine',
-        frequency: midiToFreq(midi) * ratio,
+        frequency: midiToFreq(midi + 12),
         gainAutomation: [
-          { type: 'set', value: vel * level * 0.14, time },
+          { type: 'set', value: gain * 0.34, time },
           { type: 'exponentialRamp', value: 0.001, time: time + decay },
         ],
         destination: output,
-        sends: [{ destination: delaySend, gain: 0.4 }],
+        sends: playerSends(0.5, 0.18),
       });
     }
-    noiseHit(time, vel * 0.03, 0.02, 'highpass', 9500, output);
+    const sparkle = mixedVoiceValue(mix, 'kill', 'sparkle') as number;
+    playerNoise(time, 0.025 + sparkle * 0.05, 0.09, 7200);
+  }
+
+  function heartChip(time: number, intensity: number) {
+    const output = sfxDestination();
+    if (!ctx || !output) return;
+    const position = arrangementPositionAt(time);
+    const chord = chordAt(position);
+    const root = midiToFreq(chord.bass + 12);
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 0.52,
+      oscillatorType: 'sine',
+      frequency: root * 4,
+      frequencyAutomation: [{ type: 'exponentialRamp', value: root, time: time + 0.12 }],
+      gainAutomation: [
+        { type: 'set', value: 0.24 + intensity * 0.18, time },
+        { type: 'exponentialRamp', value: 0.001, time: time + 0.46 },
+      ],
+      destination: output,
+    });
+    for (const midi of chord.stab) {
+      playOscillatorVoice({
+        context: ctx,
+        time,
+        stopTime: time + 0.32,
+        oscillatorType: 'sawtooth',
+        frequency: midiToFreq(midi + 12),
+        filter: { type: 'lowpass', frequency: 1500 + intensity * 3200 },
+        gainAutomation: [
+          { type: 'set', value: 0.04 + intensity * 0.025, time },
+          { type: 'exponentialRamp', value: 0.001, time: time + 0.27 },
+        ],
+        destination: output,
+        sends: playerSends(0.25, 0.35),
+      });
+    }
+    const beacon = leadSetAt(position)[Math.min(7, Math.floor(intensity * 8))];
+    playerTone(time + THIRTYSECOND, beacon + 12, PLAYER_VOICES[3].kill, 0.45 + intensity * 0.35, 1);
+    playerNoise(time, 0.1 + intensity * 0.08, 0.1, 5200);
+  }
+
+  function heartFinale(time: number) {
+    const output = sfxDestination();
+    if (!ctx || !output || !duck) return;
+    const position = arrangementPositionAt(time);
+    const chord = chordAt(position);
+    duck.gain.cancelScheduledValues(time);
+    duck.gain.setValueAtTime(0.14, time);
+    duck.gain.linearRampToValueAtTime(1, time + 1.4);
+    impact(time, 1.4);
+    choir(time + 0.08, [chord.bass, ...chord.pad, ...chord.stab.map((midi) => midi + 12)], 6, 1.15);
+    riser(time, 0.8, 0.14);
+    leadSetAt(position).slice().reverse().forEach((midi, index) => {
+      const at = time + index * THIRTYSECOND;
+      playerTone(at, midi + 12, PLAYER_VOICES[3].kill, 0.9 - index * 0.06, 1);
+    });
   }
 
   bus.on('lock', ({ lockCount }) => {
     if (!ctx) return;
     const time = quantizeActionSfx(ctx.currentTime);
-    const midi = LOCK_SCALE[Math.min(LOCK_SCALE.length, Math.max(1, lockCount)) - 1];
-    icePluck(time, midi, 1);
+    const position = arrangementPositionAt(time);
+    const midi = leadSetAt(position)[Math.min(7, Math.max(0, lockCount - 1))];
+    const mix = sectionMixAt(position);
+    for (const [section, weight] of sectionLayers(mix)) {
+      if (weight < 0.02) continue;
+      playerTone(time, midi, PLAYER_VOICES[section].lock, 1, weight);
+    }
+    const sparkle = mixedVoiceValue(mix, 'lock', 'sparkle') as number;
+    playerNoise(time, 0.015 + sparkle * 0.035, 0.025, 9000);
     if (lockCount >= 6) {
-      // Ignition: the sixth lock rings the octave and thumps the floor.
-      icePluck(time + THIRTYSECOND, 88, 0.9);
       const output = sfxDestination();
-      if (output) {
-        playOscillatorVoice({
-          context: ctx,
-          time,
-          stopTime: time + 0.2,
-          oscillatorType: 'sine',
-          frequency: 90,
-          frequencyAutomation: [{ type: 'exponentialRamp', value: 45, time: time + 0.12 }],
-          gainAutomation: [
-            { type: 'set', value: 0.2, time },
-            { type: 'exponentialRamp', value: 0.001, time: time + 0.16 },
-          ],
-          destination: output,
-        });
-      }
+      if (!output) return;
+      playerTone(time + THIRTYSECOND, midi + 12, PLAYER_VOICES[mix.to].kill, 0.55, 1);
+      playOscillatorVoice({
+        context: ctx,
+        time,
+        stopTime: time + 0.22,
+        oscillatorType: 'sine',
+        frequency: midiToFreq(chordAt(position).bass + 12),
+        frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(chordAt(position).bass), time: time + 0.14 }],
+        gainAutomation: [
+          { type: 'set', value: 0.19, time },
+          { type: 'exponentialRamp', value: 0.001, time: time + 0.18 },
+        ],
+        destination: output,
+      });
     }
   });
 
   bus.on('unlock', () => {
     const output = sfxDestination();
     if (!ctx || !output) return;
-    noiseHit(ctx.currentTime, 0.025, 0.03, 'highpass', 7000, output);
+    const time = nextGridTime(ctx.currentTime, 0.5);
+    playerTone(time, chordAt(arrangementPositionAt(time)).bass + 24, PLAYER_VOICES[sectionMixAt(arrangementPositionAt(time)).to].lock, 0.35, 1);
   });
 
   bus.on('fire', ({ indexInVolley }) => {
     const output = sfxDestination();
     if (!ctx || !output) return;
     const time = quantizeActionSfx(ctx.currentTime);
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.09,
-      oscillatorType: 'sawtooth',
-      frequency: 920 + (indexInVolley ?? 0) * 60,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 190, time: time + 0.06 }],
-      gainAutomation: [
-        { type: 'set', value: 0.07, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.07 },
-      ],
-      destination: output,
-    });
-    noiseHit(time, 0.05, 0.03, 'highpass', 4000, output);
-  });
-
-  bus.on('hit', ({ lethal }) => {
-    const output = sfxDestination();
-    if (lethal || !ctx || !output) return;
-    const time = quantize(ctx.currentTime);
-    // Armor chip: a dead metallic tick — deliberately not a kill sparkle.
-    for (const [frequency, vel] of [[523, 0.07], [1046, 0.045]] as const) {
+    const position = arrangementPositionAt(time);
+    const chord = chordAt(position);
+    const mix = sectionMixAt(position);
+    const sourceMidi = chord.arp[(indexInVolley ?? 0) % chord.arp.length] + 24;
+    for (const [section, weight] of sectionLayers(mix)) {
+      if (weight < 0.02) continue;
+      const voice = PLAYER_VOICES[section].fire;
       playOscillatorVoice({
         context: ctx,
         time,
-        stopTime: time + 0.07,
-        oscillatorType: 'square',
-        frequency,
+        stopTime: time + 0.095,
+        oscillatorType: voice.oscillator,
+        frequency: midiToFreq(sourceMidi),
+        frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(sourceMidi - voice.fallSemitones), time: time + 0.065 }],
+        filter: { type: 'lowpass', frequency: voice.cutoff },
         gainAutomation: [
-          { type: 'set', value: vel, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.05 },
+          { type: 'set', value: voice.gain * weight, time },
+          { type: 'exponentialRamp', value: 0.001, time: time + 0.078 },
         ],
         destination: output,
+        sends: playerSends(0.18, 0.08),
       });
     }
-    noiseHit(time, 0.05, 0.03, 'bandpass', 3200, output);
+    const fromFire = PLAYER_VOICES[mix.from].fire;
+    const toFire = PLAYER_VOICES[mix.to].fire;
+    playerNoise(time, lerp(fromFire.noise, toFire.noise, mix.t), 0.026, 4800);
   });
 
-  bus.on('stage', ({ enemyId }) => {
+  bus.on('hit', ({ lethal, enemyId, hitPointsRemaining }) => {
+    const output = sfxDestination();
+    if (lethal || !ctx || !output) return;
+    const time = nextGridTime(ctx.currentTime, 0.5);
+    if (enemyId === heartId) {
+      heartMaxHp = Math.max(heartMaxHp, hitPointsRemaining + 1);
+      heartChip(time, 1 - hitPointsRemaining / Math.max(1, heartMaxHp));
+      return;
+    }
+    const chord = chordAt(arrangementPositionAt(time));
+    const context = ctx;
+    for (const [index, midi] of chord.stab.entries()) {
+      const at = time + index * THIRTYSECOND;
+      playOscillatorVoice({
+        context,
+        time: at,
+        stopTime: at + 0.11,
+        oscillatorType: 'triangle',
+        frequency: midiToFreq(midi + 12),
+        filter: { type: 'lowpass', frequency: 3600 },
+        gainAutomation: [
+          { type: 'set', value: 0.055 - index * 0.008, time: at },
+          { type: 'exponentialRamp', value: 0.001, time: at + 0.09 },
+        ],
+        destination: output,
+        sends: playerSends(0.22, 0.18),
+      });
+    }
+    playerNoise(time, 0.045, 0.035, 5600);
+  });
+
+  bus.on('stage', ({ enemyId, stageIndex }) => {
     const output = sfxDestination();
     if (!ctx || !output || !reverbSend) return;
-    const time = quantize(ctx.currentTime);
-    // Armor break: a crack and a dark bell.
-    noiseHit(time, 0.22, 0.12, 'bandpass', 1300, output);
-    for (const midi of [40, 47]) {
+    const time = nextGridTime(ctx.currentTime, 1);
+    const chord = chordAt(arrangementPositionAt(time));
+    playerNoise(time, 0.2, 0.13, 2600);
+    for (const midi of [chord.bass + 12, chord.stab[(stageIndex + 1) % chord.stab.length] + 12]) {
       playOscillatorVoice({
         context: ctx,
         time,
-        stopTime: time + 0.65,
+        stopTime: time + 0.68,
         oscillatorType: 'triangle',
         frequency: midiToFreq(midi),
         gainAutomation: [
-          { type: 'set', value: 0.16, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.6 },
+          { type: 'set', value: 0.14, time },
+          { type: 'exponentialRamp', value: 0.001, time: time + 0.62 },
         ],
         destination: output,
-        sends: [{ destination: reverbSend, gain: 0.5 }],
+        sends: playerSends(0.26, 0.55),
       });
     }
     if (enemyId === heartId) riser(time, 1.6, 0.18); // it dives — brace
   });
 
-  bus.on('kill', ({ enemyId, volleyId }) => {
-    const output = sfxDestination();
-    if (!ctx || !duck || !output) return;
-    const time = quantize(ctx.currentTime);
+  let lastKillStep = -1;
+  bus.on('kill', ({ enemyId, indexInVolley }) => {
+    if (!ctx) return;
+    let step = Math.round((nextGridTime(ctx.currentTime, 1) - transportEpoch) / SIXTEENTH);
+    if (step <= lastKillStep) step = lastKillStep + 1;
+    lastKillStep = step;
+    const time = transportEpoch + step * SIXTEENTH;
     if (enemyId === heartId) {
-      // The Suneater dies: the biggest sound in the level.
-      impact(time, 1.4);
-      choir(time + 0.1, [40, 52, 59, 64, 71, 76], 6, 1.2);
-      riser(time, 0.8, 0.14);
-      if (duck) {
-        duck.gain.cancelScheduledValues(time);
-        duck.gain.setValueAtTime(0.15, time);
-        duck.gain.linearRampToValueAtTime(1, time + 1.1);
-      }
+      heartFinale(time);
       return;
     }
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.2,
-      oscillatorType: 'sine',
-      frequency: 130,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 52, time: time + 0.11 }],
-      gainAutomation: [
-        { type: 'set', value: 0.16, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.16 },
-      ],
-      destination: output,
-    });
-    // Ember sizzle + a cold blip riding the volley index keeps kill chains melodic.
-    noiseHit(time, 0.06, 0.16, 'bandpass', 3400, output);
-    icePluck(time + THIRTYSECOND, LOCK_SCALE[(enemyId + (volleyId ?? 0)) % LOCK_SCALE.length] + 12, 0.5);
+    const position = Math.max(0, step - arrangementStart);
+    killMelody(time, position, sectionMixAt(position), indexInVolley ?? 0);
   });
 
   bus.on('volley', ({ size, kills }) => {
-    if (!ctx || size < 5 || kills < size) return;
-    // Perfect big volley: a fast ascending flourish.
-    const time = quantize(ctx.currentTime);
-    [76, 79, 83, 88].forEach((midi, index) => {
-      icePluck(time + index * THIRTYSECOND, midi, 0.7 - index * 0.08);
+    if (!ctx || size < 4 || kills < size || !duck) return;
+    const time = nextGridTime(ctx.currentTime, 4);
+    const position = arrangementPositionAt(time);
+    const chord = chordAt(position);
+    stab(time, chord.stab.map((midi) => midi + 12), size >= 6 ? 0.95 : 0.72);
+    const leadSet = leadSetAt(position);
+    [0, 2, 4, 7].forEach((degree, index) => {
+      playerTone(time + index * THIRTYSECOND, leadSet[degree] + 12, PLAYER_VOICES[sectionMixAt(position).to].kill, 0.6 - index * 0.06, 1);
     });
   });
 
@@ -955,25 +1194,26 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const output = sfxDestination();
     if (!ctx || !output) return;
     const time = ctx.currentTime;
+    const chord = chordAt(arrangementPositionAt(time));
     playOscillatorVoice({
       context: ctx,
       time,
       stopTime: time + 0.55,
       oscillatorType: 'sine',
-      frequency: 100,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 30, time: time + 0.32 }],
+      frequency: midiToFreq(chord.bass + 12),
+      frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(chord.bass), time: time + 0.32 }],
       gainAutomation: [
         { type: 'set', value: 0.46, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.5 },
       ],
       destination: output,
     });
-    // Two-tone hull alarm.
-    [69, 63].forEach((midi, index) => {
-      if (!ctx) return;
+    // Hull alarm: still alarming, but it borrows the live chord instead of a fixed siren.
+    const context = ctx;
+    [chord.stab[2] + 12, chord.stab[0] + 12].forEach((midi, index) => {
       const at = time + index * 0.13;
       playOscillatorVoice({
-        context: ctx,
+        context,
         time: at,
         stopTime: at + 0.15,
         oscillatorType: 'square',
@@ -983,6 +1223,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: at + 0.12 },
         ],
         destination: output,
+        sends: playerSends(0.12, 0.08),
       });
     });
     noiseHit(time, 0.2, 0.16, 'bandpass', 800, output);
@@ -992,18 +1233,20 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const output = sfxDestination();
     if (!ctx || !output) return;
     const time = ctx.currentTime;
+    const chord = chordAt(arrangementPositionAt(time));
     playOscillatorVoice({
       context: ctx,
       time,
       stopTime: time + 0.14,
       oscillatorType: 'sine',
-      frequency: 120,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 62, time: time + 0.11 }],
+      frequency: midiToFreq(chord.bass + 24),
+      frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(chord.bass + 12), time: time + 0.11 }],
       gainAutomation: [
         { type: 'set', value: 0.045, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.12 },
       ],
       destination: output,
+      sends: playerSends(0.08, 0),
     });
   });
 
@@ -1040,21 +1283,24 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     } else if (kind === 'flare') {
       const output = sfxDestination();
       if (!output) return;
-      // Prominence warning: a short upward siren, quiet enough to layer.
-      const time = ctx.currentTime;
+      // Prominence warning: a short upward siren voiced from the live arp.
+      const time = nextGridTime(ctx.currentTime, 0.5);
+      const leadSet = leadSetAt(arrangementPositionAt(time));
+      const sourceMidi = leadSet[enemyId % 4];
       playOscillatorVoice({
         context: ctx,
         time,
         stopTime: time + 0.44,
         oscillatorType: 'triangle',
-        frequency: 340,
-        frequencyAutomation: [{ type: 'exponentialRamp', value: 760, time: time + 0.34 }],
+        frequency: midiToFreq(sourceMidi),
+        frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(sourceMidi + 12), time: time + 0.34 }],
         gainAutomation: [
           { type: 'set', value: 0.001, time },
           { type: 'exponentialRamp', value: 0.05, time: time + 0.26 },
           { type: 'linearRamp', value: 0, time: time + 0.4 },
         ],
         destination: output,
+        sends: playerSends(0.16, 0.14),
       });
     }
   });
@@ -1062,6 +1308,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   bus.on('runstart', () => {
     mode = 'run';
     heartId = -1;
+    heartMaxHp = 0;
+    lastKillStep = -1;
     // Restart the arrangement on the next 16th so the drops track the run
     // set pieces to within ~90 ms.
     arrangementStart = transport.stepIndex;
