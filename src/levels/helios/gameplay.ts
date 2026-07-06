@@ -217,15 +217,18 @@ const flares = (time: number, entries: Array<[number, number]>): HeliosSpawnEntr
 
 // Named so the gameplay closure can gate `lockable` across the boss phases
 // without re-finding it in the timeline.
-const HEART_ENTRY: HeliosSpawnEntry = {
-  time: BOSS_TIME,
-  kind: 'heart',
-  hitStages: [5, 6],
-  lockable: false,
-  data: { role: 'heart' },
-};
+function createHeartEntry(): HeliosSpawnEntry {
+  return {
+    time: BOSS_TIME,
+    kind: 'heart',
+    hitStages: [5, 6],
+    lockable: false,
+    data: { role: 'heart' },
+  };
+}
 
-const TIMELINE: HeliosSpawnEntry[] = [
+function buildHeliosTimeline(heartEntry: HeliosSpawnEntry): HeliosSpawnEntry[] {
+  return [
   // --- Act 1: The Approach. Sparse, formation-first; learn the sweep among wreckage.
   ...cinders(bar(2), 4.6, 0.35, [[-5, 2], [-1.8, 3.4], [1.8, 3.4], [5, 2]]),
   ...cinders(bar(4), 4.8, -0.3, [[-6, -1], [-3, 1.4], [0, 3.6], [3, 1.4], [6, -1]]),
@@ -331,7 +334,7 @@ const TIMELINE: HeliosSpawnEntry[] = [
   ]),
 
   // --- Act 4: The Suneater. The heart is sealed until all four fangs shatter.
-  HEART_ENTRY,
+  heartEntry,
   { time: BOSS_TIME + 0.15, kind: 'fang', hitPoints: 3, data: { role: 'fang', socket: 0 } },
   { time: BOSS_TIME + 0.25, kind: 'fang', hitPoints: 3, data: { role: 'fang', socket: 1 } },
   { time: BOSS_TIME + 0.35, kind: 'fang', hitPoints: 3, data: { role: 'fang', socket: 2 } },
@@ -344,9 +347,18 @@ const TIMELINE: HeliosSpawnEntry[] = [
     { fromX: 24, toX: -24, y: 1.4, arc: 2.6, crossTime: 2.4 },
     { fromX: -24, toX: 24, y: 3.4, arc: 2, crossTime: 2.4 },
   ]),
-];
+  ];
+}
 
-export const HELIOS_TIMELINE: HeliosSpawnEntry[] = TIMELINE.sort((a, b) => a.time - b.time);
+export function createHeliosTimeline() {
+  const heartEntry = createHeartEntry();
+  return {
+    heartEntry,
+    timeline: buildHeliosTimeline(heartEntry).sort((a, b) => a.time - b.time),
+  };
+}
+
+export const HELIOS_TIMELINE: HeliosSpawnEntry[] = createHeliosTimeline().timeline;
 
 const KILL_SCORE: Record<HeliosEnemyKind, number> = {
   cinder: 100,
@@ -363,7 +375,7 @@ const BOLT_MAX_AGE = 13;
 const FLARE_MAX_AGE = 14;
 
 export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEnemyKind, HeliosSpawnData> {
-  const heartEntry = HEART_ENTRY;
+  const { timeline, heartEntry } = createHeliosTimeline();
 
   const interceptions = new Set<number>();
   let hitsTaken = 0;
@@ -592,7 +604,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     bpm: HELIOS_BPM,
     playerHealth: HELIOS_PLAYER_HEALTH,
     createRail: createHeliosRail,
-    spawnTimeline: HELIOS_TIMELINE,
+    spawnTimeline: timeline,
     easeRunProgress: heliosRunProgress,
     startWord: 'IGNITE',
     updateEnemy(context) {
