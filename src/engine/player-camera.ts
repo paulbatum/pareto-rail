@@ -6,8 +6,8 @@ export type PlayerCameraSettings = {
 
 const DEFAULT_SETTINGS: PlayerCameraSettings = {
   edgeLookDegrees: 5,
-  edgeRollDegrees: 2,
-  edgeDeadZone: 0.08,
+  edgeRollDegrees: 5,
+  edgeDeadZone: 0.5,
 };
 
 let settings: PlayerCameraSettings = { ...DEFAULT_SETTINGS };
