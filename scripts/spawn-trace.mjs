@@ -37,6 +37,11 @@ const TRACE_TARGETS = {
     module: '/src/levels/rezdle/gameplay.ts',
     exportName: 'REZDLE_TIMELINE',
   },
+  deluge: {
+    level: 'deluge',
+    module: '/src/levels/deluge/gameplay.ts',
+    exportName: 'DELUGE_TIMELINE',
+  },
 };
 
 main().catch((error) => {
