@@ -9,6 +9,7 @@ Shared code lives in `src/engine/`:
 - `music.ts` contains small timing helpers for beat emission, tempo, MIDI conversion, and grid quantization;
 - `music-time.ts` converts authored bars, beats, steps, and named markers into the seconds consumed by gameplay systems;
 - `audio-kit.ts` contains Web Audio primitives plus the shared mix bus and instrument registry;
+- `audio-voices.ts` contains the declarative voice-spec layer that compiles compact timbre specs to the audio-kit primitives;
 - `audio-trace.ts` contains semantic audio trace sinks and the reusable trace harness;
 - `score.ts` contains the shared musical-position helper for epoch anchoring, harmony, sections, action quantization, and kill lanes;
 - `arrangement.ts` contains the thin section/pattern/function/one-shot DSL for musical scheduling;
@@ -112,7 +113,7 @@ The bloom slider goes to 0. A level must stay playable and legible with bloom fu
 
 ## Musical action audio
 
-Crystal (`src/levels/crystal/audio.ts`) is the reference for integrating gameplay sounds into the level's music, Rez-style: player actions are notes in the score, not sound effects layered over it. New beat-driven levels should build their audio spine from the shared path: `createBeatLevelAudio` for mix-bus/transport/beat/trace-run wiring, `createScore` for transport-anchored musical position, `defineInstruments` for traced voices, and `createArrangement` for sections/patterns/one-shots. Raw `audio-kit` primitives remain the escape hatch when a level needs custom synthesis or routing.
+Crystal (`src/levels/crystal/audio.ts`) is the reference for integrating gameplay sounds into the level's music, Rez-style: player actions are notes in the score, not sound effects layered over it. New beat-driven levels should build their audio spine from the shared path: `createBeatLevelAudio` for mix-bus/transport/beat/trace-run wiring, `createScore` for transport-anchored musical position, `defineInstruments` for traced voices, and `createArrangement` for sections/patterns/one-shots. Use the `audio-voices.ts` spec layer as the default way to author player-instrument timbres, with raw `audio-kit` primitives as the escape hatch when a level needs custom synthesis or routing.
 
 These lessons came out of A/B playtesting and apply to any level with a beat-driven soundtrack:
 

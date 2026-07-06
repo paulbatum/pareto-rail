@@ -4,6 +4,7 @@ import {
   playOscillatorVoice,
   type BeatLevelAudioStep,
 } from '../../engine/audio-kit';
+import { voice } from '../../engine/audio-voices';
 import { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';
 import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
 import { midiToFreq } from '../../engine/music';
@@ -393,6 +394,96 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   const voices = createHeliosVoices({ trace, context: () => ctx, mix: runtime.mix });
   const { kick, snare, hat, openHat, ride, crash, bass, choir, arp, stab, lead, alarmSwell, riser, impact, noiseHit, playerSends, playerTone, playerNoise } = voices;
 
+  const killBodyVoice = voice<{ decay: number; gain: number }>({
+    oscillators: [{ type: 'sine', octave: -1, gain: ({ gain }) => gain * 0.52 }],
+    duration: ({ decay }) => decay,
+    stopPadding: 0.04,
+    gainAutomation: (time, gain, { decay }) => [
+      { type: 'set', value: gain, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + decay * 0.8 },
+    ],
+  });
+
+  const killOctaveVoice = voice<{ decay: number; gain: number }>({
+    oscillators: [{ type: 'sine', octave: 1, gain: ({ gain }) => gain * 0.34 }],
+    duration: ({ decay }) => decay,
+    stopPadding: 0.04,
+    envelope: { decay: ({ decay }) => decay },
+  });
+
+  const lockBassVoice = voice({
+    oscillators: [{ type: 'sine', gain: 0.19 }],
+    duration: 0.18,
+    stopPadding: 0.04,
+    envelope: { decay: 0.18 },
+  });
+
+  const fireVoice = voice<{ oscillator: OscillatorType; cutoff: number; gainValue: number }>({
+    oscillators: [{ type: ({ oscillator }) => oscillator, gain: ({ gainValue }) => gainValue }],
+    duration: 0.078,
+    stopPadding: 0.017,
+    filter: { type: 'lowpass', cutoff: ({ cutoff }) => cutoff },
+    envelope: { decay: 0.078 },
+  });
+
+  const hitTriangleVoice = voice<{ cutoff: number; gainValue: number; decay: number; stopPadding: number }>({
+    oscillators: [{ type: 'triangle', gain: ({ gainValue }) => gainValue }],
+    duration: ({ decay }) => decay,
+    stopPadding: ({ stopPadding }) => stopPadding,
+    filter: { type: 'lowpass', cutoff: ({ cutoff }) => cutoff },
+    envelope: { decay: ({ decay }) => decay },
+  });
+
+  const stageTriangleVoice = voice<{ gainValue: number; decay: number; stopPadding: number }>({
+    oscillators: [{ type: 'triangle', gain: ({ gainValue }) => gainValue }],
+    duration: ({ decay }) => decay,
+    stopPadding: ({ stopPadding }) => stopPadding,
+    envelope: { decay: ({ decay }) => decay },
+  });
+
+  const rejectVoice = voice<{ vel: number }>({
+    oscillators: [{ type: 'square' }],
+    duration: 0.2,
+    stopPadding: 0.04,
+    filter: { type: 'bandpass', Q: 4, frequency: 900 },
+    gainAutomation: (time, _gain, { vel }) => [
+      { type: 'set', value: vel, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.2 },
+    ],
+  });
+
+  const playerHitBoomVoice = voice({
+    oscillators: [{ type: 'sine', gain: 0.46 }],
+    duration: 0.5,
+    stopPadding: 0.05,
+    envelope: { decay: 0.5 },
+  });
+
+  const playerHitStabVoice = voice({
+    oscillators: [{ type: 'square', gain: 0.06 }],
+    duration: 0.12,
+    stopPadding: 0.03,
+    envelope: { decay: 0.12 },
+  });
+
+  const missVoice = voice({
+    oscillators: [{ type: 'sine', gain: 0.045 }],
+    duration: 0.12,
+    stopPadding: 0.02,
+    envelope: { decay: 0.12 },
+  });
+
+  const flareWarningVoice = voice({
+    oscillators: [{ type: 'triangle' }],
+    duration: 0.4,
+    stopPadding: 0.04,
+    gainAutomation: (time) => [
+      { type: 'set', value: 0.001, time },
+      { type: 'exponentialRamp', value: 0.05, time: time + 0.26 },
+      { type: 'linearRamp', value: 0, time: time + 0.4 },
+    ],
+  });
+
   // ---- player instruments ---------------------------------------------------
   // Player actions are written into the score: every positive action snaps to
   // the transport, reads the live chord, and sends tails into the same delay /
@@ -419,32 +510,9 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     }
     const decay = mixedVoiceValue(mix, 'kill', 'decay') as number;
     const gain = mixedVoiceValue(mix, 'kill', 'gain') as number;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + decay + 0.04,
-      oscillatorType: 'sine',
-      frequency: midiToFreq(midi - 12),
-      gainAutomation: [
-        { type: 'set', value: gain * 0.52 * vel, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + decay * 0.8 },
-      ],
-      destination: output,
-    });
+    killBodyVoice.play({ context: ctx, time, midi, decay, gain, velocity: vel, destination: output });
     if (chain >= 2) {
-      playOscillatorVoice({
-        context: ctx,
-        time,
-        stopTime: time + decay + 0.04,
-        oscillatorType: 'sine',
-        frequency: midiToFreq(midi + 12),
-        gainAutomation: [
-          { type: 'set', value: gain * 0.34, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + decay },
-        ],
-        destination: output,
-        sends: playerSends(0.5, 0.18),
-      });
+      killOctaveVoice.play({ context: ctx, time, midi, decay, gain, destination: output, sends: playerSends(0.5, 0.18) });
     }
     const sparkle = mixedVoiceValue(mix, 'kill', 'sparkle') as number;
     playerNoise(time, 0.025 + sparkle * 0.05, 0.09, 7200);
@@ -522,17 +590,11 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       const output = sfxDestination();
       if (!output) return;
       playerTone(time + THIRTYSECOND, midi + 12, PLAYER_VOICES[mix.to].kill, 0.55, 1);
-      playOscillatorVoice({
+      lockBassVoice.play({
         context: ctx,
         time,
-        stopTime: time + 0.22,
-        oscillatorType: 'sine',
-        frequency: midiToFreq(score.chordAt(position).bass + 12),
+        midi: score.chordAt(position).bass + 12,
         frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(score.chordAt(position).bass), time: time + 0.14 }],
-        gainAutomation: [
-          { type: 'set', value: 0.19, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.18 },
-        ],
         destination: output,
       });
     }
@@ -556,18 +618,15 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     for (const [section, weight] of score.sectionLayers(mix)) {
       if (weight < 0.02) continue;
       const voice = PLAYER_VOICES[section].fire;
-      playOscillatorVoice({
+      fireVoice.play({
         context: ctx,
         time,
-        stopTime: time + 0.095,
-        oscillatorType: voice.oscillator,
-        frequency: midiToFreq(sourceMidi),
+        midi: sourceMidi,
+        oscillator: voice.oscillator,
+        cutoff: voice.cutoff,
+        gainValue: voice.gain,
+        weight,
         frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(sourceMidi - voice.fallSemitones), time: time + 0.065 }],
-        filter: { type: 'lowpass', frequency: voice.cutoff },
-        gainAutomation: [
-          { type: 'set', value: voice.gain * weight, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.078 },
-        ],
         destination: output,
         sends: playerSends(0.18, 0.08),
       });
@@ -590,17 +649,14 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const context = ctx;
     for (const [index, midi] of chord.stab.entries()) {
       const at = time + index * THIRTYSECOND;
-      playOscillatorVoice({
+      hitTriangleVoice.play({
         context,
         time: at,
-        stopTime: at + 0.11,
-        oscillatorType: 'triangle',
-        frequency: midiToFreq(midi + 12),
-        filter: { type: 'lowpass', frequency: 3600 },
-        gainAutomation: [
-          { type: 'set', value: 0.055 - index * 0.008, time: at },
-          { type: 'exponentialRamp', value: 0.001, time: at + 0.09 },
-        ],
+        midi: midi + 12,
+        cutoff: 3600,
+        gainValue: 0.055 - index * 0.008,
+        decay: 0.09,
+        stopPadding: 0.02,
         destination: output,
         sends: playerSends(0.22, 0.18),
       });
@@ -615,16 +671,13 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const chord = score.chordAt(score.arrangementPositionAt(time));
     playerNoise(time, 0.2, 0.13, 2600);
     for (const midi of [chord.bass + 12, chord.stab[(stageIndex + 1) % chord.stab.length] + 12]) {
-      playOscillatorVoice({
+      stageTriangleVoice.play({
         context: ctx,
         time,
-        stopTime: time + 0.68,
-        oscillatorType: 'triangle',
-        frequency: midiToFreq(midi),
-        gainAutomation: [
-          { type: 'set', value: 0.14, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.62 },
-        ],
+        midi,
+        gainValue: 0.14,
+        decay: 0.62,
+        stopPadding: 0.06,
         destination: output,
         sends: playerSends(0.26, 0.55),
       });
@@ -661,18 +714,12 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const time = ctx.currentTime;
     // Rejection: a dead anvil clank with a minor-second snarl — cold iron, no reward.
     for (const [frequency, at, vel] of [[233, time, 0.16], [247, time + 0.02, 0.12]] as const) {
-      playOscillatorVoice({
+      rejectVoice.play({
         context: ctx,
         time: at,
-        stopTime: at + 0.24,
-        oscillatorType: 'square',
         frequency,
         frequencyAutomation: [{ type: 'exponentialRamp', value: frequency * 0.4, time: at + 0.16 }],
-        filter: { type: 'bandpass', Q: 4, frequency: 900 },
-        gainAutomation: [
-          { type: 'set', value: vel, time: at },
-          { type: 'exponentialRamp', value: 0.001, time: at + 0.2 },
-        ],
+        vel,
         destination: output,
       });
     }
@@ -684,36 +731,18 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (!ctx || !output) return;
     const time = ctx.currentTime;
     const chord = score.chordAt(score.arrangementPositionAt(time));
-    playOscillatorVoice({
+    playerHitBoomVoice.play({
       context: ctx,
       time,
-      stopTime: time + 0.55,
-      oscillatorType: 'sine',
-      frequency: midiToFreq(chord.bass + 12),
+      midi: chord.bass + 12,
       frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(chord.bass), time: time + 0.32 }],
-      gainAutomation: [
-        { type: 'set', value: 0.46, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.5 },
-      ],
       destination: output,
     });
     // Hull alarm: still alarming, but it borrows the live chord instead of a fixed siren.
     const context = ctx;
     [chord.stab[2] + 12, chord.stab[0] + 12].forEach((midi, index) => {
       const at = time + index * 0.13;
-      playOscillatorVoice({
-        context,
-        time: at,
-        stopTime: at + 0.15,
-        oscillatorType: 'square',
-        frequency: midiToFreq(midi),
-        gainAutomation: [
-          { type: 'set', value: 0.06, time: at },
-          { type: 'exponentialRamp', value: 0.001, time: at + 0.12 },
-        ],
-        destination: output,
-        sends: playerSends(0.12, 0.08),
-      });
+      playerHitStabVoice.play({ context, time: at, midi, destination: output, sends: playerSends(0.12, 0.08) });
     });
     noiseHit(time, 0.2, 0.16, 'bandpass', 800, output);
   });
@@ -723,17 +752,11 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (!ctx || !output) return;
     const time = ctx.currentTime;
     const chord = score.chordAt(score.arrangementPositionAt(time));
-    playOscillatorVoice({
+    missVoice.play({
       context: ctx,
       time,
-      stopTime: time + 0.14,
-      oscillatorType: 'sine',
-      frequency: midiToFreq(chord.bass + 24),
+      midi: chord.bass + 24,
       frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(chord.bass + 12), time: time + 0.11 }],
-      gainAutomation: [
-        { type: 'set', value: 0.045, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.12 },
-      ],
       destination: output,
       sends: playerSends(0.08, 0),
     });
@@ -777,18 +800,11 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       const time = score.nextGridTime(ctx.currentTime, 0.5);
       const leadSet = score.leadSetAt(score.arrangementPositionAt(time));
       const sourceMidi = leadSet[enemyId % 4];
-      playOscillatorVoice({
+      flareWarningVoice.play({
         context: ctx,
         time,
-        stopTime: time + 0.44,
-        oscillatorType: 'triangle',
-        frequency: midiToFreq(sourceMidi),
+        midi: sourceMidi,
         frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(sourceMidi + 12), time: time + 0.34 }],
-        gainAutomation: [
-          { type: 'set', value: 0.001, time },
-          { type: 'exponentialRamp', value: 0.05, time: time + 0.26 },
-          { type: 'linearRamp', value: 0, time: time + 0.4 },
-        ],
         destination: output,
         sends: playerSends(0.16, 0.14),
       });

@@ -4,6 +4,7 @@ import {
   playOscillatorVoice,
   type BeatLevelAudioStep,
 } from '../../engine/audio-kit';
+import { voice } from '../../engine/audio-voices';
 import { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';
 import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
 import { midiToFreq } from '../../engine/music';
@@ -169,6 +170,97 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   const { kick, clap, hat, bass, pad, arpNote, riser, noiseHit, playerSends, playerTone } = voices;
   const sfxDestination = () => runtime.mix()?.sfx ?? runtime.mix()?.master ?? null;
 
+  const killLayerVoice = voice<{ killVoice: CrystalKillVoice }>({
+    oscillators: [{ type: ({ killVoice }) => killVoice.oscillator, gain: ({ killVoice }) => killVoice.gain }],
+    duration: ({ killVoice }) => killVoice.decay,
+    stopPadding: 0.05,
+    filter: { type: 'lowpass', cutoff: ({ killVoice }) => killVoice.cutoff },
+    envelope: { decay: ({ killVoice }) => killVoice.decay },
+  });
+
+  const killBodyVoice = voice<{ decay: number; gain: number }>({
+    oscillators: [{ type: 'sine', octave: -1, gain: ({ gain }) => gain * 0.55 }],
+    duration: ({ decay }) => decay,
+    stopPadding: 0.05,
+    gainAutomation: (time, gain, { decay }) => [
+      { type: 'set', value: gain, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + decay * 0.8 },
+    ],
+  });
+
+  const killOctaveVoice = voice<{ decay: number; gain: number }>({
+    oscillators: [{ type: 'sine', octave: 1, gain: ({ gain }) => gain * 0.4 }],
+    duration: ({ decay }) => decay,
+    stopPadding: 0.05,
+    envelope: { decay: ({ decay }) => decay },
+  });
+
+  const lockVoice = voice<{ oscillator: OscillatorType; cutoff: number; gainValue: number; lockCount: number }>({
+    oscillators: [{ type: ({ oscillator }) => oscillator, gain: ({ gainValue }) => gainValue }],
+    duration: 0.1,
+    stopPadding: 0.03,
+    filter: { type: 'lowpass', cutoff: ({ cutoff, lockCount }) => cutoff + lockCount * 180 },
+    envelope: { decay: 0.1 },
+  });
+
+  const fireVoice = voice<{ cutoff: number }>({
+    oscillators: [{ type: 'sawtooth', gain: 0.09 }],
+    duration: 0.08,
+    stopPadding: 0.02,
+    filter: { type: 'lowpass', cutoff: ({ cutoff }) => cutoff },
+    envelope: { decay: 0.08 },
+  });
+
+  const chipVoice = voice<{ vel: number }>({
+    oscillators: [{ type: 'triangle' }],
+    duration: 0.14,
+    stopPadding: 0.02,
+    filter: { type: 'lowpass', cutoff: 4200 },
+    gainAutomation: (time, _gain, { vel }) => [
+      { type: 'set', value: vel, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.14 },
+    ],
+  });
+
+  const rejectVoice = voice<{ vel: number; filterStart: number; filterEnd: number }>({
+    oscillators: [{ type: 'sawtooth' }],
+    duration: 0.24,
+    stopPadding: 0.02,
+    filter: {
+      type: 'bandpass',
+      Q: 5,
+      frequencyAutomation: (time, { filterStart, filterEnd }) => [
+        { type: 'set', value: filterStart, time },
+        { type: 'exponentialRamp', value: filterEnd, time: time + 0.18 },
+      ],
+    },
+    gainAutomation: (time, _gain, { vel }) => [
+      { type: 'set', value: vel, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.24 },
+    ],
+  });
+
+  const impactBoomVoice = voice({
+    oscillators: [{ type: 'sine' }],
+    duration: 0.4,
+    stopPadding: 0.05,
+    frequencyAutomation: (time) => [{ type: 'exponentialRamp', value: 34, time: time + 0.28 }],
+    gainAutomation: (time) => [
+      { type: 'set', value: 0.42, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.4 },
+    ],
+  });
+
+  const impactStabVoice = voice({
+    oscillators: [{ type: 'square' }],
+    duration: 0.24,
+    stopPadding: 0.04,
+    gainAutomation: (time) => [
+      { type: 'set', value: 0.07, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.24 },
+    ],
+  });
+
   // ---- scheduler ----------------------------------------------------------
 
   const blankBar = '................';
@@ -273,48 +365,21 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
       : [[fromVoice, 1 - sectionMix.t], [toVoice, sectionMix.t]];
     for (const [voice, weight] of layers) {
       if (weight < 0.02) continue;
-      playOscillatorVoice({
+      killLayerVoice.play({
         context: ctx,
         time,
-        stopTime: time + voice.decay + 0.05,
-        oscillatorType: voice.oscillator,
-        frequency: midiToFreq(midi),
-        filter: { type: 'lowpass', frequency: voice.cutoff },
-        gainAutomation: [
-          { type: 'set', value: voice.gain * vel * weight, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + voice.decay },
-        ],
+        midi,
+        killVoice: voice,
+        velocity: vel,
+        weight,
         destination: output,
         sends: [{ destination: audioMix.delaySend, gain: 0.45 }],
       });
     }
     // A pure-tone body an octave below keeps square/saw voices from thinness.
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + decay + 0.05,
-      oscillatorType: 'sine',
-      frequency: midiToFreq(midi - 12),
-      gainAutomation: [
-        { type: 'set', value: gain * 0.55 * vel, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + decay * 0.8 },
-      ],
-      destination: output,
-    });
+    killBodyVoice.play({ context: ctx, time, midi, decay, gain, velocity: vel, destination: output });
     if (chain >= 2) {
-      playOscillatorVoice({
-        context: ctx,
-        time,
-        stopTime: time + decay + 0.05,
-        oscillatorType: 'sine',
-        frequency: midiToFreq(midi + 12),
-        gainAutomation: [
-          { type: 'set', value: gain * 0.4, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + decay },
-        ],
-        destination: output,
-        sends: [{ destination: audioMix.delaySend, gain: 0.5 }],
-      });
+      killOctaveVoice.play({ context: ctx, time, midi, decay, gain, destination: output, sends: [{ destination: audioMix.delaySend, gain: 0.5 }] });
     }
     noiseHit(time, 0.05 * shimmer + 0.03, 0.08, 'highpass', 5200, output);
   }
@@ -479,17 +544,15 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     for (const [section, weight] of layers) {
       if (weight < 0.02) continue;
       const voice = SECTION_VOICES[section].lock;
-      playOscillatorVoice({
+      lockVoice.play({
         context: ctx,
         time,
-        stopTime: time + 0.13,
-        oscillatorType: voice.oscillator,
-        frequency: midiToFreq(midi),
-        filter: { type: 'lowpass', frequency: voice.cutoff + lockCount * 180 },
-        gainAutomation: [
-          { type: 'set', value: voice.gain * weight, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.1 },
-        ],
+        midi,
+        oscillator: voice.oscillator,
+        cutoff: voice.cutoff,
+        gainValue: voice.gain,
+        lockCount,
+        weight,
         destination: output,
         sends: [{ destination: mix.delaySend, gain: 0.35 }],
       });
@@ -512,18 +575,12 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     // The zap starts three octaves above the chord root and falls one, so
     // even the gun retunes as the harmony moves.
     const root = score.chordAt(position).bass;
-    playOscillatorVoice({
+    fireVoice.play({
       context: ctx,
       time,
-      stopTime: time + 0.1,
-      oscillatorType: 'sawtooth',
-      frequency: midiToFreq(root + 36),
+      midi: root + 36,
+      cutoff: voice.cutoff,
       frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(root + 24), time: time + 0.07 }],
-      filter: { type: 'lowpass', frequency: voice.cutoff },
-      gainAutomation: [
-        { type: 'set', value: 0.09, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.08 },
-      ],
       destination: output,
     });
     noiseHit(time, voice.noise, 0.02, 'highpass', 3000, output);
@@ -548,20 +605,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     ([[0, 0.08], [1, 0.07], [2, 0.06]] as const).forEach(([index, vel]) => {
       if (!ctx || !output || !delaySend) return;
       const at = time + THIRTYSECOND * index;
-      playOscillatorVoice({
-        context: ctx,
-        time: at,
-        stopTime: at + 0.16,
-        oscillatorType: 'triangle',
-        frequency: midiToFreq(arp[index] + 12),
-        filter: { type: 'lowpass', frequency: 4200 },
-        gainAutomation: [
-          { type: 'set', value: vel, time: at },
-          { type: 'exponentialRamp', value: 0.001, time: at + 0.14 },
-        ],
-        destination: output,
-        sends: [{ destination: delaySend, gain: 0.38 }],
-      });
+      chipVoice.play({ context: ctx, time: at, midi: arp[index] + 12, vel, destination: output, sends: [{ destination: delaySend, gain: 0.38 }] });
     });
     noiseHit(time, 0.035, 0.035, 'highpass', 5600, output);
   });
@@ -603,25 +647,14 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
       [330, 92, time, 0.18],
       [233, 61, time + 0.028, 0.13],
     ] as const) {
-      playOscillatorVoice({
+      rejectVoice.play({
         context: ctx,
         time: at,
-        stopTime: at + 0.26,
-        oscillatorType: 'sawtooth',
         frequency: start,
         frequencyAutomation: [{ type: 'exponentialRamp', value: end, time: at + 0.2 }],
-        filter: {
-          type: 'bandpass',
-          Q: 5,
-          frequencyAutomation: [
-            { type: 'set', value: 1100, time: at },
-            { type: 'exponentialRamp', value: 430, time: at + 0.18 },
-          ],
-        },
-        gainAutomation: [
-          { type: 'set', value: vel, time: at },
-          { type: 'exponentialRamp', value: 0.001, time: at + 0.24 },
-        ],
+        vel,
+        filterStart: 1100,
+        filterEnd: 430,
         destination: output,
       });
     }
@@ -635,32 +668,9 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     const output = sfxDestination();
     if (!ctx || !output) return;
     const time = ctx.currentTime;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.45,
-      oscillatorType: 'sine',
-      frequency: 96,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 34, time: time + 0.28 }],
-      gainAutomation: [
-        { type: 'set', value: 0.42, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.4 },
-      ],
-      destination: output,
-    });
+    impactBoomVoice.play({ context: ctx, time, frequency: 96, destination: output });
     for (const midi of [63, 69]) {
-      playOscillatorVoice({
-        context: ctx,
-        time,
-        stopTime: time + 0.28,
-        oscillatorType: 'square',
-        frequency: midiToFreq(midi),
-        gainAutomation: [
-          { type: 'set', value: 0.07, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.24 },
-        ],
-        destination: output,
-      });
+      impactStabVoice.play({ context: ctx, time, midi, destination: output });
     }
     noiseHit(time, 0.2, 0.14, 'bandpass', 900, output);
   });

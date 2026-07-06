@@ -1,10 +1,10 @@
 import {
   defineInstruments,
   playBufferSourceVoice,
-  playNoiseHit,
   playOscillatorVoice,
   type MixBus,
 } from '../../engine/audio-kit';
+import { noiseHit as noiseHitSpec, voice } from '../../engine/audio-voices';
 import type { AudioTraceSink } from '../../engine/audio-trace';
 import { midiToFreq } from '../../engine/music';
 
@@ -41,6 +41,8 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
   const musicDestination = () => environment.mix()?.music ?? environment.mix()?.master ?? null;
   const sfxDestination = () => environment.mix()?.sfx ?? environment.mix()?.master ?? null;
 
+  const noiseHitVoice = noiseHitSpec({ filterType: 'highpass', frequency: 1000, velocity: 1, decay: 0.05 });
+
   function noiseHit(
     time: number,
     vel: number,
@@ -52,7 +54,7 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
     const context = environment.context();
     const noiseBuffer = environment.mix()?.noiseBuffer;
     if (!context || !noiseBuffer) return;
-    playNoiseHit({
+    noiseHitVoice.play({
       context,
       buffer: noiseBuffer,
       time,
@@ -65,24 +67,99 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
     });
   }
 
+  const kickTone = voice<{ vel: number }>({
+    oscillators: [{ type: 'sine' }],
+    duration: 0.15,
+    stopPadding: 0.03,
+    frequencyAutomation: (time) => [{ type: 'exponentialRamp', value: 44, time: time + 0.09 }],
+    gainAutomation: (time, _gain, { vel }) => [
+      { type: 'set', value: 0.52 * vel, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.15 },
+    ],
+  });
+
+  const snareBody = voice<{ vel: number }>({
+    oscillators: [{ type: 'triangle' }],
+    duration: 0.07,
+    stopPadding: 0.02,
+    frequencyAutomation: (time) => [{ type: 'exponentialRamp', value: 130, time: time + 0.05 }],
+    gainAutomation: (time, _gain, { vel }) => [
+      { type: 'set', value: 0.14 * vel, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.07 },
+    ],
+  });
+
+  const arpTone = voice<{ vel: number }>({
+    oscillators: [{ type: 'square' }],
+    duration: 0.1,
+    stopPadding: 0.02,
+    filter: {
+      type: 'lowpass',
+      frequency: 2900,
+      frequencyAutomation: (time) => [{ type: 'exponentialRamp', value: 900, time: time + 0.09 }],
+    },
+    gainAutomation: (time, _gain, { vel }) => [
+      { type: 'set', value: 0.075 * vel, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.1 },
+    ],
+  });
+
+  const stabTone = voice<{ vel: number }>({
+    oscillators: [{ type: 'sawtooth' }],
+    duration: 0.26,
+    stopPadding: 0.04,
+    filter: {
+      type: 'lowpass',
+      frequency: 3600,
+      frequencyAutomation: (time) => [{ type: 'exponentialRamp', value: 500, time: time + 0.22 }],
+    },
+    gainAutomation: (time, _gain, { vel }) => [
+      { type: 'set', value: 0.05 * vel, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.26 },
+    ],
+  });
+
+  const alarmTone = voice<{ duration: number }>({
+    oscillators: [{ type: 'sawtooth' }],
+    duration: ({ duration }) => duration,
+    stopPadding: 0.05,
+    filter: {
+      type: 'lowpass',
+      frequency: 360,
+      frequencyAutomation: (time, { duration }) => [{ type: 'linearRamp', value: 1500, time: time + duration * 0.8 }],
+    },
+    gainAutomation: (time, _gain, { duration }) => [
+      { type: 'set', value: 0, time },
+      { type: 'linearRamp', value: 0.15, time: time + duration * 0.7 },
+      { type: 'linearRamp', value: 0, time: time + duration },
+    ],
+  });
+
+  const impactTone = voice<{ vel: number }>({
+    oscillators: [{ type: 'sine' }],
+    duration: 0.75,
+    stopPadding: 0.05,
+    frequencyAutomation: (time) => [{ type: 'exponentialRamp', value: 30, time: time + 0.5 }],
+    gainAutomation: (time, _gain, { vel }) => [
+      { type: 'set', value: 0.5 * vel, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.75 },
+    ],
+  });
+
+  const playerToneSpec = voice<{ voice: HeliosTonalVoice }>({
+    oscillators: [{ type: ({ voice }) => voice.oscillator, gain: ({ voice }) => voice.gain }],
+    duration: ({ voice }) => voice.decay,
+    stopPadding: 0.04,
+    filter: { type: 'lowpass', cutoff: ({ voice }) => voice.cutoff },
+    envelope: { decay: ({ voice }) => voice.decay },
+  });
+
   const instruments = defineInstruments({ trace: environment.trace, context: environment.context }, {
     kick(context, time, vel) {
       const mix = environment.mix();
       const output = musicDestination();
       if (!mix || !output) return;
-      playOscillatorVoice({
-        context,
-        time,
-        stopTime: time + 0.18,
-        oscillatorType: 'sine',
-        frequency: 165,
-        frequencyAutomation: [{ type: 'exponentialRamp', value: 44, time: time + 0.09 }],
-        gainAutomation: [
-          { type: 'set', value: 0.52 * vel, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.15 },
-        ],
-        destination: output,
-      });
+      kickTone.play({ context, time, frequency: 165, vel, destination: output });
       noiseHit(time, 0.09 * vel, 0.004, 'highpass', 1500, output);
       mix.duckAt(time, 0.4, 0.16);
     },
@@ -92,19 +169,7 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
       if (!output) return;
       noiseHit(time, 0.2 * vel, 0.075, 'bandpass', 1750, output);
       noiseHit(time, 0.1 * vel, 0.03, 'highpass', 5200, output);
-      playOscillatorVoice({
-        context,
-        time,
-        stopTime: time + 0.09,
-        oscillatorType: 'triangle',
-        frequency: 215,
-        frequencyAutomation: [{ type: 'exponentialRamp', value: 130, time: time + 0.05 }],
-        gainAutomation: [
-          { type: 'set', value: 0.14 * vel, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.07 },
-        ],
-        destination: output,
-      });
+      snareBody.play({ context, time, frequency: 215, vel, destination: output });
     },
 
     hat(_context, time, vel, decay) {
@@ -208,24 +273,7 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
     arp(context, time, midi, vel) {
       const mix = environment.mix();
       if (!mix?.duck || !mix.delaySend) return;
-      playOscillatorVoice({
-        context,
-        time,
-        stopTime: time + 0.12,
-        oscillatorType: 'square',
-        frequency: midiToFreq(midi),
-        filter: {
-          type: 'lowpass',
-          frequency: 2900,
-          frequencyAutomation: [{ type: 'exponentialRamp', value: 900, time: time + 0.09 }],
-        },
-        gainAutomation: [
-          { type: 'set', value: 0.075 * vel, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.1 },
-        ],
-        destination: mix.duck,
-        sends: [{ destination: mix.delaySend, gain: 0.42 }],
-      });
+      arpTone.play({ context, time, midi, vel, destination: mix.duck, sends: [{ destination: mix.delaySend, gain: 0.42 }] });
     },
 
     stab(context, time, midis, vel) {
@@ -233,25 +281,7 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
       if (!mix?.duck || !mix.reverbSend) return;
       for (const midi of midis) {
         for (const detune of [-11, 11]) {
-          playOscillatorVoice({
-            context,
-            time,
-            stopTime: time + 0.3,
-            oscillatorType: 'sawtooth',
-            frequency: midiToFreq(midi),
-            detune,
-            filter: {
-              type: 'lowpass',
-              frequency: 3600,
-              frequencyAutomation: [{ type: 'exponentialRamp', value: 500, time: time + 0.22 }],
-            },
-            gainAutomation: [
-              { type: 'set', value: 0.05 * vel, time },
-              { type: 'exponentialRamp', value: 0.001, time: time + 0.26 },
-            ],
-            destination: mix.duck,
-            sends: [{ destination: mix.reverbSend, gain: 0.35 }],
-          });
+          stabTone.play({ context, time, midi, detune, vel, destination: mix.duck, sends: [{ destination: mix.reverbSend, gain: 0.35 }] });
         }
       }
     },
@@ -298,25 +328,7 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
     alarm(context, time, midi, duration) {
       const mix = environment.mix();
       if (!mix?.duck || !mix.reverbSend) return;
-      playOscillatorVoice({
-        context,
-        time,
-        stopTime: time + duration + 0.05,
-        oscillatorType: 'sawtooth',
-        frequency: midiToFreq(midi),
-        filter: {
-          type: 'lowpass',
-          frequency: 360,
-          frequencyAutomation: [{ type: 'linearRamp', value: 1500, time: time + duration * 0.8 }],
-        },
-        gainAutomation: [
-          { type: 'set', value: 0, time },
-          { type: 'linearRamp', value: 0.15, time: time + duration * 0.7 },
-          { type: 'linearRamp', value: 0, time: time + duration },
-        ],
-        destination: mix.duck,
-        sends: [{ destination: mix.reverbSend, gain: 0.5 }],
-      });
+      alarmTone.play({ context, time, midi, duration, destination: mix.duck, sends: [{ destination: mix.reverbSend, gain: 0.5 }] });
     },
 
     riser(context, time, duration, level) {
@@ -347,19 +359,7 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
     impact(context, time, vel) {
       const output = musicDestination();
       if (!output) return;
-      playOscillatorVoice({
-        context,
-        time,
-        stopTime: time + 0.8,
-        oscillatorType: 'sine',
-        frequency: 120,
-        frequencyAutomation: [{ type: 'exponentialRamp', value: 30, time: time + 0.5 }],
-        gainAutomation: [
-          { type: 'set', value: 0.5 * vel, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.75 },
-        ],
-        destination: output,
-      });
+      impactTone.play({ context, time, frequency: 120, vel, destination: output });
       noiseHit(time, 0.26 * vel, 0.3, 'lowpass', 420, output);
       instruments.crash(time, 0.16 * vel);
     },
@@ -396,20 +396,7 @@ export function createHeliosVoices(environment: HeliosVoiceEnvironment) {
     const context = environment.context();
     const output = sfxDestination();
     if (!context || !output) return;
-    playOscillatorVoice({
-      context,
-      time,
-      stopTime: time + voice.decay + 0.04,
-      oscillatorType: voice.oscillator,
-      frequency: midiToFreq(midi),
-      filter: { type: 'lowpass', frequency: voice.cutoff },
-      gainAutomation: [
-        { type: 'set', value: voice.gain * vel * weight, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + voice.decay },
-      ],
-      destination: output,
-      sends: playerSends(0.42, voice.reverb),
-    });
+    playerToneSpec.play({ context, time, midi, voice, velocity: vel, weight, destination: output, sends: playerSends(0.42, voice.reverb) });
   }
 
   function playerNoise(time: number, vel: number, decay: number, frequency: number) {

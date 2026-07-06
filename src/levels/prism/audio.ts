@@ -1,6 +1,7 @@
 import type { EventBus } from '../../events';
 import { createArrangement, fn } from '../../engine/arrangement';
-import { createBeatLevelAudio, defineInstruments, playNoiseHit, playOscillatorVoice, type BeatLevelAudioStep } from '../../engine/audio-kit';
+import { createBeatLevelAudio, defineInstruments, type BeatLevelAudioStep } from '../../engine/audio-kit';
+import { noiseHit, voice } from '../../engine/audio-voices';
 import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
 import { midiToFreq } from '../../engine/music';
 import { createScore } from '../../engine/score';
@@ -83,6 +84,27 @@ function createPrismAudio(bus: EventBus, trace?: AudioTraceSink) {
     },
   });
 
+  const lowPulseVoice = voice({
+    oscillators: [{ type: 'triangle' }],
+    duration: 0.48,
+    stopPadding: 0.04,
+    filter: {
+      type: 'lowpass',
+      frequency: 900,
+      frequencyAutomation: (time) => [{ type: 'exponentialRamp', value: 120, time: time + 0.42 }],
+    },
+    gainAutomation: (time) => [
+      { type: 'set', value: 0.18, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + 0.48 },
+    ],
+  });
+
+  const noiseTickHit = noiseHit({
+    filterType: 'highpass',
+    frequency: 5200,
+    decay: 0.035,
+  });
+
   const inst = defineInstruments({ trace, context: runtime.context }, {
     bell(context, time, midi, velocity, decay) {
       const mix = runtime.mix();
@@ -111,35 +133,17 @@ function createPrismAudio(bus: EventBus, trace?: AudioTraceSink) {
     lowPulse(context, time, midi) {
       const mix = runtime.mix();
       if (!mix?.master) return;
-      playOscillatorVoice({
-        context,
-        time,
-        stopTime: time + 0.52,
-        oscillatorType: 'triangle',
-        frequency: midiToFreq(midi),
-        filter: {
-          type: 'lowpass',
-          frequency: 900,
-          frequencyAutomation: [{ type: 'exponentialRamp', value: 120, time: time + 0.42 }],
-        },
-        gainAutomation: [
-          { type: 'set', value: 0.18, time },
-          { type: 'exponentialRamp', value: 0.001, time: time + 0.48 },
-        ],
-        destination: mix.master,
-      });
+      lowPulseVoice.play({ context, time, midi, destination: mix.master });
     },
     noiseTick(context, time, velocity, decay) {
       const mix = runtime.mix();
       if (!mix?.master || !mix.noiseBuffer) return;
-      playNoiseHit({
+      noiseTickHit.play({
         context,
         buffer: mix.noiseBuffer,
         time,
         velocity,
         decay,
-        filterType: 'highpass',
-        frequency: 5200,
         destination: mix.master,
         offset: Math.random() * 1.5,
       });
