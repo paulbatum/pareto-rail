@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BoxGeometry,
   Color,
   CylinderGeometry,
@@ -16,6 +15,7 @@ import {
   TorusGeometry,
   Vector3,
 } from 'three';
+import { additiveMaterialParameters, createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import { BLOOD, EMBER, GOLD, hdr, OBSIDIAN, WHITE_HOT } from './palette';
 import type { EmberSpec } from './effects';
 import type { TintPart } from './enemies';
@@ -35,12 +35,9 @@ function facet(
   const parts = (group.userData.parts ??= []) as TintPart[];
   const fillMaterial = new MeshBasicMaterial({ color: fillColor.clone() });
   const fill = new Mesh(geometry, fillMaterial);
-  const edgeMaterial = new LineBasicMaterial({
+  const edgeMaterial = new LineBasicMaterial(additiveMaterialParameters({
     color: hdr(edgeColor, edgeIntensity),
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  }));
   fill.add(new LineSegments(new EdgesGeometry(geometry), edgeMaterial));
   group.add(fill);
   parts.push(
@@ -165,12 +162,9 @@ export function createHeadMesh() {
   const heart = new Mesh(new OctahedronGeometry(1.6, 1), heartMaterial);
   heart.position.set(0, -1.9, 3.4);
   group.add(heart);
-  const heartGlowMaterial = new MeshBasicMaterial({
+  const heartGlowMaterial = createAdditiveBasicMaterial({
     color: hdr(EMBER, 0.35),
-    transparent: true,
     opacity: 0.4,
-    blending: AdditiveBlending,
-    depthWrite: false,
   });
   const heartGlow = new Mesh(new OctahedronGeometry(2.5, 1), heartGlowMaterial);
   heart.add(heartGlow);
@@ -296,11 +290,8 @@ export function createSerpentBody(starCenter: Vector3, starRadius: number): Serp
     coilGroup.add(new Mesh(torus, fillMaterial));
     // Dorsal seam: a glowing line along the coil's spine.
     const seam = new TorusGeometry(placement.major + placement.tube * 0.92, placement.tube * 0.08, 5, 64, placement.arc);
-    const seamMaterial = new MeshBasicMaterial({
+    const seamMaterial = createAdditiveBasicMaterial({
       color: hdr(EMBER, 0.9),
-      transparent: true,
-      blending: AdditiveBlending,
-      depthWrite: false,
     });
     coilGroup.add(new Mesh(seam, seamMaterial));
     // Spine fins along the arc.

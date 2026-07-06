@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BufferGeometry,
   Color,
   EdgesGeometry,
@@ -13,6 +12,7 @@ import {
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { additiveMaterialParameters } from '../../../engine/visual-kit';
 import { COLD_BLUE, GOLD, hdr, ICE_WHITE, OBSIDIAN } from './palette';
 import type { EmberSpec } from './effects';
 
@@ -59,12 +59,9 @@ export function createLetterMesh(char: string) {
   }
 
   const fillMaterial = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(2.2) });
-  const edgeMaterial = new LineBasicMaterial({
+  const edgeMaterial = new LineBasicMaterial(additiveMaterialParameters({
     color: hdr(GOLD, 1.25),
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  }));
   const fillMesh = new Mesh(mergeGeometries(fills), fillMaterial);
   const edgeLines = new LineSegments(mergeGeometries(edges), edgeMaterial);
   group.add(fillMesh, edgeLines);

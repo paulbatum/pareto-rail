@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   CircleGeometry,
   Color,
   DoubleSide,
@@ -17,6 +16,12 @@ import {
 } from 'three';
 import type { Camera } from 'three';
 import { colorForLockCount } from '../../../engine/locks';
+import {
+  createAdditiveBasicMaterial,
+  createAdornmentSlot,
+  createPendingVisualRecords,
+  configureAdditiveMaterial,
+} from '../../../engine/visual-kit';
 import type { EventBus } from '../../../events';
 import {
   BOSS_TIME,
@@ -92,7 +97,6 @@ const DENY_RED = new Color(1.6, 0.1, 0.05);
 const DENY_FILL = new Color(0.3, 0.02, 0.01);
 
 let environment: Environment | null = null;
-let sceneRef: Scene | null = null;
 let baseFov: number | null = null;
 let beatEnergy = 0;
 let shakeEnergy = 0;
@@ -105,15 +109,24 @@ let heartKilledAt = -1;
 
 const rail = createHeliosRail();
 
+const lockRings = createAdornmentSlot<EnemyRecord, Group>({
+  get: (record) => record.lockRing,
+  set: (record, ring) => {
+    record.lockRing = ring;
+  },
+});
+
 // createEnemyMesh() has no id, but the game emits `spawn` synchronously right
 // after calling it — pairing the queue with spawn events links mesh to id.
-const pendingEnemyMeshes: Group[] = [];
-const pendingProjectileMeshes: ProjectileRecord[] = [];
-const enemyRecords = new Map<number, EnemyRecord>();
-const projectileRecords = new Map<number, ProjectileRecord>();
+const enemyRecords = createPendingVisualRecords<Group, EnemyRecord>({
+  createRecord: (mesh) => ({ mesh, bornAt: null, lockRing: null }),
+  disposeRecord: (record) => lockRings.detach(record),
+});
+const projectileRecords = createPendingVisualRecords<ProjectileRecord, ProjectileRecord>({
+  createRecord: (record) => record,
+});
 
 export function createEnvironment(scene: Scene) {
-  sceneRef = scene;
   environment = createEnvironmentInternal(scene);
   createEffects(scene);
   return environment.root;
@@ -123,7 +136,7 @@ export function createEnemyMesh(kind: string, letter?: string) {
   const mesh = buildEnemyMesh(kind, letter);
   mesh.userData.kind = kind;
   mesh.scale.setScalar(0.001);
-  pendingEnemyMeshes.push(mesh);
+  enemyRecords.enqueue(mesh);
   return mesh;
 }
 
@@ -175,16 +188,10 @@ export function createProjectileMesh() {
   group.add(
     new Mesh(
       shellGeometry,
-      new MeshBasicMaterial({
-        color: hdr(COLD_BLUE, 1.0),
-        transparent: true,
-        opacity: 0.5,
-        blending: AdditiveBlending,
-        depthWrite: false,
-      }),
+      createAdditiveBasicMaterial({ color: hdr(COLD_BLUE, 1.0), opacity: 0.5 }),
     ),
   );
-  pendingProjectileMeshes.push({ mesh: group, trailColor: COLD_BLUE.clone().multiplyScalar(0.9) });
+  projectileRecords.enqueue({ mesh: group, trailColor: COLD_BLUE.clone().multiplyScalar(0.9) });
   return group;
 }
 
@@ -195,12 +202,7 @@ export function createReticle() {
   const parts: Array<{ material: MeshBasicMaterial; base: Color }> = [];
 
   const addPart = (mesh: Mesh, base: Color) => {
-    const material = mesh.material as MeshBasicMaterial;
-    material.transparent = true;
-    material.blending = AdditiveBlending;
-    material.depthWrite = false;
-    material.side = DoubleSide;
-    material.color.copy(base);
+    const material = configureAdditiveMaterial(mesh.material as MeshBasicMaterial, { color: base, side: DoubleSide });
     parts.push({ material, base });
   };
 
@@ -251,9 +253,8 @@ export function setReticleActive(reticle: Object3D, active: boolean, lockCount: 
 
 export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
   bus.on('spawn', ({ enemyId, kind, worldPosition }) => {
-    const mesh = pendingEnemyMeshes.shift();
-    if (!mesh) return;
-    enemyRecords.set(enemyId, { mesh, bornAt: null, lockRing: null });
+    const record = enemyRecords.claim(enemyId);
+    if (!record) return;
     if (kind === 'flare') {
       // Prominence telegraph: a light column where it will erupt.
       spawnBeam(worldPosition.clone(), hdr(GOLD, 0.9), 30, 0.8);
@@ -272,20 +273,18 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     const lockColor = colorForLockCount(lockCount, LOCK_GRADIENT);
     const record = enemyRecords.get(enemyId);
     if (record && !record.lockRing) {
-      record.lockRing = makeLockRing(lockColor);
-      scene.add(record.lockRing);
+      lockRings.attach(record, makeLockRing(lockColor), scene);
     }
     spawnRing(worldPosition, hdr(lockColor, 1.4), 2.2, 0.28);
   });
 
   bus.on('unlock', ({ enemyId }) => {
     const record = enemyRecords.get(enemyId);
-    if (record) removeLockRing(record, scene);
+    if (record) lockRings.detach(record);
   });
 
   bus.on('fire', ({ projectileId, worldPosition }) => {
-    const record = pendingProjectileMeshes.shift();
-    if (record) projectileRecords.set(projectileId, record);
+    projectileRecords.claim(projectileId);
     spawnGlint(worldPosition, hdr(ICE_WHITE, 1.2), 0.5, 0.12);
   });
 
@@ -346,16 +345,14 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
         spawnRing(worldPosition, hdr(GOLD, 1.3), 9, 0.55);
       }
 
-      removeLockRing(record, scene);
-      enemyRecords.delete(enemyId);
+      enemyRecords.delete(enemyId, { dispose: true });
     }
   });
 
   bus.on('miss', ({ enemyId, worldPosition }) => {
     const record = enemyRecords.get(enemyId);
     if (record) {
-      removeLockRing(record, scene);
-      enemyRecords.delete(enemyId);
+      enemyRecords.delete(enemyId, { dispose: true });
     }
     burstEmbers(worldPosition, EMBER.clone().multiplyScalar(0.4), 3, 3, 2);
   });
@@ -379,11 +376,8 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
 
   bus.on('runstart', () => {
     resetEffects();
-    for (const record of enemyRecords.values()) removeLockRing(record, scene);
-    enemyRecords.clear();
-    projectileRecords.clear();
-    pendingEnemyMeshes.length = 0;
-    pendingProjectileMeshes.length = 0;
+    enemyRecords.clear({ dispose: true, pending: true });
+    projectileRecords.clear({ pending: true });
     heartWorldPosition = null;
     heartKilledAt = -1;
     lastRunTime = -1;
@@ -416,10 +410,9 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
   updateEnvironmentFrame(dt, ctx, speed, runTime);
   updatePostUniforms(dt, ctx, runTime);
 
-  for (const [enemyId, record] of enemyRecords) {
+  for (const [enemyId, record] of enemyRecords.entries()) {
     if (!record.mesh.parent) {
-      if (sceneRef) removeLockRing(record, sceneRef);
-      enemyRecords.delete(enemyId);
+      enemyRecords.delete(enemyId, { dispose: true });
       continue;
     }
     if (record.bornAt === null) record.bornAt = elapsedNow;
@@ -452,7 +445,7 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
     }
   }
 
-  for (const [projectileId, record] of projectileRecords) {
+  for (const [projectileId, record] of projectileRecords.entries()) {
     if (!record.mesh.parent) {
       projectileRecords.delete(projectileId);
       continue;
@@ -644,34 +637,16 @@ function makeLockRing(color: Color): Group {
   // Hex outer ring — the cold clamp closing on a hostile.
   const ring = new Mesh(
     new RingGeometry(0.86, 0.92, 6),
-    new MeshBasicMaterial({
-      color: hdr(color, 1.8),
-      transparent: true,
-      blending: AdditiveBlending,
-      depthWrite: false,
-      side: DoubleSide,
-    }),
+    createAdditiveBasicMaterial({ color: hdr(color, 1.8), side: DoubleSide }),
   );
   const innerRing = new Mesh(
     new RingGeometry(0.66, 0.69, 32),
-    new MeshBasicMaterial({
-      color: hdr(color.clone().lerp(ICE_WHITE, 0.55), 1.4),
-      transparent: true,
-      blending: AdditiveBlending,
-      depthWrite: false,
-      side: DoubleSide,
-    }),
+    createAdditiveBasicMaterial({ color: hdr(color.clone().lerp(ICE_WHITE, 0.55), 1.4), side: DoubleSide }),
   );
   group.add(ring, innerRing);
   return group;
 }
 
-function removeLockRing(record: EnemyRecord, scene: Scene) {
-  if (record.lockRing) {
-    scene.remove(record.lockRing);
-    record.lockRing = null;
-  }
-}
 
 function easeOutBack(t: number): number {
   const c1 = 1.70158;

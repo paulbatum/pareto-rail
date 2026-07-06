@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BoxGeometry,
   BufferGeometry,
   Color,
@@ -40,6 +39,7 @@ import {
   vec3,
 } from 'three/tsl';
 import { sampleRailFrame } from '../../../engine/rail';
+import { additiveMaterialParameters, createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import { createHeliosRail, CORONA_TIME, GATE_TIME, railU, STAR_CENTER, STAR_RADIUS } from '../gameplay';
 import { ASH_VIOLET, BLOOD, EMBER, GOLD, hdr, mulberry32, OBSIDIAN, SPACE_MAROON, WHITE_HOT, type Rng } from './palette';
 import { createSerpentBody, type SerpentBody } from './serpent';
@@ -133,11 +133,7 @@ function createStar() {
   group.add(star);
 
   // Corona: an additive fresnel shell just outside the surface.
-  const coronaMaterial = new MeshBasicNodeMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const coronaMaterial = new MeshBasicNodeMaterial(additiveMaterialParameters({}));
   const coronaView = cameraPosition.sub(positionWorld).normalize();
   const coronaRim = float(1).sub(normalWorld.dot(coronaView).abs()).pow(2.6);
   coronaMaterial.colorNode = vec3(GOLD.r, GOLD.g, GOLD.b)
@@ -180,14 +176,11 @@ function createEmberField(rng: Rng, curve: ReturnType<typeof createHeliosRail>) 
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
-  const material = new PointsMaterial({
+  const material = new PointsMaterial(additiveMaterialParameters({
     size: 0.5,
     vertexColors: true,
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
     sizeAttenuation: true,
-  });
+  }));
   const points = new Points(geometry, material);
   points.frustumCulled = false;
   return points;
@@ -202,11 +195,7 @@ function createGate(curve: ReturnType<typeof createHeliosRail>) {
   gate.lookAt(frame.position.clone().add(frame.tangent));
 
   const dark = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(0.5) });
-  const seamMaterial = new MeshBasicNodeMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const seamMaterial = new MeshBasicNodeMaterial(additiveMaterialParameters({}));
   // A hot spot of energy orbits the ring; the beat kicks the whole seam.
   const around = normalize(positionLocal.xy);
   const crawl = around
@@ -242,11 +231,7 @@ function createGate(curve: ReturnType<typeof createHeliosRail>) {
       .multiply(new Matrix4().makeTranslation(0, 47, 0));
     runeGeometries.push(plate.applyMatrix4(matrix));
   }
-  const runeMaterial = new MeshBasicNodeMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const runeMaterial = new MeshBasicNodeMaterial(additiveMaterialParameters({}));
   const flicker = positionWorld.y.mul(0.7).add(time.mul(2.1)).sin().mul(0.25).add(0.75);
   runeMaterial.colorNode = vec3(GOLD.r, GOLD.g, GOLD.b).mul(flicker).mul(beatUniform.mul(0.8).add(0.75));
   gateRunes.add(new Mesh(mergeGeometries(runeGeometries), runeMaterial));
@@ -295,11 +280,7 @@ function createWreckField(rng: Rng, curve: ReturnType<typeof createHeliosRail>) 
   }
   const group = new Group();
   group.add(new Mesh(mergeGeometries(fills), new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(0.4) })));
-  const edgeMaterial = new LineBasicNodeMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const edgeMaterial = new LineBasicNodeMaterial(additiveMaterialParameters({}));
   // Faint ember rims that fade with distance so the field has depth.
   edgeMaterial.colorNode = vec3(EMBER.r, EMBER.g, EMBER.b)
     .mul(0.32)
@@ -318,11 +299,7 @@ function createConduit(curve: ReturnType<typeof createHeliosRail>) {
   const uEnd = railU(CORONA_TIME) - 0.006;
 
   // Twin energy rails flanking the path, pulsing toward the star.
-  const railMaterial = new LineBasicNodeMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const railMaterial = new LineBasicNodeMaterial(additiveMaterialParameters({}));
   const travel = positionWorld.z.mul(0.06).add(time.mul(6.5)).sin().mul(0.5).add(0.5).pow(4).mul(1.8);
   railMaterial.colorNode = vec3(GOLD.r, GOLD.g, GOLD.b)
     .mul(travel.add(0.35))
@@ -377,11 +354,7 @@ function createConduit(curve: ReturnType<typeof createHeliosRail>) {
   const ribGeometry = new BufferGeometry();
   ribGeometry.setAttribute('position', new Float32BufferAttribute(ribPositions, 3));
   ribGeometry.setAttribute('color', new Float32BufferAttribute(ribColors, 3));
-  const ribMaterial = new LineBasicNodeMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const ribMaterial = new LineBasicNodeMaterial(additiveMaterialParameters({}));
   ribMaterial.colorNode = attribute<'vec3'>('color', 'vec3')
     .mul(positionView.z.negate().mul(-0.01).exp().mul(smoothstep(float(2), float(9), positionView.z.negate())))
     .mul(beatUniform.mul(0.9).add(0.8));
@@ -391,7 +364,7 @@ function createConduit(curve: ReturnType<typeof createHeliosRail>) {
 
   // Colossal pylon monoliths off to the sides.
   const dark = new MeshBasicMaterial({ color: OBSIDIAN.clone().multiplyScalar(0.42) });
-  const seam = new MeshBasicMaterial({ color: hdr(EMBER, 0.75), transparent: true, blending: AdditiveBlending, depthWrite: false });
+  const seam = createAdditiveBasicMaterial({ color: hdr(EMBER, 0.75) });
   for (let i = 0; i < 8; i += 1) {
     const u = uStart + ((uEnd - uStart) * (i + 0.5)) / 8;
     const frame = sampleRailFrame(curve, u);
@@ -418,12 +391,9 @@ function createConduit(curve: ReturnType<typeof createHeliosRail>) {
 
 function createGeysers(rng: Rng, curve: ReturnType<typeof createHeliosRail>, root: Group) {
   const geysers: Environment['geysers'] = [];
-  const material = new MeshBasicMaterial({
+  const material = createAdditiveBasicMaterial({
     color: hdr(GOLD, 0.8),
-    transparent: true,
     opacity: 0.5,
-    blending: AdditiveBlending,
-    depthWrite: false,
     side: 2,
   });
   for (let i = 0; i < 8; i += 1) {
@@ -474,11 +444,7 @@ function createSpeedStreaks(rng: Rng) {
   geometry.setAttribute('dz', new Float32BufferAttribute(dz, 1));
   geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
 
-  const material = new LineBasicNodeMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const material = new LineBasicNodeMaterial(additiveMaterialParameters({}));
   const wrapped = attribute<'float'>('z0', 'float')
     .add(streakOffsetUniform)
     .mod(STREAK_SPAN)

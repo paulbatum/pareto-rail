@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   Camera,
   Color,
   CylinderGeometry,
@@ -16,6 +15,7 @@ import {
   TetrahedronGeometry,
   Vector3,
 } from 'three';
+import { createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 
 // Molten particle language: embers arc and *fall* (the star owns gravity
 // here), slag chunks cool from ember to black as they tumble, shockwaves are
@@ -88,7 +88,7 @@ const SLAG_DARK = new Color(0.02, 0.012, 0.014);
 export function createEffects(scene: Scene) {
   emberMesh = new InstancedMesh(
     new TetrahedronGeometry(0.12, 0),
-    new MeshBasicMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false }),
+    createAdditiveBasicMaterial({ color: 0xffffff }),
     EMBER_CAPACITY,
   );
   emberMesh.count = 0;
@@ -99,7 +99,7 @@ export function createEffects(scene: Scene) {
   for (let i = 0; i < RING_CAPACITY; i += 1) {
     const mesh = new Mesh(
       ringGeometry,
-      new MeshBasicMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }),
+      createAdditiveBasicMaterial({ color: 0x000000, side: DoubleSide }),
     );
     mesh.visible = false;
     scene.add(mesh);
@@ -111,12 +111,7 @@ export function createEffects(scene: Scene) {
     const group = new Group();
     const materials: MeshBasicMaterial[] = [];
     for (const rotation of [0, Math.PI / 2]) {
-      const material = new MeshBasicMaterial({
-        transparent: true,
-        blending: AdditiveBlending,
-        depthWrite: false,
-        side: DoubleSide,
-      });
+      const material = createAdditiveBasicMaterial({ color: 0x000000, side: DoubleSide });
       const blade = new Mesh(bladeGeometry, material);
       blade.rotation.z = rotation;
       group.add(blade);
@@ -132,7 +127,7 @@ export function createEffects(scene: Scene) {
   for (let i = 0; i < BEAM_CAPACITY; i += 1) {
     const mesh = new Mesh(
       beamGeometry,
-      new MeshBasicMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }),
+      createAdditiveBasicMaterial({ color: 0x000000, side: DoubleSide }),
     );
     mesh.visible = false;
     scene.add(mesh);

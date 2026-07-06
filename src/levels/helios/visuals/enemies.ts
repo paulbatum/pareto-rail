@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BoxGeometry,
   Color,
   CylinderGeometry,
@@ -14,6 +13,7 @@ import {
   TetrahedronGeometry,
   Vector3,
 } from 'three';
+import { additiveMaterialParameters, createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import { EMBER, GOLD, hdr, OBSIDIAN, WHITE_HOT } from './palette';
 import type { EmberSpec } from './effects';
 
@@ -38,12 +38,9 @@ function addFacetMesh(
 ) {
   const fillMaterial = new MeshBasicMaterial({ color: fillColor.clone() });
   const fill = new Mesh(geometry, fillMaterial);
-  const edgeMaterial = new LineBasicMaterial({
+  const edgeMaterial = new LineBasicMaterial(additiveMaterialParameters({
     color: hdr(edgeColor, edgeIntensity),
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  }));
   const edges = new LineSegments(new EdgesGeometry(geometry), edgeMaterial);
   fill.add(edges);
   group.add(fill);
@@ -57,12 +54,9 @@ function addFacetMesh(
 function addCore(group: Group, radius: number, color: Color, intensity: number, glowScale = 1.55, glowOpacity = 0.26) {
   const coreMaterial = new MeshBasicMaterial({ color: hdr(color, intensity) });
   const core = new Mesh(new OctahedronGeometry(radius, 1), coreMaterial);
-  const glowMaterial = new MeshBasicMaterial({
+  const glowMaterial = createAdditiveBasicMaterial({
     color: hdr(color, intensity * 0.4),
-    transparent: true,
     opacity: glowOpacity,
-    blending: AdditiveBlending,
-    depthWrite: false,
   });
   const glow = new Mesh(new OctahedronGeometry(radius * glowScale, 1), glowMaterial);
   core.add(glow);
@@ -108,12 +102,9 @@ export function createMoteMesh() {
   addFacetMesh(group, head, OBSIDIAN.clone().multiplyScalar(0.7), GOLD, 1.3);
   addCore(group, 0.16, WHITE_HOT, 1.9, 1.5, 0.3);
 
-  const tailMaterial = new MeshBasicMaterial({
+  const tailMaterial = createAdditiveBasicMaterial({
     color: hdr(EMBER, 1.2),
-    transparent: true,
     opacity: 0.75,
-    blending: AdditiveBlending,
-    depthWrite: false,
     side: 2,
   });
   // Wide at the head, tapering to a point behind: a comet tail.
@@ -165,11 +156,8 @@ export function createScorcherMesh() {
     [1.35, 1.44, 0.55, 1],
     [1.7, 1.76, -0.4, -1],
   ] as const) {
-    const arcMaterial = new MeshBasicMaterial({
+    const arcMaterial = createAdditiveBasicMaterial({
       color: hdr(EMBER, 1.45),
-      transparent: true,
-      blending: AdditiveBlending,
-      depthWrite: false,
       side: 2,
     });
     const ring = new Mesh(new RingGeometry(inner, outer, 40, 1, 0, Math.PI * 1.35), arcMaterial);
@@ -201,12 +189,9 @@ export function createPyreMesh() {
   // Molten column, hidden until the armor breaks.
   const coreMaterial = new MeshBasicMaterial({ color: hdr(GOLD, 1.0) });
   const core = new Mesh(new CylinderGeometry(0.72, 0.72, 2.7, 6), coreMaterial);
-  const coreGlowMaterial = new MeshBasicMaterial({
+  const coreGlowMaterial = createAdditiveBasicMaterial({
     color: hdr(GOLD, 0.4),
-    transparent: true,
     opacity: 0.24,
-    blending: AdditiveBlending,
-    depthWrite: false,
   });
   const coreGlow = new Mesh(new CylinderGeometry(1.05, 1.05, 2.9, 6), coreGlowMaterial);
   core.add(coreGlow);
@@ -279,12 +264,9 @@ export function createBoltMesh() {
   dart.scale(0.55, 0.55, 2.4);
   const coreMaterial = new MeshBasicMaterial({ color: hdr(EMBER, 2.5) });
   const core = new Mesh(dart, coreMaterial);
-  const shellMaterial = new MeshBasicMaterial({
+  const shellMaterial = createAdditiveBasicMaterial({
     color: hdr(EMBER, 1.0),
-    transparent: true,
     opacity: 0.5,
-    blending: AdditiveBlending,
-    depthWrite: false,
   });
   const shellGeometry = new OctahedronGeometry(0.55, 0);
   shellGeometry.scale(0.6, 0.6, 2.1);
@@ -308,24 +290,18 @@ export function createBoltMesh() {
 export function createFlareMesh() {
   const group = new Group();
   addCore(group, 0.62, WHITE_HOT, 2.3, 1.9, 0.5);
-  const sheathMaterial = new MeshBasicMaterial({
+  const sheathMaterial = createAdditiveBasicMaterial({
     color: hdr(GOLD, 0.9),
-    transparent: true,
     opacity: 0.42,
-    blending: AdditiveBlending,
-    depthWrite: false,
   });
   const sheathGeometry = new OctahedronGeometry(1.05, 1);
   sheathGeometry.scale(0.8, 0.8, 1.5);
   group.add(new Mesh(sheathGeometry, sheathMaterial));
   tintable(group).push({ material: sheathMaterial, base: hdr(GOLD, 0.9), kind: 'core' });
 
-  const tailMaterial = new MeshBasicMaterial({
+  const tailMaterial = createAdditiveBasicMaterial({
     color: hdr(GOLD, 0.8),
-    transparent: true,
     opacity: 0.5,
-    blending: AdditiveBlending,
-    depthWrite: false,
   });
   const tail = new Mesh(new CylinderGeometry(0.02, 0.52, 4.2, 8, 1, true), tailMaterial);
   tail.rotation.x = -Math.PI / 2;
