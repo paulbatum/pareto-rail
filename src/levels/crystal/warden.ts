@@ -140,7 +140,7 @@ export function createCrystalWarden(
   }
 
   function updateOuterDefense(context: CrystalUpdate, data: Extract<WardenSpawnData, { role: 'outer' }>) {
-    const { enemy, runTime, camera } = context;
+    const { enemy, runTime, age, camera } = context;
     const { right, up } = defenseBasis(camera);
     const angle = data.index * ((Math.PI * 2) / WARDEN_OUTER_COUNT) - runTime * 0.42;
     const breathe = 1 + Math.sin(runTime * 1.25 + data.index) * 0.045;
@@ -151,6 +151,12 @@ export function createCrystalWarden(
     defensePositions.set(enemy.id, enemy.mesh.position.clone());
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(angle + runTime * 0.9);
+
+    const fire = context.enemyState(() => ({ nextAt: 1.35 + data.index * 0.55 }));
+    if (age >= fire.nextAt) {
+      fire.nextAt = age + 7.2;
+      fireBolt(context, enemy.mesh.position);
+    }
     return false;
   }
 
