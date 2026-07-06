@@ -8,8 +8,8 @@ import {
   playOscillatorVoice,
 } from '../../engine/audio-kit';
 import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
-import { quantizeActionSfxTime } from '../../engine/action-sfx-quantization';
-import { emitBeatAt, midiToFreq, quantizeToGrid } from '../../engine/music';
+import { getActionSfxQuantization } from '../../engine/action-sfx-quantization';
+import { emitBeatAt, midiToFreq } from '../../engine/music';
 import { HELIOS_BPM, HELIOS_DURATION } from './gameplay';
 
 // The Helios score: 172 BPM drum & bass in E minor, 86 bars = exactly the
@@ -81,6 +81,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
   let arrangementStart = 0;
   let mode: 'run' | 'ambient' = 'ambient';
+  let transportEpoch = 0;
   let heartId = -1;
 
   let master: GainNode | null = null;
@@ -107,6 +108,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       ctx = context;
       buildGraph(context, musicVolume, sfxVolume);
       transport.start(context);
+      transportEpoch = transport.nextStepTime;
     },
     onSchedule(context) {
       transport.schedule(context);
@@ -206,6 +208,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     heartId = -1;
     arrangementStart = 0;
     transport.reset(0.06, 0);
+    transportEpoch = 0.06;
     ctx = { currentTime: 0 } as AudioContext;
     transport.runUntil(seconds);
     ctx = null;
@@ -345,8 +348,19 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     }
   }
 
-  const quantize = (time: number) => quantizeToGrid(time, THIRTYSECOND);
-  const quantizeActionSfx = (time: number) => quantizeActionSfxTime(time, THIRTYSECOND);
+  function nextGridTime(time: number, gridSixteenths = 0.5) {
+    const grid = SIXTEENTH * gridSixteenths;
+    const stepsFromEpoch = Math.max(0, Math.ceil((time - transportEpoch) / grid - 1e-4));
+    return transportEpoch + stepsFromEpoch * grid;
+  }
+
+  const quantize = (time: number) => nextGridTime(time, 0.5);
+
+  function quantizeActionSfx(time: number) {
+    const { enabled, gridThirtyseconds } = getActionSfxQuantization();
+    if (!enabled) return time;
+    return nextGridTime(time, gridThirtyseconds / 2);
+  }
 
   function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
     if (trace) {
