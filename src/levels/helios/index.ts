@@ -1,6 +1,7 @@
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
+import { HELIOS_DEBUG_TARGETS, normalizeHeliosDebugTarget } from './debug';
 import { BOSS_TIME, CORONA_TIME, createHeliosGameplay, GATE_TIME, HELIOS_BPM, REVEAL_TIME } from './gameplay';
 import {
   createEnemyMesh,
@@ -21,6 +22,7 @@ export const heliosLevel: LevelDefinition = {
   title: 'Helios',
   description: 'Dive into a dying star and kill the thing that is eating it.',
   bpm: HELIOS_BPM,
+  debugSelector: { queryParam: 'debugEnemy', label: 'Enemy', options: HELIOS_DEBUG_TARGETS },
   post: {
     clearColor: 0x070204,
     bloom: { strength: 1.2, threshold: 0.52, radius: 0.2 },
@@ -28,7 +30,7 @@ export const heliosLevel: LevelDefinition = {
     composeOutput: composeHeliosOutput,
   },
   createAudio,
-  createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
+  createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip, debugValue }) {
     createEnvironment(scene);
     installVisualEventHandlers(bus, scene);
 
@@ -74,7 +76,9 @@ export const heliosLevel: LevelDefinition = {
       hud.setCallout('');
     });
 
-    const heliosGameplay = createHeliosGameplay(bus);
+    const heliosGameplay = debugValue === undefined
+      ? createHeliosGameplay(bus)
+      : createHeliosGameplay(bus, normalizeHeliosDebugTarget(debugValue));
     const game = createLockOnRunner({
       scene,
       camera,

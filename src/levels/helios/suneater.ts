@@ -68,9 +68,9 @@ export function createSuneater(bus: EventBus, options: SuneaterOptions) {
     options.heartEntry.lockable = false;
   });
 
-  function updateHeart(context: HeliosUpdate) {
+  function updateHeart(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'heart' }>) {
     const { enemy, runTime, age, runProgress, curve, camera } = context;
-    const frame = sampleRailFrame(curve, MathUtils.clamp(runProgress + 0.004, 0, 1));
+    const frame = sampleRailFrame(curve, MathUtils.clamp(runProgress + (data.debugHold ? 0.08 : 0.004), 0, 1));
 
     // Breach: the head erupts out of the star over the first 2.6 seconds.
     const breach = MathUtils.clamp(age / 2.6, 0, 1);
@@ -89,11 +89,17 @@ export function createSuneater(bus: EventBus, options: SuneaterOptions) {
       options.heartEntry.lockable = true; // resurfaced
     }
 
-    const weave = new Vector3(
-      Math.sin(runTime * 0.55) * 7 + Math.sin(runTime * 1.7) * 2.4,
-      6.5 + Math.sin(runTime * 0.85) * 3 + Math.sin(runTime * 2.3) * 1.1,
-      42,
-    );
+    const weave = data.debugHold
+      ? new Vector3(
+          Math.sin(runTime * 0.55) * 2.5,
+          5.5 + Math.sin(runTime * 0.85) * 1.2,
+          20,
+        )
+      : new Vector3(
+          Math.sin(runTime * 0.55) * 7 + Math.sin(runTime * 1.7) * 2.4,
+          6.5 + Math.sin(runTime * 0.85) * 3 + Math.sin(runTime * 2.3) * 1.1,
+          42,
+        );
     weave.y = MathUtils.lerp(-130, weave.y, breachEase) - submerge * 150;
 
     boss.headPosition

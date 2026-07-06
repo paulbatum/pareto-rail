@@ -10,6 +10,7 @@ import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../
 import { tempo } from '../../engine/music';
 import { offsetFromRail } from '../../engine/rail';
 import type { EventBus } from '../../events';
+import { createHeliosDebugTimeline, type HeliosDebugTarget } from './debug';
 import { createSuneater } from './suneater';
 
 // HELIOS — a 120-second dive into a dying star, in four movements scored to a
@@ -56,14 +57,14 @@ export type HeliosEnemyKind =
 // state lives in this module, and dynamically spawned bolts get fresh data
 // objects each launch.
 export type HeliosSpawnData =
-  | { role: 'lattice'; lead: number; offset: Vector3; spin: number }
-  | { role: 'mote'; lead: number; fromX: number; toX: number; y: number; arc: number; crossTime: number; delay: number }
-  | { role: 'scorcher'; lead: number; offset: Vector3; seed: number }
-  | { role: 'pyre'; leadStart: number; leadEnd: number; closeTime: number; offset: Vector3 }
-  | { role: 'flare'; targetLead: number; x: number }
+  | { role: 'lattice'; lead: number; offset: Vector3; spin: number; debugHold?: boolean }
+  | { role: 'mote'; lead: number; fromX: number; toX: number; y: number; arc: number; crossTime: number; delay: number; debugHold?: boolean }
+  | { role: 'scorcher'; lead: number; offset: Vector3; seed: number; debugHold?: boolean; fireForever?: boolean }
+  | { role: 'pyre'; leadStart: number; leadEnd: number; closeTime: number; offset: Vector3; debugHold?: boolean }
+  | { role: 'flare'; targetLead: number; x: number; debugHold?: boolean }
   | { role: 'bolt'; position: Vector3; velocity: Vector3; lastAge: number; impact: HostileShotImpactState }
   | { role: 'fang'; socket: number }
-  | { role: 'heart' };
+  | { role: 'heart'; debugHold?: boolean };
 
 export type HeliosSpawnEntry = LockOnSpawnEntry<HeliosEnemyKind, HeliosSpawnData>;
 export type HeliosUpdate = LockOnEnemyUpdate<HeliosEnemyKind, HeliosSpawnData>;
@@ -217,7 +218,7 @@ const flares = (time: number, entries: Array<[number, number]>): HeliosSpawnEntr
 
 // Named so the gameplay closure can gate `lockable` across the boss phases
 // without re-finding it in the timeline.
-function createHeartEntry(): HeliosSpawnEntry {
+export function createHeartEntry(): HeliosSpawnEntry {
   return {
     time: BOSS_TIME,
     kind: 'heart',
@@ -374,8 +375,11 @@ const KILL_SCORE: Record<HeliosEnemyKind, number> = {
 const BOLT_MAX_AGE = 13;
 const FLARE_MAX_AGE = 14;
 
-export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEnemyKind, HeliosSpawnData> {
-  const { timeline, heartEntry } = createHeliosTimeline();
+export function createHeliosGameplay(
+  bus: EventBus,
+  debugTarget?: HeliosDebugTarget,
+): LockOnRunnerLevel<HeliosEnemyKind, HeliosSpawnData> {
+  const { timeline, heartEntry } = debugTarget ? createHeliosDebugTimeline(debugTarget) : createHeliosTimeline();
 
   const interceptions = new Set<number>();
   let hitsTaken = 0;
@@ -428,7 +432,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
 
   function updateLattice(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'lattice' }>) {
     const { enemy, runProgress, age, curve, camera, railAnchor } = context;
-    const anchorU = railAnchor(data.lead);
+    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + 0.08, 0, 1) : railAnchor(data.lead);
     // The whole formation slowly wheels around its center while each ember
     // tumbles in place — a smoldering constellation, not a static wall.
     const angle = age * data.spin;
@@ -439,14 +443,14 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(age * (0.5 + (enemy.id % 4) * 0.13) + enemy.id * 2.3);
     enemy.mesh.rotateX(Math.sin(age * 0.9 + enemy.id) * 0.5);
-    return runProgress > anchorU + 0.014;
+    return !data.debugHold && runProgress > anchorU + 0.014;
   }
 
   function updateMote(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'mote' }>) {
     const { enemy, runProgress, age, curve, camera, railAnchor } = context;
-    const anchorU = railAnchor(data.lead);
+    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + 0.08, 0, 1) : railAnchor(data.lead);
     const t = (age - data.delay) / data.crossTime;
-    if (t > 1.15 || runProgress > anchorU + 0.012) return true;
+    if (!data.debugHold && (t > 1.15 || runProgress > anchorU + 0.012)) return true;
     const clamped = MathUtils.clamp(t, 0, 1);
     const eased = clamped * clamped * (3 - 2 * clamped);
     const x = MathUtils.lerp(data.fromX, data.toX, eased);
@@ -466,7 +470,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
 
   function updateScorcher(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'scorcher' }>) {
     const { enemy, runProgress, age, curve, camera, railAnchor } = context;
-    const anchorU = railAnchor(data.lead);
+    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + 0.08, 0, 1) : railAnchor(data.lead);
     const offset = data.offset.clone();
     offset.x += Math.sin(age * 1.15 + data.seed) * 2.6;
     offset.y += Math.sin(age * 1.75 + data.seed * 2.1) * 1.7;
@@ -477,21 +481,21 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     if (untilShot < 0.9 && untilShot > 0.55) offset.z += (0.9 - untilShot) * 8; // rear back
     else if (untilShot <= 0.55 && untilShot > 0) offset.z -= (0.55 - untilShot) * 14; // lunge in
     if (age >= fire.nextAt) {
-      fire.nextAt = age + 3.4;
+      fire.nextAt = age + (data.fireForever ? 1.8 : 3.4);
       fireBolt(context, enemy.mesh.position);
     }
 
     enemy.mesh.position.copy(offsetFromRail(curve, anchorU, offset));
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(Math.sin(age * 2.2 + data.seed) * 0.5);
-    return runProgress > anchorU + 0.014;
+    return !data.debugHold && runProgress > anchorU + 0.014;
   }
 
   function updatePyre(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'pyre' }>) {
     const { enemy, runProgress, age, curve, camera, railAnchor } = context;
     const close = Math.min(1, age / data.closeTime);
     const lead = MathUtils.lerp(data.leadStart, data.leadEnd, close * close * (3 - 2 * close));
-    const anchorU = railAnchor(lead);
+    const anchorU = data.debugHold ? MathUtils.clamp(runProgress + 0.08, 0, 1) : railAnchor(lead);
     const offset = data.offset.clone();
     offset.x += Math.sin(age * 0.5) * 1.1;
     offset.y += 2 + Math.sin(age * 0.75) * 0.8;
@@ -504,7 +508,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
       enemy.mesh.position.x += Math.sin(age * 21) * 0.14;
       enemy.mesh.position.y += Math.cos(age * 17) * 0.12;
     }
-    return runProgress > anchorU + 0.014;
+    return !data.debugHold && runProgress > anchorU + 0.014;
   }
 
   function updateBolt(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'bolt' }>) {
@@ -543,7 +547,14 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   }
 
   function updateFlare(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'flare' }>) {
-    const { enemy, age, curve, camera, damagePlayer } = context;
+    const { enemy, age, curve, camera, damagePlayer, runProgress } = context;
+    if (data.debugHold) {
+      const anchorU = MathUtils.clamp(runProgress + 0.08, 0, 1);
+      enemy.mesh.position.copy(offsetFromRail(curve, anchorU, new Vector3(0, 2.2, 0)));
+      enemy.mesh.quaternion.copy(camera.quaternion);
+      enemy.mesh.rotateZ(age * 4);
+      return false;
+    }
     const launchU = heliosRunProgress(Math.min(HELIOS_DURATION, enemy.entry.time + data.targetLead));
     const position = offsetFromRail(curve, launchU, new Vector3(data.x, -36, 0));
     const velocity = new Vector3(0, 26, 0);
@@ -600,7 +611,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
   // ---- level definition ------------------------------------------------------
 
   return {
-    duration: HELIOS_DURATION,
+    duration: debugTarget ? 90 : HELIOS_DURATION,
     bpm: HELIOS_BPM,
     playerHealth: HELIOS_PLAYER_HEALTH,
     createRail: createHeliosRail,
@@ -625,7 +636,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
         case 'fang':
           return suneater.updateFang(context, data);
         case 'heart':
-          return suneater.updateHeart(context);
+          return suneater.updateHeart(context, data);
       }
     },
     scoreForKill(volleySize, enemy) {
