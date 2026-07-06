@@ -84,6 +84,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   let heartId = -1;
 
   let master: GainNode | null = null;
+  let musicGain: GainNode | null = null;
+  let sfxGain: GainNode | null = null;
   let duck: GainNode | null = null;
   let delaySend: GainNode | null = null;
   let reverbSend: GainNode | null = null;
@@ -101,20 +103,25 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   const audio = createLevelAudioKit({
     volumeScale: 0.8,
     schedulerMs: SCHEDULER_MS,
-    onCreateContext(context, masterVolume) {
+    onCreateContext(context, musicVolume, sfxVolume) {
       ctx = context;
-      buildGraph(context, masterVolume);
+      buildGraph(context, musicVolume, sfxVolume);
       transport.start(context);
     },
     onSchedule(context) {
       transport.schedule(context);
     },
-    onVolumeChange(context, masterVolume) {
-      if (master) master.gain.setTargetAtTime(masterVolume, context.currentTime, 0.05);
+    onMusicVolumeChange(context, musicVolume) {
+      if (musicGain) musicGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.05);
+    },
+    onSfxVolumeChange(context, sfxVolume) {
+      if (sfxGain) sfxGain.gain.setTargetAtTime(sfxVolume, context.currentTime, 0.02);
     },
     onDispose() {
       ctx = null;
       master = null;
+      musicGain = null;
+      sfxGain = null;
       duck = null;
       delaySend = null;
       reverbSend = null;
@@ -122,16 +129,20 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     },
   });
 
-  function buildGraph(context: AudioContext, masterVolume: number) {
+  function buildGraph(context: AudioContext, musicVolume: number, sfxVolume: number) {
     const graph = createAudioGraphBuilder(context);
 
-    master = graph.gain(masterVolume);
+    master = graph.gain();
+    musicGain = graph.gain(musicVolume);
+    sfxGain = graph.gain(sfxVolume);
     const compressor = graph.compressor({ threshold: -16, ratio: 5, attack: 0.004, release: 0.2 });
+    graph.connect(musicGain, master);
+    graph.connect(sfxGain, master);
     graph.connect(master, compressor);
     graph.connect(compressor, context.destination);
 
     duck = graph.gain();
-    graph.connect(duck, master);
+    graph.connect(duck, musicGain);
 
     // Dotted-eighth feedback delay: where the arp and lead live.
     delaySend = graph.gain();
@@ -170,10 +181,13 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     const rumbleLfoGain = context.createGain();
     rumbleLfoGain.gain.value = 0.05;
     rumbleLfo.connect(rumbleLfoGain).connect(rumbleGain.gain);
-    rumbleSource.connect(rumbleFilter).connect(rumbleGain).connect(master);
+    rumbleSource.connect(rumbleFilter).connect(rumbleGain).connect(musicGain);
     rumbleSource.start();
     rumbleLfo.start();
   }
+
+  const musicDestination = () => musicGain ?? master;
+  const sfxDestination = () => sfxGain ?? master;
 
   function makeImpulse(context: AudioContext, seconds: number, decay: number) {
     const length = Math.floor(context.sampleRate * seconds);
@@ -366,7 +380,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'kick', { vel });
       return;
     }
-    if (!ctx || !master || !duck) return;
+    const output = musicDestination();
+    if (!ctx || !output || !duck) return;
     playOscillatorVoice({
       context: ctx,
       time,
@@ -378,9 +393,9 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.52 * vel, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.15 },
       ],
-      destination: master,
+      destination: output,
     });
-    noiseHit(time, 0.09 * vel, 0.004, 'highpass', 1500, master);
+    noiseHit(time, 0.09 * vel, 0.004, 'highpass', 1500, output);
     duck.gain.cancelScheduledValues(time);
     duck.gain.setValueAtTime(0.4, time);
     duck.gain.linearRampToValueAtTime(1, time + 0.16);
@@ -391,9 +406,10 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'snare', { vel });
       return;
     }
-    if (!ctx || !master) return;
-    noiseHit(time, 0.2 * vel, 0.075, 'bandpass', 1750, master);
-    noiseHit(time, 0.1 * vel, 0.03, 'highpass', 5200, master);
+    const output = musicDestination();
+    if (!ctx || !output) return;
+    noiseHit(time, 0.2 * vel, 0.075, 'bandpass', 1750, output);
+    noiseHit(time, 0.1 * vel, 0.03, 'highpass', 5200, output);
     playOscillatorVoice({
       context: ctx,
       time,
@@ -405,7 +421,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.14 * vel, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.07 },
       ],
-      destination: master,
+      destination: output,
     });
   }
 
@@ -441,8 +457,9 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'crash', { vel });
       return;
     }
-    if (!master || !reverbSend) return;
-    noiseHit(time, vel, 0.9, 'highpass', 4600, master);
+    const output = musicDestination();
+    if (!output || !reverbSend) return;
+    noiseHit(time, vel, 0.9, 'highpass', 4600, output);
     noiseHit(time, vel * 0.5, 1.4, 'bandpass', 7200, reverbSend);
   }
 
@@ -657,7 +674,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'riser', { duration, level });
       return;
     }
-    if (!ctx || !master || !noiseBuffer) return;
+    const output = musicDestination();
+    if (!ctx || !output || !noiseBuffer) return;
     playBufferSourceVoice({
       context: ctx,
       buffer: noiseBuffer,
@@ -675,7 +693,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'exponentialRamp', value: level, time: time + duration },
         { type: 'linearRamp', value: 0, time: time + duration + 0.06 },
       ],
-      destination: master,
+      destination: output,
     });
   }
 
@@ -684,7 +702,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'impact', { vel });
       return;
     }
-    if (!ctx || !master) return;
+    const output = musicDestination();
+    if (!ctx || !output) return;
     playOscillatorVoice({
       context: ctx,
       time,
@@ -696,9 +715,9 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.5 * vel, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.75 },
       ],
-      destination: master,
+      destination: output,
     });
-    noiseHit(time, 0.26 * vel, 0.3, 'lowpass', 420, master);
+    noiseHit(time, 0.26 * vel, 0.3, 'lowpass', 420, output);
     crash(time, 0.16 * vel);
   }
 
@@ -732,7 +751,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       trace.record(time, 'icePluck', { midi, vel });
       return;
     }
-    if (!ctx || !duck || !delaySend) return;
+    const output = sfxDestination();
+    if (!ctx || !output || !delaySend) return;
     for (const [ratio, level, decay] of [[1, 1, 0.14], [2.01, 0.35, 0.07], [3.98, 0.12, 0.04]] as const) {
       playOscillatorVoice({
         context: ctx,
@@ -744,11 +764,11 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: vel * level * 0.14, time },
           { type: 'exponentialRamp', value: 0.001, time: time + decay },
         ],
-        destination: duck,
+        destination: output,
         sends: [{ destination: delaySend, gain: 0.4 }],
       });
     }
-    noiseHit(time, vel * 0.03, 0.02, 'highpass', 9500, duck);
+    noiseHit(time, vel * 0.03, 0.02, 'highpass', 9500, output);
   }
 
   bus.on('lock', ({ lockCount }) => {
@@ -759,7 +779,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     if (lockCount >= 6) {
       // Ignition: the sixth lock rings the octave and thumps the floor.
       icePluck(time + THIRTYSECOND, 88, 0.9);
-      if (master) {
+      const output = sfxDestination();
+      if (output) {
         playOscillatorVoice({
           context: ctx,
           time,
@@ -771,19 +792,21 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
             { type: 'set', value: 0.2, time },
             { type: 'exponentialRamp', value: 0.001, time: time + 0.16 },
           ],
-          destination: master,
+          destination: output,
         });
       }
     }
   });
 
   bus.on('unlock', () => {
-    if (!ctx || !duck) return;
-    noiseHit(ctx.currentTime, 0.025, 0.03, 'highpass', 7000, duck);
+    const output = sfxDestination();
+    if (!ctx || !output) return;
+    noiseHit(ctx.currentTime, 0.025, 0.03, 'highpass', 7000, output);
   });
 
   bus.on('fire', ({ indexInVolley }) => {
-    if (!ctx || !master) return;
+    const output = sfxDestination();
+    if (!ctx || !output) return;
     const time = quantizeActionSfx(ctx.currentTime);
     playOscillatorVoice({
       context: ctx,
@@ -796,13 +819,14 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.07, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.07 },
       ],
-      destination: master,
+      destination: output,
     });
-    noiseHit(time, 0.05, 0.03, 'highpass', 4000, master);
+    noiseHit(time, 0.05, 0.03, 'highpass', 4000, output);
   });
 
   bus.on('hit', ({ lethal }) => {
-    if (lethal || !ctx || !duck) return;
+    const output = sfxDestination();
+    if (lethal || !ctx || !output) return;
     const time = quantize(ctx.currentTime);
     // Armor chip: a dead metallic tick — deliberately not a kill sparkle.
     for (const [frequency, vel] of [[523, 0.07], [1046, 0.045]] as const) {
@@ -816,17 +840,18 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: vel, time },
           { type: 'exponentialRamp', value: 0.001, time: time + 0.05 },
         ],
-        destination: duck,
+        destination: output,
       });
     }
-    noiseHit(time, 0.05, 0.03, 'bandpass', 3200, duck);
+    noiseHit(time, 0.05, 0.03, 'bandpass', 3200, output);
   });
 
   bus.on('stage', ({ enemyId }) => {
-    if (!ctx || !master || !reverbSend) return;
+    const output = sfxDestination();
+    if (!ctx || !output || !reverbSend) return;
     const time = quantize(ctx.currentTime);
     // Armor break: a crack and a dark bell.
-    noiseHit(time, 0.22, 0.12, 'bandpass', 1300, master);
+    noiseHit(time, 0.22, 0.12, 'bandpass', 1300, output);
     for (const midi of [40, 47]) {
       playOscillatorVoice({
         context: ctx,
@@ -838,7 +863,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: 0.16, time },
           { type: 'exponentialRamp', value: 0.001, time: time + 0.6 },
         ],
-        destination: master,
+        destination: output,
         sends: [{ destination: reverbSend, gain: 0.5 }],
       });
     }
@@ -846,7 +871,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   });
 
   bus.on('kill', ({ enemyId, volleyId }) => {
-    if (!ctx || !duck || !master) return;
+    const output = sfxDestination();
+    if (!ctx || !duck || !output) return;
     const time = quantize(ctx.currentTime);
     if (enemyId === heartId) {
       // The Suneater dies: the biggest sound in the level.
@@ -871,10 +897,10 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.16, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.16 },
       ],
-      destination: master,
+      destination: output,
     });
     // Ember sizzle + a cold blip riding the volley index keeps kill chains melodic.
-    noiseHit(time, 0.06, 0.16, 'bandpass', 3400, duck);
+    noiseHit(time, 0.06, 0.16, 'bandpass', 3400, output);
     icePluck(time + THIRTYSECOND, LOCK_SCALE[(enemyId + (volleyId ?? 0)) % LOCK_SCALE.length] + 12, 0.5);
   });
 
@@ -888,7 +914,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   });
 
   bus.on('reject', () => {
-    if (!ctx || !master) return;
+    const output = sfxDestination();
+    if (!ctx || !output) return;
     const time = ctx.currentTime;
     // Rejection: a dead anvil clank with a minor-second snarl — cold iron, no reward.
     for (const [frequency, at, vel] of [[233, time, 0.16], [247, time + 0.02, 0.12]] as const) {
@@ -904,14 +931,15 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: vel, time: at },
           { type: 'exponentialRamp', value: 0.001, time: at + 0.2 },
         ],
-        destination: master,
+        destination: output,
       });
     }
-    noiseHit(time, 0.14, 0.08, 'bandpass', 620, master);
+    noiseHit(time, 0.14, 0.08, 'bandpass', 620, output);
   });
 
   bus.on('playerhit', () => {
-    if (!ctx || !master) return;
+    const output = sfxDestination();
+    if (!ctx || !output) return;
     const time = ctx.currentTime;
     playOscillatorVoice({
       context: ctx,
@@ -924,11 +952,11 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.46, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.5 },
       ],
-      destination: master,
+      destination: output,
     });
     // Two-tone hull alarm.
     [69, 63].forEach((midi, index) => {
-      if (!ctx || !master) return;
+      if (!ctx) return;
       const at = time + index * 0.13;
       playOscillatorVoice({
         context: ctx,
@@ -940,14 +968,15 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: 0.06, time: at },
           { type: 'exponentialRamp', value: 0.001, time: at + 0.12 },
         ],
-        destination: master,
+        destination: output,
       });
     });
-    noiseHit(time, 0.2, 0.16, 'bandpass', 800, master);
+    noiseHit(time, 0.2, 0.16, 'bandpass', 800, output);
   });
 
   bus.on('miss', () => {
-    if (!ctx || !master) return;
+    const output = sfxDestination();
+    if (!ctx || !output) return;
     const time = ctx.currentTime;
     playOscillatorVoice({
       context: ctx,
@@ -960,7 +989,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'set', value: 0.045, time },
         { type: 'exponentialRamp', value: 0.001, time: time + 0.12 },
       ],
-      destination: master,
+      destination: output,
     });
   });
 
@@ -994,7 +1023,9 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           sends: [{ destination: reverbSend, gain: 0.55 }],
         });
       });
-    } else if (kind === 'flare' && master) {
+    } else if (kind === 'flare') {
+      const output = sfxDestination();
+      if (!output) return;
       // Prominence warning: a short upward siren, quiet enough to layer.
       const time = ctx.currentTime;
       playOscillatorVoice({
@@ -1009,7 +1040,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.05, time: time + 0.26 },
           { type: 'linearRamp', value: 0, time: time + 0.4 },
         ],
-        destination: master,
+        destination: output,
       });
     }
   });
