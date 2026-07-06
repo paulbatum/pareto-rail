@@ -1,5 +1,10 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from 'three';
-import { shotBehindCamera, steerHomingShot, updateHostileShotImpact } from '../../engine/hostile-shot';
+import {
+  hostileShotAimPoint,
+  shotBehindCamera,
+  steerHomingShot,
+  updateHostileShotImpact,
+} from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import { formation, section, sortTimeline } from '../../engine/spawn-patterns';
@@ -10,7 +15,7 @@ import { createCrystalWarden, type CrystalWarden, type WardenSpawnData } from '.
 // A 45-second run in three acts: a familiar warm-up third, a dense middle
 // where lancers start shooting back, and a heavier Crystal Warden finale after
 // a short breath. The player has a 3-point hull; shard bolts home in on the
-// camera and must be shot down before they land.
+// center of the view and must be shot down before they land.
 
 export const CRYSTAL_BPM = 126;
 export const CRYSTAL_RUN_DURATION = 45;
@@ -173,7 +178,7 @@ export function createCrystalGameplay(
   let hitsTaken = 0;
 
   function fireBolt(context: CrystalUpdate, from: Vector3) {
-    const initial = context.camera.position.clone().sub(from).normalize().multiplyScalar(4.5);
+    const initial = hostileShotAimPoint(context.camera).sub(from).normalize().multiplyScalar(4.5);
     context.spawnEnemy({
       time: context.runTime,
       kind: 'bolt',
@@ -271,7 +276,7 @@ export function createCrystalGameplay(
 
     // Ballistic launch that tightens into a homing run; speed ramps so the
     // player gets a beat to read it before it commits.
-    steerHomingShot(data.position, data.velocity, camera.position, age, dt, {
+    steerHomingShot(data.position, data.velocity, hostileShotAimPoint(camera), age, dt, {
       baseSpeed: 5,
       maxSpeed: 11.5,
       accel: 3.2,

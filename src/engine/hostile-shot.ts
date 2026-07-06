@@ -41,6 +41,8 @@ export type HostileShotImpactConfig = {
   impactBrake?: number;
   damageDistance?: number;
   interceptGrace?: number;
+  /** Half-size in normalized device coordinates for the safe-looking center impact window. */
+  centerImpactHalfSizeNdc?: number;
 };
 
 export type HostileShotImpactContext = {
@@ -57,12 +59,22 @@ export type HostileShotImpactResult =
   | { phase: 'approach' }
   | { phase: 'braking'; damaged: boolean };
 
+export const DEFAULT_HOSTILE_SHOT_CENTER_IMPACT_HALF_SIZE_NDC = 0.5;
+
 export const DEFAULT_HOSTILE_SHOT_IMPACT = {
   hitDistance: 2.4,
   impactBrake: 0.35,
   damageDistance: 0.65,
   interceptGrace: 0.45,
+  centerImpactHalfSizeNdc: DEFAULT_HOSTILE_SHOT_CENTER_IMPACT_HALF_SIZE_NDC,
 } satisfies Required<HostileShotImpactConfig>;
+
+/** Point hostile shots should steer toward so they visibly converge on the center of the player's view. */
+export function hostileShotAimPoint(camera: PerspectiveCamera, distance = DEFAULT_HOSTILE_SHOT_IMPACT.hitDistance): Vector3 {
+  const forward = new Vector3();
+  camera.getWorldDirection(forward);
+  return camera.position.clone().addScaledVector(forward, distance);
+}
 
 export function updateHostileShotImpact(context: HostileShotImpactContext): HostileShotImpactResult {
   const config = { ...DEFAULT_HOSTILE_SHOT_IMPACT, ...context.config };
@@ -75,6 +87,7 @@ export function updateHostileShotImpact(context: HostileShotImpactContext): Host
 
   if (context.state.impactAt === undefined) {
     if (context.position.distanceTo(context.camera.position) > config.hitDistance) return { phase: 'approach' };
+    if (!shotInCenterImpactArea(context.camera, context.position, config.centerImpactHalfSizeNdc)) return { phase: 'approach' };
     const toShot = context.position.clone().sub(context.camera.position);
     context.state.impactDirection = toShot.lengthSq() > 0.0001 ? toShot.normalize() : forward.clone();
     context.state.impactAt = context.age + config.impactBrake;
@@ -93,4 +106,20 @@ export function updateHostileShotImpact(context: HostileShotImpactContext): Host
     phase: 'braking',
     damaged: context.age >= context.state.impactAt && context.age >= (context.state.interceptUntil ?? -Infinity),
   };
+}
+
+function shotInCenterImpactArea(camera: PerspectiveCamera, position: Vector3, centerImpactHalfSizeNdc: number) {
+  const centerHalfSize = Math.max(0.08, Math.min(1, centerImpactHalfSizeNdc));
+  const toShot = position.clone().sub(camera.position);
+  const forward = new Vector3();
+  camera.getWorldDirection(forward);
+  if (toShot.dot(forward) <= 0) return false;
+
+  const projected = position.clone().project(camera);
+  return (
+    Number.isFinite(projected.x)
+    && Number.isFinite(projected.y)
+    && Math.abs(projected.x) <= centerHalfSize
+    && Math.abs(projected.y) <= centerHalfSize
+  );
 }
