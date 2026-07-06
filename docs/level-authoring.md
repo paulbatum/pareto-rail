@@ -10,6 +10,7 @@ Shared code lives in `src/engine/`:
 - `audio-kit.ts` contains Web Audio primitives plus the shared mix bus and instrument registry;
 - `audio-trace.ts` contains semantic audio trace sinks and the reusable trace harness;
 - `score.ts` contains the shared musical-position helper for epoch anchoring, harmony, sections, action quantization, and kill lanes;
+- `arrangement.ts` contains the thin section/pattern/function/one-shot DSL for musical scheduling;
 - `spawn-patterns.ts` contains small helpers for eager spawn timeline construction;
 - `glyphs.ts` contains neutral 5×7 glyph grid data and accessors, not rendering;
 - `hostile-shot.ts` contains shared homing steer, behind-camera despawn cull, and approach/impact timing for lockable enemy shots and hazards;
@@ -28,7 +29,7 @@ This is a default, not a law. Rezdle legitimately decomposes differently, and `c
 
 1. Create `src/levels/<id>/index.ts` that exports a `LevelDefinition`.
 2. Declare one authoritative BPM constant for the level. Reference it from both the `LevelDefinition` and the runner config; audio should import the same constant instead of repeating the number.
-3. Implement `createAudio(bus)` in that level. The pause menu calls the returned volume, start, suspend, and dispose methods.
+3. Implement `createAudio(bus)` in that level. The pause menu calls the returned volume, start, suspend, and dispose methods. For beat-driven levels, the expected audio spine uses `createMixBus`, `createScore`, `defineInstruments`, `createArrangement`, and `createAudioTraceHarness`; raw `audio-kit` primitives remain available when a level needs custom synthesis or routing.
 4. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`.
 5. Add the level to `src/levels/index.ts`.
 
@@ -109,7 +110,7 @@ The bloom slider goes to 0. A level must stay playable and legible with bloom fu
 
 ## Musical action audio
 
-Crystal (`src/levels/crystal/audio.ts`) is the reference for integrating gameplay sounds into the level's music, Rez-style: player actions are notes in the score, not sound effects layered over it. New beat-driven levels should build their audio spine from the shared path: `createMixBus` for routing, `createScore` for transport-anchored musical position, `defineInstruments` for traced voices, and the trace harness for `trace:audio` coverage. Raw `audio-kit` primitives remain the escape hatch when a level needs custom synthesis or routing.
+Crystal (`src/levels/crystal/audio.ts`) is the reference for integrating gameplay sounds into the level's music, Rez-style: player actions are notes in the score, not sound effects layered over it. New beat-driven levels should build their audio spine from the shared path: `createMixBus` for routing, `createScore` for transport-anchored musical position, `defineInstruments` for traced voices, `createArrangement` for sections/patterns/one-shots, and `createAudioTraceHarness` for `trace:audio` coverage. Raw `audio-kit` primitives remain the escape hatch when a level needs custom synthesis or routing.
 
 These lessons came out of A/B playtesting and apply to any level with a beat-driven soundtrack:
 

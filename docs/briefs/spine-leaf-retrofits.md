@@ -10,9 +10,9 @@ These are **timeline- and audio-preserving refactors**. No gameplay, visual, or 
 
 ## Tasks (independent; do in this order)
 
-1. **Helios audio split.** `src/levels/helios/audio.ts` (~1,325 lines) mixes the arrangement — sections, harmony, lead sets, the per-bar structure — with instrument construction (`kick`, `snare`, `hat`, `bass`, `choir`, `arp`, `stab`, `lead`, …). Split into a score module (the decisions) and a voices module (the instruments). Helios also predates full `audio-kit` adoption (raw Web Audio node calls remain); migrating those to the kit is in scope **only** where it provably preserves output.
-2. **Crystal audio split.** Same split for `src/levels/crystal/audio.ts` (~1,000 lines). Crystal is the flagship landing level: be conservative, and prefer a smaller split over a risky one.
-3. **Deluge decomposition.** `src/levels/deluge/visuals.ts` (~74 KB) and `src/levels/deluge/audio.ts` (~21 KB) are monoliths. Decompose along the convention: decisions (palette, event choreography, tuning) in the spine files; mesh construction and voice construction in leaf files.
+1. **Superseded — Helios audio split.** Superseded by `docs/briefs/audio-kit.md`; Helios now uses the shared audio kit, score, arrangement DSL, trace harness, and a voices leaf.
+2. **Superseded — Crystal audio split.** Superseded by `docs/briefs/audio-kit.md`; Crystal now follows the same audio spine/voices-leaf path.
+3. **Deluge decomposition.** `src/levels/deluge/visuals.ts` (~74 KB) and `src/levels/deluge/audio.ts` (~21 KB) are monoliths. Decompose along the convention: decisions (palette, event choreography, tuning) in the spine files; mesh construction and voice construction in leaf files. Its audio retrofit should use the new mix bus, score, instrument registry, trace harness, and arrangement DSL, but Deluge needs `trace:audio` coverage added before any audio-preserving retrofit is attempted.
 
 ## Verification per task
 

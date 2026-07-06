@@ -1,16 +1,17 @@
 import type { EventBus } from '../../events';
 import {
-  createAudioGraphBuilder,
   createLevelAudioKit,
+  createMixBus,
   createStepTransport,
-  playBufferSourceVoice,
-  playNoiseHit,
   playOscillatorVoice,
+  type MixBus,
 } from '../../engine/audio-kit';
-import { createAudioTraceSink, createNoopTraceBus, type AudioTraceResult, type AudioTraceSink } from '../../engine/audio-trace';
-import { getActionSfxQuantization } from '../../engine/action-sfx-quantization';
+import { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';
+import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
 import { emitBeatAt, midiToFreq } from '../../engine/music';
+import { createScore, lerp, type SectionMix } from '../../engine/score';
 import { CRYSTAL_BPM } from './gameplay';
+import { createCrystalVoices, type CrystalKillVoice } from './audio-voices';
 
 // Rez-style synesthesia layer: the arrangement carries drums, bass, and
 // pads, while the LEAD MELODY is a hidden two-bar sequencer lane that only
@@ -35,6 +36,7 @@ const CHORDS = [
   { bass: 36, pad: [52, 55, 60, 64], arp: [67, 72, 76, 79] }, // Cmaj7
   { bass: 31, pad: [55, 59, 62, 64], arp: [67, 71, 74, 79] }, // G6
 ];
+type Chord = typeof CHORDS[number];
 const LOCK_SCALE = [69, 72, 74, 76, 79, 81, 84, 88]; // A minor pentatonic, rising per lock
 
 // The kill-melody lanes. Values are degrees 0–7 into the current chord's
@@ -75,7 +77,7 @@ const KILL_LANES: Record<SectionIndex, number[]> = {
 // square or saw at the same gain as a triangle sounds far louder (richer
 // harmonics), and the lock must stay a subtle tick in every act.
 const SECTION_VOICES: Record<SectionIndex, {
-  kill: { oscillator: OscillatorType; decay: number; cutoff: number; gain: number; shimmer: number };
+  kill: CrystalKillVoice;
   lock: { oscillator: OscillatorType; cutoff: number; gain: number };
   fire: { cutoff: number; noise: number };
 }> = {
@@ -100,43 +102,34 @@ export function createAudio(bus: EventBus) {
   return createCrystalAudio(bus).audio;
 }
 
-export function traceCrystalAudio(options: { seconds?: number } = {}): AudioTraceResult {
-  const seconds = options.seconds ?? 45;
-  const events: AudioTraceResult['events'] = [];
-  const trace = createAudioTraceSink(events);
-  const bus = createNoopTraceBus();
-  const tracedAudio = createCrystalAudio(bus, trace);
-  tracedAudio.traceRun(seconds);
-  return {
-    metadata: {
-      level: 'crystal-corridor',
-      bpm: CRYSTAL_BPM,
-      seconds,
-      stepSeconds: SIXTEENTH,
-      mode: 'run',
-    },
-    events,
-  };
-}
+export const traceCrystalAudio = createAudioTraceHarness({
+  level: 'crystal-corridor',
+  bpm: CRYSTAL_BPM,
+  stepSeconds: SIXTEENTH,
+  defaultSeconds: 45,
+  createAudio: createCrystalAudio,
+});
 
 function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
-  let arrangementStart = 0;
   // Boots in ambient (attract screen); runstart switches to the full arrangement.
   let mode: 'run' | 'ambient' = 'ambient';
-  // Audio-clock time of transport step 0. Player sounds snap to this grid —
-  // not to an absolute-zero grid — so they land exactly on the music.
-  let transportEpoch = 0;
-  let wardenActive = false;
   let coreId = -1;
   let coreMaxHp = 0;
+  let mix: MixBus | null = null;
 
-  let master: GainNode | null = null;
-  let musicGain: GainNode | null = null;
-  let sfxGain: GainNode | null = null;
-  let duck: GainNode | null = null;
-  let delaySend: GainNode | null = null;
-  let noiseBuffer: AudioBuffer | null = null;
+  const score = createScore<Chord, SectionIndex>({
+    bpm: CRYSTAL_BPM,
+    stepsPerBar: STEPS_PER_BAR,
+    chords: CHORDS,
+    barsPerChord: 2,
+    sections: [
+      { index: 0, fromBar: 0 },
+      { index: 1, fromBar: 7, crossfadeBars: 2 },
+      { index: 2, fromBar: 18, crossfadeBars: 2 },
+    ],
+    killLanes: KILL_LANES,
+  });
 
   const transport = createStepTransport({
     stepSeconds: SIXTEENTH,
@@ -154,165 +147,140 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
       ctx = context;
       buildGraph(context, musicVolume, sfxVolume);
       transport.start(context);
-      transportEpoch = transport.nextStepTime;
+      score.setEpoch(transport.nextStepTime);
     },
     onSchedule(context) {
       transport.schedule(context);
     },
     onMusicVolumeChange(context, musicVolume) {
-      if (musicGain) musicGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.05);
+      mix?.setMusicVolume(musicVolume, context.currentTime, 0.05);
     },
     onSfxVolumeChange(context, sfxVolume) {
-      if (sfxGain) sfxGain.gain.setTargetAtTime(sfxVolume, context.currentTime, 0.02);
+      mix?.setSfxVolume(sfxVolume, context.currentTime, 0.02);
     },
     onDispose() {
       ctx = null;
-      master = null;
-      musicGain = null;
-      sfxGain = null;
-      duck = null;
-      delaySend = null;
-      noiseBuffer = null;
+      mix = null;
     },
   });
 
   function buildGraph(context: AudioContext, musicVolume: number, sfxVolume: number) {
-    const graph = createAudioGraphBuilder(context);
-
-    master = graph.gain();
-    musicGain = graph.gain(musicVolume);
-    sfxGain = graph.gain(sfxVolume);
-    const compressor = graph.compressor({ threshold: -18, ratio: 5, attack: 0.005, release: 0.22 });
-    graph.connect(musicGain, master);
-    graph.connect(sfxGain, master);
-    graph.connect(master, compressor);
-    graph.connect(compressor, context.destination);
-
-    duck = graph.gain();
-    graph.connect(duck, musicGain);
-
-    // Feedback delay tuned to a dotted eighth: the space the arp lives in.
-    delaySend = graph.gain();
-    const delay = graph.delay(1, SIXTEENTH * 3);
-    const feedback = graph.gain(0.34);
-    const damp = graph.biquadFilter({ type: 'lowpass', frequency: 2600 });
-    graph.connect(delaySend, delay);
-    graph.connect(delay, damp);
-    graph.connect(damp, feedback);
-    graph.connect(feedback, delay);
-    graph.connect(damp, duck);
-
-    noiseBuffer = graph.noiseBuffer(2);
+    mix = createMixBus(context, {
+      musicVolume,
+      sfxVolume,
+      compressor: { threshold: -18, ratio: 5, attack: 0.005, release: 0.22 },
+      delay: { time: SIXTEENTH * 3, feedback: 0.34, dampHz: 2600 },
+      noiseSeconds: 2,
+    });
   }
 
   // ---- musical position ----------------------------------------------------
   // Every player-triggered sound asks three questions: which grid step does
   // this land on, which chord sounds there, and which act's voice speaks.
 
-  function nextGridTime(time: number, gridSixteenths = 1) {
-    const grid = SIXTEENTH * gridSixteenths;
-    const stepsFromEpoch = Math.max(0, Math.ceil((time - transportEpoch) / grid - 1e-4));
-    return transportEpoch + stepsFromEpoch * grid;
-  }
-
-  // Lock/fire snap honoring the timing panel, on the transport's real grid.
-  function quantizePlayerAction(time: number) {
-    const { enabled, gridThirtyseconds } = getActionSfxQuantization();
-    if (!enabled) return time;
-    return nextGridTime(time, gridThirtyseconds / 2); // nextGridTime's unit is 16ths
-  }
-
-  function arrangementPositionAt(time: number) {
-    const step = Math.round((time - transportEpoch) / SIXTEENTH);
-    return Math.max(0, step - arrangementStart);
-  }
-
-  function chordAt(position: number) {
-    const bar = Math.floor(position / STEPS_PER_BAR);
-    return CHORDS[Math.floor(bar / 2) % CHORDS.length];
-  }
-
   // Sections track the arrangement bars the same way the drum build does
   // (act 2 gameplay begins ~bar 5, the Warden fill lands at bar 16). Because
   // the backing track does NOT change at bar 5, the player-instrument
   // handover crossfades over two bars there instead of snapping; the Warden's
   // spawn snaps instantly because the music turns over with it.
-  type SectionMix = { from: SectionIndex; to: SectionIndex; t: number };
 
-  function sectionMixAt(position: number): SectionMix {
-    if (wardenActive) return { from: 2, to: 2, t: 1 };
-    const bar = position / STEPS_PER_BAR;
-    if (bar >= 18) return { from: 2, to: 2, t: 1 };
-    if (bar >= 16) return { from: 1, to: 2, t: (bar - 16) / 2 };
-    if (bar >= 7) return { from: 1, to: 1, t: 1 };
-    if (bar >= 5) return { from: 0, to: 1, t: (bar - 5) / 2 };
-    return { from: 0, to: 0, t: 1 };
-  }
+  // ---- voices -------------------------------------------------------------
 
-  function lerp(a: number, b: number, t: number) {
-    return a + (b - a) * t;
-  }
-
-  function leadSetAt(position: number) {
-    const chord = chordAt(position);
-    return [...chord.arp, ...chord.arp.map((midi) => midi + 12)];
-  }
+  const voices = createCrystalVoices({ trace, context: () => ctx, mix: () => mix });
+  const { kick, clap, hat, bass, pad, arpNote, riser, noiseHit, playerSends, playerTone } = voices;
+  const sfxDestination = () => mix?.sfx ?? mix?.master ?? null;
 
   // ---- scheduler ----------------------------------------------------------
 
   function traceRun(seconds: number) {
     mode = 'run';
-    arrangementStart = 0;
+    score.clearOverride();
+    score.restartArrangement(0, { align: 'step' });
     transport.reset(0.06, 0);
-    transportEpoch = 0.06;
+    score.setEpoch(0.06);
     ctx = { currentTime: 0 } as AudioContext;
     transport.runUntil(seconds);
     ctx = null;
   }
 
+  const blankBar = '................';
+  const padEven = 'P...............' + blankBar;
+  const padOdd = blankBar + 'P...............';
+  const normalKick = 'K...k...k...k...';
+  const fillKick = 'K...k...k.k.k.k.';
+  const clapBackbeat = '....C.......C...';
+  const oddHat = '.h.h.h.h.h.h.h.h';
+  const tightHat = 'hhHhhhHhhhHhhhHh';
+  const openHat = 'hhOhhhOhhhOhhhOh';
+  const bassGrid = 'B..b..u.b..b..f.';
+  const evenArp = 'A.A.A.A.A.A.A.A.';
+
+  const ambientArrangement = createArrangement<Chord>({
+    stepsPerBar: STEPS_PER_BAR,
+    chordAt: score.chordAt,
+    sections: [{
+      name: 'ambient',
+      fromBar: 0,
+      tracks: [
+        padTrack(0),
+        hits('A...A...A...A...', { A: 0.5 }, ({ time, step, chord }, vel) => arpNote(time, chord.arp[(step / 4) % chord.arp.length], vel)),
+      ],
+    }],
+  });
+
+  const runArrangement = createArrangement<Chord>({
+    stepsPerBar: STEPS_PER_BAR,
+    chordAt: score.chordAt,
+    sections: [
+      { name: 'bar-0', fromBar: 0, toBar: 1, tracks: [padTrack(0), kickTrack(normalKick)] },
+      { name: 'bar-1', fromBar: 1, toBar: 2, tracks: [padTrack(1), kickTrack(normalKick), hatTrack(oddHat), bassTrack()] },
+      { name: 'warmup', fromBar: 2, toBar: 4, tracks: [padTrack(2), kickTrack(normalKick), hatTrack(tightHat), bassTrack(), arpTrack(0.45)] },
+      { name: 'claps', fromBar: 4, toBar: 6, tracks: [padTrack(4), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(tightHat), bassTrack(), arpTrack(0.45)] },
+      { name: 'open-hats', fromBar: 6, toBar: 8, tracks: [padTrack(6), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.45)] },
+      { name: 'drive', fromBar: 8, toBar: 14, tracks: [padTrack(8), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6)] },
+      { name: 'pre-warden', fromBar: 14, toBar: 16, tracks: [padTrack(14), kickTrack(normalKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6), oneShot(0, 0, ({ time }) => riser(time, 16 * 2 * SIXTEENTH))] },
+      { name: 'warden-fill', fromBar: 16, toBar: 21, tracks: [padTrack(16), kickTrack(fillKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6)] },
+      { name: 'finale', fromBar: 21, tracks: [padTrack(21), kickTrack(fillKick), hits(clapBackbeat, { C: 1 }, ({ time }) => clap(time)), hatTrack(openHat), bassTrack(), arpTrack(0.6), oneShot(0, 0, ({ time }) => riser(time, 16 * 2 * SIXTEENTH))] },
+    ],
+  });
+
+  function padTrack(fromBar: number) {
+    return hits<Chord>(fromBar % 2 === 0 ? padEven : padOdd, { P: 1 }, ({ time, chord }) => pad(time, chord.pad, 16 * 2 * SIXTEENTH * 1.05));
+  }
+
+  function kickTrack(pattern: string) {
+    return hits(pattern, { K: 1, k: 0.9 }, ({ time }, vel) => kick(time, vel));
+  }
+
+  function hatTrack(pattern: string) {
+    return hits(pattern, { h: 0.045, H: 0.09, O: 0.14 }, ({ time }, vel, symbol) => hat(time, vel, symbol === 'O' ? 0.2 : 0.03));
+  }
+
+  function bassTrack() {
+    return hits<Chord>(bassGrid, { B: 1, b: 0.75, u: 0.75, f: 0.75 }, ({ time, chord }, vel, symbol) => {
+      const offset = symbol === 'u' ? 12 : symbol === 'f' ? 7 : 0;
+      bass(time, chord.bass + offset, vel);
+    });
+  }
+
+  function arpTrack(vel: number) {
+    return hits<Chord>(evenArp, { A: vel }, ({ time, step, chord }, velocity) => {
+      const order = [0, 2, 1, 3, 2, 0, 3, 1];
+      arpNote(time, chord.arp[order[(step / 2) % order.length]] - 12, velocity);
+    });
+  }
+
   function scheduleStep(index: number, time: number) {
-    const position = Math.max(0, index - arrangementStart);
-    const step = position % 16;
-    const bar = Math.floor(position / 16);
-    const chord = CHORDS[Math.floor(bar / 2) % CHORDS.length];
+    const position = Math.max(0, index - score.arrangementStart);
+    const step = position % STEPS_PER_BAR;
 
     if (step % 4 === 0) {
       const beatNumber = Math.floor(index / 4);
       scheduleBeat(time, beatNumber, step === 0);
     }
 
-    if (step === 0 && bar % 2 === 0) {
-      pad(time, chord.pad, 16 * 2 * SIXTEENTH * 1.05);
-    }
-
-    if (mode === 'ambient') {
-      if (step % 4 === 0) arpNote(time, chord.arp[(step / 4) % chord.arp.length], 0.5);
-      return;
-    }
-
-    // Bar 16 lands near the Warden's entrance (~30s); bar 22 rides out the end.
-    const isFillBar = bar >= 16;
-    if (step % 4 === 0 || (isFillBar && step % 2 === 0 && step >= 8)) {
-      kick(time, step === 0 ? 1 : 0.9);
-    }
-    if (bar >= 4 && (step === 4 || step === 12)) clap(time);
-    if (bar >= 1) {
-      const openHat = bar >= 6 && step % 4 === 2;
-      if (openHat) hat(time, 0.14, 0.2);
-      else if (bar >= 2 || step % 2 === 1) hat(time, step % 4 === 2 ? 0.09 : 0.045, 0.03);
-    }
-    if (bar >= 1) {
-      const bassSteps: Record<number, number> = { 0: 0, 3: 0, 6: 12, 8: 0, 11: 0, 14: 7 };
-      if (step in bassSteps) bass(time, chord.bass + bassSteps[step], step === 0 ? 1 : 0.75);
-    }
-    // During runs the bed arp sits an octave lower, quieter, and on eighths
-    // instead of sixteenths — the top register belongs to the player's kill
-    // melody. (Crystal's original doubles up an octave and louder instead.)
-    if (bar >= 2 && step % 2 === 0) {
-      const order = [0, 2, 1, 3, 2, 0, 3, 1];
-      arpNote(time, chord.arp[order[(step / 2) % order.length]] - 12, bar >= 8 ? 0.6 : 0.45);
-    }
-    if ((bar === 14 || bar === 21) && step === 0) riser(time, 16 * 2 * SIXTEENTH);
+    if (mode === 'ambient') ambientArrangement.schedule(position, time);
+    else runArrangement.schedule(position, time);
   }
 
   function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
@@ -324,224 +292,33 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
   }
 
-  const musicDestination = () => musicGain ?? master;
-  const sfxDestination = () => sfxGain ?? master;
-
-  // ---- instruments --------------------------------------------------------
-
-  function kick(time: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'kick', { vel });
-      return;
-    }
-    const output = musicDestination();
-    if (!ctx || !output || !duck) return;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.2,
-      oscillatorType: 'sine',
-      frequency: 150,
-      frequencyAutomation: [{ type: 'exponentialRamp', value: 43, time: time + 0.11 }],
-      gainAutomation: [
-        { type: 'set', value: 0.5 * vel, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.17 },
-      ],
-      destination: output,
-    });
-    noiseHit(time, 0.1 * vel, 0.004, 'highpass', 1200, output);
-    // Sidechain: everything melodic breathes around the kick.
-    duck.gain.cancelScheduledValues(time);
-    duck.gain.setValueAtTime(0.42, time);
-    duck.gain.linearRampToValueAtTime(1, time + 0.26);
-  }
-
-  function clap(time: number) {
-    if (trace) {
-      trace.record(time, 'clap');
-      return;
-    }
-    const output = musicDestination();
-    if (!output) return;
-    noiseHit(time, 0.16, 0.05, 'bandpass', 1900, output);
-    noiseHit(time + 0.013, 0.1, 0.07, 'bandpass', 2200, output);
-  }
-
-  function hat(time: number, vel: number, decay: number) {
-    if (trace) {
-      trace.record(time, 'hat', { vel, decay });
-      return;
-    }
-    if (!duck) return;
-    noiseHit(time, vel, decay, 'highpass', 7200, duck);
-  }
-
-  function bass(time: number, midi: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'bass', { midi, vel });
-      return;
-    }
-    if (!ctx || !duck) return;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.28,
-      oscillatorType: 'sawtooth',
-      frequency: midiToFreq(midi),
-      filter: {
-        type: 'lowpass',
-        Q: 6,
-        frequencyAutomation: [
-          { type: 'set', value: 200 + vel * 800, time },
-          { type: 'exponentialRamp', value: 160, time: time + 0.2 },
-        ],
-      },
-      gainAutomation: [
-        { type: 'set', value: 0, time },
-        { type: 'linearRamp', value: 0.3 * vel, time: time + 0.006 },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.24 },
-      ],
-      destination: duck,
-    });
-  }
-
-  function pad(time: number, midis: number[], duration: number) {
-    if (trace) {
-      trace.record(time, 'pad', { midis, duration });
-      return;
-    }
-    if (!ctx || !duck || !delaySend) return;
-    for (const midi of midis) {
-      for (const detune of [-7, 7]) {
-        playOscillatorVoice({
-          context: ctx,
-          time,
-          stopTime: time + duration + 0.05,
-          oscillatorType: 'sawtooth',
-          frequency: midiToFreq(midi),
-          detune,
-          filter: {
-            type: 'lowpass',
-            frequencyAutomation: [
-              { type: 'set', value: 420, time },
-              { type: 'linearRamp', value: 760, time: time + duration * 0.5 },
-              { type: 'linearRamp', value: 420, time: time + duration },
-            ],
-          },
-          gainAutomation: [
-            { type: 'set', value: 0, time },
-            { type: 'linearRamp', value: 0.045, time: time + 0.5 },
-            { type: 'set', value: 0.045, time: time + duration - 0.4 },
-            { type: 'linearRamp', value: 0, time: time + duration },
-          ],
-          destination: [duck, delaySend],
-        });
-      }
-    }
-  }
-
-  function arpNote(time: number, midi: number, vel: number) {
-    if (trace) {
-      trace.record(time, 'arp', { midi, vel });
-      return;
-    }
-    if (!ctx || !duck || !delaySend) return;
-    playOscillatorVoice({
-      context: ctx,
-      time,
-      stopTime: time + 0.15,
-      oscillatorType: 'triangle',
-      frequency: midiToFreq(midi),
-      filter: { type: 'lowpass', frequency: 2600 },
-      gainAutomation: [
-        { type: 'set', value: 0.16 * vel, time },
-        { type: 'exponentialRamp', value: 0.001, time: time + 0.12 },
-      ],
-      destination: duck,
-      sends: [{ destination: delaySend, gain: 0.5 }],
-    });
-  }
-
-  function riser(time: number, duration: number) {
-    if (trace) {
-      trace.record(time, 'riser', { duration });
-      return;
-    }
-    const output = musicDestination();
-    if (!ctx || !output || !noiseBuffer) return;
-    playBufferSourceVoice({
-      context: ctx,
-      buffer: noiseBuffer,
-      time,
-      stopTime: time + duration + 0.1,
-      loop: true,
-      filter: {
-        type: 'bandpass',
-        Q: 1.2,
-        frequencyAutomation: [
-          { type: 'set', value: 300, time },
-          { type: 'exponentialRamp', value: 6400, time: time + duration },
-        ],
-      },
-      gainAutomation: [
-        { type: 'set', value: 0.001, time },
-        { type: 'exponentialRamp', value: 0.14, time: time + duration },
-        { type: 'linearRamp', value: 0, time: time + duration + 0.05 },
-      ],
-      destination: output,
-    });
-  }
-
-  function noiseHit(
-    time: number,
-    vel: number,
-    decay: number,
-    filterType: BiquadFilterType,
-    frequency: number,
-    destination: AudioNode,
-  ) {
-    if (!ctx || !noiseBuffer) return;
-    playNoiseHit({
-      context: ctx,
-      buffer: noiseBuffer,
-      time,
-      velocity: vel,
-      decay,
-      filterType,
-      frequency,
-      destination,
-      loopStart: Math.random(),
-      offset: Math.random() * 1.5,
-    });
-  }
-
   // ---- the player's instruments -------------------------------------------
   // Kills read the hidden melody lane, locks climb the pentatonic in the
   // act's timbre, fire is a pitched zap rooted on the current chord. All
   // snap to the transport's real grid.
 
-  function killNote(time: number, position: number, mix: SectionMix, chain: number) {
+  function killNote(time: number, position: number, sectionMix: SectionMix<SectionIndex>, chain: number) {
     const output = sfxDestination();
-    if (!ctx || !output || !delaySend) return;
+    if (!ctx || !output || !mix?.delaySend) return;
     // Mid-blend the lane contour flips at the halfway point; the timbre is
     // what needs the smooth handover, not the (always-consonant) note choice.
-    const laneSection = mix.t >= 0.5 ? mix.to : mix.from;
+    const laneSection = sectionMix.t >= 0.5 ? sectionMix.to : sectionMix.from;
     const degree = KILL_LANES[laneSection][position % LANE_STEPS];
-    const midi = leadSetAt(position)[degree];
-    const fromVoice = SECTION_VOICES[mix.from].kill;
-    const toVoice = SECTION_VOICES[mix.to].kill;
+    const midi = score.leadSetAt(position)[degree];
+    const fromVoice = SECTION_VOICES[sectionMix.from].kill;
+    const toVoice = SECTION_VOICES[sectionMix.to].kill;
     // Chained volley kills crescendo, and from the third onward a soft upper
     // octave rings above the line.
     const vel = Math.min(1.35, 1 + chain * 0.12);
-    const decay = lerp(fromVoice.decay, toVoice.decay, mix.t);
-    const gain = lerp(fromVoice.gain, toVoice.gain, mix.t);
-    const shimmer = lerp(fromVoice.shimmer, toVoice.shimmer, mix.t);
+    const decay = lerp(fromVoice.decay, toVoice.decay, sectionMix.t);
+    const gain = lerp(fromVoice.gain, toVoice.gain, sectionMix.t);
+    const shimmer = lerp(fromVoice.shimmer, toVoice.shimmer, sectionMix.t);
 
     // Crossfade the lead: inside a blend window both acts' oscillators sound
     // with complementary weights, so the timbre slides rather than snapping.
-    const layers: Array<[typeof fromVoice, number]> = mix.from === mix.to
+    const layers: Array<[typeof fromVoice, number]> = sectionMix.from === sectionMix.to
       ? [[toVoice, 1]]
-      : [[fromVoice, 1 - mix.t], [toVoice, mix.t]];
+      : [[fromVoice, 1 - sectionMix.t], [toVoice, sectionMix.t]];
     for (const [voice, weight] of layers) {
       if (weight < 0.02) continue;
       playOscillatorVoice({
@@ -556,7 +333,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: time + voice.decay },
         ],
         destination: output,
-        sends: [{ destination: delaySend, gain: 0.45 }],
+        sends: [{ destination: mix.delaySend, gain: 0.45 }],
       });
     }
     // A pure-tone body an octave below keeps square/saw voices from thinness.
@@ -584,7 +361,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: time + decay },
         ],
         destination: output,
-        sends: [{ destination: delaySend, gain: 0.5 }],
+        sends: [{ destination: mix.delaySend, gain: 0.5 }],
       });
     }
     noiseHit(time, 0.05 * shimmer + 0.03, 0.08, 'highpass', 5200, output);
@@ -596,10 +373,10 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // audibly ratchets toward the finale.
   function coreChip(intensity: number) {
     const output = sfxDestination();
-    if (!ctx || !output || !delaySend) return;
-    const time = nextGridTime(ctx.currentTime, 0.5);
-    const position = arrangementPositionAt(time);
-    const chord = chordAt(position);
+    if (!ctx || !output || !mix?.delaySend) return;
+    const time = score.nextGridTime(ctx.currentTime, 0.5);
+    const position = score.arrangementPositionAt(time);
+    const chord = score.chordAt(position);
     const rootFreq = midiToFreq(chord.bass + 12);
 
     playOscillatorVoice({
@@ -629,10 +406,10 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: time + 0.2 },
         ],
         destination: output,
-        sends: [{ destination: delaySend, gain: 0.3 }],
+        sends: [{ destination: mix.delaySend, gain: 0.3 }],
       });
     }
-    const leadSet = leadSetAt(position);
+    const leadSet = score.leadSetAt(position);
     const beacon = leadSet[Math.min(leadSet.length - 1, Math.floor(intensity * leadSet.length))];
     playOscillatorVoice({
       context: ctx,
@@ -645,7 +422,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'exponentialRamp', value: 0.001, time: time + 0.5 },
       ],
       destination: output,
-      sends: [{ destination: delaySend, gain: 0.5 }],
+      sends: [{ destination: mix.delaySend, gain: 0.5 }],
     });
     noiseHit(time, 0.12 + 0.08 * intensity, 0.06, 'bandpass', 1400, output);
   }
@@ -655,12 +432,10 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // falls from the top of the register through the delay.
   function coreFinale() {
     const output = sfxDestination();
-    if (!ctx || !output || !delaySend || !duck) return;
-    const time = nextGridTime(ctx.currentTime, 2);
+    if (!ctx || !output || !mix?.delaySend || !mix?.duck) return;
+    const time = score.nextGridTime(ctx.currentTime, 2);
 
-    duck.gain.cancelScheduledValues(time);
-    duck.gain.setValueAtTime(0.2, time);
-    duck.gain.linearRampToValueAtTime(1, time + 1.8);
+    mix.duckAt(time, 0.2, 1.8);
 
     playOscillatorVoice({
       context: ctx,
@@ -697,13 +472,13 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
             { type: 'exponentialRamp', value: 0.001, time: time + 1.4 },
           ],
           destination: output,
-          sends: [{ destination: delaySend, gain: 0.35 }],
+          sends: [{ destination: mix.delaySend, gain: 0.35 }],
         });
       }
     }
     // Victory peal: A minor pentatonic falling from the top, ringing out.
     [93, 88, 84, 81, 76, 72, 69].forEach((midi, index) => {
-      if (!ctx || !output || !delaySend) return;
+      if (!ctx || !output || !mix?.delaySend) return;
       const at = time + index * SIXTEENTH;
       playOscillatorVoice({
         context: ctx,
@@ -717,7 +492,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: at + 0.45 },
         ],
         destination: output,
-        sends: [{ destination: delaySend, gain: 0.55 }],
+        sends: [{ destination: mix.delaySend, gain: 0.55 }],
       });
     });
     noiseHit(time, 0.14, 0.6, 'highpass', 6000, output);
@@ -725,30 +500,26 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   // Each kill takes at least the step after the previous one, so rapid
   // volley kills never stack on one step — they walk the lane note by note.
-  let lastKillStep = -1;
   bus.on('kill', ({ enemyId, indexInVolley }) => {
     if (!ctx) return;
     if (enemyId === coreId) {
       coreFinale();
       return;
     }
-    let step = Math.round((nextGridTime(ctx.currentTime) - transportEpoch) / SIXTEENTH);
-    if (step <= lastKillStep) step = lastKillStep + 1;
-    lastKillStep = step;
-    const time = transportEpoch + step * SIXTEENTH;
-    const position = Math.max(0, step - arrangementStart);
-    killNote(time, position, sectionMixAt(position), indexInVolley ?? 0);
+    const kill = score.nextKill(ctx.currentTime);
+    const position = Math.max(0, kill.step - score.arrangementStart);
+    killNote(kill.time, position, score.sectionMixAt(position), indexInVolley ?? 0);
   });
 
   bus.on('lock', ({ lockCount }) => {
     const output = sfxDestination();
-    if (!ctx || !output || !delaySend) return;
+    if (!ctx || !output || !mix?.delaySend) return;
     const midi = LOCK_SCALE[Math.min(LOCK_SCALE.length, Math.max(1, lockCount)) - 1];
-    const time = quantizePlayerAction(ctx.currentTime);
-    const mix = sectionMixAt(arrangementPositionAt(time));
-    const layers: Array<[SectionIndex, number]> = mix.from === mix.to
-      ? [[mix.to, 1]]
-      : [[mix.from, 1 - mix.t], [mix.to, mix.t]];
+    const time = score.quantizePlayerAction(ctx.currentTime);
+    const sectionMix = score.sectionMixAt(score.arrangementPositionAt(time));
+    const layers: Array<[SectionIndex, number]> = sectionMix.from === sectionMix.to
+      ? [[sectionMix.to, 1]]
+      : [[sectionMix.from, 1 - sectionMix.t], [sectionMix.to, sectionMix.t]];
     for (const [section, weight] of layers) {
       if (weight < 0.02) continue;
       const voice = SECTION_VOICES[section].lock;
@@ -764,7 +535,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: time + 0.1 },
         ],
         destination: output,
-        sends: [{ destination: delaySend, gain: 0.35 }],
+        sends: [{ destination: mix.delaySend, gain: 0.35 }],
       });
     }
   });
@@ -772,19 +543,19 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   bus.on('fire', () => {
     const output = sfxDestination();
     if (!ctx || !output) return;
-    const time = quantizePlayerAction(ctx.currentTime);
-    const position = arrangementPositionAt(time);
-    const mix = sectionMixAt(position);
-    const fromFire = SECTION_VOICES[mix.from].fire;
-    const toFire = SECTION_VOICES[mix.to].fire;
+    const time = score.quantizePlayerAction(ctx.currentTime);
+    const position = score.arrangementPositionAt(time);
+    const sectionMix = score.sectionMixAt(position);
+    const fromFire = SECTION_VOICES[sectionMix.from].fire;
+    const toFire = SECTION_VOICES[sectionMix.to].fire;
     // Fire keeps one oscillator; its brightness slides between acts.
     const voice = {
-      cutoff: lerp(fromFire.cutoff, toFire.cutoff, mix.t),
-      noise: lerp(fromFire.noise, toFire.noise, mix.t),
+      cutoff: lerp(fromFire.cutoff, toFire.cutoff, sectionMix.t),
+      noise: lerp(fromFire.noise, toFire.noise, sectionMix.t),
     };
     // The zap starts three octaves above the chord root and falls one, so
     // even the gun retunes as the harmony moves.
-    const root = chordAt(position).bass;
+    const root = score.chordAt(position).bass;
     playOscillatorVoice({
       context: ctx,
       time,
@@ -808,16 +579,16 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // sound growing.
   bus.on('hit', ({ lethal, enemyId, hitPointsRemaining }) => {
     const output = sfxDestination();
-    if (lethal || !ctx || !output || !delaySend) return;
+    if (lethal || !ctx || !output || !mix?.delaySend) return;
     if (enemyId === coreId) {
       coreMaxHp = Math.max(coreMaxHp, hitPointsRemaining + 1);
       coreChip(1 - hitPointsRemaining / coreMaxHp);
       return;
     }
-    const time = nextGridTime(ctx.currentTime, 0.5);
-    const arp = chordAt(arrangementPositionAt(time)).arp;
+    const time = score.nextGridTime(ctx.currentTime, 0.5);
+    const arp = score.chordAt(score.arrangementPositionAt(time)).arp;
     ([[0, 0.08], [1, 0.07], [2, 0.06]] as const).forEach(([index, vel]) => {
-      if (!ctx || !output || !delaySend) return;
+      if (!ctx || !output || !mix?.delaySend) return;
       const at = time + THIRTYSECOND * index;
       playOscillatorVoice({
         context: ctx,
@@ -831,7 +602,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: at + 0.14 },
         ],
         destination: output,
-        sends: [{ destination: delaySend, gain: 0.38 }],
+        sends: [{ destination: mix.delaySend, gain: 0.38 }],
       });
     });
     noiseHit(time, 0.035, 0.035, 'highpass', 5600, output);
@@ -840,9 +611,9 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // A clean volley of four or more kills earns a flourish: the chord stabbed
   // on the next beat under a bright shimmer — the music itself applauds.
   bus.on('volley', ({ size, kills }) => {
-    if (!ctx || !duck || !delaySend || kills < 4 || kills < size) return;
-    const time = nextGridTime(ctx.currentTime, 4);
-    const chord = chordAt(arrangementPositionAt(time));
+    if (!ctx || !mix?.duck || !mix?.delaySend || kills < 4 || kills < size) return;
+    const time = score.nextGridTime(ctx.currentTime, 4);
+    const chord = score.chordAt(score.arrangementPositionAt(time));
     for (const midi of chord.pad) {
       playOscillatorVoice({
         context: ctx,
@@ -855,11 +626,11 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: 0.055, time },
           { type: 'exponentialRamp', value: 0.001, time: time + 0.45 },
         ],
-        destination: duck,
-        sends: [{ destination: delaySend, gain: 0.5 }],
+        destination: mix.duck,
+        sends: [{ destination: mix.delaySend, gain: 0.5 }],
       });
     }
-    noiseHit(time, 0.09, 0.3, 'highpass', 6800, duck);
+    noiseHit(time, 0.09, 0.3, 'highpass', 6800, mix.duck);
   });
 
   bus.on('reject', () => {
@@ -938,13 +709,13 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // Warden entrance: a rising two-note alarm over a long riser. From here on
   // the kill melody speaks in the Warden's voice.
   bus.on('spawn', ({ kind, enemyId }) => {
-    if (kind !== 'warden-core' || !ctx || !duck || !delaySend) return;
-    wardenActive = true;
+    if (kind !== 'warden-core' || !ctx || !mix?.duck || !mix?.delaySend) return;
+    score.overrideSection(2);
     coreId = enemyId;
-    const time = nextGridTime(ctx.currentTime);
+    const time = score.nextGridTime(ctx.currentTime);
     riser(time, 1.8);
     [57, 63].forEach((midi, index) => {
-      if (!ctx || !duck || !delaySend) return;
+      if (!ctx || !mix?.duck || !mix?.delaySend) return;
       const at = time + index * 0.42;
       playOscillatorVoice({
         context: ctx,
@@ -957,8 +728,8 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'set', value: 0.16, time: at },
           { type: 'exponentialRamp', value: 0.001, time: at + 0.5 },
         ],
-        destination: duck,
-        sends: [{ destination: delaySend, gain: 0.5 }],
+        destination: mix.duck,
+        sends: [{ destination: mix.delaySend, gain: 0.5 }],
       });
     });
   });
@@ -984,17 +755,17 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('runstart', () => {
     mode = 'run';
-    wardenActive = false;
+    score.clearOverride();
     coreId = -1;
     coreMaxHp = 0;
     // Restart the arrangement on the next bar boundary so the build-up
     // tracks the new run.
-    arrangementStart = transport.stepIndex + ((16 - (transport.stepIndex % 16)) % 16);
+    score.restartArrangement(transport.stepIndex, { align: 'bar' });
   });
 
   bus.on('runend', () => {
     mode = 'ambient';
-    wardenActive = false;
+    score.clearOverride();
     if (!ctx) return;
     pad(ctx.currentTime + 0.05, [57, 64, 69, 76], 5);
   });

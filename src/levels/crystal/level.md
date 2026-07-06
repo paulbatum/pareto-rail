@@ -15,6 +15,7 @@ A 45-second run with a 3-point hull, node, drifter, orbiter, and lancer waves, i
 - `src/levels/crystal/index.ts`
 - `src/levels/crystal/gameplay.ts`
 - `src/levels/crystal/audio.ts`
+- `src/levels/crystal/audio-voices.ts`
 - `src/levels/crystal/visuals/index.ts`
 - `src/levels/crystal/warden.ts`
 
