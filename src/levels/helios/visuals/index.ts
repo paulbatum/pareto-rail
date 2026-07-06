@@ -71,6 +71,12 @@ export type VisualContext = {
   running: boolean;
 };
 
+export type CameraEffectsContext = {
+  camera: Camera;
+  runTime: number;
+  running: boolean;
+};
+
 type EnemyRecord = {
   mesh: Group;
   bornAt: number | null;
@@ -407,7 +413,6 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
   const speed = ctx.running ? speedFactorAt(runTime) : 0.5;
 
   updateSetPieceMoments(ctx);
-  updateCameraFeel(dt, ctx, speed);
   updateEnvironmentFrame(dt, ctx, speed, runTime);
   updatePostUniforms(dt, ctx, runTime);
 
@@ -494,7 +499,13 @@ function updateSetPieceMoments(ctx: VisualContext) {
   lastRunTime = ctx.runTime;
 }
 
-function updateCameraFeel(dt: number, ctx: VisualContext, speed: number) {
+export function updateCameraEffects(dt: number, ctx: CameraEffectsContext) {
+  const runTime = ctx.running ? ctx.runTime : 0;
+  const speed = ctx.running ? speedFactorAt(runTime) : 0.5;
+  updateCameraFeel(dt, ctx, speed);
+}
+
+function updateCameraFeel(dt: number, ctx: CameraEffectsContext, speed: number) {
   if (!(ctx.camera instanceof PerspectiveCamera)) return;
   const camera = ctx.camera;
   if (baseFov === null) baseFov = camera.fov;

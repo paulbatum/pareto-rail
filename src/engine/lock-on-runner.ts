@@ -97,6 +97,14 @@ export type LockOnAttractCameraUpdate = {
   dt: number;
 };
 
+export type LockOnCameraEffectsUpdate = {
+  camera: PerspectiveCamera;
+  curve: CatmullRomCurve3;
+  runTime: number;
+  runProgress: number;
+  dt: number;
+};
+
 export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = {
   duration: number;
   bpm: number;
@@ -104,6 +112,7 @@ export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = 
   spawnTimeline: Array<LockOnSpawnEntry<TKind, TData>>;
   updateEnemy(context: LockOnEnemyUpdate<TKind, TData>): boolean | void;
   updateAttractCamera?(context: LockOnAttractCameraUpdate): void;
+  updateCameraEffects?(context: LockOnCameraEffectsUpdate): void;
   easeRunProgress?(time: number, duration: number): number;
   scoreForHit?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
   scoreForKill?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
@@ -364,6 +373,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     runTime = Math.min(duration, runTime + dt);
     const runProgress = easeRunProgress(runTime, duration);
     updateRunCamera(runProgress, dt);
+    level.updateCameraEffects?.({ camera, curve, runTime, runProgress, dt });
     updateReticle();
     spawnDueEnemies();
     if (state !== 'running') return;

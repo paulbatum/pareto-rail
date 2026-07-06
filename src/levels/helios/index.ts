@@ -11,6 +11,7 @@ import {
   setEnemyDenied,
   setEnemyLocked,
   setReticleActive,
+  updateCameraEffects as updateHeliosCameraEffects,
   updateVisuals,
 } from './visuals';
 import { composeHeliosOutput } from './visuals/post-fx';
@@ -73,6 +74,7 @@ export const heliosLevel: LevelDefinition = {
       hud.setCallout('');
     });
 
+    const heliosGameplay = createHeliosGameplay(bus);
     const game = createLockOnRunner({
       scene,
       camera,
@@ -82,7 +84,12 @@ export const heliosLevel: LevelDefinition = {
       onPause,
       onFullscreen,
       startTip,
-      level: createHeliosGameplay(bus),
+      level: {
+        ...heliosGameplay,
+        updateCameraEffects({ camera, runTime, dt }) {
+          updateHeliosCameraEffects(dt, { camera, runTime, running: true });
+        },
+      },
       visuals: {
         createEnemyMesh,
         setEnemyLocked,
