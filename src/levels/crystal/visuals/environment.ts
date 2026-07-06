@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BufferGeometry,
   Color,
   EdgesGeometry,
@@ -15,6 +14,7 @@ import {
 import { LineBasicNodeMaterial } from 'three/webgpu';
 import { attribute, float, positionView, positionWorld, smoothstep, time, uniform, vec3 } from 'three/tsl';
 import { sampleRailFrame } from '../../../engine/rail';
+import { additiveMaterialParameters } from '../../../engine/visual-kit';
 import { createCrystalRail } from '../gameplay';
 import { AMBER, BACKGROUND, CYAN, MAGENTA, mulberry32 } from './palette';
 
@@ -90,11 +90,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
   tunnelGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
   tunnelGeometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
 
-  const tunnelMaterial = new LineBasicNodeMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const tunnelMaterial = new LineBasicNodeMaterial(additiveMaterialParameters({}));
   const viewDistance = positionView.z.negate();
   const travelingPulse = positionWorld.z
     .mul(0.075)
@@ -129,7 +125,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
     const color = (roll < 0.55 ? CYAN : roll < 0.85 ? MAGENTA : AMBER).clone().multiplyScalar(0.34);
     const lines = new LineSegments(
       geometry,
-      new LineBasicNodeMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false }),
+      new LineBasicNodeMaterial(additiveMaterialParameters({})),
     );
     (lines.material as LineBasicNodeMaterial).colorNode = vec3(color.r, color.g, color.b)
       .mul(positionView.z.negate().mul(-0.014).exp())
@@ -177,14 +173,11 @@ function makeStars(rng: () => number, count: number, minRadius: number, maxRadiu
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
-  const material = new PointsMaterial({
+  const material = new PointsMaterial(additiveMaterialParameters({
     size,
     vertexColors: true,
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
     sizeAttenuation: true,
-  });
+  }));
   const points = new Points(geometry, material);
   points.frustumCulled = false;
   return points;

@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BufferGeometry,
   Color,
   CylinderGeometry,
@@ -17,6 +16,7 @@ import {
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { additiveMaterialParameters, createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import crystalTemplateJson from './crystal-template.json';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA, mulberry32, pickColor, type Rng } from './palette';
 
@@ -238,23 +238,18 @@ export function createCrystal(kind: CrystalKind, opts: CreateCrystalOptions = {}
 
   const fillMesh = new Mesh(
     fillGeometries.length > 0 ? mergeGeometries(fillGeometries) : new BufferGeometry(),
-    new MeshBasicMaterial({
+    createAdditiveBasicMaterial({
+      color: 0xffffff,
       vertexColors: true,
-      transparent: true,
       opacity: 1,
-      blending: AdditiveBlending,
-      depthWrite: false,
     }),
   );
 
   const edgeLines = new LineSegments(
     edgeGeometries.length > 0 ? mergeGeometries(edgeGeometries) : new BufferGeometry(),
-    new LineBasicMaterial({
+    new LineBasicMaterial(additiveMaterialParameters({
       vertexColors: true,
-      transparent: true,
-      blending: AdditiveBlending,
-      depthWrite: false,
-    }),
+    })),
   );
 
   const coreBase = hdr(CORE_WHITE, shared.core.coreIntensity);
@@ -263,12 +258,9 @@ export function createCrystal(kind: CrystalKind, opts: CreateCrystalOptions = {}
   const core = new Mesh(new OctahedronGeometry(shared.core.coreRadius, 2), coreMaterial);
   const coreGlow = new Mesh(
     new OctahedronGeometry(shared.core.glowRadius, 2),
-    new MeshBasicMaterial({
+    createAdditiveBasicMaterial({
       color: glowBase.clone(),
-      transparent: true,
       opacity: shared.core.glowOpacity,
-      blending: AdditiveBlending,
-      depthWrite: false,
     }),
   );
 

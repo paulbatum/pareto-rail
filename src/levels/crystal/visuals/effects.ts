@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   Camera,
   Color,
   DoubleSide,
@@ -18,6 +17,7 @@ import {
   Vector3,
 } from 'three';
 import type { ShardSpec } from './crystal';
+import { createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import { AMBER, CYAN, MAGENTA } from './palette';
 
 const SHARD_CAPACITY = 1024;
@@ -90,7 +90,7 @@ const scratchColor = new Color();
 export function createEffects(scene: Scene) {
   shardMesh = new InstancedMesh(
     new TetrahedronGeometry(0.13, 0),
-    new MeshBasicMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false }),
+    createAdditiveBasicMaterial({ color: 0xffffff }),
     SHARD_CAPACITY,
   );
   shardMesh.count = 0;
@@ -110,12 +110,7 @@ export function createEffects(scene: Scene) {
   for (let i = 0; i < RING_CAPACITY; i += 1) {
     const mesh = new Mesh(
       ringGeometry,
-      new MeshBasicMaterial({
-        transparent: true,
-        blending: AdditiveBlending,
-        depthWrite: false,
-        side: DoubleSide,
-      }),
+      createAdditiveBasicMaterial({ color: 0x000000, side: DoubleSide }),
     );
     mesh.visible = false;
     scene.add(mesh);
@@ -129,12 +124,7 @@ export function createEffects(scene: Scene) {
     const group = new Group();
     const materials: MeshBasicMaterial[] = [];
     for (const rotation of [0, Math.PI / 2]) {
-      const material = new MeshBasicMaterial({
-        transparent: true,
-        blending: AdditiveBlending,
-        depthWrite: false,
-        side: DoubleSide,
-      });
+      const material = createAdditiveBasicMaterial({ color: 0x000000, side: DoubleSide });
       const blade = new Mesh(bladeGeometry, material);
       blade.rotation.z = rotation;
       group.add(blade);

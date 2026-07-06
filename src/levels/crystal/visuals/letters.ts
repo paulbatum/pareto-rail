@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BoxGeometry,
   BufferGeometry,
   Color,
@@ -13,6 +12,7 @@ import {
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { additiveMaterialParameters, createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import { CYAN, hdr, MAGENTA } from './palette';
 
 const GLYPHS: Record<string, string[]> = {
@@ -59,18 +59,8 @@ export function createLetterMesh(char: string) {
     }
   }
 
-  const fillMaterial = new MeshBasicMaterial({
-    color: CYAN.clone().multiplyScalar(0.12),
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
-  const edgeMaterial = new LineBasicMaterial({
-    color: hdr(CYAN, 1.1),
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  const fillMaterial = createAdditiveBasicMaterial({ color: CYAN.clone().multiplyScalar(0.12) });
+  const edgeMaterial = new LineBasicMaterial(additiveMaterialParameters({ color: hdr(CYAN, 1.1) }));
   const fillMesh = new Mesh(mergeGeometries(fills), fillMaterial);
   const edgeLines = new LineSegments(mergeGeometries(edges), edgeMaterial);
   group.add(fillMesh, edgeLines);

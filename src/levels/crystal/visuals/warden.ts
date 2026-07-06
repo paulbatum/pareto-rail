@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BufferGeometry,
   Color,
   CylinderGeometry,
@@ -18,6 +17,7 @@ import {
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { additiveMaterialParameters, createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import { hexRing, paintVertexColor, type ShardSpec } from './crystal';
 import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA } from './palette';
 
@@ -76,22 +76,19 @@ function hotGroup(): HotGroupParts {
   const finish: HotGroupParts['finish'] = ({ coreRadius, glowRadius, coreColor, glowColor, glowOpacity, accent, shardSpecs }) => {
     const fillMesh = new Mesh(
       fillGeometries.length > 0 ? mergeGeometries(fillGeometries) : new BufferGeometry(),
-      new MeshBasicMaterial({ vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false }),
+      createAdditiveBasicMaterial({ color: 0xffffff, vertexColors: true }),
     );
     const edgeLines = new LineSegments(
       edgeGeometries.length > 0 ? mergeGeometries(edgeGeometries) : new BufferGeometry(),
-      new LineBasicMaterial({ vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false }),
+      new LineBasicMaterial(additiveMaterialParameters({ vertexColors: true })),
     );
     const coreMaterial = new MeshBasicMaterial({ color: coreColor.clone() });
     const core = new Mesh(new OctahedronGeometry(coreRadius, 2), coreMaterial);
     const coreGlow = new Mesh(
       new OctahedronGeometry(glowRadius, 2),
-      new MeshBasicMaterial({
+      createAdditiveBasicMaterial({
         color: glowColor.clone(),
-        transparent: true,
         opacity: glowOpacity,
-        blending: AdditiveBlending,
-        depthWrite: false,
       }),
     );
     group.add(fillMesh, edgeLines, core, coreGlow);
@@ -173,22 +170,16 @@ export function createLancerHalo(): Group {
   const halo = new Group();
   const ring = new Mesh(
     new RingGeometry(2.35, 2.46, 3),
-    new MeshBasicMaterial({
+    createAdditiveBasicMaterial({
       color: hdr(AMBER, 1.35),
-      transparent: true,
       opacity: 0.9,
-      blending: AdditiveBlending,
-      depthWrite: false,
     }),
   );
   const counterRing = new Mesh(
     new RingGeometry(2.7, 2.76, 3),
-    new MeshBasicMaterial({
+    createAdditiveBasicMaterial({
       color: hdr(AMBER, 0.8),
-      transparent: true,
       opacity: 0.7,
-      blending: AdditiveBlending,
-      depthWrite: false,
     }),
   );
   counterRing.rotation.z = Math.PI;
@@ -309,13 +300,10 @@ export function createWardenCoreMesh(): Group {
   // Shield shell: amber cage that spins while the shield plates live. Not part
   // of the falloff contract — it stays hot until it dissolves.
   const shell = new Group();
-  const shellLineMaterial = new LineBasicMaterial({
+  const shellLineMaterial = new LineBasicMaterial(additiveMaterialParameters({
     color: hdr(AMBER, 0.78),
-    transparent: true,
     opacity: 0.62,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
+  }));
   for (const [radius, z, twist] of [
     [8.2, 0.7, 0.12],
     [8.55, 0, 0],
@@ -328,13 +316,10 @@ export function createWardenCoreMesh(): Group {
   }
   const cage = new LineSegments(
     new EdgesGeometry(new IcosahedronGeometry(6.9, 0)),
-    new LineBasicMaterial({
+    new LineBasicMaterial(additiveMaterialParameters({
       color: hdr(AMBER, 0.45),
-      transparent: true,
       opacity: 0.48,
-      blending: AdditiveBlending,
-      depthWrite: false,
-    }),
+    })),
   );
   shell.add(cage);
   group.add(shell);
