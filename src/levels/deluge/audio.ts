@@ -10,6 +10,7 @@ import {
 } from '../../engine/audio-kit';
 import { emitBeatAt, midiToFreq } from '../../engine/music';
 import { CANAL_TIME, DELUGE_BPM, DELUGE_DURATION, PHASE2_TIME, STREETFALL_TIME, UNDER_TIME, VULTURE_TIME, OUTRO_TIME } from './gameplay';
+import { nearestLightning, TRAIN_PASS_TIME } from './sync';
 
 const SIXTEENTH = 60 / DELUGE_BPM / 4;
 const THIRTYSECOND = SIXTEENTH / 2;
@@ -168,25 +169,43 @@ export function createAudio(bus: EventBus) {
     if (runTime < 0 || runTime > DELUGE_DURATION) return;
 
     const intro = runTime < STREETFALL_TIME;
+    const avenue = runTime >= STREETFALL_TIME && runTime < UNDER_TIME;
     const tube = runTime >= UNDER_TIME && runTime < CANAL_TIME;
     const boss = runTime >= VULTURE_TIME && runTime < OUTRO_TIME;
+    const phase2 = runTime >= PHASE2_TIME && runTime < OUTRO_TIME;
     const outro = runTime >= OUTRO_TIME;
 
     if (step === 0) {
-      scheduleKick(time, intro ? 0.12 : outro ? 0.06 : 0.28);
-      schedulePad(time, chord, intro ? 0.07 : boss ? 0.1 : 0.055, outro ? 2.8 : 1.2);
+      scheduleKick(time, intro ? 0.13 : outro ? 0.04 : boss ? 0.24 : 0.30);
+      schedulePad(time, chord, intro ? 0.08 : boss ? 0.11 : tube ? 0.045 : 0.06, outro ? 3.0 : 1.25);
     }
-    if (!intro && !outro && (step === 10 || step === 14)) scheduleSnare(time, boss ? 0.24 : 0.2);
-    if (!outro && (step % 2 === 0)) scheduleHat(time, tube ? 0.08 : intro ? 0.025 : 0.055);
-    if (!intro && !outro && [0, 3, 6, 10, 12].includes(step)) scheduleReese(time, chord.bass, tube ? 0.17 : boss ? 0.2 : 0.15);
-    if (!intro && !outro && (step === 1 || step === 5 || step === 9 || step === 13)) {
-      const note = chord.arp[(index + section) % chord.arp.length] + (tube ? 0 : 12);
-      scheduleArp(time, note, tube ? 0.035 : 0.05, SIXTEENTH * 1.5);
+    if (intro && step === 8) scheduleKick(time, 0.07);
+    if (avenue && [4, 11, 14].includes(step)) scheduleKick(time, 0.17);
+    if (tube && [3, 6, 9, 12, 15].includes(step)) scheduleKick(time, 0.13);
+    if (boss && !phase2 && step === 8) scheduleKick(time, 0.18);
+    if (phase2 && [2, 7, 10, 15].includes(step)) scheduleKick(time, 0.17);
+
+    if (!intro && !outro && (step === 4 || step === 12 || (avenue && step === 14) || (phase2 && step === 10))) scheduleSnare(time, boss ? 0.25 : 0.21);
+    if (!outro && ((intro && step % 8 === 0) || (avenue && step % 2 === 0) || (tube && step % 2 === 1) || (boss && step % 4 !== 0))) {
+      scheduleHat(time, tube ? 0.075 : intro ? 0.025 : phase2 ? 0.065 : 0.052);
     }
+    if (!intro && !outro && (tube ? [0, 2, 5, 8, 11, 14].includes(step) : boss ? [0, 6, 8, 13].includes(step) : [0, 3, 6, 10, 12].includes(step))) {
+      scheduleReese(time, chord.bass, tube ? 0.18 : boss ? 0.21 : 0.15);
+    }
+    if (!intro && !outro && (step === 1 || step === 5 || step === 9 || step === 13 || (phase2 && step % 2 === 1))) {
+      const note = chord.arp[(index + section) % chord.arp.length] + (tube ? 0 : phase2 ? 7 : 12);
+      scheduleArp(time, note, tube ? 0.034 : phase2 ? 0.044 : 0.052, SIXTEENTH * (tube ? 1.1 : 1.5));
+    }
+    if ((STREETFALL_TIME - runTime > 0 && STREETFALL_TIME - runTime < 2.2) || (UNDER_TIME - runTime > 0 && UNDER_TIME - runTime < 2.2)) {
+      if (step % 2 === 0) scheduleRiser(time, chord.root + 36 + Math.floor((index % 16) / 2));
+    }
+    if (Math.abs(runTime - STREETFALL_TIME) < SIXTEENTH || Math.abs(runTime - UNDER_TIME) < SIXTEENTH) scheduleImpact(time);
+    if (Math.abs(runTime - TRAIN_PASS_TIME) < SIXTEENTH && step === 0) scheduleTrainRoar(time);
+    if (phase2 && [0, 4, 8, 12].includes(step)) scheduleChargeBed(time, chord.root + 12 + (bossDamage % 5));
     if (boss && step === 4) scheduleBossVoice(time, chord.root + 24 + (bossDamage % 7));
     if (outro && step === 0) scheduleArp(time, chord.root + 36, 0.025, 0.8);
 
-    if (Math.abs(runTime - STREETFALL_TIME) < SIXTEENTH || Math.abs(runTime - UNDER_TIME) < SIXTEENTH) scheduleThunder(time);
+    if (nearestLightning(runTime, SIXTEENTH * 0.65)) scheduleThunder(time);
   }
 
   function sectionForTime(runTime: number) {
@@ -199,6 +218,58 @@ export function createAudio(bus: EventBus) {
   function chordForBar(barIndex: number, runTime: number) {
     const bank = runTime >= VULTURE_TIME && runTime < OUTRO_TIME ? BOSS_CHORDS : CHORDS;
     return bank[Math.floor(barIndex / 2) % bank.length];
+  }
+
+  function scheduleRiser(time: number, midi: number) {
+    if (!ctx || !musicGain || !delaySend) return;
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + SIXTEENTH * 1.7,
+      oscillatorType: 'sawtooth',
+      frequency: midiToFreq(midi),
+      frequencyAutomation: [{ type: 'exponentialRamp', value: midiToFreq(midi + 12), time: time + SIXTEENTH * 1.7 }],
+      filter: { type: 'highpass', frequency: 600, Q: 0.7 },
+      gainAutomation: [{ type: 'set', value: 0.018, time }, { type: 'linearRamp', value: 0.055, time: time + SIXTEENTH * 1.3 }, { type: 'exponentialRamp', value: 0.001, time: time + SIXTEENTH * 1.7 }],
+      destination: musicGain,
+      sends: [{ destination: delaySend, gain: 0.22 }],
+    });
+  }
+
+  function scheduleImpact(time: number) {
+    if (!ctx || !musicGain || !noiseBuffer) return;
+    scheduleKick(time, 0.42);
+    playNoiseHit({ context: ctx, buffer: noiseBuffer, time, velocity: 0.38, decay: 0.42, filterType: 'lowpass', frequency: 520, destination: musicGain });
+  }
+
+  function scheduleTrainRoar(time: number) {
+    if (!ctx || !musicGain || !noiseBuffer) return;
+    playNoiseHit({ context: ctx, buffer: noiseBuffer, time, velocity: 0.28, decay: 1.4, filterType: 'bandpass', frequency: 420, destination: musicGain });
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + 1.6,
+      oscillatorType: 'sawtooth',
+      frequency: 86,
+      frequencyAutomation: [{ type: 'exponentialRamp', value: 42, time: time + 1.45 }],
+      filter: { type: 'lowpass', frequency: 780, Q: 0.5 },
+      gainAutomation: [{ type: 'set', value: 0.16, time }, { type: 'exponentialRamp', value: 0.001, time: time + 1.6 }],
+      destination: musicGain,
+    });
+  }
+
+  function scheduleChargeBed(time: number, midi: number) {
+    if (!ctx || !musicGain) return;
+    playOscillatorVoice({
+      context: ctx,
+      time,
+      stopTime: time + SIXTEENTH * 3.7,
+      oscillatorType: 'sawtooth',
+      frequency: midiToFreq(midi),
+      filter: { type: 'bandpass', frequency: 760 + bossDamage * 70, Q: 5.0 },
+      gainAutomation: [{ type: 'set', value: 0.026 + bossDamage * 0.002, time }, { type: 'linearRamp', value: 0.055 + bossDamage * 0.003, time: time + SIXTEENTH * 2 }, { type: 'exponentialRamp', value: 0.001, time: time + SIXTEENTH * 3.7 }],
+      destination: musicGain,
+    });
   }
 
   function scheduleKick(time: number, gain: number) {

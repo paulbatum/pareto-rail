@@ -1,4 +1,4 @@
-import { CatmullRomCurve3, MathUtils, Vector3 } from 'three';
+import { CatmullRomCurve3, MathUtils, Object3D, Vector3 } from 'three';
 import {
   hostileShotAimPoint,
   shotBehindCamera,
@@ -42,7 +42,7 @@ export type DelugeSpawnData =
   | { role: 'gnat'; lead: number; center: Vector3; seed: number; boid: number; debugHold?: boolean }
   | { role: 'interceptor'; lead: number; side: -1 | 1; y: number; seed: number; fireAt?: number; debugHold?: boolean }
   | { role: 'turret'; lead: number; wall: -1 | 1 | 0; y: number; seed: number; fireEvery?: number; debugHold?: boolean }
-  | { role: 'barrier'; lead: number; gapX: number; gapY: number; width: number; seed: number; debugHold?: boolean }
+  | { role: 'barrier'; lead: number; gapX: number; gapY: number; width: number; seed: number; sealed?: boolean; debugHold?: boolean }
   | { role: 'dropvan'; lead: number; offset: Vector3; seed: number; debugHold?: boolean }
   | { role: 'shot'; position: Vector3; velocity: Vector3; lastAge: number; impact: HostileShotImpactState; flavor: 'bolt' | 'flak' }
   | { role: 'vulturePod'; side: -1 | 1; debugHold?: boolean }
@@ -132,6 +132,55 @@ export function createDelugeRail() {
   );
 }
 
+export type VultureWorldTransform = {
+  position: Vector3;
+  rotation: import('three').Quaternion;
+  scale: number;
+  local: number;
+};
+
+export const VULTURE_HARDPOINTS = {
+  leftPod: new Vector3(-7.4, 0, 0.2),
+  rightPod: new Vector3(7.4, 0, 0.2),
+  core: new Vector3(0, -1.9, 3.9),
+} as const;
+
+const vultureCurve = createDelugeRail();
+const VULTURE_BASE_SCALE = 2.25;
+
+export function vultureWorldTransform(runTime: number): VultureWorldTransform {
+  const local = Math.max(0, runTime - VULTURE_TIME);
+  const lead = runTime < PHASE2_TIME ? 5.0 : 3.5;
+  const u = railU(Math.min(DELUGE_DURATION, runTime + lead));
+  const frame = sampleVultureRailFrame(u);
+  const strafe = Math.sin(local * 0.38) * (runTime < PHASE2_TIME ? 8.5 : 4.5);
+  const bob = (runTime < PHASE2_TIME ? 6.8 : 4.6) + Math.sin(local * 0.7) * 0.9;
+  const position = frame.position.clone().addScaledVector(frame.right, strafe).addScaledVector(frame.up, bob);
+  const helper = new Object3D();
+  helper.position.copy(position);
+  helper.lookAt(position.clone().addScaledVector(frame.tangent, -1));
+  const ahead = vultureCurve.getTangentAt(MathUtils.clamp(u + 0.007, 0, 1));
+  const roll = MathUtils.clamp((ahead.x - frame.tangent.x) * 18 + Math.sin(local * 0.32) * 0.08, -0.22, 0.22);
+  helper.rotateZ(roll);
+  return { position, rotation: helper.quaternion.clone(), scale: VULTURE_BASE_SCALE * (runTime >= PHASE2_TIME ? 1.08 : 1), local };
+}
+
+export function vultureHardpointWorldPosition(runTime: number, offset: Vector3) {
+  const transform = vultureWorldTransform(runTime);
+  return transform.position.clone().add(offset.clone().multiplyScalar(transform.scale).applyQuaternion(transform.rotation));
+}
+
+function sampleVultureRailFrame(u: number) {
+  const clamped = MathUtils.clamp(u, 0, 1);
+  const position = vultureCurve.getPointAt(clamped);
+  const tangent = vultureCurve.getTangentAt(clamped).normalize();
+  const worldUp = new Vector3(0, 1, 0);
+  const right = new Vector3().crossVectors(tangent, worldUp).normalize();
+  if (right.lengthSq() < 0.0001) right.set(1, 0, 0);
+  const up = new Vector3().crossVectors(right, tangent).normalize();
+  return { position, tangent, right, up };
+}
+
 const DEBUG_HOLD_PROGRESS_OFFSET = 0.016;
 const SHOT_MAX_AGE = 12;
 
@@ -183,7 +232,7 @@ function barriers(time: number, lead: number, gaps: Array<[number, number, numbe
     time: time + index * 0.32,
     kind: 'barrier',
     countsTowardTotal: false,
-    data: { role: 'barrier', lead, gapX, gapY, width, seed: time + index },
+    data: { role: 'barrier', lead, gapX, gapY, width, sealed: width <= 0, seed: time + index },
   }));
 }
 
@@ -230,28 +279,28 @@ function buildTimeline(vultureEntries: DelugeSpawnEntry[]): DelugeSpawnEntry[] {
     ...interceptors(bar(25), 4.3, [1, -1]),
     ...turrets(bar(26), 4.5, [[-1, 0.8], [0, 5.2], [1, 2.6]]),
     ...gnats(bar(28), 4.1, [0, 3.5], 7, 1.8),
-    ...barriers(bar(30), 4.3, [[-3.8, 0, 3.2], [3.8, 0, 3.2]]),
+    ...barriers(bar(30), 4.3, [[0, 0, 4.2], [99, 99, 0]]),
     ...interceptors(bar(32), 4.2, [-1, 1]),
     ...dropvans(bar(34), 4.7, [[0, 4.2]]),
     ...turrets(bar(36), 4.4, [[-1, 2.0], [1, 2.0]]),
     ...gnats(bar(38), 4.0, [-3.5, 3], 5, 1.9),
 
     // bars 39.5–41 clear for The Under drop.
-    ...barriers(bar(41), 3.8, [[0, 0, 4.8], [-4.5, 0, 3.0]]),
+    ...barriers(bar(41), 3.8, [[0, 0, 4.8], [99, 99, 0]]),
     ...turrets(bar(42), 3.9, [[-1, 2.6], [1, 2.6], [0, 5.2]]),
     ...gnats(bar(43), 3.6, [0, 2.8], 8, 1.3),
     ...interceptors(bar(45), 3.8, [-1, 1]),
-    ...barriers(bar(47), 3.5, [[3.9, 0, 2.8], [-3.9, 0, 2.8]]),
+    ...barriers(bar(47), 3.5, [[0, 0, 4.0], [99, 99, 0]]),
 
     // Tube: half-bar panic, ring turrets, barriers.
     ...turrets(bar(49), 3.3, [[-1, 2.4], [1, 2.4]]),
-    ...barriers(bar(50), 3.2, [[0, 0, 4.2], [4.2, 0, 2.8]]),
+    ...barriers(bar(50), 3.2, [[0, 0, 4.2], [99, 99, 0]]),
     ...gnats(bar(51), 3.2, [0, 3.0], 6, 1.1),
     ...turrets(bar(52), 3.3, [[0, 5.5], [-1, 1.5], [1, 1.5]]),
-    ...barriers(bar(54), 3.1, [[-4.1, 0, 2.8], [0, 0, 4.0]]),
+    ...barriers(bar(54), 3.1, [[99, 99, 0], [0, 0, 4.0]]),
     ...interceptors(bar(55), 3.3, [-1, 1]),
     ...gnats(bar(56), 3.1, [-2, 3.5], 8, 1.0),
-    ...barriers(bar(58), 3.0, [[4.5, 0, 2.4], [-4.5, 0, 2.4], [0, 0, 4.0]]),
+    ...barriers(bar(58), 3.0, [[99, 99, 0], [0, 0, 4.0], [99, 99, 0]]),
     ...dropvans(bar(60), 3.4, [[0, 3.2]]),
     ...turrets(bar(62), 3.0, [[-1, 2.1], [1, 4.3], [0, 5.6]]),
 
@@ -267,12 +316,12 @@ function buildTimeline(vultureEntries: DelugeSpawnEntry[]): DelugeSpawnEntry[] {
     ...barriers(bar(82), 3.8, [[0, 0, 4.4]]),
     ...gnats(bar(86), 3.8, [-2.5, 3.2], 6, 1.3),
     ...interceptors(bar(88), 4.0, [-1, 1]),
-    ...barriers(bar(90), 3.6, [[-4.2, 0, 2.8], [4.2, 0, 2.8]]),
+    ...barriers(bar(90), 3.6, [[99, 99, 0], [0, 0, 4.0]]),
     ...turrets(bar(92), 3.9, [[-1, 2.2], [1, 4.4]]),
     ...gnats(bar(94), 3.7, [0, 3.5], 8, 1.0),
     ...dropvans(bar(96), 4.0, [[0, 3.0]]),
     ...interceptors(bar(100), 3.8, [-1, 1]),
-    ...barriers(bar(102), 3.5, [[0, 0, 4.2]]),
+    ...barriers(bar(102), 3.5, [[99, 99, 0]]),
   ].sort((a, b) => a.time - b.time);
 }
 
@@ -402,7 +451,11 @@ export function createDelugeGameplay(bus: EventBus, debugTarget?: DelugeDebugTar
     enemy.mesh.userData.gapWidth = data.width;
     enemy.mesh.rotateZ(Math.sin(age * 5 + data.seed) * 0.03);
     if (!data.debugHold && runProgress > anchorU + 0.002) {
-      const cameraInGap = Math.abs(data.gapX) < data.width * 0.5 && Math.abs(data.gapY) < 2.2;
+      enemy.mesh.updateMatrixWorld(true);
+      const localCamera = camera.position.clone().applyMatrix4(enemy.mesh.matrixWorld.clone().invert());
+      const cameraInGap = !data.sealed && data.width > 0.1
+        && Math.abs(localCamera.x - data.gapX) <= data.width * 0.5
+        && Math.abs(localCamera.y - data.gapY) <= 1.75;
       if (!cameraInGap) damagePlayer(1);
       return true;
     }
@@ -468,25 +521,18 @@ export function createDelugeGameplay(bus: EventBus, debugTarget?: DelugeDebugTar
     return age > SHOT_MAX_AGE || shotBehindCamera(camera, data.position);
   }
 
-  function vultureAnchor(context: DelugeUpdate, phaseOffset = 0) {
-    const local = Math.max(0, context.runTime - VULTURE_TIME);
-    const lead = context.runTime < PHASE2_TIME ? 5.0 : 4.0;
-    const anchorU = context.enemy.entry.data.role === 'vultureCore' && context.enemy.entry.data.debugHold
-      ? MathUtils.clamp(context.runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1)
-      : context.railAnchor(lead);
-    const strafe = Math.sin(local * 0.38 + phaseOffset) * (context.runTime < PHASE2_TIME ? 9 : 5.2);
-    const bob = Math.sin(local * 0.7 + phaseOffset) * 1.4 + (context.runTime < PHASE2_TIME ? 6 : 4.2);
-    return { anchorU, strafe, bob, local };
-  }
-
   function updateVulturePod(context: DelugeUpdate, data: Extract<DelugeSpawnData, { role: 'vulturePod' }>) {
     const { enemy, curve, camera, runProgress, age } = context;
-    const { anchorU, strafe, bob, local } = data.debugHold
-      ? { anchorU: MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1), strafe: 0, bob: 4, local: age }
-      : vultureAnchor(context, data.side * 0.9);
-    enemy.mesh.position.copy(offsetFromRail(curve, anchorU, new Vector3(strafe + data.side * 4.9, bob, data.side * 0.6)));
-    enemy.mesh.quaternion.copy(camera.quaternion);
-    enemy.mesh.rotateZ(data.side * 0.2 + Math.sin(local) * 0.12);
+    if (data.debugHold) {
+      const anchorU = MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1);
+      enemy.mesh.position.copy(offsetFromRail(curve, anchorU, new Vector3(data.side * 4.8, 4, 0)));
+      enemy.mesh.quaternion.copy(camera.quaternion);
+    } else {
+      const transform = vultureWorldTransform(context.runTime);
+      const hardpoint = data.side < 0 ? VULTURE_HARDPOINTS.leftPod : VULTURE_HARDPOINTS.rightPod;
+      enemy.mesh.position.copy(transform.position.clone().add(hardpoint.clone().multiplyScalar(transform.scale).applyQuaternion(transform.rotation)));
+      enemy.mesh.quaternion.copy(transform.rotation);
+    }
     const state = context.enemyState(() => ({ nextFire: 2.2 + (data.side > 0 ? 0.8 : 0) }));
     if (age >= state.nextFire) {
       state.nextFire += 3.0;
@@ -521,12 +567,17 @@ export function createDelugeGameplay(bus: EventBus, debugTarget?: DelugeDebugTar
   function updateVultureCore(context: DelugeUpdate, data: Extract<DelugeSpawnData, { role: 'vultureCore' }>) {
     const { enemy, curve, camera, runProgress, age } = context;
     updateCoreWindow(context.runTime);
-    const { anchorU, strafe, bob, local } = data.debugHold
-      ? { anchorU: MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1), strafe: 0, bob: 3.6, local: age }
-      : vultureAnchor(context, 0);
-    enemy.mesh.position.copy(offsetFromRail(curve, anchorU, new Vector3(strafe, bob - 0.45, 0)));
-    enemy.mesh.quaternion.copy(camera.quaternion);
-    enemy.mesh.rotateZ(Math.sin(local * 0.6) * 0.08);
+    let local = age;
+    if (data.debugHold) {
+      const anchorU = MathUtils.clamp(runProgress + DEBUG_HOLD_PROGRESS_OFFSET, 0, 1);
+      enemy.mesh.position.copy(offsetFromRail(curve, anchorU, new Vector3(0, 3.6, 0)));
+      enemy.mesh.quaternion.copy(camera.quaternion);
+    } else {
+      const transform = vultureWorldTransform(context.runTime);
+      local = transform.local;
+      enemy.mesh.position.copy(transform.position.clone().add(VULTURE_HARDPOINTS.core.clone().multiplyScalar(transform.scale).applyQuaternion(transform.rotation)));
+      enemy.mesh.quaternion.copy(transform.rotation);
+    }
     enemy.mesh.userData.charge = coreEntry.lockable ? 1 : Math.max(0, Math.sin(local * 3.2) * 0.4);
     const state = context.enemyState(() => ({ nextFlak: 1.0, beamDamageDone: false }));
     if (age >= state.nextFlak && !coreEntry.lockable) {
