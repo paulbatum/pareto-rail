@@ -9,6 +9,7 @@ import {
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { tempo } from '../../engine/music';
 import { offsetFromRail } from '../../engine/rail';
+import { createSpeedProfile } from '../../engine/speed-profile';
 import type { EventBus } from '../../events';
 import { createHeliosDebugTimeline, type HeliosDebugTarget } from './debug';
 import { createSuneater, createSuneaterEntries } from './suneater';
@@ -90,36 +91,12 @@ const SPEED_KEYS: Array<[number, number]> = [
   [120, 1.3],
 ];
 
-export function speedFactorAt(time: number) {
-  const t = MathUtils.clamp(time, 0, HELIOS_DURATION);
-  for (let i = 1; i < SPEED_KEYS.length; i += 1) {
-    if (t <= SPEED_KEYS[i][0]) {
-      const [t0, v0] = SPEED_KEYS[i - 1];
-      const [t1, v1] = SPEED_KEYS[i];
-      return MathUtils.lerp(v0, v1, (t - t0) / Math.max(0.0001, t1 - t0));
-    }
-  }
-  return SPEED_KEYS[SPEED_KEYS.length - 1][1];
-}
+const speedProfile = createSpeedProfile(SPEED_KEYS, HELIOS_DURATION);
 
-const EASE_SAMPLES = 1200;
-const easeTable: number[] = (() => {
-  const table = [0];
-  let sum = 0;
-  const dt = HELIOS_DURATION / EASE_SAMPLES;
-  for (let i = 1; i <= EASE_SAMPLES; i += 1) {
-    const mid = (i - 0.5) * dt;
-    sum += speedFactorAt(mid) * dt;
-    table.push(sum);
-  }
-  const total = table[EASE_SAMPLES];
-  return table.map((value) => value / total);
-})();
+export const speedFactorAt = speedProfile.speedAt;
 
 export function heliosRunProgress(time: number, duration = HELIOS_DURATION) {
-  const t = MathUtils.clamp(time / duration, 0, 1) * EASE_SAMPLES;
-  const index = Math.min(EASE_SAMPLES - 1, Math.floor(t));
-  return MathUtils.lerp(easeTable[index], easeTable[index + 1], t - index);
+  return speedProfile.runProgress(time, duration);
 }
 
 /** Rail parameter the camera occupies at run time `t` — for placing set pieces. */

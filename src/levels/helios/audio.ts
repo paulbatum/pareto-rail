@@ -1,14 +1,12 @@
 import type { EventBus } from '../../events';
 import {
-  createLevelAudioKit,
-  createMixBus,
-  createStepTransport,
+  createBeatLevelAudio,
   playOscillatorVoice,
-  type MixBus,
+  type BeatLevelAudioStep,
 } from '../../engine/audio-kit';
 import { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';
 import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
-import { emitBeatAt, midiToFreq } from '../../engine/music';
+import { midiToFreq } from '../../engine/music';
 import { createScore, lerp, type SectionMix } from '../../engine/score';
 import { HELIOS_BPM, HELIOS_DURATION } from './gameplay';
 import { createHeliosVoices, installHeliosRumble, type HeliosTonalVoice } from './audio-voices';
@@ -24,8 +22,6 @@ import { createHeliosVoices, installHeliosRumble, type HeliosTonalVoice } from '
 
 const SIXTEENTH = 60 / HELIOS_BPM / 4;
 const THIRTYSECOND = SIXTEENTH / 2;
-const SCHEDULE_AHEAD = 0.18;
-const SCHEDULER_MS = 25;
 const STEPS_PER_BAR = 16;
 const KILL_LANE_STEPS = 32;
 
@@ -131,11 +127,8 @@ export const traceHeliosAudio = createAudioTraceHarness({
 
 function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
-  let mode: 'run' | 'ambient' = 'ambient';
   let heartId = -1;
   let heartMaxHp = 0;
-
-  let mix: MixBus | null = null;
 
   const score = createScore<Chord, SectionIndex>({
     bpm: HELIOS_BPM,
@@ -152,64 +145,42 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     killLanes: KILL_LANES,
   });
 
-  const transport = createStepTransport({
+  const runtime = createBeatLevelAudio({
+    bus,
+    trace,
     stepSeconds: SIXTEENTH,
-    scheduleAhead: SCHEDULE_AHEAD,
-    startDelay: 0.06,
-    onStep({ index, time }) {
-      scheduleStep(index, time);
-    },
-  });
-
-  const audio = createLevelAudioKit({
     volumeScale: 0.8,
-    schedulerMs: SCHEDULER_MS,
-    onCreateContext(context, musicVolume, sfxVolume) {
-      ctx = context;
-      buildGraph(context, musicVolume, sfxVolume);
-      transport.start(context);
-      score.setEpoch(transport.nextStepTime);
+    score,
+    runAlignment: 'step',
+    beatNumber: 'position',
+    onBeforeBeat({ step, bar, time, mode }) {
+      if (mode === 'run' && step === 0) runArrangement.recordSectionStart(time, bar);
     },
-    onSchedule(context) {
-      transport.schedule(context);
-    },
-    onMusicVolumeChange(context, musicVolume) {
-      mix?.setMusicVolume(musicVolume, context.currentTime, 0.05);
-    },
-    onSfxVolumeChange(context, sfxVolume) {
-      mix?.setSfxVolume(sfxVolume, context.currentTime, 0.02);
-    },
-    onDispose() {
-      ctx = null;
-      mix = null;
-    },
-  });
-
-  function buildGraph(context: AudioContext, musicVolume: number, sfxVolume: number) {
-    mix = createMixBus(context, {
-      musicVolume,
-      sfxVolume,
+    mix: {
       compressor: { threshold: -16, ratio: 5, attack: 0.004, release: 0.2 },
       delay: { time: SIXTEENTH * 3, feedback: 0.32, dampHz: 2400 },
       reverb: { seconds: 2.4, decay: 2.6, level: 0.5 },
       noiseSeconds: 2,
-    });
-    installHeliosRumble(context, mix);
-  }
+    },
+    onPostBuild(context, mix) {
+      ctx = context;
+      installHeliosRumble(context, mix);
+    },
+    onStep: scheduleStep,
+    onRunStart() {
+      heartId = -1;
+      heartMaxHp = 0;
+    },
+    onRunEnd() {
+      const context = runtime.context();
+      if (context) choir(context.currentTime + 0.05, [52, 59, 64, 66, 71], 6, 0.9);
+    },
+    onDispose() {
+      ctx = null;
+    },
+  });
 
-  const sfxDestination = () => mix?.sfx ?? mix?.master ?? null;
-
-  function traceRun(seconds: number) {
-    mode = 'run';
-    heartId = -1;
-    heartMaxHp = 0;
-    score.restartArrangement(0, { align: 'step' });
-    transport.reset(0.06, 0);
-    score.setEpoch(0.06);
-    ctx = { currentTime: 0 } as AudioContext;
-    transport.runUntil(seconds);
-    ctx = null;
-  }
+  const sfxDestination = () => runtime.mix()?.sfx ?? runtime.mix()?.master ?? null;
 
   // ---- scheduler ------------------------------------------------------------
 
@@ -417,32 +388,14 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     return 1 - (bar - 80) / 7;
   }
 
-  function scheduleStep(index: number, time: number) {
-    const position = Math.max(0, index - score.arrangementStart);
-    const step = position % STEPS_PER_BAR;
-    const barIndex = Math.floor(position / STEPS_PER_BAR);
-
-    if (mode === 'run' && step === 0) runArrangement.recordSectionStart(time, barIndex);
-
-    if (position % 4 === 0) {
-      scheduleBeat(time, Math.floor(position / 4), step === 0);
-    }
-
+  function scheduleStep({ position, time, mode }: BeatLevelAudioStep) {
     if (mode === 'ambient') ambientArrangement.schedule(position, time);
     else runArrangement.schedule(position, time);
   }
 
-  function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
-    if (trace) {
-      trace.record(time, 'beat', { beatNumber, isDownbeat });
-      return;
-    }
-    if (ctx) emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
-  }
-
   // ---- voices -----------------------------------------------------------------
 
-  const voices = createHeliosVoices({ trace, context: () => ctx, mix: () => mix });
+  const voices = createHeliosVoices({ trace, context: () => ctx, mix: runtime.mix });
   const { kick, snare, hat, openHat, ride, crash, bass, choir, arp, stab, lead, alarmSwell, riser, impact, noiseHit, playerSends, playerTone, playerNoise } = voices;
 
   // ---- player instruments ---------------------------------------------------
@@ -544,10 +497,11 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   function heartFinale(time: number) {
     const output = sfxDestination();
-    if (!ctx || !output || !mix?.duck) return;
+    const audioMix = runtime.mix();
+    if (!ctx || !output || !audioMix?.duck) return;
     const position = score.arrangementPositionAt(time);
     const chord = score.chordAt(position);
-    mix.duckAt(time, 0.14, 1.4);
+    audioMix.duckAt(time, 0.14, 1.4);
     impact(time, 1.4);
     choir(time + 0.08, [chord.bass, ...chord.pad, ...chord.stab.map((midi) => midi + 12)], 6, 1.15);
     riser(time, 0.8, 0.14);
@@ -661,7 +615,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('stage', ({ enemyId, stageIndex }) => {
     const output = sfxDestination();
-    if (!ctx || !output || !mix?.reverbSend) return;
+    if (!ctx || !output || !runtime.mix()?.reverbSend) return;
     const time = score.nextGridTime(ctx.currentTime, 1);
     const chord = score.chordAt(score.arrangementPositionAt(time));
     playerNoise(time, 0.2, 0.13, 2600);
@@ -695,7 +649,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   });
 
   bus.on('volley', ({ size, kills }) => {
-    if (!ctx || size < 4 || kills < size || !mix?.duck) return;
+    if (!ctx || size < 4 || kills < size || !runtime.mix()?.duck) return;
     const time = score.nextGridTime(ctx.currentTime, 4);
     const position = score.arrangementPositionAt(time);
     const chord = score.chordAt(position);
@@ -798,7 +752,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
       const time = score.nextGridTime(ctx.currentTime, 0.5);
       riser(time, 2.2, 0.2);
       [28, 40, 47].forEach((midi, index) => {
-        if (!ctx || !mix?.duck || !mix.reverbSend) return;
+        const audioMix = runtime.mix();
+        if (!ctx || !audioMix?.duck || !audioMix.reverbSend) return;
         const at = time + index * 0.3;
         playOscillatorVoice({
           context: ctx,
@@ -816,8 +771,8 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
             { type: 'linearRamp', value: 0.2, time: at + 0.05 },
             { type: 'exponentialRamp', value: 0.001, time: at + 1.1 },
           ],
-          destination: mix.duck,
-          sends: [{ destination: mix.reverbSend, gain: 0.55 }],
+          destination: audioMix.duck,
+          sends: [{ destination: audioMix.reverbSend, gain: 0.55 }],
         });
       });
     } else if (kind === 'flare') {
@@ -845,20 +800,5 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
     }
   });
 
-  bus.on('runstart', () => {
-    mode = 'run';
-    heartId = -1;
-    heartMaxHp = 0;
-    // Restart the arrangement on the next 16th so the drops track the run
-    // set pieces to within ~90 ms.
-    score.restartArrangement(transport.stepIndex, { align: 'step' });
-  });
-
-  bus.on('runend', () => {
-    mode = 'ambient';
-    if (!ctx) return;
-    choir(ctx.currentTime + 0.05, [52, 59, 64, 66, 71], 6, 0.9);
-  });
-
-  return { audio, traceRun };
+  return runtime;
 }

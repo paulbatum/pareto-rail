@@ -1,6 +1,8 @@
+import type { EventBus } from '../events';
 import type { LevelAudio } from './types';
 import type { AudioTraceSink, AudioTraceValue } from './audio-trace';
 import { createBrowserAudioContext, installAudioUnlock } from './audio-unlock';
+import { emitBeatAt } from './music';
 
 export type StepTransportStep = {
   index: number;
@@ -145,6 +147,55 @@ export type NoiseHitOptions = {
   destination: AudioNode;
   loopStart?: number;
   offset?: number;
+};
+
+export type BeatLevelAudioMode = 'ambient' | 'run';
+
+export type BeatLevelAudioScore = {
+  readonly arrangementStart: number;
+  setEpoch(time: number): void;
+  restartArrangement(stepIndex: number, options: { align: 'bar' | 'step' }): number;
+};
+
+export type BeatLevelAudioStep = {
+  index: number;
+  position: number;
+  step: number;
+  bar: number;
+  time: number;
+  mode: BeatLevelAudioMode;
+};
+
+export type BeatLevelAudioRuntime = {
+  audio: LevelAudio;
+  traceRun(seconds: number): void;
+  context(): AudioContext | null;
+  mix(): MixBus | null;
+  mode(): BeatLevelAudioMode;
+  arrangementStart(): number;
+  transport(): StepTransport;
+};
+
+export type BeatLevelAudioOptions = {
+  bus: EventBus;
+  trace?: AudioTraceSink;
+  bpm?: number;
+  stepSeconds: number;
+  stepsPerBar?: number;
+  scheduleAhead?: number;
+  schedulerMs?: number;
+  startDelay?: number;
+  volumeScale?: number;
+  mix: MixBusOptions | ((context: AudioContext, musicVolume: number, sfxVolume: number) => MixBusOptions);
+  score?: BeatLevelAudioScore;
+  runAlignment?: 'bar' | 'step';
+  beatNumber?: 'absolute' | 'position' | ((step: BeatLevelAudioStep) => number);
+  onBeforeBeat?(step: BeatLevelAudioStep): void;
+  onStep(step: BeatLevelAudioStep): void;
+  onPostBuild?(context: AudioContext, mix: MixBus): void;
+  onRunStart?(runtime: BeatLevelAudioRuntime): void;
+  onRunEnd?(runtime: BeatLevelAudioRuntime): void;
+  onDispose?(): void;
 };
 
 export type LevelAudioKitOptions = {
@@ -471,6 +522,125 @@ export function playNoiseHit(options: NoiseHitOptions) {
   source.connect(filter).connect(gain).connect(options.destination);
   source.start(options.time, options.offset);
   source.stop(options.time + Math.max(0.02, options.decay) + 0.03);
+}
+
+export function createBeatLevelAudio(options: BeatLevelAudioOptions): BeatLevelAudioRuntime {
+  const stepsPerBar = options.stepsPerBar ?? 16;
+  const scheduleAhead = options.scheduleAhead ?? 0.18;
+  const schedulerMs = options.schedulerMs ?? 25;
+  const startDelay = options.startDelay ?? 0.06;
+  const runAlignment = options.runAlignment ?? 'step';
+  let ctx: AudioContext | null = null;
+  let mix: MixBus | null = null;
+  let mode: BeatLevelAudioMode = 'ambient';
+  let localArrangementStart = 0;
+
+  const arrangementStart = () => options.score?.arrangementStart ?? localArrangementStart;
+  const restartArrangement = (stepIndex: number) => {
+    if (options.score) localArrangementStart = options.score.restartArrangement(stepIndex, { align: runAlignment });
+    else localArrangementStart = runAlignment === 'bar'
+      ? stepIndex + ((stepsPerBar - (stepIndex % stepsPerBar)) % stepsPerBar)
+      : stepIndex;
+  };
+
+  const transport = createStepTransport({
+    stepSeconds: options.stepSeconds,
+    scheduleAhead,
+    startDelay,
+    onStep({ index, time }) {
+      const position = Math.max(0, index - arrangementStart());
+      const step = position % stepsPerBar;
+      const bar = Math.floor(position / stepsPerBar);
+      const stepInfo = { index, position, step, bar, time, mode };
+      if (step % 4 === 0) {
+        options.onBeforeBeat?.(stepInfo);
+        scheduleBeat(stepInfo);
+      }
+      options.onStep(stepInfo);
+    },
+  });
+
+  const audio = createLevelAudioKit({
+    volumeScale: options.volumeScale ?? 1,
+    schedulerMs,
+    onCreateContext(context, musicVolume, sfxVolume) {
+      ctx = context;
+      const mixOptions = typeof options.mix === 'function' ? options.mix(context, musicVolume, sfxVolume) : { ...options.mix, musicVolume, sfxVolume };
+      mix = createMixBus(context, mixOptions);
+      options.onPostBuild?.(context, mix);
+      transport.start(context);
+      options.score?.setEpoch(transport.nextStepTime);
+    },
+    onSchedule(context) {
+      transport.schedule(context);
+    },
+    onVolumeChange(context, volume) {
+      if (mix && options.mix && typeof options.mix !== 'function' && options.mix.combinedVolume) mix.setMasterVolume(volume, context.currentTime, 0.05);
+    },
+    onMusicVolumeChange(context, volume) {
+      mix?.setMusicVolume(volume, context.currentTime, 0.05);
+    },
+    onSfxVolumeChange(context, volume) {
+      mix?.setSfxVolume(volume, context.currentTime, 0.02);
+    },
+    onDispose() {
+      ctx = null;
+      mix = null;
+      options.onDispose?.();
+    },
+  });
+
+  const runtime: BeatLevelAudioRuntime = {
+    audio,
+    traceRun(seconds) {
+      mode = 'run';
+      restartArrangement(0);
+      options.onRunStart?.(runtime);
+      transport.reset(startDelay, 0);
+      options.score?.setEpoch(startDelay);
+      ctx = { currentTime: 0 } as AudioContext;
+      transport.runUntil(seconds);
+      ctx = null;
+    },
+    context() {
+      return ctx;
+    },
+    mix() {
+      return mix;
+    },
+    mode() {
+      return mode;
+    },
+    arrangementStart,
+    transport() {
+      return transport;
+    },
+  };
+
+  options.bus.on('runstart', () => {
+    mode = 'run';
+    restartArrangement(transport.stepIndex);
+    options.onRunStart?.(runtime);
+  });
+
+  options.bus.on('runend', () => {
+    mode = 'ambient';
+    options.onRunEnd?.(runtime);
+  });
+
+  function scheduleBeat(step: BeatLevelAudioStep) {
+    const beatNumber = typeof options.beatNumber === 'function'
+      ? options.beatNumber(step)
+      : Math.floor((options.beatNumber === 'position' ? step.position : step.index) / 4);
+    const isDownbeat = step.step === 0;
+    if (options.trace) {
+      options.trace.record(step.time, 'beat', { beatNumber, isDownbeat });
+      return;
+    }
+    if (ctx) emitBeatAt(options.bus, ctx, step.time, beatNumber, isDownbeat);
+  }
+
+  return runtime;
 }
 
 export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {

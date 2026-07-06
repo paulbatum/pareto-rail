@@ -1,14 +1,12 @@
 import type { EventBus } from '../../events';
 import {
-  createLevelAudioKit,
-  createMixBus,
-  createStepTransport,
+  createBeatLevelAudio,
   playOscillatorVoice,
-  type MixBus,
+  type BeatLevelAudioStep,
 } from '../../engine/audio-kit';
 import { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';
 import { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';
-import { emitBeatAt, midiToFreq } from '../../engine/music';
+import { midiToFreq } from '../../engine/music';
 import { createScore, lerp, type SectionMix } from '../../engine/score';
 import { CRYSTAL_BPM } from './gameplay';
 import { createCrystalVoices, type CrystalKillVoice } from './audio-voices';
@@ -24,8 +22,6 @@ import { createCrystalVoices, type CrystalKillVoice } from './audio-voices';
 
 const SIXTEENTH = 60 / CRYSTAL_BPM / 4;
 const THIRTYSECOND = SIXTEENTH / 2;
-const SCHEDULE_AHEAD = 0.18;
-const SCHEDULER_MS = 25;
 const STEPS_PER_BAR = 16;
 const LANE_STEPS = 32; // two bars: one full chord
 
@@ -113,10 +109,8 @@ export const traceCrystalAudio = createAudioTraceHarness({
 function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   let ctx: AudioContext | null = null;
   // Boots in ambient (attract screen); runstart switches to the full arrangement.
-  let mode: 'run' | 'ambient' = 'ambient';
   let coreId = -1;
   let coreMaxHp = 0;
-  let mix: MixBus | null = null;
 
   const score = createScore<Chord, SectionIndex>({
     bpm: CRYSTAL_BPM,
@@ -131,48 +125,37 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     killLanes: KILL_LANES,
   });
 
-  const transport = createStepTransport({
+  const runtime = createBeatLevelAudio({
+    bus,
+    trace,
     stepSeconds: SIXTEENTH,
-    scheduleAhead: SCHEDULE_AHEAD,
-    startDelay: 0.06,
-    onStep({ index, time }) {
-      scheduleStep(index, time);
-    },
-  });
-
-  const audio = createLevelAudioKit({
     volumeScale: 0.8,
-    schedulerMs: SCHEDULER_MS,
-    onCreateContext(context, musicVolume, sfxVolume) {
-      ctx = context;
-      buildGraph(context, musicVolume, sfxVolume);
-      transport.start(context);
-      score.setEpoch(transport.nextStepTime);
-    },
-    onSchedule(context) {
-      transport.schedule(context);
-    },
-    onMusicVolumeChange(context, musicVolume) {
-      mix?.setMusicVolume(musicVolume, context.currentTime, 0.05);
-    },
-    onSfxVolumeChange(context, sfxVolume) {
-      mix?.setSfxVolume(sfxVolume, context.currentTime, 0.02);
-    },
-    onDispose() {
-      ctx = null;
-      mix = null;
-    },
-  });
-
-  function buildGraph(context: AudioContext, musicVolume: number, sfxVolume: number) {
-    mix = createMixBus(context, {
-      musicVolume,
-      sfxVolume,
+    score,
+    runAlignment: 'bar',
+    beatNumber: 'absolute',
+    mix: {
       compressor: { threshold: -18, ratio: 5, attack: 0.005, release: 0.22 },
       delay: { time: SIXTEENTH * 3, feedback: 0.34, dampHz: 2600 },
       noiseSeconds: 2,
-    });
-  }
+    },
+    onPostBuild(context) {
+      ctx = context;
+    },
+    onStep: scheduleStep,
+    onRunStart() {
+      score.clearOverride();
+      coreId = -1;
+      coreMaxHp = 0;
+    },
+    onRunEnd() {
+      score.clearOverride();
+      const context = runtime.context();
+      if (context) pad(context.currentTime + 0.05, [57, 64, 69, 76], 5);
+    },
+    onDispose() {
+      ctx = null;
+    },
+  });
 
   // ---- musical position ----------------------------------------------------
   // Every player-triggered sound asks three questions: which grid step does
@@ -186,22 +169,11 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   // ---- voices -------------------------------------------------------------
 
-  const voices = createCrystalVoices({ trace, context: () => ctx, mix: () => mix });
+  const voices = createCrystalVoices({ trace, context: () => ctx, mix: runtime.mix });
   const { kick, clap, hat, bass, pad, arpNote, riser, noiseHit, playerSends, playerTone } = voices;
-  const sfxDestination = () => mix?.sfx ?? mix?.master ?? null;
+  const sfxDestination = () => runtime.mix()?.sfx ?? runtime.mix()?.master ?? null;
 
   // ---- scheduler ----------------------------------------------------------
-
-  function traceRun(seconds: number) {
-    mode = 'run';
-    score.clearOverride();
-    score.restartArrangement(0, { align: 'step' });
-    transport.reset(0.06, 0);
-    score.setEpoch(0.06);
-    ctx = { currentTime: 0 } as AudioContext;
-    transport.runUntil(seconds);
-    ctx = null;
-  }
 
   const blankBar = '................';
   const padEven = 'P...............' + blankBar;
@@ -270,26 +242,9 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     });
   }
 
-  function scheduleStep(index: number, time: number) {
-    const position = Math.max(0, index - score.arrangementStart);
-    const step = position % STEPS_PER_BAR;
-
-    if (step % 4 === 0) {
-      const beatNumber = Math.floor(index / 4);
-      scheduleBeat(time, beatNumber, step === 0);
-    }
-
+  function scheduleStep({ position, time, mode }: BeatLevelAudioStep) {
     if (mode === 'ambient') ambientArrangement.schedule(position, time);
     else runArrangement.schedule(position, time);
-  }
-
-  function scheduleBeat(time: number, beatNumber: number, isDownbeat: boolean) {
-    if (trace) {
-      trace.record(time, 'beat', { beatNumber, isDownbeat });
-      return;
-    }
-    if (!ctx) return;
-    emitBeatAt(bus, ctx, time, beatNumber, isDownbeat);
   }
 
   // ---- the player's instruments -------------------------------------------
@@ -299,7 +254,8 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   function killNote(time: number, position: number, sectionMix: SectionMix<SectionIndex>, chain: number) {
     const output = sfxDestination();
-    if (!ctx || !output || !mix?.delaySend) return;
+    const audioMix = runtime.mix();
+    if (!ctx || !output || !audioMix?.delaySend) return;
     // Mid-blend the lane contour flips at the halfway point; the timbre is
     // what needs the smooth handover, not the (always-consonant) note choice.
     const laneSection = sectionMix.t >= 0.5 ? sectionMix.to : sectionMix.from;
@@ -333,7 +289,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: time + voice.decay },
         ],
         destination: output,
-        sends: [{ destination: mix.delaySend, gain: 0.45 }],
+        sends: [{ destination: audioMix.delaySend, gain: 0.45 }],
       });
     }
     // A pure-tone body an octave below keeps square/saw voices from thinness.
@@ -361,7 +317,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: time + decay },
         ],
         destination: output,
-        sends: [{ destination: mix.delaySend, gain: 0.5 }],
+        sends: [{ destination: audioMix.delaySend, gain: 0.5 }],
       });
     }
     noiseHit(time, 0.05 * shimmer + 0.03, 0.08, 'highpass', 5200, output);
@@ -373,7 +329,8 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // audibly ratchets toward the finale.
   function coreChip(intensity: number) {
     const output = sfxDestination();
-    if (!ctx || !output || !mix?.delaySend) return;
+    const audioMix = runtime.mix();
+    if (!ctx || !output || !audioMix?.delaySend) return;
     const time = score.nextGridTime(ctx.currentTime, 0.5);
     const position = score.arrangementPositionAt(time);
     const chord = score.chordAt(position);
@@ -406,7 +363,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: time + 0.2 },
         ],
         destination: output,
-        sends: [{ destination: mix.delaySend, gain: 0.3 }],
+        sends: [{ destination: audioMix.delaySend, gain: 0.3 }],
       });
     }
     const leadSet = score.leadSetAt(position);
@@ -422,7 +379,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
         { type: 'exponentialRamp', value: 0.001, time: time + 0.5 },
       ],
       destination: output,
-      sends: [{ destination: mix.delaySend, gain: 0.5 }],
+      sends: [{ destination: audioMix.delaySend, gain: 0.5 }],
     });
     noiseHit(time, 0.12 + 0.08 * intensity, 0.06, 'bandpass', 1400, output);
   }
@@ -432,10 +389,12 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // falls from the top of the register through the delay.
   function coreFinale() {
     const output = sfxDestination();
-    if (!ctx || !output || !mix?.delaySend || !mix?.duck) return;
+    const audioMix = runtime.mix();
+    if (!ctx || !output || !audioMix?.delaySend || !audioMix.duck) return;
+    const delaySend = audioMix.delaySend;
     const time = score.nextGridTime(ctx.currentTime, 2);
 
-    mix.duckAt(time, 0.2, 1.8);
+    audioMix.duckAt(time, 0.2, 1.8);
 
     playOscillatorVoice({
       context: ctx,
@@ -472,13 +431,13 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
             { type: 'exponentialRamp', value: 0.001, time: time + 1.4 },
           ],
           destination: output,
-          sends: [{ destination: mix.delaySend, gain: 0.35 }],
+          sends: [{ destination: delaySend, gain: 0.35 }],
         });
       }
     }
     // Victory peal: A minor pentatonic falling from the top, ringing out.
     [93, 88, 84, 81, 76, 72, 69].forEach((midi, index) => {
-      if (!ctx || !output || !mix?.delaySend) return;
+      if (!ctx || !output || !delaySend) return;
       const at = time + index * SIXTEENTH;
       playOscillatorVoice({
         context: ctx,
@@ -492,7 +451,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: at + 0.45 },
         ],
         destination: output,
-        sends: [{ destination: mix.delaySend, gain: 0.55 }],
+        sends: [{ destination: delaySend, gain: 0.55 }],
       });
     });
     noiseHit(time, 0.14, 0.6, 'highpass', 6000, output);
@@ -513,6 +472,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
 
   bus.on('lock', ({ lockCount }) => {
     const output = sfxDestination();
+    const mix = runtime.mix();
     if (!ctx || !output || !mix?.delaySend) return;
     const midi = LOCK_SCALE[Math.min(LOCK_SCALE.length, Math.max(1, lockCount)) - 1];
     const time = score.quantizePlayerAction(ctx.currentTime);
@@ -579,7 +539,9 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // sound growing.
   bus.on('hit', ({ lethal, enemyId, hitPointsRemaining }) => {
     const output = sfxDestination();
+    const mix = runtime.mix();
     if (lethal || !ctx || !output || !mix?.delaySend) return;
+    const delaySend = mix.delaySend;
     if (enemyId === coreId) {
       coreMaxHp = Math.max(coreMaxHp, hitPointsRemaining + 1);
       coreChip(1 - hitPointsRemaining / coreMaxHp);
@@ -588,7 +550,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     const time = score.nextGridTime(ctx.currentTime, 0.5);
     const arp = score.chordAt(score.arrangementPositionAt(time)).arp;
     ([[0, 0.08], [1, 0.07], [2, 0.06]] as const).forEach(([index, vel]) => {
-      if (!ctx || !output || !mix?.delaySend) return;
+      if (!ctx || !output || !delaySend) return;
       const at = time + THIRTYSECOND * index;
       playOscillatorVoice({
         context: ctx,
@@ -602,7 +564,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
           { type: 'exponentialRamp', value: 0.001, time: at + 0.14 },
         ],
         destination: output,
-        sends: [{ destination: mix.delaySend, gain: 0.38 }],
+        sends: [{ destination: delaySend, gain: 0.38 }],
       });
     });
     noiseHit(time, 0.035, 0.035, 'highpass', 5600, output);
@@ -611,7 +573,8 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // A clean volley of four or more kills earns a flourish: the chord stabbed
   // on the next beat under a bright shimmer — the music itself applauds.
   bus.on('volley', ({ size, kills }) => {
-    if (!ctx || !mix?.duck || !mix?.delaySend || kills < 4 || kills < size) return;
+    const mix = runtime.mix();
+    if (!ctx || !mix?.duck || !mix.delaySend || kills < 4 || kills < size) return;
     const time = score.nextGridTime(ctx.currentTime, 4);
     const chord = score.chordAt(score.arrangementPositionAt(time));
     for (const midi of chord.pad) {
@@ -709,13 +672,14 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   // Warden entrance: a rising two-note alarm over a long riser. From here on
   // the kill melody speaks in the Warden's voice.
   bus.on('spawn', ({ kind, enemyId }) => {
-    if (kind !== 'warden-core' || !ctx || !mix?.duck || !mix?.delaySend) return;
+    const mix = runtime.mix();
+    if (kind !== 'warden-core' || !ctx || !mix?.duck || !mix.delaySend) return;
     score.overrideSection(2);
     coreId = enemyId;
     const time = score.nextGridTime(ctx.currentTime);
     riser(time, 1.8);
     [57, 63].forEach((midi, index) => {
-      if (!ctx || !mix?.duck || !mix?.delaySend) return;
+      if (!ctx || !mix.duck || !mix.delaySend) return;
       const at = time + index * 0.42;
       playOscillatorVoice({
         context: ctx,
@@ -753,22 +717,5 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
     });
   });
 
-  bus.on('runstart', () => {
-    mode = 'run';
-    score.clearOverride();
-    coreId = -1;
-    coreMaxHp = 0;
-    // Restart the arrangement on the next bar boundary so the build-up
-    // tracks the new run.
-    score.restartArrangement(transport.stepIndex, { align: 'bar' });
-  });
-
-  bus.on('runend', () => {
-    mode = 'ambient';
-    score.clearOverride();
-    if (!ctx) return;
-    pad(ctx.currentTime + 0.05, [57, 64, 69, 76], 5);
-  });
-
-  return { audio, traceRun };
+  return runtime;
 }
