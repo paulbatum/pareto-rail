@@ -1,7 +1,7 @@
 import { CatmullRomCurve3, Vector3 } from 'three';
 import type { LockOnRunnerLevel } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
-import { PRISM_BPM, PRISM_RUN_DURATION, PRISM_TIME } from './timing';
+import { PRISM_BPM, PRISM_MARKERS, PRISM_RUN_DURATION, PRISM_TIME } from './timing';
 
 export { PRISM_BPM, PRISM_RUN_DURATION } from './timing';
 
@@ -40,34 +40,46 @@ type PrismSpawnEntry = {
   data: PrismSpawnData;
 };
 
-const PRISM_WAVES: PrismSpawnEntry[] = [];
 const FAN_STAGGER = PRISM_TIME.seconds(0.14);
 
-function addFan(time: number, kind: PrismEnemyKind, pattern: PrismPattern, count: number, radius: number, lead = 4.4) {
-  for (let i = 0; i < count; i += 1) {
-    PRISM_WAVES.push({
-      time: time + i * FAN_STAGGER,
-      kind,
-      data: {
-        lead,
-        lane: i - (count - 1) / 2,
-        radius,
-        phase: (i / Math.max(1, count)) * Math.PI * 2,
-        pattern,
-      },
-    });
-  }
+type PrismFan = {
+  time: number;
+  kind: PrismEnemyKind;
+  pattern: PrismPattern;
+  count: number;
+  radius: number;
+  lead?: number;
+};
+
+const PRISM_FANS: readonly PrismFan[] = [
+  { time: PRISM_MARKERS.firstGateFan, kind: 'gate', pattern: 'spiral', count: 5, radius: 4.8, lead: 4.6 },
+  { time: PRISM_MARKERS.firstCometFan, kind: 'comet', pattern: 'zipper', count: 6, radius: 6.4, lead: 4.2 },
+  { time: PRISM_MARKERS.firstEchoFan, kind: 'echo', pattern: 'bloom', count: 4, radius: 3.4, lead: 5.0 },
+  { time: PRISM_MARKERS.secondGateFan, kind: 'gate', pattern: 'spiral', count: 7, radius: 6.0, lead: 4.6 },
+  { time: PRISM_MARKERS.secondCometFan, kind: 'comet', pattern: 'zipper', count: 5, radius: 7.2, lead: 4.0 },
+  { time: PRISM_MARKERS.secondEchoFan, kind: 'echo', pattern: 'bloom', count: 6, radius: 4.2, lead: 4.8 },
+  { time: PRISM_MARKERS.finalGateFan, kind: 'gate', pattern: 'spiral', count: 8, radius: 6.8, lead: 3.4 },
+] as const;
+
+function buildFan({ time, kind, pattern, count, radius, lead = 4.4 }: PrismFan): PrismSpawnEntry[] {
+  return Array.from({ length: count }, (_, i) => ({
+    time: time + i * FAN_STAGGER,
+    kind,
+    data: {
+      lead,
+      lane: i - (count - 1) / 2,
+      radius,
+      phase: (i / Math.max(1, count)) * Math.PI * 2,
+      pattern,
+    },
+  }));
 }
 
-addFan(PRISM_TIME.beats(1.6), 'gate', 'spiral', 5, 4.8, 4.6);
-addFan(PRISM_TIME.beats(7.04), 'comet', 'zipper', 6, 6.4, 4.2);
-addFan(PRISM_TIME.beats(13.12), 'echo', 'bloom', 4, 3.4, 5.0);
-addFan(PRISM_TIME.beats(18.88), 'gate', 'spiral', 7, 6.0, 4.6);
-addFan(PRISM_TIME.beats(25.6), 'comet', 'zipper', 5, 7.2, 4.0);
-addFan(PRISM_TIME.beats(32.32), 'echo', 'bloom', 6, 4.2, 4.8);
-addFan(PRISM_TIME.beats(40), 'gate', 'spiral', 8, 6.8, 3.4);
+function buildPrismTimeline() {
+  return PRISM_FANS.flatMap(buildFan).sort((a, b) => a.time - b.time);
+}
 
-export const PRISM_TIMELINE = PRISM_WAVES.sort((a, b) => a.time - b.time);
+export const PRISM_TIMELINE = buildPrismTimeline();
 
 export const prismGameplay: LockOnRunnerLevel<PrismEnemyKind, PrismSpawnData> = {
   duration: PRISM_RUN_DURATION,
