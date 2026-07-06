@@ -25,9 +25,14 @@ export function createCrystalWarden(
   let coreSpawned = false;
   let coreKilled = false;
   let exposed = false;
+  let shieldsExposed = false;
   let defenseSpawned = 0;
+  let outerSpawned = 0;
   let coreEntry: CrystalSpawnEntry | undefined;
+  let shieldEntries: CrystalSpawnEntry[] = [];
   const defenseIds = new Set<number>();
+  const outerIds = new Set<number>();
+  const shieldIds = new Set<number>();
   const defensePositions = new Map<number, Vector3>();
 
   bus.on('runstart', () => {
@@ -35,10 +40,15 @@ export function createCrystalWarden(
     coreSpawned = false;
     coreKilled = false;
     exposed = false;
+    shieldsExposed = false;
     defenseIds.clear();
+    outerIds.clear();
+    shieldIds.clear();
     defensePositions.clear();
     defenseSpawned = 0;
+    outerSpawned = 0;
     if (coreEntry) coreEntry.lockable = false;
+    for (const entry of shieldEntries) entry.lockable = false;
   });
 
   bus.on('spawn', ({ enemyId, kind }) => {
@@ -46,6 +56,11 @@ export function createCrystalWarden(
       defenseIds.add(enemyId);
       defenseSpawned += 1;
     }
+    if (kind === 'warden-outer') {
+      outerIds.add(enemyId);
+      outerSpawned += 1;
+    }
+    if (kind === 'warden-shield') shieldIds.add(enemyId);
     if (kind === 'warden-core') {
       coreSpawned = true;
       coreId = enemyId;
@@ -53,9 +68,18 @@ export function createCrystalWarden(
     }
   });
 
+  const exposeShields = () => {
+    if (shieldsExposed || outerSpawned < WARDEN_OUTER_COUNT || outerIds.size > 0) return;
+    shieldsExposed = true;
+    for (const entry of shieldEntries) entry.lockable = true;
+  };
+
   const onDefenseGone = (enemyId: number) => {
     if (!defenseIds.delete(enemyId)) return;
+    const outerGone = outerIds.delete(enemyId);
+    shieldIds.delete(enemyId);
     defensePositions.delete(enemyId);
+    if (outerGone) exposeShields();
     if (
       defenseSpawned >= CRYSTAL_WARDEN_DEFENSE_COUNT
       && defenseIds.size === 0
@@ -89,7 +113,13 @@ export function createCrystalWarden(
       lockable: false,
       data: { role: 'core' },
     };
+    const shields: CrystalSpawnEntry[] = [
+      { time: time + 0.95, kind: 'warden-shield', hitStages: [1, 1], lockable: false, data: { role: 'shield', index: 0 } },
+      { time: time + 1.08, kind: 'warden-shield', hitStages: [1, 1], lockable: false, data: { role: 'shield', index: 1 } },
+      { time: time + 1.21, kind: 'warden-shield', hitStages: [1, 1], lockable: false, data: { role: 'shield', index: 2 } },
+    ];
     coreEntry = core;
+    shieldEntries = shields;
     return [
       core,
       { time: time + 0.2, kind: 'warden-outer', data: { role: 'outer', index: 0 } },
@@ -98,9 +128,7 @@ export function createCrystalWarden(
       { time: time + 0.44, kind: 'warden-outer', data: { role: 'outer', index: 3 } },
       { time: time + 0.52, kind: 'warden-outer', data: { role: 'outer', index: 4 } },
       { time: time + 0.6, kind: 'warden-outer', data: { role: 'outer', index: 5 } },
-      { time: time + 0.95, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 0 } },
-      { time: time + 1.08, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 1 } },
-      { time: time + 1.21, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 2 } },
+      ...shields,
     ];
   }
 
@@ -139,6 +167,9 @@ export function createCrystalWarden(
     defensePositions.set(enemy.id, enemy.mesh.position.clone());
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(angle + Math.PI / 2);
+    enemy.mesh.visible = shieldsExposed;
+    enemy.entry.lockable = shieldsExposed;
+    if (!shieldsExposed) return false;
 
     const fire = context.enemyState(() => ({ nextAt: 4.8 + data.index * 1.2, shotsLeft: Number.POSITIVE_INFINITY }));
     if (age >= fire.nextAt) {
@@ -196,21 +227,44 @@ export function createCrystalWarden(
   }
 
   function validateRelease(enemies: CrystalEnemy[]): boolean | CrystalEnemy[] {
-    // The outer lattice and shield plates are all real targets: the player
-    // may pick them off one by one or sweep several in a volley. Only stale
-    // locks on the core are denied while any defensive node remains alive.
-    if (defenseIds.size === 0) return true;
-    const releasedCoreIds = enemies.filter((enemy) => enemy.kind === 'warden-core').map((enemy) => enemy.id);
-    if (releasedCoreIds.length === 0) return true;
+    // Outer lattice nodes are individual targets. The three inner shield plates
+    // are a linked layer: any released shield plate is protected unless every
+    // live plate is included in the same volley. Non-shield targets in that
+    // mixed release, such as hostile bolts, are still allowed to fire.
+    const deniedIds = new Set<number>();
+    const shieldFlashIds = new Set<number>();
+
+    if (shieldsExposed && shieldIds.size > 0) {
+      const releasedShieldIds = new Set(
+        enemies.filter((enemy) => enemy.kind === 'warden-shield').map((enemy) => enemy.id),
+      );
+      if (releasedShieldIds.size > 0) {
+        const missingShieldIds = [...shieldIds].filter((enemyId) => !releasedShieldIds.has(enemyId));
+        if (missingShieldIds.length > 0) {
+          for (const enemyId of releasedShieldIds) deniedIds.add(enemyId);
+          for (const enemyId of missingShieldIds) shieldFlashIds.add(enemyId);
+        }
+      }
+    }
+
+    if (defenseIds.size > 0) {
+      const releasedCoreIds = enemies.filter((enemy) => enemy.kind === 'warden-core').map((enemy) => enemy.id);
+      if (releasedCoreIds.length > 0) {
+        for (const enemyId of releasedCoreIds) deniedIds.add(enemyId);
+        for (const enemyId of defenseIds) shieldFlashIds.add(enemyId);
+      }
+    }
+
+    if (deniedIds.size === 0) return true;
 
     bus.emit('shielded', {
-      shields: [...defenseIds].map((enemyId) => ({
+      shields: [...shieldFlashIds].map((enemyId) => ({
         enemyId,
         worldPosition: defensePositions.get(enemyId)?.clone() ?? corePosition.clone(),
       })),
-      blockedEnemyIds: releasedCoreIds,
+      blockedEnemyIds: [...deniedIds],
     });
-    return enemies.filter((enemy) => enemy.kind !== 'warden-core');
+    return enemies.filter((enemy) => !deniedIds.has(enemy.id));
   }
 
   function summary() {
