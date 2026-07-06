@@ -1,7 +1,5 @@
 # Engine brief: visual-kit
 
-**Status: hold — do not execute until the scaffold/convention work (authoring-scaffold brief) has landed.**
-
 ## Goal
 
 Create `src/engine/visual-kit.ts`: the visuals counterpart to `src/engine/audio-kit.ts`. Every level currently rewrites the same visual bookkeeping — the kit absorbs the mechanics while leaving every aesthetic decision with the level.
