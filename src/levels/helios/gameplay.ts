@@ -8,8 +8,9 @@ import {
 } from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { tempo } from '../../engine/music';
-import { offsetFromRail, sampleRailFrame } from '../../engine/rail';
+import { offsetFromRail } from '../../engine/rail';
 import type { EventBus } from '../../events';
+import { createSuneater } from './suneater';
 
 // HELIOS — a 120-second dive into a dying star, in four movements scored to a
 // 172 BPM arrangement (one bar = 240/172 s; 86 bars = exactly 120 s):
@@ -64,8 +65,8 @@ export type HeliosSpawnData =
   | { role: 'fang'; socket: number }
   | { role: 'heart' };
 
-type HeliosSpawnEntry = LockOnSpawnEntry<HeliosEnemyKind, HeliosSpawnData>;
-type HeliosUpdate = LockOnEnemyUpdate<HeliosEnemyKind, HeliosSpawnData>;
+export type HeliosSpawnEntry = LockOnSpawnEntry<HeliosEnemyKind, HeliosSpawnData>;
+export type HeliosUpdate = LockOnEnemyUpdate<HeliosEnemyKind, HeliosSpawnData>;
 
 // ---- speed profile → rail easing ------------------------------------------
 
@@ -360,38 +361,18 @@ const KILL_SCORE: Record<HeliosEnemyKind, number> = {
 
 const BOLT_MAX_AGE = 13;
 const FLARE_MAX_AGE = 14;
-const FANG_SOCKETS: Array<[number, number]> = [[-4.1, 2.4], [4.1, 2.4], [-2.6, -2.6], [2.6, -2.6]];
 
 export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEnemyKind, HeliosSpawnData> {
   const heartEntry = HEART_ENTRY;
 
-  const boss = {
-    heartId: -1,
-    heartSpawned: false,
-    heartKilled: false,
-    exposed: false,
-    diveUntil: -1,
-    fangIds: new Set<number>(),
-    headPosition: new Vector3(),
-    headRight: new Vector3(1, 0, 0),
-    headUp: new Vector3(0, 1, 0),
-    headForward: new Vector3(0, 0, 1),
-  };
   const interceptions = new Set<number>();
   let hitsTaken = 0;
   let flaresDowned = 0;
 
   bus.on('runstart', () => {
-    boss.heartId = -1;
-    boss.heartSpawned = false;
-    boss.heartKilled = false;
-    boss.exposed = false;
-    boss.diveUntil = -1;
-    boss.fangIds.clear();
     interceptions.clear();
     hitsTaken = 0;
     flaresDowned = 0;
-    heartEntry.lockable = false;
   });
 
   bus.on('playerhit', () => {
@@ -402,39 +383,12 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     interceptions.add(enemyId);
   });
 
-  bus.on('spawn', ({ enemyId, kind }) => {
-    if (kind === 'fang') boss.fangIds.add(enemyId);
-    if (kind === 'heart') {
-      boss.heartSpawned = true;
-      boss.heartId = enemyId;
-    }
-  });
-
-  const onFangGone = (enemyId: number) => {
-    if (!boss.fangIds.delete(enemyId)) return;
-    if (boss.fangIds.size === 0 && boss.heartSpawned && !boss.exposed) {
-      boss.exposed = true;
-      heartEntry.lockable = true;
-    }
-  };
-
   bus.on('kill', ({ enemyId }) => {
     interceptions.delete(enemyId);
-    onFangGone(enemyId);
-    if (enemyId === boss.heartId) boss.heartKilled = true;
   });
 
   bus.on('miss', ({ enemyId }) => {
     interceptions.delete(enemyId);
-    onFangGone(enemyId);
-  });
-
-  // The heart's stage break: it plunges back into the star, unlockable, then
-  // resurfaces meaner. (Pyres also emit `stage` on their armor break; only
-  // the heart dives.)
-  bus.on('stage', ({ enemyId }) => {
-    if (enemyId !== boss.heartId) return;
-    heartEntry.lockable = false;
   });
 
   function fireBolt(context: HeliosUpdate, from: Vector3) {
@@ -455,6 +409,8 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
       data: { role: 'flare', targetLead: 3.2, x },
     });
   }
+
+  const suneater = createSuneater(bus, { heartEntry, drop3Time: DROP3_TIME, spawnBossFlare });
 
   // ---- movement -------------------------------------------------------------
 
@@ -629,79 +585,6 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     mesh.lookAt(target);
   }
 
-  // ---- the Suneater -----------------------------------------------------------
-
-  function updateHeart(context: HeliosUpdate) {
-    const { enemy, runTime, age, runProgress, curve, camera } = context;
-    const frame = sampleRailFrame(curve, MathUtils.clamp(runProgress + 0.004, 0, 1));
-
-    // Breach: the head erupts out of the star over the first 2.6 seconds.
-    const breach = MathUtils.clamp(age / 2.6, 0, 1);
-    const breachEase = 1 - (1 - breach) ** 3;
-
-    // Stage break: plunge back under, run submerged, erupt again.
-    const diving = boss.diveUntil > runTime;
-    if (enemy.hitStageIndex > 0 && boss.diveUntil < 0) {
-      boss.diveUntil = runTime + 4.4;
-    }
-    let submerge = 0;
-    if (diving) {
-      const remaining = boss.diveUntil - runTime;
-      submerge = MathUtils.clamp(Math.min(remaining / 1.2, (4.4 - remaining) / 0.9), 0, 1);
-    } else if (boss.diveUntil > 0 && enemy.hitStageIndex > 0 && boss.exposed) {
-      heartEntry.lockable = true; // resurfaced
-    }
-
-    const weave = new Vector3(
-      Math.sin(runTime * 0.55) * 7 + Math.sin(runTime * 1.7) * 2.4,
-      6.5 + Math.sin(runTime * 0.85) * 3 + Math.sin(runTime * 2.3) * 1.1,
-      42,
-    );
-    weave.y = MathUtils.lerp(-130, weave.y, breachEase) - submerge * 150;
-
-    boss.headPosition
-      .copy(frame.position)
-      .addScaledVector(frame.right, weave.x)
-      .addScaledVector(frame.up, weave.y)
-      .addScaledVector(frame.tangent, weave.z);
-    boss.headRight.copy(frame.right);
-    boss.headUp.copy(frame.up);
-    boss.headForward.copy(frame.tangent).negate(); // faces back down the rail at the player
-
-    enemy.mesh.position.copy(boss.headPosition);
-    enemy.mesh.lookAt(camera.position);
-    enemy.mesh.rotateZ(Math.sin(runTime * 0.7) * 0.16);
-    enemy.mesh.userData.exposed = boss.exposed && !diving;
-    enemy.mesh.userData.submerge = submerge;
-    enemy.mesh.userData.breach = breachEase;
-
-    // Flare volleys: wider and faster once the theme drops, relentless while diving.
-    if (age > 3) {
-      const fire = context.enemyState(() => ({ nextAt: age + 1.4 }));
-      if (age >= fire.nextAt) {
-        const brutal = runTime >= DROP3_TIME;
-        fire.nextAt = age + (diving ? 3.2 : brutal ? 4.6 : 5.8);
-        const spread = brutal ? [-7, 0, 7] : [-5, 5];
-        for (const x of spread) spawnBossFlare(context, weave.x * 0.25 + x);
-      }
-    }
-    return false;
-  }
-
-  function updateFang(context: HeliosUpdate, data: Extract<HeliosSpawnData, { role: 'fang' }>) {
-    const { enemy, age, camera } = context;
-    const socket = FANG_SOCKETS[data.socket];
-    const wobble = Math.sin(age * 2.1 + data.socket * 1.9) * 0.5;
-    enemy.mesh.position
-      .copy(boss.headPosition)
-      .addScaledVector(boss.headRight, socket[0] * 1.15 + wobble * 0.4)
-      .addScaledVector(boss.headUp, socket[1] * 1.15 + wobble)
-      .addScaledVector(boss.headForward, 4.5);
-    enemy.mesh.quaternion.copy(camera.quaternion);
-    enemy.mesh.rotateZ(data.socket * 1.57 + Math.sin(age * 1.4 + data.socket) * 0.3);
-    return false;
-  }
-
   // ---- level definition ------------------------------------------------------
 
   return {
@@ -728,9 +611,9 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
         case 'flare':
           return updateFlare(context, data);
         case 'fang':
-          return updateFang(context, data);
+          return suneater.updateFang(context, data);
         case 'heart':
-          return updateHeart(context);
+          return suneater.updateHeart(context);
       }
     },
     scoreForKill(volleySize, enemy) {
@@ -748,7 +631,7 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
     },
     rankForRun(score, kills, totalEnemies) {
       const clearRate = totalEnemies === 0 ? 0 : kills / totalEnemies;
-      if (boss.heartKilled && score >= 24000 && clearRate >= 0.8) return 'S';
+      if (suneater.heartKilled() && score >= 24000 && clearRate >= 0.8) return 'S';
       if (score >= 16000 && clearRate >= 0.62) return 'A';
       if (score >= 9500 && clearRate >= 0.42) return 'B';
       if (score >= 4000 && clearRate >= 0.22) return 'C';
@@ -758,7 +641,8 @@ export function createHeliosGameplay(bus: EventBus): LockOnRunnerLevel<HeliosEne
       const hull = Math.max(0, HELIOS_PLAYER_HEALTH - hitsTaken);
       const lines = [`Hull ${hull}/${HELIOS_PLAYER_HEALTH}`];
       if (flaresDowned > 0) lines.push(`${flaresDowned} flare${flaresDowned === 1 ? '' : 's'} shot down`);
-      if (boss.heartSpawned) lines.push(boss.heartKilled ? 'The Suneater is slain' : 'The Suneater still feeds');
+      const suneaterLine = suneater.summaryLine();
+      if (suneaterLine) lines.push(suneaterLine);
       return lines;
     },
   };
