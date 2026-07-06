@@ -5,11 +5,37 @@ import type { HeliosSpawnData, HeliosSpawnEntry, HeliosUpdate } from './gameplay
 
 const FANG_SOCKETS: Array<[number, number]> = [[-4.1, 2.4], [4.1, 2.4], [-2.6, -2.6], [2.6, -2.6]];
 
+type SuneaterEntriesOptions = {
+  debugHold?: boolean;
+};
+
+type SuneaterEntries = {
+  heartEntry: HeliosSpawnEntry;
+  timeline: HeliosSpawnEntry[];
+};
+
 type SuneaterOptions = {
   heartEntry: HeliosSpawnEntry;
   drop3Time: number;
   spawnBossFlare(context: HeliosUpdate, x: number): void;
 };
+
+export function createSuneaterEntries(time: number, options: SuneaterEntriesOptions = {}): SuneaterEntries {
+  const heartEntry: HeliosSpawnEntry = {
+    time,
+    kind: 'heart',
+    hitStages: [5, 6],
+    lockable: false,
+    data: options.debugHold ? { role: 'heart', debugHold: true } : { role: 'heart' },
+  };
+  const fangs: HeliosSpawnEntry[] = [0, 1, 2, 3].map((socket, index) => ({
+    time: time + 0.15 + index * 0.1,
+    kind: 'fang',
+    hitPoints: 3,
+    data: { role: 'fang', socket },
+  }));
+  return { heartEntry, timeline: [heartEntry, ...fangs] };
+}
 
 export function createSuneater(bus: EventBus, options: SuneaterOptions) {
   const boss = {

@@ -1,5 +1,6 @@
 import { Vector3 } from 'three';
-import { createHeartEntry, type HeliosEnemyKind, type HeliosSpawnEntry } from './gameplay';
+import type { HeliosEnemyKind, HeliosSpawnEntry } from './gameplay';
+import { createSuneaterEntries } from './suneater';
 
 export type HeliosDebugTarget = 'cinder' | 'mote' | 'scorcher' | 'pyre' | 'flare' | 'suneater';
 
@@ -64,22 +65,7 @@ function debugEnemy(kind: Exclude<HeliosDebugTarget, 'suneater'>): HeliosSpawnEn
   }
 }
 
-function debugSuneater(): { timeline: HeliosSpawnEntry[]; heartEntry: HeliosSpawnEntry } {
-  const heartEntry = createHeartEntry();
-  heartEntry.time = 1;
-  heartEntry.data = { role: 'heart', debugHold: true };
-
-  const fangs: HeliosSpawnEntry[] = [0, 1, 2, 3].map((socket, index) => ({
-    time: 1.15 + index * 0.1,
-    kind: 'fang',
-    hitPoints: 3,
-    data: { role: 'fang', socket },
-  }));
-
-  return { heartEntry, timeline: [heartEntry, ...fangs] };
-}
-
 export function createHeliosDebugTimeline(target: HeliosDebugTarget): { timeline: HeliosSpawnEntry[]; heartEntry: HeliosSpawnEntry } {
-  if (target === 'suneater') return debugSuneater();
-  return { heartEntry: createHeartEntry(), timeline: [debugEnemy(target)] };
+  if (target === 'suneater') return createSuneaterEntries(1, { debugHold: true });
+  return { heartEntry: createSuneaterEntries(1).heartEntry, timeline: [debugEnemy(target)] };
 }

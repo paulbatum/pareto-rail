@@ -11,7 +11,7 @@ import { tempo } from '../../engine/music';
 import { offsetFromRail } from '../../engine/rail';
 import type { EventBus } from '../../events';
 import { createHeliosDebugTimeline, type HeliosDebugTarget } from './debug';
-import { createSuneater } from './suneater';
+import { createSuneater, createSuneaterEntries } from './suneater';
 
 // HELIOS — a 120-second dive into a dying star, in four movements scored to a
 // 172 BPM arrangement (one bar = 240/172 s; 86 bars = exactly 120 s):
@@ -216,19 +216,7 @@ const flares = (time: number, entries: Array<[number, number]>): HeliosSpawnEntr
     data: { role: 'flare', targetLead, x },
   }));
 
-// Named so the gameplay closure can gate `lockable` across the boss phases
-// without re-finding it in the timeline.
-export function createHeartEntry(): HeliosSpawnEntry {
-  return {
-    time: BOSS_TIME,
-    kind: 'heart',
-    hitStages: [5, 6],
-    lockable: false,
-    data: { role: 'heart' },
-  };
-}
-
-function buildHeliosTimeline(heartEntry: HeliosSpawnEntry): HeliosSpawnEntry[] {
+function buildHeliosTimeline(suneaterEntries: HeliosSpawnEntry[]): HeliosSpawnEntry[] {
   return [
   // --- Act 1: The Approach. Sparse, formation-first; learn the sweep among wreckage.
   ...cinders(bar(2), 4.6, 0.35, [[-5, 2], [-1.8, 3.4], [1.8, 3.4], [5, 2]]),
@@ -335,11 +323,7 @@ function buildHeliosTimeline(heartEntry: HeliosSpawnEntry): HeliosSpawnEntry[] {
   ]),
 
   // --- Act 4: The Suneater. The heart is sealed until all four fangs shatter.
-  heartEntry,
-  { time: BOSS_TIME + 0.15, kind: 'fang', hitPoints: 3, data: { role: 'fang', socket: 0 } },
-  { time: BOSS_TIME + 0.25, kind: 'fang', hitPoints: 3, data: { role: 'fang', socket: 1 } },
-  { time: BOSS_TIME + 0.35, kind: 'fang', hitPoints: 3, data: { role: 'fang', socket: 2 } },
-  { time: BOSS_TIME + 0.45, kind: 'fang', hitPoints: 3, data: { role: 'fang', socket: 3 } },
+  ...suneaterEntries,
   ...motes(bar(68), 3.8, [
     { fromX: -24, toX: 24, y: 2, arc: 2.4, crossTime: 2.4 },
     { fromX: 24, toX: -24, y: 4, arc: 1.8, crossTime: 2.4 },
@@ -352,10 +336,10 @@ function buildHeliosTimeline(heartEntry: HeliosSpawnEntry): HeliosSpawnEntry[] {
 }
 
 export function createHeliosTimeline() {
-  const heartEntry = createHeartEntry();
+  const suneaterEntries = createSuneaterEntries(BOSS_TIME);
   return {
-    heartEntry,
-    timeline: buildHeliosTimeline(heartEntry).sort((a, b) => a.time - b.time),
+    heartEntry: suneaterEntries.heartEntry,
+    timeline: buildHeliosTimeline(suneaterEntries.timeline).sort((a, b) => a.time - b.time),
   };
 }
 
