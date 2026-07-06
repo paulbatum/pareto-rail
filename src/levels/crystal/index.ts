@@ -1,7 +1,8 @@
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
-import { CRYSTAL_BPM, CRYSTAL_WARDEN_DEFENSE_COUNT, createCrystalGameplay } from './gameplay';
+import { CRYSTAL_DEBUG_TARGETS, normalizeCrystalDebugTarget } from './debug';
+import { CRYSTAL_BPM, createCrystalGameplay } from './gameplay';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -19,43 +20,25 @@ export const crystalCorridorLevel: LevelDefinition = {
   title: 'Crystal Corridor',
   description: 'The neon crystal rail run — and now it shoots back.',
   bpm: CRYSTAL_BPM,
+  debugSelector: { queryParam: 'debugEnemy', label: 'Enemy', options: CRYSTAL_DEBUG_TARGETS },
   createAudio,
-  createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
+  createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip, debugValue }) {
     createEnvironment(scene);
     installVisualEventHandlers(bus, scene);
 
     // Boss beat callouts. Gameplay owns the fight; this just narrates it.
-    const defenseIds = new Set<number>();
-    let defensesSpawned = 0;
-    let coreId = -1;
     let calloutUntil = -1;
     let now = 0;
     const say = (message: string, seconds: number) => {
       hud.setCallout(message);
       calloutUntil = now + seconds;
     };
-    bus.on('spawn', ({ enemyId, kind }) => {
-      if (kind === 'warden-outer' || kind === 'warden-shield') {
-        defenseIds.add(enemyId);
-        defensesSpawned += 1;
-      }
-      if (kind === 'warden-core') {
-        coreId = enemyId;
-        say('CRYSTAL WARDEN', 2.6);
-      }
-    });
-    bus.on('kill', ({ enemyId }) => {
-      if (
-        defenseIds.delete(enemyId)
-        && defensesSpawned >= CRYSTAL_WARDEN_DEFENSE_COUNT
-        && defenseIds.size === 0
-      ) say('CORE EXPOSED', 2.6);
-      if (enemyId === coreId) say('WARDEN DOWN', 3.2);
+    bus.on('bossphase', ({ phase }) => {
+      if (phase === 'summoned') say('CRYSTAL WARDEN', 2.6);
+      if (phase === 'exposed') say('CORE EXPOSED', 2.6);
+      if (phase === 'destroyed') say('WARDEN DOWN', 3.2);
     });
     bus.on('runstart', () => {
-      defenseIds.clear();
-      defensesSpawned = 0;
-      coreId = -1;
       calloutUntil = -1;
     });
 
@@ -68,7 +51,9 @@ export const crystalCorridorLevel: LevelDefinition = {
       onPause,
       onFullscreen,
       startTip,
-      level: createCrystalGameplay(bus),
+      level: debugValue === undefined
+        ? createCrystalGameplay(bus)
+        : createCrystalGameplay(bus, normalizeCrystalDebugTarget(debugValue)),
       visuals: {
         createEnemyMesh,
         setEnemyLocked,

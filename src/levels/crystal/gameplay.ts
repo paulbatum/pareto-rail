@@ -1,10 +1,11 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from 'three';
-import type { Object3D } from 'three';
 import { shotBehindCamera, steerHomingShot, updateHostileShotImpact } from '../../engine/hostile-shot';
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { offsetFromRail, smoothRunProgress } from '../../engine/rail';
 import { formation, section, sortTimeline } from '../../engine/spawn-patterns';
-import type { EventBus } from '../../events';
+import { createEventBus, type EventBus } from '../../events';
+import { createDebugTimeline, type CrystalDebugTarget } from './debug';
+import { createCrystalWarden, type CrystalWarden, type WardenSpawnData } from './warden';
 
 // A 45-second run in three acts: a familiar warm-up third, a dense middle
 // where lancers start shooting back, and a heavier Crystal Warden finale after
@@ -31,23 +32,28 @@ export type CrystalMovementPattern = 'hold' | 'drift' | 'orbit';
 // timeline across runs. Per-enemy runtime state (fire cadence) lives in a
 // closure map keyed by enemy id; bolts are spawned dynamically with fresh
 // data objects, so theirs may mutate.
-export type CrystalSpawnData =
-  | {
-    role: 'bolt';
-    position: Vector3;
-    velocity: Vector3;
-    lastAge: number;
-    impactAt?: number;
-    impactDirection?: Vector3;
-    interceptUntil?: number;
-  }
-  | { role: 'wave'; lead: number; pattern: CrystalMovementPattern; offset: Vector3 }
-  | { role: 'outer'; index: number }
-  | { role: 'shield'; index: number }
-  | { role: 'core' };
+type CrystalBoltData = {
+  role: 'bolt';
+  position: Vector3;
+  velocity: Vector3;
+  lastAge: number;
+  impactAt?: number;
+  impactDirection?: Vector3;
+  interceptUntil?: number;
+};
 
-type CrystalSpawnEntry = LockOnSpawnEntry<CrystalEnemyKind, CrystalSpawnData>;
-type CrystalUpdate = LockOnEnemyUpdate<CrystalEnemyKind, CrystalSpawnData>;
+type CrystalWaveData = {
+  role: 'wave';
+  lead: number;
+  pattern: CrystalMovementPattern;
+  offset: Vector3;
+  debugHold?: boolean;
+  fireForever?: boolean;
+};
+
+export type CrystalSpawnData = CrystalBoltData | CrystalWaveData | WardenSpawnData;
+export type CrystalSpawnEntry = LockOnSpawnEntry<CrystalEnemyKind, CrystalSpawnData>;
+export type CrystalUpdate = LockOnEnemyUpdate<CrystalEnemyKind, CrystalSpawnData>;
 
 export function createCrystalRail() {
   return new CatmullRomCurve3(
@@ -87,75 +93,64 @@ const lancers = (time: number, lead: number, offsets: Array<[number, number]>): 
   wave(time, lead, 'hold', 'lancer', offsets);
 
 const BOSS_TIME = 31.6;
-const WARDEN_OUTER_COUNT = 6;
-const WARDEN_SHIELD_COUNT = 3;
-export const CRYSTAL_WARDEN_DEFENSE_COUNT = WARDEN_OUTER_COUNT + WARDEN_SHIELD_COUNT;
 
-const TIMELINE: CrystalSpawnEntry[] = [
-  // --- Act 1 (0–10s): the familiar opening. Room to learn the sweep.
-  ...section(0,
-    wave(1.2, 4.0, 'hold', 'node', [
-      [-5, 1], [-2, 3], [2, 3], [5, 1],
-    ]),
-    wave(4.2, 4.6, 'drift', 'drifter', [
-      [-8, -1], [-4, 2], [0, 3], [4, 2], [8, -1],
-    ]),
-    wave(7.4, 4.8, 'orbit', 'orbiter', [
-      [-6, 4], [-3, 0], [3, 0], [6, 4],
-    ]),
-  ),
+function createCrystalTimeline(warden: CrystalWarden): CrystalSpawnEntry[] {
+  return [
+    // --- Act 1 (0–10s): the familiar opening. Room to learn the sweep.
+    ...section(0,
+      wave(1.2, 4.0, 'hold', 'node', [
+        [-5, 1], [-2, 3], [2, 3], [5, 1],
+      ]),
+      wave(4.2, 4.6, 'drift', 'drifter', [
+        [-8, -1], [-4, 2], [0, 3], [4, 2], [8, -1],
+      ]),
+      wave(7.4, 4.8, 'orbit', 'orbiter', [
+        [-6, 4], [-3, 0], [3, 0], [6, 4],
+      ]),
+    ),
 
-  // --- Act 2 (10–30s): the corridor wakes up. Times are relative to the act;
-  // lancers are haloed crystals that fire homing shard bolts at the hull.
-  ...section(10,
-    wave(0.6, 4.3, 'drift', 'drifter', [
-      [-7, 2], [-3, -2], [2, 1], [7, -1],
-    ]),
-    wave(3.2, 4.6, 'hold', 'node', [
-      [-7, -1], [-3.5, 2], [0, 3.5], [3.5, 2], [7, -1],
-    ]),
-    lancers(4.4, 5.0, [[0, 5.4]]),
-    wave(6.4, 4.7, 'orbit', 'orbiter', [
-      [-9, 2], [-4.5, 5], [0, 2], [4.5, 5], [9, 2],
-    ]),
-    wave(8.8, 4.4, 'drift', 'drifter', [
-      [-7, 0], [-2, 3], [2, -1], [7, 2],
-    ]),
-    lancers(9.6, 5.2, [[-6, 4], [6, 4]]),
-    wave(11.6, 4.5, 'hold', 'node', [
-      [-7.5, 4], [-5, 1.5], [-2.5, -1], [2.5, -1], [5, 1.5], [7.5, 4],
-    ]),
-    wave(13.8, 4.6, 'orbit', 'orbiter', [
-      [-8, -1], [-3, 3], [3, 3], [8, -1],
-    ]),
-    lancers(14.6, 4.8, [[-5, -2], [5, -2]]),
-    wave(16.2, 4.2, 'drift', 'drifter', [
-      [-8, 1], [-5, -2], [-1.5, 3], [1.5, -1], [5, 2], [8, -1],
-    ]),
-    lancers(18.2, 4.4, [[-3, 5], [3, 5]]),
-    wave(19.2, 3.4, 'hold', 'node', [
-      [-4, 2], [0, 4], [4, 2],
-    ]),
-  ),
+    // --- Act 2 (10–30s): the corridor wakes up. Times are relative to the act;
+    // lancers are haloed crystals that fire homing shard bolts at the hull.
+    ...section(10,
+      wave(0.6, 4.3, 'drift', 'drifter', [
+        [-7, 2], [-3, -2], [2, 1], [7, -1],
+      ]),
+      wave(3.2, 4.6, 'hold', 'node', [
+        [-7, -1], [-3.5, 2], [0, 3.5], [3.5, 2], [7, -1],
+      ]),
+      lancers(4.4, 5.0, [[0, 5.4]]),
+      wave(6.4, 4.7, 'orbit', 'orbiter', [
+        [-9, 2], [-4.5, 5], [0, 2], [4.5, 5], [9, 2],
+      ]),
+      wave(8.8, 4.4, 'drift', 'drifter', [
+        [-7, 0], [-2, 3], [2, -1], [7, 2],
+      ]),
+      lancers(9.6, 5.2, [[-6, 4], [6, 4]]),
+      wave(11.6, 4.5, 'hold', 'node', [
+        [-7.5, 4], [-5, 1.5], [-2.5, -1], [2.5, -1], [5, 1.5], [7.5, 4],
+      ]),
+      wave(13.8, 4.6, 'orbit', 'orbiter', [
+        [-8, -1], [-3, 3], [3, 3], [8, -1],
+      ]),
+      lancers(14.6, 4.8, [[-5, -2], [5, -2]]),
+      wave(16.2, 4.2, 'drift', 'drifter', [
+        [-8, 1], [-5, -2], [-1.5, 3], [1.5, -1], [5, 2], [8, -1],
+      ]),
+      lancers(18.2, 4.4, [[-3, 5], [3, 5]]),
+      wave(19.2, 3.4, 'hold', 'node', [
+        [-4, 2], [0, 4], [4, 2],
+      ]),
+    ),
 
-  // --- Act 3 (31.6s–end): the Crystal Warden. The delayed entrance gives the
-  // last corridor wave room to clear, then a six-node outer lattice and three
-  // inner plates must be picked apart before the core takes two full volleys.
-  ...section(BOSS_TIME, [
-    { time: 0, kind: 'warden-core', hitStages: [6, 6], lockable: false, data: { role: 'core' } },
-    { time: 0.2, kind: 'warden-outer', data: { role: 'outer', index: 0 } },
-    { time: 0.28, kind: 'warden-outer', data: { role: 'outer', index: 1 } },
-    { time: 0.36, kind: 'warden-outer', data: { role: 'outer', index: 2 } },
-    { time: 0.44, kind: 'warden-outer', data: { role: 'outer', index: 3 } },
-    { time: 0.52, kind: 'warden-outer', data: { role: 'outer', index: 4 } },
-    { time: 0.6, kind: 'warden-outer', data: { role: 'outer', index: 5 } },
-    { time: 0.95, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 0 } },
-    { time: 1.08, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 1 } },
-    { time: 1.21, kind: 'warden-shield', hitStages: [1, 1], data: { role: 'shield', index: 2 } },
-  ] satisfies CrystalSpawnEntry[]),
-];
+    // --- Act 3 (31.6s–end): the Crystal Warden. The delayed entrance gives the
+    // last corridor wave room to clear, then a six-node outer lattice and three
+    // inner plates must be picked apart before the core takes two full volleys.
+    ...warden.entries(BOSS_TIME),
+  ];
+}
 
-export const CRYSTAL_TIMELINE: CrystalSpawnEntry[] = sortTimeline(TIMELINE);
+const traceWarden = createCrystalWarden(createEventBus(), () => {});
+export const CRYSTAL_TIMELINE: CrystalSpawnEntry[] = sortTimeline(createCrystalTimeline(traceWarden));
 
 const KILL_SCORE: Record<CrystalEnemyKind, number> = {
   node: 100,
@@ -170,79 +165,12 @@ const KILL_SCORE: Record<CrystalEnemyKind, number> = {
 
 const BOLT_MAX_AGE = 14;
 
-export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalEnemyKind, CrystalSpawnData> {
-  const coreEntry = CRYSTAL_TIMELINE.find((entry) => entry.kind === 'warden-core');
-  if (!coreEntry) throw new Error('Crystal timeline is missing the warden core');
-
-  const boss = {
-    corePosition: new Vector3(),
-    coreId: -1,
-    coreSpawned: false,
-    coreKilled: false,
-    exposed: false,
-    defenseIds: new Set<number>(),
-    defensePositions: new Map<number, Vector3>(),
-    defenseSpawned: 0,
-  };
+export function createCrystalGameplay(
+  bus: EventBus,
+  debugTarget?: CrystalDebugTarget,
+): LockOnRunnerLevel<CrystalEnemyKind, CrystalSpawnData> {
   const boltInterceptions = new Set<number>();
   let hitsTaken = 0;
-
-  bus.on('runstart', () => {
-    boss.coreId = -1;
-    boss.coreSpawned = false;
-    boss.coreKilled = false;
-    boss.exposed = false;
-    boss.defenseIds.clear();
-    boss.defensePositions.clear();
-    boss.defenseSpawned = 0;
-    boltInterceptions.clear();
-    hitsTaken = 0;
-    coreEntry.lockable = false;
-  });
-
-  bus.on('playerhit', () => {
-    hitsTaken += 1;
-  });
-
-  bus.on('fire', ({ enemyId }) => {
-    boltInterceptions.add(enemyId);
-  });
-
-  bus.on('spawn', ({ enemyId, kind }) => {
-    if (kind === 'warden-outer' || kind === 'warden-shield') {
-      boss.defenseIds.add(enemyId);
-      boss.defenseSpawned += 1;
-    }
-    if (kind === 'warden-core') {
-      boss.coreSpawned = true;
-      boss.coreId = enemyId;
-    }
-  });
-
-  const onDefenseGone = (enemyId: number) => {
-    if (!boss.defenseIds.delete(enemyId)) return;
-    boss.defensePositions.delete(enemyId);
-    if (
-      boss.defenseSpawned >= CRYSTAL_WARDEN_DEFENSE_COUNT
-      && boss.defenseIds.size === 0
-      && boss.coreSpawned
-      && !boss.exposed
-    ) {
-      boss.exposed = true;
-      coreEntry.lockable = true;
-    }
-  };
-
-  bus.on('kill', ({ enemyId }) => {
-    boltInterceptions.delete(enemyId);
-    onDefenseGone(enemyId);
-    if (enemyId === boss.coreId) boss.coreKilled = true;
-  });
-
-  bus.on('miss', ({ enemyId }) => {
-    boltInterceptions.delete(enemyId);
-    onDefenseGone(enemyId);
-  });
 
   function fireBolt(context: CrystalUpdate, from: Vector3) {
     const initial = context.camera.position.clone().sub(from).normalize().multiplyScalar(4.5);
@@ -254,9 +182,37 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     });
   }
 
+  const warden = createCrystalWarden(bus, fireBolt);
+  const timeline = debugTarget
+    ? sortTimeline(createDebugTimeline(debugTarget, warden))
+    : sortTimeline(createCrystalTimeline(warden));
+
+  bus.on('runstart', () => {
+    boltInterceptions.clear();
+    hitsTaken = 0;
+  });
+
+  bus.on('playerhit', () => {
+    hitsTaken += 1;
+  });
+
+  bus.on('fire', ({ enemyId }) => {
+    boltInterceptions.add(enemyId);
+  });
+
+  bus.on('kill', ({ enemyId }) => {
+    boltInterceptions.delete(enemyId);
+  });
+
+  bus.on('miss', ({ enemyId }) => {
+    boltInterceptions.delete(enemyId);
+  });
+
   function updateWave(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'wave' }>) {
     const { enemy, runTime, runProgress, age, curve, camera, railAnchor } = context;
-    const anchorU = railAnchor(data.lead);
+    const anchorU = data.debugHold
+      ? MathUtils.clamp(runProgress + 0.08, 0, 1)
+      : railAnchor(data.lead);
     const offset = data.offset.clone();
     if (data.pattern === 'drift') {
       offset.x += Math.sin(age * 0.85 + enemy.id) * 1.3 + age * 0.55;
@@ -269,10 +225,13 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     if (enemy.kind === 'lancer') {
       // Menace pulse: a slow push toward the camera sells intent.
       offset.z = Math.sin(age * 1.5) * 0.9;
-      const fire = context.enemyState(() => ({ nextAt: 1.4, shotsLeft: 2 }));
+      const fire = context.enemyState(() => ({
+        nextAt: data.fireForever ? 0.8 : 1.4,
+        shotsLeft: data.fireForever ? Number.POSITIVE_INFINITY : 2,
+      }));
       if (fire.shotsLeft > 0 && age >= fire.nextAt) {
         fire.shotsLeft -= 1;
-        fire.nextAt = age + 3.2;
+        fire.nextAt = age + (data.fireForever ? 1.8 : 3.2);
         fireBolt(context, enemy.mesh.position);
       }
     }
@@ -283,7 +242,7 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     enemy.mesh.rotateY(Math.sin(runTime * 0.8 + enemy.id * 1.3) * 0.4);
     enemy.mesh.rotateX(Math.cos(runTime * 0.65 + enemy.id * 2.1) * 0.3);
 
-    return runProgress > anchorU + 0.018;
+    return !data.debugHold && runProgress > anchorU + 0.018;
   }
 
   function updateBolt(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'bolt' }>) {
@@ -326,92 +285,12 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     return shotBehindCamera(camera, data.position) || age > BOLT_MAX_AGE;
   }
 
-  function defenseBasis(camera: CrystalUpdate['camera']) {
-    return {
-      right: new Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize(),
-      up: new Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize(),
-    };
-  }
-
-  function updateOuterDefense(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'outer' }>) {
-    const { enemy, runTime, camera } = context;
-    const { right, up } = defenseBasis(camera);
-    const angle = data.index * ((Math.PI * 2) / WARDEN_OUTER_COUNT) - runTime * 0.42;
-    const breathe = 1 + Math.sin(runTime * 1.25 + data.index) * 0.045;
-    enemy.mesh.position
-      .copy(boss.corePosition)
-      .addScaledVector(right, Math.cos(angle) * 8.4 * breathe)
-      .addScaledVector(up, Math.sin(angle) * 6.25 * breathe);
-    boss.defensePositions.set(enemy.id, enemy.mesh.position.clone());
-    enemy.mesh.quaternion.copy(camera.quaternion);
-    enemy.mesh.rotateZ(angle + runTime * 0.9);
-    return false;
-  }
-
-  function updateShield(context: CrystalUpdate, data: Extract<CrystalSpawnData, { role: 'shield' }>) {
-    const { enemy, runTime, age, camera } = context;
-    // Screen-space orbit around the core so the triangle formation always
-    // reads from the rail.
-    const angle = data.index * ((Math.PI * 2) / WARDEN_SHIELD_COUNT) + runTime * 0.85;
-    const { right, up } = defenseBasis(camera);
-    enemy.mesh.position
-      .copy(boss.corePosition)
-      .addScaledVector(right, Math.cos(angle) * 4.7)
-      .addScaledVector(up, Math.sin(angle) * 4.0);
-    boss.defensePositions.set(enemy.id, enemy.mesh.position.clone());
-    enemy.mesh.quaternion.copy(camera.quaternion);
-    enemy.mesh.rotateZ(angle + Math.PI / 2);
-
-    const fire = context.enemyState(() => ({ nextAt: 4.8 + data.index * 1.2, shotsLeft: Number.POSITIVE_INFINITY }));
-    if (age >= fire.nextAt) {
-      fire.nextAt = age + 5.4;
-      fireBolt(context, enemy.mesh.position);
-    }
-    return false;
-  }
-
-  function updateCore(context: CrystalUpdate, _data: Extract<CrystalSpawnData, { role: 'core' }>) {
-    const { enemy, runTime, age, runProgress, curve, camera } = context;
-    // Anchored a fixed distance ahead of the camera (tangent offset, not a
-    // timeline anchor) so the Warden holds the screen to the end of the rail.
-    const exposedJuke = boss.exposed ? 1 : 0;
-    const sway = new Vector3(
-      Math.sin(runTime * 0.5) * 3.4
-        + exposedJuke * (Math.sin(runTime * 2.9) * 2.1 + Math.sin(runTime * 5.1) * 0.9),
-      2.1 + Math.sin(runTime * 0.8) * 1.5
-        + exposedJuke * (Math.cos(runTime * 2.6) * 1.4 + Math.sin(runTime * 4.7) * 0.65),
-      28 + exposedJuke * Math.sin(runTime * 3.7) * 2.2,
-    );
-    boss.corePosition.copy(offsetFromRail(curve, MathUtils.clamp(runProgress, 0, 1), sway));
-    enemy.mesh.position.copy(boss.corePosition);
-    enemy.mesh.quaternion.copy(camera.quaternion);
-    enemy.mesh.rotateZ(runTime * 0.35);
-
-    enemy.mesh.userData.exposed = boss.exposed;
-    const shell = enemy.mesh.userData.shell as Object3D | undefined;
-    if (shell && shell.visible) {
-      shell.rotation.z = runTime * 1.15;
-      shell.rotation.x = Math.sin(runTime * 0.4) * 0.35;
-    }
-
-    if (boss.exposed) {
-      const fire = context.enemyState(() => ({ nextAt: age + 1.2, shotsLeft: Number.POSITIVE_INFINITY }));
-      if (age >= fire.nextAt) {
-        fire.nextAt = age + 2.7;
-        const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
-        fireBolt(context, enemy.mesh.position.clone().addScaledVector(right, 2.2));
-        fireBolt(context, enemy.mesh.position.clone().addScaledVector(right, -2.2));
-      }
-    }
-    return false;
-  }
-
   return {
-    duration: CRYSTAL_RUN_DURATION,
+    duration: debugTarget ? 90 : CRYSTAL_RUN_DURATION,
     bpm: CRYSTAL_BPM,
     playerHealth: CRYSTAL_PLAYER_HEALTH,
     createRail: createCrystalRail,
-    spawnTimeline: CRYSTAL_TIMELINE,
+    spawnTimeline: timeline,
     easeRunProgress: smoothRunProgress,
     updateEnemy(context) {
       const data = context.enemy.entry.data;
@@ -421,29 +300,13 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
         case 'bolt':
           return updateBolt(context, data);
         case 'outer':
-          return updateOuterDefense(context, data);
         case 'shield':
-          return updateShield(context, data);
         case 'core':
-          return updateCore(context, data);
+          return warden.update(context, data);
       }
     },
     validateRelease(enemies) {
-      // The outer lattice and shield plates are all real targets: the player
-      // may pick them off one by one or sweep several in a volley. Only stale
-      // locks on the core are denied while any defensive node remains alive.
-      if (boss.defenseIds.size === 0) return true;
-      const releasedCoreIds = enemies.filter((enemy) => enemy.kind === 'warden-core').map((enemy) => enemy.id);
-      if (releasedCoreIds.length === 0) return true;
-
-      bus.emit('shielded', {
-        shields: [...boss.defenseIds].map((enemyId) => ({
-          enemyId,
-          worldPosition: boss.defensePositions.get(enemyId)?.clone() ?? boss.corePosition.clone(),
-        })),
-        blockedEnemyIds: releasedCoreIds,
-      });
-      return enemies.filter((enemy) => enemy.kind !== 'warden-core');
+      return warden.validateRelease(enemies);
     },
     scoreForKill(volleySize, enemy) {
       const multiplier = 1 + Math.max(0, volleySize - 1) * 0.15;
@@ -462,7 +325,8 @@ export function createCrystalGameplay(bus: EventBus): LockOnRunnerLevel<CrystalE
     detailsForRun() {
       const hull = Math.max(0, CRYSTAL_PLAYER_HEALTH - hitsTaken);
       const lines = [`Hull ${hull}/${CRYSTAL_PLAYER_HEALTH}`];
-      if (boss.coreSpawned) lines.push(boss.coreKilled ? 'Crystal Warden destroyed' : 'Crystal Warden escaped');
+      const summary = warden.summary();
+      if (summary) lines.push(summary);
       return lines;
     },
   };

@@ -74,7 +74,6 @@ export type LevelDefinition = {
   description: string;
   bpm: number;
   aliases?: string[];
-  debugOnly?: boolean;
   debugSelector?: LevelDebugSelector;
   post?: LevelPostConfig;
   createAudio(bus: EventBus): LevelAudio;

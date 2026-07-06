@@ -115,14 +115,14 @@ npm run trace:audio -- --level prism
 npm run trace:audio -- --level rezdle
 npm run trace:audio -- --level helios
 npm run trace:audio -- --level helios --verbose
-npm run trace:audio -- --level crystal-debug --write test-fixtures/audio/crystal-debug.json
-npm run trace:audio -- --level crystal-debug --compare test-fixtures/audio/crystal-debug.json
 npm run trace:audio -- --level helios --graph
 ```
 
-The default output is a compact semantic summary for level authoring. Use `--verbose` or `--compare` when characterizing a refactor. The semantic trace is not waveform-based: it captures scheduled musical events, beat events, sections, and important voice calls, not browser compressor output or final mix quality. It currently covers `crystal`, `crystal-debug`, `prism`, `rezdle`, and `helios`.
+The default output is a compact semantic summary for level authoring. Use `--verbose` or `--compare` when characterizing a refactor. The semantic trace is not waveform-based: it captures scheduled musical events, beat events, sections, and important voice calls, not browser compressor output or final mix quality. It currently covers `crystal`, `prism`, `rezdle`, and `helios`.
 
-In dev builds, the timing debug panel is available on every level. It reads the selected level's BPM and effective runner timing baseline, including inherited defaults or level overrides. To make its action SFX snap control affect a level, honor `getActionSfxQuantization()` when scheduling `lock` and `fire` one-shots — preferably on the level transport's epoch-anchored grid as in crystal's `quantizePlayerAction` (see "Musical action audio" above), or through `quantizeActionSfxTime(time, thirtysecondSeconds)` if the level has no step transport. Do not route music, ambient, hit, or kill sounds through that control.
+In dev builds, a collapsed Debug panel is available on every level. Levels opt in to target-specific debug modes by declaring `debugSelector`; Crystal's debug mode holds the chosen enemy or the full Warden group in front of the camera with inflated health through `?debugEnemy=<target>`.
+
+The panel also includes timing controls. It reads the selected level's BPM and effective runner timing baseline, including inherited defaults or level overrides. To make its action SFX snap control affect a level, honor `getActionSfxQuantization()` when scheduling `lock` and `fire` one-shots — preferably on the level transport's epoch-anchored grid as in crystal's `quantizePlayerAction` (see "Musical action audio" above), or through `quantizeActionSfxTime(time, thirtysecondSeconds)` if the level has no step transport. Do not route music, ambient, hit, or kill sounds through that control.
 
 Use `--graph` to inspect the actual Web Audio graph that a level creates in Chrome via the DevTools Protocol. Graph capture can run for level modules that export `createAudio` from `src/levels/<module-folder>/audio.ts`; use the module folder name when it differs from the picker id. It captures node topology and node/parameter defaults; it does not capture every later parameter assignment in a stable authoring-friendly form.
 

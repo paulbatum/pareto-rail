@@ -135,11 +135,7 @@ canvas {
   cursor: pointer;
 }
 
-.debug-picker {
-  bottom: 58px;
-}
-
-.debug-quant-panel {
+.debug-panel {
   position: fixed;
   right: 18px;
   bottom: 18px;
@@ -155,25 +151,41 @@ canvas {
   cursor: auto;
 }
 
-.debug-quant-panel summary {
+.debug-panel summary {
   color: var(--cyan);
   cursor: pointer;
   user-select: none;
 }
 
-.debug-quant-panel-body {
+.debug-panel-body,
+.debug-panel-section {
   display: grid;
   gap: 10px;
+}
+
+.debug-panel-body {
   padding-top: 10px;
 }
 
-.debug-quant-presets {
+.debug-panel-section + .debug-panel-section {
+  padding-top: 10px;
+  border-top: 1px solid rgb(70 232 255 / 18%);
+}
+
+.debug-panel h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.debug-panel-presets {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
-.debug-quant-panel button {
+.debug-panel button {
   padding: 6px 8px;
   color: var(--ink);
   background: var(--cyan);
@@ -185,32 +197,46 @@ canvas {
   cursor: pointer;
 }
 
-.debug-quant-readout {
+.debug-panel-readout {
   color: #fff;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: none;
 }
 
-.debug-quant-panel label {
+.debug-panel label {
   display: grid;
   gap: 5px;
 }
 
-.debug-quant-panel input {
+.debug-panel-row {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.debug-panel input,
+.debug-panel select {
   accent-color: var(--magenta);
   cursor: pointer;
 }
 
-.debug-quant-disabled {
+.debug-panel select {
+  width: 100%;
+  color: #e8f6ff;
+  background: rgb(2 4 10 / 95%);
+  border: 1px solid rgb(70 232 255 / 35%);
+  font: inherit;
+}
+
+.debug-panel-disabled {
   opacity: 0.42;
 }
 
-.debug-quant-disabled input {
+.debug-panel-disabled input {
   cursor: not-allowed;
 }
 
-.debug-quant-panel p {
+.debug-panel p {
   margin: 0;
   color: rgb(232 246 255 / 66%);
   font-size: 10px;

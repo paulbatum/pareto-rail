@@ -1,7 +1,8 @@
 import { Object3D, PerspectiveCamera, Vector3 } from 'three';
 import { createEventBus } from '../src/events';
 import type { LockOnEnemy, LockOnSpawnEntry } from '../src/engine/lock-on-runner';
-import { createCrystalGameplay, type CrystalEnemyKind, type CrystalSpawnData } from '../src/levels/crystal-debug/gameplay';
+import { createCrystalGameplay, type CrystalEnemyKind, type CrystalSpawnData } from '../src/levels/crystal/gameplay';
+import type { CrystalDebugTarget } from '../src/levels/crystal/debug';
 
 type Enemy = LockOnEnemy<CrystalEnemyKind, CrystalSpawnData>;
 type Entry = LockOnSpawnEntry<CrystalEnemyKind, CrystalSpawnData>;
@@ -13,6 +14,7 @@ type SimOptions = {
 };
 
 const PLAYER_INVULNERABILITY_SECONDS = 0.9;
+const DEBUG_TARGET: CrystalDebugTarget = 'lancer';
 
 class SimEnemy implements Enemy {
   id: number;
@@ -25,6 +27,7 @@ class SimEnemy implements Enemy {
   hitStageIndex = 0;
   hitStageCount: number;
   stageHitPointsRemaining: number;
+  updateState?: unknown;
 
   constructor(id: number, entry: Entry, runTime: number) {
     this.id = id;
@@ -41,7 +44,7 @@ class SimEnemy implements Enemy {
 
 export function runCrystalLancerDebugSim(options: SimOptions) {
   const bus = createEventBus();
-  const level = createCrystalGameplay(bus);
+  const level = createCrystalGameplay(bus, DEBUG_TARGET);
   const curve = level.createRail();
   const camera = new PerspectiveCamera(60, 16 / 9, 0.1, 1000);
   const enemies = new Map<number, SimEnemy>();
@@ -126,6 +129,11 @@ export function runCrystalLancerDebugSim(options: SimOptions) {
       age: Math.max(0, runTime - enemy.spawnTime),
       curve,
       camera,
+      railAnchor: (lead) => {
+        const anchorTime = Math.min(level.duration, enemy.entry.time + lead);
+        return level.easeRunProgress?.(anchorTime, level.duration) ?? anchorTime / level.duration;
+      },
+      enemyState: <S>(init: () => S): S => (enemy.updateState ??= init()) as S,
       spawnEnemy,
       damagePlayer,
       playerHealth: health,
@@ -191,6 +199,6 @@ if (verbose) {
     .join(' ');
   const outcome = result.endedByDeath ? `death at ${result.secondsSimulated.toFixed(2)}s` : `${result.secondsSimulated.toFixed(2)}s`;
   console.log(
-    `crystal-debug sim: ${outcome}; health ${result.healthRemaining}; spawns ${spawnCounts}; hits ${result.playerHits.length}; misses ${result.misses.length}; active ${result.activeEnemies.length}`,
+    `crystal debug sim: ${outcome}; health ${result.healthRemaining}; spawns ${spawnCounts}; hits ${result.playerHits.length}; misses ${result.misses.length}; active ${result.activeEnemies.length}`,
   );
 }

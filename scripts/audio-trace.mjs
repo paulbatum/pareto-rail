@@ -17,10 +17,6 @@ const TRACE_TARGETS = {
     module: '/src/levels/crystal/audio.ts',
     exportName: 'traceCrystalAudio',
   },
-  'crystal-debug': {
-    module: '/src/levels/crystal-debug/audio.ts',
-    exportName: 'traceCrystalDebugAudio',
-  },
   helios: {
     module: '/src/levels/helios/audio.ts',
     exportName: 'traceHeliosAudio',
@@ -424,7 +420,7 @@ function countBy(values, keyForValue) {
 
 function parseArgs(argv) {
   const options = {
-    level: 'crystal-debug',
+    level: 'crystal',
     seconds: undefined,
     verbose: false,
     json: false,

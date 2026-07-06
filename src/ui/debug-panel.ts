@@ -5,6 +5,7 @@ import {
   setShotDelaySettings,
   type ShotDelayPattern,
 } from '../engine/action-sfx-quantization';
+import type { LevelDebugSelector } from '../engine/types';
 
 const GRID_OPTIONS = [
   { label: 'Immediate', enabled: false, gridThirtyseconds: 4 },
@@ -23,6 +24,13 @@ type TimingPreset = {
   releaseShare: number;
   pattern: ShotDelayPattern;
   gridRampGapGrowthThirtyseconds: number;
+};
+
+type DebugPanelLevel = {
+  id: string;
+  bpm: number;
+  debugSelector?: LevelDebugSelector;
+  urlParams?: URLSearchParams;
 };
 
 const OLD_PRESET: TimingPreset = {
@@ -52,31 +60,39 @@ const DEFAULT_PRESET: TimingPreset = {
   gridRampGapGrowthThirtyseconds: 2,
 };
 
-export function installDebugQuantPanel(level: { id: string; bpm: number }) {
+export function installDebugPanel(level: DebugPanelLevel) {
   if (!import.meta.env.DEV) return;
 
   const thirtysecondSeconds = 60 / level.bpm / 8;
   const panel = document.createElement('details');
-  panel.className = 'debug-quant-panel';
-  panel.open = true;
+  panel.className = 'debug-panel';
+  panel.open = false;
 
   const summary = document.createElement('summary');
-  summary.textContent = 'Timing';
+  summary.textContent = 'Debug';
   panel.append(summary);
 
   const body = document.createElement('div');
-  body.className = 'debug-quant-panel-body';
+  body.className = 'debug-panel-body';
   panel.append(body);
 
+  if (level.debugSelector) body.append(createDebugModeSection(level, level.debugSelector));
+
+  const timingSection = document.createElement('section');
+  timingSection.className = 'debug-panel-section';
+  const timingHeading = document.createElement('h3');
+  timingHeading.textContent = 'Timing';
+  timingSection.append(timingHeading);
+
   const presets = document.createElement('div');
-  presets.className = 'debug-quant-presets';
+  presets.className = 'debug-panel-presets';
   const defaultButton = button('Default');
   const linearButton = button('Linear');
   const oldButton = button('Old');
   presets.append(defaultButton, linearButton, oldButton);
 
   const patternText = document.createElement('div');
-  patternText.className = 'debug-quant-readout';
+  patternText.className = 'debug-panel-readout';
 
   const { label: gridLabel, text: gridText, input: gridInput } = range('0', `${GRID_OPTIONS.length - 1}`, '1');
   const { label: gapLabel, text: gapText, input: gapInput } = range('0', '8', '1');
@@ -86,7 +102,8 @@ export function installDebugQuantPanel(level: { id: string; bpm: number }) {
   const help = document.createElement('p');
   help.textContent = 'Default doubles the shot grid per shot and adapts to the level tempo so no grid period exceeds about 1.9s. Disabled sliders do not affect the active preset.';
 
-  body.append(presets, patternText, gridLabel, gapLabel, splitLabel, growthLabel, help);
+  timingSection.append(presets, patternText, gridLabel, gapLabel, splitLabel, growthLabel, help);
+  body.append(timingSection);
   document.body.append(panel);
 
   let activePattern: ShotDelayPattern = 'linear';
@@ -152,6 +169,73 @@ export function installDebugQuantPanel(level: { id: string; bpm: number }) {
   initializeFromStore();
 }
 
+function createDebugModeSection(level: DebugPanelLevel, selector: LevelDebugSelector) {
+  const params = level.urlParams ?? new URLSearchParams(window.location.search);
+  const section = document.createElement('section');
+  section.className = 'debug-panel-section';
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Debug mode';
+
+  const modeLabel = document.createElement('label');
+  modeLabel.className = 'debug-panel-row';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = params.has(selector.queryParam);
+  const modeText = document.createElement('span');
+  modeText.textContent = 'Debug mode';
+  modeLabel.append(checkbox, modeText);
+
+  const selectLabel = document.createElement('label');
+  selectLabel.className = 'debug-panel-field';
+  const selectText = document.createElement('span');
+  selectText.textContent = selector.label;
+  const select = document.createElement('select');
+  const storedValue = readStoredDebugValue(level.id, selector);
+  const activeValue = validOptionId(selector, params.get(selector.queryParam))
+    ?? storedValue
+    ?? selector.options[0]?.id
+    ?? '';
+  for (const optionDefinition of selector.options) {
+    const option = document.createElement('option');
+    option.value = optionDefinition.id;
+    option.textContent = optionDefinition.title;
+    option.selected = optionDefinition.id === activeValue;
+    select.append(option);
+  }
+  select.value = activeValue;
+  selectLabel.append(selectText, select);
+  selectLabel.hidden = !checkbox.checked;
+
+  checkbox.addEventListener('change', () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('level', level.id);
+    if (checkbox.checked) {
+      const nextValue = validOptionId(selector, readStoredDebugValue(level.id, selector))
+        ?? selector.options[0]?.id;
+      if (nextValue) {
+        storeDebugValue(level.id, selector, nextValue);
+        url.searchParams.set(selector.queryParam, nextValue);
+      }
+    } else {
+      storeDebugValue(level.id, selector, select.value);
+      url.searchParams.delete(selector.queryParam);
+    }
+    window.location.href = url.toString();
+  });
+
+  select.addEventListener('change', () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('level', level.id);
+    url.searchParams.set(selector.queryParam, select.value);
+    storeDebugValue(level.id, selector, select.value);
+    window.location.href = url.toString();
+  });
+
+  section.append(heading, modeLabel, selectLabel);
+  return section;
+}
+
 function button(text: string) {
   const element = document.createElement('button');
   element.type = 'button';
@@ -172,7 +256,7 @@ function range(min: string, max: string, step: string) {
 }
 
 function setDisabled(label: HTMLLabelElement, input: HTMLInputElement, disabled: boolean) {
-  label.classList.toggle('debug-quant-disabled', disabled);
+  label.classList.toggle('debug-panel-disabled', disabled);
   input.disabled = disabled;
 }
 
@@ -185,4 +269,20 @@ function optionIndexFor(enabled: boolean, gridThirtyseconds: number) {
   if (!enabled) return 0;
   const index = GRID_OPTIONS.findIndex((option) => option.enabled && option.gridThirtyseconds === gridThirtyseconds);
   return index === -1 ? 3 : index;
+}
+
+function validOptionId(selector: LevelDebugSelector, value: string | null | undefined) {
+  return selector.options.find((option) => option.id === value)?.id;
+}
+
+function debugStorageKey(levelId: string, selector: LevelDebugSelector) {
+  return `raild-debug-${levelId}-${selector.queryParam}`;
+}
+
+function readStoredDebugValue(levelId: string, selector: LevelDebugSelector) {
+  return validOptionId(selector, localStorage.getItem(debugStorageKey(levelId, selector)));
+}
+
+function storeDebugValue(levelId: string, selector: LevelDebugSelector, value: string) {
+  if (validOptionId(selector, value)) localStorage.setItem(debugStorageKey(levelId, selector), value);
 }

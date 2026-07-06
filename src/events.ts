@@ -56,6 +56,7 @@ export type GameEvents = {
     missingEnemyIds?: number[];
   };
   shielded: { shields: Array<{ enemyId: number; worldPosition: Vector3 }>; blockedEnemyIds: number[] };
+  bossphase: { phase: 'summoned' | 'exposed' | 'destroyed' };
   volley: { volleyId: number; size: number; kills: number; scoreAwarded: number };
   beat: { beatNumber: number; isDownbeat: boolean; audioTime: number };
   runstart: { runNumber: number; duration: number; totalEnemies: number };

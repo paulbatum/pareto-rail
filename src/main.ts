@@ -21,10 +21,11 @@ async function bootstrap() {
 
   const urlParams = new URLSearchParams(window.location.search);
   const selectedLevel = await getLevelById(urlParams.get('level'));
-  const debugValue = selectedLevel.debugSelector ? urlParams.get(selectedLevel.debugSelector.queryParam) ?? undefined : undefined;
+  const debugValue = import.meta.env.DEV && selectedLevel.debugSelector
+    ? urlParams.get(selectedLevel.debugSelector.queryParam) ?? undefined
+    : undefined;
   document.title = `raild — ${selectedLevel.title}`;
-  installLevelPicker(selectedLevel.id, import.meta.env.DEV);
-  installDebugPicker(selectedLevel, urlParams);
+  installLevelPicker(selectedLevel.id);
 
   const renderer = new WebGPURenderer({ antialias: true, alpha: false });
   // three.js installs a WebGL fallback internally; this project is intentionally WebGPU-only.
@@ -45,7 +46,7 @@ async function bootstrap() {
 
   const scene = new Scene();
   const camera = new PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
-  const hud = createHud({ showTimer: import.meta.env.DEV || selectedLevel.debugOnly === true });
+  const hud = createHud({ showTimer: import.meta.env.DEV });
   const bus = createEventBus();
   const audio = selectedLevel.createAudio(bus);
   const legacyVolume = readStoredPercent('raild-volume', 50);
@@ -108,9 +109,14 @@ async function bootstrap() {
   });
 
   if (import.meta.env.DEV) {
-    void import('./ui/debug-quant-panel')
-      .then(({ installDebugQuantPanel }) => installDebugQuantPanel({ id: selectedLevel.id, bpm: selectedLevel.bpm }))
-      .catch((error) => console.warn('Debug quant panel failed to install', error));
+    void import('./ui/debug-panel')
+      .then(({ installDebugPanel }) => installDebugPanel({
+        id: selectedLevel.id,
+        bpm: selectedLevel.bpm,
+        debugSelector: selectedLevel.debugSelector,
+        urlParams,
+      }))
+      .catch((error) => console.warn('Debug panel failed to install', error));
   }
 
   document.body.classList.remove('booting');
@@ -137,12 +143,12 @@ async function bootstrap() {
   });
 }
 
-function installLevelPicker(activeId: string, includeDebug: boolean) {
+function installLevelPicker(activeId: string) {
   const host = document.createElement('label');
   host.className = 'level-picker';
   host.textContent = 'Level ';
   const select = document.createElement('select');
-  for (const level of selectableLevels(includeDebug)) {
+  for (const level of selectableLevels()) {
     const option = document.createElement('option');
     option.value = level.id;
     option.textContent = level.title;
@@ -152,32 +158,6 @@ function installLevelPicker(activeId: string, includeDebug: boolean) {
   select.addEventListener('change', () => {
     const url = new URL(window.location.href);
     url.searchParams.set('level', select.value);
-    window.location.href = url.toString();
-  });
-  host.append(select);
-  document.body.append(host);
-}
-
-function installDebugPicker(level: Awaited<ReturnType<typeof getLevelById>>, urlParams: URLSearchParams) {
-  const selector = level.debugSelector;
-  if (!selector) return;
-
-  const host = document.createElement('label');
-  host.className = 'level-picker debug-picker';
-  host.textContent = `${selector.label} `;
-  const select = document.createElement('select');
-  const activeValue = urlParams.get(selector.queryParam) ?? selector.options[0]?.id;
-  for (const optionDefinition of selector.options) {
-    const option = document.createElement('option');
-    option.value = optionDefinition.id;
-    option.textContent = optionDefinition.title;
-    option.selected = optionDefinition.id === activeValue;
-    select.append(option);
-  }
-  select.addEventListener('change', () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('level', level.id);
-    url.searchParams.set(selector.queryParam, select.value);
     window.location.href = url.toString();
   });
   host.append(select);

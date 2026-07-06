@@ -17,11 +17,6 @@ const TRACE_TARGETS = {
     module: '/src/levels/crystal/gameplay.ts',
     exportName: 'CRYSTAL_TIMELINE',
   },
-  'crystal-debug': {
-    level: 'crystal-debug',
-    module: '/src/levels/crystal-debug/gameplay.ts',
-    exportName: 'CRYSTAL_TIMELINE',
-  },
   helios: {
     level: 'helios',
     module: '/src/levels/helios/gameplay.ts',
