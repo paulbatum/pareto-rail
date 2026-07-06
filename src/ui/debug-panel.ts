@@ -5,7 +5,15 @@ import {
   setShotDelaySettings,
   type ShotDelayPattern,
 } from '../engine/action-sfx-quantization';
+import {
+  defaultPlayerCameraSettings,
+  getPlayerCameraSettings,
+  setPlayerCameraSettings,
+} from '../engine/player-camera';
 import type { LevelDebugSelector } from '../engine/types';
+
+const CAMERA_EDGE_LOOK_KEY = 'raild-debug-camera-edge-look-degrees';
+const CAMERA_EDGE_ROLL_KEY = 'raild-debug-camera-edge-roll-degrees';
 
 const GRID_OPTIONS = [
   { label: 'Immediate', enabled: false, gridThirtyseconds: 4 },
@@ -77,6 +85,7 @@ export function installDebugPanel(level: DebugPanelLevel) {
   panel.append(body);
 
   if (level.debugSelector) body.append(createDebugModeSection(level, level.debugSelector));
+  body.append(createCameraSection());
 
   const timingSection = document.createElement('section');
   timingSection.className = 'debug-panel-section';
@@ -167,6 +176,56 @@ export function installDebugPanel(level: DebugPanelLevel) {
   splitInput.addEventListener('input', apply);
   growthInput.addEventListener('input', apply);
   initializeFromStore();
+}
+
+function createCameraSection() {
+  const defaults = defaultPlayerCameraSettings();
+  setPlayerCameraSettings({
+    edgeLookDegrees: readStoredNumber(CAMERA_EDGE_LOOK_KEY, defaults.edgeLookDegrees),
+    edgeRollDegrees: readStoredNumber(CAMERA_EDGE_ROLL_KEY, defaults.edgeRollDegrees),
+  });
+
+  const section = document.createElement('section');
+  section.className = 'debug-panel-section';
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Camera';
+
+  const { label: lookLabel, text: lookText, input: lookInput } = range('0', '16', '0.5');
+  const { label: rollLabel, text: rollText, input: rollInput } = range('0', '10', '0.5');
+  const resetButton = button('Reset');
+  const help = document.createElement('p');
+  help.textContent = 'Edge look turns the camera toward the cursor near screen edges, widening the practical lock-on area. Edge roll is cosmetic bank.';
+
+  const settings = getPlayerCameraSettings();
+  lookInput.value = `${settings.edgeLookDegrees}`;
+  rollInput.value = `${settings.edgeRollDegrees}`;
+
+  function render() {
+    lookText.textContent = `Edge look: ${formatDegrees(Number(lookInput.value))}° max`;
+    rollText.textContent = `Edge roll: ${formatDegrees(Number(rollInput.value))}° max`;
+  }
+
+  function apply() {
+    const edgeLookDegrees = Number(lookInput.value);
+    const edgeRollDegrees = Number(rollInput.value);
+    setPlayerCameraSettings({ edgeLookDegrees, edgeRollDegrees });
+    localStorage.setItem(CAMERA_EDGE_LOOK_KEY, `${edgeLookDegrees}`);
+    localStorage.setItem(CAMERA_EDGE_ROLL_KEY, `${edgeRollDegrees}`);
+    render();
+  }
+
+  resetButton.addEventListener('click', () => {
+    lookInput.value = `${defaults.edgeLookDegrees}`;
+    rollInput.value = `${defaults.edgeRollDegrees}`;
+    apply();
+  });
+  lookInput.addEventListener('input', apply);
+  rollInput.addEventListener('input', apply);
+  render();
+
+  section.append(heading, lookLabel, rollLabel, resetButton, help);
+  return section;
 }
 
 function createDebugModeSection(level: DebugPanelLevel, selector: LevelDebugSelector) {
@@ -263,6 +322,17 @@ function setDisabled(label: HTMLLabelElement, input: HTMLInputElement, disabled:
 function labelForPattern(pattern: ShotDelayPattern) {
   if (pattern === 'linear') return 'Shot rhythm: linear';
   return 'Shot rhythm: default tempo-adaptive grid ramp (doubles per shot, capped near 1.9s)';
+}
+
+function formatDegrees(value: number) {
+  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+}
+
+function readStoredNumber(key: string, fallback: number) {
+  const raw = localStorage.getItem(key);
+  if (raw === null) return fallback;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : fallback;
 }
 
 function optionIndexFor(enabled: boolean, gridThirtyseconds: number) {

@@ -1,4 +1,4 @@
-import { MathUtils, Object3D, PerspectiveCamera, Raycaster, Scene, Vector3 } from 'three';
+import { MathUtils, Object3D, PerspectiveCamera, Quaternion, Raycaster, Scene, Vector2, Vector3 } from 'three';
 import type { CatmullRomCurve3 } from 'three';
 import {
   setActionSfxQuantization,
@@ -9,6 +9,7 @@ import {
 } from './action-sfx-quantization';
 import { createInput } from './input';
 import { MAX_LOCKS } from './locks';
+import { getPlayerCameraSettings } from './player-camera';
 import { smoothRunProgress } from './rail';
 import { scoreForKill as defaultScoreForKill, rankForRun as defaultRankForRun, type RunSummary } from './scoring';
 import type { VisualFactories } from './types';
@@ -25,6 +26,9 @@ const REPLAY_WORD = 'REPLAY';
 const CONTROL_TIP = 'HOLD to charge — SWEEP across all six targets — RELEASE to fire';
 const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 const REPEAT_LOCK_DELAY = 0.18;
+const EDGE_LOOK_DEAD_ZONE = 0.08;
+const EDGE_LOOK_EXPONENT = 1.35;
+const EDGE_LOOK_RESPONSE = 9;
 
 declare global {
   interface Window {
@@ -239,6 +243,9 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   let showingStartTip = false;
   const easeFromPosition = new Vector3();
   const easeFromLook = new Vector3(0, 0, -1);
+  const cameraBaseQuaternion = new Quaternion();
+  const smoothedEdgeLook = new Vector2();
+  const targetEdgeLook = new Vector2();
 
   const enemies = new Map<number, Enemy<TKind, TData>>();
   const locks: number[] = [];
@@ -379,6 +386,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   }
 
   function updateEnded(dt: number) {
+    applyEdgeLook(dt);
     updateReticle();
     updateLetterTargets();
     updateLocks();
@@ -392,23 +400,23 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function updateAttractCamera(dt: number) {
     if (level.updateAttractCamera) {
       level.updateAttractCamera({ camera, curve, modeTime, dt });
-      return;
+    } else {
+      const base = curve.getPointAt(0);
+      const lookBase = curve.getPointAt(0.03);
+      const drift = new Vector3(
+        Math.sin(modeTime * 0.7) * 0.035,
+        Math.cos(modeTime * 0.9) * 0.025,
+        Math.sin(modeTime * 0.5) * 0.02,
+      );
+      const lookDrift = new Vector3(
+        Math.sin(modeTime * 0.55 + 1.4) * 0.07,
+        Math.cos(modeTime * 0.6) * 0.045,
+        0,
+      );
+      camera.position.copy(base).add(drift);
+      camera.lookAt(lookBase.clone().add(lookDrift));
     }
-    const base = curve.getPointAt(0);
-    const lookBase = curve.getPointAt(0.03);
-    const drift = new Vector3(
-      Math.sin(modeTime * 0.7) * 0.035,
-      Math.cos(modeTime * 0.9) * 0.025,
-      Math.sin(modeTime * 0.5) * 0.02,
-    );
-    const lookDrift = new Vector3(
-      Math.sin(modeTime * 0.55 + 1.4) * 0.07,
-      Math.cos(modeTime * 0.6) * 0.045,
-      0,
-    );
-    camera.position.copy(base).add(drift);
-    camera.lookAt(lookBase.clone().add(lookDrift));
-    camera.updateMatrixWorld();
+    captureCameraBaseAndApplyEdgeLook(dt);
   }
 
   function updateRunCamera(runProgress: number, dt: number) {
@@ -424,7 +432,34 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       camera.position.copy(position);
       camera.lookAt(lookAt);
     }
+    captureCameraBaseAndApplyEdgeLook(dt);
+  }
+
+  function captureCameraBaseAndApplyEdgeLook(dt: number) {
+    cameraBaseQuaternion.copy(camera.quaternion);
+    applyEdgeLook(dt);
+  }
+
+  function applyEdgeLook(dt: number) {
+    const settings = getPlayerCameraSettings();
+    targetEdgeLook.set(edgeCurve(input.state.pointerNdc.x), edgeCurve(input.state.pointerNdc.y));
+    const alpha = dt <= 0 ? 1 : 1 - Math.exp(-EDGE_LOOK_RESPONSE * dt);
+    smoothedEdgeLook.lerp(targetEdgeLook, Math.min(1, alpha));
+
+    camera.quaternion.copy(cameraBaseQuaternion);
+    const yaw = -MathUtils.degToRad(settings.edgeLookDegrees) * smoothedEdgeLook.x;
+    const pitch = MathUtils.degToRad(settings.edgeLookDegrees) * smoothedEdgeLook.y;
+    const roll = -MathUtils.degToRad(settings.edgeRollDegrees) * smoothedEdgeLook.x;
+    if (yaw !== 0) camera.rotateY(yaw);
+    if (pitch !== 0) camera.rotateX(pitch);
+    if (roll !== 0) camera.rotateZ(roll);
     camera.updateMatrixWorld();
+  }
+
+  function edgeCurve(value: number) {
+    const sign = Math.sign(value);
+    const magnitude = Math.max(0, Math.min(1, Math.abs(value)) - EDGE_LOOK_DEAD_ZONE) / (1 - EDGE_LOOK_DEAD_ZONE);
+    return sign * magnitude ** EDGE_LOOK_EXPONENT;
   }
 
   function updateReticle() {
