@@ -13,6 +13,7 @@ import {
   setEnemyLocked,
   setReticleActive,
   updateVisuals,
+  disposeEnvironment,
 } from './visuals';
 
 export const prismBloomLevel: LevelDefinition = {
@@ -52,10 +53,11 @@ export const prismBloomLevel: LevelDefinition = {
     return {
       update(dt, elapsed) {
         game.update(dt);
-        updateVisuals(dt, { scene, camera, elapsed });
+        updateVisuals(dt, { scene, camera, elapsed, runProgress: game.runProgress });
       },
       dispose() {
         game.dispose();
+        disposeEnvironment();
       },
     };
   },

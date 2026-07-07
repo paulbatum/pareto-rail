@@ -25,7 +25,14 @@ import type { Camera } from 'three';
 import type { EventBus } from '../../events';
 import { colorForLockCount } from '../../engine/locks';
 import { sampleRailFrame } from '../../engine/rail';
-import { createAdditiveBasicMaterial, createPendingVisualRecords, createTransientEffectPool } from '../../engine/visual-kit';
+import { scatterAlongRail } from '../../engine/environment-kit';
+import type { ScatterField } from '../../engine/environment-kit';
+import {
+  createAdditiveBasicMaterial,
+  createPendingVisualRecords,
+  createTransientEffectPool,
+  disposeObject3D,
+} from '../../engine/visual-kit';
 import { createPrismRail } from './gameplay';
 
 const INDIGO = new Color(0.13, 0.08, 0.38);
@@ -62,40 +69,63 @@ let beatEnergy = 0;
 let environmentRoot: Group | null = null;
 let baseFov: number | null = null;
 let elapsedNow = 0;
+let ribField: ScatterField | null = null;
+
+export function disposeEnvironment() {
+  const root = environmentRoot;
+  ribField?.dispose();
+  ribField = null;
+  if (root) {
+    root.removeFromParent();
+    disposeObject3D(root);
+  }
+  environmentRoot = null;
+}
 
 export function createEnvironment(scene: Scene) {
+  disposeEnvironment();
   scene.background = INDIGO;
   const root = new Group();
   const rail = createPrismRail();
-  const positions: number[] = [];
-  const colors: number[] = [];
 
-  const push = (a: Vector3, b: Vector3, color: Color, intensity: number) => {
-    positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
-    for (let i = 0; i < 2; i += 1) colors.push(color.r * intensity, color.g * intensity, color.b * intensity);
-  };
+  const ribPositions: number[] = [];
+  const ribColors: number[] = [];
+  const ribOffsets: number[] = [];
 
-  for (let i = 0; i < 86; i += 1) {
-    const u = i / 85;
-    const frame = sampleRailFrame(rail, u);
-    const skew = Math.sin(u * Math.PI * 8) * 3;
-    const a = frame.position.clone().addScaledVector(frame.right, -14 - skew).addScaledVector(frame.up, -8);
-    const b = frame.position.clone().addScaledVector(frame.right, 14 - skew).addScaledVector(frame.up, 8);
-    const c = frame.position.clone().addScaledVector(frame.right, -14 + skew).addScaledVector(frame.up, 8);
-    const d = frame.position.clone().addScaledVector(frame.right, 14 + skew).addScaledVector(frame.up, -8);
-    push(a, b, i % 3 === 0 ? LIME : VIOLET, i % 5 === 0 ? 0.9 : 0.28);
-    if (i % 2 === 0) push(c, d, ICE, 0.18);
+  for (let index = 0; index < 86; index += 1) {
+    ribOffsets[index] = ribPositions.length;
+    writePrismRib(ribPositions, ribColors, rail, index, index / 85);
   }
 
   const geometry = new BufferGeometry();
-  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+  geometry.setAttribute('position', new Float32BufferAttribute(ribPositions, 3));
+  geometry.setAttribute('color', new Float32BufferAttribute(ribColors, 3));
   const prismField = new LineSegments(
     geometry,
     new LineBasicMaterial({ vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false }),
   );
   prismField.frustumCulled = false;
   root.add(prismField);
+
+  const railLength = rail.getLength();
+  const positionAttribute = geometry.getAttribute('position') as Float32BufferAttribute;
+  ribField = scatterAlongRail(rail, {
+    count: 86,
+    seed: 20260707,
+    window: { behind: railLength * 2, ahead: railLength * 2 },
+    place(index) {
+      return { u: index / 85, offset: new Vector3() };
+    },
+    make() {
+      const marker = new Object3D();
+      marker.visible = false;
+      return marker;
+    },
+    onUpdate(item) {
+      writePrismRibPositions(positionAttribute.array as Float32Array, ribOffsets[item.index], rail, item.index, item.u);
+      positionAttribute.needsUpdate = true;
+    },
+  });
 
   const starGeometry = new BufferGeometry();
   const starPositions = new Float32Array(900 * 3);
@@ -121,6 +151,56 @@ export function createEnvironment(scene: Scene) {
   scene.add(root);
   environmentRoot = root;
   return root;
+}
+
+function writePrismRib(
+  positions: number[],
+  colors: number[],
+  rail: ReturnType<typeof createPrismRail>,
+  index: number,
+  u: number,
+) {
+  const offset = positions.length;
+  for (let i = 0; i < (index % 2 === 0 ? 12 : 6); i += 1) positions.push(0);
+  writePrismRibPositions(positions, offset, rail, index, u);
+
+  const color = index % 3 === 0 ? LIME : VIOLET;
+  const intensity = index % 5 === 0 ? 0.9 : 0.28;
+  colors.push(
+    color.r * intensity, color.g * intensity, color.b * intensity,
+    color.r * intensity, color.g * intensity, color.b * intensity,
+  );
+  if (index % 2 === 0) {
+    colors.push(ICE.r * 0.18, ICE.g * 0.18, ICE.b * 0.18, ICE.r * 0.18, ICE.g * 0.18, ICE.b * 0.18);
+  }
+}
+
+function writePrismRibPositions(
+  positions: number[] | Float32Array,
+  offset: number,
+  rail: ReturnType<typeof createPrismRail>,
+  index: number,
+  u: number,
+) {
+  const frame = sampleRailFrame(rail, u);
+  const skew = Math.sin(u * Math.PI * 8) * 3;
+  const a = frame.position.clone().addScaledVector(frame.right, -14 - skew).addScaledVector(frame.up, -8);
+  const b = frame.position.clone().addScaledVector(frame.right, 14 - skew).addScaledVector(frame.up, 8);
+  positions[offset] = a.x;
+  positions[offset + 1] = a.y;
+  positions[offset + 2] = a.z;
+  positions[offset + 3] = b.x;
+  positions[offset + 4] = b.y;
+  positions[offset + 5] = b.z;
+  if (index % 2 !== 0) return;
+  const c = frame.position.clone().addScaledVector(frame.right, -14 + skew).addScaledVector(frame.up, 8);
+  const d = frame.position.clone().addScaledVector(frame.right, 14 + skew).addScaledVector(frame.up, -8);
+  positions[offset + 6] = c.x;
+  positions[offset + 7] = c.y;
+  positions[offset + 8] = c.z;
+  positions[offset + 9] = d.x;
+  positions[offset + 10] = d.y;
+  positions[offset + 11] = d.z;
 }
 
 export function createEnemyMesh(kind: string, letter?: string) {
@@ -306,7 +386,10 @@ function pulse(scene: Scene, position: Vector3, color: Color, scale: number, lif
   pulses.add({ ring, age: 0, life, color: color.clone().multiplyScalar(1.5 * scale) });
 }
 
-export function updateVisuals(dt: number, context: { scene: Scene; camera: Camera; elapsed: number }) {
+export function updateVisuals(
+  dt: number,
+  context: { scene: Scene; camera: Camera; elapsed: number; runProgress?: number },
+) {
   elapsedNow = context.elapsed;
   beatEnergy = Math.max(0, beatEnergy - dt * 3.8);
   if (environmentRoot) {
@@ -318,6 +401,9 @@ export function updateVisuals(dt: number, context: { scene: Scene; camera: Camer
     context.camera.fov = baseFov + beatEnergy * 1.7;
     context.camera.updateProjectionMatrix();
   }
+
+  const runProgress = context.runProgress ?? 0;
+  ribField?.update(runProgress, dt);
 
   for (const record of enemies.values()) {
     const age = context.elapsed - record.bornAt;

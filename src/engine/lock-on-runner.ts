@@ -1166,5 +1166,8 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     get state() {
       return state;
     },
+    get runProgress() {
+      return state === 'running' ? easeRunProgress(runTime, duration) : (state === 'ended' ? 1 : 0);
+    },
   };
 }
