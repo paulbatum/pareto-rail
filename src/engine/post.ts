@@ -1,5 +1,5 @@
 import { RenderPipeline, WebGPURenderer } from 'three/webgpu';
-import { float, pass, screenUV, smoothstep, vec2 } from 'three/tsl';
+import { float, pass, screenUV, smoothstep, uniform, vec2 } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import type { Camera, Scene } from 'three';
 import type { LevelPostConfig } from './types';
@@ -31,9 +31,14 @@ export function getBloomLevel() {
 }
 
 // Shared player preference for levels that implement their own motion blur.
-// The engine stores this value only; motion-blur levels must read and apply it.
+// The engine stores this value only; motion-blur levels must apply it. Levels
+// should factor the uniform into their composeOutput so slider changes show
+// immediately, including while paused (level update loops halt on pause).
+export const motionBlurLevelUniform = uniform(1);
+
 export function setMotionBlurLevel(level: number) {
   motionBlurLevel = Math.min(1, Math.max(0, level));
+  motionBlurLevelUniform.value = motionBlurLevel;
 }
 
 export function getMotionBlurLevel() {

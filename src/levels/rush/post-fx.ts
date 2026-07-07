@@ -2,6 +2,7 @@ import { Matrix4, MathUtils } from 'three';
 import { clamp, float, length, max, min, mix, step, uniform, vec2, vec3, vec4 } from 'three/tsl';
 import type { Camera } from 'three';
 import type { LevelPostColorNode, LevelPostComposeInput, LevelPostUvNode } from '../../engine/types';
+import { motionBlurLevelUniform } from '../../engine/post';
 import { RUSH_TUNING } from './tuning';
 
 const MAX_TAPS = 8;
@@ -62,10 +63,13 @@ export function composeRushOutput({ base, scenePass, screenUV }: LevelPostCompos
   const previousClip = rushClipToPreviousClipUniform.mul(currentClip);
   const previousNdc = previousClip.xy.div(previousClip.w);
   const previousUv = vec2(previousNdc.x.mul(0.5).add(0.5), previousNdc.y.mul(0.5).add(0.5).oneMinus());
+  // Player slider: 50% is the authored reference strength, 100% doubles it. Applied
+  // in-shader so slider changes are visible immediately, including while paused.
+  const effectiveStrength = min(rushMotionBlurStrengthUniform.mul(motionBlurLevelUniform.div(0.5)), float(1));
   const rawVelocity = screenUV.sub(previousUv);
   const velocityLength = length(rawVelocity);
   const velocityScale = min(float(1), rushMotionBlurMaxVelocityUniform.div(max(velocityLength, float(0.00001))));
-  const velocity = rawVelocity.mul(velocityScale).mul(rushMotionBlurStrengthUniform);
+  const velocity = rawVelocity.mul(velocityScale).mul(effectiveStrength);
 
   const tap1 = gatedTap(sceneTexture, screenUV, velocity, 1, 0.15);
   const tap2 = gatedTap(sceneTexture, screenUV, velocity, 2, 0.30);
@@ -86,7 +90,7 @@ export function composeRushOutput({ base, scenePass, screenUV }: LevelPostCompos
     .add(tapGate(8));
   const blurred = base.add(tap1).add(tap2).add(tap3).add(tap4).add(tap5).add(tap6).add(tap7).add(tap8).div(weight);
   const flash = vec4(0.95, 0.38, 0.08, 0).mul(rushSurgeFlashUniform.mul(0.22));
-  return mix(base, blurred, rushMotionBlurStrengthUniform).add(flash);
+  return mix(base, blurred, effectiveStrength).add(flash);
 }
 
 function computeViewProjection(camera: Camera, target: Matrix4) {
