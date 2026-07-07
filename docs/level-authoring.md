@@ -38,7 +38,7 @@ This is a default, not a law. Rezdle legitimately decomposes differently, and `c
 4. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`.
 5. Add the level to `src/levels/index.ts`.
 
-A level task should only touch `src/levels/<id>/` plus one registry line in `src/levels/index.ts`. Use `npm run check:scope -- <level-id>` to verify that boundary.
+A level task should only touch `src/levels/<id>/`, one registry line in `src/levels/index.ts`, and the regenerated `docs/level-gallery.md`. Use `npm run check:scope -- <level-id>` to verify that boundary.
 
 ## Handoff checks
 
