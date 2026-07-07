@@ -54,7 +54,7 @@ export function decayRushPost(dt: number) {
   rushSurgeFlashUniform.value = Math.max(0, rushSurgeFlashUniform.value - dt * RUSH_TUNING.motionBlur.surgeDecay);
 }
 
-export function composeRushOutput({ base, scenePass, screenUV }: LevelPostComposeInput): LevelPostColorNode {
+export function composeRushOutput({ scenePass, bloomPass, screenUV }: LevelPostComposeInput): LevelPostColorNode {
   const sceneTexture = scenePass.getTextureNode();
   const depthTexture = scenePass.getTextureNode('depth');
   const depth = depthTexture.sample(screenUV).r;
@@ -63,9 +63,9 @@ export function composeRushOutput({ base, scenePass, screenUV }: LevelPostCompos
   const previousClip = rushClipToPreviousClipUniform.mul(currentClip);
   const previousNdc = previousClip.xy.div(previousClip.w);
   const previousUv = vec2(previousNdc.x.mul(0.5).add(0.5), previousNdc.y.mul(0.5).add(0.5).oneMinus());
-  // Player slider: 50% is the authored reference strength, 100% doubles it. Applied
-  // in-shader so slider changes are visible immediately, including while paused.
-  const effectiveStrength = min(rushMotionBlurStrengthUniform.mul(motionBlurLevelUniform.div(0.5)), float(1));
+  // Player slider: 12.5% is the authored reference strength; the old 100% lands at 25% now.
+  // Applied in-shader so slider changes are visible immediately, including while paused.
+  const effectiveStrength = min(rushMotionBlurStrengthUniform.mul(motionBlurLevelUniform.div(0.125)), float(1));
   const rawVelocity = screenUV.sub(previousUv);
   const velocityLength = length(rawVelocity);
   const velocityScale = min(float(1), rushMotionBlurMaxVelocityUniform.div(max(velocityLength, float(0.00001))));
@@ -88,9 +88,10 @@ export function composeRushOutput({ base, scenePass, screenUV }: LevelPostCompos
     .add(tapGate(6))
     .add(tapGate(7))
     .add(tapGate(8));
-  const blurred = base.add(tap1).add(tap2).add(tap3).add(tap4).add(tap5).add(tap6).add(tap7).add(tap8).div(weight);
+  const sceneColor = sceneTexture.sample(screenUV);
+  const blurredScene = sceneColor.add(tap1).add(tap2).add(tap3).add(tap4).add(tap5).add(tap6).add(tap7).add(tap8).div(weight);
   const flash = vec4(0.95, 0.38, 0.08, 0).mul(rushSurgeFlashUniform.mul(0.22));
-  return mix(base, blurred, effectiveStrength).add(flash);
+  return mix(sceneColor, blurredScene, effectiveStrength).add(bloomPass).add(flash);
 }
 
 function computeViewProjection(camera: Camera, target: Matrix4) {
