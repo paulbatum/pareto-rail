@@ -80,14 +80,69 @@ const LOG_EVENT_TYPES = [
   'runstart', 'runend', 'shielded', 'bossphase',
 ] as const satisfies Array<keyof GameEvents>;
 
-const LEVEL_ALIASES: Record<string, { canonical: string; folder: string; title: string }> = {
-  crystal: { canonical: 'crystal-corridor', folder: 'crystal', title: 'Crystal Corridor' },
-  'crystal-corridor': { canonical: 'crystal-corridor', folder: 'crystal', title: 'Crystal Corridor' },
-  helios: { canonical: 'helios', folder: 'helios', title: 'Helios' },
-  prism: { canonical: 'prism-bloom', folder: 'prism', title: 'Prism Bloom' },
-  'prism-bloom': { canonical: 'prism-bloom', folder: 'prism', title: 'Prism Bloom' },
-  rezdle: { canonical: 'rezdle', folder: 'rezdle', title: 'Rezdle' },
+type LevelTarget = {
+  canonical: string;
+  folder: string;
+  title: string;
 };
+
+async function resolveLevelTarget(levelIdOrAlias: string, rootDir: string): Promise<LevelTarget> {
+  const registryPath = path.resolve(rootDir, 'src/levels/index.ts');
+  const registrySource = await fs.readFile(registryPath, 'utf8');
+
+  // Find dynamic import case mappings
+  const caseRegex = /case\s+['"]([^'"]+)['"]:\s*\r?\n\s*return\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+);/g;
+  const cases = new Map<string, string>();
+  let match: RegExpExecArray | null;
+  while ((match = caseRegex.exec(registrySource))) {
+    const canonicalId = match[1];
+    const importPath = match[2];
+    const folder = importPath.replace(/^\.\//, '');
+    cases.set(canonicalId, folder);
+  }
+
+  // Parse levelMetadatas to get aliases/IDs
+  const arrayMatch = registrySource.match(/export const levelMetadatas: LevelMetadata\[] = \[([\s\S]*?)\n\];/);
+  if (!arrayMatch) throw new Error('Could not find levelMetadatas array in src/levels/index.ts');
+  
+  const entryRegex = /\{\s*id:\s*['"]([^'"]+)['"]\s*,\s*title:\s*['"]([^'"]+)['"](?:\s*,\s*aliases:\s*\[([^\]]*)\])?/g;
+  let canonicalId = '';
+  let title = '';
+  while ((match = entryRegex.exec(arrayMatch[1]))) {
+    const entryId = match[1];
+    const entryTitle = match[2];
+    const entryAliases = match[3] 
+      ? match[3].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean) 
+      : [];
+    if (entryId === levelIdOrAlias || entryAliases.includes(levelIdOrAlias)) {
+      canonicalId = entryId;
+      title = entryTitle;
+      break;
+    }
+  }
+
+  if (!canonicalId || !cases.has(canonicalId)) {
+    // Fallback search: if it doesn't match the strict patterns, try to see if the directory exists
+    const directPath = path.resolve(rootDir, 'src/levels', levelIdOrAlias);
+    try {
+      const stats = await fs.stat(directPath);
+      if (stats.isDirectory()) {
+        canonicalId = levelIdOrAlias;
+        title = levelIdOrAlias;
+        cases.set(canonicalId, levelIdOrAlias);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!canonicalId || !cases.has(canonicalId)) {
+    throw new Error(`Unsupported simulation level: ${levelIdOrAlias}`);
+  }
+
+  const folder = cases.get(canonicalId)!;
+  return { canonical: canonicalId, folder, title };
+}
 
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
@@ -119,7 +174,7 @@ export async function runSimulationSuite(options: Partial<CliOptions> & { level:
   return runSuite(fullOptions);
 }
 
-export const simulationLevels = Object.keys(LEVEL_ALIASES);
+export const simulationLevels: string[] = [];
 
 async function runSuite(options: CliOptions): Promise<SuiteResult> {
   const runs: RunResult[] = [];
@@ -143,8 +198,7 @@ async function runSuite(options: CliOptions): Promise<SuiteResult> {
 }
 
 async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise<RunResult> {
-  const target = LEVEL_ALIASES[options.level];
-  if (!target) throw new Error(`Unsupported simulation level: ${options.level}`);
+  const target = await resolveLevelTarget(options.level, process.cwd());
 
   const bus = createEventBus();
   const hud = createStubHud();
@@ -365,26 +419,21 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
 }
 
 async function createGameplay(folder: string, bus: ReturnType<typeof createEventBus>, hud: Hud): Promise<LockOnRunnerLevel<string, unknown>> {
-  switch (folder) {
-    case 'crystal': {
-      const mod = await import('../src/levels/crystal/gameplay');
-      return mod.createCrystalGameplay(bus) as LockOnRunnerLevel<string, unknown>;
-    }
-    case 'helios': {
-      const mod = await import('../src/levels/helios/gameplay');
-      return mod.createHeliosGameplay(bus) as LockOnRunnerLevel<string, unknown>;
-    }
-    case 'prism': {
-      const mod = await import('../src/levels/prism/gameplay');
-      return mod.prismGameplay as LockOnRunnerLevel<string, unknown>;
-    }
-    case 'rezdle': {
-      const mod = await import('../src/levels/rezdle/gameplay');
-      return mod.createRezdleGameplay(bus, hud) as LockOnRunnerLevel<string, unknown>;
-    }
-    default:
-      throw new Error(`Unsupported simulation folder: ${folder}`);
+  const mod = await import(`../src/levels/${folder}/gameplay`);
+
+  // Pattern 1: Any function starting with 'create' and ending with 'Gameplay'
+  const factoryKey = Object.keys(mod).find(key => key.startsWith('create') && key.endsWith('Gameplay'));
+  if (factoryKey && typeof mod[factoryKey] === 'function') {
+    return mod[factoryKey](bus, folder === 'rezdle' ? hud : undefined) as LockOnRunnerLevel<string, unknown>;
   }
+
+  // Pattern 2: Any object ending with 'Gameplay' (e.g. prismGameplay, crystalGameplay)
+  const objectKey = Object.keys(mod).find(key => key.endsWith('Gameplay'));
+  if (objectKey && typeof mod[objectKey] === 'object' && mod[objectKey] !== null) {
+    return mod[objectKey] as LockOnRunnerLevel<string, unknown>;
+  }
+
+  throw new Error(`Could not find a gameplay factory or object in level folder: ${folder}`);
 }
 
 function visibleTargets(camera: PerspectiveCamera, targets: Map<number, SimTarget>, includeLetters: boolean) {

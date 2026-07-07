@@ -8,32 +8,70 @@ import puppeteer from 'puppeteer';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const TRACE_TARGETS = {
-  crystal: {
-    module: '/src/levels/crystal/audio.ts',
-    exportName: 'traceCrystalAudio',
-  },
-  'crystal-corridor': {
-    module: '/src/levels/crystal/audio.ts',
-    exportName: 'traceCrystalAudio',
-  },
-  helios: {
-    module: '/src/levels/helios/audio.ts',
-    exportName: 'traceHeliosAudio',
-  },
-  prism: {
-    module: '/src/levels/prism/audio.ts',
-    exportName: 'tracePrismAudio',
-  },
-  'prism-bloom': {
-    module: '/src/levels/prism/audio.ts',
-    exportName: 'tracePrismAudio',
-  },
-  rezdle: {
-    module: '/src/levels/rezdle/audio.ts',
-    exportName: 'traceRezdleAudio',
-  },
-};
+async function resolveLevelTarget(levelIdOrAlias, rootDir) {
+  const registryPath = path.resolve(rootDir, 'src/levels/index.ts');
+  const registrySource = await fs.readFile(registryPath, 'utf8');
+
+  // Find dynamic import case mappings
+  // e.g. case 'crystal-corridor': return (await import('./crystal')).crystalCorridorLevel;
+  const caseRegex = /case\s+['"]([^'"]+)['"]:\s*\r?\n\s*return\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+);/g;
+  const cases = new Map();
+  let match;
+  while ((match = caseRegex.exec(registrySource))) {
+    const canonicalId = match[1];
+    const importPath = match[2];
+    const exportName = match[3];
+    const folder = importPath.replace(/^\.\//, '');
+    cases.set(canonicalId, { folder, exportName });
+  }
+
+  // Parse levelMetadatas to get aliases/IDs
+  const arrayMatch = registrySource.match(/export const levelMetadatas: LevelMetadata\[] = \[([\s\S]*?)\n\];/);
+  if (!arrayMatch) throw new Error('Could not find levelMetadatas array in src/levels/index.ts');
+  
+  const entryRegex = /\{\s*id:\s*['"]([^'"]+)['"]\s*,\s*title:\s*['"]([^'"]+)['"](?:\s*,\s*aliases:\s*\[([^\]]*)\])?/g;
+  let canonicalId = null;
+  let title = null;
+  while ((match = entryRegex.exec(arrayMatch[1]))) {
+    const entryId = match[1];
+    const entryTitle = match[2];
+    const entryAliases = match[3] 
+      ? match[3].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean) 
+      : [];
+    if (entryId === levelIdOrAlias || entryAliases.includes(levelIdOrAlias)) {
+      canonicalId = entryId;
+      title = entryTitle;
+      break;
+    }
+  }
+
+  if (!canonicalId || !cases.has(canonicalId)) {
+    // Fallback search: if it doesn't match the strict patterns, try to see if the directory exists
+    const directPath = path.resolve(rootDir, 'src/levels', levelIdOrAlias);
+    try {
+      const stats = await fs.stat(directPath);
+      if (stats.isDirectory()) {
+        canonicalId = levelIdOrAlias;
+        title = levelIdOrAlias;
+        cases.set(canonicalId, { folder: levelIdOrAlias, exportName: '' });
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!canonicalId || !cases.has(canonicalId)) {
+    throw new Error(`Unsupported audio trace level: ${levelIdOrAlias}`);
+  }
+
+  const { folder } = cases.get(canonicalId);
+  return {
+    level: canonicalId,
+    title,
+    folder,
+    module: `/src/levels/${folder}/audio.ts`
+  };
+}
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.stack ?? error.message : error);
@@ -65,8 +103,7 @@ async function main() {
 }
 
 async function captureTrace(options) {
-  const target = TRACE_TARGETS[options.level];
-  if (!target) throw new Error(`Unsupported audio trace level: ${options.level}`);
+  const target = await resolveLevelTarget(options.level, root);
 
   const server = await createServer({
     root,
@@ -95,13 +132,15 @@ async function captureTrace(options) {
 
     await page.goto(new URL('/audio-trace.html', baseUrl).href, { waitUntil: 'networkidle0' });
     return await page.evaluate(
-      async ({ modulePath, exportName, seconds }) => {
+      async ({ modulePath, seconds }) => {
         const mod = await import(modulePath);
-        const trace = mod[exportName];
-        if (typeof trace !== 'function') throw new Error(`Missing trace export: ${exportName}`);
+        const traceKey = Object.keys(mod).find(key => key.startsWith('trace') && key.endsWith('Audio'));
+        if (!traceKey) throw new Error(`Missing audio trace export in module ${modulePath}`);
+        const trace = mod[traceKey];
+        if (typeof trace !== 'function') throw new Error(`Missing trace export: ${traceKey}`);
         return trace({ seconds });
       },
-      { modulePath: target.module, exportName: target.exportName, seconds: options.seconds },
+      { modulePath: target.module, seconds: options.seconds },
     );
   } finally {
     if (browser) await browser.close();
@@ -110,8 +149,8 @@ async function captureTrace(options) {
 }
 
 async function captureWebAudioGraph(options) {
-  assertSafeLevelId(options.level);
-  const modulePath = `/src/levels/${options.level}/audio.ts`;
+  const target = await resolveLevelTarget(options.level, root);
+  const modulePath = `/src/levels/${target.folder}/audio.ts`;
   const rawEvents = [];
 
   const server = await createServer({

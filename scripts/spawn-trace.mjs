@@ -6,53 +6,71 @@ import { createServer } from 'vite';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const TRACE_TARGETS = {
-  crystal: {
-    level: 'crystal',
-    module: '/src/levels/crystal/gameplay.ts',
-    exportName: 'CRYSTAL_TIMELINE',
-    syncModule: '/src/levels/crystal/timing.ts',
-    syncExportName: 'CRYSTAL_SPAWN_SYNC',
-  },
-  'crystal-corridor': {
-    level: 'crystal',
-    module: '/src/levels/crystal/gameplay.ts',
-    exportName: 'CRYSTAL_TIMELINE',
-    syncModule: '/src/levels/crystal/timing.ts',
-    syncExportName: 'CRYSTAL_SPAWN_SYNC',
-  },
-  helios: {
-    level: 'helios',
-    module: '/src/levels/helios/gameplay.ts',
-    exportName: 'HELIOS_TIMELINE',
-    syncModule: '/src/levels/helios/timing.ts',
-    syncExportName: 'HELIOS_SPAWN_SYNC',
-  },
-  prism: {
-    level: 'prism',
-    module: '/src/levels/prism/gameplay.ts',
-    exportName: 'PRISM_TIMELINE',
-    syncModule: '/src/levels/prism/timing.ts',
-    syncExportName: 'PRISM_SPAWN_SYNC',
-  },
-  'prism-bloom': {
-    level: 'prism',
-    module: '/src/levels/prism/gameplay.ts',
-    exportName: 'PRISM_TIMELINE',
-    syncModule: '/src/levels/prism/timing.ts',
-    syncExportName: 'PRISM_SPAWN_SYNC',
-  },
-  rezdle: {
-    level: 'rezdle',
-    module: '/src/levels/rezdle/gameplay.ts',
-    exportName: 'REZDLE_TIMELINE',
-  },
-  deluge: {
-    level: 'deluge',
-    module: '/src/levels/deluge/gameplay.ts',
-    exportName: 'DELUGE_TIMELINE',
-  },
-};
+async function resolveLevelTarget(levelIdOrAlias, rootDir) {
+  const registryPath = path.resolve(rootDir, 'src/levels/index.ts');
+  const registrySource = await fs.readFile(registryPath, 'utf8');
+
+  // Find dynamic import case mappings
+  // e.g. case 'crystal-corridor': return (await import('./crystal')).crystalCorridorLevel;
+  const caseRegex = /case\s+['"]([^'"]+)['"]:\s*\r?\n\s*return\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+);/g;
+  const cases = new Map();
+  let match;
+  while ((match = caseRegex.exec(registrySource))) {
+    const canonicalId = match[1];
+    const importPath = match[2];
+    const exportName = match[3];
+    const folder = importPath.replace(/^\.\//, '');
+    cases.set(canonicalId, { folder, exportName });
+  }
+
+  // Parse levelMetadatas to get aliases/IDs
+  const arrayMatch = registrySource.match(/export const levelMetadatas: LevelMetadata\[] = \[([\s\S]*?)\n\];/);
+  if (!arrayMatch) throw new Error('Could not find levelMetadatas array in src/levels/index.ts');
+  
+  const entryRegex = /\{\s*id:\s*['"]([^'"]+)['"]\s*,\s*title:\s*['"]([^'"]+)['"](?:\s*,\s*aliases:\s*\[([^\]]*)\])?/g;
+  let canonicalId = null;
+  let title = null;
+  while ((match = entryRegex.exec(arrayMatch[1]))) {
+    const entryId = match[1];
+    const entryTitle = match[2];
+    const entryAliases = match[3] 
+      ? match[3].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean) 
+      : [];
+    if (entryId === levelIdOrAlias || entryAliases.includes(levelIdOrAlias)) {
+      canonicalId = entryId;
+      title = entryTitle;
+      break;
+    }
+  }
+
+  if (!canonicalId || !cases.has(canonicalId)) {
+    // Fallback search: if it doesn't match the strict patterns, try to see if the directory exists
+    const directPath = path.resolve(rootDir, 'src/levels', levelIdOrAlias);
+    try {
+      const stats = await fs.stat(directPath);
+      if (stats.isDirectory()) {
+        canonicalId = levelIdOrAlias;
+        title = levelIdOrAlias;
+        cases.set(canonicalId, { folder: levelIdOrAlias, exportName: '' });
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!canonicalId || !cases.has(canonicalId)) {
+    throw new Error(`Unsupported spawn trace level: ${levelIdOrAlias}`);
+  }
+
+  const { folder } = cases.get(canonicalId);
+  return {
+    level: canonicalId,
+    title,
+    folder,
+    module: `/src/levels/${folder}/gameplay.ts`,
+    syncModule: `/src/levels/${folder}/timing.ts`
+  };
+}
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.stack ?? error.message : error);
@@ -86,8 +104,7 @@ async function main() {
 }
 
 async function captureTrace(options) {
-  const target = Object.hasOwn(TRACE_TARGETS, options.level) ? TRACE_TARGETS[options.level] : undefined;
-  if (!target) throw new Error(`Unsupported spawn trace level: ${options.level}`);
+  const target = await resolveLevelTarget(options.level, root);
 
   const server = await createServer({
     root,
@@ -99,12 +116,31 @@ async function captureTrace(options) {
   try {
     server.moduleGraph.invalidateAll();
     const mod = await server.ssrLoadModule(target.module);
-    const timeline = mod[target.exportName];
-    if (!Array.isArray(timeline)) throw new Error(`Missing timeline export: ${target.exportName}`);
+    
+    // Dynamically find timeline export
+    const timelineKey = Object.keys(mod).find(key => key.endsWith('_TIMELINE') || key.endsWith('_SPAWN_TIMELINE'));
+    if (!timelineKey) throw new Error(`Missing timeline export in ${target.module}`);
+    
+    const timeline = mod[timelineKey];
+    if (!Array.isArray(timeline)) throw new Error(`Timeline export ${timelineKey} is not an array`);
     const entries = timeline.map((entry, index) => serializeEntry(entry, `entries[${index}]`));
-    const sync = options.bars && target.syncModule && target.syncExportName
-      ? await loadSync(server, target)
-      : undefined;
+
+    // Try loading sync dynamically if timing.ts exists
+    let sync = undefined;
+    if (options.bars) {
+      const timingPath = path.resolve(root, target.syncModule.slice(1));
+      let timingExists = false;
+      try {
+        await fs.access(timingPath);
+        timingExists = true;
+      } catch {
+        // file doesn't exist
+      }
+      if (timingExists) {
+        sync = await loadSync(server, target.syncModule);
+      }
+    }
+
     return {
       metadata: { level: target.level, entryCount: entries.length },
       entries,
@@ -115,12 +151,14 @@ async function captureTrace(options) {
   }
 }
 
-async function loadSync(server, target) {
-  const mod = await server.ssrLoadModule(target.syncModule);
-  const sync = mod[target.syncExportName];
-  if (!isPlainObject(sync)) throw new Error(`Missing sync export: ${target.syncExportName}`);
-  if (typeof sync.bpm !== 'number') throw new Error(`${target.syncExportName}.bpm must be a number`);
-  if (!Array.isArray(sync.sections)) throw new Error(`${target.syncExportName}.sections must be an array`);
+async function loadSync(server, syncModule) {
+  const mod = await server.ssrLoadModule(syncModule);
+  const syncKey = Object.keys(mod).find(key => key.endsWith('_SPAWN_SYNC'));
+  if (!syncKey) throw new Error(`Missing sync export in ${syncModule}`);
+  const sync = mod[syncKey];
+  if (!isPlainObject(sync)) throw new Error(`${syncKey} must be a plain object`);
+  if (typeof sync.bpm !== 'number') throw new Error(`${syncKey}.bpm must be a number`);
+  if (!Array.isArray(sync.sections)) throw new Error(`${syncKey}.sections must be an array`);
   return sync;
 }
 
