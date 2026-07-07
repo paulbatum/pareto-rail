@@ -179,7 +179,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   });
 
   const killBodyVoice = voice<{ decay: number; gain: number }>({
-    oscillators: [{ type: 'sine', octave: -1, gain: ({ gain }) => gain * 0.55 }],
+    oscillators: [{ type: 'sine', octave: -1, gain: 0.55 }],
     duration: ({ decay }) => decay,
     stopPadding: 0.05,
     gainAutomation: (time, gain, { decay }) => [
@@ -189,7 +189,7 @@ function createCrystalAudio(bus: EventBus, trace?: AudioTraceSink) {
   });
 
   const killOctaveVoice = voice<{ decay: number; gain: number }>({
-    oscillators: [{ type: 'sine', octave: 1, gain: ({ gain }) => gain * 0.4 }],
+    oscillators: [{ type: 'sine', octave: 1, gain: 0.4 }],
     duration: ({ decay }) => decay,
     stopPadding: 0.05,
     envelope: { decay: ({ decay }) => decay },

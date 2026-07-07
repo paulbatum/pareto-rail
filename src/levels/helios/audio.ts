@@ -395,7 +395,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   const { kick, snare, hat, openHat, ride, crash, bass, choir, arp, stab, lead, alarmSwell, riser, impact, noiseHit, playerSends, playerTone, playerNoise } = voices;
 
   const killBodyVoice = voice<{ decay: number; gain: number }>({
-    oscillators: [{ type: 'sine', octave: -1, gain: ({ gain }) => gain * 0.52 }],
+    oscillators: [{ type: 'sine', octave: -1, gain: 0.52 }],
     duration: ({ decay }) => decay,
     stopPadding: 0.04,
     gainAutomation: (time, gain, { decay }) => [
@@ -405,7 +405,7 @@ function createHeliosAudio(bus: EventBus, trace?: AudioTraceSink) {
   });
 
   const killOctaveVoice = voice<{ decay: number; gain: number }>({
-    oscillators: [{ type: 'sine', octave: 1, gain: ({ gain }) => gain * 0.34 }],
+    oscillators: [{ type: 'sine', octave: 1, gain: 0.34 }],
     duration: ({ decay }) => decay,
     stopPadding: 0.04,
     envelope: { decay: ({ decay }) => decay },
