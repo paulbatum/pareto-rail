@@ -102,7 +102,7 @@ npm run check:occlusion -- --all
 npm run check:occlusion -- --level deluge --no-fail
 ```
 
-By default the tool drives a simple perfect lock-on policy, then warns when a target center is blocked for more than 5% of its on-screen lifetime. The tool ignores projectiles, the reticle, letters, other targets, non-depth-writing effects, and objects with `userData.raildIgnoreOcclusion = true` on themselves or an ancestor. Useful options:
+By default the tool drives a simple perfect lock-on policy, then warns when a target center is blocked for more than 5% of its on-screen lifetime. `npm run check:floor -- --level <level-id>` runs this default occlusion pass for the selected level; use `check:occlusion` directly when you need all levels, JSON, alternate thresholds, or a non-failing diagnostic run. The tool ignores projectiles, the reticle, letters, other targets, non-depth-writing effects, and objects with `userData.raildIgnoreOcclusion = true` on themselves or an ancestor. Useful options:
 
 ```sh
 --threshold 0.05                # maximum occluded ratio

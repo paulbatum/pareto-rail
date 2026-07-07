@@ -2,7 +2,7 @@
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createServer } from 'vite';
 import puppeteer from 'puppeteer';
 
@@ -14,16 +14,29 @@ const DEFAULT_THRESHOLD = 0.05;
 const DEFAULT_SEED = 20260704;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileUrl(process.argv[1])) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    process.exitCode = 1;
+  });
+}
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const levels = options.levels.length > 0 ? options.levels : await readLevelIds();
   if (levels.length === 0) throw new Error('No levels found');
 
+  const reports = await analyzeOcclusionLevels(levels, options);
+
+  if (options.json) console.log(JSON.stringify(reports, null, 2));
+  else console.log(formatReports(reports, options));
+
+  const warningCount = reports.reduce((sum, report) => sum + report.warnings.length, 0);
+  if (warningCount > 0 && options.fail) process.exitCode = 1;
+}
+
+export async function analyzeOcclusionLevels(levels, options = {}) {
+  const resolvedOptions = { ...defaultOptions(), ...options };
   const server = await createServer({
     root,
     logLevel: 'error',
@@ -31,6 +44,7 @@ async function main() {
       host: '127.0.0.1',
       port: 0,
       strictPort: false,
+      hmr: false,
     },
   });
 
@@ -57,13 +71,8 @@ async function main() {
     });
 
     const reports = [];
-    for (const level of levels) reports.push(await analyzeLevel(browser, baseUrl, level, options));
-
-    if (options.json) console.log(JSON.stringify(reports, null, 2));
-    else console.log(formatReports(reports, options));
-
-    const warningCount = reports.reduce((sum, report) => sum + report.warnings.length, 0);
-    if (warningCount > 0 && options.fail) process.exitCode = 1;
+    for (const level of levels) reports.push(await analyzeLevel(browser, baseUrl, level, resolvedOptions));
+    return reports;
   } finally {
     if (browser) await browser.close();
     await server.close();
@@ -113,8 +122,8 @@ async function readLevelIds() {
   return [...arrayMatch[1].matchAll(/\bid:\s*['"]([^'"]+)['"]/g)].map((match) => match[1]);
 }
 
-function parseArgs(argv) {
-  const parsed = {
+function defaultOptions() {
+  return {
     levels: [],
     width: DEFAULT_WIDTH,
     height: DEFAULT_HEIGHT,
@@ -129,6 +138,10 @@ function parseArgs(argv) {
     fail: true,
     json: false,
   };
+}
+
+function parseArgs(argv) {
+  const parsed = defaultOptions();
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -201,7 +214,7 @@ function parseArgs(argv) {
   return parsed;
 }
 
-function formatReports(reports, options) {
+export function formatReports(reports, options) {
   const lines = [];
   lines.push(`Target occlusion check (threshold ${(options.threshold * 100).toFixed(1)}% of on-screen target lifetime, sample ${options.sampleStep.toFixed(3)}s, policy ${options.policy})`);
   for (const report of reports) {
@@ -258,6 +271,10 @@ function findChromeExecutable() {
     if (existsSync(candidate)) return candidate;
   }
   return undefined;
+}
+
+function pathToFileUrl(filePath) {
+  return pathToFileURL(path.resolve(filePath)).href;
 }
 
 function printHelpAndExit() {

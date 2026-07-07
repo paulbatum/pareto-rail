@@ -134,7 +134,7 @@ Use the run simulator while building levels to catch mechanical issues before as
 npm run simulate -- --level <level-id>
 ```
 
-The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events. Use `npm run check:floor -- --level <level-id>` before handoff to catch floor misses such as missing beat events, missing reject coverage, too few spawned enemy kinds, or stale gallery docs.
+The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events. Use `npm run check:floor -- --level <level-id>` before handoff to catch floor misses such as missing beat events, missing reject coverage, too few spawned enemy kinds, stale gallery docs, or automated target occlusion warnings.
 
 ## Audio and visual inspection tools
 

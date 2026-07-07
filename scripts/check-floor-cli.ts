@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { runSimulationSuite } from './simulation-cli';
+import { analyzeOcclusionLevels, formatReports } from './target-occlusion.mjs';
 
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
@@ -42,14 +43,36 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   const actualGallery = await fs.readFile(galleryPath, 'utf8');
   if (actualGallery !== expectedGallery) failures.push('docs/level-gallery.md is not regenerated from the current level.md cards. Run npm run gallery.');
 
+  const occlusionReports = options.skipOcclusion ? [] : await analyzeOcclusionLevels([level.id], {
+    dt: options.dt,
+    threshold: options.occlusionThreshold,
+    sampleStep: options.occlusionSampleStep,
+    minOccludedSeconds: options.occlusionSampleStep,
+  });
+  const occlusionWarnings = occlusionReports.flatMap((report) => report.warnings.map((warning) => ({ report, warning })));
+  if (occlusionWarnings.length > 0) {
+    failures.push(`Target occlusion check found ${occlusionWarnings.length} warning${occlusionWarnings.length === 1 ? '' : 's'}. Run npm run check:occlusion -- --level ${level.id} for details.`);
+  }
+
   const lines: string[] = [];
   lines.push(`${level.title} floor check`);
   lines.push(`duration ${level.duration.toFixed(1)}s; spawned kinds ${spawnedKinds.size}: ${[...spawnedKinds].sort().join(', ') || 'none'}`);
   lines.push(`event coverage missing: ${result.eventCoverage.neverFired.join(', ') || 'none'}`);
+  if (options.skipOcclusion) lines.push('target occlusion check: skipped');
+  else lines.push(`target occlusion warnings: ${occlusionWarnings.length}`);
   if (failures.length) {
     lines.push('');
     lines.push('Failures:');
     for (const failure of failures) lines.push(`- ${failure}`);
+    if (occlusionReports.length > 0) {
+      lines.push('');
+      lines.push(formatReports(occlusionReports, {
+        threshold: options.occlusionThreshold,
+        sampleStep: options.occlusionSampleStep,
+        policy: 'perfect',
+        json: false,
+      }));
+    }
     console.error(lines.join('\n'));
     process.exitCode = 1;
   } else {
@@ -63,6 +86,9 @@ function parseArgs(argv: string[]) {
   let seed = 1;
   let dt = 1 / 60;
   let gapThreshold = 4;
+  let occlusionThreshold = 0.05;
+  let occlusionSampleStep = 0.1;
+  let skipOcclusion = false;
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     const value = () => {
@@ -75,13 +101,18 @@ function parseArgs(argv: string[]) {
     else if (arg === '--seed') seed = Number(value());
     else if (arg === '--dt') dt = Number(value());
     else if (arg === '--gap-threshold') gapThreshold = Number(value());
+    else if (arg === '--occlusion-threshold') occlusionThreshold = Number(value());
+    else if (arg === '--occlusion-sample-step') occlusionSampleStep = Number(value());
+    else if (arg === '--skip-occlusion') skipOcclusion = true;
     else if (arg === '-h' || arg === '--help') {
-      console.log('Usage: npm run check:floor -- --level <id> [--seed n]');
+      console.log('Usage: npm run check:floor -- --level <id> [--seed n] [--occlusion-threshold ratio] [--occlusion-sample-step seconds] [--skip-occlusion]');
       process.exit(0);
     } else throw new Error(`Unknown argument: ${arg}`);
   }
   if (!level) throw new Error('Missing --level <id>');
-  return { level, seed, dt, gapThreshold };
+  if (!Number.isFinite(occlusionThreshold) || occlusionThreshold < 0) throw new Error('--occlusion-threshold must be non-negative');
+  if (!Number.isFinite(occlusionSampleStep) || occlusionSampleStep <= 0) throw new Error('--occlusion-sample-step must be positive');
+  return { level, seed, dt, gapThreshold, occlusionThreshold, occlusionSampleStep, skipOcclusion };
 }
 
 function isNonTemplateCard(card: string, title: string) {
