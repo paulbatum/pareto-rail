@@ -25,7 +25,8 @@ export function resetRushMotionBlur(camera: Camera) {
 }
 
 export function updateRushMotionBlur(camera: Camera, strength: number, options: { reset?: boolean } = {}) {
-  const safeStrength = MathUtils.clamp(strength, 0, RUSH_TUNING.motionBlur.maxStrength);
+  // The caller applies the authored maxStrength cap before the player multiplier; only guard the mix range here.
+  const safeStrength = MathUtils.clamp(strength, 0, 1);
   rushMotionBlurStrengthUniform.value = safeStrength;
   rushMotionBlurTapCountUniform.value = MathUtils.clamp(Math.round(RUSH_TUNING.motionBlur.tapCount), 1, MAX_TAPS);
   rushMotionBlurMaxVelocityUniform.value = MathUtils.clamp(RUSH_TUNING.motionBlur.maxVelocityUv, 0.001, 0.25);

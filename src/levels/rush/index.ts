@@ -1,6 +1,7 @@
 import type { LevelDefinition } from '../../engine/types';
 import { createCameraFeel } from '../../engine/camera-feel';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
+import { getMotionBlurLevel } from '../../engine/post';
 import { createAudio } from './audio';
 import { RUSH_BPM, RUSH_RUN_DURATION, rushGameplay, speedFactorAt } from './gameplay';
 import { RUSH_TUNING } from './tuning';
@@ -122,12 +123,13 @@ export const rushLevel: LevelDefinition = {
           },
         });
         const speedExcess = Math.max(0, speedFactor - 1);
-        const blurStrength = isRunning
+        const rawBlurStrength = isRunning
           ? Math.min(
             RUSH_TUNING.motionBlur.maxStrength,
             RUSH_TUNING.motionBlur.cruiseStrength + speedExcess * RUSH_TUNING.motionBlur.strengthPerSpeedFactor + surgePulse,
           )
           : 0;
+        const blurStrength = Math.min(1, rawBlurStrength * (getMotionBlurLevel() / 0.5));
         updateRushMotionBlur(camera, blurStrength, { reset: resetMotionBlurNextFrame });
         resetMotionBlurNextFrame = false;
       },

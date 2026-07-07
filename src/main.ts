@@ -2,7 +2,7 @@ import './style.css';
 import { PerspectiveCamera, Scene } from 'three';
 import { WebGPURenderer } from 'three/webgpu';
 import { createEventBus } from './events';
-import { createPost, getBloomLevel, setBloomLevel } from './engine/post';
+import { createPost, getBloomLevel, getMotionBlurLevel, setBloomLevel, setMotionBlurLevel } from './engine/post';
 import { getLevelById, selectableLevels } from './levels';
 import { getStartScreenTip } from './ui/client-tip';
 import { installDevErrorOverlay } from './ui/dev-error-overlay';
@@ -53,6 +53,7 @@ async function bootstrap() {
   audio.setMusicVolume(readStoredPercent('raild-music-volume', legacyVolume) / 100);
   audio.setSfxVolume(readStoredPercent('raild-sfx-volume', legacyVolume) / 100);
   setBloomLevel(readStoredPercent('raild-bloom', 100) / 100);
+  setMotionBlurLevel(readStoredPercent('raild-motion-blur', 100) / 100);
   audio.installGestureStart();
 
   const post = createPost(renderer, scene, camera, selectedLevel.post);
@@ -77,6 +78,7 @@ async function bootstrap() {
     initialMusicVolume: audio.getMusicVolume() * 100,
     initialSfxVolume: audio.getSfxVolume() * 100,
     initialBloom: getBloomLevel() * 100,
+    initialMotionBlur: getMotionBlurLevel() * 100,
     onResume: () => setPaused(false),
     onFullscreen: toggleFullscreen,
     onMusicVolume: (value) => {
@@ -90,6 +92,10 @@ async function bootstrap() {
     onBloom: (value) => {
       localStorage.setItem('raild-bloom', `${value}`);
       setBloomLevel(value / 100);
+    },
+    onMotionBlur: (value) => {
+      localStorage.setItem('raild-motion-blur', `${value}`);
+      setMotionBlurLevel(value / 100);
     },
   });
 

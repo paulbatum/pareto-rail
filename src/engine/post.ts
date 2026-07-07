@@ -17,6 +17,7 @@ const DEFAULT_VIGNETTE_FLOOR = 0.18;
 const BLOOM_UI_SCALE = 0.75;
 const bloomRefs = new Map<ReturnType<typeof bloom>, number>();
 let bloomLevel = 1;
+let motionBlurLevel = 1;
 
 // One knob for bloom intensity. 1.0 is the settings-menu maximum, scaled to
 // the previous 75% intensity; 0 disables bloom. Safe to call before createPost.
@@ -27,6 +28,16 @@ export function setBloomLevel(level: number) {
 
 export function getBloomLevel() {
   return bloomLevel;
+}
+
+// Shared player preference for levels that implement their own motion blur.
+// The engine stores this value only; motion-blur levels must read and apply it.
+export function setMotionBlurLevel(level: number) {
+  motionBlurLevel = Math.min(1, Math.max(0, level));
+}
+
+export function getMotionBlurLevel() {
+  return motionBlurLevel;
 }
 
 export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camera, config: LevelPostConfig = {}) {

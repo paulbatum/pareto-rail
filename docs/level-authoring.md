@@ -101,6 +101,8 @@ post?: {
 
 Omitting it preserves the shared default frame. The engine always multiplies the level bloom strength by the player's bloom slider, so levels cannot bypass the pause-menu bloom setting.
 
+The pause menu also exposes a player motion-blur slider. Levels that implement motion blur in their own `composeOutput` path must read that shared setting and multiply it into their blur strength themselves; they must remain playable and legible with motion blur at 0%.
+
 A level can use `composeOutput` to add a small TSL screen-space effect while leaving the shared pipeline in `src/engine/post.ts`. Keep effect uniforms at module scope, write them from the level runtime, and sample the raw scene with `scenePass.getTextureNode().sample(customUv)`. The hook receives `base`, which is already `scenePass.add(bloomPass)`, and the engine applies the shared vignette after the hook returns.
 
 ```ts

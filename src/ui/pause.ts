@@ -8,12 +8,14 @@ export type PauseMenuOptions = {
   initialMusicVolume: number;
   initialSfxVolume: number;
   initialBloom: number;
+  initialMotionBlur: number;
   fullscreenAvailable: boolean;
   onResume: () => void;
   onFullscreen: () => void;
   onMusicVolume: (value: number) => void;
   onSfxVolume: (value: number) => void;
   onBloom: (value: number) => void;
+  onMotionBlur: (value: number) => void;
 };
 
 export function createPauseMenu(options: PauseMenuOptions) {
@@ -23,10 +25,12 @@ export function createPauseMenu(options: PauseMenuOptions) {
   const music = requireElement<HTMLInputElement>('[data-pause="music"]');
   const sfx = requireElement<HTMLInputElement>('[data-pause="sfx"]');
   const bloom = requireElement<HTMLInputElement>('[data-pause="bloom"]');
+  const motionBlur = requireElement<HTMLInputElement>('[data-pause="motion-blur"]');
 
   music.value = `${Math.round(options.initialMusicVolume)}`;
   sfx.value = `${Math.round(options.initialSfxVolume)}`;
   bloom.value = `${Math.round(options.initialBloom)}`;
+  motionBlur.value = `${Math.round(options.initialMotionBlur)}`;
 
   fullscreen.classList.toggle('hidden', !options.fullscreenAvailable);
 
@@ -40,6 +44,7 @@ export function createPauseMenu(options: PauseMenuOptions) {
   music.addEventListener('input', () => options.onMusicVolume(Number(music.value)));
   sfx.addEventListener('input', () => options.onSfxVolume(Number(sfx.value)));
   bloom.addEventListener('input', () => options.onBloom(Number(bloom.value)));
+  motionBlur.addEventListener('input', () => options.onMotionBlur(Number(motionBlur.value)));
 
   return {
     setPaused(paused: boolean) {
