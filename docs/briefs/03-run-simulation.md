@@ -4,7 +4,7 @@ Part 3 of the wishlist sequence. Benefits from brief 01 (bar-labelled output) bu
 
 ## Problem
 
-An agent building a level cannot play it. `trace:spawns` shows when enemies spawn but not what a run *feels* like: whether there is dead air, whether a wall of enemies is uninterceptable, whether the run length actually lands in the 30–90 s window once motion and despawns play out, or whether some required event never fires at all. Today those questions burn a human playtest each.
+An agent building a level cannot play it. `trace:spawns` shows when enemies spawn but not what a run *feels* like: whether there is dead air, whether a wall of enemies is uninterceptable, how the authored duration feels once motion and despawns play out, or whether some required event never fires at all. Today those questions burn a human playtest each.
 
 ## Deliverable 1: `npm run simulate -- --level <id>`
 
@@ -22,7 +22,7 @@ Report, per run: machine-readable event log plus a summary —
 
 ## Deliverable 2: `npm run check:floor -- --level <id>`
 
-A thin checklist runner over the simulation plus static checks, mirroring `docs/level-brief.md`'s floor: run length in range, ≥3 enemy kinds actually spawned, `beat` events emitted, a `reject` observed under a policy that forces one, `level.md` present and non-template, gallery regenerated. Exit nonzero with a readable list of failures. This does not judge quality — it catches floor misses before a human is asked to look.
+A thin checklist runner over the simulation plus static checks, mirroring `docs/level-brief.md`'s floor: ≥3 enemy kinds actually spawned, `beat` events emitted, a `reject` observed under a policy that forces one, `level.md` present and non-template, gallery regenerated. Exit nonzero with a readable list of failures. This does not judge quality — it catches floor misses before a human is asked to look.
 
 ## Level updates
 

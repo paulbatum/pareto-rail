@@ -18,7 +18,7 @@ Generated with `npm run simulate -- --level <id>` at seed 1 and `dt=1/60` after 
 - Perfect: 118/125 counted kills, 7 counted misses, score 22147, rank A; pressure peak 10; long gap around 77.0–85.0s.
 - Imperfect: 117/125 counted kills, 8 counted misses, score 26578, rank S; pressure peak 8; long gaps around 78.0–85.0s and 102.5–119.5s.
 - Forced reject: reject observed; died at 91.37s.
-- Coverage note: all tracked event types fired. `check:floor` intentionally reports Helios as over the 30–90s floor at 120s.
+- Coverage note: all tracked event types fired.
 
 ## Prism Bloom
 

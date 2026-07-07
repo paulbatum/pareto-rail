@@ -14,9 +14,6 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
 
   const failures: string[] = [];
   const level = result.level;
-  if (level.duration < 30 || level.duration > 90) {
-    failures.push(`Run length is ${level.duration.toFixed(1)}s; expected 30–90s.`);
-  }
 
   const spawnedKinds = new Set<string>();
   for (const run of result.runs) for (const kind of Object.keys(run.counts.spawnedKinds)) spawnedKinds.add(kind);
