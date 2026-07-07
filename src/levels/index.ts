@@ -12,6 +12,7 @@ export const levelMetadatas: LevelMetadata[] = [
   { id: 'helios', title: 'Helios' },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'] },
   { id: 'rezdle', title: 'Rezdle' },
+  { id: 'rush', title: 'Rush' },
 ];
 
 export function selectableLevels(): LevelMetadata[] {
@@ -32,6 +33,8 @@ export async function getLevelById(id: string | null): Promise<LevelDefinition> 
       return (await import('./prism')).prismBloomLevel;
     case 'rezdle':
       return (await import('./rezdle')).rezdleLevel;
+    case 'rush':
+      return (await import('./rush')).rushLevel;
     default:
       throw new Error(`Unknown level: ${matched.id}`);
   }
