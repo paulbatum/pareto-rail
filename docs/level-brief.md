@@ -21,7 +21,7 @@ This is a showcase piece, not a prototype or a proof of concept. Polish is the p
 - Use `createLockOnRunner`. Do not build a bespoke runtime or modify the engine.
 - Touch only `src/levels/<id>/` plus one registry line. `npm run check:scope -- <id>` must pass.
 - No imports from other levels' directories.
-- `npm run typecheck` and `npm run build` must pass.
+- `npm run typecheck`, `npm run build`, and `npm run check:floor -- --level <id>` must pass.
 
 ## The floor
 
@@ -47,4 +47,4 @@ Your output will be compared against levels built by other agents from this same
 
 ## Handoff
 
-Report what you verified and what still needs human eyes. Use the visual inspection tools in `docs/visual-tools.md` to capture model snapshots, gameplay stills, and thumbnail sheets when useful. If your environment cannot render WebGPU, say so plainly and describe what a playtester should look at first — visual and audio quality can only be confirmed by a human run-through.
+Report what you verified and what still needs human eyes. Use `npm run simulate -- --level <id>` for a compact headless read on outcome, spawn pressure, dead-air gaps, hull events, and event coverage before handoff. Use the visual inspection tools in `docs/visual-tools.md` to capture model snapshots, gameplay stills, and thumbnail sheets when useful. If your environment cannot render WebGPU, say so plainly and describe what a playtester should look at first — visual and audio quality can only be confirmed by a human run-through.

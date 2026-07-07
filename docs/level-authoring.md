@@ -124,6 +124,16 @@ These lessons came out of A/B playtesting and apply to any level with a beat-dri
 - **Tune gains by perceived loudness, not by matching numbers.** At equal gain a square or sawtooth sounds far louder than a sine or triangle. Crossfading between waveforms with equal gain values lets the brighter voice take over halfway through the blend; each voice needs its own gain tuned by ear.
 - **Give a boss its own escalating voice.** Repeated hits on a boss should audibly grow with damage dealt — gain, brightness, a climbing pitch element — and the killing blow deserves a scheduled finale: duck the music for a breath and land a conclusive figure on the grid.
 
+## Headless gameplay checks
+
+Use the run simulator while building levels to catch mechanical issues before asking for a human playtest:
+
+```sh
+npm run simulate -- --level <level-id>
+```
+
+The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events. Use `npm run check:floor -- --level <level-id>` before handoff to catch floor misses such as missing beat events, missing reject coverage, too few spawned enemy kinds, or stale gallery docs.
+
 ## Audio and visual inspection tools
 
 Use the audio trace tool while building levels, the same way you use snapshots for visuals. It inspects procedural music structure without relying on human listening for every iteration:

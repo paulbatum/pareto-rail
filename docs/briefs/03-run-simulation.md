@@ -26,7 +26,7 @@ A thin checklist runner over the simulation plus static checks, mirroring `docs/
 
 ## Level updates
 
-Run the tool against **crystal, helios, prism**, and optionally **rezdle**. Where a level's gameplay module reaches for browser globals in a way that blocks headless execution, fix the coupling in the level (gate: `trace:spawns --compare`, typecheck, build, `check:scope`). Record each level's simulation summary in the report so we have baselines — anything surprising in those numbers (a dead-air gap, an event that never fires) gets *reported*, not fixed; gameplay changes are their own future task.
+Run the tool against **crystal, helios, prism**, and optionally **rezdle**. Where a level's gameplay module reaches for browser globals in a way that blocks headless execution, fix the coupling in the level (gate: `trace:spawns --compare`, typecheck, build, `check:scope`). Anything surprising in those numbers (a dead-air gap, an event that never fires) gets *reported*, not fixed; gameplay changes are their own future task. Do not commit simulation baseline reports; consumers can run the simulator before changing a level when they need a local baseline.
 
 ## Out of scope
 
