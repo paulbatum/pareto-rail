@@ -532,6 +532,7 @@ function updateEnvironmentFrame(dt: number, ctx: VisualContext, speed: number, r
   if (!environment) return;
 
   environment.gateRunes.rotation.z += dt * 0.25;
+  environment.geyserField.update(heliosRunProgress(runTime), dt);
 
   for (const geyser of environment.geysers) {
     const swell = Math.max(0, Math.sin(elapsedNow * geyser.speed + geyser.phase));

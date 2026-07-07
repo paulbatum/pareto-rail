@@ -38,6 +38,7 @@ import {
   vec2,
   vec3,
 } from 'three/tsl';
+import { scatterAlongRail, type ScatterField } from '../../../engine/environment-kit';
 import { sampleRailFrame } from '../../../engine/rail';
 import { additiveMaterialParameters, createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import { createHeliosRail, CORONA_TIME, GATE_TIME, railU, STAR_CENTER, STAR_RADIUS } from '../gameplay';
@@ -53,12 +54,15 @@ export const streakGlowUniform = uniform(0.35); // streak brightness by act
 const STREAK_SPAN = 52;
 const STREAK_BACK = 46;
 
+type Geyser = { mesh: Mesh; phase: number; speed: number; baseHeight: number };
+
 export type Environment = {
   root: Group;
   gatePosition: Vector3;
   gateRunes: Group;
   coronaPosition: Vector3;
-  geysers: Array<{ mesh: Mesh; phase: number; speed: number; baseHeight: number }>;
+  geysers: Geyser[];
+  geyserField: ScatterField;
   streaks: Group;
   serpent: SerpentBody;
 };
@@ -78,7 +82,8 @@ export function createEnvironmentInternal(scene: Scene): Environment {
   root.add(createWreckField(rng, curve));
   root.add(createConduit(curve));
 
-  const geysers = createGeysers(rng, curve, root);
+  const { geysers, field: geyserField } = createGeysers(rng, curve);
+  root.add(geyserField.group);
   const streaks = createSpeedStreaks(rng);
   root.add(streaks);
 
@@ -87,7 +92,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
 
   scene.add(root);
   const coronaFrame = sampleRailFrame(curve, railU(CORONA_TIME));
-  return { root, gatePosition, gateRunes, coronaPosition: coronaFrame.position.clone(), geysers, streaks, serpent };
+  return { root, gatePosition, gateRunes, coronaPosition: coronaFrame.position.clone(), geysers, geyserField, streaks, serpent };
 }
 
 // ---- the star -----------------------------------------------------------------
@@ -253,6 +258,7 @@ function createGate(curve: ReturnType<typeof createHeliosRail>) {
 
 // ---- act 1 wreck field ---------------------------------------------------------------
 
+// Authored act-1 set piece: keep this merged instead of recycling individual wreck plates.
 function createWreckField(rng: Rng, curve: ReturnType<typeof createHeliosRail>) {
   const fills: BufferGeometry[] = [];
   const edges: BufferGeometry[] = [];
@@ -389,27 +395,36 @@ function createConduit(curve: ReturnType<typeof createHeliosRail>) {
 
 // ---- act 3 flare geysers -----------------------------------------------------------------
 
-function createGeysers(rng: Rng, curve: ReturnType<typeof createHeliosRail>, root: Group) {
-  const geysers: Environment['geysers'] = [];
+function createGeysers(rng: Rng, curve: ReturnType<typeof createHeliosRail>) {
+  const geysers: Geyser[] = [];
   const material = createAdditiveBasicMaterial({
     color: hdr(GOLD, 0.8),
     opacity: 0.5,
     side: 2,
   });
-  for (let i = 0; i < 8; i += 1) {
-    const u = 0.47 + (0.27 * i) / 7;
-    const frame = sampleRailFrame(curve, u);
-    const side = i % 2 === 0 ? 1 : -1;
-    const mesh = new Mesh(new CylinderGeometry(1.6, 3.4, 1, 9, 1, true), material.clone());
-    const baseHeight = 26 + rng() * 30;
-    mesh.position
-      .copy(frame.position)
-      .addScaledVector(frame.right, side * (24 + rng() * 46))
-      .addScaledVector(frame.up, -34);
-    root.add(mesh);
-    geysers.push({ mesh, phase: rng() * Math.PI * 2, speed: 0.55 + rng() * 0.5, baseHeight });
-  }
-  return geysers;
+  const field = scatterAlongRail(curve, {
+    count: 8,
+    seed: 20260704,
+    rng,
+    window: { behind: curve.getLength(), ahead: curve.getLength() },
+    alignToRail: false,
+    make(index) {
+      const mesh = new Mesh(new CylinderGeometry(1.6, 3.4, 1, 9, 1, true), material.clone());
+      geysers[index] = { mesh, phase: 0, speed: 0, baseHeight: 0 };
+      return mesh;
+    },
+    place(index, placeRng) {
+      const u = 0.47 + (0.27 * index) / 7;
+      const side = index % 2 === 0 ? 1 : -1;
+      const geyser = geysers[index];
+      geyser.baseHeight = 26 + placeRng() * 30;
+      const sideOffset = side * (24 + placeRng() * 46);
+      geyser.phase = placeRng() * Math.PI * 2;
+      geyser.speed = 0.55 + placeRng() * 0.5;
+      return { u, offset: new Vector3(sideOffset, -34, 0) };
+    },
+  });
+  return { geysers, field };
 }
 
 // ---- speed streaks -----------------------------------------------------------------------
