@@ -66,7 +66,7 @@ import {
 } from './effects';
 import { createLetterMesh, setLetterDenied, setLetterLocked } from './letters';
 import { COLD_BLUE, EMBER, GOLD, hdr, ICE_WHITE, LOCK_GRADIENT, SPACE_MAROON, WHITE_HOT } from './palette';
-import { flashUniform, heatUniform, speedBlurUniform } from './post-fx';
+import { flashUniform, heatUniform } from './post-fx';
 import { createFangMesh, createHeadMesh, killSerpentBody, updateHeadMesh, updateSerpentBody } from './serpent';
 
 export type VisualContext = {
@@ -103,7 +103,7 @@ let environment: Environment | null = null;
 let beatEnergy = 0;
 let cameraRoll = 0;
 let cameraFovOffset = 0;
-let blurPulse = 0;
+let surgePulse = 0;
 let elapsedNow = 0;
 let lastRunTime = -1;
 let heartWorldPosition: Vector3 | null = null;
@@ -273,7 +273,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, cameraFe
       spawnRing(worldPosition, hdr(GOLD, 1.1), 4, 0.5);
     } else if (kind === 'heart') {
       cameraFeel.shake(1.2, HELIOS_CAMERA_SHAKE);
-      blurPulse = Math.max(blurPulse, 0.55);
+      surgePulse = Math.max(surgePulse, 0.55);
       spawnRing(worldPosition, hdr(EMBER, 1.3), 26, 0.9);
       spawnRing(worldPosition, hdr(GOLD, 1.0), 14, 0.7);
     } else if (kind !== 'bolt') {
@@ -322,7 +322,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, cameraFe
     } else if (record.mesh.userData.isSerpentHead) {
       // The heart survives a stage — it dives. Make the ocean answer.
       cameraFeel.shake(1.1, HELIOS_CAMERA_SHAKE);
-      blurPulse = Math.max(blurPulse, 0.5);
+      surgePulse = Math.max(surgePulse, 0.5);
       spawnRing(worldPosition, hdr(EMBER, 1.5), 30, 1.0);
       spawnRing(worldPosition, hdr(WHITE_HOT, 1.1), 12, 0.6);
       burstEmbers(worldPosition, hdr(GOLD, 1.2), 30, 26, 14);
@@ -344,7 +344,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, cameraFe
         heartKilledAt = elapsedNow;
         heartWorldPosition = null;
         cameraFeel.shake(1.8, HELIOS_CAMERA_SHAKE);
-        blurPulse = 1.0;
+        surgePulse = 1.0;
         flashUniform.value = Math.max(flashUniform.value, 1.15);
         spawnRing(worldPosition, hdr(WHITE_HOT, 1.6), 90, 1.6);
         spawnRing(worldPosition, hdr(GOLD, 1.3), 55, 1.2);
@@ -395,9 +395,8 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, cameraFe
     resetCameraFeel(cameraFeel);
     novaUniform.value = 0;
     flashUniform.value = 0;
-    speedBlurUniform.value = 0;
     heatUniform.value = 0;
-    blurPulse = 0;
+    surgePulse = 0;
     if (environment) {
       environment.serpent.state = 'idle';
       environment.serpent.dyingFor = 0;
@@ -422,7 +421,7 @@ function resetCameraFeel(cameraFeel: CameraFeelRig) {
 export function updateVisuals(dt: number, ctx: VisualContext) {
   elapsedNow = ctx.elapsed;
   beatEnergy = Math.max(0, beatEnergy - dt * 4.2);
-  blurPulse = Math.max(0, blurPulse - dt * 0.85);
+  surgePulse = Math.max(0, surgePulse - dt * 0.85);
   beatUniform.value = beatEnergy;
 
   const runTime = ctx.running ? ctx.runTime : 0;
@@ -495,7 +494,7 @@ function updateSetPieceMoments(ctx: VisualContext) {
   const crossed = (t: number) => lastRunTime >= 0 && lastRunTime < t && ctx.runTime >= t;
   if (crossed(GATE_TIME)) {
     flashUniform.value = Math.max(flashUniform.value, 0.75);
-    blurPulse = Math.max(blurPulse, 0.95);
+    surgePulse = Math.max(surgePulse, 0.95);
     ctx.feel.shake(0.8, HELIOS_CAMERA_SHAKE);
     if (environment) {
       spawnRing(environment.gatePosition, hdr(GOLD, 1.5), 70, 1.1);
@@ -504,7 +503,7 @@ function updateSetPieceMoments(ctx: VisualContext) {
   }
   if (crossed(CORONA_TIME)) {
     flashUniform.value = Math.max(flashUniform.value, 1.05);
-    blurPulse = Math.max(blurPulse, 1.1);
+    surgePulse = Math.max(surgePulse, 1.1);
     ctx.feel.shake(1.0, HELIOS_CAMERA_SHAKE);
     if (environment) {
       spawnRing(environment.coronaPosition, hdr(WHITE_HOT, 1.4), 60, 1.2);
@@ -524,10 +523,10 @@ function updateCameraFeel(dt: number, ctx: CameraEffectsContext, speed: number) 
   if (!(ctx.camera instanceof PerspectiveCamera)) return;
   const camera = ctx.camera;
 
-  // FOV breathes with airspeed, kicks with the beat and the blur pulses. Helios
+  // FOV breathes with airspeed, kicks with the beat and the surge pulses. Helios
   // keeps the old smoothing curve here while the shared rig owns the actual
   // camera.fov write and projection update.
-  const targetFovOffset = (speed - 0.8) * 9 + beatEnergy * 1.1 + blurPulse * 7;
+  const targetFovOffset = (speed - 0.8) * 9 + beatEnergy * 1.1 + surgePulse * 7;
   cameraFovOffset = MathUtils.lerp(cameraFovOffset, targetFovOffset, Math.min(1, dt * 6));
 
   if (ctx.running) {
@@ -586,9 +585,6 @@ function updatePostUniforms(dt: number, ctx: VisualContext, runTime: number) {
   const act3 = ctx.running && runTime >= CORONA_TIME;
   const heatTarget = !ctx.running ? 0 : act3 ? (runTime >= BOSS_TIME ? 0.3 : 0.5) : runTime >= GATE_TIME ? 0.12 : 0;
   heatUniform.value += (heatTarget - heatUniform.value) * Math.min(1, dt * 1.4);
-
-  const blurBase = !ctx.running ? 0 : act3 ? 0.1 : 0.04;
-  speedBlurUniform.value = Math.min(1, blurBase + blurPulse);
 
   flashUniform.value = Math.max(0, flashUniform.value - dt * (flashUniform.value > 0.8 ? 1.4 : 2.4));
 

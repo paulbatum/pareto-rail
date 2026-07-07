@@ -4,7 +4,7 @@ import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
 import { RUSH_BPM, RUSH_RUN_DURATION, rushGameplay, speedFactorAt } from './gameplay';
 import { RUSH_TUNING } from './tuning';
-import { composeRushOutput, decayRushPost, kickRushSurgeFlash, resetRushMotionBlur, updateRushMotionBlur } from './post-fx';
+import { composeRushOutput, decayRushPost, kickRushSurgeFlash } from './post-fx';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -48,19 +48,12 @@ export const rushLevel: LevelDefinition = {
 
     let runClock = 0;
     let running = false;
-    let surgePulse = 0;
-    let resetMotionBlurNextFrame = true;
-    resetRushMotionBlur(camera);
     bus.on('runstart', () => {
       runClock = 0;
       running = true;
-      surgePulse = 0;
-      resetMotionBlurNextFrame = true;
     });
     bus.on('runend', () => {
       running = false;
-      surgePulse = 0;
-      resetMotionBlurNextFrame = true;
     });
 
     const game = createLockOnRunner({
@@ -92,14 +85,12 @@ export const rushLevel: LevelDefinition = {
           for (const surgeTime of SURGE_TIMES) {
             if (previous < surgeTime && runClock >= surgeTime) {
               feel.kickFov(RUSH_TUNING.fov.surgeKickDegrees);
-              surgePulse = Math.max(surgePulse, RUSH_TUNING.motionBlur.surgePulse);
-              kickRushSurgeFlash(RUSH_TUNING.motionBlur.surgePulse);
+              kickRushSurgeFlash(RUSH_TUNING.post.surgeFlash);
             }
           }
         }
         const isRunning = running && game.state === 'running';
         const speedFactor = isRunning ? speedFactorAt(runClock) : 1;
-        surgePulse = Math.max(0, surgePulse - dt * RUSH_TUNING.motionBlur.surgeDecay);
         decayRushPost(dt);
         updateVisuals(dt, {
           scene,
@@ -121,15 +112,6 @@ export const rushLevel: LevelDefinition = {
             smoothing: RUSH_TUNING.shake.smoothing,
           },
         });
-        const speedExcess = Math.max(0, speedFactor - 1);
-        const rawBlurStrength = isRunning
-          ? Math.min(
-            RUSH_TUNING.motionBlur.maxStrength,
-            RUSH_TUNING.motionBlur.cruiseStrength + speedExcess * RUSH_TUNING.motionBlur.strengthPerSpeedFactor + surgePulse,
-          )
-          : 0;
-        updateRushMotionBlur(camera, rawBlurStrength, { reset: resetMotionBlurNextFrame });
-        resetMotionBlurNextFrame = false;
       },
       dispose() {
         game.dispose();

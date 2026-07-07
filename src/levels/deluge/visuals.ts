@@ -49,7 +49,7 @@ import {
   VULTURE_TIME,
   vultureWorldTransform,
 } from './gameplay';
-import { flashUniform, speedBlurUniform, staticUniform } from './post-fx';
+import { flashUniform, staticUniform } from './post-fx';
 import { CRASH_TIME, lightningIntensity, TRAIN_PASS_TIME } from './sync';
 
 const CYAN = new Color(0.0, 0.88, 1.0);
@@ -93,7 +93,6 @@ let elapsedNow = 0;
 let lastRunTime = -1;
 let beatEnergy = 0;
 let shakeEnergy = 0;
-let blurPulse = 0;
 let cameraRoll = 0;
 let baseCameraPosition = new Vector3();
 
@@ -283,7 +282,6 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     if (record) {
       if (record.mesh.userData.kind === 'vultureCore') {
         flashUniform.value = Math.max(flashUniform.value, 1.0);
-        blurPulse = 1.0;
         shakeEnergy = 1.4;
         if (environment) {
           environment.crashBillboard.visible = true;
@@ -310,7 +308,6 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
   bus.on('volley', ({ size, kills }) => {
     if (size >= 5 && kills === size) {
       flashUniform.value = Math.max(flashUniform.value, 0.2);
-      blurPulse = Math.max(blurPulse, 0.22);
     }
   });
   bus.on('beat', ({ isDownbeat }) => { beatEnergy = Math.max(beatEnergy, isDownbeat ? 1 : 0.38); });
@@ -331,9 +328,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     effects.length = 0;
     lastRunTime = -1;
     flashUniform.value = 0;
-    speedBlurUniform.value = 0;
     staticUniform.value = 0;
-    blurPulse = 0;
   });
 }
 
@@ -341,13 +336,11 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
   elapsedNow = ctx.elapsed;
   beatEnergy = Math.max(0, beatEnergy - dt * 4.2);
   shakeEnergy = Math.max(0, shakeEnergy - dt * 2.6);
-  blurPulse = Math.max(0, blurPulse - dt * 0.75);
   staticUniform.value = Math.max(0, staticUniform.value - dt * 2.8);
   const runTime = ctx.running ? ctx.runTime : 0;
   const speed = ctx.running ? speedFactorAt(runTime) : 0.5;
   updateSetPieceMoments(ctx);
   updateEnvironment(dt, ctx, speed, runTime);
-  speedBlurUniform.value = Math.min(0.7, (ctx.running ? Math.max(0, speed - 0.75) * 0.105 : 0.015) + blurPulse * 0.42);
   flashUniform.value = Math.max(0, flashUniform.value - dt * 2.0);
 
   for (const [enemyId, record] of enemyRecords) {
@@ -1479,7 +1472,6 @@ function updateSetPieceMoments(ctx: VisualContext) {
   const crossed = (t: number) => lastRunTime >= 0 && lastRunTime < t && ctx.runTime >= t;
   if (crossed(STREETFALL_TIME) || crossed(UNDER_TIME)) {
     flashUniform.value = Math.max(flashUniform.value, 0.9);
-    blurPulse = Math.max(blurPulse, 0.85);
     shakeEnergy = Math.max(shakeEnergy, 0.75);
   }
   if (crossed(VULTURE_TIME)) {

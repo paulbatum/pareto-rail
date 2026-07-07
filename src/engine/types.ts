@@ -37,9 +37,9 @@ export type LevelPostColorNode = Node<'vec4'>;
 export type LevelPostUvNode = Node<'vec2'>;
 
 export type LevelPostComposeInput = {
-  /** Bloom-composited frame (scenePass.add(bloomPass)) — the default output. */
+  /** Engine-composited frame: global motion blur plus bloom. This is the default output. */
   base: LevelPostColorNode;
-  /** Raw scene pass node; use getTextureNode().sample(uv) for blur/distortion taps. */
+  /** Raw scene pass node; use getTextureNode('output').sample(uv) only for deliberate distortion taps. */
   scenePass: PassNode;
   /** Bloom pass node. */
   bloomPass: LevelPostColorNode;

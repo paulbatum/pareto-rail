@@ -176,21 +176,11 @@ export const RUSH_TUNING = {
     // World units kept visible behind the camera; prevents curbside popping behind the camera.
     visibleBehindUnits: 36,
   },
-  motionBlur: {
-    // Unitless shutter strength at speed factor 1; raises constant camera-motion smear in cruise.
-    cruiseStrength: 0.18,
-    // Unitless shutter strength added per speed factor above 1; raises depth-correct smearing during boosts.
-    strengthPerSpeedFactor: 0.2,
-    // Unitless maximum shutter strength; caps full-screen blur intensity at the fastest stretch.
-    maxStrength: 0.55,
-    // Unitless extra shutter/flash pulse at surge onset; makes boost entries hit harder.
-    surgePulse: 0.22,
-    // 1/seconds pulse decay; higher values make surge blur and flash recover faster.
+  post: {
+    // Unitless orange flash pulse at surge onset; makes boost entries hit harder without controlling global blur.
+    surgeFlash: 0.22,
+    // 1/seconds pulse decay; higher values make surge flash recover faster.
     surgeDecay: 3.2,
-    // Number of full-screen taps used for the blur; higher values smooth trails but cost more post time.
-    tapCount: 8,
-    // Maximum per-pixel motion vector in UV units; clamps extreme reprojection jumps before artifacts appear.
-    maxVelocityUv: 0.045,
   },
   fog: {
     // World units from camera where fog begins; lower values make structures emerge later.

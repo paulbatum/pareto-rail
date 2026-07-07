@@ -101,27 +101,19 @@ post?: {
 
 Omitting it preserves the shared default frame. The engine always multiplies the level bloom strength by the player's bloom slider, so levels cannot bypass the pause-menu bloom setting.
 
-The pause menu also exposes a player motion-blur slider. Levels that implement motion blur in their own `composeOutput` path must factor the shared `motionBlurLevelUniform` from `src/engine/post.ts` into the shader so slider changes apply immediately, including while the game is paused; they must remain playable and legible with motion blur at 0%.
+The pause menu also exposes a player motion-blur slider. Motion blur is engine-owned in `src/engine/post.ts`: the shared pass renders a velocity buffer, applies the same shutter model to every level, and scales it by the player's setting. Levels should create speed through rail motion, nearby geometry, moving objects, FOV, shake, and authored set pieces; do not add level-specific motion blur or speed-blur strength knobs.
 
-A level can use `composeOutput` to add a small TSL screen-space effect while leaving the shared pipeline in `src/engine/post.ts`. Keep effect uniforms at module scope, write them from the level runtime, and sample the raw scene with `scenePass.getTextureNode().sample(customUv)`. The hook receives `base`, which is already `scenePass.add(bloomPass)`, and the engine applies the shared vignette after the hook returns.
+A level can use `composeOutput` to add a small TSL screen-space effect while leaving the shared pipeline in `src/engine/post.ts`. Keep effect uniforms at module scope and write them from the level runtime. The hook receives `base`, which is already global motion blur plus bloom, and the engine applies the shared vignette after the hook returns. Prefer adding flashes, tints, heat shimmer, or glitch over `base`; if an effect samples `scenePass.getTextureNode('output')` directly, it is bypassing the engine-composited frame for that part of the image and should be deliberate.
 
 ```ts
-import { mix, uniform, vec2, vec4 } from 'three/tsl';
+import { uniform, vec4 } from 'three/tsl';
 import type { LevelPostConfig } from '../../engine/types';
 
-const speedBlur = uniform(0);
 const flash = uniform(0);
 
 export const post: LevelPostConfig = {
-  composeOutput({ base, scenePass, screenUV }) {
-    const sceneTexture = scenePass.getTextureNode();
-    const centerPull = vec2(0.5).sub(screenUV).mul(speedBlur);
-    const tap1 = sceneTexture.sample(screenUV.add(centerPull.mul(0.20)));
-    const tap2 = sceneTexture.sample(screenUV.add(centerPull.mul(0.45)));
-    const tap3 = sceneTexture.sample(screenUV.add(centerPull.mul(0.70)));
-    const blurred = base.add(tap1).add(tap2).add(tap3).mul(0.25);
-
-    return mix(base, blurred, speedBlur).add(vec4(1, 0.7, 0.35, 0).mul(flash));
+  composeOutput({ base }) {
+    return base.add(vec4(1, 0.7, 0.35, 0).mul(flash));
   },
 };
 ```
