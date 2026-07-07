@@ -176,37 +176,21 @@ export const RUSH_TUNING = {
     // World units kept visible behind the camera; prevents curbside popping behind the camera.
     visibleBehindUnits: 36,
   },
-  streaks: {
-    // Baseline streak line count at cruise; raises particle density even before surges.
-    baseCount: 120,
-    // Extra streak lines per speed factor above 1; raises density during boosts.
-    countPerSpeedFactor: 95,
-    // Maximum streak line count; caps fill rate and bloom load.
-    maxCount: 320,
-    // World units of streak length at cruise; longer values smear near-camera particles.
-    baseLengthUnits: 7.5,
-    // Extra world units of streak length per speed factor above 1; makes boosts draw longer lines.
-    lengthPerSpeedFactor: 13,
-    // World units per second of local particle travel at cruise; raises apparent starfield speed.
-    baseVelocityUnitsPerSecond: 140,
-    // Extra world units per second per speed factor above 1; accelerates streaks during boosts.
-    velocityPerSpeedFactor: 190,
-    // World units in front of camera where streaks recycle; lowers values put streaks nearer the lens.
-    depthRangeUnits: 76,
-    // World units from camera center to streak field edge; raises peripheral streak coverage.
-    spreadRadiusUnits: 17,
-  },
-  post: {
-    // Blur mix at speed factor 1; raises constant radial smear in cruise.
-    radialBlurBase: 0.035,
-    // Blur mix added per speed factor above 1; raises speed-dependent radial smear.
-    radialBlurPerSpeedFactor: 0.18,
-    // Maximum radial blur mix; caps post intensity at the fastest stretch.
-    radialBlurMax: 0.42,
-    // Extra blur pulse at surge onset; makes boost entries hit harder.
-    surgeBlurPulse: 0.32,
-    // 1/seconds pulse decay; higher values make surge blur recover faster.
-    surgeBlurDecay: 3.2,
+  motionBlur: {
+    // Unitless shutter strength at speed factor 1; raises constant camera-motion smear in cruise.
+    cruiseStrength: 0.18,
+    // Unitless shutter strength added per speed factor above 1; raises depth-correct smearing during boosts.
+    strengthPerSpeedFactor: 0.2,
+    // Unitless maximum shutter strength; caps full-screen blur intensity at the fastest stretch.
+    maxStrength: 0.55,
+    // Unitless extra shutter/flash pulse at surge onset; makes boost entries hit harder.
+    surgePulse: 0.22,
+    // 1/seconds pulse decay; higher values make surge blur and flash recover faster.
+    surgeDecay: 3.2,
+    // Number of full-screen taps used for the blur; higher values smooth trails but cost more post time.
+    tapCount: 8,
+    // Maximum per-pixel motion vector in UV units; clamps extreme reprojection jumps before artifacts appear.
+    maxVelocityUv: 0.045,
   },
   fog: {
     // World units from camera where fog begins; lower values make structures emerge later.

@@ -42,7 +42,6 @@ import {
 } from '../../../engine/visual-kit';
 import { createRushRail } from '../gameplay';
 import { RUSH_TUNING } from '../tuning';
-import { setRushRadialBlur } from '../post-fx';
 
 const BLACK = new Color(0.002, 0.004, 0.01);
 const CYAN = new Color(0.08, 1.0, 1.35);
@@ -63,7 +62,6 @@ type VisualContext = {
   elapsed: number;
   running: boolean;
   speedFactor: number;
-  surgePulse: number;
   feel: CameraFeelRig;
   runProgress?: number;
 };
@@ -109,7 +107,6 @@ let sameTrafficField: ScatterField | null = null;
 let oncomingTrafficField: ScatterField | null = null;
 let streetlightField: ScatterField | null = null;
 let gantryField: ScatterField | null = null;
-let streakField: SpeedStreakField | null = null;
 let beatEnergy = 0;
 let elapsedNow = 0;
 
@@ -134,9 +131,6 @@ export function createEnvironment(scene: Scene) {
   gantryField = createGantryField();
   root.add(buildingField.group, sameTrafficField.group, oncomingTrafficField.group, streetlightField.group, gantryField.group);
 
-  streakField = createSpeedStreaks();
-  root.add(streakField.object);
-
   scene.add(root);
   environmentRoot = root;
   return root;
@@ -153,14 +147,11 @@ export function disposeEnvironment() {
   oncomingTrafficField = null;
   streetlightField = null;
   gantryField = null;
-  streakField?.dispose();
-  streakField = null;
   if (environmentRoot) {
     environmentRoot.removeFromParent();
     disposeObject3D(environmentRoot);
   }
   environmentRoot = null;
-  setRushRadialBlur(0);
 }
 
 type BuildingSpec = {
@@ -505,81 +496,6 @@ function matte(color: number) {
   return material;
 }
 
-class SpeedStreakField {
-  readonly object: LineSegments;
-  private readonly geometry: BufferGeometry;
-  private readonly positions: Float32Array;
-  private readonly colors: Float32Array;
-  private readonly seeds: Float32Array;
-
-  constructor() {
-    const max = RUSH_TUNING.streaks.maxCount;
-    this.positions = new Float32Array(max * 2 * 3);
-    this.colors = new Float32Array(max * 2 * 3);
-    this.seeds = new Float32Array(max * 4);
-    for (let i = 0; i < max; i += 1) {
-      const r = pseudo(i, 1) ** 0.55;
-      const a = pseudo(i, 2) * Math.PI * 2;
-      this.seeds.set([r, a, pseudo(i, 3), pseudo(i, 4)], i * 4);
-    }
-    this.geometry = new BufferGeometry();
-    this.geometry.setAttribute('position', new Float32BufferAttribute(this.positions, 3));
-    this.geometry.setAttribute('color', new Float32BufferAttribute(this.colors, 3));
-    this.object = new LineSegments(this.geometry, new LineBasicMaterial({ vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false }));
-    this.object.frustumCulled = false;
-  }
-
-  update(context: VisualContext) {
-    const speedExcess = Math.max(0, context.speedFactor - 1);
-    const active = Math.min(RUSH_TUNING.streaks.maxCount, Math.round(RUSH_TUNING.streaks.baseCount + speedExcess * RUSH_TUNING.streaks.countPerSpeedFactor));
-    const length = RUSH_TUNING.streaks.baseLengthUnits + speedExcess * RUSH_TUNING.streaks.lengthPerSpeedFactor;
-    const velocity = RUSH_TUNING.streaks.baseVelocityUnitsPerSecond + speedExcess * RUSH_TUNING.streaks.velocityPerSpeedFactor;
-    const forward = new Vector3();
-    const right = new Vector3();
-    const up = new Vector3();
-    context.camera.getWorldDirection(forward);
-    right.setFromMatrixColumn(context.camera.matrixWorld, 0).normalize();
-    up.setFromMatrixColumn(context.camera.matrixWorld, 1).normalize();
-
-    for (let i = 0; i < RUSH_TUNING.streaks.maxCount; i += 1) {
-      const offset = i * 6;
-      if (i >= active) {
-        this.positions.fill(0, offset, offset + 6);
-        this.colors.fill(0, offset, offset + 6);
-        continue;
-      }
-      const seed = i * 4;
-      const radial = this.seeds[seed] * RUSH_TUNING.streaks.spreadRadiusUnits;
-      const angle = this.seeds[seed + 1] + Math.sin(context.elapsed * 0.7 + i) * 0.08;
-      const range = RUSH_TUNING.streaks.depthRangeUnits;
-      const phase = this.seeds[seed + 2] * range;
-      const depth = 4 + ((((phase - context.elapsed * velocity) % range) + range) % range);
-      const center = context.camera.position.clone()
-        .addScaledVector(forward, depth)
-        .addScaledVector(right, Math.cos(angle) * radial)
-        .addScaledVector(up, Math.sin(angle) * radial * 0.72);
-      const start = center.clone().addScaledVector(forward, length * 0.55);
-      const end = center.clone().addScaledVector(forward, -length * 0.45);
-      this.positions.set([start.x, start.y, start.z, end.x, end.y, end.z], offset);
-      const color = this.seeds[seed + 3] > 0.82 ? AMBER : CYAN;
-      const intensity = 0.24 + speedExcess * 0.16 + (radial < 5 ? 0.2 : 0);
-      this.colors.set([color.r * intensity, color.g * intensity, color.b * intensity, color.r * intensity, color.g * intensity, color.b * intensity], offset);
-    }
-    (this.geometry.getAttribute('position') as Float32BufferAttribute).needsUpdate = true;
-    (this.geometry.getAttribute('color') as Float32BufferAttribute).needsUpdate = true;
-  }
-
-  dispose() {
-    this.geometry.dispose();
-    (this.object.material as LineBasicMaterial).dispose();
-    this.object.removeFromParent();
-  }
-}
-
-function createSpeedStreaks() {
-  return new SpeedStreakField();
-}
-
 function pseudo(index: number, salt: number) {
   const x = Math.sin(index * 127.1 + salt * 311.7) * 43758.5453123;
   return x - Math.floor(x);
@@ -808,10 +724,6 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     enemies.clear();
     projectiles.clear();
     beatEnergy = 1;
-    setRushRadialBlur(0);
-  });
-  bus.on('runend', () => {
-    setRushRadialBlur(0);
   });
 }
 
@@ -832,7 +744,6 @@ export function updateVisuals(dt: number, context: VisualContext) {
   oncomingTrafficField?.update(railU, dt);
   streetlightField?.update(railU, dt);
   gantryField?.update(railU, dt);
-  streakField?.update(context);
 
   const speedExcess = Math.max(0, context.speedFactor - 1);
   const fovOffset = Math.min(RUSH_TUNING.fov.maxOffsetDegrees, speedExcess * RUSH_TUNING.fov.offsetDegreesPerSpeedFactor);
@@ -841,12 +752,6 @@ export function updateVisuals(dt: number, context: VisualContext) {
     maxTrauma: RUSH_TUNING.shake.maxTrauma,
     decay: RUSH_TUNING.shake.decay,
   });
-
-  const blur = Math.min(
-    RUSH_TUNING.post.radialBlurMax,
-    RUSH_TUNING.post.radialBlurBase + speedExcess * RUSH_TUNING.post.radialBlurPerSpeedFactor + context.surgePulse,
-  );
-  setRushRadialBlur(context.running ? blur : 0);
 
   if (environmentRoot) environmentRoot.scale.setScalar(1 + beatEnergy * 0.006 + speedExcess * 0.008);
 

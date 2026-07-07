@@ -135,7 +135,7 @@ Inspection captures: `carriage-8` (word combos, bar 8), `carriage-16` (midnight 
 
 # Rush
 
-Rush is a night flight down a city street canyon built to test how fast this engine can feel. The speed rig is still the point, but the velocity now reads through asphalt lane dashes, tower faces, streetlights, gantries, traffic, FOV pulls, streak particles, and radial blur.
+Rush is a night flight down a city street canyon built to test how fast this engine can feel. The speed rig is still the point, but the velocity now reads through asphalt lane dashes, tower faces, streetlights, gantries, traffic, FOV pulls, and depth-aware camera motion blur.
 
 ## Visual language
 Near-black low-poly city geometry with flat-shaded road, curbs, sidewalks, and skyscraper walls. Small cyan windows, cyan-white headlights, amber streetlights, taillights, and beat-strobing gantries provide the hot accents without turning bloom into a whiteout.
