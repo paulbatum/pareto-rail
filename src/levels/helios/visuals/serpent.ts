@@ -258,6 +258,7 @@ function createNeckSegment(index: number): Group {
 
 export function createSerpentBody(starCenter: Vector3, starRadius: number): SerpentBody {
   const root = new Group();
+  root.userData.raildIgnoreOcclusion = true;
 
   const neck: Group[] = [];
   for (let i = 0; i < NECK_SEGMENTS; i += 1) {

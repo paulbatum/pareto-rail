@@ -14,6 +14,7 @@
     "trace:spawns": "node scripts/spawn-trace.mjs",
     "simulate": "node scripts/simulate.mjs",
     "check:floor": "node scripts/check-floor.mjs",
+    "check:occlusion": "node scripts/target-occlusion.mjs",
     "scaffold": "node scripts/scaffold-level.mjs",
     "gallery": "node scripts/collect-gallery.mjs",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",

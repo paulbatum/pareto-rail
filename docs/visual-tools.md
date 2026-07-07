@@ -93,6 +93,26 @@ Sheet resolution is controlled by the thumbnail layout, not by the raw render si
 
 For example, the default 4-thumbnail sheet is `664x432`: two 320-pixel-wide thumbnails per row, 180-pixel thumbnail height from the 16:9 render aspect, a 24-pixel label strip, and 8-pixel gutters.
 
+## Target occlusion check
+
+Use the target occlusion check to catch scenery or other large meshes blocking lockable target centers during an automated run:
+
+```sh
+npm run check:occlusion -- --all
+npm run check:occlusion -- --level deluge --no-fail
+```
+
+By default the tool drives a simple perfect lock-on policy, then warns when a target center is blocked for more than 5% of its on-screen lifetime. The tool ignores projectiles, the reticle, letters, other targets, non-depth-writing effects, and objects with `userData.raildIgnoreOcclusion = true` on themselves or an ancestor. Useful options:
+
+```sh
+--threshold 0.05                # maximum occluded ratio
+--sample-step 0.1               # seconds between occlusion samples
+--include-targets-as-occluders  # count enemy-on-enemy overlap too
+--policy none                   # sample without auto-locking targets
+--json                          # machine-readable report
+--no-fail                       # print warnings without a failing exit code
+```
+
 ## Crystal enemy tuning gallery
 
 The `/dev` enemy gallery is specifically for `crystal-corridor`; it reads and writes `src/levels/crystal/visuals/crystal-template.json`.

@@ -140,6 +140,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   });
   const raycaster = new Raycaster();
   const reticle = visuals.createReticle();
+  reticle.userData.raildRole = 'reticle';
 
   let state: RunState = 'attract';
   let runNumber = 0;
@@ -411,6 +412,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (dynamic && countsEntryTowardTotal(entry)) dynamicCountedEnemies += 1;
     const hitStages = normalizedHitStages(entry);
     const mesh = visuals.createEnemyMesh(entry.kind, entry.letter);
+    markTargetMesh(mesh, id, 'enemy', entry.kind, entry.letter);
     const enemy: Enemy<TKind, TData> = {
       id,
       kind: entry.kind,
@@ -437,6 +439,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       const id = nextEnemyId;
       nextEnemyId += 1;
       const mesh = visuals.createEnemyMesh('letter', letter);
+      markTargetMesh(mesh, id, purpose, 'letter', letter);
       const target: Enemy<TKind, TData> = {
         id,
         kind: 'letter',
@@ -1030,6 +1033,14 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function removeProjectile(projectile: Projectile) {
     projectiles.delete(projectile.id);
     scene.remove(projectile.mesh);
+  }
+
+  function markTargetMesh(mesh: Object3D, enemyId: number, purpose: TargetPurpose, kind: string, letter?: string) {
+    mesh.userData.raildRole = 'target';
+    mesh.userData.raildTargetPurpose = purpose;
+    mesh.userData.raildEnemyId = enemyId;
+    mesh.userData.raildEnemyKind = kind;
+    if (letter !== undefined) mesh.userData.raildEnemyLetter = letter;
   }
 
   function updateLetterStartDelay(dt: number) {
