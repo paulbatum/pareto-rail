@@ -16,9 +16,10 @@ import {
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mulberry32 } from '../../../engine/rng';
 import { additiveMaterialParameters, createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import crystalTemplateJson from './crystal-template.json';
-import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA, mulberry32, pickColor, type Rng } from './palette';
+import { AMBER, CORE_WHITE, CYAN, hdr, MAGENTA, pickColor, type Rng } from './palette';
 
 export type ShardSpec = {
   direction: Vector3;

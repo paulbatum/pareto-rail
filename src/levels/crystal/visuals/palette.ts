@@ -1,4 +1,5 @@
 import { Color } from 'three';
+import type { Rng } from '../../../engine/rng';
 
 // The three-color neon language everything draws from: dominant cyan,
 // secondary magenta, sparse amber accents. HDR multipliers push values
@@ -10,18 +11,7 @@ export const CORE_WHITE = new Color(0.85, 0.97, 1.0);
 
 export const BACKGROUND = new Color(0.006, 0.012, 0.035);
 
-export type Rng = () => number;
-
-export function mulberry32(seed: number): Rng {
-  let a = seed >>> 0;
-  return () => {
-    a += 0x6d2b79f5;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+export type { Rng };
 
 // Weighted palette pick; weights = [cyan, magenta, amber].
 export function pickColor(rng: Rng, weights: [number, number, number]): Color {

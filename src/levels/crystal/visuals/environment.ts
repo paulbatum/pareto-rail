@@ -13,10 +13,12 @@ import {
 } from 'three';
 import { LineBasicNodeMaterial } from 'three/webgpu';
 import { attribute, float, positionView, positionWorld, smoothstep, time, uniform, vec3 } from 'three/tsl';
+import { scatterAlongRail, type ScatterField } from '../../../engine/environment-kit';
 import { sampleRailFrame } from '../../../engine/rail';
+import { mulberry32 } from '../../../engine/rng';
 import { additiveMaterialParameters } from '../../../engine/visual-kit';
 import { createCrystalRail } from '../gameplay';
-import { AMBER, BACKGROUND, CYAN, MAGENTA, mulberry32 } from './palette';
+import { AMBER, BACKGROUND, CYAN, MAGENTA } from './palette';
 
 const RING_COUNT = 220;
 const RING_SIDES = 8;
@@ -27,7 +29,7 @@ export const beatUniform = uniform(0);
 
 export type Environment = {
   root: Group;
-  debris: Array<{ lines: LineSegments; spin: Vector3 }>;
+  debris: ScatterField;
 };
 
 export function createEnvironmentInternal(scene: Scene): Environment {
@@ -116,30 +118,44 @@ export function createEnvironmentInternal(scene: Scene): Environment {
   root.add(makeStars(rng, 500, 3, 9.5, 0.16));
 
   // --- Drifting wireframe debris outside the tunnel for parallax depth.
-  const debris: Array<{ lines: LineSegments; spin: Vector3 }> = [];
-  for (let i = 0; i < 20; i += 1) {
-    const u = (i + 0.5) / 20;
-    const frame = sampleRailFrame(curve, u);
-    const geometry = new EdgesGeometry(new IcosahedronGeometry(2.2 + rng() * 4, 0));
-    const roll = rng();
-    const color = (roll < 0.55 ? CYAN : roll < 0.85 ? MAGENTA : AMBER).clone().multiplyScalar(0.34);
-    const lines = new LineSegments(
-      geometry,
-      new LineBasicNodeMaterial(additiveMaterialParameters({})),
-    );
-    (lines.material as LineBasicNodeMaterial).colorNode = vec3(color.r, color.g, color.b)
-      .mul(positionView.z.negate().mul(-0.014).exp())
-      .mul(beatUniform.mul(0.6).add(1));
-    const angle = rng() * Math.PI * 2;
-    const distance = TUNNEL_RADIUS * (2.2 + rng() * 3.5);
-    lines.position
-      .copy(frame.position)
-      .addScaledVector(frame.right, Math.cos(angle) * distance)
-      .addScaledVector(frame.up, Math.sin(angle) * distance);
-    const spin = new Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).multiplyScalar(0.35);
-    debris.push({ lines, spin });
-    root.add(lines);
-  }
+  const debrisSpin: Vector3[] = [];
+  const debris = scatterAlongRail(curve, {
+    count: 20,
+    seed: 20260703,
+    rng,
+    window: { behind: curve.getLength(), ahead: curve.getLength() },
+    alignToRail: false,
+    make(index, makeRng) {
+      const geometry = new EdgesGeometry(new IcosahedronGeometry(2.2 + makeRng() * 4, 0));
+      const roll = makeRng();
+      const color = (roll < 0.55 ? CYAN : roll < 0.85 ? MAGENTA : AMBER).clone().multiplyScalar(0.34);
+      const lines = new LineSegments(
+        geometry,
+        new LineBasicNodeMaterial(additiveMaterialParameters({})),
+      );
+      (lines.material as LineBasicNodeMaterial).colorNode = vec3(color.r, color.g, color.b)
+        .mul(positionView.z.negate().mul(-0.014).exp())
+        .mul(beatUniform.mul(0.6).add(1));
+      debrisSpin[index] = new Vector3();
+      return lines;
+    },
+    place(index, placeRng) {
+      const angle = placeRng() * Math.PI * 2;
+      const distance = TUNNEL_RADIUS * (2.2 + placeRng() * 3.5);
+      debrisSpin[index].set(placeRng() - 0.5, placeRng() - 0.5, placeRng() - 0.5).multiplyScalar(0.35);
+      return {
+        u: (index + 0.5) / 20,
+        offset: new Vector3(Math.cos(angle) * distance, Math.sin(angle) * distance, 0),
+      };
+    },
+    onUpdate(item, dt) {
+      const spin = debrisSpin[item.index];
+      item.object.rotation.x += spin.x * dt;
+      item.object.rotation.y += spin.y * dt;
+      item.object.rotation.z += spin.z * dt;
+    },
+  });
+  root.add(debris.group);
 
   scene.add(root);
   return { root, debris };

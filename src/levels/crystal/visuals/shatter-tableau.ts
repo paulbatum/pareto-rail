@@ -1,8 +1,9 @@
 import { Color, Group, Vector3 } from 'three';
 import { createCrystal, type CrystalKind, type ShardSpec } from './crystal';
 import { createFrozenShatterDebris } from './effects';
+import { mulberry32 } from '../../../engine/rng';
 import { createLancerHalo } from './warden';
-import { AMBER, CYAN, MAGENTA, type Rng, mulberry32 } from './palette';
+import { AMBER, CYAN, MAGENTA, type Rng } from './palette';
 
 const TABLEAU_AGE = 0.25;
 const COLUMN_SPACING = 4.2;

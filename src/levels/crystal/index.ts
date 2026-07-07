@@ -78,7 +78,7 @@ export const crystalCorridorLevel: LevelDefinition = {
           hud.setCallout('');
         }
         game.update(dt);
-        updateVisuals(dt, { scene, camera, elapsed });
+        updateVisuals(dt, { scene, camera, elapsed, runProgress: game.runProgress });
       },
       dispose() {
         game.dispose();

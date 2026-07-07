@@ -49,6 +49,7 @@ export type VisualContext = {
   scene: Scene;
   camera: Camera;
   elapsed: number;
+  runProgress?: number;
 };
 
 type EnemyRecord = {
@@ -319,13 +320,7 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
     ctx.camera.updateProjectionMatrix();
   }
 
-  if (environment) {
-    for (const item of environment.debris) {
-      item.lines.rotation.x += item.spin.x * dt;
-      item.lines.rotation.y += item.spin.y * dt;
-      item.lines.rotation.z += item.spin.z * dt;
-    }
-  }
+  environment?.debris.update(ctx.runProgress ?? 0, dt);
 
   for (const [enemyId, record] of enemyRecords.entries()) {
     if (!record.mesh.parent) {

@@ -40,6 +40,10 @@ export type ScatterAlongRailOptions = {
   make: (index: number, rng: () => number) => Object3D;
   window: { behind: number; ahead: number };
   seed: number;
+  /** Optional authored RNG stream; when omitted, `seed` creates a Mulberry32 stream. */
+  rng?: () => number;
+  /** Set false for scenery that should keep its authored world rotation while still using rail-relative placement. */
+  alignToRail?: boolean;
   onUpdate?: (item: ScatterItem, dt: number) => void;
 };
 
@@ -53,12 +57,13 @@ export type ScatterField = {
 
 const transformMatrix = new Matrix4();
 
-function applyRailTransform(curve: CatmullRomCurve3, item: ScatterItem) {
+function applyRailTransform(curve: CatmullRomCurve3, item: ScatterItem, alignToRail: boolean) {
   const frame = sampleRailFrame(curve, item.u);
   item.object.position.copy(frame.position)
     .addScaledVector(frame.right, item.offset.x)
     .addScaledVector(frame.up, item.offset.y)
     .addScaledVector(frame.tangent, item.offset.z);
+  if (!alignToRail) return;
   transformMatrix.makeBasis(frame.right, frame.up, frame.tangent);
   item.object.quaternion.setFromRotationMatrix(transformMatrix);
 }
@@ -67,13 +72,14 @@ export function scatterAlongRail(
   curve: CatmullRomCurve3,
   options: ScatterAlongRailOptions,
 ): ScatterField {
-  const rng = mulberry32(options.seed);
+  const rng = options.rng ?? mulberry32(options.seed);
   const group = new Group();
   const items: MutableScatterItem[] = [];
   let lastCameraU = 0;
   const length = curve.getLength();
   const behindU = options.window.behind / length;
   const aheadU = Math.max(0.0001, options.window.ahead / length);
+  const alignToRail = options.alignToRail ?? true;
 
   const createPlacement = (index: number) => {
     const placement = options.place(index, rng);
@@ -94,7 +100,7 @@ export function scatterAlongRail(
       initialU: placement.u,
       initialOffset: placement.offset.clone(),
     };
-    applyRailTransform(curve, item);
+    applyRailTransform(curve, item, alignToRail);
     group.add(object);
     items.push(item);
   }
@@ -127,7 +133,7 @@ export function scatterAlongRail(
         item.object.visible = visible;
         if (!visible) continue;
 
-        applyRailTransform(curve, item);
+        applyRailTransform(curve, item, alignToRail);
         options.onUpdate?.(item, dt);
       }
     },
