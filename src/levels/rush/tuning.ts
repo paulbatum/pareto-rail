@@ -66,31 +66,115 @@ export const RUSH_TUNING = {
     // 1/seconds smoothing; higher values make shake sharper and less floaty.
     smoothing: 34,
   },
-  ribs: {
-    // World units between tunnel ribs; smaller values increase passage frequency.
-    spacingUnits: 10.5,
-    // World units from rail center to rib sides; smaller values create closer near-misses.
-    nearMissRadiusUnits: 6.4,
-    // World units of rib height; changes how much vertical structure whips by.
-    heightUnits: 8.8,
-    // Number of ribs kept ahead of the camera; raises visible tunnel density.
-    aheadCount: 64,
-    // Number of ribs kept behind the camera; prevents popping in rear peripheral vision.
-    behindCount: 8,
-    // Every Nth rib becomes a hot strobe gate; lower values increase beat-like flashing.
-    strobeEvery: 4,
-    // Seconds a strobe gate stays hot after a beat; raises temporal smear of light rings.
-    strobeHoldSeconds: 0.12,
+  street: {
+    // World units across the drivable road; wider values push curbs and scenery farther from enemy lanes.
+    roadWidthUnits: 24,
+    // World units from camera/rail down to asphalt; raises or lowers the flight height over the street.
+    cameraHeightOverRoadUnits: 5.6,
+    // World units between lane dash starts; smaller values increase road-surface speed ticks.
+    laneDashSpacingUnits: 7.2,
+    // World units of each painted lane dash; longer values make road markings streakier.
+    laneDashLengthUnits: 4.4,
+    // World units across each painted lane dash; wider values make road markings easier to read.
+    laneDashWidthUnits: 0.22,
+    // World units from road center for the two dashed lane divider lines; spreads road markings laterally.
+    laneDashOffsetsUnits: [-4, 4] as const,
+    // World units of curb height above road; increases the side edge silhouette.
+    curbHeightUnits: 0.34,
+    // World units of sidewalk width beyond each curb; separates towers and poles from the road.
+    sidewalkWidthUnits: 2.2,
+    // Number of road samples per lane dash interval; higher values make bends smoother.
+    samplesPerDash: 2,
   },
-  dashRails: {
-    // World units between longitudinal dash starts; smaller values make speed easier to read.
-    spacingUnits: 7,
-    // World units per dash segment; longer dashes become streakier rails.
-    lengthUnits: 4.4,
-    // World units from rail center to each side strip; changes near-field side parallax.
-    sideOffsetUnits: 5.2,
-    // World units below rail center for strips; lowers or raises the trench floor cue.
-    verticalOffsetUnits: -3.8,
+  buildings: {
+    // Deterministic layout seed; changes skyline/window scatter without changing density settings.
+    seed: 914170,
+    // World units from road center to closest tower face; must stay outside target lanes and widens the canyon.
+    faceOffsetUnits: 21,
+    // World units of extra random distance behind the tower face; higher values make a looser skyline.
+    setbackRangeUnits: 3.8,
+    // World units between building placement slots; smaller values increase wall passage frequency.
+    blockSpacingUnits: 12,
+    // Every Nth building slot is skipped; lower values open more alley gaps.
+    gapEvery: 7,
+    // World units range for tower width across the street; changes wall chunk size and silhouette variety.
+    widthRangeUnits: [5.5, 10.5] as const,
+    // World units range for tower depth along the street; changes how long each facade whips past.
+    depthRangeUnits: [7.5, 17] as const,
+    // World units range for tower height; higher values keep tops out of frame.
+    heightRangeUnits: [32, 88] as const,
+    // Fraction of candidate windows that light up; raises or lowers sparse night-window scatter.
+    windowLightDensity: 0.08,
+    // [width, height] in world units for each lit window quad; larger values make windows read farther away.
+    windowSizeUnits: [0.26, 0.16] as const,
+    // World units between candidate window columns; smaller values create finer window scatter.
+    windowColumnSpacingUnits: 1.15,
+    // World units between candidate window rows; smaller values create denser vertical window opportunities.
+    windowRowSpacingUnits: 1.45,
+    // Number of building slots kept ahead; raises visible city depth.
+    aheadCount: 54,
+    // Number of building slots kept behind; prevents side-wall popping in peripheral vision.
+    behindCount: 8,
+  },
+  traffic: {
+    // Deterministic traffic seed; changes car spacing/lane choices without changing speed settings.
+    seed: 220174,
+    // Count of same-direction cars recycled along the road; raises overtaking cues.
+    sameDirectionCount: 34,
+    // Count of oncoming cars recycled along the road; raises headlight closing-frequency cues.
+    oncomingCount: 28,
+    // World units per second range for same-direction cars; higher values reduce how quickly the player overtakes them.
+    sameDirectionSpeedRangeUnitsPerSecond: [14, 30] as const,
+    // World units per second range for oncoming cars; higher values make headlight pairs close faster.
+    oncomingSpeedRangeUnitsPerSecond: [38, 66] as const,
+    // World units from road center for same-direction lanes; changes where taillights streak below camera.
+    sameDirectionLaneOffsetsUnits: [-6.4, -2.1] as const,
+    // World units from road center for oncoming lanes; changes where headlight pairs approach below camera.
+    oncomingLaneOffsetsUnits: [2.1, 6.4] as const,
+    // World units of car body length; longer values make traffic silhouettes more visible.
+    carLengthUnits: 3.9,
+    // World units of car body width; wider values fill more of each traffic lane.
+    carWidthUnits: 1.7,
+    // World units of car body height; taller values make cars read more clearly from above.
+    carHeightUnits: 0.95,
+    // World units of gap between paired headlights or taillights; widens light pairs.
+    lightPairSpacingUnits: 1.05,
+    // [width, height] in world units for each car light quad; larger values make traffic lights more prominent.
+    lightSizeUnits: [0.5, 0.26] as const,
+    // World units above road for car lights; raises headlight and taillight quads.
+    lightHeightUnits: 0.42,
+    // World units ahead/behind camera used for car recycling; larger values show traffic earlier.
+    recycleAheadUnits: 430,
+    // World units behind camera retained for traffic; larger values keep overtaken cars longer.
+    recycleBehindUnits: 80,
+  },
+  streetFurniture: {
+    // Deterministic furniture seed; changes small lamp/gantry variation without changing spacing settings.
+    seed: 701942,
+    // World units between streetlight poles on each curb; smaller values increase curbside passage frequency.
+    streetlightSpacingUnits: 19,
+    // World units from road center to each pole; must stay outside target lanes and controls curb silhouette.
+    poleOffsetUnits: 15.2,
+    // World units from road to lamp head; higher values lift lights above the reticle lane.
+    poleHeightUnits: 6.1,
+    // [width, height, depth] in world units for each lamp head; larger values make sodium lights chunkier.
+    lampHeadSizeUnits: [0.55, 0.18, 0.38] as const,
+    // World units of pole thickness; wider values make poles more visible but risk occlusion.
+    poleRadiusUnits: 0.055,
+    // World units between overhead gantry slots; smaller values make overhead bars whip past more often.
+    gantrySpacingUnits: 42,
+    // Every Nth gantry strobes on the beat; lower values increase beat-synced flashes.
+    gantryStrobeEvery: 2,
+    // Seconds a strobe gantry stays hot after a beat; raises temporal smear of overhead flashes.
+    strobeHoldSeconds: 0.12,
+    // World units from road to gantry crossbar; higher values reduce target occlusion.
+    gantryHeightUnits: 16.2,
+    // World units of gantry crossbar thickness; wider values make overhead passes chunkier.
+    gantryBarThicknessUnits: 0.18,
+    // Number of furniture slots kept ahead; raises visible street depth.
+    aheadCount: 42,
+    // Number of furniture slots kept behind; prevents curbside popping behind the camera.
+    behindCount: 8,
   },
   streaks: {
     // Baseline streak line count at cruise; raises particle density even before surges.

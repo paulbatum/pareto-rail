@@ -1,24 +1,27 @@
 import {
   AdditiveBlending,
+  AmbientLight,
   BoxGeometry,
   BufferGeometry,
   Color,
   ConeGeometry,
+  DirectionalLight,
   DoubleSide,
   Float32BufferAttribute,
   Fog,
   Group,
+  HemisphereLight,
   IcosahedronGeometry,
   LineBasicMaterial,
   LineSegments,
   Mesh,
   MeshBasicMaterial,
+  MeshLambertMaterial,
   Object3D,
   OctahedronGeometry,
   PlaneGeometry,
   RingGeometry,
   Scene,
-  SphereGeometry,
   TorusGeometry,
   Vector3,
 } from 'three';
@@ -87,7 +90,11 @@ const pulses = createTransientEffectPool<Pulse, VisualContext>({
 });
 
 let environmentRoot: Group | null = null;
-let ribField: ScatterField | null = null;
+let buildingField: ScatterField | null = null;
+let sameTrafficField: ScatterField | null = null;
+let oncomingTrafficField: ScatterField | null = null;
+let streetlightField: ScatterField | null = null;
+let gantryField: ScatterField | null = null;
 let streakField: SpeedStreakField | null = null;
 let beatEnergy = 0;
 let elapsedNow = 0;
@@ -98,31 +105,21 @@ export function createEnvironment(scene: Scene) {
   scene.fog = new Fog(RUSH_TUNING.fog.color, RUSH_TUNING.fog.nearUnits, RUSH_TUNING.fog.farUnits);
 
   const root = new Group();
-  const ribCount = Math.ceil(RUSH_TUNING.rail.lengthUnits / RUSH_TUNING.ribs.spacingUnits);
-  const railLength = rail.getLength();
+  root.add(new AmbientLight(0x151923, 0.75));
+  root.add(new HemisphereLight(0x35486e, 0x050307, 1.6));
+  const key = new DirectionalLight(0x88aaff, 2.4);
+  key.position.set(0.6, 0.75, 0.3);
+  root.add(key);
 
-  ribField = scatterAlongRail(rail, {
-    count: ribCount,
-    seed: 914170,
-    window: {
-      behind: RUSH_TUNING.ribs.spacingUnits * RUSH_TUNING.ribs.behindCount,
-      ahead: RUSH_TUNING.ribs.spacingUnits * RUSH_TUNING.ribs.aheadCount,
-    },
-    place(index) {
-      return { u: (index * RUSH_TUNING.ribs.spacingUnits) / railLength, offset: new Vector3() };
-    },
-    make(index) {
-      return createRib(index);
-    },
-    onUpdate(item) {
-      const hot = (item.index % RUSH_TUNING.ribs.strobeEvery === 0 ? beatEnergy : 0) * 1.8;
-      item.object.scale.setScalar(1 + hot * 0.035);
-      tintObject(item.object, item.index % RUSH_TUNING.ribs.strobeEvery === 0 ? hdr(AMBER, 0.4 + hot) : hdr(CYAN, 0.36));
-    },
-  });
-  root.add(ribField.group);
+  root.add(createStreetSurface());
 
-  root.add(createDashRails());
+  buildingField = createBuildingField();
+  sameTrafficField = createTrafficField('same');
+  oncomingTrafficField = createTrafficField('oncoming');
+  streetlightField = createStreetlightField();
+  gantryField = createGantryField();
+  root.add(buildingField.group, sameTrafficField.group, oncomingTrafficField.group, streetlightField.group, gantryField.group);
+
   streakField = createSpeedStreaks();
   root.add(streakField.object);
 
@@ -132,8 +129,16 @@ export function createEnvironment(scene: Scene) {
 }
 
 export function disposeEnvironment() {
-  ribField?.dispose();
-  ribField = null;
+  buildingField?.dispose();
+  sameTrafficField?.dispose();
+  oncomingTrafficField?.dispose();
+  streetlightField?.dispose();
+  gantryField?.dispose();
+  buildingField = null;
+  sameTrafficField = null;
+  oncomingTrafficField = null;
+  streetlightField = null;
+  gantryField = null;
   streakField?.dispose();
   streakField = null;
   if (environmentRoot) {
@@ -144,52 +149,71 @@ export function disposeEnvironment() {
   setRushRadialBlur(0);
 }
 
-function createRib(index: number) {
-  const group = new Group();
-  const radius = RUSH_TUNING.ribs.nearMissRadiusUnits;
-  const height = RUSH_TUNING.ribs.heightUnits;
-  const z = 0;
-  const points = [
-    -radius, -height * 0.5, z, radius, -height * 0.5, z,
-    radius, -height * 0.5, z, radius, height * 0.5, z,
-    radius, height * 0.5, z, -radius, height * 0.5, z,
-    -radius, height * 0.5, z, -radius, -height * 0.5, z,
-    -radius, -height * 0.5, z, radius, height * 0.5, z,
-    -radius, height * 0.5, z, radius, -height * 0.5, z,
-  ];
-  const geometry = new BufferGeometry();
-  geometry.setAttribute('position', new Float32BufferAttribute(points, 3));
-  const material = new LineBasicMaterial({ color: index % RUSH_TUNING.ribs.strobeEvery === 0 ? hdr(AMBER, 0.85) : hdr(CYAN, 0.34), transparent: true, blending: AdditiveBlending, depthWrite: false });
-  group.add(new LineSegments(geometry, material));
+type BuildingSpec = {
+  side: -1 | 1;
+  gap: boolean;
+  width: number;
+  depth: number;
+  height: number;
+  setback: number;
+};
 
-  if (index % RUSH_TUNING.ribs.strobeEvery === 0) {
-    const ring = new Mesh(
-      new TorusGeometry(radius * 0.72, 0.025, 6, 40),
-      createAdditiveBasicMaterial({ color: hdr(AMBER, 0.9), side: DoubleSide }),
-    );
-    ring.scale.y = height / (radius * 2);
-    group.add(ring);
+type TrafficDirection = 'same' | 'oncoming';
+
+const roadY = () => -RUSH_TUNING.street.cameraHeightOverRoadUnits;
+const lerpRange = (range: readonly [number, number], t: number) => range[0] + (range[1] - range[0]) * t;
+const sideForIndex = (index: number): -1 | 1 => (index % 2 === 0 ? -1 : 1);
+
+function createStreetSurface() {
+  const group = new Group();
+  group.add(createRoadStrip(-RUSH_TUNING.street.roadWidthUnits * 0.5, RUSH_TUNING.street.roadWidthUnits * 0.5, roadY(), matte(0x07080a)));
+  for (const side of [-1, 1] as const) {
+    const roadEdge = side * RUSH_TUNING.street.roadWidthUnits * 0.5;
+    const sidewalkOuter = side * (RUSH_TUNING.street.roadWidthUnits * 0.5 + RUSH_TUNING.street.sidewalkWidthUnits);
+    group.add(createRoadStrip(roadEdge, sidewalkOuter, roadY() + RUSH_TUNING.street.curbHeightUnits, matte(0x101217)));
+    group.add(createCurbLine(roadEdge, roadY() + RUSH_TUNING.street.curbHeightUnits));
   }
+  group.add(createLaneDashes());
   return group;
 }
 
-function createDashRails() {
+function createRoadStrip(leftOffset: number, rightOffset: number, y: number, material: MeshLambertMaterial) {
+  const geometry = new BufferGeometry();
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const railLength = rail.getLength();
+  const samples = Math.ceil((railLength / RUSH_TUNING.street.laneDashSpacingUnits) * RUSH_TUNING.street.samplesPerDash);
+  for (let i = 0; i <= samples; i += 1) {
+    const u = i / samples;
+    const left = streetPoint(u, leftOffset, y);
+    const right = streetPoint(u, rightOffset, y);
+    positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+    if (i < samples) {
+      const a = i * 2;
+      indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    }
+  }
+  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const mesh = new Mesh(geometry, material);
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
+function createCurbLine(offset: number, y: number) {
   const geometry = new BufferGeometry();
   const positions: number[] = [];
   const colors: number[] = [];
   const railLength = rail.getLength();
-  const count = Math.floor(railLength / RUSH_TUNING.dashRails.spacingUnits);
+  const count = Math.floor(railLength / RUSH_TUNING.street.laneDashSpacingUnits);
   for (let i = 0; i < count; i += 1) {
-    const u0 = (i * RUSH_TUNING.dashRails.spacingUnits) / railLength;
-    const u1 = Math.min(1, (i * RUSH_TUNING.dashRails.spacingUnits + RUSH_TUNING.dashRails.lengthUnits) / railLength);
-    for (const side of [-1, 1]) {
-      const start = railDashPoint(u0, side);
-      const end = railDashPoint(u1, side);
-      positions.push(start.x, start.y, start.z, end.x, end.y, end.z);
-      const color = side < 0 ? CYAN : AMBER;
-      const intensity = i % RUSH_TUNING.ribs.strobeEvery === 0 ? 0.85 : 0.26;
-      colors.push(color.r * intensity, color.g * intensity, color.b * intensity, color.r * intensity, color.g * intensity, color.b * intensity);
-    }
+    const u0 = (i * RUSH_TUNING.street.laneDashSpacingUnits) / railLength;
+    const u1 = Math.min(1, (i * RUSH_TUNING.street.laneDashSpacingUnits + RUSH_TUNING.street.laneDashLengthUnits) / railLength);
+    const a = streetPoint(u0, offset, y);
+    const b = streetPoint(u1, offset, y);
+    positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+    colors.push(AMBER.r * 0.25, AMBER.g * 0.25, AMBER.b * 0.25, AMBER.r * 0.25, AMBER.g * 0.25, AMBER.b * 0.25);
   }
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
@@ -198,11 +222,241 @@ function createDashRails() {
   return lines;
 }
 
-function railDashPoint(u: number, side: number) {
+function createLaneDashes() {
+  const geometry = new BufferGeometry();
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const railLength = rail.getLength();
+  const count = Math.floor(railLength / RUSH_TUNING.street.laneDashSpacingUnits);
+  for (let i = 0; i < count; i += 1) {
+    const u0 = (i * RUSH_TUNING.street.laneDashSpacingUnits) / railLength;
+    const u1 = Math.min(1, (i * RUSH_TUNING.street.laneDashSpacingUnits + RUSH_TUNING.street.laneDashLengthUnits) / railLength);
+    for (const laneOffset of RUSH_TUNING.street.laneDashOffsetsUnits) {
+      const base = positions.length / 3;
+      const halfWidth = RUSH_TUNING.street.laneDashWidthUnits * 0.5;
+      const p0 = streetPoint(u0, laneOffset - halfWidth, roadY() + RUSH_TUNING.street.curbHeightUnits * 0.08);
+      const p1 = streetPoint(u0, laneOffset + halfWidth, roadY() + RUSH_TUNING.street.curbHeightUnits * 0.08);
+      const p2 = streetPoint(u1, laneOffset - halfWidth, roadY() + RUSH_TUNING.street.curbHeightUnits * 0.08);
+      const p3 = streetPoint(u1, laneOffset + halfWidth, roadY() + RUSH_TUNING.street.curbHeightUnits * 0.08);
+      positions.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
+      indices.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
+    }
+  }
+  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const mesh = new Mesh(geometry, new MeshBasicMaterial({ color: hdr(CYAN, 0.38), side: DoubleSide }));
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
+function streetPoint(u: number, rightOffset: number, yOffset: number) {
   const frame = sampleRailFrame(rail, u);
   return frame.position.clone()
-    .addScaledVector(frame.right, side * RUSH_TUNING.dashRails.sideOffsetUnits)
-    .addScaledVector(frame.up, RUSH_TUNING.dashRails.verticalOffsetUnits);
+    .addScaledVector(frame.right, rightOffset)
+    .addScaledVector(frame.up, yOffset);
+}
+
+function createBuildingField() {
+  const railLength = rail.getLength();
+  const slots = Math.ceil(railLength / RUSH_TUNING.buildings.blockSpacingUnits) * 2;
+  return scatterAlongRail(rail, {
+    count: slots,
+    seed: RUSH_TUNING.buildings.seed,
+    window: {
+      behind: RUSH_TUNING.buildings.blockSpacingUnits * RUSH_TUNING.buildings.behindCount,
+      ahead: RUSH_TUNING.buildings.blockSpacingUnits * RUSH_TUNING.buildings.aheadCount,
+    },
+    place(index) {
+      const spec = buildingSpec(index);
+      const slot = Math.floor(index / 2);
+      return {
+        u: (slot * RUSH_TUNING.buildings.blockSpacingUnits) / railLength,
+        offset: new Vector3(
+          spec.side * (RUSH_TUNING.buildings.faceOffsetUnits + spec.setback + spec.width * 0.5),
+          roadY() + spec.height * 0.5,
+          0,
+        ),
+      };
+    },
+    make(index) {
+      const spec = buildingSpec(index);
+      return spec.gap ? new Group() : createBuilding(spec, index);
+    },
+  });
+}
+
+function buildingSpec(index: number): BuildingSpec {
+  const slot = Math.floor(index / 2);
+  const side = sideForIndex(index);
+  return {
+    side,
+    gap: slot % RUSH_TUNING.buildings.gapEvery === RUSH_TUNING.buildings.gapEvery - 1,
+    width: lerpRange(RUSH_TUNING.buildings.widthRangeUnits, pseudo(index + RUSH_TUNING.buildings.seed, 1)),
+    depth: lerpRange(RUSH_TUNING.buildings.depthRangeUnits, pseudo(index + RUSH_TUNING.buildings.seed, 2)),
+    height: lerpRange(RUSH_TUNING.buildings.heightRangeUnits, pseudo(index + RUSH_TUNING.buildings.seed, 3)),
+    setback: pseudo(index + RUSH_TUNING.buildings.seed, 4) * RUSH_TUNING.buildings.setbackRangeUnits,
+  };
+}
+
+function createBuilding(spec: BuildingSpec, index: number) {
+  const group = new Group();
+  const tower = new Mesh(new BoxGeometry(spec.width, spec.height, spec.depth), matte(0x1c222c));
+  group.add(tower);
+
+  const nearFaceX = -spec.side * (spec.width * 0.5 + 0.015);
+  const columns = Math.max(1, Math.floor(spec.depth / RUSH_TUNING.buildings.windowColumnSpacingUnits));
+  const rows = Math.max(1, Math.floor(spec.height / RUSH_TUNING.buildings.windowRowSpacingUnits));
+  const windowGeometry = new PlaneGeometry(RUSH_TUNING.buildings.windowSizeUnits[0], RUSH_TUNING.buildings.windowSizeUnits[1]);
+  const [windowWidth, windowHeight] = RUSH_TUNING.buildings.windowSizeUnits;
+  for (let row = 1; row < rows; row += 1) {
+    for (let col = 0; col < columns; col += 1) {
+      const lit = pseudo(index * 101 + row * 17 + col * 31 + RUSH_TUNING.buildings.seed, 5) < RUSH_TUNING.buildings.windowLightDensity;
+      if (!lit) continue;
+      const window = new Mesh(windowGeometry, createAdditiveBasicMaterial({ color: hdr(pseudo(index + row + col, 6) > 0.82 ? AMBER : CYAN, 0.8), side: DoubleSide }));
+      window.rotation.y = spec.side > 0 ? -Math.PI / 2 : Math.PI / 2;
+      window.position.set(
+        nearFaceX,
+        -spec.height * 0.5 + row * RUSH_TUNING.buildings.windowRowSpacingUnits,
+        -spec.depth * 0.5 + col * RUSH_TUNING.buildings.windowColumnSpacingUnits + windowWidth,
+      );
+      window.scale.y = 1 + pseudo(index + row * col, 7) * windowHeight;
+      group.add(window);
+    }
+  }
+  return group;
+}
+
+function createTrafficField(direction: TrafficDirection) {
+  const railLength = rail.getLength();
+  const count = direction === 'same' ? RUSH_TUNING.traffic.sameDirectionCount : RUSH_TUNING.traffic.oncomingCount;
+  const lanes = direction === 'same' ? RUSH_TUNING.traffic.sameDirectionLaneOffsetsUnits : RUSH_TUNING.traffic.oncomingLaneOffsetsUnits;
+  const speedRange = direction === 'same' ? RUSH_TUNING.traffic.sameDirectionSpeedRangeUnitsPerSecond : RUSH_TUNING.traffic.oncomingSpeedRangeUnitsPerSecond;
+  return scatterAlongRail(rail, {
+    count,
+    seed: RUSH_TUNING.traffic.seed + (direction === 'same' ? 1 : 2),
+    window: { behind: RUSH_TUNING.traffic.recycleBehindUnits, ahead: RUSH_TUNING.traffic.recycleAheadUnits },
+    place(index) {
+      const lane = lanes[index % lanes.length] ?? 0;
+      return {
+        u: ((index + pseudo(index + RUSH_TUNING.traffic.seed, direction === 'same' ? 8 : 9)) / count),
+        offset: new Vector3(lane, roadY() + RUSH_TUNING.traffic.carHeightUnits * 0.5, 0),
+      };
+    },
+    make(index) {
+      const speed = lerpRange(speedRange, pseudo(index + RUSH_TUNING.traffic.seed, direction === 'same' ? 10 : 11));
+      const car = createCar(direction);
+      car.userData.speedUnitsPerSecond = speed;
+      car.userData.directionSign = direction === 'same' ? 1 : -1;
+      return car;
+    },
+    onUpdate(item, dt) {
+      const speed = Number(item.object.userData.speedUnitsPerSecond ?? 0);
+      const sign = Number(item.object.userData.directionSign ?? 1);
+      item.u += (speed * sign * dt) / railLength;
+    },
+  });
+}
+
+function createCar(direction: TrafficDirection) {
+  const group = new Group();
+  const body = new Mesh(new BoxGeometry(RUSH_TUNING.traffic.carWidthUnits, RUSH_TUNING.traffic.carHeightUnits * 0.62, RUSH_TUNING.traffic.carLengthUnits), matte(0x1a2028));
+  body.position.y = -RUSH_TUNING.traffic.carHeightUnits * 0.12;
+  const cabin = new Mesh(new BoxGeometry(RUSH_TUNING.traffic.carWidthUnits * 0.7, RUSH_TUNING.traffic.carHeightUnits * 0.45, RUSH_TUNING.traffic.carLengthUnits * 0.45), matte(0x2a3140));
+  cabin.position.y = RUSH_TUNING.traffic.carHeightUnits * 0.28;
+  group.add(body, cabin);
+
+  const lightMaterial = createAdditiveBasicMaterial({ color: direction === 'same' ? hdr(AMBER, 2.0) : hdr(CYAN, 2.4), side: DoubleSide });
+  const lightGeometry = new PlaneGeometry(RUSH_TUNING.traffic.lightSizeUnits[0], RUSH_TUNING.traffic.lightSizeUnits[1]);
+  for (const side of [-1, 1] as const) {
+    const light = new Mesh(lightGeometry, lightMaterial);
+    light.position.set(side * RUSH_TUNING.traffic.lightPairSpacingUnits * 0.5, RUSH_TUNING.traffic.lightHeightUnits - RUSH_TUNING.traffic.carHeightUnits * 0.5, -RUSH_TUNING.traffic.carLengthUnits * 0.5 - 0.02);
+    group.add(light);
+  }
+  return group;
+}
+
+function createStreetlightField() {
+  const railLength = rail.getLength();
+  const count = Math.ceil(railLength / RUSH_TUNING.streetFurniture.streetlightSpacingUnits) * 2;
+  return scatterAlongRail(rail, {
+    count,
+    seed: RUSH_TUNING.streetFurniture.seed,
+    window: {
+      behind: RUSH_TUNING.streetFurniture.streetlightSpacingUnits * RUSH_TUNING.streetFurniture.behindCount,
+      ahead: RUSH_TUNING.streetFurniture.streetlightSpacingUnits * RUSH_TUNING.streetFurniture.aheadCount,
+    },
+    place(index) {
+      const slot = Math.floor(index / 2);
+      const side = sideForIndex(index);
+      return {
+        u: (slot * RUSH_TUNING.streetFurniture.streetlightSpacingUnits) / railLength,
+        offset: new Vector3(side * RUSH_TUNING.streetFurniture.poleOffsetUnits, 0, 0),
+      };
+    },
+    make(index) {
+      return createStreetlight(sideForIndex(index));
+    },
+  });
+}
+
+function createStreetlight(side: -1 | 1) {
+  const group = new Group();
+  const pole = new Mesh(
+    new BoxGeometry(RUSH_TUNING.streetFurniture.poleRadiusUnits, RUSH_TUNING.streetFurniture.poleHeightUnits, RUSH_TUNING.streetFurniture.poleRadiusUnits),
+    matte(0x14120f),
+  );
+  pole.position.y = roadY() + RUSH_TUNING.streetFurniture.poleHeightUnits * 0.5;
+  const [headWidth, headHeight, headDepth] = RUSH_TUNING.streetFurniture.lampHeadSizeUnits;
+  const head = new Mesh(new BoxGeometry(headWidth, headHeight, headDepth), createAdditiveBasicMaterial({ color: hdr(AMBER, 1.15) }));
+  head.position.set(-side * headWidth * 0.45, roadY() + RUSH_TUNING.streetFurniture.poleHeightUnits, 0);
+  group.add(pole, head);
+  return group;
+}
+
+function createGantryField() {
+  const railLength = rail.getLength();
+  const count = Math.ceil(railLength / RUSH_TUNING.streetFurniture.gantrySpacingUnits);
+  return scatterAlongRail(rail, {
+    count,
+    seed: RUSH_TUNING.streetFurniture.seed + 17,
+    window: {
+      behind: RUSH_TUNING.streetFurniture.gantrySpacingUnits * RUSH_TUNING.streetFurniture.behindCount,
+      ahead: RUSH_TUNING.streetFurniture.gantrySpacingUnits * RUSH_TUNING.streetFurniture.aheadCount,
+    },
+    place(index) {
+      return {
+        u: (index * RUSH_TUNING.streetFurniture.gantrySpacingUnits) / railLength,
+        offset: new Vector3(0, roadY() + RUSH_TUNING.streetFurniture.gantryHeightUnits, 0),
+      };
+    },
+    make(index) {
+      return createGantry(index);
+    },
+    onUpdate(item) {
+      const hot = (item.index % RUSH_TUNING.streetFurniture.gantryStrobeEvery === 0 ? beatEnergy : 0) * 1.8;
+      tintObject(item.object, item.index % RUSH_TUNING.streetFurniture.gantryStrobeEvery === 0 ? hdr(AMBER, 0.55 + hot) : hdr(CYAN, 0.18));
+    },
+  });
+}
+
+function createGantry(index: number) {
+  const group = new Group();
+  const span = RUSH_TUNING.street.roadWidthUnits + RUSH_TUNING.street.sidewalkWidthUnits * 2;
+  const thickness = RUSH_TUNING.streetFurniture.gantryBarThicknessUnits;
+  const bar = new Mesh(new BoxGeometry(span, thickness, thickness), matte(0x111318));
+  const material = createAdditiveBasicMaterial({ color: hdr(index % RUSH_TUNING.streetFurniture.gantryStrobeEvery === 0 ? AMBER : CYAN, 0.65), side: DoubleSide });
+  for (const x of [-span * 0.28, 0, span * 0.28]) {
+    const signal = new Mesh(new PlaneGeometry(thickness * 3.2, thickness * 1.7), material);
+    signal.position.set(x, -thickness * 1.15, -thickness);
+    group.add(signal);
+  }
+  group.add(bar);
+  return group;
+}
+
+function matte(color: number) {
+  return new MeshLambertMaterial({ color, flatShading: true });
 }
 
 class SpeedStreakField {
@@ -481,8 +735,13 @@ function pulse(scene: Scene, position: Vector3, color: Color, scale: number, lif
 
 export function updateVisuals(dt: number, context: VisualContext) {
   elapsedNow = context.elapsed;
-  beatEnergy = Math.max(0, beatEnergy - dt / RUSH_TUNING.ribs.strobeHoldSeconds);
-  ribField?.update(context.runProgress ?? 0, dt);
+  beatEnergy = Math.max(0, beatEnergy - dt / RUSH_TUNING.streetFurniture.strobeHoldSeconds);
+  const railU = context.runProgress ?? 0;
+  buildingField?.update(railU, dt);
+  sameTrafficField?.update(railU, dt);
+  oncomingTrafficField?.update(railU, dt);
+  streetlightField?.update(railU, dt);
+  gantryField?.update(railU, dt);
   streakField?.update(context);
 
   const speedExcess = Math.max(0, context.speedFactor - 1);
