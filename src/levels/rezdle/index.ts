@@ -33,11 +33,27 @@ import { BPM, createRezdleGameplay, createRezdleRail } from './gameplay';
 import { loadWords } from './words';
 import { BONE, BRASS, hdr, INK_BLACK, PLATE, SMOKE, VERMILLION } from './palette';
 
+const BAR = (60 / BPM) * 4;
+
 export const rezdleLevel: LevelDefinition = {
   id: 'rezdle',
   title: 'Rezdle',
   description: 'Set words from loose type drifting off a midnight press.',
   bpm: BPM,
+  markers: {
+    bar0: 0,
+    bar4: 4 * BAR,
+    bar8: 8 * BAR,
+    bar12: 12 * BAR,
+    bar16: 16 * BAR,
+  },
+  sections: [
+    { name: 'carriage-0', time: 0 },
+    { name: 'carriage-4', time: 4 * BAR },
+    { name: 'carriage-8', time: 8 * BAR },
+    { name: 'carriage-12', time: 12 * BAR },
+    { name: 'carriage-16', time: 16 * BAR },
+  ],
   post: {
     clearColor: 0x070502,
     bloom: { strength: 0.7, threshold: 0.3, radius: 0.5 },

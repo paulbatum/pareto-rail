@@ -3,6 +3,7 @@ import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
 import { CRYSTAL_DEBUG_TARGETS, normalizeCrystalDebugTarget } from './debug';
 import { CRYSTAL_BPM, createCrystalGameplay } from './gameplay';
+import { CRYSTAL_MARKERS, CRYSTAL_RUN_SECTIONS, CRYSTAL_TIME } from './timing';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -20,6 +21,11 @@ export const crystalCorridorLevel: LevelDefinition = {
   title: 'Crystal Corridor',
   description: 'The neon crystal rail run — and now it shoots back.',
   bpm: CRYSTAL_BPM,
+  markers: { ...CRYSTAL_MARKERS, warden: CRYSTAL_MARKERS.bossEntrance },
+  sections: CRYSTAL_RUN_SECTIONS.map((section) => ({
+    name: section.name,
+    time: CRYSTAL_TIME.bar(section.fromBar),
+  })),
   debugSelector: { queryParam: 'debugEnemy', label: 'Enemy', options: CRYSTAL_DEBUG_TARGETS },
   createAudio,
   createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip, debugValue }) {

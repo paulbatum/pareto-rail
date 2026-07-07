@@ -21,3 +21,4 @@ A 45-second run with a 3-point hull, node, drifter, orbiter, and lancer waves, i
 
 ## Status & notes
 Flagship landing level and the most polished level through human playtests.
+Inspection captures: `bossEntrance` (warden entrance, bar 16:2.36), `drive` (densest act-2, bar 8).

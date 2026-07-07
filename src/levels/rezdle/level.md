@@ -20,3 +20,4 @@ A 60-second run where vowels, consonants, and rare-letter bonuses must be releas
 
 ## Status & notes
 Word-game-shaped and legitimately deviates from the standard spine/leaf decomposition.
+Inspection captures: `carriage-8` (word combos, bar 8), `carriage-16` (midnight finale, bar 16).

@@ -59,6 +59,10 @@ async function main() {
       ],
     });
 
+    const metadata = await readLevelMetadata(browser, baseUrl, options);
+    options.metadata = metadata;
+    resolveMusicalTimes(options);
+
     if (options.sheet) {
       await captureSheet(browser, baseUrl, outDir, options);
       return;
@@ -73,7 +77,9 @@ async function main() {
 
 async function captureStill(browser, baseUrl, outDir, options, time) {
   const result = await captureWithFallbacks(browser, baseUrl, options, time);
-  const outputPath = path.join(outDir, `${safeName(options.level)}-${formatTime(time)}-${result.fidelity}${projectileSuffix(options)}${mortalitySuffix(options)}.png`);
+  const label = options.musicalLabels[time];
+  const timeLabel = label ? `${formatTime(time)}-${label}` : formatTime(time);
+  const outputPath = path.join(outDir, `${safeName(options.level)}-${timeLabel}-${result.fidelity}${projectileSuffix(options)}${mortalitySuffix(options)}.png`);
   await fs.writeFile(outputPath, addSnapshotSeedTextChunk(decodePngDataUrl(result.dataUrl), result.seed));
   logCapture(outputPath, result);
 }
@@ -85,7 +91,8 @@ async function captureSheet(browser, baseUrl, outDir, options) {
   const captures = [];
   for (const time of times) {
     const result = await captureWithFallbacks(browser, baseUrl, options, time);
-    captures.push({ ...result, time });
+    const label = options.musicalLabels[time] || '';
+    captures.push({ ...result, time, label });
     logCapture(null, result, time);
   }
 
@@ -93,20 +100,21 @@ async function captureSheet(browser, baseUrl, outDir, options) {
   const fidelityLabel = uniqueValues(captures.map((capture) => capture.fidelity)).length === 1 ? captures[0].fidelity : 'mixed';
   const firstTime = captures[0].time;
   const lastTime = captures[captures.length - 1].time;
+  const sheetType = options.sections ? 'sections-' : '';
   const outputPath = path.join(
     outDir,
-    `${safeName(options.level)}-thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}${mortalitySuffix(options)}.png`,
+    `${safeName(options.level)}-${sheetType}thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}${mortalitySuffix(options)}.png`,
   );
   await fs.writeFile(outputPath, addSnapshotSeedTextChunk(decodePngDataUrl(dataUrl), captures[0].seed));
   console.log(`${path.relative(process.cwd(), outputPath)} thumbnails=${captures.length} fidelity=${fidelityLabel}`);
 }
 
 async function makeEvenTimes(browser, baseUrl, options) {
-  const duration = await readLevelDuration(browser, baseUrl, options);
+  const duration = options.metadata.duration;
   return Array.from({ length: options.thumbnailCount }, (_, index) => duration * ((index + 0.5) / options.thumbnailCount));
 }
 
-async function readLevelDuration(browser, baseUrl, options) {
+async function readLevelMetadata(browser, baseUrl, options) {
   const page = await browser.newPage();
   page.on('console', (message) => {
     if (message.type() === 'error') console.error(`[page] ${message.text()}`);
@@ -120,9 +128,9 @@ async function readLevelDuration(browser, baseUrl, options) {
     await page.evaluate(() => window.__gameplaySnapshot.ready);
     const metadata = await page.evaluate(() => window.__gameplaySnapshot.metadata());
     if (!metadata || !Number.isFinite(metadata.duration) || metadata.duration <= 0) {
-      throw new Error(`Could not read run duration for level ${options.level}`);
+      throw new Error(`Could not read level metadata for ${options.level}`);
     }
-    return metadata.duration;
+    return metadata;
   } finally {
     await page.close();
   }
@@ -218,13 +226,14 @@ async function composeSheet(browser, captures, options) {
           context.fillStyle = 'rgba(2, 4, 10, 0.82)';
           context.fillRect(x, y + thumbHeight, thumbWidth, labelHeight);
           context.fillStyle = '#d8f6ff';
-          context.fillText(`${capture.time.toFixed(1)}s · ${capture.fidelity} · ${capture.state}`, x + 8, y + thumbHeight + labelHeight / 2);
+          const labelPart = capture.label ? ` (${capture.label})` : '';
+          context.fillText(`${capture.time.toFixed(1)}s${labelPart} · ${capture.fidelity} · ${capture.state}`, x + 8, y + thumbHeight + labelHeight / 2);
         });
 
         return canvas.toDataURL('image/png');
       },
       {
-        captures: captures.map(({ dataUrl, time, fidelity, state }) => ({ dataUrl, time, fidelity, state })),
+        captures: captures.map(({ dataUrl, time, fidelity, state, label }) => ({ dataUrl, time, fidelity, state, label })),
         thumbWidth: options.thumbWidth,
         sourceWidth: options.width,
         sourceHeight: options.height,
@@ -256,6 +265,8 @@ function parseArgs(argv) {
     thumbnailCount: undefined,
     thumbWidth: DEFAULT_THUMB_WIDTH,
     columns: undefined,
+    atsRaw: [],
+    sections: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -284,6 +295,12 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (key === 'sections') {
+      parsed.sections = true;
+      parsed.sheet = true;
+      continue;
+    }
+
     if (key === 'projectiles') {
       const next = argv[i + 1];
       if (next !== undefined && !next.startsWith('--')) {
@@ -308,6 +325,12 @@ function parseArgs(argv) {
         break;
       case 'times':
         parsed.times.push(...readTimes(value));
+        break;
+      case 'at':
+        parsed.atsRaw.push(value);
+        break;
+      case 'ats':
+        parsed.atsRaw.push(...value.split(',').map((part) => part.trim()).filter((part) => part.length > 0));
         break;
       case 'out':
         parsed.out = value;
@@ -351,12 +374,13 @@ function parseArgs(argv) {
   }
 
   if (!parsed.level) throw new Error('Missing required option: --level <id>');
+  const hasTimeInput = parsed.times.length > 0 || parsed.atsRaw.length > 0 || parsed.sections || parsed.thumbnailCount !== undefined;
   if (parsed.sheet) {
-    if (parsed.times.length === 0 && parsed.thumbnailCount === undefined) {
-      throw new Error('Sheet mode requires --thumbnails <count> or --times <seconds,...>');
+    if (!hasTimeInput) {
+      throw new Error('Sheet mode requires --thumbnails <count>, --times <seconds,...>, --at <bar:beat>, --ats <list>, or --sections');
     }
-  } else if (parsed.times.length === 0) {
-    throw new Error('Missing required option: --time <seconds>, --times <seconds,...>, or --thumbnails <count>');
+  } else if (!hasTimeInput) {
+    throw new Error('Missing required option: --time <seconds>, --times <seconds,...>, --at <bar:beat>, --ats <list>, --sections, or --thumbnails <count>');
   }
   return parsed;
 }
@@ -422,7 +446,8 @@ function mortalitySuffix(options) {
 }
 
 function formatTime(seconds) {
-  return `${String(seconds).replace(/\./g, 'p')}s`;
+  const rounded = Math.round(seconds * 100) / 100;
+  return `${String(rounded).replace(/\./g, 'p')}s`;
 }
 
 function safeName(value) {
@@ -488,4 +513,83 @@ function findChromeExecutable() {
     if (existsSync(candidate)) return candidate;
   }
   return undefined;
+}
+
+function resolveMusicalTimes(options) {
+  const metadata = options.metadata;
+  const bpm = metadata.bpm;
+  const duration = metadata.duration;
+  const markers = metadata.markers || {};
+  const sections = metadata.sections || [];
+
+  options.musicalLabels = {};
+
+  const beatsPerBar = 4;
+  const beatSeconds = 60 / bpm;
+
+  for (const rawVal of options.atsRaw) {
+    let resolvedTime = null;
+    let label = rawVal;
+
+    const markerKey = Object.keys(markers).find((k) => k.toLowerCase() === rawVal.toLowerCase());
+    if (markerKey !== undefined) {
+      resolvedTime = markers[markerKey];
+      label = markerKey;
+    } else {
+      const parts = rawVal.split(':');
+      const barVal = Number(parts[0]);
+      if (!Number.isNaN(barVal) && Number.isFinite(barVal)) {
+        const beatVal = parts.length > 1 ? Number(parts[1]) : 0;
+        if (!Number.isNaN(beatVal) && Number.isFinite(beatVal)) {
+          resolvedTime = (barVal * beatsPerBar + beatVal) * beatSeconds;
+          label = parts.length > 1 ? `bar-${barVal}-beat-${beatVal}` : `bar-${barVal}`;
+        }
+      }
+    }
+
+    if (resolvedTime === null) {
+      throw new Error(`Could not resolve musical position '${rawVal}' for level '${options.level}'. It must be a valid bar[:beat] or marker name.`);
+    }
+
+    if (resolvedTime < 0 || resolvedTime > duration) {
+      throw new Error(`Resolved musical position '${rawVal}' (${resolvedTime.toFixed(2)}s) is out of bounds (level duration is ${duration.toFixed(2)}s)`);
+    }
+
+    options.times.push(resolvedTime);
+    options.musicalLabels[resolvedTime] = label;
+  }
+
+  if (options.sections) {
+    for (const section of sections) {
+      const resolvedTime = section.time;
+      if (resolvedTime >= 0 && resolvedTime <= duration) {
+        options.times.push(resolvedTime);
+        options.musicalLabels[resolvedTime] = `section-${section.name}`;
+      }
+    }
+  }
+
+  const seen = new Set();
+  const sortedUnique = [];
+  const newMusicalLabels = {};
+
+  for (const t of options.times) {
+    const rounded = Math.round(t * 10000) / 10000;
+    if (!seen.has(rounded)) {
+      seen.add(rounded);
+      sortedUnique.push(t);
+      if (options.musicalLabels[t]) {
+        newMusicalLabels[t] = options.musicalLabels[t];
+      }
+    } else {
+      const existingTime = sortedUnique.find((x) => Math.abs(x - t) < 0.0001);
+      if (existingTime !== undefined && options.musicalLabels[t]) {
+        newMusicalLabels[existingTime] = options.musicalLabels[t];
+      }
+    }
+  }
+
+  sortedUnique.sort((a, b) => a - b);
+  options.times = sortedUnique;
+  options.musicalLabels = newMusicalLabels;
 }

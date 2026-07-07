@@ -25,6 +25,7 @@ A 45-second run with a 3-point hull, node, drifter, orbiter, and lancer waves, i
 
 ## Status & notes
 Flagship landing level and the most polished level through human playtests.
+Inspection captures: `bossEntrance` (warden entrance, bar 16:2.36), `drive` (densest act-2, bar 8).
 
 ---
 
@@ -77,6 +78,7 @@ Variable rail speed, 4-point hull, cinders, motes, scorchers, pyres, flares, hos
 
 ## Status & notes
 Current quality bar for one-shot builds.
+Inspection captures: `gate` (drop 1 gate entrance, bar 16), `corona` (drop 2 corona plunge, bar 40), `bossEntrance` (Suneater reveal, bar 60).
 
 ---
 
@@ -101,6 +103,7 @@ A 30-second run with three enemy kinds, fan-built waves, spiral, zipper, and blo
 
 ## Status & notes
 Minimal early proof-out, not a showcase.
+Inspection captures: `bloom` (bloom pattern, bar 6), `finale` (final gate wave, bar 10).
 
 ---
 
@@ -126,3 +129,4 @@ A 60-second run where vowels, consonants, and rare-letter bonuses must be releas
 
 ## Status & notes
 Word-game-shaped and legitimately deviates from the standard spine/leaf decomposition.
+Inspection captures: `carriage-8` (word combos, bar 8), `carriage-16` (midnight finale, bar 16).

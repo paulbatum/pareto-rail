@@ -19,3 +19,4 @@ A 30-second run with three enemy kinds, fan-built waves, spiral, zipper, and blo
 
 ## Status & notes
 Minimal early proof-out, not a showcase.
+Inspection captures: `bloom` (bloom pattern, bar 6), `finale` (final gate wave, bar 10).

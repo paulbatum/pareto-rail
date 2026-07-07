@@ -21,3 +21,4 @@ Variable rail speed, 4-point hull, cinders, motes, scorchers, pyres, flares, hos
 
 ## Status & notes
 Current quality bar for one-shot builds.
+Inspection captures: `gate` (drop 1 gate entrance, bar 16), `corona` (drop 2 corona plunge, bar 40), `bossEntrance` (Suneater reveal, bar 60).

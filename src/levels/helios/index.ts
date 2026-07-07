@@ -3,6 +3,7 @@ import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
 import { HELIOS_DEBUG_TARGETS, normalizeHeliosDebugTarget } from './debug';
 import { BOSS_TIME, CORONA_TIME, createHeliosGameplay, GATE_TIME, HELIOS_BPM, REVEAL_TIME } from './gameplay';
+import { HELIOS_MARKERS, HELIOS_RUN_SECTIONS, HELIOS_TIME } from './timing';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -22,6 +23,11 @@ export const heliosLevel: LevelDefinition = {
   title: 'Helios',
   description: 'Dive into a dying star and kill the thing that is eating it.',
   bpm: HELIOS_BPM,
+  markers: HELIOS_MARKERS,
+  sections: HELIOS_RUN_SECTIONS.map((section) => ({
+    name: section.name,
+    time: HELIOS_TIME.bar(section.fromBar),
+  })),
   debugSelector: { queryParam: 'debugEnemy', label: 'Enemy', options: HELIOS_DEBUG_TARGETS },
   post: {
     clearColor: 0x070204,

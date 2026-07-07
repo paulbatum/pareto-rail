@@ -48,7 +48,24 @@ Useful options:
 --out snapshots/gameplay
 ```
 
-Single-frame outputs are named with the level, timestamp, fidelity, and any non-default modes such as `-projectiles` or `-mortal`.
+### Musical addressing
+
+Inspect the level at specific musical times instead of raw seconds:
+
+```sh
+npm run snapshot:gameplay -- --level crystal --at 8       # bar 8 (beat 0)
+npm run snapshot:gameplay -- --level crystal --at 8:2     # bar 8, beat 2
+npm run snapshot:gameplay -- --level crystal --at warden  # named marker (e.g. boss entrance)
+npm run snapshot:gameplay -- --level crystal --at 4 --at 8 # repeatable --at flag
+npm run snapshot:gameplay -- --level crystal --ats 4,8:2,warden # comma-separated list
+npm run snapshot:gameplay -- --level crystal --sections   # contact sheet at each section boundary
+```
+
+* `--at <bar[:beat] | marker>` — converts a musical position to seconds using the level's BPM (assuming a default 4 beats/bar) or looks up a named marker. Can be repeated.
+* `--ats <list>` — a comma-separated list of musical positions or named markers.
+* `--sections` — captures a thumbnail sheet at each arrangement section boundary, sourced from per-level marker and section metadata.
+
+Single-frame outputs are named with the level, timestamp, resolved musical position (if applicable), fidelity, and any non-default modes.
 
 ## Gameplay thumbnail sheets
 

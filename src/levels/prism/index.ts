@@ -2,6 +2,7 @@ import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
 import { PRISM_BPM, prismGameplay } from './gameplay';
+import { PRISM_MARKERS, PRISM_ARRANGEMENT_SECTIONS, PRISM_TIME } from './timing';
 import {
   createEnemyMesh,
   createEnvironment,
@@ -19,6 +20,11 @@ export const prismBloomLevel: LevelDefinition = {
   title: 'Prism Bloom',
   description: 'A separate glassy level with its own rail, targets, visual language, and soundtrack.',
   bpm: PRISM_BPM,
+  markers: PRISM_MARKERS,
+  sections: PRISM_ARRANGEMENT_SECTIONS.map((section) => ({
+    name: section.name,
+    time: PRISM_TIME.bar(section.fromBar),
+  })),
   createAudio,
   createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
     createEnvironment(scene);

@@ -76,6 +76,8 @@ export type LevelDefinition = {
   aliases?: string[];
   debugSelector?: LevelDebugSelector;
   post?: LevelPostConfig;
+  markers?: Record<string, number>;
+  sections?: Array<{ name: string; time: number }>;
   createAudio(bus: EventBus): LevelAudio;
   createRuntime(context: LevelContext): LevelRuntime;
 };

@@ -14,13 +14,21 @@ import { createEventBus } from '../events';
 import { createPost } from '../engine/post';
 import type { Hud } from '../ui/hud';
 import { getLevelById } from '../levels';
+import type { LevelDefinition } from '../engine/types';
 
 type Fidelity = 'full' | 'postless' | 'flat';
 
 type GameplaySnapshotApi = {
   ready: Promise<void>;
   capture(): Promise<{ dataUrl: string; luminance: number; fidelity: Fidelity; state: string; seed: number | null }>;
-  metadata(): { duration: number | null; fidelity: Fidelity; state: string };
+  metadata(): {
+    duration: number | null;
+    fidelity: Fidelity;
+    state: string;
+    bpm: number | null;
+    markers: Record<string, number>;
+    sections: Array<{ name: string; time: number }>;
+  };
 };
 
 type SnapshotRenderer = WebGPURenderer & {
@@ -82,6 +90,7 @@ let scene: Scene | null = null;
 let camera: PerspectiveCamera | null = null;
 let runtimeState = 'unknown';
 let runDuration: number | null = null;
+let selectedLevel: LevelDefinition | null = null;
 
 window.__raildDebug = {
   ...window.__raildDebug,
@@ -105,12 +114,19 @@ window.__gameplaySnapshot = {
     };
   },
   metadata() {
-    return { duration: runDuration, fidelity, state: runtimeState };
+    return {
+      duration: runDuration,
+      fidelity,
+      state: runtimeState,
+      bpm: selectedLevel ? selectedLevel.bpm : null,
+      markers: selectedLevel ? (selectedLevel.markers ?? {}) : {},
+      sections: selectedLevel ? (selectedLevel.sections ?? []) : [],
+    };
   },
 };
 
 async function bootstrap() {
-  const selectedLevel = await getLevelById(params.get('level'));
+  selectedLevel = await getLevelById(params.get('level'));
   document.title = `raild gameplay snapshot — ${selectedLevel.title}`;
 
   scene = new Scene();
