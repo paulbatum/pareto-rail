@@ -111,18 +111,18 @@ export const RUSH_TUNING = {
     windowColumnSpacingUnits: 1.15,
     // World units between candidate window rows; smaller values create denser vertical window opportunities.
     windowRowSpacingUnits: 1.45,
-    // Number of building slots kept ahead; raises visible city depth.
-    aheadCount: 54,
-    // Number of building slots kept behind; prevents side-wall popping in peripheral vision.
-    behindCount: 8,
+    // World units kept visible ahead of the camera; should sit just beyond the opaque fog wall.
+    visibleAheadUnits: 126,
+    // World units kept visible behind the camera; prevents side-wall popping in peripheral vision.
+    visibleBehindUnits: 36,
   },
   traffic: {
     // Deterministic traffic seed; changes car spacing/lane choices without changing speed settings.
     seed: 220174,
-    // Count of same-direction cars recycled along the road; raises overtaking cues.
-    sameDirectionCount: 34,
-    // Count of oncoming cars recycled along the road; raises headlight closing-frequency cues.
-    oncomingCount: 28,
+    // Count of same-direction cars recycled through the visible fog window; raises overtaking cues.
+    sameDirectionCount: 12,
+    // Count of oncoming cars recycled through the visible fog window; raises headlight closing-frequency cues.
+    oncomingCount: 10,
     // World units per second range for same-direction cars; higher values reduce how quickly the player overtakes them.
     sameDirectionSpeedRangeUnitsPerSecond: [14, 30] as const,
     // World units per second range for oncoming cars; higher values make headlight pairs close faster.
@@ -143,10 +143,10 @@ export const RUSH_TUNING = {
     lightSizeUnits: [0.5, 0.26] as const,
     // World units above road for car lights; raises headlight and taillight quads.
     lightHeightUnits: 0.42,
-    // World units ahead/behind camera used for car recycling; larger values show traffic earlier.
-    recycleAheadUnits: 430,
-    // World units behind camera retained for traffic; larger values keep overtaken cars longer.
-    recycleBehindUnits: 80,
+    // World units ahead of the camera used for car recycling; should sit just beyond the opaque fog wall.
+    recycleAheadUnits: 126,
+    // World units behind camera retained for traffic; keeps overtaken cars briefly in peripheral vision.
+    recycleBehindUnits: 36,
   },
   streetFurniture: {
     // Deterministic furniture seed; changes small lamp/gantry variation without changing spacing settings.
@@ -171,10 +171,10 @@ export const RUSH_TUNING = {
     gantryHeightUnits: 16.2,
     // World units of gantry crossbar thickness; wider values make overhead passes chunkier.
     gantryBarThicknessUnits: 0.18,
-    // Number of furniture slots kept ahead; raises visible street depth.
-    aheadCount: 42,
-    // Number of furniture slots kept behind; prevents curbside popping behind the camera.
-    behindCount: 8,
+    // World units kept visible ahead of the camera; should sit just beyond the opaque fog wall.
+    visibleAheadUnits: 126,
+    // World units kept visible behind the camera; prevents curbside popping behind the camera.
+    visibleBehindUnits: 36,
   },
   streaks: {
     // Baseline streak line count at cruise; raises particle density even before surges.

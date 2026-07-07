@@ -25,6 +25,7 @@ import {
   TorusGeometry,
   Vector3,
 } from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { Camera, Material } from 'three';
 import type { EventBus } from '../../../events';
 import type { CameraFeelRig } from '../../../engine/camera-feel';
@@ -66,6 +67,19 @@ type VisualContext = {
   feel: CameraFeelRig;
   runProgress?: number;
 };
+
+const UNIT_BOX_GEOMETRY = new BoxGeometry(1, 1, 1);
+const UNIT_PLANE_GEOMETRY = new PlaneGeometry(1, 1);
+const BUILDING_WINDOW_MATERIAL = createAdditiveBasicMaterial({ color: 0xffffff, vertexColors: true, side: DoubleSide });
+const SAME_TRAFFIC_LIGHT_MATERIAL = createAdditiveBasicMaterial({ color: hdr(AMBER, 2.0), side: DoubleSide });
+const ONCOMING_TRAFFIC_LIGHT_MATERIAL = createAdditiveBasicMaterial({ color: hdr(CYAN, 2.4), side: DoubleSide });
+const STREETLIGHT_HEAD_MATERIAL = createAdditiveBasicMaterial({ color: hdr(AMBER, 1.15) });
+const GANTRY_STROBE_MATERIAL = createAdditiveBasicMaterial({ color: hdr(AMBER, 0.65), side: DoubleSide });
+const GANTRY_IDLE_MATERIAL = createAdditiveBasicMaterial({ color: hdr(CYAN, 0.18), side: DoubleSide });
+const matteMaterials = new Map<number, MeshLambertMaterial>();
+const enemyGeometries = new Map<string, BufferGeometry>();
+const letterGeometries = new Map<string, { fill: BufferGeometry; core: BufferGeometry }>();
+const LETTER_BRACKET_GEOMETRY = new RingGeometry(0.88, 0.92, 4);
 
 const rail = createRushRail();
 const enemies = createPendingVisualRecords<Group, EnemyRecord, [number, string]>({
@@ -259,13 +273,14 @@ function streetPoint(u: number, rightOffset: number, yOffset: number) {
 
 function createBuildingField() {
   const railLength = rail.getLength();
-  const slots = Math.ceil(railLength / RUSH_TUNING.buildings.blockSpacingUnits) * 2;
+  const visibleSpan = RUSH_TUNING.buildings.visibleAheadUnits + RUSH_TUNING.buildings.visibleBehindUnits;
+  const slots = (Math.ceil(visibleSpan / RUSH_TUNING.buildings.blockSpacingUnits) + 2) * 2;
   return scatterAlongRail(rail, {
     count: slots,
     seed: RUSH_TUNING.buildings.seed,
     window: {
-      behind: RUSH_TUNING.buildings.blockSpacingUnits * RUSH_TUNING.buildings.behindCount,
-      ahead: RUSH_TUNING.buildings.blockSpacingUnits * RUSH_TUNING.buildings.aheadCount,
+      behind: RUSH_TUNING.buildings.visibleBehindUnits,
+      ahead: RUSH_TUNING.buildings.visibleAheadUnits,
     },
     place(index) {
       const spec = buildingSpec(index);
@@ -301,30 +316,49 @@ function buildingSpec(index: number): BuildingSpec {
 
 function createBuilding(spec: BuildingSpec, index: number) {
   const group = new Group();
-  const tower = new Mesh(new BoxGeometry(spec.width, spec.height, spec.depth), matte(0x1c222c));
+  const tower = new Mesh(UNIT_BOX_GEOMETRY, matte(0x1c222c));
+  tower.scale.set(spec.width, spec.height, spec.depth);
   group.add(tower);
 
+  const windows = createBuildingWindows(spec, index);
+  if (windows) group.add(windows);
+  return group;
+}
+
+function createBuildingWindows(spec: BuildingSpec, index: number) {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
   const nearFaceX = -spec.side * (spec.width * 0.5 + 0.015);
   const columns = Math.max(1, Math.floor(spec.depth / RUSH_TUNING.buildings.windowColumnSpacingUnits));
   const rows = Math.max(1, Math.floor(spec.height / RUSH_TUNING.buildings.windowRowSpacingUnits));
-  const windowGeometry = new PlaneGeometry(RUSH_TUNING.buildings.windowSizeUnits[0], RUSH_TUNING.buildings.windowSizeUnits[1]);
   const [windowWidth, windowHeight] = RUSH_TUNING.buildings.windowSizeUnits;
   for (let row = 1; row < rows; row += 1) {
     for (let col = 0; col < columns; col += 1) {
       const lit = pseudo(index * 101 + row * 17 + col * 31 + RUSH_TUNING.buildings.seed, 5) < RUSH_TUNING.buildings.windowLightDensity;
       if (!lit) continue;
-      const window = new Mesh(windowGeometry, createAdditiveBasicMaterial({ color: hdr(pseudo(index + row + col, 6) > 0.82 ? AMBER : CYAN, 0.8), side: DoubleSide }));
-      window.rotation.y = spec.side > 0 ? -Math.PI / 2 : Math.PI / 2;
-      window.position.set(
-        nearFaceX,
-        -spec.height * 0.5 + row * RUSH_TUNING.buildings.windowRowSpacingUnits,
-        -spec.depth * 0.5 + col * RUSH_TUNING.buildings.windowColumnSpacingUnits + windowWidth,
+      const base = positions.length / 3;
+      const centerY = -spec.height * 0.5 + row * RUSH_TUNING.buildings.windowRowSpacingUnits;
+      const centerZ = -spec.depth * 0.5 + col * RUSH_TUNING.buildings.windowColumnSpacingUnits + windowWidth;
+      const halfWidth = windowWidth * 0.5;
+      const halfHeight = windowHeight * (1 + pseudo(index + row * col, 7) * windowHeight) * 0.5;
+      positions.push(
+        nearFaceX, centerY - halfHeight, centerZ - halfWidth,
+        nearFaceX, centerY + halfHeight, centerZ - halfWidth,
+        nearFaceX, centerY - halfHeight, centerZ + halfWidth,
+        nearFaceX, centerY + halfHeight, centerZ + halfWidth,
       );
-      window.scale.y = 1 + pseudo(index + row * col, 7) * windowHeight;
-      group.add(window);
+      indices.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
+      const color = hdr(pseudo(index + row + col, 6) > 0.82 ? AMBER : CYAN, 0.8);
+      for (let vertex = 0; vertex < 4; vertex += 1) colors.push(color.r, color.g, color.b);
     }
   }
-  return group;
+  if (positions.length === 0) return null;
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices);
+  return new Mesh(geometry, BUILDING_WINDOW_MATERIAL);
 }
 
 function createTrafficField(direction: TrafficDirection) {
@@ -360,16 +394,19 @@ function createTrafficField(direction: TrafficDirection) {
 
 function createCar(direction: TrafficDirection) {
   const group = new Group();
-  const body = new Mesh(new BoxGeometry(RUSH_TUNING.traffic.carWidthUnits, RUSH_TUNING.traffic.carHeightUnits * 0.62, RUSH_TUNING.traffic.carLengthUnits), matte(0x1a2028));
+  const body = new Mesh(UNIT_BOX_GEOMETRY, matte(0x1a2028));
+  body.scale.set(RUSH_TUNING.traffic.carWidthUnits, RUSH_TUNING.traffic.carHeightUnits * 0.62, RUSH_TUNING.traffic.carLengthUnits);
   body.position.y = -RUSH_TUNING.traffic.carHeightUnits * 0.12;
-  const cabin = new Mesh(new BoxGeometry(RUSH_TUNING.traffic.carWidthUnits * 0.7, RUSH_TUNING.traffic.carHeightUnits * 0.45, RUSH_TUNING.traffic.carLengthUnits * 0.45), matte(0x2a3140));
+  const cabin = new Mesh(UNIT_BOX_GEOMETRY, matte(0x2a3140));
+  cabin.scale.set(RUSH_TUNING.traffic.carWidthUnits * 0.7, RUSH_TUNING.traffic.carHeightUnits * 0.45, RUSH_TUNING.traffic.carLengthUnits * 0.45);
   cabin.position.y = RUSH_TUNING.traffic.carHeightUnits * 0.28;
   group.add(body, cabin);
 
-  const lightMaterial = createAdditiveBasicMaterial({ color: direction === 'same' ? hdr(AMBER, 2.0) : hdr(CYAN, 2.4), side: DoubleSide });
-  const lightGeometry = new PlaneGeometry(RUSH_TUNING.traffic.lightSizeUnits[0], RUSH_TUNING.traffic.lightSizeUnits[1]);
+  const lightMaterial = direction === 'same' ? SAME_TRAFFIC_LIGHT_MATERIAL : ONCOMING_TRAFFIC_LIGHT_MATERIAL;
+  const [lightWidth, lightHeight] = RUSH_TUNING.traffic.lightSizeUnits;
   for (const side of [-1, 1] as const) {
-    const light = new Mesh(lightGeometry, lightMaterial);
+    const light = new Mesh(UNIT_PLANE_GEOMETRY, lightMaterial);
+    light.scale.set(lightWidth, lightHeight, 1);
     light.position.set(side * RUSH_TUNING.traffic.lightPairSpacingUnits * 0.5, RUSH_TUNING.traffic.lightHeightUnits - RUSH_TUNING.traffic.carHeightUnits * 0.5, -RUSH_TUNING.traffic.carLengthUnits * 0.5 - 0.02);
     group.add(light);
   }
@@ -378,13 +415,14 @@ function createCar(direction: TrafficDirection) {
 
 function createStreetlightField() {
   const railLength = rail.getLength();
-  const count = Math.ceil(railLength / RUSH_TUNING.streetFurniture.streetlightSpacingUnits) * 2;
+  const visibleSpan = RUSH_TUNING.streetFurniture.visibleAheadUnits + RUSH_TUNING.streetFurniture.visibleBehindUnits;
+  const count = (Math.ceil(visibleSpan / RUSH_TUNING.streetFurniture.streetlightSpacingUnits) + 2) * 2;
   return scatterAlongRail(rail, {
     count,
     seed: RUSH_TUNING.streetFurniture.seed,
     window: {
-      behind: RUSH_TUNING.streetFurniture.streetlightSpacingUnits * RUSH_TUNING.streetFurniture.behindCount,
-      ahead: RUSH_TUNING.streetFurniture.streetlightSpacingUnits * RUSH_TUNING.streetFurniture.aheadCount,
+      behind: RUSH_TUNING.streetFurniture.visibleBehindUnits,
+      ahead: RUSH_TUNING.streetFurniture.visibleAheadUnits,
     },
     place(index) {
       const slot = Math.floor(index / 2);
@@ -402,13 +440,12 @@ function createStreetlightField() {
 
 function createStreetlight(side: -1 | 1) {
   const group = new Group();
-  const pole = new Mesh(
-    new BoxGeometry(RUSH_TUNING.streetFurniture.poleRadiusUnits, RUSH_TUNING.streetFurniture.poleHeightUnits, RUSH_TUNING.streetFurniture.poleRadiusUnits),
-    matte(0x14120f),
-  );
+  const pole = new Mesh(UNIT_BOX_GEOMETRY, matte(0x14120f));
+  pole.scale.set(RUSH_TUNING.streetFurniture.poleRadiusUnits, RUSH_TUNING.streetFurniture.poleHeightUnits, RUSH_TUNING.streetFurniture.poleRadiusUnits);
   pole.position.y = roadY() + RUSH_TUNING.streetFurniture.poleHeightUnits * 0.5;
   const [headWidth, headHeight, headDepth] = RUSH_TUNING.streetFurniture.lampHeadSizeUnits;
-  const head = new Mesh(new BoxGeometry(headWidth, headHeight, headDepth), createAdditiveBasicMaterial({ color: hdr(AMBER, 1.15) }));
+  const head = new Mesh(UNIT_BOX_GEOMETRY, STREETLIGHT_HEAD_MATERIAL);
+  head.scale.set(headWidth, headHeight, headDepth);
   head.position.set(-side * headWidth * 0.45, roadY() + RUSH_TUNING.streetFurniture.poleHeightUnits, 0);
   group.add(pole, head);
   return group;
@@ -416,13 +453,14 @@ function createStreetlight(side: -1 | 1) {
 
 function createGantryField() {
   const railLength = rail.getLength();
-  const count = Math.ceil(railLength / RUSH_TUNING.streetFurniture.gantrySpacingUnits);
+  const visibleSpan = RUSH_TUNING.streetFurniture.visibleAheadUnits + RUSH_TUNING.streetFurniture.visibleBehindUnits;
+  const count = Math.ceil(visibleSpan / RUSH_TUNING.streetFurniture.gantrySpacingUnits) + 2;
   return scatterAlongRail(rail, {
     count,
     seed: RUSH_TUNING.streetFurniture.seed + 17,
     window: {
-      behind: RUSH_TUNING.streetFurniture.gantrySpacingUnits * RUSH_TUNING.streetFurniture.behindCount,
-      ahead: RUSH_TUNING.streetFurniture.gantrySpacingUnits * RUSH_TUNING.streetFurniture.aheadCount,
+      behind: RUSH_TUNING.streetFurniture.visibleBehindUnits,
+      ahead: RUSH_TUNING.streetFurniture.visibleAheadUnits,
     },
     place(index) {
       return {
@@ -433,21 +471,24 @@ function createGantryField() {
     make(index) {
       return createGantry(index);
     },
-    onUpdate(item) {
-      const hot = (item.index % RUSH_TUNING.streetFurniture.gantryStrobeEvery === 0 ? beatEnergy : 0) * 1.8;
-      tintObject(item.object, item.index % RUSH_TUNING.streetFurniture.gantryStrobeEvery === 0 ? hdr(AMBER, 0.55 + hot) : hdr(CYAN, 0.18));
-    },
   });
+}
+
+function updateGantryMaterials() {
+  GANTRY_STROBE_MATERIAL.color.copy(hdr(AMBER, 0.55 + beatEnergy * 1.8));
+  GANTRY_IDLE_MATERIAL.color.copy(hdr(CYAN, 0.18));
 }
 
 function createGantry(index: number) {
   const group = new Group();
   const span = RUSH_TUNING.street.roadWidthUnits + RUSH_TUNING.street.sidewalkWidthUnits * 2;
   const thickness = RUSH_TUNING.streetFurniture.gantryBarThicknessUnits;
-  const bar = new Mesh(new BoxGeometry(span, thickness, thickness), matte(0x111318));
-  const material = createAdditiveBasicMaterial({ color: hdr(index % RUSH_TUNING.streetFurniture.gantryStrobeEvery === 0 ? AMBER : CYAN, 0.65), side: DoubleSide });
+  const bar = new Mesh(UNIT_BOX_GEOMETRY, matte(0x111318));
+  bar.scale.set(span, thickness, thickness);
+  const material = index % RUSH_TUNING.streetFurniture.gantryStrobeEvery === 0 ? GANTRY_STROBE_MATERIAL : GANTRY_IDLE_MATERIAL;
   for (const x of [-span * 0.28, 0, span * 0.28]) {
-    const signal = new Mesh(new PlaneGeometry(thickness * 3.2, thickness * 1.7), material);
+    const signal = new Mesh(UNIT_PLANE_GEOMETRY, material);
+    signal.scale.set(thickness * 3.2, thickness * 1.7, 1);
     signal.position.set(x, -thickness * 1.15, -thickness);
     group.add(signal);
   }
@@ -456,7 +497,12 @@ function createGantry(index: number) {
 }
 
 function matte(color: number) {
-  return new MeshLambertMaterial({ color, flatShading: true });
+  let material = matteMaterials.get(color);
+  if (!material) {
+    material = new MeshLambertMaterial({ color, flatShading: true });
+    matteMaterials.set(color, material);
+  }
+  return material;
 }
 
 class SpeedStreakField {
@@ -549,60 +595,99 @@ export function createEnemyMesh(kind: string, letter?: string) {
 function createRushEnemy(kind: string) {
   const group = new Group();
   const accent = accentForKind(kind);
-  const hot = createAdditiveBasicMaterial({ color: hdr(accent, 1.8), side: DoubleSide });
-  const core = new MeshBasicMaterial({ color: hdr(WHITE, 0.95), side: DoubleSide });
-
-  if (kind === 'dart') {
-    const nose = new Mesh(new ConeGeometry(0.42, 1.55, 3), core);
-    nose.rotation.x = Math.PI / 2;
-    const wing = new Mesh(new PlaneGeometry(1.35, 0.18), hot);
-    const tail = new Mesh(new PlaneGeometry(0.22, 1.7), createAdditiveBasicMaterial({ color: hdr(CYAN, 1.1), side: DoubleSide }));
-    tail.position.y = -0.72;
-    group.add(nose, wing, tail);
-  } else if (kind === 'heavy') {
-    const hull = new Mesh(new IcosahedronGeometry(0.72, 1), core);
-    hull.scale.set(1.15, 0.82, 1.15);
-    group.add(hull);
-    for (let i = 0; i < 3; i += 1) {
-      const ring = new Mesh(new TorusGeometry(0.95 + i * 0.18, 0.028, 6, 36), hot.clone());
-      ring.rotation.z = (i / 3) * Math.PI;
-      ring.rotation.x = Math.PI / 2;
-      group.add(ring);
-    }
-  } else {
-    const frame = new Mesh(new TorusGeometry(0.78, 0.04, 6, 6), hot);
-    const coreBox = new Mesh(new BoxGeometry(0.7, 0.7, 0.24), core);
-    const slit = new Mesh(new PlaneGeometry(1.2, 0.075), createAdditiveBasicMaterial({ color: hdr(AMBER, 1.6), side: DoubleSide }));
-    group.add(frame, coreBox, slit);
-  }
-
+  const body = new Mesh(getEnemyGeometry(kind), createAdditiveBasicMaterial({ color: 0xffffff, vertexColors: true, side: DoubleSide }));
+  group.add(body);
   group.userData.kind = kind;
   group.userData.accent = accent;
+  group.userData.vertexColored = true;
   group.userData.materials = collectMaterials(group);
   return group;
 }
 
+function getEnemyGeometry(kind: string) {
+  const cached = enemyGeometries.get(kind);
+  if (cached) return cached;
+  const accent = accentForKind(kind);
+  const hot = hdr(accent, 1.8);
+  const geometries: BufferGeometry[] = [];
+
+  if (kind === 'dart') {
+    const nose = colorizedGeometry(new ConeGeometry(0.42, 1.55, 3), hdr(WHITE, 0.95));
+    nose.rotateX(Math.PI / 2);
+    geometries.push(nose);
+    geometries.push(colorizedGeometry(new PlaneGeometry(1.35, 0.18), hot));
+    const tail = colorizedGeometry(new PlaneGeometry(0.22, 1.7), hdr(CYAN, 1.1));
+    tail.translate(0, -0.72, 0);
+    geometries.push(tail);
+  } else if (kind === 'heavy') {
+    const hull = colorizedGeometry(new IcosahedronGeometry(0.72, 1), hdr(WHITE, 0.95));
+    hull.scale(1.15, 0.82, 1.15);
+    geometries.push(hull);
+    for (let i = 0; i < 3; i += 1) {
+      const ring = colorizedGeometry(new TorusGeometry(0.95 + i * 0.18, 0.028, 6, 36), hot);
+      ring.rotateZ((i / 3) * Math.PI);
+      ring.rotateX(Math.PI / 2);
+      geometries.push(ring);
+    }
+  } else {
+    geometries.push(colorizedGeometry(new TorusGeometry(0.78, 0.04, 6, 6), hot));
+    geometries.push(colorizedGeometry(new BoxGeometry(0.7, 0.7, 0.24), hdr(WHITE, 0.95)));
+    geometries.push(colorizedGeometry(new PlaneGeometry(1.2, 0.075), hdr(AMBER, 1.6)));
+  }
+
+  const merged = mergeGeometries(geometries, false) ?? new BufferGeometry();
+  for (const geometry of geometries) geometry.dispose();
+  enemyGeometries.set(kind, merged);
+  return merged;
+}
+
+function colorizedGeometry(geometry: BufferGeometry, color: Color) {
+  const prepared = geometry.index ? geometry.toNonIndexed() : geometry;
+  if (prepared !== geometry) geometry.dispose();
+  const count = prepared.getAttribute('position')?.count ?? 0;
+  const colors: number[] = [];
+  for (let i = 0; i < count; i += 1) colors.push(color.r, color.g, color.b);
+  prepared.setAttribute('color', new Float32BufferAttribute(colors, 3));
+  return prepared;
+}
+
 function createLetterMesh(character: string) {
   const group = new Group();
-  const fill = new MeshBasicMaterial({ color: hdr(WHITE, 0.9), side: DoubleSide });
-  const hot = createAdditiveBasicMaterial({ color: hdr(CYAN, 1.7), side: DoubleSide });
-  const cellGeometry = new BoxGeometry(0.19, 0.19, 0.075);
-  const coreGeometry = new BoxGeometry(0.105, 0.105, 0.09);
-  for (const cell of glyphOnCells(character)) {
-    const block = new Mesh(cellGeometry, fill);
-    block.position.set((cell.x - 2) * 0.27, (3 - cell.y) * 0.27, 0);
-    const core = new Mesh(coreGeometry, hot);
-    core.position.copy(block.position);
-    core.position.z = 0.07;
-    group.add(block, core);
-  }
-  const bracket = new Mesh(new RingGeometry(0.88, 0.92, 4), createAdditiveBasicMaterial({ color: hdr(AMBER, 1.2), side: DoubleSide }));
+  const geometries = getLetterGeometries(character);
+  const fill = new Mesh(geometries.fill, new MeshBasicMaterial({ color: hdr(WHITE, 0.9), side: DoubleSide }));
+  const hot = new Mesh(geometries.core, createAdditiveBasicMaterial({ color: hdr(CYAN, 1.7), side: DoubleSide }));
+  const bracket = new Mesh(LETTER_BRACKET_GEOMETRY, createAdditiveBasicMaterial({ color: hdr(AMBER, 1.2), side: DoubleSide }));
   bracket.rotation.z = Math.PI / 4;
-  group.add(bracket);
+  group.add(fill, hot, bracket);
   group.userData.kind = 'letter';
   group.userData.accent = CYAN;
   group.userData.materials = collectMaterials(group);
   return group;
+}
+
+function getLetterGeometries(character: string) {
+  const key = character.toUpperCase();
+  const cached = letterGeometries.get(key);
+  if (cached) return cached;
+  const fills: BufferGeometry[] = [];
+  const cores: BufferGeometry[] = [];
+  for (const cell of glyphOnCells(key)) {
+    const x = (cell.x - 2) * 0.27;
+    const y = (3 - cell.y) * 0.27;
+    const fill = new BoxGeometry(0.19, 0.19, 0.075);
+    fill.translate(x, y, 0);
+    fills.push(fill);
+    const core = new BoxGeometry(0.105, 0.105, 0.09);
+    core.translate(x, y, 0.07);
+    cores.push(core);
+  }
+  const merged = {
+    fill: fills.length > 0 ? mergeGeometries(fills, false) ?? new BufferGeometry() : new BufferGeometry(),
+    core: cores.length > 0 ? mergeGeometries(cores, false) ?? new BufferGeometry() : new BufferGeometry(),
+  };
+  for (const geometry of [...fills, ...cores]) geometry.dispose();
+  letterGeometries.set(key, merged);
+  return merged;
 }
 
 function accentForKind(kind: string) {
@@ -631,9 +716,11 @@ function tintObject(object: Object3D, color: Color) {
 function tintEnemy(mesh: Object3D, color: Color | undefined) {
   const materials = mesh.userData.materials as ColorMaterial[] | undefined;
   const accent = (mesh.userData.accent as Color | undefined) ?? CYAN;
+  const vertexColored = mesh.userData.vertexColored === true;
   for (const material of materials ?? []) {
     if (!material.color) continue;
-    material.color.copy(color ?? hdr(accent, material instanceof MeshBasicMaterial && material.blending !== AdditiveBlending ? 0.85 : 1.45));
+    if (!color && vertexColored) material.color.setRGB(1, 1, 1);
+    else material.color.copy(color ?? hdr(accent, material instanceof MeshBasicMaterial && material.blending !== AdditiveBlending ? 0.85 : 1.45));
   }
 }
 
@@ -736,6 +823,7 @@ function pulse(scene: Scene, position: Vector3, color: Color, scale: number, lif
 export function updateVisuals(dt: number, context: VisualContext) {
   elapsedNow = context.elapsed;
   beatEnergy = Math.max(0, beatEnergy - dt / RUSH_TUNING.streetFurniture.strobeHoldSeconds);
+  updateGantryMaterials();
   const railU = context.runProgress ?? 0;
   buildingField?.update(railU, dt);
   sameTrafficField?.update(railU, dt);
