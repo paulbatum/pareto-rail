@@ -19,6 +19,7 @@ Shared code lives in `src/engine/`:
 - `hostile-shot.ts` contains shared homing steer, behind-camera despawn cull, and approach/impact timing for lockable enemy shots and hazards;
 - `visual-kit.ts` contains lifecycle helpers for visual bookkeeping: pending mesh-to-event records, transient effect pools, additive material setup, and attached adornment slots. It owns no look or timing decisions; levels still supply every mesh, color, number, and update rule;
 - `environment-kit.ts` contains lifecycle helpers for rail-relative scenery fields and atmosphere ramps. It owns placement/recycling bookkeeping and interpolation; levels still supply every mesh, color, count, distribution, and keyframe;
+- `camera-feel.ts` contains opt-in FOV kick/offset and trauma-shake primitives with no default bindings; levels decide every trigger and magnitude;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting.
 
 ## Module layout: spine and leaves

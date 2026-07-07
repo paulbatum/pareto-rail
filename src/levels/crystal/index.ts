@@ -1,4 +1,5 @@
 import type { LevelDefinition } from '../../engine/types';
+import { createCameraFeel } from '../../engine/camera-feel';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
 import { CRYSTAL_DEBUG_TARGETS, normalizeCrystalDebugTarget } from './debug';
@@ -29,6 +30,7 @@ export const crystalCorridorLevel: LevelDefinition = {
   debugSelector: { queryParam: 'debugEnemy', label: 'Enemy', options: CRYSTAL_DEBUG_TARGETS },
   createAudio,
   createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip, debugValue }) {
+    const feel = createCameraFeel(camera);
     createEnvironment(scene);
     installVisualEventHandlers(bus, scene);
 
@@ -78,9 +80,11 @@ export const crystalCorridorLevel: LevelDefinition = {
           hud.setCallout('');
         }
         game.update(dt);
-        updateVisuals(dt, { scene, camera, elapsed, runProgress: game.runProgress });
+        updateVisuals(dt, { scene, camera, feel, elapsed, runProgress: game.runProgress });
+        feel.update(dt);
       },
       dispose() {
+        feel.dispose();
         game.dispose();
       },
     };

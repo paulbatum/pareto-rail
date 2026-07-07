@@ -8,12 +8,12 @@ import {
   MeshBasicMaterial,
   Object3D,
   OctahedronGeometry,
-  PerspectiveCamera,
   PlaneGeometry,
   RingGeometry,
   Scene,
 } from 'three';
 import type { Camera } from 'three';
+import type { CameraFeelRig } from '../../../engine/camera-feel';
 import type { EventBus } from '../../../events';
 import { createCrystal, setCrystalLocked, type CrystalKind, type ShardSpec } from './crystal';
 import { beatUniform, createEnvironmentInternal, type Environment } from './environment';
@@ -48,6 +48,7 @@ import {
 export type VisualContext = {
   scene: Scene;
   camera: Camera;
+  feel: CameraFeelRig;
   elapsed: number;
   runProgress?: number;
 };
@@ -64,7 +65,6 @@ type ProjectileRecord = {
 };
 
 let environment: Environment | null = null;
-let baseFov: number | null = null;
 let beatEnergy = 0;
 let elapsedNow = 0;
 
@@ -314,11 +314,7 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
   beatEnergy = Math.max(0, beatEnergy - dt * 4.2);
   beatUniform.value = beatEnergy;
 
-  if (ctx.camera instanceof PerspectiveCamera) {
-    if (baseFov === null) baseFov = ctx.camera.fov;
-    ctx.camera.fov = baseFov + beatEnergy * 1.1;
-    ctx.camera.updateProjectionMatrix();
-  }
+  ctx.feel.setFovOffset(beatEnergy * 1.1);
 
   environment?.debris.update(ctx.runProgress ?? 0, dt);
 

@@ -12,7 +12,6 @@ import {
   MeshBasicMaterial,
   Object3D,
   OctahedronGeometry,
-  PerspectiveCamera,
   PlaneGeometry,
   Points,
   PointsMaterial,
@@ -23,6 +22,7 @@ import {
 } from 'three';
 import type { Camera } from 'three';
 import type { EventBus } from '../../events';
+import type { CameraFeelRig } from '../../engine/camera-feel';
 import { colorForLockCount } from '../../engine/locks';
 import { sampleRailFrame } from '../../engine/rail';
 import { scatterAlongRail } from '../../engine/environment-kit';
@@ -67,7 +67,6 @@ const pulses = createTransientEffectPool<Pulse, VisualContext>({
 });
 let beatEnergy = 0;
 let environmentRoot: Group | null = null;
-let baseFov: number | null = null;
 let elapsedNow = 0;
 let ribField: ScatterField | null = null;
 
@@ -388,7 +387,7 @@ function pulse(scene: Scene, position: Vector3, color: Color, scale: number, lif
 
 export function updateVisuals(
   dt: number,
-  context: { scene: Scene; camera: Camera; elapsed: number; runProgress?: number },
+  context: { scene: Scene; camera: Camera; feel: CameraFeelRig; elapsed: number; runProgress?: number },
 ) {
   elapsedNow = context.elapsed;
   beatEnergy = Math.max(0, beatEnergy - dt * 3.8);
@@ -396,11 +395,7 @@ export function updateVisuals(
     environmentRoot.rotation.z = Math.sin(context.elapsed * 0.13) * 0.035;
     environmentRoot.scale.setScalar(1 + beatEnergy * 0.012);
   }
-  if (context.camera instanceof PerspectiveCamera) {
-    if (baseFov === null) baseFov = context.camera.fov;
-    context.camera.fov = baseFov + beatEnergy * 1.7;
-    context.camera.updateProjectionMatrix();
-  }
+  context.feel.setFovOffset(beatEnergy * 1.7);
 
   const runProgress = context.runProgress ?? 0;
   ribField?.update(runProgress, dt);

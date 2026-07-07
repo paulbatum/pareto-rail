@@ -15,6 +15,7 @@ import {
   Vector3,
 } from 'three';
 import type { Camera } from 'three';
+import type { CameraFeelRig, CameraFeelShakeOptions } from '../../../engine/camera-feel';
 import { colorForLockCount } from '../../../engine/locks';
 import {
   createAdditiveBasicMaterial,
@@ -74,12 +75,14 @@ export type VisualContext = {
   elapsed: number;
   runTime: number;
   running: boolean;
+  feel: CameraFeelRig;
 };
 
 export type CameraEffectsContext = {
   camera: Camera;
   runTime: number;
   running: boolean;
+  feel: CameraFeelRig;
 };
 
 type EnemyRecord = {
@@ -97,15 +100,24 @@ const DENY_RED = new Color(1.6, 0.1, 0.05);
 const DENY_FILL = new Color(0.3, 0.02, 0.01);
 
 let environment: Environment | null = null;
-let baseFov: number | null = null;
 let beatEnergy = 0;
-let shakeEnergy = 0;
 let cameraRoll = 0;
+let cameraFovOffset = 0;
 let blurPulse = 0;
 let elapsedNow = 0;
 let lastRunTime = -1;
 let heartWorldPosition: Vector3 | null = null;
 let heartKilledAt = -1;
+
+const HELIOS_CAMERA_SHAKE: CameraFeelShakeOptions = {
+  decay: 2.6,
+  maxTrauma: 1.8,
+  pitchDegrees: 0.36,
+  yawDegrees: 0.3,
+  rollDegrees: 0.75,
+  frequency: 8.5,
+  smoothing: 20,
+};
 
 const rail = createHeliosRail();
 
@@ -251,7 +263,7 @@ export function setReticleActive(reticle: Object3D, active: boolean, lockCount: 
 
 // ---- event wiring ---------------------------------------------------------------
 
-export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
+export function installVisualEventHandlers(bus: EventBus, scene: Scene, cameraFeel: CameraFeelRig) {
   bus.on('spawn', ({ enemyId, kind, worldPosition }) => {
     const record = enemyRecords.claim(enemyId);
     if (!record) return;
@@ -260,7 +272,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
       spawnBeam(worldPosition.clone(), hdr(GOLD, 0.9), 30, 0.8);
       spawnRing(worldPosition, hdr(GOLD, 1.1), 4, 0.5);
     } else if (kind === 'heart') {
-      shakeEnergy = Math.max(shakeEnergy, 1.2);
+      cameraFeel.shake(1.2, HELIOS_CAMERA_SHAKE);
       blurPulse = Math.max(blurPulse, 0.55);
       spawnRing(worldPosition, hdr(EMBER, 1.3), 26, 0.9);
       spawnRing(worldPosition, hdr(GOLD, 1.0), 14, 0.7);
@@ -309,7 +321,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
       spawnRing(worldPosition, hdr(GOLD, 1.4), 6.5, 0.5);
     } else if (record.mesh.userData.isSerpentHead) {
       // The heart survives a stage — it dives. Make the ocean answer.
-      shakeEnergy = Math.max(shakeEnergy, 1.1);
+      cameraFeel.shake(1.1, HELIOS_CAMERA_SHAKE);
       blurPulse = Math.max(blurPulse, 0.5);
       spawnRing(worldPosition, hdr(EMBER, 1.5), 30, 1.0);
       spawnRing(worldPosition, hdr(WHITE_HOT, 1.1), 12, 0.6);
@@ -331,7 +343,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
         // Supernova: the kill the whole level is built around.
         heartKilledAt = elapsedNow;
         heartWorldPosition = null;
-        shakeEnergy = 1.8;
+        cameraFeel.shake(1.8, HELIOS_CAMERA_SHAKE);
         blurPulse = 1.0;
         flashUniform.value = Math.max(flashUniform.value, 1.15);
         spawnRing(worldPosition, hdr(WHITE_HOT, 1.6), 90, 1.6);
@@ -341,7 +353,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
         burstEmbers(worldPosition, hdr(GOLD, 1.3), 60, 34, 10);
         if (environment) killSerpentBody(environment.serpent);
       } else if (record.mesh.userData.kind === 'fang') {
-        shakeEnergy = Math.max(shakeEnergy, 0.6);
+        cameraFeel.shake(0.6, HELIOS_CAMERA_SHAKE);
         spawnRing(worldPosition, hdr(GOLD, 1.3), 9, 0.55);
       }
 
@@ -371,7 +383,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
 
   bus.on('playerhit', () => {
     beatEnergy = 1.5;
-    shakeEnergy = Math.max(shakeEnergy, 1.3);
+    cameraFeel.shake(1.3, HELIOS_CAMERA_SHAKE);
   });
 
   bus.on('runstart', () => {
@@ -380,7 +392,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     projectileRecords.clear({ pending: true });
     heartWorldPosition = null;
     heartKilledAt = -1;
-    lastRunTime = -1;
+    resetCameraFeel(cameraFeel);
     novaUniform.value = 0;
     flashUniform.value = 0;
     speedBlurUniform.value = 0;
@@ -392,14 +404,24 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
       for (const segment of environment.serpent.neck) segment.visible = false;
     }
   });
+
+  bus.on('runend', () => {
+    resetCameraFeel(cameraFeel);
+  });
 }
 
 // ---- per-frame update -------------------------------------------------------------
 
+function resetCameraFeel(cameraFeel: CameraFeelRig) {
+  lastRunTime = -1;
+  cameraRoll = 0;
+  cameraFovOffset = 0;
+  cameraFeel.restore();
+}
+
 export function updateVisuals(dt: number, ctx: VisualContext) {
   elapsedNow = ctx.elapsed;
   beatEnergy = Math.max(0, beatEnergy - dt * 4.2);
-  shakeEnergy = Math.max(0, shakeEnergy - dt * 2.6);
   blurPulse = Math.max(0, blurPulse - dt * 0.85);
   beatUniform.value = beatEnergy;
 
@@ -474,7 +496,7 @@ function updateSetPieceMoments(ctx: VisualContext) {
   if (crossed(GATE_TIME)) {
     flashUniform.value = Math.max(flashUniform.value, 0.75);
     blurPulse = Math.max(blurPulse, 0.95);
-    shakeEnergy = Math.max(shakeEnergy, 0.8);
+    ctx.feel.shake(0.8, HELIOS_CAMERA_SHAKE);
     if (environment) {
       spawnRing(environment.gatePosition, hdr(GOLD, 1.5), 70, 1.1);
       spawnRing(environment.gatePosition, hdr(EMBER, 1.1), 40, 0.8);
@@ -483,7 +505,7 @@ function updateSetPieceMoments(ctx: VisualContext) {
   if (crossed(CORONA_TIME)) {
     flashUniform.value = Math.max(flashUniform.value, 1.05);
     blurPulse = Math.max(blurPulse, 1.1);
-    shakeEnergy = Math.max(shakeEnergy, 1.0);
+    ctx.feel.shake(1.0, HELIOS_CAMERA_SHAKE);
     if (environment) {
       spawnRing(environment.coronaPosition, hdr(WHITE_HOT, 1.4), 60, 1.2);
       spawnRing(environment.coronaPosition, hdr(GOLD, 1.0), 34, 0.9);
@@ -501,12 +523,12 @@ export function updateCameraEffects(dt: number, ctx: CameraEffectsContext) {
 function updateCameraFeel(dt: number, ctx: CameraEffectsContext, speed: number) {
   if (!(ctx.camera instanceof PerspectiveCamera)) return;
   const camera = ctx.camera;
-  if (baseFov === null) baseFov = camera.fov;
 
-  // FOV breathes with airspeed, kicks with the beat and the blur pulses.
-  const targetFov = baseFov + (speed - 0.8) * 9 + beatEnergy * 1.1 + blurPulse * 7;
-  camera.fov = MathUtils.lerp(camera.fov, targetFov, Math.min(1, dt * 6));
-  camera.updateProjectionMatrix();
+  // FOV breathes with airspeed, kicks with the beat and the blur pulses. Helios
+  // keeps the old smoothing curve here while the shared rig owns the actual
+  // camera.fov write and projection update.
+  const targetFovOffset = (speed - 0.8) * 9 + beatEnergy * 1.1 + blurPulse * 7;
+  cameraFovOffset = MathUtils.lerp(cameraFovOffset, targetFovOffset, Math.min(1, dt * 6));
 
   if (ctx.running) {
     // Bank into the rail's turns. Applied after the runner's lookAt, so it is
@@ -519,13 +541,8 @@ function updateCameraFeel(dt: number, ctx: CameraEffectsContext, speed: number) 
     camera.rotateZ(cameraRoll);
   }
 
-  if (shakeEnergy > 0.001) {
-    const amp = shakeEnergy * 0.09;
-    camera.position.x += (Math.random() - 0.5) * amp;
-    camera.position.y += (Math.random() - 0.5) * amp;
-    camera.rotateZ((Math.random() - 0.5) * shakeEnergy * 0.012);
-  }
-  camera.updateMatrixWorld();
+  ctx.feel.setFovOffset(cameraFovOffset);
+  ctx.feel.update(dt, { shake: HELIOS_CAMERA_SHAKE });
 }
 
 function updateEnvironmentFrame(dt: number, ctx: VisualContext, speed: number, runTime: number) {

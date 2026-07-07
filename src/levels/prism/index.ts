@@ -1,5 +1,6 @@
 import type { LevelDefinition } from '../../engine/types';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
+import { createCameraFeel } from '../../engine/camera-feel';
 import { createAudio } from './audio';
 import { PRISM_BPM, prismGameplay } from './gameplay';
 import { PRISM_MARKERS, PRISM_ARRANGEMENT_SECTIONS, PRISM_TIME } from './timing';
@@ -30,6 +31,7 @@ export const prismBloomLevel: LevelDefinition = {
   createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip }) {
     createEnvironment(scene);
     installVisualEventHandlers(bus, scene);
+    const feel = createCameraFeel(camera);
     const game = createLockOnRunner({
       scene,
       camera,
@@ -53,10 +55,12 @@ export const prismBloomLevel: LevelDefinition = {
     return {
       update(dt, elapsed) {
         game.update(dt);
-        updateVisuals(dt, { scene, camera, elapsed, runProgress: game.runProgress });
+        updateVisuals(dt, { scene, camera, feel, elapsed, runProgress: game.runProgress });
+        feel.update(dt);
       },
       dispose() {
         game.dispose();
+        feel.dispose();
         disposeEnvironment();
       },
     };

@@ -1,4 +1,5 @@
 import type { LevelDefinition } from '../../engine/types';
+import { createCameraFeel } from '../../engine/camera-feel';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createAudio } from './audio';
 import { HELIOS_DEBUG_TARGETS, normalizeHeliosDebugTarget } from './debug';
@@ -37,8 +38,9 @@ export const heliosLevel: LevelDefinition = {
   },
   createAudio,
   createRuntime({ scene, camera, canvas, bus, hud, onPause, onFullscreen, startTip, debugValue }) {
+    const cameraFeel = createCameraFeel(camera);
     createEnvironment(scene);
-    installVisualEventHandlers(bus, scene);
+    installVisualEventHandlers(bus, scene, cameraFeel);
 
     // Narration: the run's set pieces get names. Gameplay owns the fight;
     // this only watches the clock and the bus.
@@ -97,7 +99,7 @@ export const heliosLevel: LevelDefinition = {
       level: {
         ...heliosGameplay,
         updateCameraEffects({ camera, runTime, dt }) {
-          updateHeliosCameraEffects(dt, { camera, runTime, running: true });
+          updateHeliosCameraEffects(dt, { camera, runTime, running: true, feel: cameraFeel });
         },
       },
       visuals: {
@@ -127,9 +129,10 @@ export const heliosLevel: LevelDefinition = {
           hud.setCallout('');
         }
         game.update(dt);
-        updateVisuals(dt, { scene, camera, elapsed, runTime, running: game.state === 'running' });
+        updateVisuals(dt, { scene, camera, elapsed, runTime, running: game.state === 'running', feel: cameraFeel });
       },
       dispose() {
+        cameraFeel.dispose();
         game.dispose();
       },
     };
