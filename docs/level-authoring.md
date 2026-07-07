@@ -101,7 +101,7 @@ post?: {
 
 Omitting it preserves the shared default frame. The engine always multiplies the level bloom strength by the player's bloom slider, so levels cannot bypass the pause-menu bloom setting.
 
-The pause menu also exposes a player motion-blur slider. Motion blur is engine-owned in `src/engine/post.ts`: the shared pass renders a velocity buffer, applies the same shutter model to every level, and scales it by the player's setting. Levels should create speed through rail motion, nearby geometry, moving objects, FOV, shake, and authored set pieces; do not add level-specific motion blur or speed-blur strength knobs.
+The pause menu also exposes a player motion-blur slider. Motion blur is engine-owned in `src/engine/post.ts`: the shared pass uses depth reprojection against the previous camera matrix, applies the same shutter model to every level, and scales it by the player's setting. Levels should create speed through rail motion, nearby geometry, moving objects, FOV, shake, and authored set pieces; do not add level-specific motion blur or speed-blur strength knobs.
 
 A level can use `composeOutput` to add a small TSL screen-space effect while leaving the shared pipeline in `src/engine/post.ts`. Keep effect uniforms at module scope and write them from the level runtime. The hook receives `base`, which is already global motion blur plus bloom, and the engine applies the shared vignette after the hook returns. Prefer adding flashes, tints, heat shimmer, or glitch over `base`; if an effect samples `scenePass.getTextureNode('output')` directly, it is bypassing the engine-composited frame for that part of the image and should be deliberate.
 

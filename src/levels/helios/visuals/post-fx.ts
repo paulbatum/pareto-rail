@@ -9,7 +9,7 @@ export const heatUniform = uniform(0);
 export const flashUniform = uniform(0);
 
 export function composeHeliosOutput({ base, scenePass, bloomPass, screenUV }: LevelPostComposeInput): LevelPostColorNode {
-  const sceneTexture = scenePass.getTextureNode('output');
+  const sceneTexture = scenePass.getTextureNode();
 
   // Heat shimmer is a local distortion, not a motion-blur strength knob. Mix it
   // over the engine-composited frame so the normal path keeps global blur.

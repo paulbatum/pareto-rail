@@ -138,7 +138,7 @@ async function bootstrap() {
     const dt = Math.min(0.05, dtMs / 1000);
     last = now;
     if (!paused) runtime.update(dt, now / 1000);
-    post.render();
+    post.render({ advanceMotionBlur: !paused });
     perfOverlay?.recordFrame(dtMs, now);
   });
 
