@@ -48,14 +48,15 @@ Useful overrides:
 
 ## Real-hardware playtest overlay
 
-Open a normal game URL with `perf=1`, for example:
+In dev builds (`npm run dev`) the overlay is on by default, in the top-left corner; pass `perf=0` to turn it off. In production builds it is off unless requested with `perf=1`:
 
 ```text
-http://localhost:5173/?level=rush&perf=1
+http://localhost:5173/?level=rush&perf=0
+https://<deployed>/?level=rush&perf=1
 ```
 
-The shared app shell installs a tiny overlay only when that query parameter is present. Without `perf=1`, no recorder or overlay is created.
+Outside dev builds, no recorder or overlay is created without `perf=1`.
 
-The overlay records frame delta times into preallocated buffers and samples counters once per second. It displays current frames per second, the worst frame in the current second, a five-second sparkline, and current draw calls. Press the `perf json` button to download a JSON report at any time. The same report is downloaded automatically on `runend`.
+The overlay records frame delta times into preallocated buffers and samples counters once per second. It displays current frames per second, the worst frame in the current second, a five-second sparkline, and current draw calls. Press the `perf json` button to download a JSON report at any time; on `runend` the overlay only logs the summary, it never downloads on its own.
 
 The JSON report contains per-second frame buckets with average, p95, p99, and max frame milliseconds, plus the renderer and scene counters, level id, run duration, user agent, and timestamp. The overlay also prints a compact `console.table` summary for quick comparison during playtests.

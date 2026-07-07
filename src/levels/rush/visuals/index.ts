@@ -747,9 +747,11 @@ export function createProjectileMesh() {
 
 export function createReticle() {
   const group = new Group();
-  const inner = new Mesh(new RingGeometry(0.45, 0.49, 32), new MeshBasicMaterial({ color: hdr(WHITE, 0.9), side: DoubleSide }));
-  const outer = new Mesh(new RingGeometry(0.7, 0.73, 4), createAdditiveBasicMaterial({ color: hdr(CYAN, 1.2), side: DoubleSide }));
+  const inner = new Mesh(new RingGeometry(0.45, 0.49, 32), new MeshBasicMaterial({ color: hdr(WHITE, 0.9), side: DoubleSide, transparent: true, depthTest: false, depthWrite: false }));
+  const outer = new Mesh(new RingGeometry(0.7, 0.73, 4), createAdditiveBasicMaterial({ color: hdr(CYAN, 1.2), side: DoubleSide, depthTest: false }));
   outer.rotation.z = Math.PI / 4;
+  inner.renderOrder = 1000;
+  outer.renderOrder = 1000;
   group.add(inner, outer);
   return group;
 }
@@ -857,9 +859,11 @@ export function updateVisuals(dt: number, context: VisualContext) {
     record.mesh.scale.setScalar((intro * intro * (3 - 2 * intro)) * pulseScale);
     if (denied) tintEnemy(record.mesh, hdr(RED, 1.65));
     else if (!locked) tintEnemy(record.mesh, undefined);
-    record.mesh.children.forEach((child, index) => {
-      child.rotateZ(dt * (0.9 + index * 0.18) * (locked ? 2.3 : 1));
-    });
+    if (record.mesh.userData.kind !== 'letter') {
+      record.mesh.children.forEach((child, index) => {
+        child.rotateZ(dt * (0.9 + index * 0.18) * (locked ? 2.3 : 1));
+      });
+    }
   }
 
   for (const { mesh } of projectiles.values()) mesh.rotateZ(dt * 15);

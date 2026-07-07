@@ -56,7 +56,9 @@ async function bootstrap() {
   audio.installGestureStart();
 
   const post = createPost(renderer, scene, camera, selectedLevel.post);
-  const perfOverlay = urlParams.get('perf') === '1'
+  const perfParam = urlParams.get('perf');
+  const perfEnabled = perfParam === '1' || (import.meta.env.DEV && perfParam !== '0');
+  const perfOverlay = perfEnabled
     ? (await import('./ui/perf-overlay')).createPerfOverlay({ renderer, scene, bus, levelId: selectedLevel.id })
     : null;
 

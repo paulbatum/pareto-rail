@@ -83,7 +83,7 @@ class PerfOverlay {
       this.runStartedAt = performance.now();
     });
     bus.on('runend', () => {
-      this.downloadReport();
+      logSummary(this.buildReport());
     });
   }
 
@@ -228,7 +228,7 @@ function installStyle() {
     .perf-overlay {
       position: fixed;
       left: 8px;
-      bottom: 8px;
+      top: 8px;
       z-index: 20;
       display: flex;
       gap: 6px;
