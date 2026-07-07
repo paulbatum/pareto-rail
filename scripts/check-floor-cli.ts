@@ -49,11 +49,19 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
     failures.push(`Target occlusion check found ${occlusionWarnings.length} warning${occlusionWarnings.length === 1 ? '' : 's'}. Run npm run check:occlusion -- --level ${level.id} for details.`);
   }
 
+  const { analyzePerformanceLevels, formatPerformanceReports } = await import('./check-perf.mjs');
+  const perfReports = await analyzePerformanceLevels([level.id], { dt: options.dt });
+  const perfFailures = perfReports.flatMap((report: { failures: unknown[] }) => report.failures);
+  if (perfFailures.length > 0) {
+    failures.push(`Performance check found ${perfFailures.length} failing gate${perfFailures.length === 1 ? '' : 's'}. Run npm run check:perf -- --level ${level.id} for details.`);
+  }
+
   const lines: string[] = [];
   lines.push(`${level.title} floor check`);
   lines.push(`duration ${level.duration.toFixed(1)}s; spawned kinds ${spawnedKinds.size}: ${[...spawnedKinds].sort().join(', ') || 'none'}`);
   lines.push(`event coverage missing: ${result.eventCoverage.neverFired.join(', ') || 'none'}`);
   lines.push(`target occlusion warnings: ${occlusionWarnings.length}`);
+  lines.push(`performance gate failures: ${perfFailures.length}`);
   if (failures.length) {
     lines.push('');
     lines.push('Failures:');
@@ -67,6 +75,10 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
         policy: 'perfect',
         json: false,
       }));
+    }
+    if (perfReports.length > 0) {
+      lines.push('');
+      lines.push(formatPerformanceReports(perfReports));
     }
     console.error(lines.join('\n'));
     process.exitCode = 1;

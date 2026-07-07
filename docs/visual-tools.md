@@ -2,6 +2,8 @@
 
 These tools help inspect procedural visuals when a full WebGPU playtest is not available. They use headless Chrome with SwiftShader/WebGL fallbacks where possible. Do not constrain level design around these fallbacks: the game remains WebGPU-only, and the tools own any reduced-fidelity rendering.
 
+For performance gates and the `?perf=1` real-hardware overlay, see `docs/perf-tools.md`.
+
 ## Procedural model snapshots
 
 Use model snapshots for isolated enemies, props, glyphs, or environment pieces that can be returned from a factory as a Three `Object3D`:

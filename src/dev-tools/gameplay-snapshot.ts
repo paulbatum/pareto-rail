@@ -15,6 +15,7 @@ import {
 import { WebGPURenderer, type WebGPURendererParameters } from 'three/webgpu';
 import { createEventBus } from '../events';
 import { createPost } from '../engine/post';
+import { collectPerfCounters, type PerfCounters } from '../engine/perf-counters';
 import type { Hud } from '../ui/hud';
 import { getLevelById } from '../levels';
 import type { LevelDefinition } from '../engine/types';
@@ -56,10 +57,27 @@ type OcclusionReport = {
   warnings: OcclusionTargetReport[];
 };
 
+type PerfStepOptions = {
+  dt?: number;
+  targetTime: number;
+};
+
+type PerfStepSample = PerfCounters & {
+  t: number;
+  state: string;
+  frames: number;
+  avgFrameMs: number;
+  p95FrameMs: number;
+  p99FrameMs: number;
+  maxFrameMs: number;
+  heapUsedMB: number | null;
+};
+
 type GameplaySnapshotApi = {
   ready: Promise<void>;
   capture(): Promise<{ dataUrl: string; luminance: number; fidelity: Fidelity; state: string; seed: number | null }>;
   analyzeOcclusion(options?: OcclusionOptions): Promise<OcclusionReport>;
+  stepPerformance(options: PerfStepOptions): Promise<PerfStepSample>;
   metadata(): {
     duration: number | null;
     fidelity: Fidelity;
@@ -72,6 +90,7 @@ type GameplaySnapshotApi = {
 
 type SnapshotRenderer = WebGPURenderer & {
   domElement: HTMLCanvasElement;
+  info?: { reset?: () => void };
   render(scene: Scene, camera: Camera): void;
 };
 
@@ -181,6 +200,9 @@ window.__gameplaySnapshot = {
   },
   async analyzeOcclusion(options = {}) {
     return analyzeTargetOcclusion(options);
+  },
+  async stepPerformance(options) {
+    return stepPerformance(options);
   },
   metadata() {
     return {
@@ -321,6 +343,45 @@ function advanceRuntime(update: (dt: number, elapsed: number) => void, seconds: 
     currentElapsed += step;
     update(step, currentElapsed);
   }
+}
+
+async function stepPerformance(options: PerfStepOptions): Promise<PerfStepSample> {
+  if (!scene || !camera || !renderer || !runtimeUpdate) throw new Error('Gameplay snapshot runtime is not ready');
+  const dt = readOptionPositiveNumber(options.dt, fixedDt, 'dt');
+  const targetTime = readOptionNonNegativeNumber(options.targetTime, currentElapsed, 'targetTime');
+  const frameTimes: number[] = [];
+
+  while (currentElapsed < targetTime - 0.000001 && runtimeState !== 'ended') {
+    const step = Math.min(dt, targetTime - currentElapsed);
+    const before = performance.now();
+    currentElapsed += step;
+    runtimeUpdate(step, currentElapsed);
+    setRendererFrameTime(renderer, currentElapsed, step);
+    renderer.info?.reset?.();
+    if (post) post.render();
+    else renderer.render(scene, camera);
+    frameTimes.push(performance.now() - before);
+  }
+
+  if (frameTimes.length === 0) {
+    setRendererFrameTime(renderer, currentElapsed, dt);
+    renderer.info?.reset?.();
+    if (post) post.render();
+    else renderer.render(scene, camera);
+  }
+
+  const counters = collectPerfCounters(renderer, scene);
+  return {
+    t: roundSeconds(currentElapsed),
+    state: runtimeState,
+    frames: frameTimes.length,
+    avgFrameMs: roundMillis(mean(frameTimes)),
+    p95FrameMs: roundMillis(percentile(frameTimes, 0.95)),
+    p99FrameMs: roundMillis(percentile(frameTimes, 0.99)),
+    maxFrameMs: roundMillis(max(frameTimes)),
+    heapUsedMB: readInPageHeapUsedMB(),
+    ...counters,
+  };
 }
 
 async function analyzeTargetOcclusion(options: OcclusionOptions): Promise<OcclusionReport> {
@@ -574,6 +635,36 @@ function readOptionPositiveInteger(value: number | undefined, fallback: number, 
 
 function roundSeconds(value: number) {
   return Math.round(value * 1000) / 1000;
+}
+
+function roundMillis(value: number) {
+  return Math.round(value * 1000) / 1000;
+}
+
+function mean(values: number[]) {
+  if (values.length === 0) return 0;
+  let total = 0;
+  for (const value of values) total += value;
+  return total / values.length;
+}
+
+function max(values: number[]) {
+  if (values.length === 0) return 0;
+  let result = 0;
+  for (const value of values) if (value > result) result = value;
+  return result;
+}
+
+function percentile(values: number[], p: number) {
+  if (values.length === 0) return 0;
+  values.sort((a, b) => a - b);
+  return values[Math.min(values.length - 1, Math.max(0, Math.ceil(values.length * p) - 1))];
+}
+
+function readInPageHeapUsedMB() {
+  const memory = (performance as Performance & { memory?: { usedJSHeapSize?: number } }).memory;
+  const bytes = memory?.usedJSHeapSize;
+  return Number.isFinite(bytes) ? roundMillis((bytes as number) / (1024 * 1024)) : null;
 }
 
 function roundRatio(value: number) {

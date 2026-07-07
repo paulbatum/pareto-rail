@@ -56,6 +56,9 @@ async function bootstrap() {
   audio.installGestureStart();
 
   const post = createPost(renderer, scene, camera, selectedLevel.post);
+  const perfOverlay = urlParams.get('perf') === '1'
+    ? (await import('./ui/perf-overlay')).createPerfOverlay({ renderer, scene, bus, levelId: selectedLevel.id })
+    : null;
 
   let paused = false;
   let last = performance.now();
@@ -123,10 +126,12 @@ async function bootstrap() {
 
   renderer.setAnimationLoop(() => {
     const now = performance.now();
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dtMs = now - last;
+    const dt = Math.min(0.05, dtMs / 1000);
     last = now;
     if (!paused) runtime.update(dt, now / 1000);
     post.render();
+    perfOverlay?.recordFrame(dtMs, now);
   });
 
   window.addEventListener('resize', () => {
@@ -137,6 +142,7 @@ async function bootstrap() {
   });
 
   window.addEventListener('pagehide', () => {
+    perfOverlay?.dispose();
     runtime.dispose();
     audio.dispose();
     bus.clear();

@@ -51,7 +51,7 @@ npm run check:scope -- <level-id>
 npm run check:floor -- --level <level-id>
 ```
 
-Use focused tools such as `simulate`, `snapshot:gameplay`, and `trace:audio` while investigating a specific problem, but `check:floor` is the level readiness gate.
+`check:floor` includes simulation, target occlusion, and headless performance gates. Use focused tools such as `simulate`, `snapshot:gameplay`, `trace:audio`, and `check:perf` while investigating a specific problem, but `check:floor` is the level readiness gate.
 
 ## Runner contract
 
@@ -180,3 +180,5 @@ npm run snapshot:gameplay -- --level helios --sheet --times 4,12,24,48
 ```
 
 Gameplay snapshots are immortal by default and hide projectiles by default. For options and details, see `docs/visual-tools.md`.
+
+For performance investigations, use `npm run check:perf -- --level <level-id>` for headless growth and budget gates, and add `?perf=1` in a real browser to record a hardware playtest report. See `docs/perf-tools.md`.
