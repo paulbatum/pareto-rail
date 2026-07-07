@@ -40,6 +40,19 @@ This is a default, not a law. Rezdle legitimately decomposes differently, and `c
 
 A level task should only touch `src/levels/<id>/` plus one registry line in `src/levels/index.ts`. Use `npm run check:scope -- <level-id>` to verify that boundary.
 
+## Handoff checks
+
+Before handing off a level change, run the general project checks and the level floor gate:
+
+```sh
+npm run typecheck
+npm run build
+npm run check:scope -- <level-id>
+npm run check:floor -- --level <level-id>
+```
+
+Use focused tools such as `simulate`, `snapshot:gameplay`, and `trace:audio` while investigating a specific problem, but `check:floor` is the level readiness gate.
+
 ## Runner contract
 
 Pass a `LockOnRunnerLevel` to `createLockOnRunner`:
@@ -134,7 +147,7 @@ Use the run simulator while building levels to catch mechanical issues before as
 npm run simulate -- --level <level-id>
 ```
 
-The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events. Use `npm run check:floor -- --level <level-id>` before handoff to catch floor misses such as missing beat events, missing reject coverage, too few spawned enemy kinds, or stale gallery docs.
+The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events.
 
 ## Audio and visual inspection tools
 
