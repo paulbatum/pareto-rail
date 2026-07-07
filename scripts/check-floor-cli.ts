@@ -7,6 +7,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   const options = parseArgs(argv);
   const result = await runSimulationSuite({
     level: options.level,
+    policies: ['none', 'perfect', 'imperfect', 'reject'],
     seed: options.seed,
     dt: options.dt,
     gapThreshold: options.gapThreshold,

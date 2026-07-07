@@ -18,7 +18,7 @@ Report, per run: machine-readable event log plus a summary —
 
 - **Pressure curve**: lockable targets on screen over time (per bar, if brief 01 has landed), flagging spawn-free gaps longer than a threshold and impossible moments (more simultaneous must-kill targets than volleys available).
 - **Outcome**: kills/missed/total, score, rank, run length, player-hull events under each policy.
-- **Event coverage**: which of `spawn / lock / unlock / fire / hit / kill / miss / reject / stage / volley / playerhit` never fired across the policy suite — an unexercised reaction is untested authoring.
+- **Event coverage**: which of `spawn / lock / unlock / fire / hit / kill / miss / stage / volley / playerhit` never fired across the normal policy suite — an unexercised reaction is untested authoring. Rejected releases are covered by `check:floor` and by explicit `--policy reject`, not by the default happy-path summary.
 
 ## Deliverable 2: `npm run check:floor -- --level <id>`
 

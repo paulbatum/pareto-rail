@@ -108,7 +108,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
 export async function runSimulationSuite(options: Partial<CliOptions> & { level: string }): Promise<SuiteResult> {
   installDomStubs();
   const fullOptions: CliOptions = {
-    policies: ['none', 'perfect', 'imperfect', 'reject'],
+    policies: ['none', 'perfect', 'imperfect'],
     seed: 1,
     dt: 1 / 60,
     json: false,
@@ -128,13 +128,16 @@ async function runSuite(options: CliOptions): Promise<SuiteResult> {
   }
   const fired = new Set<keyof GameEvents>();
   for (const run of runs) for (const event of run.events) fired.add(event.type);
+  const coverageTypes = options.policies.includes('reject')
+    ? EVENT_TYPES
+    : EVENT_TYPES.filter((type) => type !== 'reject');
   return {
     level: runs[0].level,
     seed: options.seed,
     runs,
     eventCoverage: {
-      fired: EVENT_TYPES.filter((type) => fired.has(type)),
-      neverFired: EVENT_TYPES.filter((type) => !fired.has(type)),
+      fired: coverageTypes.filter((type) => fired.has(type)),
+      neverFired: coverageTypes.filter((type) => !fired.has(type)),
     },
   };
 }
@@ -483,7 +486,7 @@ function parseArgs(argv: string[]): CliOptions {
   if (!Number.isFinite(dt) || dt <= 0) throw new Error('--dt must be positive');
   if (!Number.isFinite(gapThreshold) || gapThreshold < 0) throw new Error('--gap-threshold must be non-negative');
   const policies = policy === 'suite'
-    ? ['none', 'perfect', 'imperfect', 'reject'] as SimPolicy[]
+    ? ['none', 'perfect', 'imperfect'] as SimPolicy[]
     : policy.split(',').map((item) => item.trim()).filter(Boolean) as SimPolicy[];
   for (const item of policies) if (!['none', 'perfect', 'imperfect', 'reject'].includes(item)) throw new Error(`Unknown policy: ${item}`);
   return { level, policies, seed, dt, json, write, suite: policy === 'suite', gapThreshold };
