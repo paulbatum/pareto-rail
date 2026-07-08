@@ -26,8 +26,6 @@ export type ShotDelayContext = {
   baselineTravelTime: number;
   baselineTravelTimes: number[];
   thirtysecondSeconds: number;
-  /** Rail-speed multiplier at release; above 1 tightens the snap cap. */
-  speedFactor?: number;
 };
 
 export type ActionSfxQuantizationSettings = {
@@ -98,7 +96,7 @@ function gridRampDelayForShot(context: ShotDelayContext) {
 
 function rawGridRampHitTimes(context: ShotDelayContext) {
   const times: number[] = [];
-  const ramp = gridRampForTempo(context.thirtysecondSeconds, context.speedFactor ?? 1);
+  const ramp = gridRampForTempo(context.thirtysecondSeconds);
   for (let index = 0; index < context.volleySize; index += 1) {
     const travelTime = context.baselineTravelTimes[index] ?? context.baselineTravelTime;
     const gridThirtyseconds = ramp[Math.min(index, ramp.length - 1)] ?? 32;
@@ -108,12 +106,9 @@ function rawGridRampHitTimes(context: ShotDelayContext) {
   return times;
 }
 
-function gridRampForTempo(thirtysecondSeconds: number, speedFactor: number) {
-  // maxGridSeconds is the budget at baseline speed; faster sections cover more
-  // world distance per second, so the same felt delay allows fewer seconds.
-  const maxGridSeconds = shotDelaySettings.maxGridSeconds / Math.max(1, speedFactor);
+function gridRampForTempo(thirtysecondSeconds: number) {
   let ramp = [...GRID_RAMP_THIRTYSECONDS];
-  while (ramp[ramp.length - 1] * thirtysecondSeconds > maxGridSeconds) {
+  while (ramp[ramp.length - 1] * thirtysecondSeconds > shotDelaySettings.maxGridSeconds) {
     if (ramp.every((gridThirtyseconds) => gridThirtyseconds === 1)) break;
     ramp = [1, ...ramp.slice(0, -1)];
   }
