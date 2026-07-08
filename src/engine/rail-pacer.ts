@@ -109,7 +109,7 @@ export function createRailPacer(options: RailPacerOptions) {
 export function resolveRailPacing(input: Omit<RailPacingResolved, 'exitAheadUnits'> & { exitAheadUnits?: number }): RailPacingResolved {
   const resolved = {
     ...input,
-    exitAheadUnits: input.exitAheadUnits ?? input.spawnAheadUnits,
+    exitAheadUnits: input.exitAheadUnits ?? input.engageAheadUnits,
   };
   for (const [key, value] of Object.entries(resolved)) {
     if (!Number.isFinite(value) || value < 0) throw new Error(`Rail pacing ${key} must be a non-negative number`);

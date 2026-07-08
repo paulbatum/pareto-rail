@@ -175,14 +175,16 @@ export const rushGameplay: LockOnRunnerLevel<RushEnemyKind, RushSpawnData> = {
       const exit = paced.phase === 'done' ? 1 : paced.phaseProgress;
       const side = data.lane >= 0 ? 1 : -1;
       if (enemy.kind === 'dart') {
-        tempOffset.x += side * exit * exit * 11;
+        tempOffset.x += side * exit * exit * 16;
         tempOffset.y += Math.sin(exit * Math.PI) * 2.4;
+        tempOffset.z -= exit * 6;
       } else if (enemy.kind === 'heavy') {
         tempOffset.y -= exit * exit * 3.2;
         tempOffset.z -= exit * 16;
       } else {
+        tempOffset.x += side * exit * exit * 5;
         tempOffset.y += Math.sin(exit * Math.PI) * 1.4;
-        tempOffset.z += exit * 4;
+        tempOffset.z -= exit * 24;
       }
     }
 
