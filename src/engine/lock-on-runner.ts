@@ -28,6 +28,7 @@ import { scoreForKill as defaultScoreForKill, rankForRun as defaultRankForRun, t
 const RETICLE_DISTANCE = 24;
 const LOCK_RADIUS_NDC = 0.085;
 const PROJECTILE_SPEED = 82;
+const PROJECTILE_MAX_SPEED = PROJECTILE_SPEED * 3;
 const PROJECTILE_HIT_RADIUS = 1.15;
 const WORD_DISTANCE = 20;
 const START_WORD = 'START!';
@@ -37,6 +38,15 @@ const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 const REPEAT_LOCK_DELAY = 0.18;
 const EDGE_LOOK_EXPONENT = 1.35;
 const EDGE_LOOK_RESPONSE = 9;
+
+// Shot delays quantize each impact to the music, so a projectile's planned
+// arrival is a contract: re-solving speed from the live distance every frame
+// keeps the appointment even when the target moves after release (fast levels
+// pace enemies along the rail). Overdue or unreachable shots close at the
+// speed ceiling instead of drifting past their beat indefinitely.
+function impactContractSpeed(distance: number, remainingSeconds: number) {
+  return Math.min(PROJECTILE_MAX_SPEED, distance / Math.max(0.05, remainingSeconds));
+}
 
 declare global {
   interface Window {
@@ -83,7 +93,7 @@ type PendingShot = {
   volleySize: number;
   fireAt: number;
   origin: Vector3;
-  travelDelay: number;
+  impactAt: number;
   volleyId?: number;
   indexInVolley?: number;
 };
@@ -95,6 +105,7 @@ type Projectile = {
   mesh: Object3D;
   velocity: Vector3;
   speed: number;
+  impactAt: number;
   volleyId?: number;
   indexInVolley?: number;
 };
@@ -748,7 +759,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         volleySize: releasedEnemies.length,
         fireAt: worldTime + shotDelay.releaseDelay,
         origin: origin.clone(),
-        travelDelay: shotDelay.travelDelay,
+        impactAt: worldTime + shotDelay.releaseDelay + (baselineTravelTimes[index] ?? 0) + shotDelay.travelDelay,
         volleyId,
         indexInVolley: volleyId === undefined ? undefined : index,
       });
@@ -864,8 +875,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       scene.add(mesh);
       const toTarget = enemy.mesh.position.clone().sub(shot.origin);
       const distance = toTarget.length();
-      const baselineTravelTime = distance / PROJECTILE_SPEED;
-      const speed = distance / Math.max(0.001, baselineTravelTime + shot.travelDelay);
+      const speed = impactContractSpeed(distance, shot.impactAt - worldTime);
       projectiles.set(shot.projectileId, {
         id: shot.projectileId,
         enemyId: shot.enemyId,
@@ -873,6 +883,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         mesh,
         velocity: toTarget.normalize().multiplyScalar(speed),
         speed,
+        impactAt: shot.impactAt,
         volleyId: shot.volleyId,
         indexInVolley: shot.indexInVolley,
       });
@@ -905,6 +916,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         continue;
       }
 
+      projectile.speed = impactContractSpeed(distance, projectile.impactAt - worldTime);
       const desired = toTarget.normalize().multiplyScalar(projectile.speed);
       projectile.velocity.lerp(desired, Math.min(1, dt * 8));
       projectile.mesh.position.addScaledVector(projectile.velocity, dt);
