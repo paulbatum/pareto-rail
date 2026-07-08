@@ -83,6 +83,27 @@ function totalDelayForShot(context: ShotDelayContext) {
   return delayStepForIndex(Math.max(0, context.index)) * shotDelaySettings.gapThirtyseconds * context.thirtysecondSeconds;
 }
 
+/**
+ * Volley impact timing composes two deliberately separate rules:
+ *
+ * 1. Grid ramp (`rawGridRampHitTimes`): each shot's natural arrival is
+ *    ceil-snapped — never earlier — to a per-index grid that coarsens
+ *    (32nd, 16th, ... bar), so later shots land on progressively stronger
+ *    beats.
+ * 2. Gap floor (`enforceIncreasingGaps`): consecutive impacts must fan out,
+ *    each gap at least the previous gap plus a growth term. The grids are
+ *    nested, so without this a release just before a strong beat clumps
+ *    several shots onto the same line.
+ *
+ * The floor pushes by raw offsets, which lands a pushed hit off its own
+ * coarse grid — but every quantity here is a 32nd-note multiple, so pushed
+ * hits stay on the 32nd lattice: strong-beat placement degrades to
+ * weak-beat placement, never off the music. That degradation is
+ * load-bearing. Re-snapping floored hits to their own coarse grid (the
+ * "clean" unification) lets each snap-up widen the next required gap and
+ * roughly triples the resolution time of a clumped volley, such as a
+ * six-lock word release.
+ */
 function gridRampDelayForShot(context: ShotDelayContext) {
   const hitTimes = rawGridRampHitTimes(context);
   enforceIncreasingGaps(
