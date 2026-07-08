@@ -70,11 +70,10 @@ const RUSH_PACER_DEFAULTS = resolveRailPacing({
   enterSeconds: 0.72,
   readableFor: RUSH_TIME.beats(2),
   exitSeconds: 0.72,
-  exitAheadUnits: RUSH_TUNING.enemies.engageAheadUnits * 0.72,
 });
 
 const SHORT_SURGE_ENGAGEMENT = { enterSeconds: 0.58, readableFor: RUSH_TIME.beats(1.25), exitSeconds: 0.58 } as const;
-const HEAVY_ENGAGEMENT = { readableFor: RUSH_TIME.beats(2.6), exitAheadUnits: RUSH_TUNING.enemies.engageAheadUnits * 0.5 } as const;
+const HEAVY_ENGAGEMENT = { readableFor: RUSH_TIME.beats(2.6) } as const;
 const TERMINAL_HEAVY_ENGAGEMENT = { ...HEAVY_ENGAGEMENT, enterSeconds: 0.58, readableFor: RUSH_TIME.beats(1.6), exitSeconds: 0.58 } as const;
 
 export const rushPacer = createRailPacer({
@@ -130,6 +129,7 @@ function buildTimeline(): Array<LockOnSpawnEntry<RushEnemyKind, RushSpawnData>> 
 
 export const RUSH_SPAWN_TIMELINE = buildTimeline();
 
+const HOVER_APPROACH_UNITS = 10;
 const tempOffset = new Vector3();
 
 export const rushGameplay: LockOnRunnerLevel<RushEnemyKind, RushSpawnData> = {
@@ -172,25 +172,26 @@ export const rushGameplay: LockOnRunnerLevel<RushEnemyKind, RushSpawnData> = {
       tempOffset.set(laneX * 0.75 + Math.sin(age * 1.8 + data.phase) * 0.7, rowY + sink, Math.cos(age * 2.1) * 0.7);
     }
 
-    if (paced.phase === 'hold') {
-      const settle = paced.phaseProgress * paced.phaseProgress * (3 - 2 * paced.phaseProgress);
-      tempOffset.z -= settle * 3.5;
-    } else if (paced.phase === 'exit' || paced.phase === 'done') {
+    const approachSpan = data.engagement.enterSeconds + data.engagement.readableFor;
+    const hoverApproach = MathUtils.clamp(age / Math.max(0.001, approachSpan), 0, 1) * HOVER_APPROACH_UNITS;
+    tempOffset.z -= hoverApproach;
+
+    if (paced.phase === 'exit' || paced.phase === 'done') {
       const exit = paced.phase === 'done' ? 1 : paced.phaseProgress;
       const peel = exit * exit * (3 - 2 * exit);
       const side = data.lane >= 0 ? 1 : -1;
       if (enemy.kind === 'dart') {
-        tempOffset.x += side * peel * 42;
-        tempOffset.y += Math.sin(peel * Math.PI) * 3.2;
-        tempOffset.z -= 3.5 + peel * 10;
+        tempOffset.x += side * peel * 56;
+        tempOffset.y += peel * 8 + Math.sin(peel * Math.PI) * 2.2;
+        tempOffset.z -= peel * 2;
       } else if (enemy.kind === 'heavy') {
-        tempOffset.x += side * peel * 12;
-        tempOffset.y -= peel * 22;
-        tempOffset.z -= 3.5 + peel * 10;
-      } else {
         tempOffset.x += side * peel * 30;
-        tempOffset.y += peel * 10;
-        tempOffset.z -= 3.5 + peel * 12;
+        tempOffset.y += peel * 18;
+        tempOffset.z -= peel * 2;
+      } else {
+        tempOffset.x += side * peel * 44;
+        tempOffset.y += peel * 14;
+        tempOffset.z -= peel * 2;
       }
     }
 
