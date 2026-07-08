@@ -1,17 +1,43 @@
 import type { EventBus } from '../../events';
 import { createBeatLevelAudio, playNoiseHit, playOscillatorVoice } from '../../engine/audio-kit';
 import { midiToFreq } from '../../engine/music';
+import { createScore } from '../../engine/score';
 import { RUSH_TUNING, RUSH_TIME } from './tuning';
 
 const STEP_SECONDS = RUSH_TIME.stepSeconds;
 const BASS_PATTERN = [34, 34, 41, 34, 34, 46, 41, 34] as const;
+const RUSH_CHORDS = [
+  { bass: 34, arp: [58, 61, 65, 68] },
+  { bass: 41, arp: [58, 63, 65, 70] },
+  { bass: 46, arp: [58, 61, 65, 70] },
+  { bass: 41, arp: [56, 61, 65, 68] },
+] as const;
+const HIT_LANE = [
+  0, 1, 2, 4, 3, 2, 5, 4,
+  1, 3, 2, 6, 5, 3, 4, 7,
+  6, 4, 5, 7, 3, 5, 2, 4,
+  1, 2, 0, 3, 4, 6, 5, 2,
+] as const;
 
 export function createAudio(bus: EventBus) {
+  // Like crystal-corridor's kill lane, Rush has a hidden two-bar melody. Each
+  // projectile hit opens the next grid note, so bursts turn combat into a line
+  // instead of a stack of identical pings.
+  const score = createScore<typeof RUSH_CHORDS[number], 0>({
+    bpm: RUSH_TUNING.bpm,
+    stepsPerBar: RUSH_TUNING.stepsPerBar,
+    chords: RUSH_CHORDS,
+    barsPerChord: 1,
+    sections: [{ index: 0, fromBar: 0 }],
+    killLanes: { 0: HIT_LANE },
+  });
+
   const runtime = createBeatLevelAudio({
     bus,
     bpm: RUSH_TUNING.bpm,
     stepSeconds: STEP_SECONDS,
     stepsPerBar: RUSH_TUNING.stepsPerBar,
+    score,
     scheduleAhead: 0.12,
     schedulerMs: 20,
     volumeScale: 0.82,
@@ -59,11 +85,18 @@ export function createAudio(bus: EventBus) {
     zap(ctx, mix.sfx, ctx.currentTime, 170, 0.1, 0.11 + volleySize * 0.01);
     mix.duckAt(ctx.currentTime, 0.82, 0.08);
   });
-  bus.on('hit', ({ lethal }) => {
+  bus.on('hit', ({ lethal, indexInVolley, hitStageIndex, hitStageCount }) => {
     const ctx = runtime.context();
     const mix = runtime.mix();
     if (!ctx || !mix) return;
-    tick(ctx, mix.sfx, ctx.currentTime, lethal ? 0.13 : 0.07, lethal ? 0.06 : 0.035, lethal ? 3200 : 5200);
+    const note = score.nextKill(ctx.currentTime, 0);
+    const stageLift = hitStageCount > 1 ? hitStageIndex / Math.max(1, hitStageCount - 1) : 0;
+    hitMelody(ctx, mix.sfx, mix.delaySend, note.time, note.midi + Math.round(stageLift) * 12, {
+      velocity: lethal ? 0.16 : 0.105,
+      duration: lethal ? 0.24 : 0.16,
+      volleyIndex: indexInVolley ?? 0,
+    });
+    tick(ctx, mix.sfx, note.time + 0.012, lethal ? 0.09 : 0.045, lethal ? 0.055 : 0.03, lethal ? 3200 : 5200);
   });
   bus.on('kill', () => {
     const ctx = runtime.context();
@@ -136,6 +169,39 @@ function tick(context: AudioContext, destination: AudioNode, time: number, veloc
   const data = buffer.getChannelData(0);
   for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
   playNoiseHit({ context, buffer, time, velocity, decay, filterType: 'highpass', frequency, destination, offset: 0 });
+}
+
+function hitMelody(
+  context: AudioContext,
+  destination: AudioNode,
+  delaySend: AudioNode | undefined,
+  time: number,
+  midi: number,
+  options: { velocity: number; duration: number; volleyIndex: number },
+) {
+  const accent = Math.min(0.05, options.volleyIndex * 0.012);
+  playOscillatorVoice({
+    context,
+    time,
+    stopTime: time + options.duration + 0.04,
+    oscillatorType: 'triangle',
+    frequency: midiToFreq(midi + (options.volleyIndex >= 3 ? 12 : 0)),
+    gainAutomation: [
+      { type: 'set', value: options.velocity + accent, time },
+      { type: 'exponentialRamp', value: 0.001, time: time + options.duration },
+    ],
+    filter: {
+      type: 'lowpass',
+      frequency: 4200,
+      Q: 0.6,
+      frequencyAutomation: [
+        { type: 'set', value: 5200 + options.volleyIndex * 220, time },
+        { type: 'exponentialRamp', value: 1800, time: time + options.duration },
+      ],
+    },
+    destination,
+    sends: delaySend ? [{ destination: delaySend, gain: 0.55 }] : undefined,
+  });
 }
 
 function zap(context: AudioContext, destination: AudioNode, time: number, frequency: number, velocity: number, duration: number) {
