@@ -72,15 +72,15 @@ For lockable enemy shots and hazards, prefer `steerHomingShot`, `shotBehindCamer
 
 ## Rail pacing for high-speed combat
 
-Use `createRailPacer` from `src/engine/rail-pacer.ts` when the camera is moving so fast that a fixed `railAnchor(lead)` target crosses the useful lock-on view too quickly. Fixed anchors remain the right choice for slower levels, set pieces, bosses, and choreographed formations. Rail pacing is only for ordinary targets that should race with the player before leaving.
+A fixed-anchor target authored with `railAnchor(lead)` means one thing: the camera overtakes the target `lead` seconds after it spawns, so `lead` is the target's time on screen. That authoring works at Crystal- or Helios-class speeds (leads around 4–5 s) because the camera covers less ground during the lead than the level can show. When the camera is fast enough that a fixed anchor would sit beyond the fog at spawn, the window collapses and no lead value can fix it.
 
-A paced target is authored as a distance ahead of the camera over three phases:
+`createRailPacer` from `src/engine/rail-pacer.ts` keeps the same authoring and compensates for speed automatically. A lead still means "overtaken `lead` seconds after spawn"; the pacer checks how far ahead the fixed anchor would be at spawn, and if that exceeds the level's visibility budget (`spawnAheadUnits`, usually just inside the fog wall), it scales the target's distance-ahead profile down so the target spawns exactly at the visibility edge and closes on the camera proportionally. The overtake time is unchanged, so the on-screen window equals the lead by construction. When the fixed anchor fits, the scale is 1 and the result is identical to `railAnchor(lead)` — so leads are authored in the same ballpark of seconds regardless of level speed, and a fast level just runs slightly shorter values.
 
-1. **Enter**: it appears near the fog edge and eases inward toward the engagement distance. This should read as incoming motion, not a teleport followed by a stop.
-2. **Hold**: it stays at the engagement distance for `readableFor` seconds. `readableFor` is the contract and is a minimum hold duration, not an estimate of total time on screen.
-3. **Exit**: it breaks away. The pacer can move it ahead or back along the rail, and the level should add its own lateral or vertical peel so the exit looks intentional.
+The compensated target has real velocity along the rail: it races with the player, closes at a fraction of camera speed, surges when the camera surges, and exits by being overtaken — the same exit fixed-anchor targets have. Do not add hover, hold, or scripted break-away phases on top; being passed is the natural exit at any speed.
 
-The helper returns `anchorU`, `phase`, `phaseProgress`, and `exitCompleteTime`. Feed `anchorU` into the same `offsetFromRail` path used by fixed anchors. Apply the level's existing miss grace after `exitCompleteTime`; do not count eased enter time as satisfying a `readableFor` contract.
+Create one pacer per level with `curve`, `duration`, the level's `runProgress` easing, `spawnAheadUnits`, and `defaultLeadSeconds`. Resolve each spawn's lead at timeline-build time with `pacer.resolve(entryTime, leadSeconds?)` and store the returned `RailLead` on the spawn's `data.engagement`; in `updateEnemy`, feed `pacer.sample(entryTime, runTime, data.engagement).anchorU` into the same `offsetFromRail` path used by fixed anchors, and count the target as missed after `passTime` plus the level's miss grace. The `RailLead.windowSeconds` field (the lead clamped to the rail end) is what the engagement report reads as the contract.
+
+Fixed anchors remain the right choice for set pieces, bosses, and choreographed formations, and for whole levels at moderate speeds.
 
 Example diagnostics:
 
@@ -89,7 +89,7 @@ npm run simulate -- --level rush --engagement
 npm run simulate -- --level crystal --engagement
 ```
 
-The engagement report runs a no-fire, immortal simulation and measures the real camera projection each frame. For paced entries with a `data.engagement.readableFor` contract, `OK` means the target was lockable from hold start onward for at least `readableFor`, with a small global tolerance. Entries with no contract are reported as measured-only, which is useful for checking fixed-anchor levels without changing their source.
+The engagement report runs a no-fire, immortal simulation and measures the real camera projection each frame. For entries with a `data.engagement.windowSeconds` contract, `OK` means the target was lockable for at least the window, minus a checker-owned tolerance (a small flat term plus a fraction of the window covering the moment near the pass where the target leaves the lock frustum). Entries with no contract are reported as measured-only, which is useful for checking fixed-anchor levels without changing their source. Pressure numbers under the no-fire policy overstate stacking — nothing dies — so compare them against a known-good level (Helios) rather than reading them as absolutes.
 
 ## Visual factories
 

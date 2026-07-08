@@ -191,11 +191,13 @@ export const RUSH_TUNING = {
     color: 0x02040a,
   },
   enemies: {
-    // World units ahead of the camera where paced targets hold for their authored lock-on window.
-    engageAheadUnits: 34,
+    // Seconds between spawn and the camera overtaking a target; same authoring scale as Helios-style leads (~4.4s), kept a little shorter to match the speed feel.
+    defaultLeadSeconds: 3.4,
+    // Fraction of the opaque fog distance where targets first become visible; the rail pacer compresses approaches to fit inside it.
+    spawnAheadFogFraction: 0.92,
     // World units from rail center for enemy lane spread; larger values reduce target overlap.
     laneRadiusUnits: 4.3,
-    // Seconds after a paced exit completes before a surviving target is counted as missed.
+    // Seconds after the camera overtakes a target before a survivor is counted as missed.
     missGraceSeconds: 0.34,
   },
 } as const;

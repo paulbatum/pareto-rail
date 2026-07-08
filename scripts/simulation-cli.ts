@@ -78,19 +78,7 @@ type SuiteResult = {
 };
 
 type EngagementContract = {
-  readableFor: number;
-  enterSeconds: number;
-  exitSeconds: number;
-  holdStart: number;
-  holdEnd: number;
-  exitComplete: number;
-};
-
-type EngagementPhaseSeconds = {
-  enter: number;
-  hold: number;
-  exit: number;
-  afterExit: number;
+  windowSeconds: number;
 };
 
 type EngagementTargetReport = {
@@ -102,17 +90,16 @@ type EngagementTargetReport = {
   firstLockableAt?: number;
   lastLockableAt?: number;
   lockableSeconds: number;
-  phaseSeconds: EngagementPhaseSeconds;
   contract?: {
-    readableFor: number;
-    measuredFromHoldStart: number;
+    windowSeconds: number;
+    measuredLockable: number;
     result: 'OK' | 'FAIL';
     shortBy?: number;
   };
 };
 
 type EngagementRunReport = {
-  tolerance: number;
+  tolerance: { flatSeconds: number; windowFraction: number };
   targets: EngagementTargetReport[];
   summary: {
     total: number;
@@ -132,8 +119,6 @@ type EngagementAccumulator = {
   firstLockableAt?: number;
   lastLockableAt?: number;
   lockableSeconds: number;
-  holdLockableSeconds: number;
-  phaseSeconds: EngagementPhaseSeconds;
 };
 
 const EVENT_TYPES = [
@@ -561,8 +546,6 @@ function createEngagementAccumulator(enemyId: number, timelineIndex: number, ent
     label: labelForEntry(entry),
     contract,
     lockableSeconds: 0,
-    holdLockableSeconds: 0,
-    phaseSeconds: { enter: 0, hold: 0, exit: 0, afterExit: 0 },
   };
 }
 
@@ -571,15 +554,9 @@ function readEngagementContract(entry: LockOnSpawnEntry<string, unknown>): Engag
   if (!data || typeof data !== 'object') return undefined;
   const engagement = (data as { engagement?: unknown }).engagement;
   if (!engagement || typeof engagement !== 'object') return undefined;
-  const source = engagement as Partial<Record<'readableFor' | 'enterSeconds' | 'exitSeconds', unknown>>;
-  const readableFor = Number(source.readableFor);
-  const enterSeconds = Number(source.enterSeconds);
-  const exitSeconds = Number(source.exitSeconds ?? 0);
-  if (!Number.isFinite(readableFor) || !Number.isFinite(enterSeconds) || !Number.isFinite(exitSeconds)) return undefined;
-  const holdStart = entry.time + enterSeconds;
-  const holdEnd = holdStart + readableFor;
-  const exitComplete = holdEnd + exitSeconds;
-  return { readableFor, enterSeconds, exitSeconds, holdStart, holdEnd, exitComplete };
+  const windowSeconds = Number((engagement as { windowSeconds?: unknown }).windowSeconds);
+  if (!Number.isFinite(windowSeconds) || windowSeconds <= 0) return undefined;
+  return { windowSeconds };
 }
 
 function labelForEntry(entry: LockOnSpawnEntry<string, unknown>) {
@@ -614,32 +591,26 @@ function sampleEngagement(
     accumulator.firstLockableAt ??= sampleTime;
     accumulator.lastLockableAt = sampleTime;
     accumulator.lockableSeconds += dt;
-
-    const contract = accumulator.contract;
-    if (!contract) continue;
-    if (time < contract.holdStart) accumulator.phaseSeconds.enter += dt;
-    else if (time < contract.holdEnd) {
-      accumulator.phaseSeconds.hold += dt;
-      accumulator.holdLockableSeconds += dt;
-    } else if (time < contract.exitComplete) {
-      accumulator.phaseSeconds.exit += dt;
-      accumulator.holdLockableSeconds += dt;
-    } else {
-      accumulator.phaseSeconds.afterExit += dt;
-      accumulator.holdLockableSeconds += dt;
-    }
   }
 }
 
-const ENGAGEMENT_TOLERANCE_SECONDS = 0.08;
+const ENGAGEMENT_TOLERANCE_FLAT_SECONDS = 0.08;
+// A target that overtakes (or is overtaken by) the camera leaves the lock frustum
+// shortly before the pass; the clipped time scales with the window, bounded by
+// lateral offset over spawn distance. 15% covers the widest lanes with margin.
+const ENGAGEMENT_TOLERANCE_WINDOW_FRACTION = 0.15;
+
+function engagementTolerance(windowSeconds: number) {
+  return ENGAGEMENT_TOLERANCE_FLAT_SECONDS + ENGAGEMENT_TOLERANCE_WINDOW_FRACTION * windowSeconds;
+}
 
 function finalizeEngagementReport(accumulators: Map<number, EngagementAccumulator>): EngagementRunReport {
   const targets = [...accumulators.values()]
     .sort((a, b) => a.timelineIndex - b.timelineIndex)
     .map((accumulator): EngagementTargetReport => {
       const contract = accumulator.contract;
-      const measuredFromHoldStart = round(accumulator.holdLockableSeconds);
-      const result = contract && measuredFromHoldStart + ENGAGEMENT_TOLERANCE_SECONDS >= contract.readableFor ? 'OK' : 'FAIL';
+      const measuredLockable = round(accumulator.lockableSeconds);
+      const result = contract && measuredLockable + engagementTolerance(contract.windowSeconds) >= contract.windowSeconds ? 'OK' : 'FAIL';
       return {
         enemyId: accumulator.enemyId,
         timelineIndex: accumulator.timelineIndex,
@@ -648,25 +619,19 @@ function finalizeEngagementReport(accumulators: Map<number, EngagementAccumulato
         label: accumulator.label,
         firstLockableAt: accumulator.firstLockableAt,
         lastLockableAt: accumulator.lastLockableAt,
-        lockableSeconds: round(accumulator.lockableSeconds),
-        phaseSeconds: {
-          enter: round(accumulator.phaseSeconds.enter),
-          hold: round(accumulator.phaseSeconds.hold),
-          exit: round(accumulator.phaseSeconds.exit),
-          afterExit: round(accumulator.phaseSeconds.afterExit),
-        },
+        lockableSeconds: measuredLockable,
         contract: contract ? {
-          readableFor: round(contract.readableFor),
-          measuredFromHoldStart,
+          windowSeconds: round(contract.windowSeconds),
+          measuredLockable,
           result,
-          shortBy: result === 'FAIL' ? round(Math.max(0, contract.readableFor - measuredFromHoldStart)) : undefined,
+          shortBy: result === 'FAIL' ? round(Math.max(0, contract.windowSeconds - measuredLockable)) : undefined,
         } : undefined,
       };
     });
   const withContracts = targets.filter((target) => target.contract);
   const failed = withContracts.filter((target) => target.contract?.result === 'FAIL');
   return {
-    tolerance: ENGAGEMENT_TOLERANCE_SECONDS,
+    tolerance: { flatSeconds: ENGAGEMENT_TOLERANCE_FLAT_SECONDS, windowFraction: ENGAGEMENT_TOLERANCE_WINDOW_FRACTION },
     targets,
     summary: {
       total: targets.length,
@@ -800,18 +765,15 @@ function formatEngagementReport(result: SuiteResult) {
     const impossible = noneRun.pressure.impossibleMoments.length;
     lines.push(`pressure: peak ${Math.max(0, ...noneRun.pressure.samples.map((sample) => sample.count))}, impossible moments ${impossible}`);
   }
-  lines.push(`contracts: ${report.summary.passed}/${report.summary.withContracts} passed, ${report.summary.failed} failed, ${report.summary.measuredOnly} measured-only, tolerance ${report.tolerance.toFixed(2)}s`);
+  lines.push(`contracts: ${report.summary.passed}/${report.summary.withContracts} passed, ${report.summary.failed} failed, ${report.summary.measuredOnly} measured-only, tolerance ${report.tolerance.flatSeconds.toFixed(2)}s + ${Math.round(report.tolerance.windowFraction * 100)}% of window`);
   for (const target of report.targets) {
     lines.push(``);
     lines.push(`${result.level.id} ${target.time.toFixed(1)}s ${target.label}`);
-    if (target.contract) lines.push(`  contract: readableFor=${target.contract.readableFor.toFixed(2)}s (hold)`);
+    if (target.contract) lines.push(`  contract: window=${target.contract.windowSeconds.toFixed(2)}s (lead)`);
     else lines.push(`  contract: none`);
     const first = target.firstLockableAt === undefined ? 'never' : `${target.firstLockableAt.toFixed(2)}s`;
     const last = target.lastLockableAt === undefined ? 'never' : `${target.lastLockableAt.toFixed(2)}s`;
-    const phase = target.contract
-      ? ` (enter ${target.phaseSeconds.enter.toFixed(2)}s + hold ${target.phaseSeconds.hold.toFixed(2)}s + exit ${target.phaseSeconds.exit.toFixed(2)}s + grace ${target.phaseSeconds.afterExit.toFixed(2)}s)`
-      : '';
-    lines.push(`  measured lockable: ${target.lockableSeconds.toFixed(2)}s${phase}; first ${first}, last ${last}`);
+    lines.push(`  measured lockable: ${target.lockableSeconds.toFixed(2)}s; first ${first}, last ${last}`);
     if (target.contract) {
       const suffix = target.contract.result === 'FAIL' ? `, short by ${(target.contract.shortBy ?? 0).toFixed(2)}s` : '';
       lines.push(`  result: ${target.contract.result}${suffix}`);

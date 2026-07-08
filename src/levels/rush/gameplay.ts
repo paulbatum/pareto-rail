@@ -1,6 +1,6 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from 'three';
 import type { LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
-import { createRailPacer, resolveRailPacing, type RailPacingOverrides, type RailPacingResolved } from '../../engine/rail-pacer';
+import { createRailPacer, type RailLead } from '../../engine/rail-pacer';
 import { createSpeedProfile } from '../../engine/speed-profile';
 import { offsetFromRail } from '../../engine/rail';
 import { RUSH_RUN_DURATION, RUSH_TIME, RUSH_TUNING } from './tuning';
@@ -12,7 +12,7 @@ export type RushEnemyKind = 'pod' | 'dart' | 'heavy';
 export type RushEnemyMotion = 'gate' | 'strafe' | 'sink';
 
 export type RushSpawnData = {
-  engagement: RailPacingResolved;
+  engagement: RailLead;
   lane: number;
   row: number;
   phase: number;
@@ -59,44 +59,39 @@ type RushWave = {
   lanes: readonly number[];
   row?: number;
   stepEvery?: number;
-  engagement?: RailPacingOverrides;
+  leadSeconds?: number;
   radiusUnits?: number;
   hitPoints?: number;
 };
 
-const RUSH_PACER_DEFAULTS = resolveRailPacing({
-  spawnAheadUnits: RUSH_TUNING.fog.farUnits * 0.92,
-  engageAheadUnits: RUSH_TUNING.enemies.engageAheadUnits,
-  enterSeconds: 0.72,
-  readableFor: RUSH_TIME.beats(2),
-  exitSeconds: 0.72,
-});
-
-const SHORT_SURGE_ENGAGEMENT = { enterSeconds: 0.58, readableFor: RUSH_TIME.beats(1.25), exitSeconds: 0.58 } as const;
-const HEAVY_ENGAGEMENT = { readableFor: RUSH_TIME.beats(2.6) } as const;
-const TERMINAL_HEAVY_ENGAGEMENT = { ...HEAVY_ENGAGEMENT, enterSeconds: 0.58, readableFor: RUSH_TIME.beats(1.6), exitSeconds: 0.58 } as const;
+// Leads read like Helios's (cruise ~4.4s): the camera overtakes the target this
+// many seconds after it spawns. Surge waves are deliberately brisker.
+const SURGE_LEAD_SECONDS = 2.4;
+const HEAVY_LEAD_SECONDS = 4.2;
+const TERMINAL_HEAVY_LEAD_SECONDS = 2.8;
 
 export const rushPacer = createRailPacer({
   curve: createRushRail(),
   duration: RUSH_RUN_DURATION,
   runProgress: rushRunProgress,
-  defaults: RUSH_PACER_DEFAULTS,
+  spawnAheadUnits: RUSH_TUNING.fog.farUnits * RUSH_TUNING.enemies.spawnAheadFogFraction,
+  defaultLeadSeconds: RUSH_TUNING.enemies.defaultLeadSeconds,
 });
 
 const WAVES: readonly RushWave[] = [
   { bar: 1, kind: 'pod', motion: 'gate', lanes: [-1, 0, 1], row: 0, stepEvery: 2 },
   { bar: 2, beat: 2, kind: 'dart', motion: 'strafe', lanes: [-2, -1, 1, 2], row: 0, stepEvery: 1 },
   { bar: 4, kind: 'pod', motion: 'gate', lanes: [-2, 0, 2], row: 1, stepEvery: 2 },
-  { bar: 5, beat: 2, kind: 'dart', motion: 'strafe', lanes: [2, 1, -1, -2], row: -1, stepEvery: 1, engagement: SHORT_SURGE_ENGAGEMENT },
-  { bar: 7, kind: 'heavy', motion: 'sink', lanes: [-1, 1], row: 0, stepEvery: 3, hitPoints: 2, engagement: HEAVY_ENGAGEMENT, radiusUnits: 4.9 },
+  { bar: 5, beat: 2, kind: 'dart', motion: 'strafe', lanes: [2, 1, -1, -2], row: -1, stepEvery: 1, leadSeconds: SURGE_LEAD_SECONDS },
+  { bar: 7, kind: 'heavy', motion: 'sink', lanes: [-1, 1], row: 0, stepEvery: 3, hitPoints: 2, leadSeconds: HEAVY_LEAD_SECONDS, radiusUnits: 4.9 },
   { bar: 8, beat: 2, kind: 'pod', motion: 'gate', lanes: [-2, -1, 0, 1, 2], row: 1, stepEvery: 1 },
   { bar: 10, kind: 'dart', motion: 'strafe', lanes: [-2, 2, -1, 1, 0], row: -1, stepEvery: 1 },
-  { bar: 12, kind: 'heavy', motion: 'sink', lanes: [0], row: 0, stepEvery: 4, hitPoints: 3, engagement: HEAVY_ENGAGEMENT, radiusUnits: 4.4 },
-  { bar: 13, beat: 2, kind: 'pod', motion: 'gate', lanes: [-2, -1, 1, 2], row: 1, stepEvery: 1, engagement: SHORT_SURGE_ENGAGEMENT },
+  { bar: 12, kind: 'heavy', motion: 'sink', lanes: [0], row: 0, stepEvery: 4, hitPoints: 3, leadSeconds: HEAVY_LEAD_SECONDS, radiusUnits: 4.4 },
+  { bar: 13, beat: 2, kind: 'pod', motion: 'gate', lanes: [-2, -1, 1, 2], row: 1, stepEvery: 1, leadSeconds: SURGE_LEAD_SECONDS },
   { bar: 15, kind: 'dart', motion: 'strafe', lanes: [2, -2, 1, -1, 0, 2], row: 0, stepEvery: 1 },
-  { bar: 17, kind: 'pod', motion: 'gate', lanes: [-2, 0, 2, -1, 1], row: -1, stepEvery: 1, engagement: SHORT_SURGE_ENGAGEMENT },
-  { bar: 18, beat: 2, kind: 'heavy', motion: 'sink', lanes: [-1, 1], row: 0, stepEvery: 2, hitPoints: 2, engagement: TERMINAL_HEAVY_ENGAGEMENT, radiusUnits: 5.1 },
-  { bar: 19, beat: 2, kind: 'dart', motion: 'strafe', lanes: [-2, -1, 0, 1, 2, 0], row: 1, stepEvery: 1, engagement: SHORT_SURGE_ENGAGEMENT },
+  { bar: 17, kind: 'pod', motion: 'gate', lanes: [-2, 0, 2, -1, 1], row: -1, stepEvery: 1, leadSeconds: SURGE_LEAD_SECONDS },
+  { bar: 18, beat: 2, kind: 'heavy', motion: 'sink', lanes: [-1, 1], row: 0, stepEvery: 2, hitPoints: 2, leadSeconds: TERMINAL_HEAVY_LEAD_SECONDS, radiusUnits: 5.1 },
+  { bar: 19, beat: 2, kind: 'dart', motion: 'strafe', lanes: [-2, -1, 0, 1, 2, 0], row: 1, stepEvery: 1, leadSeconds: SURGE_LEAD_SECONDS },
 ] as const;
 
 function waveTime(wave: RushWave, index: number) {
@@ -109,12 +104,13 @@ function buildTimeline(): Array<LockOnSpawnEntry<RushEnemyKind, RushSpawnData>> 
   const entries: Array<LockOnSpawnEntry<RushEnemyKind, RushSpawnData>> = [];
   for (const wave of WAVES) {
     wave.lanes.forEach((lane, index) => {
+      const time = waveTime(wave, index);
       entries.push({
-        time: waveTime(wave, index),
+        time,
         kind: wave.kind,
         hitPoints: wave.hitPoints,
         data: {
-          engagement: rushPacer.resolve(wave.engagement),
+          engagement: rushPacer.resolve(time, wave.leadSeconds),
           lane,
           row: wave.row ?? 0,
           phase: index * 1.137 + wave.bar * 0.61,
@@ -129,7 +125,6 @@ function buildTimeline(): Array<LockOnSpawnEntry<RushEnemyKind, RushSpawnData>> 
 
 export const RUSH_SPAWN_TIMELINE = buildTimeline();
 
-const HOVER_APPROACH_UNITS = 10;
 const tempOffset = new Vector3();
 
 export const rushGameplay: LockOnRunnerLevel<RushEnemyKind, RushSpawnData> = {
@@ -172,34 +167,11 @@ export const rushGameplay: LockOnRunnerLevel<RushEnemyKind, RushSpawnData> = {
       tempOffset.set(laneX * 0.75 + Math.sin(age * 1.8 + data.phase) * 0.7, rowY + sink, Math.cos(age * 2.1) * 0.7);
     }
 
-    const approachSpan = data.engagement.enterSeconds + data.engagement.readableFor;
-    const hoverApproach = MathUtils.clamp(age / Math.max(0.001, approachSpan), 0, 1) * HOVER_APPROACH_UNITS;
-    tempOffset.z -= hoverApproach;
-
-    if (paced.phase === 'exit' || paced.phase === 'done') {
-      const exit = paced.phase === 'done' ? 1 : paced.phaseProgress;
-      const peel = exit * exit * (3 - 2 * exit);
-      const side = data.lane >= 0 ? 1 : -1;
-      if (enemy.kind === 'dart') {
-        tempOffset.x += side * peel * 56;
-        tempOffset.y += peel * 8 + Math.sin(peel * Math.PI) * 2.2;
-        tempOffset.z -= peel * 2;
-      } else if (enemy.kind === 'heavy') {
-        tempOffset.x += side * peel * 30;
-        tempOffset.y += peel * 18;
-        tempOffset.z -= peel * 2;
-      } else {
-        tempOffset.x += side * peel * 44;
-        tempOffset.y += peel * 14;
-        tempOffset.z -= peel * 2;
-      }
-    }
-
     enemy.mesh.position.copy(offsetFromRail(curve, anchorU, tempOffset));
     enemy.mesh.quaternion.copy(camera.quaternion);
     enemy.mesh.rotateZ(data.phase + runTime * (enemy.kind === 'dart' ? -2.7 : enemy.kind === 'heavy' ? 0.45 : 1.2));
     enemy.mesh.rotateX(Math.sin(runTime * 1.6 + enemy.id) * 0.18);
 
-    return runTime > paced.exitCompleteTime + RUSH_TUNING.enemies.missGraceSeconds;
+    return runTime > paced.passTime + RUSH_TUNING.enemies.missGraceSeconds;
   },
 };

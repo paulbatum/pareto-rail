@@ -1,5 +1,7 @@
 # Brief 08: Rail-velocity pacing for high-speed enemy readability
 
+> **Revision (2026-07-08).** The enter/hold/exit model below shipped and was rejected in playtest: targets that decelerate, hover in a 100+ u/s tunnel, and then peel away read as artificial. The shipped replacement keeps this brief's goal (an authored window, decoupled from camera speed) but drops the phases: a lead keeps its fixed-anchor meaning — the camera overtakes the target `lead` seconds after spawn — and the engine scales the target's distance-ahead profile to fit the fog budget when the camera is fast. Levels author Helios-ballpark leads and the exit is the overtake itself. The engagement report survives with a simpler contract (`windowSeconds`, the lead). See `docs/level-authoring.md` § Rail pacing.
+
 ## Context
 
 Rush exposes a level-authoring problem: when the rail moves very fast, enemies enter and leave the useful lock-on view too quickly. The cause is structural. Every level today anchors combat targets at a fixed rail point via `railAnchor(lead)`, so an enemy has zero velocity along the rail and the closing speed *is* the camera speed. The readable window collapses to roughly `visibleDistance / cameraSpeed` — at Rush speeds, well under a second — and no amount of lead tuning can extend it: a larger lead just makes the enemy spawn beyond the fog and stay invisible longer. The window's ceiling is set by fog distance and local rail speed, neither of which a builder wants to bend for combat's sake.
