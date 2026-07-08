@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Object3D, PerspectiveCamera, Scene, Vector3 } from 'three';
 import { createLockOnRunner } from '../src/engine/lock-on-runner';
-import type { LockOnRunnerLevel } from '../src/engine/lock-on-runner';
+import type { LockOnRunnerLevel, LockOnSpawnEntry } from '../src/engine/lock-on-runner';
 import { MAX_LOCKS } from '../src/engine/locks';
 import { createEventBus, type GameEvents } from '../src/events';
 import type { Hud } from '../src/ui/hud';
@@ -18,6 +18,7 @@ type CliOptions = {
   write?: string;
   suite: boolean;
   gapThreshold: number;
+  engagement: boolean;
 };
 
 type SimTarget = {
@@ -28,6 +29,8 @@ type SimTarget = {
   spawnedAt: number;
   locks: number;
   inFlight: boolean;
+  entry?: LockOnSpawnEntry<string, unknown>;
+  timelineIndex?: number;
 };
 
 type LoggedEvent = {
@@ -50,6 +53,7 @@ type RunResult = {
   endedAt: number;
   summary?: GameEvents['runend'];
   events: LoggedEvent[];
+  engagement?: EngagementRunReport;
   pressure: {
     samples: PressureSample[];
     byBar: Array<{ bar: number; peak: number; average: number }>;
@@ -70,6 +74,66 @@ type SuiteResult = {
   seed: number;
   runs: RunResult[];
   eventCoverage: { fired: string[]; neverFired: string[] };
+  engagement?: EngagementRunReport;
+};
+
+type EngagementContract = {
+  readableFor: number;
+  enterSeconds: number;
+  exitSeconds: number;
+  holdStart: number;
+  holdEnd: number;
+  exitComplete: number;
+};
+
+type EngagementPhaseSeconds = {
+  enter: number;
+  hold: number;
+  exit: number;
+  afterExit: number;
+};
+
+type EngagementTargetReport = {
+  enemyId: number;
+  timelineIndex: number;
+  time: number;
+  kind: string;
+  label: string;
+  firstLockableAt?: number;
+  lastLockableAt?: number;
+  lockableSeconds: number;
+  phaseSeconds: EngagementPhaseSeconds;
+  contract?: {
+    readableFor: number;
+    measuredFromHoldStart: number;
+    result: 'OK' | 'FAIL';
+    shortBy?: number;
+  };
+};
+
+type EngagementRunReport = {
+  tolerance: number;
+  targets: EngagementTargetReport[];
+  summary: {
+    total: number;
+    withContracts: number;
+    passed: number;
+    failed: number;
+    measuredOnly: number;
+  };
+};
+
+type EngagementAccumulator = {
+  enemyId: number;
+  timelineIndex: number;
+  entry: LockOnSpawnEntry<string, unknown>;
+  label: string;
+  contract?: EngagementContract;
+  firstLockableAt?: number;
+  lastLockableAt?: number;
+  lockableSeconds: number;
+  holdLockableSeconds: number;
+  phaseSeconds: EngagementPhaseSeconds;
 };
 
 const EVENT_TYPES = [
@@ -169,8 +233,10 @@ export async function runSimulationSuite(options: Partial<CliOptions> & { level:
     json: false,
     suite: true,
     gapThreshold: 4,
+    engagement: false,
     ...options,
   };
+  if (fullOptions.engagement) fullOptions.policies = ['none'];
   return runSuite(fullOptions);
 }
 
@@ -194,12 +260,14 @@ async function runSuite(options: CliOptions): Promise<SuiteResult> {
       fired: coverageTypes.filter((type) => fired.has(type)),
       neverFired: coverageTypes.filter((type) => !fired.has(type)),
     },
+    engagement: runs.find((run) => run.policy === 'none')?.engagement,
   };
 }
 
 async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise<RunResult> {
   const target = await resolveLevelTarget(options.level, process.cwd());
 
+  window.__raildDebug = { ...(window.__raildDebug ?? {}), immortal: options.engagement };
   const bus = createEventBus();
   const hud = createStubHud();
   const level = await createGameplay(target.folder, bus, hud);
@@ -212,6 +280,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
   const eventCounts: Record<string, number> = {};
   const spawnedKinds: Record<string, number> = {};
   const pressureSamples: PressureSample[] = [];
+  const engagementTargets = new Map<number, EngagementAccumulator>();
   const rng = lcg(options.seed || 1);
   let now = 0;
   let currentLocks = 0;
@@ -222,6 +291,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
   let beatNumber = 0;
   let nextBeatAt = 0;
   let nextPressureAt = 0;
+  let timelineCursor = 0;
   let pointerDown = false;
   let lastImperfectActionAt = -Infinity;
   let imperfectReleaseAt = Infinity;
@@ -234,15 +304,25 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
       if (type === 'spawn') {
         const spawn = payload as GameEvents['spawn'];
         const mesh = createdEnemyMeshes.shift();
-        if (mesh) activeTargets.set(spawn.enemyId, {
-          id: spawn.enemyId,
-          kind: spawn.kind,
-          letter: spawn.letter,
-          mesh,
-          spawnedAt: now,
-          locks: 0,
-          inFlight: false,
-        });
+        const timelineMatch = spawn.kind === 'letter'
+          ? undefined
+          : matchTimelineEntry(level.spawnTimeline, timelineCursor, spawn.kind, now, options.dt);
+        if (timelineMatch) timelineCursor = timelineMatch.index + 1;
+        if (mesh) {
+          const target: SimTarget = {
+            id: spawn.enemyId,
+            kind: spawn.kind,
+            letter: spawn.letter,
+            mesh,
+            spawnedAt: now,
+            locks: 0,
+            inFlight: false,
+            entry: timelineMatch?.entry,
+            timelineIndex: timelineMatch?.index,
+          };
+          activeTargets.set(spawn.enemyId, target);
+          if (options.engagement && timelineMatch) engagementTargets.set(spawn.enemyId, createEngagementAccumulator(spawn.enemyId, timelineMatch.index, timelineMatch.entry));
+        }
         if (spawn.kind !== 'letter') spawnedKinds[spawn.kind] = (spawnedKinds[spawn.kind] ?? 0) + 1;
       } else if (type === 'lock') {
         const lock = payload as GameEvents['lock'];
@@ -326,6 +406,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
     if (runner.state === 'running') emitDueBeats();
     drivePolicy();
     runner.update(options.dt);
+    if (options.engagement && runner.state === 'running') sampleEngagement(now + options.dt, options.dt, camera, activeTargets, engagementTargets);
     now += options.dt;
     if (now >= nextPressureAt && runner.state === 'running') {
       pressureSamples.push(measurePressure(now, camera, activeTargets));
@@ -343,6 +424,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
     endedAt: round(Math.min(now, maxTime)),
     summary,
     events,
+    engagement: options.engagement ? finalizeEngagementReport(engagementTargets) : undefined,
     pressure: summarizePressure(pressureSamples, level.bpm, options.gapThreshold),
     counts: {
       events: eventCounts,
@@ -454,6 +536,148 @@ function priority(target: SimTarget) {
   return 0;
 }
 
+function matchTimelineEntry(
+  timeline: Array<LockOnSpawnEntry<string, unknown>>,
+  cursor: number,
+  kind: string,
+  now: number,
+  dt: number,
+): { index: number; entry: LockOnSpawnEntry<string, unknown> } | undefined {
+  const tolerance = Math.max(dt * 2.5, 0.05);
+  for (let index = cursor; index < Math.min(timeline.length, cursor + 12); index += 1) {
+    const entry = timeline[index];
+    if (entry.kind === kind && Math.abs(entry.time - now) <= tolerance) return { index, entry };
+    if (entry.time > now + tolerance) break;
+  }
+  return undefined;
+}
+
+function createEngagementAccumulator(enemyId: number, timelineIndex: number, entry: LockOnSpawnEntry<string, unknown>): EngagementAccumulator {
+  const contract = readEngagementContract(entry);
+  return {
+    enemyId,
+    timelineIndex,
+    entry,
+    label: labelForEntry(entry),
+    contract,
+    lockableSeconds: 0,
+    holdLockableSeconds: 0,
+    phaseSeconds: { enter: 0, hold: 0, exit: 0, afterExit: 0 },
+  };
+}
+
+function readEngagementContract(entry: LockOnSpawnEntry<string, unknown>): EngagementContract | undefined {
+  const data = entry.data;
+  if (!data || typeof data !== 'object') return undefined;
+  const engagement = (data as { engagement?: unknown }).engagement;
+  if (!engagement || typeof engagement !== 'object') return undefined;
+  const source = engagement as Partial<Record<'readableFor' | 'enterSeconds' | 'exitSeconds', unknown>>;
+  const readableFor = Number(source.readableFor);
+  const enterSeconds = Number(source.enterSeconds);
+  const exitSeconds = Number(source.exitSeconds ?? 0);
+  if (!Number.isFinite(readableFor) || !Number.isFinite(enterSeconds) || !Number.isFinite(exitSeconds)) return undefined;
+  const holdStart = entry.time + enterSeconds;
+  const holdEnd = holdStart + readableFor;
+  const exitComplete = holdEnd + exitSeconds;
+  return { readableFor, enterSeconds, exitSeconds, holdStart, holdEnd, exitComplete };
+}
+
+function labelForEntry(entry: LockOnSpawnEntry<string, unknown>) {
+  const data = entry.data;
+  if (!data || typeof data !== 'object') return entry.kind;
+  const record = data as Record<string, unknown>;
+  const parts = [entry.kind];
+  if (typeof record.lane === 'number') parts.push(`lane ${record.lane}`);
+  if (typeof record.row === 'number') parts.push(`row ${record.row}`);
+  return parts.join(' ');
+}
+
+function sampleEngagement(
+  time: number,
+  dt: number,
+  camera: PerspectiveCamera,
+  targets: Map<number, SimTarget>,
+  accumulators: Map<number, EngagementAccumulator>,
+) {
+  const projected = new Vector3();
+  for (const [enemyId, accumulator] of accumulators) {
+    const target = targets.get(enemyId);
+    if (!target || accumulator.entry.lockable === false) continue;
+    projected.copy(target.mesh.position).project(camera);
+    const lockable = projected.z >= -1
+      && projected.z <= 1
+      && Math.abs(projected.x) <= 1
+      && Math.abs(projected.y) <= 1;
+    if (!lockable) continue;
+
+    const sampleTime = round(time);
+    accumulator.firstLockableAt ??= sampleTime;
+    accumulator.lastLockableAt = sampleTime;
+    accumulator.lockableSeconds += dt;
+
+    const contract = accumulator.contract;
+    if (!contract) continue;
+    if (time < contract.holdStart) accumulator.phaseSeconds.enter += dt;
+    else if (time < contract.holdEnd) {
+      accumulator.phaseSeconds.hold += dt;
+      accumulator.holdLockableSeconds += dt;
+    } else if (time < contract.exitComplete) {
+      accumulator.phaseSeconds.exit += dt;
+      accumulator.holdLockableSeconds += dt;
+    } else {
+      accumulator.phaseSeconds.afterExit += dt;
+      accumulator.holdLockableSeconds += dt;
+    }
+  }
+}
+
+const ENGAGEMENT_TOLERANCE_SECONDS = 0.08;
+
+function finalizeEngagementReport(accumulators: Map<number, EngagementAccumulator>): EngagementRunReport {
+  const targets = [...accumulators.values()]
+    .sort((a, b) => a.timelineIndex - b.timelineIndex)
+    .map((accumulator): EngagementTargetReport => {
+      const contract = accumulator.contract;
+      const measuredFromHoldStart = round(accumulator.holdLockableSeconds);
+      const result = contract && measuredFromHoldStart + ENGAGEMENT_TOLERANCE_SECONDS >= contract.readableFor ? 'OK' : 'FAIL';
+      return {
+        enemyId: accumulator.enemyId,
+        timelineIndex: accumulator.timelineIndex,
+        time: round(accumulator.entry.time),
+        kind: accumulator.entry.kind,
+        label: accumulator.label,
+        firstLockableAt: accumulator.firstLockableAt,
+        lastLockableAt: accumulator.lastLockableAt,
+        lockableSeconds: round(accumulator.lockableSeconds),
+        phaseSeconds: {
+          enter: round(accumulator.phaseSeconds.enter),
+          hold: round(accumulator.phaseSeconds.hold),
+          exit: round(accumulator.phaseSeconds.exit),
+          afterExit: round(accumulator.phaseSeconds.afterExit),
+        },
+        contract: contract ? {
+          readableFor: round(contract.readableFor),
+          measuredFromHoldStart,
+          result,
+          shortBy: result === 'FAIL' ? round(Math.max(0, contract.readableFor - measuredFromHoldStart)) : undefined,
+        } : undefined,
+      };
+    });
+  const withContracts = targets.filter((target) => target.contract);
+  const failed = withContracts.filter((target) => target.contract?.result === 'FAIL');
+  return {
+    tolerance: ENGAGEMENT_TOLERANCE_SECONDS,
+    targets,
+    summary: {
+      total: targets.length,
+      withContracts: withContracts.length,
+      passed: withContracts.length - failed.length,
+      failed: failed.length,
+      measuredOnly: targets.length - withContracts.length,
+    },
+  };
+}
+
 function measurePressure(time: number, camera: PerspectiveCamera, targets: Map<number, SimTarget>): PressureSample {
   const kinds: Record<string, number> = {};
   for (const visible of visibleTargets(camera, targets, false)) kinds[visible.target.kind] = (kinds[visible.target.kind] ?? 0) + 1;
@@ -510,6 +734,7 @@ function parseArgs(argv: string[]): CliOptions {
   let json = false;
   let write: string | undefined;
   let gapThreshold = 4;
+  let engagement = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -526,6 +751,7 @@ function parseArgs(argv: string[]): CliOptions {
     else if (arg === '--json') json = true;
     else if (arg === '--write') write = readValue();
     else if (arg === '--gap-threshold') gapThreshold = Number(readValue());
+    else if (arg === '--engagement') engagement = true;
     else if (arg === '-h' || arg === '--help') printHelpAndExit();
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -538,10 +764,11 @@ function parseArgs(argv: string[]): CliOptions {
     ? ['none', 'perfect', 'imperfect'] as SimPolicy[]
     : policy.split(',').map((item) => item.trim()).filter(Boolean) as SimPolicy[];
   for (const item of policies) if (!['none', 'perfect', 'imperfect', 'reject'].includes(item)) throw new Error(`Unknown policy: ${item}`);
-  return { level, policies, seed, dt, json, write, suite: policy === 'suite', gapThreshold };
+  return { level, policies, seed, dt, json, write, suite: policy === 'suite', gapThreshold, engagement };
 }
 
 function formatSuite(result: SuiteResult, _gapThreshold: number) {
+  if (result.engagement) return formatEngagementReport(result);
   const lines: string[] = [];
   lines.push(`${result.level.title} simulation (${result.level.duration.toFixed(1)}s @ ${result.level.bpm} BPM)`);
   for (const run of result.runs) {
@@ -560,6 +787,38 @@ function formatSuite(result: SuiteResult, _gapThreshold: number) {
   }
   lines.push(``);
   lines.push(`Event coverage never fired: ${result.eventCoverage.neverFired.join(', ') || 'none'}`);
+  return lines.join('\n');
+}
+
+function formatEngagementReport(result: SuiteResult) {
+  const report = result.engagement;
+  if (!report) return formatSuite(result, 4);
+  const noneRun = result.runs.find((run) => run.policy === 'none');
+  const lines: string[] = [];
+  lines.push(`${result.level.title} engagement report (${result.level.duration.toFixed(1)}s @ ${result.level.bpm} BPM, policy none)`);
+  if (noneRun) {
+    const impossible = noneRun.pressure.impossibleMoments.length;
+    lines.push(`pressure: peak ${Math.max(0, ...noneRun.pressure.samples.map((sample) => sample.count))}, impossible moments ${impossible}`);
+  }
+  lines.push(`contracts: ${report.summary.passed}/${report.summary.withContracts} passed, ${report.summary.failed} failed, ${report.summary.measuredOnly} measured-only, tolerance ${report.tolerance.toFixed(2)}s`);
+  for (const target of report.targets) {
+    lines.push(``);
+    lines.push(`${result.level.id} ${target.time.toFixed(1)}s ${target.label}`);
+    if (target.contract) lines.push(`  contract: readableFor=${target.contract.readableFor.toFixed(2)}s (hold)`);
+    else lines.push(`  contract: none`);
+    const first = target.firstLockableAt === undefined ? 'never' : `${target.firstLockableAt.toFixed(2)}s`;
+    const last = target.lastLockableAt === undefined ? 'never' : `${target.lastLockableAt.toFixed(2)}s`;
+    const phase = target.contract
+      ? ` (enter ${target.phaseSeconds.enter.toFixed(2)}s + hold ${target.phaseSeconds.hold.toFixed(2)}s + exit ${target.phaseSeconds.exit.toFixed(2)}s + grace ${target.phaseSeconds.afterExit.toFixed(2)}s)`
+      : '';
+    lines.push(`  measured lockable: ${target.lockableSeconds.toFixed(2)}s${phase}; first ${first}, last ${last}`);
+    if (target.contract) {
+      const suffix = target.contract.result === 'FAIL' ? `, short by ${(target.contract.shortBy ?? 0).toFixed(2)}s` : '';
+      lines.push(`  result: ${target.contract.result}${suffix}`);
+    } else {
+      lines.push(`  result: measured only`);
+    }
+  }
   return lines.join('\n');
 }
 
@@ -649,6 +908,6 @@ function round(value: number) {
 }
 
 function printHelpAndExit(): never {
-  console.log(`Usage: npm run simulate -- --level <id> [--policy suite|none|perfect|imperfect|reject] [--seed n] [--json] [--write path]`);
+  console.log(`Usage: npm run simulate -- --level <id> [--policy suite|none|perfect|imperfect|reject] [--engagement] [--seed n] [--json] [--write path]`);
   process.exit(0);
 }

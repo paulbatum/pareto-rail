@@ -191,11 +191,11 @@ export const RUSH_TUNING = {
     color: 0x02040a,
   },
   enemies: {
-    // Seconds ahead of spawn time where most targets sit on the rail; lower values make targets rush closer.
-    defaultLeadSeconds: 1.6,
+    // World units ahead of the camera where paced targets hold for their authored lock-on window.
+    engageAheadUnits: 34,
     // World units from rail center for enemy lane spread; larger values reduce target overlap.
     laneRadiusUnits: 4.3,
-    // Seconds before a target is considered missed after passing its anchor; larger values make high speed more forgiving.
+    // Seconds after a paced exit completes before a surviving target is counted as missed.
     missGraceSeconds: 0.34,
   },
 } as const;

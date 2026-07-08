@@ -6,6 +6,7 @@ Shared code lives in `src/engine/`:
 
 - `lock-on-runner.ts` contains the START/RUN/REPLAY flow, pointer input, lock-on targeting, homing shots, scoring hooks, and HUD updates;
 - `rail.ts` contains rail sampling helpers, not a level rail;
+- `rail-pacer.ts` contains an opt-in helper for high-speed levels that need enemies to pace the camera for an authored readable window;
 - `music.ts` contains small timing helpers for beat emission, tempo, MIDI conversion, and grid quantization;
 - `music-time.ts` converts authored bars, beats, steps, and named markers into the seconds consumed by gameplay systems;
 - `audio-kit.ts` contains Web Audio primitives plus the shared mix bus and instrument registry;
@@ -68,6 +69,27 @@ Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`,
 Setting `playerHealth` enables the hull system: `damagePlayer` calls take a point off (with a short invulnerability window between hits), the HUD shows hull pips and a red damage flash, and reaching zero ends the run with `died: true` in the summary and a forced `—` rank. Related events: `playerhit` fires on accepted damage, `hit` carries `lethal`, total `hitPointsRemaining`, and current-stage fields, `stage` fires when a non-lethal stage is completed, and `runend` carries `died`.
 
 For lockable enemy shots and hazards, prefer `steerHomingShot`, `shotBehindCamera`, and `updateHostileShotImpact` from `src/engine/hostile-shot.ts` for shared flight bookkeeping, despawn culling, and close-range impact timing. Impact timing gives levels common defaults for hit distance, impact brake, damage distance, and intercept grace, while allowing per-level overrides for feel. Levels still own tuning, launch motion, visuals, audio, and when to call `damagePlayer`.
+
+## Rail pacing for high-speed combat
+
+Use `createRailPacer` from `src/engine/rail-pacer.ts` when the camera is moving so fast that a fixed `railAnchor(lead)` target crosses the useful lock-on view too quickly. Fixed anchors remain the right choice for slower levels, set pieces, bosses, and choreographed formations. Rail pacing is only for ordinary targets that should race with the player before leaving.
+
+A paced target is authored as a distance ahead of the camera over three phases:
+
+1. **Enter**: it appears near the fog edge and eases inward toward the engagement distance. This should read as incoming motion, not a teleport followed by a stop.
+2. **Hold**: it stays at the engagement distance for `readableFor` seconds. `readableFor` is the contract and is a minimum hold duration, not an estimate of total time on screen.
+3. **Exit**: it breaks away. The pacer can move it ahead or back along the rail, and the level should add its own lateral or vertical peel so the exit looks intentional.
+
+The helper returns `anchorU`, `phase`, `phaseProgress`, and `exitCompleteTime`. Feed `anchorU` into the same `offsetFromRail` path used by fixed anchors. Apply the level's existing miss grace after `exitCompleteTime`; do not count eased enter time as satisfying a `readableFor` contract.
+
+Example diagnostics:
+
+```sh
+npm run simulate -- --level rush --engagement
+npm run simulate -- --level crystal --engagement
+```
+
+The engagement report runs a no-fire, immortal simulation and measures the real camera projection each frame. For paced entries with a `data.engagement.readableFor` contract, `OK` means the target was lockable from hold start onward for at least `readableFor`, with a small global tolerance. Entries with no contract are reported as measured-only, which is useful for checking fixed-anchor levels without changing their source.
 
 ## Visual factories
 
