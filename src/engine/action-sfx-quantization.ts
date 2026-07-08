@@ -36,6 +36,8 @@ export type ActionSfxQuantizationSettings = {
 
 const DEFAULT_GRID_THIRTYSECONDS = 1; // 32nd note
 const GRID_RAMP_THIRTYSECONDS = [1, 2, 4, 8, 16, 32, 32, 32];
+// Keeps ceil quantization idempotent when binary roundoff places an exact grid line infinitesimally above itself.
+const GRIDLINE_EPSILON_SECONDS = 1e-10;
 // Default maxGridSeconds: the bar grid at 126 BPM (crystal's original tuning).
 const DEFAULT_MAX_GRID_SECONDS = 1.905;
 
@@ -84,26 +86,40 @@ function totalDelayForShot(context: ShotDelayContext) {
 }
 
 function gridRampDelayForShot(context: ShotDelayContext) {
-  const hitTimes = rawGridRampHitTimes(context);
-  enforceIncreasingGaps(
-    hitTimes,
-    context.thirtysecondSeconds,
-    shotDelaySettings.gridRampGapGrowthThirtyseconds * context.thirtysecondSeconds,
-  );
+  const hitTimes = gridRampHitTimes(context);
   const hitTime = hitTimes[context.index] ?? context.releaseTime + context.baselineTravelTime;
   return Math.max(0, hitTime - context.releaseTime - context.baselineTravelTime);
 }
 
-function rawGridRampHitTimes(context: ShotDelayContext) {
+function gridRampHitTimes(context: ShotDelayContext) {
   const times: number[] = [];
   const ramp = gridRampForTempo(context.thirtysecondSeconds);
+  const growthSeconds = shotDelaySettings.gridRampGapGrowthThirtyseconds * context.thirtysecondSeconds;
+  let previousHit: number | undefined;
+  let previousGap = 0;
+
   for (let index = 0; index < context.volleySize; index += 1) {
     const travelTime = context.baselineTravelTimes[index] ?? context.baselineTravelTime;
+    const natural = context.releaseTime + travelTime;
     const gridThirtyseconds = ramp[Math.min(index, ramp.length - 1)] ?? 32;
     const gridSeconds = gridThirtyseconds * context.thirtysecondSeconds;
-    times.push(quantizeToGrid(context.releaseTime + travelTime, gridSeconds));
+    const earliest = previousHit === undefined
+      ? natural
+      : Math.max(natural, previousHit + (index === 1 ? context.thirtysecondSeconds : previousGap + growthSeconds));
+    const hit = quantizeGridRampTime(earliest, gridSeconds);
+
+    if (previousHit !== undefined) previousGap = hit - previousHit;
+    previousHit = hit;
+    times.push(hit);
   }
+
   return times;
+}
+
+function quantizeGridRampTime(time: number, gridSeconds: number) {
+  const nearestGridLine = Math.round(time / gridSeconds) * gridSeconds;
+  if (Math.abs(nearestGridLine - time) <= GRIDLINE_EPSILON_SECONDS) return nearestGridLine;
+  return quantizeToGrid(time, gridSeconds);
 }
 
 function gridRampForTempo(thirtysecondSeconds: number) {
@@ -113,16 +129,6 @@ function gridRampForTempo(thirtysecondSeconds: number) {
     ramp = [1, ...ramp.slice(0, -1)];
   }
   return ramp;
-}
-
-function enforceIncreasingGaps(hitTimes: number[], minSpacing: number, gapGrowth: number) {
-  let previousGap = 0;
-  for (let index = 1; index < hitTimes.length; index += 1) {
-    const requiredGap = index === 1 ? minSpacing : previousGap + gapGrowth;
-    const earliest = hitTimes[index - 1] + requiredGap;
-    if (hitTimes[index] < earliest) hitTimes[index] = earliest;
-    previousGap = hitTimes[index] - hitTimes[index - 1];
-  }
 }
 
 function delayStepForIndex(index: number) {
