@@ -78,6 +78,9 @@ type SuiteResult = {
 };
 
 type EngagementContract = {
+  /** Authored lead: the window the builder asked for. */
+  leadSeconds: number;
+  /** Lead clamped to the rail end; smaller than leadSeconds means the spawn cannot fit its window. */
   windowSeconds: number;
 };
 
@@ -91,10 +94,11 @@ type EngagementTargetReport = {
   lastLockableAt?: number;
   lockableSeconds: number;
   contract?: {
-    windowSeconds: number;
+    leadSeconds: number;
     measuredLockable: number;
     result: 'OK' | 'FAIL';
     shortBy?: number;
+    clippedByRailEnd?: boolean;
   };
 };
 
@@ -554,9 +558,11 @@ function readEngagementContract(entry: LockOnSpawnEntry<string, unknown>): Engag
   if (!data || typeof data !== 'object') return undefined;
   const engagement = (data as { engagement?: unknown }).engagement;
   if (!engagement || typeof engagement !== 'object') return undefined;
-  const windowSeconds = Number((engagement as { windowSeconds?: unknown }).windowSeconds);
-  if (!Number.isFinite(windowSeconds) || windowSeconds <= 0) return undefined;
-  return { windowSeconds };
+  const source = engagement as { leadSeconds?: unknown; windowSeconds?: unknown };
+  const leadSeconds = Number(source.leadSeconds);
+  if (!Number.isFinite(leadSeconds) || leadSeconds <= 0) return undefined;
+  const windowSeconds = Number(source.windowSeconds);
+  return { leadSeconds, windowSeconds: Number.isFinite(windowSeconds) ? windowSeconds : leadSeconds };
 }
 
 function labelForEntry(entry: LockOnSpawnEntry<string, unknown>) {
@@ -610,7 +616,7 @@ function finalizeEngagementReport(accumulators: Map<number, EngagementAccumulato
     .map((accumulator): EngagementTargetReport => {
       const contract = accumulator.contract;
       const measuredLockable = round(accumulator.lockableSeconds);
-      const result = contract && measuredLockable + engagementTolerance(contract.windowSeconds) >= contract.windowSeconds ? 'OK' : 'FAIL';
+      const result = contract && measuredLockable + engagementTolerance(contract.leadSeconds) >= contract.leadSeconds ? 'OK' : 'FAIL';
       return {
         enemyId: accumulator.enemyId,
         timelineIndex: accumulator.timelineIndex,
@@ -621,10 +627,11 @@ function finalizeEngagementReport(accumulators: Map<number, EngagementAccumulato
         lastLockableAt: accumulator.lastLockableAt,
         lockableSeconds: measuredLockable,
         contract: contract ? {
-          windowSeconds: round(contract.windowSeconds),
+          leadSeconds: round(contract.leadSeconds),
           measuredLockable,
           result,
-          shortBy: result === 'FAIL' ? round(Math.max(0, contract.windowSeconds - measuredLockable)) : undefined,
+          shortBy: result === 'FAIL' ? round(Math.max(0, contract.leadSeconds - measuredLockable)) : undefined,
+          clippedByRailEnd: contract.windowSeconds < contract.leadSeconds - 1e-3 ? true : undefined,
         } : undefined,
       };
     });
@@ -769,13 +776,14 @@ function formatEngagementReport(result: SuiteResult) {
   for (const target of report.targets) {
     lines.push(``);
     lines.push(`${result.level.id} ${target.time.toFixed(1)}s ${target.label}`);
-    if (target.contract) lines.push(`  contract: window=${target.contract.windowSeconds.toFixed(2)}s (lead)`);
+    if (target.contract) lines.push(`  contract: lead=${target.contract.leadSeconds.toFixed(2)}s`);
     else lines.push(`  contract: none`);
     const first = target.firstLockableAt === undefined ? 'never' : `${target.firstLockableAt.toFixed(2)}s`;
     const last = target.lastLockableAt === undefined ? 'never' : `${target.lastLockableAt.toFixed(2)}s`;
     lines.push(`  measured lockable: ${target.lockableSeconds.toFixed(2)}s; first ${first}, last ${last}`);
     if (target.contract) {
-      const suffix = target.contract.result === 'FAIL' ? `, short by ${(target.contract.shortBy ?? 0).toFixed(2)}s` : '';
+      const clipped = target.contract.clippedByRailEnd ? ' — lead clipped by rail end; spawn earlier or shorten lead' : '';
+      const suffix = target.contract.result === 'FAIL' ? `, short by ${(target.contract.shortBy ?? 0).toFixed(2)}s${clipped}` : '';
       lines.push(`  result: ${target.contract.result}${suffix}`);
     } else {
       lines.push(`  result: measured only`);

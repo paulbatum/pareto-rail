@@ -78,7 +78,7 @@ A fixed-anchor target authored with `railAnchor(lead)` means one thing: the came
 
 The compensated target has real velocity along the rail: it races with the player, closes at a fraction of camera speed, surges when the camera surges, and exits by being overtaken — the same exit fixed-anchor targets have. Do not add hover, hold, or scripted break-away phases on top; being passed is the natural exit at any speed.
 
-Create one pacer per level with `curve`, `duration`, the level's `runProgress` easing, `spawnAheadUnits`, and `defaultLeadSeconds`. Resolve each spawn's lead at timeline-build time with `pacer.resolve(entryTime, leadSeconds?)` and store the returned `RailLead` on the spawn's `data.engagement`; in `updateEnemy`, feed `pacer.sample(entryTime, runTime, data.engagement).anchorU` into the same `offsetFromRail` path used by fixed anchors, and count the target as missed after `passTime` plus the level's miss grace. The `RailLead.windowSeconds` field (the lead clamped to the rail end) is what the engagement report reads as the contract.
+Create one pacer per level with `curve`, `duration`, the level's `runProgress` easing, `spawnAheadUnits`, and `defaultLeadSeconds`. Resolve each spawn's lead at timeline-build time with `pacer.resolve(entryTime, leadSeconds?)` and store the returned `RailLead` on the spawn's `data.engagement`; in `updateEnemy`, feed `pacer.sample(entryTime, runTime, data.engagement).anchorU` into the same `offsetFromRail` path used by fixed anchors, and count the target as missed after `passTime` plus the level's miss grace. The engagement report reads the authored `leadSeconds` off `data.engagement` as the contract; when `windowSeconds` (the lead clamped to the rail end) comes back smaller than the lead, the spawn cannot fit its window before the run ends and the report fails it with a rail-end note.
 
 Fixed anchors remain the right choice for set pieces, bosses, and choreographed formations, and for whole levels at moderate speeds.
 
@@ -89,7 +89,7 @@ npm run simulate -- --level rush --engagement
 npm run simulate -- --level crystal --engagement
 ```
 
-The engagement report runs a no-fire, immortal simulation and measures the real camera projection each frame. For entries with a `data.engagement.windowSeconds` contract, `OK` means the target was lockable for at least the window, minus a checker-owned tolerance (a small flat term plus a fraction of the window covering the moment near the pass where the target leaves the lock frustum). Entries with no contract are reported as measured-only, which is useful for checking fixed-anchor levels without changing their source. Pressure numbers under the no-fire policy overstate stacking — nothing dies — so compare them against a known-good level (Helios) rather than reading them as absolutes.
+The engagement report runs a no-fire, immortal simulation and measures the real camera projection each frame. For entries with a `data.engagement.leadSeconds` contract, `OK` means the target was lockable for at least the authored lead, minus a checker-owned tolerance (a small flat term plus a fraction of the window covering the moment near the pass where the target leaves the lock frustum). Entries with no contract are reported as measured-only, which is useful for checking fixed-anchor levels without changing their source. Pressure numbers under the no-fire policy overstate stacking — nothing dies — so compare them against a known-good level (Helios) rather than reading them as absolutes.
 
 ## Visual factories
 

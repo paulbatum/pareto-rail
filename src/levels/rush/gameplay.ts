@@ -91,7 +91,7 @@ const WAVES: readonly RushWave[] = [
   { bar: 15, kind: 'dart', motion: 'strafe', lanes: [2, -2, 1, -1, 0, 2], row: 0, stepEvery: 1 },
   { bar: 17, kind: 'pod', motion: 'gate', lanes: [-2, 0, 2, -1, 1], row: -1, stepEvery: 1, leadSeconds: SURGE_LEAD_SECONDS },
   { bar: 18, beat: 2, kind: 'heavy', motion: 'sink', lanes: [-1, 1], row: 0, stepEvery: 2, hitPoints: 2, leadSeconds: TERMINAL_HEAVY_LEAD_SECONDS, radiusUnits: 5.1 },
-  { bar: 19, beat: 2, kind: 'dart', motion: 'strafe', lanes: [-2, -1, 0, 1, 2, 0], row: 1, stepEvery: 1, leadSeconds: SURGE_LEAD_SECONDS },
+  { bar: 19, kind: 'dart', motion: 'strafe', lanes: [-2, -1, 1, 2], row: 1, stepEvery: 1, leadSeconds: SURGE_LEAD_SECONDS },
 ] as const;
 
 function waveTime(wave: RushWave, index: number) {
