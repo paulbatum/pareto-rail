@@ -69,6 +69,13 @@ export type LockOnRunnerLevel<TKind extends string = string, TData = unknown> = 
   updateAttractCamera?(context: LockOnAttractCameraUpdate): void;
   updateCameraEffects?(context: LockOnCameraEffectsUpdate): void;
   easeRunProgress?(time: number, duration: number): number;
+  /**
+   * Instantaneous rail-speed multiplier at a run time, relative to the level's
+   * baseline pace (1 = baseline). When provided, the shot-delay snap cap
+   * tightens as speed rises above baseline so impact delays cost a constant
+   * felt distance instead of constant seconds.
+   */
+  speedFactorAt?(time: number): number;
   scoreForHit?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
   scoreForKill?(volleySize: number, enemy: LockOnEnemy<TKind, TData>): number;
   scoreForVolley?(results: Array<{ enemy: LockOnEnemy<TKind, TData>; killed: boolean }>): number;

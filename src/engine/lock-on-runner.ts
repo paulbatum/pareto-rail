@@ -741,6 +741,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         baselineTravelTime: baselineTravelTimes[index] ?? 0,
         baselineTravelTimes,
         thirtysecondSeconds,
+        speedFactor: level.speedFactorAt?.(runTime),
       });
       pendingShots.push({
         projectileId: nextProjectileId,

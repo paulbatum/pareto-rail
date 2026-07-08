@@ -132,10 +132,12 @@ export const rushGameplay: LockOnRunnerLevel<RushEnemyKind, RushSpawnData> = {
   bpm: RUSH_BPM,
   // At this rail speed a bar-length snap (~1.4s at 170 BPM) strands impacts far
   // behind the player; cap snap grids near an eighth note and grow gaps gently.
+  // speedFactorAt tightens the cap further as the speed profile ramps past 1x.
   timing: { shotDelay: { maxGridSeconds: 0.7, gridRampGapGrowthThirtyseconds: 1 } },
   createRail: createRushRail,
   spawnTimeline: RUSH_SPAWN_TIMELINE,
   easeRunProgress: rushRunProgress,
+  speedFactorAt,
   lockRadiusNdc: 0.1,
   playerHealth: 3,
   scoreForKill(volleySize, enemy) {
