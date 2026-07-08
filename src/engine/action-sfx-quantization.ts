@@ -10,6 +10,13 @@ export type ShotDelaySettings = {
   pattern: ShotDelayPattern;
   /** Grid-ramp minimum growth between consecutive shot gaps, measured in 32nd notes. */
   gridRampGapGrowthThirtyseconds: number;
+  /**
+   * Longest acceptable snap period for any shot, in seconds. Deliberately
+   * absolute rather than musical: how much delay a level can absorb depends on
+   * its pace, not its tempo (a tempo-relative cap would cancel out against the
+   * tempo-relative ramp and never trim anything). Fast levels should lower it.
+   */
+  maxGridSeconds: number;
 };
 
 export type ShotDelayContext = {
@@ -29,10 +36,8 @@ export type ActionSfxQuantizationSettings = {
 
 const DEFAULT_GRID_THIRTYSECONDS = 1; // 32nd note
 const GRID_RAMP_THIRTYSECONDS = [1, 2, 4, 8, 16, 32, 32, 32];
-// The longest acceptable snap period for any shot. Its value comes from the
-// bar grid at 126 BPM (crystal's original tuning), but it is deliberately a
-// literal: retuning a level's tempo must never reshape other levels' ramps.
-const GRID_RAMP_MAX_GRID_SECONDS = 1.905;
+// Default maxGridSeconds: the bar grid at 126 BPM (crystal's original tuning).
+const DEFAULT_MAX_GRID_SECONDS = 1.905;
 
 // The game's default quantization profile. Levels can override or opt out via
 // the runner's timing field.
@@ -41,6 +46,7 @@ const shotDelaySettings: ShotDelaySettings = {
   releaseShare: 0.75,
   pattern: 'grid-ramp',
   gridRampGapGrowthThirtyseconds: 2,
+  maxGridSeconds: DEFAULT_MAX_GRID_SECONDS,
 };
 
 const settings: ActionSfxQuantizationSettings = {
@@ -58,6 +64,9 @@ export function setShotDelaySettings(next: Partial<ShotDelaySettings>) {
   if (next.pattern !== undefined) shotDelaySettings.pattern = next.pattern;
   if (next.gridRampGapGrowthThirtyseconds !== undefined) {
     shotDelaySettings.gridRampGapGrowthThirtyseconds = Math.max(0, Math.round(next.gridRampGapGrowthThirtyseconds));
+  }
+  if (next.maxGridSeconds !== undefined) {
+    shotDelaySettings.maxGridSeconds = Math.max(0.01, next.maxGridSeconds);
   }
 }
 
@@ -99,7 +108,7 @@ function rawGridRampHitTimes(context: ShotDelayContext) {
 
 function gridRampForTempo(thirtysecondSeconds: number) {
   let ramp = [...GRID_RAMP_THIRTYSECONDS];
-  while (ramp[ramp.length - 1] * thirtysecondSeconds > GRID_RAMP_MAX_GRID_SECONDS) {
+  while (ramp[ramp.length - 1] * thirtysecondSeconds > shotDelaySettings.maxGridSeconds) {
     if (ramp.every((gridThirtyseconds) => gridThirtyseconds === 1)) break;
     ramp = [1, ...ramp.slice(0, -1)];
   }

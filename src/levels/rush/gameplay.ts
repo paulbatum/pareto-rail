@@ -130,6 +130,9 @@ const tempOffset = new Vector3();
 export const rushGameplay: LockOnRunnerLevel<RushEnemyKind, RushSpawnData> = {
   duration: RUSH_RUN_DURATION,
   bpm: RUSH_BPM,
+  // At this rail speed a bar-length snap (~1.4s at 170 BPM) strands impacts far
+  // behind the player; cap snap grids near an eighth note and grow gaps gently.
+  timing: { shotDelay: { maxGridSeconds: 0.7, gridRampGapGrowthThirtyseconds: 1 } },
   createRail: createRushRail,
   spawnTimeline: RUSH_SPAWN_TIMELINE,
   easeRunProgress: rushRunProgress,
