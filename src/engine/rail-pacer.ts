@@ -66,7 +66,7 @@ export function createRailPacer(options: RailPacerOptions) {
     if (age < pacing.enterSeconds) {
       phase = 'enter';
       phaseProgress = progress(age, pacing.enterSeconds);
-      distanceAheadUnits = lerp(pacing.spawnAheadUnits, pacing.engageAheadUnits, easeOutCubic(phaseProgress));
+      distanceAheadUnits = lerp(pacing.spawnAheadUnits, pacing.engageAheadUnits, smootherstep(phaseProgress));
     } else if (runTime < holdEndTime) {
       phase = 'hold';
       phaseProgress = progress(runTime - holdStartTime, pacing.readableFor);
@@ -74,7 +74,7 @@ export function createRailPacer(options: RailPacerOptions) {
     } else if (runTime < exitCompleteTime) {
       phase = 'exit';
       phaseProgress = progress(runTime - holdEndTime, pacing.exitSeconds);
-      distanceAheadUnits = lerp(pacing.engageAheadUnits, pacing.exitAheadUnits, easeInCubic(phaseProgress));
+      distanceAheadUnits = lerp(pacing.engageAheadUnits, pacing.exitAheadUnits, smootherstep(phaseProgress));
     } else {
       phase = 'done';
       phaseProgress = 1;
@@ -126,10 +126,6 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-function easeOutCubic(t: number) {
-  return 1 - (1 - t) ** 3;
-}
-
-function easeInCubic(t: number) {
-  return t ** 3;
+function smootherstep(t: number) {
+  return t * t * t * (t * (t * 6 - 15) + 10);
 }
