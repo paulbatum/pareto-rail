@@ -841,19 +841,20 @@ function parseArgs(argv: string[]): CliOptions {
 
 export function formatEngineDefaultsReport(report: EngineDefaultsReport) {
   const lines: string[] = [];
-  lines.push('Engine defaults (informational — inheriting a default is a valid choice; confirm it suits this level):');
+  lines.push('Engine defaults:');
   if (report.shotRhythm.inheritedProfile) {
-    lines.push(`  shot rhythm: engine default profile: ${formatShotProfile(report.shotRhythm.profile)}`);
+    lines.push(`  shot rhythm: [default] ${formatShotProfile(report.shotRhythm.profile)}`);
   } else {
     lines.push('  shot rhythm:');
     for (const key of SHOT_DELAY_FIELDS) {
-      lines.push(`    ${key}=${report.shotRhythm.profile[key]} (${report.shotRhythm.fields[key]})`);
+      const isDefault = report.shotRhythm.fields[key] === 'engine default';
+      lines.push(`    ${key}=${report.shotRhythm.profile[key]}${isDefault ? ' [default]' : ''}`);
     }
   }
   lines.push(`  action SFX snap: ${formatActionSfxSnap(report.actionSfxSnap)}`);
   lines.push(`  lock radius: ${formatLockRadius(report.lockRadius)}`);
   lines.push(`  identity hooks declared: ${report.identityHooks.declared.join(', ') || 'none'}`);
-  lines.push(`  identity hooks inherited: ${report.identityHooks.inherited.join(', ') || 'none'}`);
+  lines.push(`  identity hooks [default]: ${report.identityHooks.inherited.join(', ') || 'none'}`);
   return lines.join('\n');
 }
 
@@ -865,12 +866,12 @@ function formatActionSfxSnap(snap: EngineDefaultsReport['actionSfxSnap']) {
   if (snap.status === 'disabled-by-level') return 'disabled by level';
   const grid = snap.gridThirtyseconds === 1 ? '32nd grid' : `${snap.gridThirtyseconds}×32nd grid`;
   if (snap.status === 'overridden-grid') return `overridden grid (${snap.enabled ? 'enabled' : 'disabled'}, ${grid})`;
-  return `inherited default (${snap.enabled ? 'enabled' : 'disabled'}, ${grid})`;
+  return `[default] (${snap.enabled ? 'enabled' : 'disabled'}, ${grid})`;
 }
 
 function formatLockRadius(lockRadius: EngineDefaultsReport['lockRadius']) {
-  if (lockRadius.source === 'engine default') return `${lockRadius.value} NDC (engine default)`;
-  return `${lockRadius.value} NDC (level-authored; engine default ${lockRadius.engineDefault})`;
+  if (lockRadius.source === 'engine default') return `[default] ${lockRadius.value} NDC`;
+  return `${lockRadius.value} NDC (engine default ${lockRadius.engineDefault})`;
 }
 
 const SHOT_DELAY_FIELDS = [

@@ -163,6 +163,7 @@ const targetTime = readNonNegativeNumber(params.get('time')) ?? 0;
 const fixedDt = readPositiveNumber(params.get('dt')) ?? DEFAULT_DT;
 const fidelity = readFidelity(params.get('fidelity'));
 const showProjectiles = params.get('projectiles') === '1';
+const skipRenders = params.get('render') === 'sample';
 
 let renderer: SnapshotRenderer | null = null;
 let post: PostRenderer | null = null;
@@ -353,21 +354,25 @@ async function stepPerformance(options: PerfStepOptions): Promise<PerfStepSample
 
   while (currentElapsed < targetTime - 0.000001 && runtimeState !== 'ended') {
     const step = Math.min(dt, targetTime - currentElapsed);
-    const before = performance.now();
     currentElapsed += step;
     runtimeUpdate(step, currentElapsed);
-    setRendererFrameTime(renderer, currentElapsed, step);
-    renderer.info?.reset?.();
-    if (post) post.render();
-    else renderer.render(scene, camera);
-    frameTimes.push(performance.now() - before);
+    if (!skipRenders) {
+      const before = performance.now();
+      setRendererFrameTime(renderer, currentElapsed, step);
+      renderer.info?.reset?.();
+      if (post) post.render();
+      else renderer.render(scene, camera);
+      frameTimes.push(performance.now() - before);
+    }
   }
 
-  if (frameTimes.length === 0) {
+  if (skipRenders || frameTimes.length === 0) {
+    const before = performance.now();
     setRendererFrameTime(renderer, currentElapsed, dt);
     renderer.info?.reset?.();
     if (post) post.render();
     else renderer.render(scene, camera);
+    frameTimes.push(performance.now() - before);
   }
 
   const counters = collectPerfCounters(renderer, scene);

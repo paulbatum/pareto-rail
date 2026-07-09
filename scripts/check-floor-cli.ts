@@ -6,13 +6,19 @@ import { analyzeOcclusionLevels, formatReports } from './target-occlusion.mjs';
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
   const options = parseArgs(argv);
-  const result = await runSimulationSuite({
-    level: options.level,
-    policies: ['none', 'perfect', 'imperfect', 'reject'],
-    seed: options.seed,
-    dt: options.dt,
-    gapThreshold: options.gapThreshold,
-  });
+  const { analyzePerformanceLevels, formatPerformanceReports } = await import('./check-perf.mjs');
+
+  const [result, occlusionReports, perfReports] = await Promise.all([
+    runSimulationSuite({
+      level: options.level,
+      policies: ['none', 'perfect', 'imperfect', 'reject'],
+      seed: options.seed,
+      dt: options.dt,
+      gapThreshold: options.gapThreshold,
+    }),
+    analyzeOcclusionLevels([options.level], { dt: options.dt }),
+    analyzePerformanceLevels([options.level], { dt: options.dt }),
+  ]);
 
   const failures: string[] = [];
   const level = result.level;
@@ -43,14 +49,11 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   const actualGallery = await fs.readFile(galleryPath, 'utf8');
   if (actualGallery !== expectedGallery) failures.push('docs/level-gallery.md is not regenerated from the current level.md cards. Run npm run gallery.');
 
-  const occlusionReports = await analyzeOcclusionLevels([level.id], { dt: options.dt });
   const occlusionWarnings = occlusionReports.flatMap((report) => report.warnings.map((warning) => ({ report, warning })));
   if (occlusionWarnings.length > 0) {
     failures.push(`Target occlusion check found ${occlusionWarnings.length} warning${occlusionWarnings.length === 1 ? '' : 's'}. Run npm run check:occlusion -- --level ${level.id} for details.`);
   }
 
-  const { analyzePerformanceLevels, formatPerformanceReports } = await import('./check-perf.mjs');
-  const perfReports = await analyzePerformanceLevels([level.id], { dt: options.dt });
   const perfFailures = perfReports.flatMap((report: { failures: unknown[] }) => report.failures);
   if (perfFailures.length > 0) {
     failures.push(`Performance check found ${perfFailures.length} failing gate${perfFailures.length === 1 ? '' : 's'}. Run npm run check:perf -- --level ${level.id} for details.`);
