@@ -1,9 +1,3 @@
-# Crystal Corridor — theme prompt
-
-_The theme for this level, in the form handed to an implementing agent alongside `docs/level-brief.md`._
-
----
-
 The theme is a neon crystal corridor.
 
 **The world.** You're flying down a winding tunnel deep inside some enormous crystal
