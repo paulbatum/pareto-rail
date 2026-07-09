@@ -40,9 +40,6 @@ export type HostileShotImpactConfig = {
   hitDistance?: number;
   impactBrake?: number;
   damageDistance?: number;
-  interceptGrace?: number;
-  /** Half-size in normalized device coordinates for the safe-looking center impact window. */
-  centerImpactHalfSizeNdc?: number;
 };
 
 export type HostileShotImpactContext = {
@@ -59,15 +56,14 @@ export type HostileShotImpactResult =
   | { phase: 'approach' }
   | { phase: 'braking'; damaged: boolean };
 
-export const DEFAULT_HOSTILE_SHOT_CENTER_IMPACT_HALF_SIZE_NDC = 0.5;
+const HOSTILE_SHOT_INTERCEPT_GRACE = 0.45;
+const HOSTILE_SHOT_CENTER_IMPACT_HALF_SIZE_NDC = 0.5;
 const HOSTILE_SHOT_CENTERLINE_DEPTH_FRACTION = 0.62;
 
-export const DEFAULT_HOSTILE_SHOT_IMPACT = {
+const DEFAULT_HOSTILE_SHOT_IMPACT = {
   hitDistance: 2.4,
   impactBrake: 0.35,
   damageDistance: 0.65,
-  interceptGrace: 0.45,
-  centerImpactHalfSizeNdc: DEFAULT_HOSTILE_SHOT_CENTER_IMPACT_HALF_SIZE_NDC,
 } satisfies Required<HostileShotImpactConfig>;
 
 /** Point hostile shots should steer toward so they visibly converge on the center of the player's view. */
@@ -89,12 +85,12 @@ export function updateHostileShotImpact(context: HostileShotImpactContext): Host
   context.camera.getWorldDirection(forward);
 
   if (context.intercepted) {
-    context.state.interceptUntil = Math.max(context.state.interceptUntil ?? 0, context.age + config.interceptGrace);
+    context.state.interceptUntil = Math.max(context.state.interceptUntil ?? 0, context.age + HOSTILE_SHOT_INTERCEPT_GRACE);
   }
 
   if (context.state.impactAt === undefined) {
     if (context.position.distanceTo(context.camera.position) > config.hitDistance) return { phase: 'approach' };
-    if (!shotInCenterImpactArea(context.camera, context.position, config.centerImpactHalfSizeNdc)) return { phase: 'approach' };
+    if (!shotInCenterImpactArea(context.camera, context.position, HOSTILE_SHOT_CENTER_IMPACT_HALF_SIZE_NDC)) return { phase: 'approach' };
     const toShot = context.position.clone().sub(context.camera.position);
     context.state.impactDirection = toShot.lengthSq() > 0.0001 ? toShot.normalize() : forward.clone();
     context.state.impactAt = context.age + config.impactBrake;

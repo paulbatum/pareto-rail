@@ -26,7 +26,7 @@ import { smoothRunProgress } from './rail';
 import { scoreForKill as defaultScoreForKill, rankForRun as defaultRankForRun, type RunSummary } from './scoring';
 
 const RETICLE_DISTANCE = 24;
-const LOCK_RADIUS_NDC = 0.085;
+export const LOCK_RADIUS_NDC = 0.085;
 const PROJECTILE_SPEED = 82;
 const PROJECTILE_MAX_SPEED = PROJECTILE_SPEED * 3;
 const PROJECTILE_HIT_RADIUS = 1.15;

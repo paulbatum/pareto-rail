@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { runSimulationSuite } from './simulation-cli';
+import { formatEngineDefaultsReport, runSimulationSuite } from './simulation-cli';
 import { analyzeOcclusionLevels, formatReports } from './target-occlusion.mjs';
 
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
@@ -60,6 +60,9 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   lines.push(`${level.title} floor check`);
   lines.push(`duration ${level.duration.toFixed(1)}s; spawned kinds ${spawnedKinds.size}: ${[...spawnedKinds].sort().join(', ') || 'none'}`);
   lines.push(`event coverage missing: ${result.eventCoverage.neverFired.join(', ') || 'none'}`);
+  lines.push('');
+  lines.push(formatEngineDefaultsReport(result.engineDefaults));
+  lines.push('');
   lines.push(`target occlusion warnings: ${occlusionWarnings.length}`);
   lines.push(`performance gate failures: ${perfFailures.length}`);
   if (failures.length) {

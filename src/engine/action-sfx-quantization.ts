@@ -39,35 +39,50 @@ const GRID_RAMP_THIRTYSECONDS = [1, 2, 4, 8, 16, 32, 32, 32];
 // Default maxGridSeconds: the bar grid at 126 BPM (crystal's original tuning).
 const DEFAULT_MAX_GRID_SECONDS = 1.905;
 
-// The game's default quantization profile. Levels can override or opt out via
-// the runner's timing field.
-const shotDelaySettings: ShotDelaySettings = {
+// Immutable baselines for reports/tools. Runtime settings below are mutable.
+export const DEFAULT_SHOT_DELAY_SETTINGS = {
   gapThirtyseconds: 2,
   releaseShare: 0.75,
   pattern: 'grid-ramp',
   gridRampGapGrowthThirtyseconds: 2,
   maxGridSeconds: DEFAULT_MAX_GRID_SECONDS,
-};
+} as const satisfies ShotDelaySettings;
 
-const settings: ActionSfxQuantizationSettings = {
+export const DEFAULT_ACTION_SFX_QUANTIZATION = {
   enabled: true,
   gridThirtyseconds: DEFAULT_GRID_THIRTYSECONDS,
-};
+} as const satisfies ActionSfxQuantizationSettings;
+
+// The game's default quantization profile. Levels can override or opt out via
+// the runner's timing field.
+const shotDelaySettings: ShotDelaySettings = { ...DEFAULT_SHOT_DELAY_SETTINGS };
+
+const settings: ActionSfxQuantizationSettings = { ...DEFAULT_ACTION_SFX_QUANTIZATION };
+
+export function resolveShotDelaySettings(next: Partial<ShotDelaySettings> = {}): ShotDelaySettings {
+  return {
+    gapThirtyseconds: next.gapThirtyseconds === undefined
+      ? DEFAULT_SHOT_DELAY_SETTINGS.gapThirtyseconds
+      : Math.max(0, Math.round(next.gapThirtyseconds)),
+    releaseShare: next.releaseShare === undefined
+      ? DEFAULT_SHOT_DELAY_SETTINGS.releaseShare
+      : Math.min(1, Math.max(0, next.releaseShare)),
+    pattern: next.pattern ?? DEFAULT_SHOT_DELAY_SETTINGS.pattern,
+    gridRampGapGrowthThirtyseconds: next.gridRampGapGrowthThirtyseconds === undefined
+      ? DEFAULT_SHOT_DELAY_SETTINGS.gridRampGapGrowthThirtyseconds
+      : Math.max(0, Math.round(next.gridRampGapGrowthThirtyseconds)),
+    maxGridSeconds: next.maxGridSeconds === undefined
+      ? DEFAULT_SHOT_DELAY_SETTINGS.maxGridSeconds
+      : Math.max(0.01, next.maxGridSeconds),
+  };
+}
 
 export function getShotDelaySettings() {
   return { ...shotDelaySettings };
 }
 
 export function setShotDelaySettings(next: Partial<ShotDelaySettings>) {
-  if (next.gapThirtyseconds !== undefined) shotDelaySettings.gapThirtyseconds = Math.max(0, Math.round(next.gapThirtyseconds));
-  if (next.releaseShare !== undefined) shotDelaySettings.releaseShare = Math.min(1, Math.max(0, next.releaseShare));
-  if (next.pattern !== undefined) shotDelaySettings.pattern = next.pattern;
-  if (next.gridRampGapGrowthThirtyseconds !== undefined) {
-    shotDelaySettings.gridRampGapGrowthThirtyseconds = Math.max(0, Math.round(next.gridRampGapGrowthThirtyseconds));
-  }
-  if (next.maxGridSeconds !== undefined) {
-    shotDelaySettings.maxGridSeconds = Math.max(0.01, next.maxGridSeconds);
-  }
+  Object.assign(shotDelaySettings, resolveShotDelaySettings({ ...shotDelaySettings, ...next }));
 }
 
 export function shotDelayForIndex(context: ShotDelayContext) {
@@ -150,13 +165,21 @@ function delayStepForIndex(index: number) {
   return index;
 }
 
+export function resolveActionSfxQuantization(next: Partial<ActionSfxQuantizationSettings> = {}): ActionSfxQuantizationSettings {
+  return {
+    enabled: next.enabled ?? DEFAULT_ACTION_SFX_QUANTIZATION.enabled,
+    gridThirtyseconds: next.gridThirtyseconds === undefined
+      ? DEFAULT_ACTION_SFX_QUANTIZATION.gridThirtyseconds
+      : Math.max(1, Math.round(next.gridThirtyseconds)),
+  };
+}
+
 export function getActionSfxQuantization() {
   return { ...settings };
 }
 
 export function setActionSfxQuantization(next: Partial<ActionSfxQuantizationSettings>) {
-  if (next.enabled !== undefined) settings.enabled = next.enabled;
-  if (next.gridThirtyseconds !== undefined) settings.gridThirtyseconds = Math.max(1, Math.round(next.gridThirtyseconds));
+  Object.assign(settings, resolveActionSfxQuantization({ ...settings, ...next }));
 }
 
 export function quantizeActionSfxTime(time: number, thirtysecondSeconds: number) {

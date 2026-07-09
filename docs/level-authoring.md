@@ -64,11 +64,22 @@ Pass a `LockOnRunnerLevel` to `createLockOnRunner`:
 - `spawnTimeline`: ordered enemy entries. Beat-driven levels should author entry times as bars, beats, steps, or named markers through `createMusicTime`; the runner still receives seconds. Entries may include `letter?: string`; the runner passes it to `createEnemyMesh`, exposes it on public enemies, and includes it in target events. Entries may also set `hitPoints` (default 1), `hitStages` (ordered HP stages; each stage must be between 1 and `MAX_LOCKS`), `lockable: false` (read live each frame, so a level may mutate it mid-run to gate a boss phase), and `countsTowardTotal: false` (excluded from the kills/missed/total stats while still scoring and emitting events — use for hazards like enemy projectiles). The current stage's remaining HP determines how many repeat locks the target can accept, capped by the global lock maximum and spaced by the game-wide repeat-lock delay.
 - `updateEnemy(context)`: owns all enemy motion every frame. Position, rotation, and any per-frame mesh state are the level's responsibility. Return `true` to despawn that enemy as a miss; return `false` or nothing to keep it alive. The context also provides `railAnchor(lead)` for eased rail seating, `enemyState(init)` for lazily initialized mutable state scoped to that enemy instance, `spawnEnemy(entry)` to spawn enemies at runtime (returns the new enemy id; running state only), `damagePlayer(amount?)`, and the current `playerHealth`.
 
-Optional overrides are `updateAttractCamera`, `easeRunProgress`, `playerHealth`, `scoreForKill`, `scoreForHit`, `scoreForVolley`, `validateRelease`, `rankForRun`, `detailsForRun`, `lockRadiusNdc`, `startWord`, `replayWord`, `allowLockUndo`, and `timing`. `scoreForVolley` scores a released group after all members resolve, `scoreForHit` scores non-lethal hits on multi-hit enemies, `validateRelease` can reject a running-state release before shots are created or return the subset of released enemies allowed to fire, `detailsForRun` adds compact end-screen lines, `lockRadiusNdc` changes the screen-space lock threshold from the default, and `allowLockUndo` lets right-click remove the last lock; it is off by default. For authored variable rail speed, use `createSpeedProfile` and pass its `runProgress` through `easeRunProgress`. Levels inherit the default quantization profile: tempo-adaptive grid-ramp shot timing, with the coarsest grid capped in absolute time, plus 32nd-note action-SFX snap at the level tempo. Declare `timing` only to override or opt out; Rezdle only opts out of SFX snapping. Shot gap values are counts of 32nd notes, not seconds. See `src/engine/lock-on-runner-types.ts` for exact types.
+Optional overrides fall into two groups. The first group shapes the level's identity — how scoring, release rules, pacing, and timing feel:
+
+- `scoreForKill`, `scoreForHit`, `scoreForVolley`: `scoreForVolley` scores a released group after all members resolve; `scoreForHit` scores non-lethal hits on multi-hit enemies.
+- `validateRelease`: rejects a running-state release before shots are created, or returns the subset of released enemies allowed to fire.
+- `rankForRun`: the level's own rank ladder.
+- `easeRunProgress`: authored variable rail speed; use `createSpeedProfile` and pass its `runProgress` through.
+- `timing`: the level's shot-rhythm and action-SFX-snap profile (see below).
+- `playerHealth`, `allowLockUndo`, `lockRadiusNdc`: the hull system, right-click undo-lock (off by default), and the screen-space lock threshold.
+
+The second group is utilities: `updateAttractCamera`, `updateCameraEffects`, `detailsForRun` (compact end-screen lines), `startWord`, and `replayWord`.
+
+`timing` is a choice the level owns whether or not it writes any code for it. The engine's default profile — tempo-adaptive grid-ramp shot timing with the coarsest grid capped in absolute time, plus 32nd-note action-SFX snap at the level tempo — is one valid answer, and inheriting it is fine when it suits the level's pace. Fast levels usually lower `maxGridSeconds`; Rezdle opts out of SFX snapping. The simulator prints an "Engine defaults" section showing exactly which timing fields, lock radius, and identity hooks a level inherits: read it and confirm each inherited default is something the level wants, not something it never considered. Shot gap values are counts of 32nd notes, not seconds. See `src/engine/lock-on-runner-types.ts` for exact types.
 
 Setting `playerHealth` enables the hull system: `damagePlayer` calls take a point off (with a short invulnerability window between hits), the HUD shows hull pips and a red damage flash, and reaching zero ends the run with `died: true` in the summary and a forced `—` rank. Related events: `playerhit` fires on accepted damage, `hit` carries `lethal`, total `hitPointsRemaining`, and current-stage fields, `stage` fires when a non-lethal stage is completed, and `runend` carries `died`.
 
-For lockable enemy shots and hazards, prefer `steerHomingShot`, `shotBehindCamera`, and `updateHostileShotImpact` from `src/engine/hostile-shot.ts` for shared flight bookkeeping, despawn culling, and close-range impact timing. Impact timing gives levels common defaults for hit distance, impact brake, damage distance, and intercept grace, while allowing per-level overrides for feel. Levels still own tuning, launch motion, visuals, audio, and when to call `damagePlayer`.
+For lockable enemy shots and hazards, prefer `steerHomingShot`, `shotBehindCamera`, and `updateHostileShotImpact` from `src/engine/hostile-shot.ts` for shared flight bookkeeping, despawn culling, and close-range impact timing. Impact timing gives levels shared safety defaults, with `hitDistance`, `impactBrake`, and `damageDistance` overridable per level for feel — the overridable surface is deliberately just the fields that change how incoming danger reads. Levels still own tuning, launch motion, visuals, audio, and when to call `damagePlayer`.
 
 ## Rail pacing for high-speed combat
 
@@ -164,6 +175,8 @@ npm run simulate -- --level <level-id>
 ```
 
 The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events.
+
+The output opens with an "Engine defaults" section (also printed by `check:floor`) listing which engine-default timing fields, lock radius, and optional runner hooks the level inherits versus declares. It is informational, never a gate: inheriting a default is a valid choice, but it should be a considered one — the section exists so the author sees the inherited list instead of never knowing it was there.
 
 ## Audio and visual inspection tools
 

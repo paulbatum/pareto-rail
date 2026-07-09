@@ -1,7 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Object3D, PerspectiveCamera, Scene, Vector3 } from 'three';
-import { createLockOnRunner } from '../src/engine/lock-on-runner';
+import {
+  DEFAULT_ACTION_SFX_QUANTIZATION,
+  DEFAULT_SHOT_DELAY_SETTINGS,
+  resolveActionSfxQuantization,
+  resolveShotDelaySettings,
+} from '../src/engine/action-sfx-quantization';
+import type { ActionSfxQuantizationSettings, ShotDelaySettings } from '../src/engine/action-sfx-quantization';
+import { createLockOnRunner, LOCK_RADIUS_NDC } from '../src/engine/lock-on-runner';
 import type { LockOnRunnerLevel, LockOnSpawnEntry } from '../src/engine/lock-on-runner';
 import { MAX_LOCKS } from '../src/engine/locks';
 import { createEventBus, type GameEvents } from '../src/events';
@@ -69,9 +76,37 @@ type RunResult = {
   };
 };
 
+type FieldSource = 'level-authored' | 'engine default';
+
+type EngineDefaultsReport = {
+  shotRhythm: {
+    profile: ShotDelaySettings;
+    fields: Record<keyof ShotDelaySettings, FieldSource>;
+    inheritedProfile: boolean;
+  };
+  actionSfxSnap: {
+    status: 'inherited-default' | 'overridden-grid' | 'disabled-by-level';
+    enabled: boolean;
+    gridThirtyseconds: number;
+    fields: Record<keyof ActionSfxQuantizationSettings, FieldSource>;
+  };
+  lockRadius: {
+    value: number;
+    source: FieldSource;
+    engineDefault: number;
+  };
+  identityHooks: {
+    declared: string[];
+    inherited: string[];
+  };
+};
+
+type SimulatedRunResult = RunResult & { engineDefaults: EngineDefaultsReport };
+
 type SuiteResult = {
   level: RunResult['level'];
   seed: number;
+  engineDefaults: EngineDefaultsReport;
   runs: RunResult[];
   eventCoverage: { fired: string[]; neverFired: string[] };
   engagement?: EngagementRunReport;
@@ -232,10 +267,11 @@ export async function runSimulationSuite(options: Partial<CliOptions> & { level:
 export const simulationLevels: string[] = [];
 
 async function runSuite(options: CliOptions): Promise<SuiteResult> {
-  const runs: RunResult[] = [];
+  const simulatedRuns: SimulatedRunResult[] = [];
   for (const policy of options.policies) {
-    runs.push(await simulateRun({ ...options, policy, seed: policy === 'imperfect' ? options.seed : 0 }));
+    simulatedRuns.push(await simulateRun({ ...options, policy, seed: policy === 'imperfect' ? options.seed : 0 }));
   }
+  const runs: RunResult[] = simulatedRuns.map(({ engineDefaults: _engineDefaults, ...run }) => run);
   const fired = new Set<keyof GameEvents>();
   for (const run of runs) for (const event of run.events) fired.add(event.type);
   const coverageTypes = options.policies.includes('reject')
@@ -244,6 +280,7 @@ async function runSuite(options: CliOptions): Promise<SuiteResult> {
   return {
     level: runs[0].level,
     seed: options.seed,
+    engineDefaults: simulatedRuns[0].engineDefaults,
     runs,
     eventCoverage: {
       fired: coverageTypes.filter((type) => fired.has(type)),
@@ -253,13 +290,14 @@ async function runSuite(options: CliOptions): Promise<SuiteResult> {
   };
 }
 
-async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise<RunResult> {
+async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise<SimulatedRunResult> {
   const target = await resolveLevelTarget(options.level, process.cwd());
 
   window.__raildDebug = { ...(window.__raildDebug ?? {}), immortal: options.engagement };
   const bus = createEventBus();
   const hud = createStubHud();
   const level = await createGameplay(target.folder, bus, hud);
+  const engineDefaults = summarizeEngineDefaults(level);
   const scene = new Scene();
   const camera = new PerspectiveCamera(60, 16 / 9, 0.1, 5000);
   const canvas = createCanvasStub(1280, 720) as HTMLCanvasElement;
@@ -406,6 +444,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
   runner.dispose();
 
   return {
+    engineDefaults,
     level: { id: target.canonical, folder: target.folder, title: target.title, duration: level.duration, bpm: level.bpm },
     policy: options.policy,
     seed: options.policy === 'imperfect' ? options.seed : 0,
@@ -506,6 +545,67 @@ async function createGameplay(folder: string, bus: ReturnType<typeof createEvent
 
   throw new Error(`Could not find a gameplay factory or object in level folder: ${folder}`);
 }
+
+function summarizeEngineDefaults(level: LockOnRunnerLevel<string, unknown>): EngineDefaultsReport {
+  const shotDelay = level.timing?.shotDelay ?? {};
+  const shotFields = sourceMap(DEFAULT_SHOT_DELAY_SETTINGS, shotDelay);
+  const shotProfile = resolveShotDelaySettings(shotDelay);
+
+  const actionSfx = level.timing?.actionSfx ?? {};
+  const actionFields = sourceMap(DEFAULT_ACTION_SFX_QUANTIZATION, actionSfx);
+  const actionSettings = resolveActionSfxQuantization(actionSfx);
+  const actionStatus = actionSfx.enabled === false
+    ? 'disabled-by-level'
+    : actionSfx.gridThirtyseconds !== undefined
+      ? 'overridden-grid'
+      : 'inherited-default';
+
+  const declaredHooks = IDENTITY_HOOKS.filter((hook) => level[hook] !== undefined);
+  const inheritedHooks = IDENTITY_HOOKS.filter((hook) => level[hook] === undefined);
+
+  return {
+    shotRhythm: {
+      profile: shotProfile,
+      fields: shotFields,
+      inheritedProfile: Object.values(shotFields).every((source) => source === 'engine default'),
+    },
+    actionSfxSnap: {
+      status: actionStatus,
+      enabled: actionSettings.enabled,
+      gridThirtyseconds: actionSettings.gridThirtyseconds,
+      fields: actionFields,
+    },
+    lockRadius: {
+      value: level.lockRadiusNdc ?? LOCK_RADIUS_NDC,
+      source: level.lockRadiusNdc === undefined ? 'engine default' : 'level-authored',
+      engineDefault: LOCK_RADIUS_NDC,
+    },
+    identityHooks: {
+      declared: declaredHooks,
+      inherited: inheritedHooks,
+    },
+  };
+}
+
+function sourceMap<T extends Record<string, unknown>>(defaults: T, authored: Partial<T>): Record<keyof T, FieldSource> {
+  return Object.fromEntries(
+    Object.keys(defaults).map((key) => [key, authored[key as keyof T] === undefined ? 'engine default' : 'level-authored']),
+  ) as Record<keyof T, FieldSource>;
+}
+
+const IDENTITY_HOOKS = [
+  'scoreForHit',
+  'scoreForKill',
+  'scoreForVolley',
+  'validateRelease',
+  'rankForRun',
+  'easeRunProgress',
+  'updateCameraEffects',
+  'updateAttractCamera',
+  'playerHealth',
+  'allowLockUndo',
+  'detailsForRun',
+] as const satisfies Array<keyof LockOnRunnerLevel<string, unknown>>;
 
 function visibleTargets(camera: PerspectiveCamera, targets: Map<number, SimTarget>, includeLetters: boolean) {
   const projected = new Vector3();
@@ -739,10 +839,54 @@ function parseArgs(argv: string[]): CliOptions {
   return { level, policies, seed, dt, json, write, suite: policy === 'suite', gapThreshold, engagement };
 }
 
+export function formatEngineDefaultsReport(report: EngineDefaultsReport) {
+  const lines: string[] = [];
+  lines.push('Engine defaults (informational — inheriting a default is a valid choice; confirm it suits this level):');
+  if (report.shotRhythm.inheritedProfile) {
+    lines.push(`  shot rhythm: engine default profile: ${formatShotProfile(report.shotRhythm.profile)}`);
+  } else {
+    lines.push('  shot rhythm:');
+    for (const key of SHOT_DELAY_FIELDS) {
+      lines.push(`    ${key}=${report.shotRhythm.profile[key]} (${report.shotRhythm.fields[key]})`);
+    }
+  }
+  lines.push(`  action SFX snap: ${formatActionSfxSnap(report.actionSfxSnap)}`);
+  lines.push(`  lock radius: ${formatLockRadius(report.lockRadius)}`);
+  lines.push(`  identity hooks declared: ${report.identityHooks.declared.join(', ') || 'none'}`);
+  lines.push(`  identity hooks inherited: ${report.identityHooks.inherited.join(', ') || 'none'}`);
+  return lines.join('\n');
+}
+
+function formatShotProfile(profile: ShotDelaySettings) {
+  return SHOT_DELAY_FIELDS.map((key) => `${key}=${profile[key]}`).join(', ');
+}
+
+function formatActionSfxSnap(snap: EngineDefaultsReport['actionSfxSnap']) {
+  if (snap.status === 'disabled-by-level') return 'disabled by level';
+  const grid = snap.gridThirtyseconds === 1 ? '32nd grid' : `${snap.gridThirtyseconds}×32nd grid`;
+  if (snap.status === 'overridden-grid') return `overridden grid (${snap.enabled ? 'enabled' : 'disabled'}, ${grid})`;
+  return `inherited default (${snap.enabled ? 'enabled' : 'disabled'}, ${grid})`;
+}
+
+function formatLockRadius(lockRadius: EngineDefaultsReport['lockRadius']) {
+  if (lockRadius.source === 'engine default') return `${lockRadius.value} NDC (engine default)`;
+  return `${lockRadius.value} NDC (level-authored; engine default ${lockRadius.engineDefault})`;
+}
+
+const SHOT_DELAY_FIELDS = [
+  'pattern',
+  'gapThirtyseconds',
+  'releaseShare',
+  'gridRampGapGrowthThirtyseconds',
+  'maxGridSeconds',
+] as const satisfies Array<keyof ShotDelaySettings>;
+
 function formatSuite(result: SuiteResult, _gapThreshold: number) {
   if (result.engagement) return formatEngagementReport(result);
   const lines: string[] = [];
   lines.push(`${result.level.title} simulation (${result.level.duration.toFixed(1)}s @ ${result.level.bpm} BPM)`);
+  lines.push('');
+  lines.push(formatEngineDefaultsReport(result.engineDefaults));
   for (const run of result.runs) {
     const summary = run.summary;
     const spawned = Object.entries(run.counts.spawnedKinds).map(([kind, count]) => `${kind}=${count}`).join(', ') || 'none';
@@ -768,6 +912,9 @@ function formatEngagementReport(result: SuiteResult) {
   const noneRun = result.runs.find((run) => run.policy === 'none');
   const lines: string[] = [];
   lines.push(`${result.level.title} engagement report (${result.level.duration.toFixed(1)}s @ ${result.level.bpm} BPM, policy none)`);
+  lines.push('');
+  lines.push(formatEngineDefaultsReport(result.engineDefaults));
+  lines.push('');
   if (noneRun) {
     const impossible = noneRun.pressure.impossibleMoments.length;
     lines.push(`pressure: peak ${Math.max(0, ...noneRun.pressure.samples.map((sample) => sample.count))}, impossible moments ${impossible}`);
