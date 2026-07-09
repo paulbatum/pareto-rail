@@ -12,7 +12,7 @@ Start from `npm run scaffold -- --id <id>`. Then read `docs/level-authoring.md`,
 
 ## Theme
 
-_Filled in per assignment. One or two sentences naming the level's world and mood._
+_Filled in per assignment. Direct the level's world, visual language, dramatic arc, musical character, and signature player-facing moments; do not repeat the shared rail-shooter contract or prescribe source-level implementation._
 
 ## Effort
 
