@@ -5,3 +5,4 @@ snapshots/
 .env.*
 .DS_Store
 .vercel
+benchmark/private/
