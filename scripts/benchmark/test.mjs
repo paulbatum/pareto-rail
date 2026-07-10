@@ -94,4 +94,12 @@ assert.deepEqual(validateRunDefinition(runDefinition), []);
 runDefinition.stage.effort = 'invalid';
 assert.ok(validateRunDefinition(runDefinition).some((error) => error.includes('stage.effort')));
 
+const claudeRunDefinition = {
+  ...structuredClone(runDefinition),
+  stage: { adapter: 'claude-cli', model: 'claude-fable-5', effort: 'high', timeoutSeconds: 10_800 },
+};
+assert.deepEqual(validateRunDefinition(claudeRunDefinition), []);
+const unknownAdapter = { ...structuredClone(claudeRunDefinition), stage: { ...claudeRunDefinition.stage, adapter: 'unknown-cli' } };
+assert.ok(validateRunDefinition(unknownAdapter).some((error) => error.includes('stage.adapter')));
+
 console.log('Benchmark controller tests passed.');

@@ -23,6 +23,8 @@ Everything below is the current protocol, not an irreversible commitment. Drafts
 
 The first run is an excluded one-theme, one-configuration rehearsal: `codex-terra-high` uses Codex CLI `0.144.0`, `gpt-5.6-terra`, and high reasoning in one fresh ephemeral `codex exec` session. A minimal live probe has verified the CLI's JSONL session and usage fields. `scripts/benchmark/codex-cli.mjs` captures those records; `scripts/benchmark/run.mjs` composes the declared single-run flow from rendering through payload extraction and a private manifest.
 
+`claude-fable-5-high` is the matching Fable solo configuration: `scripts/benchmark/claude-cli.mjs` drives one fresh `claude --print --output-format stream-json` session with `--effort high`, following the same pattern. `run.mjs` now dispatches on `definition.stage.adapter` (`codex-cli` or `claude-cli`) so either harness composes the same declared flow. A minimal live probe has verified the CLI's session/usage fields and native-transcript capture; this configuration remains rehearsal-only.
+
 The ineligible rehearsal theme is `benchmark/examples/downpour.md`. `Rush` is metadata-marked as a technical test fixture, not a playable benchmark reference, so it is excluded from overlap, distinctiveness, and quality-reference checks while remaining available in development mode.
 
 The first rehearsal's API-list-price-equivalent cost uses the dated standard short-context Terra input in `benchmark/pricing/gpt-5.6-terra-standard-short.json`; actual Plus subscription expenditure remains separate. `benchmark/controller/failure-taxonomy.md` supplies the current draft classification rules. These materials are still drafts and are not a benchmark release.
@@ -74,7 +76,7 @@ For a later benchmark, edit the same canonical paths and create a new release. R
 Before runner implementation is considered stable:
 
 - finalize the small benchmark additions in `benchmark/prompts/level-assignment.md`, including duration, polish emphasis, identity fields, and theme rendering while leaving the standing brief as the main task specification;
-- finish the remaining harness recipes after the implemented Codex Terra rehearsal has proved the controller path;
+- finish the remaining harness recipes (the delegation configuration) now that both solo harnesses — Codex Terra and Claude Fable 5 — have proved the controller path;
 - write all three verbatim recipes, including stage prompts, supplied files, session boundaries, stage limits, review/revision behavior, harness versions, and usage capture;
 - author three eligible themes and check them for comparable specificity and distance from the hand-built gallery;
 - settle the run manifest and ranking formats from rehearsal output;

@@ -23,6 +23,7 @@
     "benchmark:ranking": "node scripts/benchmark/ranking.mjs",
     "benchmark:admin": "node scripts/benchmark/admin.mjs",
     "benchmark:codex": "node scripts/benchmark/codex-cli.mjs",
+    "benchmark:claude": "node scripts/benchmark/claude-cli.mjs",
     "benchmark:run": "node scripts/benchmark/run.mjs",
     "test:benchmark-controller": "node scripts/benchmark/test.mjs",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",

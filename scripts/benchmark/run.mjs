@@ -19,8 +19,28 @@ import { renderAssignment } from './render-assignment.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
-const CODEX = path.join(ROOT, 'scripts/benchmark/codex-cli.mjs');
 const RUNBOOK = 'benchmark/controller/runbook.md';
+
+// One entry per supported `definition.stage.adapter`. Adds a harness without touching
+// the Codex path: same stage shape (model, effort, timeoutSeconds), different process runner.
+const ADAPTERS = {
+  'codex-cli': {
+    scriptPath: path.join(ROOT, 'scripts/benchmark/codex-cli.mjs'),
+    stageDir: 'stages/solo/codex',
+    binField: 'codexBin',
+    binFlag: '--codex-bin',
+    harnessName: 'Codex CLI',
+    modelProvider: 'OpenAI Codex subscription',
+  },
+  'claude-cli': {
+    scriptPath: path.join(ROOT, 'scripts/benchmark/claude-cli.mjs'),
+    stageDir: 'stages/solo/claude',
+    binField: 'claudeBin',
+    binFlag: '--claude-bin',
+    harnessName: 'Claude Code CLI',
+    modelProvider: 'Anthropic Claude Code subscription',
+  },
+};
 
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
@@ -56,12 +76,13 @@ async function main() {
     await writeCommandRecord(path.join(outputDirectory, 'setup.json'), ['npm', 'ci'], setup);
     if (setup.code !== 0) fail(`Dependency provisioning failed; see ${path.join(outputDirectory, 'setup.json')}.`);
 
-    const stageDirectory = path.join(outputDirectory, 'stages/solo/codex');
-    const stageArgs = [CODEX, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
-    if (definition.stage.codexBin) stageArgs.push('--codex-bin', definition.stage.codexBin);
+    const adapter = ADAPTERS[definition.stage.adapter];
+    const stageDirectory = path.join(outputDirectory, adapter.stageDir);
+    const stageArgs = [adapter.scriptPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
+    if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
     const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true });
     await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
-    if (stage.code !== 0) fail(`Codex stage failed; see ${path.join(outputDirectory, 'stage-launch.json')}.`);
+    if (stage.code !== 0) fail(`${adapter.harnessName} stage failed; see ${path.join(outputDirectory, 'stage-launch.json')}.`);
 
     const sealed = await command(process.execPath, [ADMIN, 'seal', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId], ROOT);
     const evaluated = JSON.parse(sealed.stdout);
@@ -102,7 +123,7 @@ export function validateDefinition(value) {
   validateArtifact(value.failureTaxonomy, 'definition.failureTaxonomy', errors);
   if (!isPlainObject(value.stage)) errors.push('definition.stage must be an object.');
   else {
-    if (value.stage.adapter !== 'codex-cli') errors.push('definition.stage.adapter must be codex-cli.');
+    if (!Object.hasOwn(ADAPTERS, value.stage.adapter)) errors.push(`definition.stage.adapter must be one of: ${Object.keys(ADAPTERS).join(', ')}.`);
     if (typeof value.stage.model !== 'string' || !value.stage.model) errors.push('definition.stage.model is required.');
     if (!['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.stage.effort)) errors.push('definition.stage.effort is invalid.');
     if (!Number.isInteger(value.stage.timeoutSeconds) || value.stage.timeoutSeconds < 1) errors.push('definition.stage.timeoutSeconds must be a positive integer.');
@@ -137,9 +158,10 @@ async function prepareInputs(definition, materialsCommit, outputDirectory) {
 }
 
 async function createManifest({ definition, materialsCommit, entrantBaseline, outputDirectory, gateRecord, evaluated, payload, worktree, startedAt }) {
+  const adapter = ADAPTERS[definition.stage.adapter];
   const [usage, commandRecord, controller, recipe, theme, pricingSource] = await Promise.all([
-    readJson(path.join(outputDirectory, 'stages/solo/codex/raw-usage.json')),
-    readJson(path.join(outputDirectory, 'stages/solo/codex/command.json')),
+    readJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json')),
+    readJson(path.join(outputDirectory, adapter.stageDir, 'command.json')),
     artifactFromCommit(materialsCommit, { path: RUNBOOK, sha256: await hashFromCommit(materialsCommit, RUNBOOK) }),
     artifactFromCommit(materialsCommit, definition.assignment.recipe),
     artifactFromCommit(materialsCommit, definition.assignment.theme),
@@ -147,7 +169,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ou
   ]);
   const pricing = calculatePricing(usage.normalized, parsePricing(pricingSource, definition.stage.model));
   const finishedAt = new Date().toISOString();
-  const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, 'stages/solo/codex/rollout.jsonl'));
+  const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -161,10 +183,10 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ou
     runner: { path: 'scripts/benchmark/run.mjs', sha256: await hashFromCommit(materialsCommit, 'scripts/benchmark/run.mjs') },
     timing: { startedAt, finishedAt, wallTimeSeconds: (Date.parse(finishedAt) - Date.parse(startedAt)) / 1_000 },
     stages: [{
-      id: 'solo', role: 'solo', model: { provider: 'OpenAI Codex subscription', snapshotId: definition.stage.model },
-      harness: { name: 'Codex CLI', version: commandRecord.cliVersion }, sessionId: usage.sessionId,
+      id: 'solo', role: 'solo', model: { provider: adapter.modelProvider, snapshotId: definition.stage.model },
+      harness: { name: adapter.harnessName, version: commandRecord.cliVersion }, sessionId: usage.sessionId,
       promptSha256: (await readJson(path.join(outputDirectory, 'rendered-assignment.json'))).rendering.sha256,
-      outputArtifactSha256: sha256(await fs.readFile(path.join(outputDirectory, 'stages/solo/codex/events.jsonl'), 'utf8')),
+      outputArtifactSha256: sha256(await fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8')),
       ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}),
       startedAt: commandRecord.startedAt, finishedAt: commandRecord.finishedAt, wallTimeSeconds: commandRecord.wallTimeSeconds,
       usage: usage.normalized, pricing: { status: 'measured', ...pricing.rates, costUsd: pricing.costUsd }, result: 'completed',

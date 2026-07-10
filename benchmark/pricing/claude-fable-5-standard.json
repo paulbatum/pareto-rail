@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "model": "claude-fable-5",
+  "serviceTier": "standard",
+  "contextTier": "standard",
+  "priceDate": "2026-07-10",
+  "currency": "USD",
+  "inputUsdPerMillion": 10,
+  "cacheReadUsdPerMillion": 1,
+  "cacheWriteUsdPerMillion": 12.5,
+  "outputUsdPerMillion": 50,
+  "sourceUrl": "https://platform.claude.com/docs/en/pricing"
+}
