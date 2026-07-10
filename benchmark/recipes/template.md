@@ -29,12 +29,13 @@ List every file or generated artifact available to this configuration. At freeze
 - Harness continuation behavior: `<policy>`
 - Failure behavior: `<which failures stop the run>`
 - Commit behavior: `<agent follows repository workflow; controller records the evaluated commit and derives the payload>`
+- Controller usage treatment: `<separate orchestrate stage, included elsewhere, unavailable, or deterministic/no model usage>`
 
 Repeat the following section for every stage in execution order.
 
 ## Stage: <stage id>
 
-- Role: `<plan | implement | review | revise | solo>`
+- Role: `<orchestrate | plan | implement | review | revise | solo>`
 - Model provider: `<provider>`
 - Exact model snapshot: `<snapshot id; never an alias in the frozen recipe>`
 - Harness and version: `<name and version>`

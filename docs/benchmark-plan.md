@@ -13,7 +13,7 @@ Everything below is the current protocol, not an irreversible commitment. Drafts
 - **Model identity:** use GPT-5.6 as soon as it is available and record exact model snapshot identifiers, not aliases.
 - **Run policy:** each run follows a fixed recipe without operator intervention. No operator-requested retry or repair is allowed. Predeclared planning, implementation, review, and revision stages inside a delegation recipe are part of one run, not retries.
 - **Mechanical eligibility:** run `npm run typecheck`, `npm run build`, `npm run check:scope -- <level-id>`, and `npm run check:floor -- --level <level-id>` against the exact evaluated working tree, including its temporary registry and generated-gallery changes. A failure is a DNF: keep its full cost and record, but do not present it for play.
-- **Cost:** runs use paid subscriptions rather than API billing. Record raw token usage where the harness exposes it and compute API-list-price-equivalent USD at the run date as a model-usage comparison. Report subscription fees separately as actual expenditure; do not allocate monthly fees arbitrarily across runs. A multi-stage run includes every measured stage. Keep both equivalent cost per run and effective equivalent cost per published level so DNFs remain visible.
+- **Cost:** runs use paid subscriptions rather than API billing. Record raw token usage where the harness exposes it and compute API-list-price-equivalent USD at the run date as a model-usage comparison. Report subscription fees separately as actual expenditure; do not allocate monthly fees arbitrarily across runs. A multi-stage run includes every measured stage. Model-mediated orchestration usage must be declared and captured without double-counting; its treatment in the primary cost metric is fixed before the release. Keep both equivalent cost per run and effective equivalent cost per published level so DNFs remain visible.
 - **Blinding:** each run is preassigned a random four-character slot. Its implementation id combines the theme and slot, such as `deluge-a44f`, without encoding configuration or execution order. The private randomized run schedule is also the slot-to-configuration key. Full run records, configuration identities, source branches, logs, and that schedule remain unopened until rankings are locked.
 - **Comparison:** play same-theme pairs back to back. With three configurations, a complete round robin is three pairs per theme and nine pair judgments overall. Randomize pair order and which slot appears first.
 - **Contamination control:** every eligible run starts from the same frozen entrant baseline and can see only its assigned theme, opaque level identity, and declared prompt material. It must not see another entrant, another eligible theme, the recipes for other configurations, the private schedule, or benchmark results.
@@ -25,6 +25,7 @@ The tracked `benchmark/` tree holds authored inputs, schemas, locked slot-only r
 
 ```text
 benchmark/
+  controller/     harness-neutral orchestration runbook
   prompts/        shared assignment applied to every configuration
   examples/       excluded theme exemplars used for authoring and rehearsal
   themes/         the three eligible theme texts
@@ -42,14 +43,14 @@ After unblinding, merge passing payloads into current `main`. Their globally uni
 
 The freeze record should identify both:
 
-1. the materials commit containing the exact shared prompt, themes, recipes, schemas, decision rule, and runner; and
+1. the materials commit containing the exact controller runbook, shared prompt, themes, recipes, schemas, decision rule, and runner/adapters; and
 2. the exact entrant-baseline commit or archive, plus hashes of every supplied artifact and the private preassigned run schedule.
 
 The entrant baseline should exclude benchmark control material that an agent is not meant to see. A commit hash alone is not sufficient if the working tree still exposes other themes and recipes.
 
 ## Versioning
 
-Prompts, recipes, themes, schemas, and runner code use stable authoring paths. Git provides file history; benchmark release metadata establishes which revisions form one experiment. Do not spread `v1` and `v2` names through the authored tree.
+The controller runbook, prompts, recipes, themes, schemas, and runner code use stable authoring paths. Git provides file history; benchmark release metadata establishes which revisions form one experiment. Do not spread `v1` and `v2` names through the authored tree.
 
 At a freeze, commit the final canonical materials, create `benchmark/releases/<version>/freeze.json` against `benchmark/schemas/freeze.schema.json`, and tag the release-record commit as `benchmark-<version>`. The first completed freeze will therefore create `benchmark/releases/v1/freeze.json` and tag `benchmark-v1`; neither exists while the material is still a draft.
 
@@ -64,6 +65,7 @@ For a later benchmark, edit the same canonical paths and create a new release. R
 Before runner implementation is considered stable:
 
 - finalize the small benchmark additions in `benchmark/prompts/level-assignment.md`, including duration, polish emphasis, identity fields, and theme rendering while leaving the standing brief as the main task specification;
+- finalize the harness-neutral controller runbook and decide how each harness launches a fresh controller context per eligible run;
 - write all three verbatim recipes, including stage prompts, supplied files, session boundaries, stage limits, review/revision behavior, harness versions, and usage capture;
 - author three eligible themes and check them for comparable specificity and distance from the hand-built gallery;
 - settle the run manifest and ranking formats;
@@ -74,7 +76,7 @@ Before runner implementation is considered stable:
 
 ### 2. Build and rehearse the pipeline
 
-Build the runner before the freeze. Exercise the complete path with an ineligible exemplar and a run that cannot enter the analysis:
+Build the deterministic adapters and exercise `benchmark/controller/runbook.md` before the freeze. Exercise the complete path with an ineligible exemplar and a run that cannot enter the analysis:
 
 1. create an ineligible opaque slot and unique level id, then prepare an isolated entrant checkout;
 2. launch every stage without manual intervention while allowing the agent to use the normal scaffold, registry, and gallery workflow;
@@ -96,11 +98,11 @@ Freeze only after the protocol and rehearsal pass:
 - create the sanitized entrant baseline;
 - generate and validate the private preassigned run schedule;
 - create the release record with the materials and entrant-baseline identities plus the private schedule hash;
-- hash themes, recipes, prompts, harness versions, schemas, price inputs, the schedule, and the runner;
+- hash the controller runbook, themes, recipes, prompts, harness versions, schemas, price inputs, the schedule, and the runner/adapters;
 - lock the decision rule and ranking protocol; and
 - verify that a fresh entrant checkout contains exactly the intended material.
 
-After this point, any behavior-affecting change to the baseline, shared prompt, runner, recipe, theme, or evaluation protocol requires a new benchmark release. Fixes to analysis or presentation code are allowed only when they do not alter recorded inputs or judgments.
+After this point, any behavior-affecting change to the baseline, controller runbook, shared prompt, runner/adapters, recipe, theme, or evaluation protocol requires a new benchmark release. Fixes to analysis or presentation code are allowed only when they do not alter recorded inputs or judgments.
 
 ### 4. Generate the nine entrants
 
@@ -120,7 +122,7 @@ DNFs are never launched. Their treatment in quality scoring must already be fixe
 
 ### 6. Lock, analyze, unblind, and integrate
 
-Commit or otherwise checksum the complete ranking set and record its lock timestamp before opening the private run schedule. Compute the preregistered result first. Exploratory observations are welcome afterward, but label them separately.
+Commit or otherwise checksum the complete ranking set and record its lock timestamp before opening the private run schedule. After opening the schedule, compute the preregistered result before any exploratory analysis. Exploratory observations are welcome afterward, but label them separately.
 
 After unblinding, publish redacted full manifests under `benchmark/manifests/`, add configuration identities to derived analysis rather than rewriting slot-only ranking records, and retain raw records so future prices or scoring methods can be applied.
 
@@ -145,6 +147,7 @@ These are the next design tasks, in dependency order:
 
 1. Confirm the duration and two-sentence polish addition in `benchmark/prompts/level-assignment.md`.
 2. Fill out one recipe from `benchmark/recipes/template.md`, preferably delegation because it has the most degrees of freedom.
-3. Draft the remaining two eligible themes alongside `benchmark/themes/deluge.md`, then compare all three for specificity, aesthetic overlap, and implementation burden.
-4. Adapt the draft schedule and manifest schemas to real controller and harness output.
-5. Write the excluded rehearsal command and make it produce an evaluated commit, a directory-only payload commit, and a private run record without yet automating all nine eligible runs.
+3. Define the harness adapters needed to execute each recipe from `benchmark/controller/runbook.md`, including fresh-context launch and usage capture.
+4. Draft the remaining two eligible themes alongside `benchmark/themes/deluge.md`, then compare all three for specificity, aesthetic overlap, and implementation burden.
+5. Adapt the draft schedule and manifest schemas to real controller and harness output.
+6. Run an excluded rehearsal that produces an evaluated commit, a directory-only payload commit, and a private run record without yet automating all nine eligible runs.

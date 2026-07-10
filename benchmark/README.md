@@ -2,6 +2,7 @@
 
 This directory holds the inputs and records for the raild level-generation benchmark. `docs/benchmark-plan.md` is the working protocol.
 
+- `controller/` contains the harness-neutral orchestration runbook.
 - `prompts/` contains the shared benchmark assignment at a stable authoring path.
 - `themes/` contains eligible assignment themes.
 - `examples/` contains ineligible prompt exemplars that may be used for rehearsal.
@@ -13,7 +14,7 @@ This directory holds the inputs and records for the raild level-generation bench
 
 During generation, keep the randomized run schedule (which is also the slot-to-configuration key), raw logs, and complete run records under `benchmark/private/`. That directory is ignored by Git. Do not publish full manifests until rankings are locked because a full manifest necessarily reveals its configuration, model, recipe, and output branch.
 
-The standing level-building brief remains `docs/level-brief.md`. `benchmark/prompts/level-assignment.md` adds benchmark-wide identity, duration, and polish expectations without duplicating the brief. At freeze, the release record identifies the materials commit, sanitized entrant baseline, and hashes for every supplied artifact. Entrant checkouts must not expose benchmark control material merely because it exists in the source repository.
+The controller follows `benchmark/controller/runbook.md`; coding agents do not receive that administrative prompt. The standing level-building brief remains `docs/level-brief.md`. `benchmark/prompts/level-assignment.md` adds benchmark-wide identity, duration, and polish expectations without duplicating the brief. At freeze, the release record identifies the materials commit, sanitized entrant baseline, and hashes for every supplied artifact. Entrant checkouts must not expose benchmark control material merely because it exists in the source repository.
 
 Each run receives a four-character opaque slot and a globally unique level id such as `deluge-a44f`. The agent develops normally in an isolated branch, including temporary registry and gallery edits. After gates run, the controller derives a clean payload commit containing only `src/levels/<level-id>/`. Passing payloads remain isolated through blind ranking, then merge into `main`; one post-unblinding integration commit registers all merged levels and regenerates the gallery.
 

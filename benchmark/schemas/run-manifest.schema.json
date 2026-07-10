@@ -14,7 +14,7 @@
     "theme",
     "baseline",
     "recipe",
-    "runner",
+    "controller",
     "timing",
     "stages",
     "cost",
@@ -57,6 +57,7 @@
       }
     },
     "recipe": { "$ref": "#/$defs/hashedArtifact" },
+    "controller": { "$ref": "#/$defs/hashedArtifact" },
     "runner": { "$ref": "#/$defs/hashedArtifact" },
     "timing": {
       "type": "object",
@@ -76,11 +77,14 @@
     "cost": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["currency", "listPriceDate", "totalUsd"],
+      "required": ["currency", "listPriceDate", "totalUsd", "orchestrationTreatment"],
       "properties": {
         "currency": { "const": "USD" },
         "listPriceDate": { "type": "string", "format": "date" },
         "totalUsd": { "type": "number", "minimum": 0 },
+        "orchestrationTreatment": {
+          "enum": ["included", "excluded", "already-included", "none", "unavailable"]
+        },
         "dashboardReconciled": { "type": "boolean" },
         "reconciliationNotes": { "type": "string" }
       }
@@ -202,7 +206,7 @@
       "required": ["id", "role", "model", "harness", "sessionId", "startedAt", "finishedAt", "wallTimeSeconds", "usage", "pricing", "result"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "role": { "enum": ["plan", "implement", "review", "revise", "solo"] },
+        "role": { "enum": ["orchestrate", "plan", "implement", "review", "revise", "solo"] },
         "model": { "$ref": "#/$defs/model" },
         "harness": { "$ref": "#/$defs/harness" },
         "sessionId": { "type": "string", "minLength": 1 },
@@ -220,14 +224,15 @@
     "gate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "command", "passed", "exitCode", "wallTimeSeconds"],
+      "required": ["id", "command", "status", "wallTimeSeconds"],
       "properties": {
         "id": { "enum": ["typecheck", "build", "scope", "floor"] },
         "command": { "type": "string", "minLength": 1 },
-        "passed": { "type": "boolean" },
+        "status": { "enum": ["passed", "failed", "not-run"] },
         "exitCode": { "type": "integer" },
         "wallTimeSeconds": { "type": "number", "minimum": 0 },
-        "outputSha256": { "$ref": "#/$defs/sha256" }
+        "outputSha256": { "$ref": "#/$defs/sha256" },
+        "reason": { "type": "string" }
       }
     }
   }

@@ -44,6 +44,7 @@
               "prompt",
               "theme",
               "recipe",
+              "controller-runbook",
               "runner",
               "schema",
               "decision-rule",

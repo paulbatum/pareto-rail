@@ -1,6 +1,6 @@
 # Benchmark releases
 
-Author benchmark prompts, recipes, themes, schemas, and runner code at their stable paths. Do not add version suffixes while they are drafts. Git preserves their history; a release record identifies the exact combination used by an eligible experiment.
+Author the controller runbook, prompts, recipes, themes, schemas, and runner code at their stable paths. Do not add version suffixes while they are drafts. Git preserves their history; a release record identifies the exact combination used by an eligible experiment.
 
 When freezing a release:
 
