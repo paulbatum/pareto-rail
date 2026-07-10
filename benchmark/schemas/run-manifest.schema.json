@@ -23,7 +23,7 @@
     "disposition"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "benchmarkVersion": { "type": "string", "minLength": 1 },
     "runId": { "type": "string", "minLength": 1 },
     "slotId": { "type": "string", "minLength": 1 },
@@ -40,7 +40,7 @@
     "baseline": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["materialsCommit", "releaseRecord", "entrantBaseline"],
+      "required": ["materialsCommit", "entrantBaseline"],
       "properties": {
         "materialsCommit": { "$ref": "#/$defs/gitObject" },
         "releaseRecord": { "$ref": "#/$defs/hashedArtifact" },
@@ -77,17 +77,23 @@
     "cost": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["currency", "listPriceDate", "totalUsd", "orchestrationTreatment"],
+      "required": ["currency", "status", "orchestrationTreatment"],
       "properties": {
         "currency": { "const": "USD" },
+        "status": { "enum": ["measured", "unavailable"] },
         "listPriceDate": { "type": "string", "format": "date" },
         "totalUsd": { "type": "number", "minimum": 0 },
+        "unavailableReason": { "type": "string", "minLength": 1 },
         "orchestrationTreatment": {
           "enum": ["included", "excluded", "already-included", "none", "unavailable"]
         },
         "dashboardReconciled": { "type": "boolean" },
         "reconciliationNotes": { "type": "string" }
-      }
+      },
+      "allOf": [
+        { "if": { "properties": { "status": { "const": "measured" } } }, "then": { "required": ["listPriceDate", "totalUsd"] } },
+        { "if": { "properties": { "status": { "const": "unavailable" } } }, "then": { "required": ["unavailableReason"] } }
+      ]
     },
     "gates": {
       "type": "array",
@@ -190,15 +196,21 @@
     "pricing": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["inputUsdPerMillion", "outputUsdPerMillion", "costUsd"],
+      "required": ["status"],
       "properties": {
+        "status": { "enum": ["measured", "unavailable"] },
         "inputUsdPerMillion": { "type": "number", "minimum": 0 },
         "outputUsdPerMillion": { "type": "number", "minimum": 0 },
         "cacheReadUsdPerMillion": { "type": "number", "minimum": 0 },
         "cacheWriteUsdPerMillion": { "type": "number", "minimum": 0 },
         "costUsd": { "type": "number", "minimum": 0 },
-        "sourceUrl": { "type": "string", "format": "uri" }
-      }
+        "sourceUrl": { "type": "string", "format": "uri" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        { "if": { "properties": { "status": { "const": "measured" } } }, "then": { "required": ["inputUsdPerMillion", "outputUsdPerMillion", "costUsd"] } },
+        { "if": { "properties": { "status": { "const": "unavailable" } } }, "then": { "required": ["reason"] } }
+      ]
     },
     "stage": {
       "type": "object",

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { renderAssignment } from './render-assignment.mjs';
 import { createPairSchedule, validatePairSchedule, validateRankings } from './ranking.mjs';
+import { validateDefinition as validateRunDefinition } from './run.mjs';
 import { createSchedule, validateSchedule } from './schedule.mjs';
 
 const hash = (character) => character.repeat(64);
@@ -66,5 +67,26 @@ const rendered = renderAssignment('id={{LEVEL_ID}} title={{LEVEL_TITLE}} theme={
 });
 assert.equal(rendered, 'id=cinder-a1b2 title=Cinder theme=# Cinder');
 assert.throws(() => renderAssignment('{{LEVEL_ID}} {{UNKNOWN}} {{THEME}}', { levelId: 'x', levelTitle: 'X', theme: 'T' }), /Unknown template placeholder/);
+
+const runDefinition = {
+  schemaVersion: 1,
+  benchmarkVersion: 'rehearsal',
+  mode: 'rehearsal',
+  assignment: {
+    runId: 'run-a1b2c3d4', slotId: 'a1b2', configurationId: 'codex-terra-high', levelId: 'cinder-a1b2', levelTitle: 'Cinder',
+    recipe: { path: 'benchmark/recipes/codex-terra-high.md', sha256: hash('a') },
+    theme: { id: 'cinder', path: 'benchmark/examples/cinder.md', sha256: hash('b') },
+  },
+  baseline: { materialsCommit: 'c'.repeat(40), entrantBaseline: 'd'.repeat(40) },
+  template: { path: 'benchmark/prompts/level-assignment.md', sha256: hash('e') },
+  failureTaxonomy: { path: 'benchmark/controller/failure-taxonomy.md', sha256: hash('f') },
+  stage: { adapter: 'codex-cli', model: 'gpt-5.6-terra', effort: 'high', timeoutSeconds: 10_800 },
+  worktree: { path: '/tmp/raild-run-a1b2c3d4' },
+  payload: { path: '/tmp/raild-payload-a1b2c3d4', branch: 'benchmark-payload-a1b2c3d4' },
+  pricing: { path: 'benchmark/pricing/gpt-5.6-terra-standard-short.json', sha256: hash('a') },
+};
+assert.deepEqual(validateRunDefinition(runDefinition), []);
+runDefinition.stage.effort = 'invalid';
+assert.ok(validateRunDefinition(runDefinition).some((error) => error.includes('stage.effort')));
 
 console.log('Benchmark controller tests passed.');

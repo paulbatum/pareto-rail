@@ -6,6 +6,62 @@ A controller may use any orchestration harness capable of launching the models a
 
 Use a fresh controller context for every eligible run. A dispatcher may launch those isolated contexts in the private schedule order, but it must not pass source, logs, stage artifacts, judgments, or conversational history from one entrant to another.
 
+## Codex CLI adapter
+
+`scripts/benchmark/codex-cli.mjs` is the deterministic adapter for a non-interactive Codex stage. It runs `codex exec`, not the interactive TUI. The draft `benchmark/recipes/codex-terra-high.md` is its first consumer and is rehearsal-only until pricing and the failure taxonomy are fixed.
+
+The adapter receives an already-rendered private prompt and sends it to `codex exec -` on stdin. It uses an ephemeral session, ignores user configuration and exec-policy rules, fixes the model, reasoning effort, sandbox, and approval policy, captures JSONL stdout without mixing in the controller's output, and records the final message separately. It validates the installed bundled model catalog before launch, then requires a `thread.started` session id and `turn.completed.usage.input_tokens` plus `output_tokens`; otherwise the stage is not eligible for a measured-cost record.
+
+```sh
+npm run benchmark:codex -- \
+  --worktree /tmp/raild-<opaque-run-id> \
+  --prompt benchmark/private/runs/<opaque-run-id>/rendered-assignment.md \
+  --out benchmark/private/runs/<opaque-run-id>/stages/solo/codex \
+  --model gpt-5.6-terra \
+  --effort high \
+  --timeout-seconds 10800
+```
+
+The output directory must be private or external to the repository and outside the entrant worktree. It contains raw JSONL, stderr, model-catalog and selected-model captures, normalized/raw usage, command/timing data, and the final agent message. The controller copies its hashes and fields into the private manifest; it must not inspect the level source or use the final message as feedback.
+
+## Single-run rehearsal controller
+
+`npm run benchmark:run` executes one private run definition end-to-end. It is intended first for an explicitly ineligible rehearsal, not a one-cell eligible experiment. The definition pins commits, assignment artifacts, worktree and payload locations, the Codex stage settings, and an honest unavailable-price reason. The controller verifies every supplied artifact against the materials commit, requires a clean controller repository, renders the prompt privately, runs `npm ci`, launches the declared stage, seals, gates, extracts a passing payload, and writes either a private manifest or a controller-failure record.
+
+```sh
+npm run benchmark:run -- \
+  --definition benchmark/private/rehearsal-definition.json \
+  --out benchmark/private/runs/<opaque-run-id>
+```
+
+The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`; a future eligible definition additionally needs the frozen-release comparison and full schedule controls described in the runbook.
+
+Its required shape is:
+
+```json
+{
+  "schemaVersion": 1,
+  "benchmarkVersion": "rehearsal",
+  "mode": "rehearsal",
+  "assignment": {
+    "runId": "<opaque-run-id>",
+    "slotId": "<opaque-slot>",
+    "configurationId": "codex-terra-high",
+    "recipe": { "path": "benchmark/recipes/codex-terra-high.md", "sha256": "<sha256>" },
+    "theme": { "id": "<ineligible-theme-id>", "path": "benchmark/examples/<theme>.md", "sha256": "<sha256>" },
+    "levelId": "<theme-id>-<opaque-slot>",
+    "levelTitle": "<theme H1>"
+  },
+  "baseline": { "materialsCommit": "<commit>", "entrantBaseline": "<commit>" },
+  "template": { "path": "benchmark/prompts/level-assignment.md", "sha256": "<sha256>" },
+  "failureTaxonomy": { "path": "benchmark/controller/failure-taxonomy.md", "sha256": "<sha256>" },
+  "stage": { "adapter": "codex-cli", "model": "gpt-5.6-terra", "effort": "high", "timeoutSeconds": 10800 },
+  "worktree": { "path": "/tmp/raild-<opaque-run-id>" },
+  "payload": { "path": "/tmp/raild-payload-<opaque-run-id>", "branch": "benchmark-payload-<opaque-run-id>" },
+  "pricing": { "path": "benchmark/pricing/gpt-5.6-terra-standard-short.json", "sha256": "<sha256>" }
+}
+```
+
 ## Generic controller tools
 
 The scripts below implement deterministic administration only. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. Hash their exact paths and revisions as runner artifacts at freeze.

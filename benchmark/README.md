@@ -8,6 +8,7 @@ This directory holds the inputs and records for the raild level-generation bench
 - `examples/` contains ineligible prompt exemplars that may be used for rehearsal.
 - `recipes/` contains verbatim configuration recipes and their template.
 - `schemas/` defines freeze, private schedule, run-manifest, and slot-only ranking formats.
+- `pricing/` holds dated API list-price inputs used only for equivalent-cost calculations.
 - `releases/` documents immutable benchmark freezes without duplicating the authored tree.
 - `rankings/` contains blind judgments locked before unblinding.
 - `manifests/` contains redacted full run records published after unblinding.

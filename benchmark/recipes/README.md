@@ -5,3 +5,5 @@ Store one verbatim recipe per benchmark configuration at a stable path, such as 
 A recipe states the exact model snapshot, harness and version, prompts and supplied files, session boundaries, allowed stages, time limits, review and revision rules, hidden harness defaults, controller-usage treatment, and token and wall-time capture. `benchmark/controller/runbook.md` executes these declarations without adding workflow decisions. The recipe is the intervention being measured.
 
 Recipes may change while the protocol is being designed and rehearsed. At freeze, the release record hashes the final files and Git preserves their exact content. After the first eligible run, a behavior-changing edit at the stable path requires a new benchmark release; do not create parallel `-v1` and `-v2` recipe files.
+
+`codex-terra-high.md` is the current first-trial draft. It demonstrates a one-stage non-interactive `codex exec` recipe and is deliberately marked rehearsal-only while GPT-5.6 Terra list pricing and the failure taxonomy remain unresolved.
