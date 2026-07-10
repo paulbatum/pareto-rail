@@ -1,6 +1,6 @@
 # Themes
 
-At the v1 freeze, this directory should contain three eligible Markdown themes. Each theme is inserted unchanged into the `## Theme` section of `docs/level-brief.md` and must be identical for every configuration.
+At the first release freeze, this directory should contain three eligible Markdown themes. Each theme is inserted unchanged into the `## Theme` section of `docs/level-brief.md` and must be identical for every configuration.
 
 Aim for roughly 120–200 words. Direct the desired world, visual language, dramatic arc, musical character, and signature player-facing moments without repeating the shared rail-shooter contract or prescribing source-level implementation. Compare the set for similar detail, ambition, and distance from aesthetics already rewarded by the hand-built gallery.
 

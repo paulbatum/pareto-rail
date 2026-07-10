@@ -40,12 +40,20 @@
     "baseline": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sourceCommit", "entrantCommit"],
+      "required": ["materialsCommit", "releaseRecord", "entrantBaseline"],
       "properties": {
-        "sourceCommit": { "$ref": "#/$defs/gitObject" },
-        "entrantCommit": { "$ref": "#/$defs/gitObject" },
-        "bundleManifestPath": { "type": "string", "minLength": 1 },
-        "bundleManifestSha256": { "$ref": "#/$defs/sha256" }
+        "materialsCommit": { "$ref": "#/$defs/gitObject" },
+        "releaseRecord": { "$ref": "#/$defs/hashedArtifact" },
+        "entrantBaseline": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "identifier"],
+          "properties": {
+            "kind": { "enum": ["git-commit", "archive"] },
+            "identifier": { "type": "string", "minLength": 1 },
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
       }
     },
     "recipe": { "$ref": "#/$defs/hashedArtifact" },

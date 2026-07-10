@@ -1,4 +1,4 @@
-# Recipe: <configuration id> v1
+# Recipe: <configuration id>
 
 Status: draft
 
@@ -7,8 +7,6 @@ A recipe is the complete intervention for one configuration. Replace every place
 ## Identity
 
 - Configuration id: `<stable-id>`
-- Recipe version: `1`
-- Eligible benchmark version: `v1`
 - Stages: `<ordered stage ids>`
 
 ## Shared inputs
@@ -16,8 +14,10 @@ A recipe is the complete intervention for one configuration. Replace every place
 List every file or generated artifact available to this configuration. At freeze time, record paths and SHA-256 hashes. State whether the agent may browse the rest of the entrant checkout.
 
 - Entrant baseline: `<freeze record reference>`
+- Shared assignment template: `benchmark/prompts/level-assignment.md`
+- Rendered assignment: `<private artifact path and hash>`
 - Standing brief: `docs/level-brief.md`
-- Assigned theme: `<injected theme path>`
+- Assigned theme: `<theme path injected into the rendered assignment>`
 - Other supplied files: `<paths or none>`
 - Files intentionally unavailable: other themes, other recipes, private benchmark records, and other entrants
 
