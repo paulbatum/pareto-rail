@@ -6,3 +6,4 @@ snapshots/
 .DS_Store
 .vercel
 benchmark/private/
+tmp/
