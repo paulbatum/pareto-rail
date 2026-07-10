@@ -128,4 +128,4 @@ A 30-second speed-feel testbed with a long rail, authored speed surges, simple p
 - `src/levels/rush/audio.ts`
 
 ## Status & notes
-Prototype speed rig with a representational city-street environment. The next tuning pass should still begin in `src/levels/rush/tuning.ts`.
+Technical test fixture, not a player-facing in-game level. It is excluded from the level picker and must not be used as a benchmark overlap, distinctiveness, or quality reference. The next tuning pass should still begin in `src/levels/rush/tuning.ts`.

@@ -25,7 +25,7 @@ async function bootstrap() {
     ? urlParams.get(selectedLevel.debugSelector.queryParam) ?? undefined
     : undefined;
   document.title = `raild — ${selectedLevel.title}`;
-  installLevelPicker(selectedLevel.id);
+  installLevelPicker(selectedLevel.id, import.meta.env.DEV);
 
   const renderer = new WebGPURenderer({ antialias: true, alpha: false });
   // three.js installs a WebGL fallback internally; this project is intentionally WebGPU-only.
@@ -157,12 +157,12 @@ async function bootstrap() {
   });
 }
 
-function installLevelPicker(activeId: string) {
+function installLevelPicker(activeId: string, includeTechnical: boolean) {
   const host = document.createElement('label');
   host.className = 'level-picker';
   host.textContent = 'Level ';
   const select = document.createElement('select');
-  for (const level of selectableLevels()) {
+  for (const level of selectableLevels({ includeTechnical })) {
     const option = document.createElement('option');
     option.value = level.id;
     option.textContent = level.title;

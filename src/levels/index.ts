@@ -4,6 +4,7 @@ export interface LevelMetadata {
   id: string;
   title: string;
   aliases?: string[];
+  kind?: 'playable' | 'technical';
 }
 
 export const levelMetadatas: LevelMetadata[] = [
@@ -11,11 +12,15 @@ export const levelMetadatas: LevelMetadata[] = [
   { id: 'helios', title: 'Helios' },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'] },
   { id: 'rezdle', title: 'Rezdle' },
-  { id: 'rush', title: 'Rush' },
+  { id: 'rush', title: 'Rush', kind: 'technical' },
 ];
 
-export function selectableLevels(): LevelMetadata[] {
-  return levelMetadatas;
+export function selectableLevels({ includeTechnical = false }: { includeTechnical?: boolean } = {}): LevelMetadata[] {
+  return includeTechnical ? levelMetadatas : levelMetadatas.filter((level) => level.kind !== 'technical');
+}
+
+export function benchmarkReferenceLevels(): LevelMetadata[] {
+  return levelMetadatas.filter((level) => level.kind !== 'technical');
 }
 
 export async function getLevelById(id: string | null): Promise<LevelDefinition> {
@@ -36,4 +41,3 @@ export async function getLevelById(id: string | null): Promise<LevelDefinition> 
       throw new Error(`Unknown level: ${matched.id}`);
   }
 }
-
