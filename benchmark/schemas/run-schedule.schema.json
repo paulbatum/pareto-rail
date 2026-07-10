@@ -95,7 +95,11 @@
           "type": "string",
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
         },
-        "levelTitle": { "type": "string", "minLength": 1 }
+        "levelTitle": {
+          "description": "Player-facing title taken from the assigned theme's first level-one heading; it must not reveal configuration, model, slot, or schedule position.",
+          "type": "string",
+          "minLength": 1
+        }
       }
     }
   }

@@ -20,11 +20,11 @@ Run preparation, eligible generation, blind ranking, and post-unblinding integra
 
 ## Non-negotiable invariants
 
-- Every eligible run starts from the frozen entrant baseline identified by the release record.
+- Every eligible run starts from the frozen entrant-baseline commit identified by the release record.
 - The controller receives exactly one private assignment containing an opaque run id, slot, configuration, recipe, theme, level id, and title.
 - The level id is `<theme-id>-<slot-id>` and the four-character slot encodes no model, configuration, theme, or schedule position.
-- An entrant sees only its rendered assignment, declared repository material, recipe-authorized earlier-stage artifacts, and its own working tree.
-- An entrant never sees another theme, recipe, entrant, ranking, full schedule, slot mapping, or benchmark result.
+- The controller supplies only the rendered assignment, declared repository material, recipe-authorized earlier-stage artifacts, and the entrant's own working tree. It does not direct an entrant to inspect another theme, recipe, entrant, ranking, schedule, slot mapping, or benchmark result.
+- Entrants use worktrees of the main repository under a non-adversarial access policy. Repository history and unrelated tracked files are not technically hidden; this accepted limitation must not be represented as technical isolation.
 - Prompts, stage order, model snapshots, session boundaries, time limits, tool access, and review/revision count come from the frozen recipe. The controller does not improvise them.
 - No operator follows logs, reads diffs, plays partial output, supplies feedback, or requests a retry.
 - Gates run against the exact evaluated working tree. Blind play serves that same evaluated commit.
@@ -37,7 +37,7 @@ Run preparation, eligible generation, blind ranking, and post-unblinding integra
 Do not start an eligible run until all of these exist and agree:
 
 - a frozen release record validated against `benchmark/schemas/freeze.schema.json`;
-- the materials commit and sanitized entrant baseline named by that record;
+- the materials commit and entrant-baseline commit named by that record;
 - a private schedule whose hash matches the frozen `run-schedule` artifact;
 - exactly one assignment selected from that schedule without exposing the other assignments;
 - the assignment's recipe and theme with matching paths and hashes;
@@ -71,12 +71,12 @@ Private paths are controller storage. Do not expose or mount the parent `benchma
 Follow `benchmark/releases/README.md` in order:
 
 1. Commit final canonical materials and record the materials commit.
-2. Produce and verify the sanitized entrant baseline.
+2. Record and verify the frozen entrant-baseline commit used for all opaque worktrees.
 3. Generate the private randomized schedule against `benchmark/schemas/run-schedule.schema.json`.
 4. Mechanically verify a complete configuration × theme crossing, contiguous schedule positions, unique run/slot/level ids, fixed-length opaque slots, and exact `<theme-id>-<slot-id>` construction.
 5. Hash the schedule without printing its contents.
 6. Create and validate the freeze record, commit it, and create the annotated release tag.
-7. Re-open a fresh entrant checkout and verify that it contains exactly the declared repository material and no benchmark control or private data.
+7. Re-open a fresh entrant worktree and verify that it is at the declared baseline commit. Verify that private schedule data, raw records, credentials, and session URLs are absent; do not claim that tracked repository material or Git history is hidden.
 
 Do not hand-author or inspect the live slot mapping. If schedule generation or validation is not yet automated, the release is not ready to freeze.
 
@@ -96,9 +96,9 @@ Create `benchmark/private/runs/<run-id>/assignment.json` and initialize a privat
 
 ### 2. Prepare the entrant checkout
 
-Materialize a fresh checkout from the frozen entrant baseline using an opaque branch or workspace name based on `runId`, never configuration or model. Verify repository cleanliness and the baseline identifier before launch.
+Materialize a fresh worktree from the frozen entrant-baseline commit using an opaque branch or workspace name based on `runId`, never configuration or model. Verify repository cleanliness and the baseline identifier before launch.
 
-Keep controller records outside this checkout. Do not copy the full recipe library, schedule, release-control material, or another stage's undeclared artifacts into it.
+Keep controller records outside this worktree. Do not copy the private schedule, release-control records, or another stage's undeclared artifacts into it. The worktree shares tracked repository material and Git history with the main repository; do not describe it as a sanitized or technically isolated checkout.
 
 ### 3. Render the shared assignment
 
@@ -155,7 +155,7 @@ Any failed required gate makes the entrant a DNF unless the frozen failure taxon
 
 ### 7. Derive the payload
 
-Only passing entrants enter the merge set. Create an opaque payload branch from the frozen **materials commit**, not from the sanitized entrant baseline:
+Only passing entrants enter the merge set. Create an opaque payload branch from the frozen **materials commit**, not from the entrant-baseline commit:
 
 1. Verify `src/levels/<level-id>/` does not exist at the materials commit.
 2. Copy exactly that directory from the evaluated commit.
@@ -230,7 +230,7 @@ Stop without improvising when:
 
 - release, schedule, recipe, theme, or prompt hashes disagree;
 - the entrant checkout is not the frozen baseline;
-- required control data is visible inside the entrant session;
+- private schedule data, raw records, credentials, or session URLs are visible inside the entrant session;
 - a requested model snapshot or session boundary cannot be honored;
 - the harness cannot provide the usage evidence required by the frozen cost rule;
 - the controller observes cross-run contamination;

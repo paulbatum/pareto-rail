@@ -5,7 +5,7 @@ Author the controller runbook, prompts, recipes, themes, schemas, and runner cod
 When freezing a release:
 
 1. Commit the final canonical materials and record that commit as the materials commit.
-2. Create and verify the sanitized entrant baseline, which must not expose other themes, recipes, controller instructions, or private records.
+2. Record and verify the frozen entrant-baseline commit used to create every opaque worktree. This benchmark deliberately uses main-repository worktrees under a non-adversarial access policy: tracked files and Git history are not technically hidden. Private schedules, raw records, credentials, and session URLs must remain outside the repository.
 3. Generate ignored `benchmark/private/run-schedule.json` against `benchmark/schemas/run-schedule.schema.json` without inspecting its slot-to-configuration mapping.
 4. Create `benchmark/releases/<version>/freeze.json`, validated against `benchmark/schemas/freeze.schema.json`, including the private schedule's path and hash.
 5. Commit the release record without changing the frozen canonical materials.

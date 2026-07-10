@@ -19,7 +19,7 @@ List every file or generated artifact available to this configuration. At freeze
 - Standing brief: `docs/level-brief.md`
 - Assigned theme: `<theme path injected into the rendered assignment>`
 - Other supplied files: `<paths or none>`
-- Files intentionally unavailable: other themes, other recipes, the private run schedule and configuration mapping, private benchmark records, and other entrants
+- Files not deliberately supplied: other themes, other recipes, the private run schedule and configuration mapping, private benchmark records, and other entrants. Entrants use a worktree of the main repository under the benchmark's non-adversarial access policy; repository history and unrelated tracked files are not technically hidden.
 
 ## Runtime policy
 
@@ -28,7 +28,7 @@ List every file or generated artifact available to this configuration. At freeze
 - Network access: `<policy>`
 - Harness continuation behavior: `<policy>`
 - Failure behavior: `<which failures stop the run>`
-- Commit behavior: `<agent follows repository workflow; controller records the evaluated commit and derives the payload>`
+- Commit behavior: `<agent may follow the repository workflow; the controller commits permitted uncommitted changes while sealing the evaluated commit, then derives the payload>`
 - Controller usage treatment: `<separate orchestrate stage, included elsewhere, unavailable, or deterministic/no model usage>`
 
 Repeat the following section for every stage in execution order.
@@ -75,7 +75,7 @@ The controller, not the agent, runs these after the final stage:
 ```sh
 npm run typecheck
 npm run build
-npm run check:scope -- <level-id>
+npm run check:scope -- <level-id> <entrant-baseline-ref>
 npm run check:floor -- --level <level-id>
 ```
 

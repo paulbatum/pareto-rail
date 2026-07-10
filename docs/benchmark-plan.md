@@ -12,12 +12,12 @@ Everything below is the current protocol, not an irreversible commitment. Drafts
 - **Replicates:** three themes crossed with all three configurations, for nine eligible runs.
 - **Model identity:** use GPT-5.6 as soon as it is available and record exact model snapshot identifiers, not aliases.
 - **Run policy:** each run follows a fixed recipe without operator intervention. No operator-requested retry or repair is allowed. Predeclared planning, implementation, review, and revision stages inside a delegation recipe are part of one run, not retries.
-- **Mechanical eligibility:** run `npm run typecheck`, `npm run build`, `npm run check:scope -- <level-id>`, and `npm run check:floor -- --level <level-id>` against the exact evaluated working tree, including its temporary registry and generated-gallery changes. A failure is a DNF: keep its full cost and record, but do not present it for play.
+- **Mechanical eligibility:** run `npm run typecheck`, `npm run build`, `npm run check:scope -- <level-id> <entrant-baseline-ref>`, and `npm run check:floor -- --level <level-id>` against the exact evaluated working tree, including its temporary registry and generated-gallery changes. The scope gate must use the frozen baseline ref, never moving `main`. A failure is a DNF: keep its full cost and record, but do not present it for play.
 - **Cost:** runs use paid subscriptions rather than API billing. Record raw token usage where the harness exposes it and compute API-list-price-equivalent USD at the run date as a model-usage comparison. Report subscription fees separately as actual expenditure; do not allocate monthly fees arbitrarily across runs. A multi-stage run includes every measured stage. Model-mediated orchestration usage must be declared and captured without double-counting; its treatment in the primary cost metric is fixed before the release. Keep both equivalent cost per run and effective equivalent cost per published level so DNFs remain visible.
 - **Blinding:** each run is preassigned a random four-character slot. Its implementation id combines the theme and slot, such as `deluge-a44f`, without encoding configuration or execution order. The private randomized run schedule is also the slot-to-configuration key. Full run records, configuration identities, source branches, logs, and that schedule remain unopened until rankings are locked.
 - **Comparison:** play same-theme pairs back to back. With three configurations, a complete round robin is three pairs per theme and nine pair judgments overall. Randomize pair order and which slot appears first.
-- **Contamination control:** every eligible run starts from the same frozen entrant baseline and can see only its assigned theme, opaque level identity, and declared prompt material. It must not see another entrant, another eligible theme, the recipes for other configurations, the private schedule, or benchmark results.
-- **Integration:** agents use the normal level workflow while isolated, including registry and gallery edits needed for development and gates. The controller derives a clean payload commit containing only the uniquely named level directory. After ranking and unblinding, passing payloads merge into current `main`, followed by one commit that registers them all and regenerates the gallery.
+- **Contamination control:** every eligible run starts from the same frozen entrant-baseline commit in an opaque worktree of this repository. The controller supplies only its assigned theme, opaque level identity, and declared prompt material; it does not direct an entrant to inspect another entrant, eligible theme, recipe, schedule, or benchmark result. This is a non-adversarial policy, not technical isolation: an entrant with ordinary Git and filesystem access can inspect repository history and unrelated tracked files. The private schedule, raw records, credentials, and session URLs remain outside the repository and unavailable to entrants.
+- **Integration:** agents use the normal level workflow in their opaque worktrees, including registry and gallery edits needed for development and gates. The controller derives a clean payload commit containing only the uniquely named level directory. After ranking and unblinding, passing payloads merge into current `main`, followed by one commit that registers them all and regenerates the gallery.
 
 ## Artifact lifecycle
 
@@ -44,9 +44,9 @@ After unblinding, merge passing payloads into current `main`. Their globally uni
 The freeze record should identify both:
 
 1. the materials commit containing the exact controller runbook, shared prompt, themes, recipes, schemas, decision rule, and runner/adapters; and
-2. the exact entrant-baseline commit or archive, plus hashes of every supplied artifact and the private preassigned run schedule.
+2. the exact entrant-baseline commit in this repository, plus hashes of every supplied artifact and the private preassigned run schedule.
 
-The entrant baseline should exclude benchmark control material that an agent is not meant to see. A commit hash alone is not sufficient if the working tree still exposes other themes and recipes.
+Entrant worktrees intentionally share this repository's tracked material and Git history. The controller must still keep the private schedule, raw records, credentials, and session URLs outside the repository. This convenience-over-isolation choice is fixed for the release and must be reported with the result.
 
 ## Versioning
 
@@ -95,7 +95,7 @@ Freeze only after the protocol and rehearsal pass:
 
 - finish any engine, standing brief, authoring documentation, gallery, and API-wishlist work intended for the baseline;
 - commit the final materials at their stable paths;
-- create the sanitized entrant baseline;
+- record the frozen entrant-baseline commit used for all entrant worktrees;
 - generate and validate the private preassigned run schedule;
 - create the release record with the materials and entrant-baseline identities plus the private schedule hash;
 - hash the controller runbook, themes, recipes, prompts, harness versions, schemas, price inputs, the schedule, and the runner/adapters;
@@ -110,7 +110,7 @@ Run in the private precomputed order, using its preassigned slot and `<theme-id>
 
 The agent follows the ordinary level-authoring workflow, including scaffolding, registration, gallery generation, and repository commits. After the final stage, the controller mechanically captures the exact evaluated commit and runs the four gates. A harness or infrastructure failure is not automatically the model's DNF: classify failure reasons in advance, and only rerun failures explicitly defined as controller failures.
 
-For a passing run, create a separate payload commit based on the frozen materials commit—not the sanitized entrant baseline—by copying only `src/levels/<level-id>/` from the evaluated commit. Verify mechanically that its diff contains exactly that directory. Record both commits in the private manifest and mark the evaluated commit playable. Preserve DNF state and spend, but do not add it to blind play or the passing-payload merge set.
+For a passing run, create a separate payload commit based on the frozen materials commit—not the entrant-baseline commit—by copying only `src/levels/<level-id>/` from the evaluated commit. Verify mechanically that its diff contains exactly that directory. Record both commits in the private manifest and mark the evaluated commit playable. Preserve DNF state and spend, but do not add it to blind play or the passing-payload merge set.
 
 ### 5. Rank blind
 
@@ -148,6 +148,6 @@ These are the next design tasks, in dependency order:
 1. Confirm the duration and two-sentence polish addition in `benchmark/prompts/level-assignment.md`.
 2. Fill out one recipe from `benchmark/recipes/template.md`, preferably delegation because it has the most degrees of freedom.
 3. Define the harness adapters needed to execute each recipe from `benchmark/controller/runbook.md`, including fresh-context launch and usage capture.
-4. Draft the remaining two eligible themes alongside `benchmark/themes/deluge.md`, then compare all three for specificity, aesthetic overlap, and implementation burden.
+4. Draft three new eligible themes, then compare them for specificity, aesthetic overlap, implementation burden, and distance from hand-built gallery levels.
 5. Adapt the draft schedule and manifest schemas to real controller and harness output.
 6. Run an excluded rehearsal that produces an evaluated commit, a directory-only payload commit, and a private run record without yet automating all nine eligible runs.

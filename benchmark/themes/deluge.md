@@ -1,5 +1,0 @@
-# Deluge
-
-Race as a hunted courier drone through a rain-lashed neon megacity at night, fleeing from the storm ceiling down the faces of its towers, through avenue canyons and the undercity, along a flooded canal, and finally up a security citadel with the city’s hunter-gunship in pursuit. Make proximity feel like speed: enormous girders, skyways, tunnel ribs, trains, and hostile hardware should strobe past within reach, while rain, storm haze, and dense city light turn every transition into a rush.
-
-The city is rain-grey black and deep blue-slate, illuminated by cyan and magenta signage, sodium-amber undercity light, and hazard-white security forces; reserve acid green for the gunship alone. Score it as 176 BPM drum and bass: weather-like noise and sparse pads before the first plunge, rolling breaks through the streets and tube, half-time menace escalating into the hunt, then a near-silent moonlit release above the clouds. Lightning and the two great descents should land as shared visual and musical drops.
