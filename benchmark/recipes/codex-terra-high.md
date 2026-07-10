@@ -23,7 +23,7 @@ This is the first Codex configuration trial. It is one unattended solo stage, no
 
 - Overall timeout: 10,800 seconds, measured from process launch to exit.
 - Operator interaction after launch: none.
-- Network access: no `--search`; ordinary command network access remains the Codex CLI sandbox default and is recorded as a harness default.
+- Network access: no `--search`. The `workspace-write` sandbox's own network default blocks outbound connections and loopback `listen()`, which prevents the entrant's own dev-server-backed self-checks (e.g. the browser-backed phase of `npm run check:floor`) from running inside its session. The adapter overrides this with `-c sandbox_workspace_write.network_access=true`, keeping every other sandbox restriction (filesystem confined to the worktree, no elevated approvals) in place. This is a declared harness override, not the CLI's out-of-the-box default.
 - Harness continuation behavior: none. `--ephemeral` starts one new local session and no `codex exec resume` command is allowed.
 - Failure behavior: a nonzero exit, timeout, missing JSONL session id, missing `turn.completed` usage, or unsupported model/effort stops the run for controller-failure classification. At an eligible freeze, the controller must additionally compare the captured CLI/catalog artifacts to their frozen identities before classifying the run. Entrant and infrastructure classifications remain subject to the frozen taxonomy.
 - Dependency provisioning: before this stage, the controller runs `npm ci` in the fresh worktree and records its command, version, exit code, timing, and complete log as unmeasured deterministic setup. This is not a model stage.
@@ -66,6 +66,7 @@ The adapter uses the following effective Codex arguments after validating the lo
 ```text
 codex exec --json --color never --ephemeral --ignore-user-config --ignore-rules --strict-config \
   -m gpt-5.6-terra -c model_reasoning_effort="high" -c approval_policy="never" \
+  -c sandbox_workspace_write.network_access=true \
   -s workspace-write -C <worktree> --output-last-message <private-final-message> -
 ```
 
@@ -102,4 +103,4 @@ The actual run remains a Plus subscription run; record subscription expenditure 
 - Codex CLI is run non-interactively with `codex exec`; no TUI, session picker, resume, cloud task, or user approval prompt is involved.
 - The CLI's bundled model catalog and binary version are captured at every run because the selected slug is not a dated model snapshot.
 - Codex receives the tracked repository instructions, including `AGENTS.md`; the controller does not inject an additional system prompt.
-- The sandbox is `workspace-write`; web search is not enabled; personal user configuration and exec-policy rules are ignored.
+- The sandbox is `workspace-write` with `network_access=true`; web search is not enabled; personal user configuration and exec-policy rules are ignored. Network access is confined to the sandboxed process the same way filesystem access is confined to the worktree — it is not an escape from `workspace-write`.

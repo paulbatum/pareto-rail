@@ -78,6 +78,7 @@ async function main() {
     '-m', model,
     '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
     '-c', 'approval_policy="never"',
+    '-c', 'sandbox_workspace_write.network_access=true',
     '-s', 'workspace-write',
     '-C', worktree,
     '--output-last-message', finalMessage,
