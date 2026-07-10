@@ -82,7 +82,7 @@ The adapter omits `--no-session-persistence`, so Claude Code persists its native
 ### Usage and timing capture
 
 - Usage source: Claude `--output-format stream-json` stdout. Preserve it exactly as `events.jsonl`; preserve stderr separately.
-- Input-token field: the terminal `result` event's `usage.input_tokens`.
+- Input-token field: the terminal `result` event's `usage.input_tokens`. Unlike Codex, this is already the uncached remainder, not a total that includes cache hits — the adapter adds `usage.cache_read_input_tokens` back in before recording `inputTokens`, so the normalized field matches the total-including-cached shape the shared cost formula expects from every adapter.
 - Output-token field: the terminal `result` event's `usage.output_tokens`.
 - Cache-read field: `usage.cache_read_input_tokens`.
 - Cache-write field: `usage.cache_creation_input_tokens`. Unlike Codex, Claude Code reports this directly, so the frozen pricing formula's cache-write term is populated rather than always zero.
@@ -102,7 +102,7 @@ The controller runs only the four standard gates specified in `benchmark/control
 
 ## Pricing
 
-Use the dated [`benchmark/pricing/claude-fable-5-standard.json`](../pricing/claude-fable-5-standard.json) artifact for API-list-price-equivalent cost. It records the standard rates at authoring: $10.00/M input, $1.00/M cache read, $12.50/M cache write, and $50.00/M output. The cache-write rate assumes Claude Code's default 5-minute ephemeral cache TTL (1.25x the input rate); the adapter does not request the 1-hour TTL, so no separate long-TTL pricing artifact is needed. Calculate one stage as `(input_tokens - cached_input_tokens) × input rate + cached_input_tokens × cache-read rate + cache-write tokens × cache-write rate + output_tokens × output rate`, divided by one million.
+Use the dated [`benchmark/pricing/claude-fable-5-standard.json`](../pricing/claude-fable-5-standard.json) artifact for API-list-price-equivalent cost. It records the standard rates at authoring: $10.00/M input, $1.00/M cache read, $20.00/M cache write, and $50.00/M output. A rehearsal run observed Claude Code CLI writing cache entries exclusively under the 1-hour ephemeral TTL (2x the input rate), not the 5-minute TTL (1.25x) originally assumed here; the adapter does not pass an explicit TTL flag, so this is the CLI's own default and the pricing artifact now reflects it. Calculate one stage as `(input_tokens - cached_input_tokens) × input rate + cached_input_tokens × cache-read rate + cache-write tokens × cache-write rate + output_tokens × output rate`, divided by one million, where `input_tokens` is the adapter-normalized total (see "Usage and timing capture" above), not the raw `usage.input_tokens` field.
 
 The actual run remains a subscription run; record subscription expenditure separately and do not allocate the monthly fee across entrants. A run using another service tier must use another frozen pricing artifact rather than reusing this one.
 
