@@ -45,13 +45,13 @@ git status --short
 git rev-parse HEAD
 sha256sum \
   benchmark/prompts/level-assignment.md \
-  benchmark/examples/downpour-vector.md \
+  benchmark/examples/downpour.md \
   benchmark/recipes/codex-terra-high.md \
   benchmark/controller/failure-taxonomy.md \
   benchmark/pricing/gpt-5.6-terra-standard-short.json
 ```
 
-Create `benchmark/private/rehearsal-definition.json` from the shape below, replacing every placeholder with the commit and matching hash above. Predeclare a fresh opaque `runId` and four-character `slotId`; the level id must be `downpour-vector-<slotId>`. Then launch exactly once:
+Create `benchmark/private/rehearsal-definition.json` from the shape below, replacing every placeholder with the commit and matching hash above. Predeclare a fresh opaque `runId` and four-character `slotId`; the level id must be `downpour-<slotId>`. Then launch exactly once:
 
 ```sh
 npm run benchmark:run -- \

@@ -23,7 +23,7 @@ Everything below is the current protocol, not an irreversible commitment. Drafts
 
 The first run is an excluded one-theme, one-configuration rehearsal: `codex-terra-high` uses Codex CLI `0.144.0`, `gpt-5.6-terra`, and high reasoning in one fresh ephemeral `codex exec` session. A minimal live probe has verified the CLI's JSONL session and usage fields. `scripts/benchmark/codex-cli.mjs` captures those records; `scripts/benchmark/run.mjs` composes the declared single-run flow from rendering through payload extraction and a private manifest.
 
-The ineligible rehearsal theme is `benchmark/examples/downpour-vector.md`. `Rush` is metadata-marked as a technical test fixture, not a playable benchmark reference, so it is excluded from overlap, distinctiveness, and quality-reference checks while remaining available in development mode.
+The ineligible rehearsal theme is `benchmark/examples/downpour.md`. `Rush` is metadata-marked as a technical test fixture, not a playable benchmark reference, so it is excluded from overlap, distinctiveness, and quality-reference checks while remaining available in development mode.
 
 The first rehearsal's API-list-price-equivalent cost uses the dated standard short-context Terra input in `benchmark/pricing/gpt-5.6-terra-standard-short.json`; actual Plus subscription expenditure remains separate. `benchmark/controller/failure-taxonomy.md` supplies the current draft classification rules. These materials are still drafts and are not a benchmark release.
 
