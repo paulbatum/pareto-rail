@@ -1,6 +1,6 @@
 # Mass Driver
 
-Build a level where you're riding a payload down a huge orbital railgun. The whole thing is basically a tunnel of glowing accelerator rings and you pass through one ring exactly on every beat, so the speed and the music are the same thing. As the run goes on the rings get spaced further apart (you're accelerating) but you still hit them on the beat, and they glow hotter as you go faster.
+Build a level where you're riding a payload down a huge orbital railgun. The whole thing is basically a tunnel of glowing accelerator rings and you pass through one ring exactly on every beat, so the speed and the music are the same thing. As the run goes on the rings get spaced further apart (you're accelerating) but you still hit them on the beat, and they glow hotter as you go faster. Hot here means electric, not fire: arc blue through violet toward blinding white. The gun is also the instrument - a bass hum that climbs in pitch across the whole run, under a locked, hypnotic pulse.
 
 Enemies are defense drones threading between the coils.
 

@@ -1,6 +1,6 @@
 # Hull Run
 
-Build a level where you're skimming low over the hull of a warship so big its surface is basically terrain. You're meters off the deck the whole way - antenna masts whip past at eye level, the rail rises and dips over bulkhead ridges, and the surface detail streaming underneath is what sells the speed. The horizon barely moves, the ground tears past. The ship is dark when you arrive and it wakes up as you cross it: running lights spreading ahead of you, hatches opening, more and more defenses coming online the deeper you get.
+Build a level where you're skimming low over the hull of a warship so big its surface is basically terrain. You're meters off the deck the whole way - antenna masts whip past at eye level, the rail rises and dips over bulkhead ridges, and the surface detail streaming underneath is what sells the speed. The horizon barely moves, the ground tears past. The ship is dark when you arrive and it wakes up as you cross it: running lights spreading ahead of you, hatches opening, more and more defenses coming online the deeper you get. The palette is the warship's own - gunmetal and shadow lit by red and amber alert lighting, nothing decorative. The music is the ship's too: percussion-led and martial, klaxons and metal folded into the score, a new layer slamming in as each stretch of the ship wakes.
 
 Enemies are the ship's own defense drones popping out of hatches ahead of you.
 
