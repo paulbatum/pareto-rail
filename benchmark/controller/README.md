@@ -8,7 +8,7 @@ Use a fresh controller context for every eligible run. A dispatcher may launch t
 
 ## Codex CLI adapter
 
-`scripts/benchmark/codex-cli.mjs` is the deterministic adapter for a non-interactive Codex stage. It runs `codex exec`, not the interactive TUI. The draft `benchmark/recipes/codex-terra-high.md` is its first consumer and is rehearsal-only until pricing and the failure taxonomy are fixed.
+`scripts/benchmark/codex-cli.mjs` is the deterministic adapter for a non-interactive Codex stage. It runs `codex exec`, not the interactive TUI. The draft `benchmark/recipes/codex-terra-high.md` is its first consumer and is rehearsal-only while the broader release protocol remains unresolved.
 
 The adapter receives an already-rendered private prompt and sends it to `codex exec -` on stdin. It uses an ephemeral session, ignores user configuration and exec-policy rules, fixes the model, reasoning effort, sandbox, and approval policy, captures JSONL stdout without mixing in the controller's output, and records the final message separately. It validates the installed bundled model catalog before launch, then requires a `thread.started` session id and `turn.completed.usage.input_tokens` plus `output_tokens`; otherwise the stage is not eligible for a measured-cost record.
 
@@ -26,7 +26,7 @@ The output directory must be private or external to the repository and outside t
 
 ## Single-run rehearsal controller
 
-`npm run benchmark:run` executes one private run definition end-to-end. It is intended first for an explicitly ineligible rehearsal, not a one-cell eligible experiment. The definition pins commits, assignment artifacts, worktree and payload locations, the Codex stage settings, and an honest unavailable-price reason. The controller verifies every supplied artifact against the materials commit, requires a clean controller repository, renders the prompt privately, runs `npm ci`, launches the declared stage, seals, gates, extracts a passing payload, and writes either a private manifest or a controller-failure record.
+`npm run benchmark:run` executes one private run definition end-to-end. It is intended first for an explicitly ineligible rehearsal, not a one-cell eligible experiment. The definition pins commits, assignment artifacts, worktree and payload locations, the Codex stage settings, and a dated API-list-price input. The controller verifies every supplied artifact against the materials commit, requires a clean controller repository, renders the prompt privately, runs `npm ci`, launches the declared stage, seals, gates, extracts a passing payload, calculates equivalent cost from the captured JSONL usage, and writes either a private manifest or a controller-failure record.
 
 ```sh
 npm run benchmark:run -- \
@@ -35,6 +35,31 @@ npm run benchmark:run -- \
 ```
 
 The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`; a future eligible definition additionally needs the frozen-release comparison and full schedule controls described in the runbook.
+
+### Preflight and launch
+
+Start only from a clean, committed repository. The `materialsCommit` and `entrantBaseline` should both be the current commit for this first rehearsal. Generate hashes from that committed content rather than typing them:
+
+```sh
+git status --short
+git rev-parse HEAD
+sha256sum \
+  benchmark/prompts/level-assignment.md \
+  benchmark/examples/downpour-vector.md \
+  benchmark/recipes/codex-terra-high.md \
+  benchmark/controller/failure-taxonomy.md \
+  benchmark/pricing/gpt-5.6-terra-standard-short.json
+```
+
+Create `benchmark/private/rehearsal-definition.json` from the shape below, replacing every placeholder with the commit and matching hash above. Predeclare a fresh opaque `runId` and four-character `slotId`; the level id must be `downpour-vector-<slotId>`. Then launch exactly once:
+
+```sh
+npm run benchmark:run -- \
+  --definition benchmark/private/rehearsal-definition.json \
+  --out benchmark/private/runs/<opaque-run-id>
+```
+
+Do not inspect entrant source or logs while it runs. When it finishes, inspect only its controller result and private manifest, then follow the rehearsal checklist in `benchmark/controller/runbook.md` for playable deployment, ranking-record validation, and cost reconciliation.
 
 Its required shape is:
 
@@ -64,7 +89,7 @@ Its required shape is:
 
 ## Generic controller tools
 
-The scripts below implement deterministic administration only. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. Hash their exact paths and revisions as runner artifacts at freeze.
+The admin scripts below implement deterministic administration only. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. `benchmark:run` is the separate declared single-run controller above. Hash every runner and adapter path and revision at freeze.
 
 ### Render the shared assignment
 

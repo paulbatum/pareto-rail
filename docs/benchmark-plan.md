@@ -19,6 +19,14 @@ Everything below is the current protocol, not an irreversible commitment. Drafts
 - **Contamination control:** every eligible run starts from the same frozen entrant-baseline commit in an opaque worktree of this repository. The controller supplies only its assigned theme, opaque level identity, and declared prompt material; it does not direct an entrant to inspect another entrant, eligible theme, recipe, schedule, or benchmark result. This is a non-adversarial policy, not technical isolation: an entrant with ordinary Git and filesystem access can inspect repository history and unrelated tracked files. The private schedule, raw records, credentials, and session URLs remain outside the repository and unavailable to entrants.
 - **Integration:** agents use the normal level workflow in their opaque worktrees, including registry and gallery edits needed for development and gates. The controller derives a clean payload commit containing only the uniquely named level directory. After ranking and unblinding, passing payloads merge into current `main`, followed by one commit that registers them all and regenerates the gallery.
 
+## Current rehearsal implementation
+
+The first run is an excluded one-theme, one-configuration rehearsal: `codex-terra-high` uses Codex CLI `0.144.0`, `gpt-5.6-terra`, and high reasoning in one fresh ephemeral `codex exec` session. A minimal live probe has verified the CLI's JSONL session and usage fields. `scripts/benchmark/codex-cli.mjs` captures those records; `scripts/benchmark/run.mjs` composes the declared single-run flow from rendering through payload extraction and a private manifest.
+
+The ineligible rehearsal theme is `benchmark/examples/downpour-vector.md`. `Rush` is metadata-marked as a technical test fixture, not a playable benchmark reference, so it is excluded from overlap, distinctiveness, and quality-reference checks while remaining available in development mode.
+
+The first rehearsal's API-list-price-equivalent cost uses the dated standard short-context Terra input in `benchmark/pricing/gpt-5.6-terra-standard-short.json`; actual Plus subscription expenditure remains separate. `benchmark/controller/failure-taxonomy.md` supplies the current draft classification rules. These materials are still drafts and are not a benchmark release.
+
 ## Artifact lifecycle
 
 The tracked `benchmark/` tree holds authored inputs, schemas, locked slot-only rankings, and eventually published manifests. During generation, sensitive records live under ignored `benchmark/private/`:
@@ -30,6 +38,7 @@ benchmark/
   examples/       excluded theme exemplars used for authoring and rehearsal
   themes/         the three eligible theme texts
   recipes/        verbatim configuration workflows
+  pricing/        dated API list-price inputs for equivalent-cost calculation
   schemas/        freeze, private schedule, run-manifest, and ranking formats
   releases/       small immutable release records, not copies of the input tree
   rankings/       locked records containing theme and slot ids only
@@ -65,11 +74,11 @@ For a later benchmark, edit the same canonical paths and create a new release. R
 Before runner implementation is considered stable:
 
 - finalize the small benchmark additions in `benchmark/prompts/level-assignment.md`, including duration, polish emphasis, identity fields, and theme rendering while leaving the standing brief as the main task specification;
-- finalize the harness-neutral controller runbook and decide how each harness launches a fresh controller context per eligible run;
+- finish the remaining harness recipes after the implemented Codex Terra rehearsal has proved the controller path;
 - write all three verbatim recipes, including stage prompts, supplied files, session boundaries, stage limits, review/revision behavior, harness versions, and usage capture;
 - author three eligible themes and check them for comparable specificity and distance from the hand-built gallery;
-- settle the run manifest and ranking formats;
-- define how every harness reports token usage and how dashboard totals are reconciled;
+- settle the run manifest and ranking formats from rehearsal output;
+- define the remaining harness usage mappings and how subscription dashboards are reconciled with equivalent-cost records;
 - choose the DNF scoring rule, tie definition, quality aggregation, and delegation adoption rule;
 - decide what the ranker may write as notes and whether notes are visible between later judgments; and
 - generate the private randomized run schedule against `benchmark/schemas/run-schedule.schema.json`, verify its complete configuration × theme crossing and unique ids mechanically, and retain its hash without opening the mapping during ranking.
@@ -145,9 +154,8 @@ These are the next design tasks, in dependency order:
 
 ## Immediate next work
 
-1. Confirm the duration and two-sentence polish addition in `benchmark/prompts/level-assignment.md`.
-2. Fill out one recipe from `benchmark/recipes/template.md`, preferably delegation because it has the most degrees of freedom.
-3. Define the harness adapters needed to execute each recipe from `benchmark/controller/runbook.md`, including fresh-context launch and usage capture.
-4. Draft three new eligible themes, then compare them for specificity, aesthetic overlap, implementation burden, and distance from hand-built gallery levels.
-5. Adapt the draft schedule and manifest schemas to real controller and harness output.
-6. Run an excluded rehearsal that produces an evaluated commit, a directory-only payload commit, and a private run record without yet automating all nine eligible runs.
+1. Commit the final rehearsal materials, then create the private `rehearsal-definition.json` using the committed hashes and opaque ids documented in `benchmark/controller/README.md`.
+2. Run the one-theme Terra-high rehearsal without intervention. Preserve its evaluated commit, gate logs, payload when passing, raw usage, calculated equivalent cost, and controller-failure record when applicable.
+3. Exercise the playable deployment and slot-only ranking-record path, including the DNF path if the rehearsal fails a gate.
+4. Reconcile the captured token record against the available subscription dashboard evidence; record any limitation instead of estimating unavailable fields.
+5. Use the rehearsal evidence to finalize the delegation and other solo recipes, three eligible themes, decision rule, ranking protocol, and release schedule before freezing `v1`.

@@ -1,6 +1,6 @@
 # Published run manifests
 
-Full run records remain under ignored `benchmark/private/` while ranking is blind. After rankings are locked and the private run schedule is opened, copy redacted publishable records here and validate them against `benchmark/schemas/run-manifest.schema.json`. A rehearsal record may omit the release-record reference and report pricing as explicitly unavailable; it is not a publishable eligible result.
+Full run records remain under ignored `benchmark/private/` while ranking is blind. After rankings are locked and the private run schedule is opened, copy redacted publishable records here and validate them against `benchmark/schemas/run-manifest.schema.json`. A rehearsal record may omit the release-record reference and may report pricing as explicitly unavailable only when no honest price source exists; the current Terra rehearsal records measured API-list-price-equivalent cost. A rehearsal is not a publishable eligible result.
 
 A manifest records the configuration, exact model snapshots, recipe and theme hashes, stage-level token usage and list-price-equivalent cost, wall time, frozen baseline, gate results, slot id, exact evaluated commit, directory-only payload commit when produced, post-unblinding integration commit when merged, and final disposition. Preserve raw token fields so costs can be recomputed later.
 

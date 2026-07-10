@@ -6,4 +6,4 @@ A recipe states the exact model snapshot, harness and version, prompts and suppl
 
 Recipes may change while the protocol is being designed and rehearsed. At freeze, the release record hashes the final files and Git preserves their exact content. After the first eligible run, a behavior-changing edit at the stable path requires a new benchmark release; do not create parallel `-v1` and `-v2` recipe files.
 
-`codex-terra-high.md` is the current first-trial draft. It demonstrates a one-stage non-interactive `codex exec` recipe and is deliberately marked rehearsal-only while GPT-5.6 Terra list pricing and the failure taxonomy remain unresolved.
+`codex-terra-high.md` is the current first-trial draft. It demonstrates a one-stage non-interactive `codex exec` recipe with captured JSONL usage, the dated Terra standard-price input, and the draft failure taxonomy. It remains rehearsal-only until the full release protocol is frozen.
