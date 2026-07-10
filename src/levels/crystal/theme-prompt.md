@@ -1,9 +1,5 @@
-The theme is a neon crystal corridor.
+# Crystal Corridor
 
-A winding tunnel deep inside some enormous crystal formation. Everything is glowing wireframe on near-black — thin hot lines, no solid surfaces — mostly cyan and magenta. Receding wireframe ribs, faceted crystal clusters drifting past in the dark outside. 
+A winding neon crystal corridor deep inside an immense formation: near-black space cut by thin cyan and magenta wireframe ribs, with faceted crystal clusters drifting beyond the tunnel. Start with calm, ordered formations, then let the corridor wake into increasingly dense and dangerous waves before a brief hush and a finale against an enormous crystal lattice whose orbiting plates must be broken to expose its core.
 
-Act one: calm formations of crystals that hold, drift, or orbit. Act two, the corridor wakes up: denser waves, plus a nastier crystal type that fires homing shard bolts you have to shoot down before they land — you can only take three hits. A short breath of quiet, then act three is a boss: a huge crystal lattice filling the tunnel, with orbiting shield plates you break away in stages to expose the core.
-
-Music in minor key, mid-120s BPM, escalating through the acts, each act with its own instrument voices. Locks tick upward in pitch; the boss act tolls, shield breaks and core hits landing like heavy bells.
-
-Locking a crystal flares it magenta. Kills shatter into shard bursts. The boss entrance floods the corridor in hot gold for a moment.
+The music is minor-key and in the mid-120s BPM, escalating across the acts with distinct instrumental voices; locks rise in pitch, while the finale lands with heavy bell-like tones. Locked crystals flare magenta, kills burst into shards, and the boss entrance briefly floods the corridor in hot gold.
