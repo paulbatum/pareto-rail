@@ -51,7 +51,8 @@ async function main() {
     worktree = JSON.parse(worktreeResult.stdout);
     await writeJson(path.join(outputDirectory, 'worktree.json'), worktree);
 
-    const setup = await command('npm', ['ci'], worktree.worktree, { allowFailure: true });
+    // Gates never launch a browser; skip puppeteer's Chrome download so npm ci doesn't depend on unzip being installed.
+    const setup = await command('npm', ['ci'], worktree.worktree, { allowFailure: true, env: { PUPPETEER_SKIP_DOWNLOAD: 'true' } });
     await writeCommandRecord(path.join(outputDirectory, 'setup.json'), ['npm', 'ci'], setup);
     if (setup.code !== 0) fail(`Dependency provisioning failed; see ${path.join(outputDirectory, 'setup.json')}.`);
 
@@ -230,10 +231,10 @@ function validateArtifact(value, label, errors) {
 function validateCommit(value, label, errors) { if (typeof value !== 'string' || !/^[a-f0-9]{40,64}$/.test(value)) errors.push(`${label} must be a Git commit id.`); }
 async function assertAbsent(target, label) { try { await fs.lstat(target); } catch (error) { if (error?.code === 'ENOENT') return; throw error; } fail(`${label} already exists: ${target}`); }
 async function writeCommandRecord(target, args, result) { await writeJson(target, { command: args, exitCode: result.code, startedAt: result.startedAt, finishedAt: result.finishedAt, wallTimeSeconds: result.wallTimeSeconds, stdoutSha256: sha256(result.stdout), stderrSha256: sha256(result.stderr), stdout: result.stdout, stderr: result.stderr }); }
-function command(executable, args, cwd, { allowFailure = false } = {}) {
+function command(executable, args, cwd, { allowFailure = false, env } = {}) {
   return new Promise((resolve, reject) => {
     const startedAt = new Date().toISOString(); const started = performance.now();
-    const child = spawn(executable, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] }); let stdout = ''; let stderr = '';
+    const child = spawn(executable, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'], env: env ? { ...process.env, ...env } : process.env }); let stdout = ''; let stderr = '';
     child.stdout.on('data', (chunk) => { stdout += chunk; }); child.stderr.on('data', (chunk) => { stderr += chunk; }); child.on('error', reject);
     child.on('close', (code) => { const result = { code: code ?? 1, stdout, stderr, startedAt, finishedAt: new Date().toISOString(), wallTimeSeconds: (performance.now() - started) / 1_000 }; if (result.code && !allowFailure) reject(new Error(`${[executable, ...args].join(' ')} failed:\n${stderr || stdout}`)); else resolve(result); });
   });
