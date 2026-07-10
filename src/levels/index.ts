@@ -9,6 +9,7 @@ export interface LevelMetadata {
 
 export const levelMetadatas: LevelMetadata[] = [
   { id: 'crystal-corridor', title: 'Crystal Corridor', aliases: ['crystal'] },
+  { id: 'downpour-hlht', title: 'Downpour' },
   { id: 'helios', title: 'Helios' },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'] },
   { id: 'rezdle', title: 'Rezdle' },
@@ -29,6 +30,8 @@ export async function getLevelById(id: string | null): Promise<LevelDefinition> 
   switch (matched.id) {
     case 'crystal-corridor':
       return (await import('./crystal')).crystalCorridorLevel;
+    case 'downpour-hlht':
+      return (await import('./downpour-hlht')).downpourHlhtLevel;
     case 'helios':
       return (await import('./helios')).heliosLevel;
     case 'prism-bloom':
