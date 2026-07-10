@@ -103,7 +103,7 @@ npm run benchmark:render -- \
   --metadata benchmark/private/runs/<run-id>/rendered-assignment.json
 ```
 
-The renderer requires exactly one each of `{{LEVEL_ID}}`, `{{LEVEL_TITLE}}`, and `{{THEME}}`; it rejects any other placeholder. The metadata records SHA-256 hashes for the template, theme, and rendering.
+The renderer requires exactly one each of `{{LEVEL_TITLE}}` and `{{THEME}}`, and at least one `{{LEVEL_ID}}` (the template may repeat it for emphasis, e.g. in a directory-path sentence); it rejects any other placeholder. The metadata records SHA-256 hashes for the template, theme, and rendering.
 
 ### Generate and validate the private run schedule
 

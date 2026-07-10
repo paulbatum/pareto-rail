@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { assertOnlyOptions, assertPrivateOrExternalPath, fail, parseArgs, requireOption, sha256, writeJson } from './common.mjs';
 
 const PLACEHOLDERS = ['LEVEL_ID', 'LEVEL_TITLE', 'THEME'];
+const REPEATABLE_PLACEHOLDERS = new Set(['LEVEL_ID']);
 
 export function renderAssignment(template, { levelId, levelTitle, theme }) {
   if (!levelId || /\r|\n/.test(levelId)) fail('levelId must be a non-empty single-line value.');
@@ -16,11 +17,12 @@ export function renderAssignment(template, { levelId, levelTitle, theme }) {
 
   for (const placeholder of PLACEHOLDERS) {
     const count = tokens.filter((token) => token === placeholder).length;
-    if (count !== 1) fail(`Expected exactly one {{${placeholder}}} placeholder; found ${count}.`);
+    const expected = REPEATABLE_PLACEHOLDERS.has(placeholder) ? count >= 1 : count === 1;
+    if (!expected) fail(`Expected ${REPEATABLE_PLACEHOLDERS.has(placeholder) ? 'at least one' : 'exactly one'} {{${placeholder}}} placeholder; found ${count}.`);
   }
 
   return template
-    .replace('{{LEVEL_ID}}', levelId)
+    .replaceAll('{{LEVEL_ID}}', levelId)
     .replace('{{LEVEL_TITLE}}', levelTitle)
     .replace('{{THEME}}', theme);
 }
