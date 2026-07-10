@@ -12,11 +12,12 @@ Everything below is the current protocol, not an irreversible commitment. Drafts
 - **Replicates:** three themes crossed with all three configurations, for nine eligible runs.
 - **Model identity:** use GPT-5.6 as soon as it is available and record exact model snapshot identifiers, not aliases.
 - **Run policy:** each run follows a fixed recipe without operator intervention. No operator-requested retry or repair is allowed. Predeclared planning, implementation, review, and revision stages inside a delegation recipe are part of one run, not retries.
-- **Mechanical eligibility:** `npm run typecheck`, `npm run build`, `npm run check:scope -- <level-id>`, and `npm run check:floor -- --level <level-id>` must pass. A failure is a DNF: keep its full cost and record, but do not present it for play.
+- **Mechanical eligibility:** run `npm run typecheck`, `npm run build`, `npm run check:scope -- <level-id>`, and `npm run check:floor -- --level <level-id>` against the exact evaluated working tree, including its temporary registry and generated-gallery changes. A failure is a DNF: keep its full cost and record, but do not present it for play.
 - **Cost:** runs use paid subscriptions rather than API billing. Record raw token usage where the harness exposes it and compute API-list-price-equivalent USD at the run date as a model-usage comparison. Report subscription fees separately as actual expenditure; do not allocate monthly fees arbitrarily across runs. A multi-stage run includes every measured stage. Keep both equivalent cost per run and effective equivalent cost per published level so DNFs remain visible.
-- **Blinding:** the ranker sees only random slot identifiers. Full run records, configuration identities, source branches, logs, and the slot key remain unopened until rankings are locked.
+- **Blinding:** each run is preassigned a random four-character slot. Its implementation id combines the theme and slot, such as `deluge-a44f`, without encoding configuration or execution order. The private randomized run schedule is also the slot-to-configuration key. Full run records, configuration identities, source branches, logs, and that schedule remain unopened until rankings are locked.
 - **Comparison:** play same-theme pairs back to back. With three configurations, a complete round robin is three pairs per theme and nine pair judgments overall. Randomize pair order and which slot appears first.
-- **Contamination control:** every eligible run starts from the same frozen entrant baseline and can see only its assigned theme and declared prompt material. It must not see another entrant, another eligible theme, the recipes for other configurations, the private schedule, or benchmark results.
+- **Contamination control:** every eligible run starts from the same frozen entrant baseline and can see only its assigned theme, opaque level identity, and declared prompt material. It must not see another entrant, another eligible theme, the recipes for other configurations, the private schedule, or benchmark results.
+- **Integration:** agents use the normal level workflow while isolated, including registry and gallery edits needed for development and gates. The controller derives a clean payload commit containing only the uniquely named level directory. After ranking and unblinding, passing payloads merge into current `main`, followed by one commit that registers them all and regenerates the gallery.
 
 ## Artifact lifecycle
 
@@ -28,19 +29,21 @@ benchmark/
   examples/       excluded theme exemplars used for authoring and rehearsal
   themes/         the three eligible theme texts
   recipes/        verbatim configuration workflows
-  schemas/        freeze, run-manifest, and ranking formats
+  schemas/        freeze, private schedule, run-manifest, and ranking formats
   releases/       small immutable release records, not copies of the input tree
   rankings/       locked records containing theme and slot ids only
   manifests/      full records published only after unblinding
-  private/        ignored schedule, slot key, raw logs, and full run records
+  private/        ignored schedule/key, raw logs, and full run records
 ```
 
-Generated level code stays on isolated output branches or commits. Do not merge entrants into the frozen baseline. Before unblinding, any playable deployment or ranking launcher must expose a slot id without exposing its branch, configuration, model, logs, or source.
+Generated level code stays isolated until rankings are locked. Each run has an exact evaluated commit used for gates and blind play. For a passing run, the controller also creates a payload commit from the frozen materials commit containing only `src/levels/<level-id>/`; it excludes the run's registry and generated-gallery edits. Do not merge either form into the frozen baseline. Before unblinding, any playable deployment or ranking launcher must expose a slot id without exposing its branch, configuration, model, logs, or source.
+
+After unblinding, merge passing payloads into current `main`. Their globally unique directories make these merges disjoint. Then update `src/levels/index.ts` once, regenerate `docs/level-gallery.md` once, verify the combined game, and commit that integration. Preserve exact evaluated commits through tags and manifests so temporary run and payload branches can be deleted.
 
 The freeze record should identify both:
 
 1. the materials commit containing the exact shared prompt, themes, recipes, schemas, decision rule, and runner; and
-2. the exact entrant-baseline commit or archive, plus hashes of every supplied artifact.
+2. the exact entrant-baseline commit or archive, plus hashes of every supplied artifact and the private preassigned run schedule.
 
 The entrant baseline should exclude benchmark control material that an agent is not meant to see. A commit hash alone is not sufficient if the working tree still exposes other themes and recipes.
 
@@ -60,25 +63,25 @@ For a later benchmark, edit the same canonical paths and create a new release. R
 
 Before runner implementation is considered stable:
 
-- finalize `benchmark/prompts/level-assignment.md`, including duration, scope, creative latitude, polish expectations, and rendered assignment fields;
+- finalize the small benchmark additions in `benchmark/prompts/level-assignment.md`, including duration, polish emphasis, identity fields, and theme rendering while leaving the standing brief as the main task specification;
 - write all three verbatim recipes, including stage prompts, supplied files, session boundaries, stage limits, review/revision behavior, harness versions, and usage capture;
 - author three eligible themes and check them for comparable specificity and distance from the hand-built gallery;
 - settle the run manifest and ranking formats;
 - define how every harness reports token usage and how dashboard totals are reconciled;
 - choose the DNF scoring rule, tie definition, quality aggregation, and delegation adoption rule;
 - decide what the ranker may write as notes and whether notes are visible between later judgments; and
-- generate the private randomized run schedule and slot mapping without opening them during ranking.
+- generate the private randomized run schedule against `benchmark/schemas/run-schedule.schema.json`, verify its complete configuration × theme crossing and unique ids mechanically, and retain its hash without opening the mapping during ranking.
 
 ### 2. Build and rehearse the pipeline
 
 Build the runner before the freeze. Exercise the complete path with an ineligible exemplar and a run that cannot enter the analysis:
 
-1. prepare an isolated entrant checkout;
-2. launch every stage without manual intervention;
-3. capture model snapshots, token usage, prices, wall time, prompts, logs, and output commits;
-4. run all four mechanical gates and exercise the DNF path;
-5. assign a random slot without leaking its configuration;
-6. make a passing output playable through the same mechanism intended for blind ranking;
+1. create an ineligible opaque slot and unique level id, then prepare an isolated entrant checkout;
+2. launch every stage without manual intervention while allowing the agent to use the normal scaffold, registry, and gallery workflow;
+3. capture model snapshots, token usage, prices, wall time, prompts, logs, and the exact evaluated commit;
+4. run all four mechanical gates against that evaluated commit and exercise the DNF path;
+5. derive a payload commit from the frozen materials commit containing only the new level directory, and mechanically reject any extra path;
+6. make the evaluated output playable through the same mechanism intended for blind ranking;
 7. write and validate a slot-only ranking record; and
 8. reconcile computed cost against the harness or vendor dashboard.
 
@@ -91,8 +94,9 @@ Freeze only after the protocol and rehearsal pass:
 - finish any engine, standing brief, authoring documentation, gallery, and API-wishlist work intended for the baseline;
 - commit the final materials at their stable paths;
 - create the sanitized entrant baseline;
-- create the release record with the materials and entrant-baseline identities;
-- hash themes, recipes, prompts, harness versions, schemas, price inputs, and the runner;
+- generate and validate the private preassigned run schedule;
+- create the release record with the materials and entrant-baseline identities plus the private schedule hash;
+- hash themes, recipes, prompts, harness versions, schemas, price inputs, the schedule, and the runner;
 - lock the decision rule and ranking protocol; and
 - verify that a fresh entrant checkout contains exactly the intended material.
 
@@ -100,21 +104,29 @@ After this point, any behavior-affecting change to the baseline, shared prompt, 
 
 ### 4. Generate the nine entrants
 
-Run in the precomputed order, using a fresh entrant checkout each time. Do not tail logs, inspect diffs, play partial outputs, or intervene. The controller may observe only enough process state to know whether a run has finished.
+Run in the private precomputed order, using its preassigned slot and `<theme-id>-<slot-id>` level id in a fresh entrant checkout each time. Do not tail logs, inspect diffs, play partial outputs, or intervene. The controller may observe only enough process state to know whether a run has finished.
 
-After each run, mechanically capture the private full record, commit the output, run the gates, and mark it playable or DNF. A harness or infrastructure failure is not automatically the model's DNF: classify failure reasons in advance, and only rerun failures explicitly defined as controller failures.
+The agent follows the ordinary level-authoring workflow, including scaffolding, registration, gallery generation, and repository commits. After the final stage, the controller mechanically captures the exact evaluated commit and runs the four gates. A harness or infrastructure failure is not automatically the model's DNF: classify failure reasons in advance, and only rerun failures explicitly defined as controller failures.
+
+For a passing run, create a separate payload commit based on the frozen materials commit—not the sanitized entrant baseline—by copying only `src/levels/<level-id>/` from the evaluated commit. Verify mechanically that its diff contains exactly that directory. Record both commits in the private manifest and mark the evaluated commit playable. Preserve DNF state and spend, but do not add it to blind play or the passing-payload merge set.
 
 ### 5. Rank blind
 
 Create the same-theme pair schedule mechanically. For each pair, record presentation order, play counts, choice or tie, optional notes, and timestamp. The ranker may replay either slot as often as desired before deciding.
 
+Serve the exact evaluated commits, not payload commits, because the evaluated form contains the registry state used by the gates. Do not merge any entrant into `main` yet.
+
 DNFs are never launched. Their treatment in quality scoring must already be fixed by the decision rule; omitting them from pairwise totals without a penalty would reward unreliable configurations.
 
-### 6. Lock, analyze, and unblind
+### 6. Lock, analyze, unblind, and integrate
 
-Commit or otherwise checksum the complete ranking set and record its lock timestamp before opening the slot key. Compute the preregistered result first. Exploratory observations are welcome afterward, but label them separately.
+Commit or otherwise checksum the complete ranking set and record its lock timestamp before opening the private run schedule. Compute the preregistered result first. Exploratory observations are welcome afterward, but label them separately.
 
 After unblinding, publish redacted full manifests under `benchmark/manifests/`, add configuration identities to derived analysis rather than rewriting slot-only ranking records, and retain raw records so future prices or scoring methods can be applied.
+
+Preserve every exact evaluated commit with a benchmark-and-slot tag. On an integration branch from current `main`, merge each passing directory-only payload; do not merge into or alter the frozen entrant baseline. Update `src/levels/index.ts` once with all merged entrants, regenerate `docs/level-gallery.md`, and run typecheck, build, and the floor gate for every integrated level. Record the final integration commit in the published manifests, merge the integration branch to `main`, and delete temporary branches once their durable commits are tagged or merged.
+
+A DNF must not break `main`. It remains preserved by its evaluated tag and manifest. Any later repair is a post-benchmark derivative: verify and label it separately before deciding whether to integrate it.
 
 ## Decisions still needed
 
@@ -126,12 +138,13 @@ These are the next design tasks, in dependency order:
 4. **Cost capture:** determine what per-run usage each subscription harness exposes, map available fields to the manifest schema, preserve vendor-specific counts, and record the exact API list prices used for equivalent-cost analysis. If exact tokens are unavailable, revise the metric before the freeze rather than presenting an estimate as measured usage.
 5. **Failure taxonomy:** distinguish entrant DNF from controller failure before any eligible run.
 6. **Decision rule:** define a tie, DNF treatment, the quality score derived from nine pair judgments, the relevant cost denominator, and the sentence that determines whether delegation becomes the adopted workflow.
-7. **Public anchors:** later, decide whether hand-built levels enter the public pool as calibration anchors. They have no honest generation-cost coordinate and are not part of the first personal experiment.
+7. **Integrated labels:** decide how the post-unblinding picker distinguishes same-theme entrants. Registry metadata can append a slot or configuration label without changing the evaluated level payload or its authored in-level title.
+8. **Public anchors:** later, decide whether hand-built levels enter the public pool as calibration anchors. They have no honest generation-cost coordinate and are not part of the first personal experiment.
 
 ## Immediate next work
 
-1. Edit `benchmark/prompts/level-assignment.md`, especially its duration, scope, creative mandate, and finish standard.
+1. Confirm the duration and two-sentence polish addition in `benchmark/prompts/level-assignment.md`.
 2. Fill out one recipe from `benchmark/recipes/template.md`, preferably delegation because it has the most degrees of freedom.
 3. Draft the remaining two eligible themes alongside `benchmark/themes/deluge.md`, then compare all three for specificity, aesthetic overlap, and implementation burden.
-4. Adapt the draft schemas in `benchmark/schemas/` to real usage output from each selected harness.
-5. Write the excluded rehearsal command and make it produce a private run record without yet automating all nine eligible runs.
+4. Adapt the draft schedule and manifest schemas to real controller and harness output.
+5. Write the excluded rehearsal command and make it produce an evaluated commit, a directory-only payload commit, and a private run record without yet automating all nine eligible runs.

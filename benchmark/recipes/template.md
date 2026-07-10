@@ -19,7 +19,7 @@ List every file or generated artifact available to this configuration. At freeze
 - Standing brief: `docs/level-brief.md`
 - Assigned theme: `<theme path injected into the rendered assignment>`
 - Other supplied files: `<paths or none>`
-- Files intentionally unavailable: other themes, other recipes, private benchmark records, and other entrants
+- Files intentionally unavailable: other themes, other recipes, the private run schedule and configuration mapping, private benchmark records, and other entrants
 
 ## Runtime policy
 
@@ -28,7 +28,7 @@ List every file or generated artifact available to this configuration. At freeze
 - Network access: `<policy>`
 - Harness continuation behavior: `<policy>`
 - Failure behavior: `<which failures stop the run>`
-- Commit behavior: `<who commits, and when>`
+- Commit behavior: `<agent follows repository workflow; controller records the evaluated commit and derives the payload>`
 
 Repeat the following section for every stage in execution order.
 
@@ -79,6 +79,8 @@ npm run check:floor -- --level <level-id>
 ```
 
 Define whether any additional controller checks exist. They may record diagnostics but must not become undeclared eligibility gates.
+
+The gates run against the exact evaluated working tree, including the agent's normal temporary registry and generated-gallery changes. After recording those results, the controller mechanically creates a separate payload commit from the frozen materials commit containing only `src/levels/<level-id>/`. Payload creation is benchmark administration, not an agent revision stage.
 
 ## Pricing
 

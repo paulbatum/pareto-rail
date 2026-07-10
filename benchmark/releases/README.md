@@ -6,10 +6,11 @@ When freezing a release:
 
 1. Commit the final canonical materials and record that commit as the materials commit.
 2. Create and verify the sanitized entrant baseline, which must not expose other themes, recipes, controller instructions, or private records.
-3. Create `benchmark/releases/<version>/freeze.json`, validated against `benchmark/schemas/freeze.schema.json`.
-4. Commit the release record without changing the frozen canonical materials.
-5. Create an annotated `benchmark-<version>` Git tag on the release-record commit.
-6. Record the benchmark version and relevant artifact hashes in every run and ranking record.
+3. Generate ignored `benchmark/private/run-schedule.json` against `benchmark/schemas/run-schedule.schema.json` without inspecting its slot-to-configuration mapping.
+4. Create `benchmark/releases/<version>/freeze.json`, validated against `benchmark/schemas/freeze.schema.json`, including the private schedule's path and hash.
+5. Commit the release record without changing the frozen canonical materials.
+6. Create an annotated `benchmark-<version>` Git tag on the release-record commit.
+7. Record the benchmark version and relevant artifact hashes in every run and ranking record.
 
 For example, the first freeze creates `benchmark/releases/v1/freeze.json` and tag `benchmark-v1`. Do not create that directory before the freeze: its presence means the release exists.
 

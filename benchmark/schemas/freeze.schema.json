@@ -48,6 +48,7 @@
               "schema",
               "decision-rule",
               "ranking-protocol",
+              "run-schedule",
               "pricing"
             ]
           },

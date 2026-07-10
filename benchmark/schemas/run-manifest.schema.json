@@ -92,11 +92,21 @@
     "output": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["branch", "commit", "levelId"],
+      "required": ["levelId", "evaluated"],
       "properties": {
-        "branch": { "type": "string", "minLength": 1 },
-        "commit": { "$ref": "#/$defs/gitObject" },
-        "levelId": { "type": "string", "minLength": 1 }
+        "levelId": { "type": "string", "minLength": 1 },
+        "evaluated": {
+          "description": "Exact registered working tree used for mechanical gates and blind play.",
+          "$ref": "#/$defs/outputCommit"
+        },
+        "payload": {
+          "description": "Derived commit based on the frozen materials commit that contains only src/levels/<level-id>/.",
+          "$ref": "#/$defs/outputCommit"
+        },
+        "integrationCommit": {
+          "description": "Post-unblinding main-branch commit that registers the merged payloads.",
+          "$ref": "#/$defs/gitObject"
+        }
       }
     },
     "disposition": {
@@ -127,6 +137,15 @@
         "id": { "type": "string" },
         "path": { "type": "string", "minLength": 1 },
         "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "outputCommit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit"],
+      "properties": {
+        "commit": { "$ref": "#/$defs/gitObject" },
+        "branch": { "type": "string", "minLength": 1 }
       }
     },
     "model": {
