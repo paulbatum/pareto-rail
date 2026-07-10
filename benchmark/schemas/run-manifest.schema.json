@@ -43,6 +43,7 @@
       "required": ["materialsCommit", "entrantBaseline"],
       "properties": {
         "materialsCommit": { "$ref": "#/$defs/gitObject" },
+        "configurationCommit": { "$ref": "#/$defs/gitObject" },
         "releaseRecord": { "$ref": "#/$defs/hashedArtifact" },
         "entrantBaseline": {
           "type": "object",
@@ -56,9 +57,20 @@
         }
       }
     },
+    "schedule": {
+      "description": "Private append-only schedule revision that authorized this eligible assignment.",
+      "$ref": "#/$defs/hashedArtifact"
+    },
     "recipe": { "$ref": "#/$defs/hashedArtifact" },
     "controller": { "$ref": "#/$defs/hashedArtifact" },
-    "runner": { "$ref": "#/$defs/hashedArtifact" },
+    "runner": {
+      "description": "Configuration-scoped orchestration runner used for this run.",
+      "$ref": "#/$defs/hashedArtifact"
+    },
+    "executor": {
+      "description": "Configuration-scoped harness executor used for this run.",
+      "$ref": "#/$defs/hashedArtifact"
+    },
     "timing": {
       "type": "object",
       "additionalProperties": false,

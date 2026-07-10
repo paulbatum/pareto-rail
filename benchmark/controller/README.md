@@ -34,7 +34,7 @@ npm run benchmark:run -- \
   --out benchmark/private/runs/<opaque-run-id>
 ```
 
-The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`; a future eligible definition additionally needs the frozen-release comparison and full schedule controls described in the runbook.
+The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`. An eligible definition additionally requires `release`, `schedule`, `runner`, and `executor` hashed artifacts plus `baseline.configurationCommit`. Before launching a model, the runner verifies the release against its `benchmark-<version>` tag, shared inputs against that release, the exact assignment against the private schedule revision, and runner/executor/recipe/pricing inputs against the configuration commit and current checkout.
 
 ### Preflight and launch
 
@@ -89,7 +89,7 @@ Its required shape is:
 
 ## Generic controller tools
 
-The admin scripts below implement deterministic administration only. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. `benchmark:run` is the separate declared single-run controller above. Hash every runner and adapter path and revision at freeze.
+The shared `admin.mjs`, `common.mjs`, and `render-assignment.mjs` components implement deterministic administration and are frozen as `controller-admin` protocol artifacts. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. `benchmark:run` is the separate configuration-scoped runner above. Pin the runner and executor hashes in every configuration registration; those two are not protocol-wide frozen artifacts.
 
 ### Render the shared assignment
 
@@ -115,7 +115,12 @@ Create a private definition file containing the benchmark version, configuration
   "configurations": [
     {
       "id": "<configuration-id>",
-      "recipe": { "id": "<configuration-id>", "path": "benchmark/recipes/<recipe>.md", "sha256": "<sha256>" }
+      "configurationCommit": "<commit-containing-runner-executor-recipe-and-pricing>",
+      "runner": { "path": "scripts/benchmark/run.mjs", "sha256": "<sha256>" },
+      "executor": { "path": "scripts/benchmark/<executor>.mjs", "sha256": "<sha256>" },
+      "recipe": { "id": "<configuration-id>", "path": "benchmark/recipes/<recipe>.md", "sha256": "<sha256>" },
+      "stage": { "adapter": "<adapter-id>", "model": "<exact-model>", "effort": "high", "timeoutSeconds": 10800 },
+      "pricing": { "path": "benchmark/pricing/<pricing>.json", "sha256": "<sha256>" }
     }
   ],
   "themes": [
@@ -138,23 +143,36 @@ npm run benchmark:schedule -- validate \
   --schedule benchmark/private/run-schedule.json
 ```
 
-Generation uses cryptographic randomness, assigns opaque run and slot ids, shuffles execution order, and does not print assignments. Validation enforces the complete configuration × theme crossing, unique ids, contiguous schedule indexes, recipe/theme hash agreement, H1-derived titles, and `<theme-id>-<slot-id>` level ids.
+Generation uses cryptographic randomness, assigns opaque run and slot ids, shuffles execution order, and does not print assignments. Validation reads each configuration artifact from its own `configurationCommit`, then enforces complete registered-configuration × theme coverage, unique ids, contiguous schedule indexes, execution/recipe/theme hash agreement, H1-derived titles, and `<theme-id>-<slot-id>` level ids.
 
-### Create and validate blind ranking pairs
+To register another configuration later, commit its recipe and pricing inputs, append it to the definition without changing existing entries, and extend the schedule in place (or through a temporary output followed by an atomic replacement):
+
+```sh
+npm run benchmark:schedule -- extend \
+  --definition benchmark/private/schedule-definition.json \
+  --schedule benchmark/private/run-schedule.json \
+  --out benchmark/private/run-schedule.next.json
+```
+
+Extension rejects changed or removed configurations/themes, preserves every old assignment and index, and appends only the newly required cells. Pin the new schedule hash, configuration commit, runner, and executor in each eligible run definition.
+
+### Create and validate blind ranked sets
 
 The input projection contains only `benchmarkVersion` and each theme's playable slot ids—never configurations or models. Keep it private until rankings are locked.
 
 ```sh
-npm run benchmark:ranking -- pairs \
+npm run benchmark:ranking -- sets \
   --projection benchmark/private/playable-projection.json \
-  --out benchmark/private/ranking-pairs.json
-npm run benchmark:ranking -- validate \
+  --out benchmark/private/ranking-sets.json
+npm run benchmark:ranking -- validate-sets \
   --projection benchmark/private/playable-projection.json \
-  --pairs benchmark/private/ranking-pairs.json \
+  --sets benchmark/private/ranking-sets.json \
   --rankings benchmark/rankings
 ```
 
-Pair generation randomizes pair order and first presentation. Validation checks that the ranking set covers every passing same-theme pair exactly once and that every verdict, winner, play count, and presentation order is valid.
+Set generation creates one randomized presentation per theme for every snapshot with at least two passing entrants. Validation checks exact slot coverage, play counts, presentation order, and best-to-worst tiers. A later configuration produces a new set schedule and locked snapshot; it does not rewrite the old one.
+
+The legacy `pairs` and `validate` commands remain available for targeted binary judgments. `extend-pairs` preserves existing pair ids and presentation orders while adding only newly possible pairs; exhaustive pair coverage is optional policy rather than the primary workflow.
 
 ### Administer worktrees, gates, and payloads
 
@@ -186,7 +204,7 @@ npm run benchmark:admin -- payload \
   --branch benchmark-payload-<opaque-run-id>
 ```
 
-`worktree` does not install dependencies; the frozen recipe or controller procedure must declare any dependency provisioning before the first model stage. `seal` runs the baseline-aware scope gate, commits only the already-permitted working-tree changes, and requires a clean result. `gates` runs all four required gates independently, writes complete logs and their hashes, and rejects a gate that changes the sealed tree. `payload` creates a worktree at the materials commit, copies only the assigned level directory from the evaluated commit, and rejects empty, deleting, renaming, or out-of-directory diffs.
+`worktree` does not install dependencies; the registered recipe or controller procedure must declare any dependency provisioning before the first model stage. `seal` runs the baseline-aware scope gate, commits only the already-permitted working-tree changes, and requires a clean result. `gates` runs all four required gates independently, writes complete logs and their hashes, and rejects a gate that changes the sealed tree. `payload` creates a worktree at the materials commit, copies only the assigned level directory from the evaluated commit, and rejects empty, deleting, renaming, or out-of-directory diffs.
 
 Run the synthetic controller checks with:
 

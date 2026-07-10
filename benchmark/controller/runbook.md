@@ -25,7 +25,7 @@ Run preparation, eligible generation, blind ranking, and post-unblinding integra
 - The level id is `<theme-id>-<slot-id>` and the four-character slot encodes no model, configuration, theme, or schedule position.
 - The controller supplies only the rendered assignment, declared repository material, recipe-authorized earlier-stage artifacts, and the entrant's own working tree. It does not direct an entrant to inspect another theme, recipe, entrant, ranking, schedule, slot mapping, or benchmark result.
 - Entrants use worktrees of the main repository under a non-adversarial access policy. Repository history and unrelated tracked files are not technically hidden; this accepted limitation must not be represented as technical isolation.
-- Prompts, stage order, model snapshots, session boundaries, time limits, tool access, and review/revision count come from the frozen recipe. The controller does not improvise them.
+- Prompts, stage order, model snapshots, session boundaries, time limits, tool access, and review/revision count come from the configuration's registered recipe. The controller does not improvise them.
 - No operator follows logs, reads diffs, plays partial output, supplies feedback, or requests a retry.
 - Gates run against the exact evaluated working tree. Blind play serves that same evaluated commit.
 - A payload is derived only after evaluation and contains only `src/levels/<level-id>/` relative to the frozen materials commit.
@@ -38,15 +38,15 @@ Do not start an eligible run until all of these exist and agree:
 
 - a frozen release record validated against `benchmark/schemas/freeze.schema.json`;
 - the materials commit and entrant-baseline commit named by that record;
-- a private schedule whose hash matches the frozen `run-schedule` artifact;
+- a private append-only schedule revision containing the assignment, with its hash pinned by the run definition;
 - exactly one assignment selected from that schedule without exposing the other assignments;
-- the assignment's recipe and theme with matching paths and hashes;
+- the assignment's recipe and theme with matching paths and hashes, plus the immutable configuration commit containing its runner, executor, recipe, and pricing input;
 - the frozen shared assignment template and controller runbook;
 - deterministic adapters or documented harness procedures for launching every recipe stage and capturing usage;
 - a predeclared failure taxonomy; and
 - private storage outside the entrant checkout.
 
-Use this private layout unless the frozen runner declares an equivalent one:
+Use this private layout unless the registered configuration runner declares an equivalent one:
 
 ```text
 benchmark/private/
@@ -72,10 +72,10 @@ Follow `benchmark/releases/README.md` in order:
 
 1. Commit final canonical materials and record the materials commit.
 2. Record and verify the frozen entrant-baseline commit used for all opaque worktrees.
-3. Generate the private randomized schedule against `benchmark/schemas/run-schedule.schema.json`.
-4. Mechanically verify a complete configuration × theme crossing, contiguous schedule positions, unique run/slot/level ids, fixed-length opaque slots, and exact `<theme-id>-<slot-id>` construction.
-5. Hash the schedule without printing its contents.
-6. Create and validate the freeze record, commit it, and create the annotated release tag.
+3. Create and validate the protocol freeze record, commit it, and create the annotated release tag.
+4. Generate the initial private randomized schedule against `benchmark/schemas/run-schedule.schema.json`.
+5. Mechanically verify complete registered-configuration × theme coverage, contiguous schedule positions, unique run/slot/level ids, fixed-length opaque slots, and exact `<theme-id>-<slot-id>` construction. Hash the schedule without printing its contents.
+6. For a later configuration, pin its runner, executor, recipe, and pricing at a configuration commit and extend the schedule. Preserve every earlier assignment and add only missing cells. New configuration code may implement delegation or different accounting, but it may not silently change shared task, baseline, gate, or judgment semantics.
 7. Re-open a fresh entrant worktree and verify that it is at the declared baseline commit. Verify that private schedule data, raw records, credentials, and session URLs are absent; do not claim that tracked repository material or Git history is hidden.
 
 Do not hand-author or inspect the live slot mapping. If schedule generation or validation is not yet automated, the release is not ready to freeze.
@@ -90,7 +90,7 @@ Rehearsal may be repeated to repair controller tooling. Never use an eligible th
 
 ### 1. Select one assignment
 
-A dispatcher selects the next assignment by `scheduleIndex` and starts a fresh controller context with only that assignment. Do not display configuration identity or the schedule row in a user-visible transcript. Verify the assignment against the frozen recipe/theme hashes and the level-id convention.
+A dispatcher selects the next assignment by `scheduleIndex` and starts a fresh controller context with only that assignment. Do not display configuration identity or the schedule row in a user-visible transcript. Verify the assignment against the registered recipe hash, frozen theme hash, schedule revision, and level-id convention.
 
 Create `benchmark/private/runs/<run-id>/assignment.json` and initialize a private manifest. The private record may contain configuration identity; no public artifact may expose it before unblinding.
 
@@ -172,9 +172,9 @@ For a DNF, preserve the evaluated commit and do not create a mergeable passing p
 
 Validate the full record against `benchmark/schemas/run-manifest.schema.json` and enforce cross-field rules not expressible in JSON Schema:
 
-- assignment, recipe, theme, release, and schedule identities agree;
+- assignment, runner, executor, recipe, theme, release, and schedule identities agree;
 - stage order and count match the recipe;
-- usage and stage costs reconcile to totals under the frozen cost rule;
+- usage and stage costs reconcile to totals under the registered configuration cost rule;
 - all four gate ids are accounted for;
 - playable disposition implies every required gate passed and a valid payload exists;
 - DNF disposition implies no blind deployment or passing payload; and
@@ -184,26 +184,26 @@ Store the complete manifest privately. Before unblinding, report only opaque com
 
 ## Blind ranking preparation mode
 
-After every eligible run is sealed:
+When the playable pool is ready for a ranking snapshot:
 
 1. Read only slot, theme, and playable/DNF disposition from private records through a mechanical projection that omits configuration and model identity.
-2. Generate same-theme passing pairs and randomize pair order and first presentation without exposing the schedule mapping.
+2. Generate one ranked set per theme and randomize set and presentation order without exposing the schedule mapping. For a large pool, overlapping subsets or targeted pairs are allowed when the declared analysis can connect them.
 3. Serve each slot from its exact evaluated commit using an opaque deployment or local launcher.
 4. Hide source, branch, logs, model identity, configuration identity, and private URLs from the ranker.
-5. Record each judgment against `benchmark/schemas/ranking.schema.json`.
+5. Record best-to-worst tiers against `benchmark/schemas/ranked-set.schema.json`. Binary judgments may use `ranking.schema.json` when explicitly scheduled.
 6. Do not merge payloads into `main` or open the private schedule.
 
-The human ranker chooses preference or tie and may replay either slot. The controller records the decision; it does not judge quality.
+The human ranker may replay any slot and may tie slots by placing them in the same tier. The controller records the decision; it does not judge quality or expand one ranked set into supposedly independent observations.
 
 ## Lock and unblind mode
 
 Before opening the private schedule:
 
-1. Validate every ranking record.
-2. Verify the expected set of playable pairs and the preregistered treatment of DNFs.
-3. Commit or checksum the complete ranking set and record its lock timestamp.
+1. Validate every ranking record against its set or pair schedule.
+2. Verify coverage of the declared snapshot and report DNFs separately as reliability outcomes.
+3. Commit or checksum the complete ranking snapshot and record its lock timestamp against `benchmark/schemas/ranking-snapshot.schema.json`.
 
-Only then open the private schedule and join slots to configurations. Compute the preregistered result before any exploratory analysis. Preserve ranking records unchanged; configuration identity belongs in derived analysis and published manifests.
+Only then open the relevant slot mapping and join slots to configurations. Compute the declared normalized-rank and reliability summaries before exploratory analysis. Preserve ranking records unchanged; configuration identity belongs in derived analysis and published manifests. Later configurations create a later snapshot rather than reopening this one.
 
 ## Integration mode
 
@@ -228,11 +228,11 @@ A DNF does not enter playable `main` as-is. Any later repair is a post-benchmark
 
 Stop without improvising when:
 
-- release, schedule, recipe, theme, or prompt hashes disagree;
+- release, schedule, runner, executor, recipe, theme, or prompt hashes disagree;
 - the entrant checkout is not the frozen baseline;
 - private schedule data, raw records, credentials, or session URLs are visible inside the entrant session;
 - a requested model snapshot or session boundary cannot be honored;
-- the harness cannot provide the usage evidence required by the frozen cost rule;
+- the harness cannot provide the usage evidence required by the registered cost rule;
 - the controller observes cross-run contamination;
 - scope contains undeclared files;
 - payload diff contains anything outside the assigned level directory;

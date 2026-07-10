@@ -23,6 +23,9 @@ const PROJECTION_THEME_KEYS = new Set(['id', 'slotIds']);
 const PAIR_SCHEDULE_KEYS = new Set(['schemaVersion', 'benchmarkVersion', 'generatedAt', 'randomization', 'pairs']);
 const PAIR_KEYS = new Set(['rankingId', 'themeId', 'pairSlotIds', 'presentationOrder']);
 const RANKING_KEYS = new Set(['schemaVersion', 'benchmarkVersion', 'rankingId', 'themeId', 'pairSlotIds', 'presentationOrder', 'playCounts', 'verdict', 'winnerSlotId', 'notes', 'recordedAt']);
+const SET_SCHEDULE_KEYS = new Set(['schemaVersion', 'benchmarkVersion', 'generatedAt', 'randomization', 'sets']);
+const SET_KEYS = new Set(['rankingId', 'themeId', 'slotIds', 'presentationOrder']);
+const SET_RANKING_KEYS = new Set(['schemaVersion', 'benchmarkVersion', 'rankingId', 'themeId', 'slotIds', 'presentationOrder', 'playCounts', 'tiers', 'notes', 'recordedAt']);
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
 export function validateProjection(projection) {
@@ -86,6 +89,116 @@ export function createPairSchedule(projection, random = randomBytes) {
     randomization: { method: 'cryptographic-shuffle' },
     pairs,
   };
+}
+
+export function extendPairSchedule(pairSchedule, projection, random = randomBytes) {
+  const projectionErrors = validateProjection(projection);
+  if (projectionErrors.length) throw new Error(`Invalid playable projection:\n${formatErrors(projectionErrors)}`);
+  if (!isPlainObject(pairSchedule) || !Array.isArray(pairSchedule.pairs)) throw new Error('Invalid existing pair schedule.');
+  if (pairSchedule.benchmarkVersion !== projection.benchmarkVersion) throw new Error('Existing pair schedule benchmarkVersion does not match the projection.');
+  const expected = expectedPairs(projection);
+  const observed = new Set();
+  const rankingIds = new Set();
+  for (const pair of pairSchedule.pairs) {
+    const key = keyForPair(pair.themeId, pair.pairSlotIds);
+    if (!expected.has(key)) throw new Error('Pair schedule extension projections may not remove an existing slot or theme.');
+    observed.add(key);
+    rankingIds.add(pair.rankingId.replace(/^pair-/, ''));
+  }
+  const additions = [];
+  for (const [key, pair] of expected) {
+    if (observed.has(key)) continue;
+    const presentationOrder = random(1)[0] % 2 === 0 ? [...pair.pairSlotIds] : [...pair.pairSlotIds].reverse();
+    additions.push({ rankingId: `pair-${uniqueOpaqueId(12, rankingIds, random)}`, ...pair, presentationOrder });
+  }
+  shuffle(additions, random);
+  const extended = { ...pairSchedule, pairs: [...pairSchedule.pairs, ...additions] };
+  const errors = validatePairSchedule(extended, projection);
+  if (errors.length) throw new Error(`Extended pair schedule is invalid:\n${formatErrors(errors)}`);
+  return extended;
+}
+
+export function createSetSchedule(projection, random = randomBytes) {
+  const errors = validateProjection(projection);
+  if (errors.length) throw new Error(`Invalid playable projection:\n${formatErrors(errors)}`);
+  const rankingIds = new Set();
+  const sets = projection.themes.filter((theme) => theme.slotIds.length >= 2).map((theme) => {
+    const presentationOrder = [...theme.slotIds];
+    shuffle(presentationOrder, random);
+    return {
+      rankingId: `set-${uniqueOpaqueId(12, rankingIds, random)}`,
+      themeId: theme.id,
+      slotIds: [...theme.slotIds],
+      presentationOrder,
+    };
+  });
+  shuffle(sets, random);
+  return {
+    schemaVersion: 1,
+    benchmarkVersion: projection.benchmarkVersion,
+    generatedAt: new Date().toISOString(),
+    randomization: { method: 'cryptographic-shuffle' },
+    sets,
+  };
+}
+
+export function validateSetSchedule(setSchedule, projection) {
+  const errors = [...validateProjection(projection)];
+  if (!isPlainObject(setSchedule)) return [...errors, 'Set schedule must be an object.'];
+  assertAllowedKeys(setSchedule, SET_SCHEDULE_KEYS, 'setSchedule', errors);
+  if (setSchedule.schemaVersion !== 1) errors.push('setSchedule.schemaVersion must equal 1.');
+  if (setSchedule.benchmarkVersion !== projection.benchmarkVersion) errors.push('setSchedule.benchmarkVersion does not match the projection.');
+  if (!isIsoDate(setSchedule.generatedAt)) errors.push('setSchedule.generatedAt must be an ISO date-time.');
+  if (!isPlainObject(setSchedule.randomization) || setSchedule.randomization.method !== 'cryptographic-shuffle') errors.push('setSchedule.randomization must record cryptographic-shuffle.');
+  if (!Array.isArray(setSchedule.sets)) return [...errors, 'setSchedule.sets must be an array.'];
+  const expected = new Map(projection.themes.filter((theme) => theme.slotIds.length >= 2).map((theme) => [theme.id, theme.slotIds]));
+  const seenThemes = new Set();
+  const rankingIds = new Set();
+  for (const [index, set] of setSchedule.sets.entries()) {
+    const label = `setSchedule.sets[${index}]`;
+    if (!isPlainObject(set)) { errors.push(`${label} must be an object.`); continue; }
+    assertAllowedKeys(set, SET_KEYS, label, errors);
+    if (typeof set.rankingId !== 'string' || !set.rankingId) errors.push(`${label}.rankingId must be non-empty.`);
+    if (rankingIds.has(set.rankingId)) errors.push(`${label}.rankingId duplicates ${set.rankingId}.`);
+    rankingIds.add(set.rankingId);
+    if (!expected.has(set.themeId)) errors.push(`${label}.themeId is not an expected playable theme.`);
+    if (seenThemes.has(set.themeId)) errors.push(`${label}.themeId duplicates ${set.themeId}.`);
+    seenThemes.add(set.themeId);
+    validateSlotSet(set.slotIds, `${label}.slotIds`, errors);
+    validateSlotSet(set.presentationOrder, `${label}.presentationOrder`, errors);
+    if (!sameSlots(set.slotIds, expected.get(set.themeId))) errors.push(`${label}.slotIds do not match the playable projection.`);
+    if (!sameSlots(set.slotIds, set.presentationOrder)) errors.push(`${label}.presentationOrder must contain the same slots.`);
+  }
+  if (setSchedule.sets.length !== expected.size) errors.push(`setSchedule.sets must contain ${expected.size} set(s).`);
+  for (const themeId of expected.keys()) if (!seenThemes.has(themeId)) errors.push(`Set schedule is missing theme ${themeId}.`);
+  return errors;
+}
+
+export function validateSetRankings(rankings, setSchedule, projection) {
+  const errors = [...validateSetSchedule(setSchedule, projection)];
+  if (!Array.isArray(rankings)) return [...errors, 'Rankings must be an array.'];
+  const scheduled = new Map(setSchedule.sets.map((set) => [set.rankingId, set]));
+  const seen = new Set();
+  for (const [index, ranking] of rankings.entries()) {
+    const label = `rankings[${index}]`;
+    if (!isPlainObject(ranking)) { errors.push(`${label} must be an object.`); continue; }
+    assertAllowedKeys(ranking, SET_RANKING_KEYS, label, errors);
+    if (ranking.schemaVersion !== 1) errors.push(`${label}.schemaVersion must equal 1.`);
+    if (ranking.benchmarkVersion !== projection.benchmarkVersion) errors.push(`${label}.benchmarkVersion does not match the projection.`);
+    const set = scheduled.get(ranking.rankingId);
+    if (!set) { errors.push(`${label}.rankingId is not in the set schedule.`); continue; }
+    if (seen.has(ranking.rankingId)) errors.push(`${label}.rankingId is duplicated.`);
+    seen.add(ranking.rankingId);
+    if (ranking.themeId !== set.themeId) errors.push(`${label}.themeId does not match its scheduled set.`);
+    if (!sameArray(ranking.presentationOrder, set.presentationOrder)) errors.push(`${label}.presentationOrder does not match its scheduled set.`);
+    if (!sameSlots(ranking.slotIds, set.slotIds)) errors.push(`${label}.slotIds do not match its scheduled set.`);
+    validateSetPlayCounts(ranking.playCounts, set.slotIds, label, errors);
+    validateTiers(ranking.tiers, set.slotIds, label, errors);
+    if (!isIsoDate(ranking.recordedAt)) errors.push(`${label}.recordedAt must be an ISO date-time.`);
+  }
+  if (rankings.length !== scheduled.size) errors.push(`Expected ${scheduled.size} ranked-set record(s), found ${rankings.length}.`);
+  for (const rankingId of scheduled.keys()) if (!seen.has(rankingId)) errors.push(`Missing ranking record ${rankingId}.`);
+  return errors;
 }
 
 export function validatePairSchedule(pairSchedule, projection) {
@@ -201,6 +314,34 @@ function validatePlayCounts(playCounts, pairSlotIds, label, errors) {
   if (slots.size !== 2) errors.push(`${label}.playCounts must cover each compared slot exactly once.`);
 }
 
+function validateSlotSet(slotIds, label, errors) {
+  if (!Array.isArray(slotIds) || slotIds.length < 2 || !slotIds.every((slot) => typeof slot === 'string' && SLOT_PATTERN.test(slot)) || new Set(slotIds).size !== slotIds.length) {
+    errors.push(`${label} must contain at least two unique opaque slots.`);
+  }
+}
+
+function validateSetPlayCounts(playCounts, slotIds, label, errors) {
+  if (!Array.isArray(playCounts) || playCounts.length !== slotIds.length) { errors.push(`${label}.playCounts must cover every slot.`); return; }
+  const seen = new Set();
+  for (const [index, entry] of playCounts.entries()) {
+    if (!isPlainObject(entry) || !slotIds.includes(entry.slotId) || !Number.isInteger(entry.count) || entry.count < 1 || seen.has(entry.slotId)) errors.push(`${label}.playCounts[${index}] is invalid.`);
+    else seen.add(entry.slotId);
+  }
+}
+
+function validateTiers(tiers, slotIds, label, errors) {
+  if (!Array.isArray(tiers) || tiers.length === 0) { errors.push(`${label}.tiers must contain one or more ordered tiers.`); return; }
+  const seen = new Set();
+  for (const [index, tier] of tiers.entries()) {
+    if (!Array.isArray(tier) || tier.length === 0) { errors.push(`${label}.tiers[${index}] must be a non-empty slot array.`); continue; }
+    for (const slotId of tier) {
+      if (!slotIds.includes(slotId) || seen.has(slotId)) errors.push(`${label}.tiers[${index}] contains an invalid or repeated slot.`);
+      else seen.add(slotId);
+    }
+  }
+  if (seen.size !== slotIds.length) errors.push(`${label}.tiers must rank every slot exactly once.`);
+}
+
 function keyForPair(themeId, slotIds) {
   if (!Array.isArray(slotIds)) return `${themeId}\u0000invalid`;
   return `${themeId}\u0000${[...slotIds].sort().join('\u0000')}`;
@@ -251,13 +392,30 @@ async function loadRankings(inputPath) {
 async function main() {
   const { rest, options } = parseArgs(process.argv.slice(2), { positional: true });
   if (options.help || rest.length === 0) {
-    console.log('Usage:\n  npm run benchmark:ranking -- pairs --projection <private-json> --out <private-json>\n  npm run benchmark:ranking -- validate --projection <private-json> --pairs <private-json> --rankings <private-file-or-dir>');
+    console.log('Usage:\n  npm run benchmark:ranking -- sets --projection <private-json> --out <private-json>\n  npm run benchmark:ranking -- validate-sets --projection <private-json> --sets <private-json> --rankings <private-file-or-dir>\n  npm run benchmark:ranking -- pairs --projection <private-json> --out <private-json>\n  npm run benchmark:ranking -- extend-pairs --projection <private-json> --pairs <private-json> --out <private-json>\n  npm run benchmark:ranking -- validate --projection <private-json> --pairs <private-json> --rankings <private-file-or-dir>');
     return;
   }
-  assertOnlyOptions(options, new Set(['help', 'projection', 'out', 'pairs', 'rankings']));
+  assertOnlyOptions(options, new Set(['help', 'projection', 'out', 'pairs', 'sets', 'rankings']));
   const command = rest[0];
-  if (rest.length !== 1 || !['pairs', 'validate'].includes(command)) throw new Error(`Unknown ranking command: ${rest.join(' ')}.`);
+  if (rest.length !== 1 || !['sets', 'validate-sets', 'pairs', 'extend-pairs', 'validate'].includes(command)) throw new Error(`Unknown ranking command: ${rest.join(' ')}.`);
   const projection = await readJson(requireOption(options, 'projection'));
+  if (command === 'sets') {
+    const outputPath = assertPrivateOrExternalPath(requireOption(options, 'out'));
+    const setSchedule = createSetSchedule(projection);
+    const errors = validateSetSchedule(setSchedule, projection);
+    if (errors.length) throw new Error(`Generated invalid set schedule:\n${formatErrors(errors)}`);
+    await writeJson(outputPath, setSchedule);
+    console.log(`Generated ${setSchedule.sets.length} slot-only ranked set(s).`);
+    return;
+  }
+  if (command === 'validate-sets') {
+    const setSchedule = await readJson(requireOption(options, 'sets'));
+    const rankings = await loadRankings(requireOption(options, 'rankings'));
+    const errors = validateSetRankings(rankings, setSchedule, projection);
+    if (errors.length) throw new Error(`Invalid ranked-set records:\n${formatErrors(errors)}`);
+    console.log(`Validated ${rankings.length} slot-only ranked-set record(s).`);
+    return;
+  }
   if (command === 'pairs') {
     const outputPath = assertPrivateOrExternalPath(requireOption(options, 'out'));
     const pairSchedule = createPairSchedule(projection);
@@ -265,6 +423,14 @@ async function main() {
     if (errors.length) throw new Error(`Generated invalid pair schedule:\n${formatErrors(errors)}`);
     await writeJson(outputPath, pairSchedule);
     console.log(`Generated ${pairSchedule.pairs.length} slot-only ranking pair(s).`);
+    return;
+  }
+  if (command === 'extend-pairs') {
+    const pairSchedule = await readJson(requireOption(options, 'pairs'));
+    const outputPath = assertPrivateOrExternalPath(requireOption(options, 'out'));
+    const extended = extendPairSchedule(pairSchedule, projection);
+    await writeJson(outputPath, extended);
+    console.log(`Preserved ${pairSchedule.pairs.length} and added ${extended.pairs.length - pairSchedule.pairs.length} slot-only pair(s).`);
     return;
   }
   const pairSchedule = await readJson(requireOption(options, 'pairs'));
