@@ -10,7 +10,7 @@ Use a fresh controller context for every eligible run. A dispatcher may launch t
 
 `scripts/benchmark/codex-cli.mjs` is the deterministic adapter for a non-interactive Codex stage. It runs `codex exec`, not the interactive TUI. The draft `benchmark/recipes/codex-terra-high.md` is its first consumer and is rehearsal-only while the broader release protocol remains unresolved.
 
-The adapter receives an already-rendered private prompt and sends it to `codex exec -` on stdin. It uses an ephemeral session, ignores user configuration and exec-policy rules, fixes the model, reasoning effort, sandbox, and approval policy, captures JSONL stdout without mixing in the controller's output, and records the final message separately. It validates the installed bundled model catalog before launch, then requires a `thread.started` session id and `turn.completed.usage.input_tokens` plus `output_tokens`; otherwise the stage is not eligible for a measured-cost record.
+The adapter receives an already-rendered private prompt and sends it to `codex exec -` on stdin. It starts one fresh local session per stage and never issues a continuation command, ignores user configuration and exec-policy rules, fixes the model, reasoning effort, sandbox, and approval policy, captures JSONL stdout without mixing in the controller's output, and records the final message separately. It validates the installed bundled model catalog before launch, then requires a `thread.started` session id and `turn.completed.usage.input_tokens` plus `output_tokens`; otherwise the stage is not eligible for a measured-cost record. It also locates Codex's own persisted session rollout by that session id, copies it into private storage, and deletes the host-side copy, best-effort — see `benchmark/recipes/codex-terra-high.md` for the exact mechanism.
 
 ```sh
 npm run benchmark:codex -- \
@@ -22,7 +22,7 @@ npm run benchmark:codex -- \
   --timeout-seconds 10800
 ```
 
-The output directory must be private or external to the repository and outside the entrant worktree. It contains raw JSONL, stderr, model-catalog and selected-model captures, normalized/raw usage, command/timing data, and the final agent message. The controller copies its hashes and fields into the private manifest; it must not inspect the level source or use the final message as feedback.
+The output directory must be private or external to the repository and outside the entrant worktree. It contains raw JSONL, stderr, model-catalog and selected-model captures, normalized/raw usage, command/timing data, the final agent message, and the copied session rollout when capture succeeded. The controller copies its hashes and fields into the private manifest; it must not inspect the level source or use the final message as feedback.
 
 ## Single-run rehearsal controller
 

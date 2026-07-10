@@ -225,6 +225,7 @@
         "promptSha256": { "$ref": "#/$defs/sha256" },
         "inputArtifactSha256": { "$ref": "#/$defs/sha256" },
         "outputArtifactSha256": { "$ref": "#/$defs/sha256" },
+        "rolloutArtifactSha256": { "$ref": "#/$defs/sha256" },
         "startedAt": { "type": "string", "format": "date-time" },
         "finishedAt": { "type": "string", "format": "date-time" },
         "wallTimeSeconds": { "type": "number", "minimum": 0 },

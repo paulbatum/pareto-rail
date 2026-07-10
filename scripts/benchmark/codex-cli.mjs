@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -71,7 +72,6 @@ async function main() {
     'exec',
     '--json',
     '--color', 'never',
-    '--ephemeral',
     '--ignore-user-config',
     '--ignore-rules',
     '--strict-config',
@@ -105,6 +105,7 @@ async function main() {
 
   const usage = extractUsage(result.stdout);
   await writeJson(path.join(outputDirectory, 'raw-usage.json'), usage);
+  const rollout = await captureRollout(usage.sessionId, outputDirectory);
   await writeJson(path.join(outputDirectory, 'result.json'), {
     result: result.code === 0 ? 'completed' : result.timedOut ? 'timed-out' : 'failed',
     exitCode: result.code,
@@ -113,6 +114,7 @@ async function main() {
     usageSha256: sha256(JSON.stringify(usage)),
     eventLogSha256: sha256(result.stdout),
     stderrSha256: sha256(result.stderr),
+    rollout,
   });
 
   if (result.code !== 0) process.exitCode = result.code || 1;
@@ -208,6 +210,49 @@ function extractUsage(eventLog) {
 
 function isUsage(value) {
   return value && typeof value === 'object';
+}
+
+// Without --ephemeral, Codex CLI persists its own richer session transcript
+// (full reasoning and message payloads, not just the curated --json stream)
+// to $CODEX_HOME/sessions/**/rollout-<timestamp>-<sessionId>.jsonl. Copy it
+// into private controller storage and remove the host-side copy so no run's
+// session content lingers outside benchmark/private/. Best-effort: a stage
+// with valid session id and usage still completes even if this fails, since
+// the harness's own persistence layout is not a controller-owned contract.
+async function captureRollout(sessionId, outputDirectory) {
+  const codexHome = process.env.CODEX_HOME ? path.resolve(process.env.CODEX_HOME) : path.join(os.homedir(), '.codex');
+  const sessionsDirectory = path.join(codexHome, 'sessions');
+  let sourcePath = await findRolloutFile(sessionsDirectory, sessionId);
+  if (!sourcePath) {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    sourcePath = await findRolloutFile(sessionsDirectory, sessionId);
+  }
+  if (!sourcePath) return { captured: false, reason: `No rollout file found under ${sessionsDirectory} for session ${sessionId}.` };
+  const content = await fs.readFile(sourcePath, 'utf8');
+  await fs.writeFile(path.join(outputDirectory, 'rollout.jsonl'), content, 'utf8');
+  await fs.unlink(sourcePath);
+  return { captured: true, sourcePath, sha256: sha256(content) };
+}
+
+async function findRolloutFile(directory, sessionId) {
+  const suffix = `-${sessionId}.jsonl`;
+  let entries;
+  try {
+    entries = await fs.readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT') return null;
+    throw error;
+  }
+  for (const entry of entries) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      const found = await findRolloutFile(fullPath, sessionId);
+      if (found) return found;
+    } else if (entry.isFile() && entry.name.startsWith('rollout-') && entry.name.endsWith(suffix)) {
+      return fullPath;
+    }
+  }
+  return null;
 }
 
 function runCommand(executable, args, { cwd, input, timeoutSeconds, allowFailure = false } = {}) {

@@ -24,7 +24,7 @@ This is the first Codex configuration trial. It is one unattended solo stage, no
 - Overall timeout: 10,800 seconds, measured from process launch to exit.
 - Operator interaction after launch: none.
 - Network access: no `--search`. The `workspace-write` sandbox's own network default blocks outbound connections and loopback `listen()`, which prevents the entrant's own dev-server-backed self-checks (e.g. the browser-backed phase of `npm run check:floor`) from running inside its session. The adapter overrides this with `-c sandbox_workspace_write.network_access=true`, keeping every other sandbox restriction (filesystem confined to the worktree, no elevated approvals) in place. This is a declared harness override, not the CLI's out-of-the-box default.
-- Harness continuation behavior: none. `--ephemeral` starts one new local session and no `codex exec resume` command is allowed.
+- Harness continuation behavior: none. The controller starts one fresh local `codex exec` process per stage and never issues `codex exec resume`, `fork`, or any continuation command.
 - Failure behavior: a nonzero exit, timeout, missing JSONL session id, missing `turn.completed` usage, or unsupported model/effort stops the run for controller-failure classification. At an eligible freeze, the controller must additionally compare the captured CLI/catalog artifacts to their frozen identities before classifying the run. Entrant and infrastructure classifications remain subject to the frozen taxonomy.
 - Dependency provisioning: before this stage, the controller runs `npm ci` in the fresh worktree and records its command, version, exit code, timing, and complete log as unmeasured deterministic setup. This is not a model stage.
 - Commit behavior: the agent may use the normal repository workflow. After it exits, the controller seals permitted changes, then derives the payload.
@@ -36,10 +36,10 @@ This is the first Codex configuration trial. It is one unattended solo stage, no
 - Model provider: OpenAI Codex subscription
 - Exact model selection: `gpt-5.6-terra` with `model_reasoning_effort="high"`. The CLI does not expose a dated Terra snapshot; capture `codex --version`, the complete `codex debug models --bundled` output, and the selected catalog entry. Do not describe this alias-like catalog slug as a weight-pinned snapshot.
 - Harness and version: Codex CLI `0.144.0` for this rehearsal. The adapter records the installed version at launch; an eligible recipe must pin that exact observed version or intentionally revise and rehearse again.
-- Session: fresh, ephemeral process.
+- Session: fresh process, one new local session per stage. The controller never issues `codex exec resume`, `fork`, or any other continuation command; this is controller policy, not a technical restriction, because the adapter no longer passes `--ephemeral` (see "Session rollout capture" below).
 - Working tree access: write access only to the entrant worktree through Codex `workspace-write` sandbox. No additional writable directories.
 - Input artifacts from earlier stages: none.
-- Required output artifact: code changes in the entrant worktree plus `final-message.md` and JSONL records in private controller storage.
+- Required output artifact: code changes in the entrant worktree plus `final-message.md`, the `--json` event stream, and (best-effort) the CLI's native session rollout, all in private controller storage.
 - Stage timeout: 10,800 seconds.
 - Completion condition: `codex exec` exits zero, reports one session id, and reports non-negative integer `input_tokens` and `output_tokens` in its final `turn.completed` JSONL event.
 
@@ -64,13 +64,17 @@ npm run benchmark:codex -- \
 The adapter uses the following effective Codex arguments after validating the local bundled model catalog:
 
 ```text
-codex exec --json --color never --ephemeral --ignore-user-config --ignore-rules --strict-config \
+codex exec --json --color never --ignore-user-config --ignore-rules --strict-config \
   -m gpt-5.6-terra -c model_reasoning_effort="high" -c approval_policy="never" \
   -c sandbox_workspace_write.network_access=true \
   -s workspace-write -C <worktree> --output-last-message <private-final-message> -
 ```
 
 `--ignore-user-config` prevents the operator's default model, effort, MCP servers, hooks, and other personal settings from becoming an undeclared intervention; authentication remains available to Codex. `--ignore-rules` excludes user and project exec-policy rules, while tracked `AGENTS.md` and the task prompt remain normal repository context.
+
+### Session rollout capture
+
+The adapter deliberately omits `--ephemeral` so Codex persists its own native session transcript — full reasoning and message/function-call payloads, not just the curated `--json` event stream — to `$CODEX_HOME/sessions/**/rollout-<timestamp>-<sessionId>.jsonl` (default `~/.codex/sessions`). After the stage exits, the adapter locates that file by the reported `thread.started` session id, copies it into private controller storage as `rollout.jsonl`, and deletes the host-side original so no run's session content lingers outside `benchmark/private/`. This is best-effort: a missing rollout file does not fail the stage, since the exact on-disk layout is a Codex CLI implementation detail, not a controller-owned contract. Record `result.json`'s `rollout` field (`captured`, and `sha256` when captured) verbatim; the controller does not issue `codex exec resume` against the copied session, and the copy is deleted from the host either way.
 
 ### Usage and timing capture
 
@@ -82,7 +86,7 @@ codex exec --json --color never --ephemeral --ignore-user-config --ignore-rules 
 - Reasoning-token treatment: record `turn.completed.usage.reasoning_output_tokens`, when present, as a vendor field. Do not add it to output tokens unless the captured event contract establishes that it is excluded.
 - Session identifier source: `thread.started.thread_id` in JSONL.
 - Wall-time boundaries: immediately before process spawn and after process exit, stored in `command.json`.
-- Raw record path: `benchmark/private/runs/<opaque-run-id>/stages/solo/codex/` containing `command.json`, `events.jsonl`, `stderr.log`, `model-catalog.json`, `selected-model.json`, `raw-usage.json`, `result.json`, and `final-message.md`.
+- Raw record path: `benchmark/private/runs/<opaque-run-id>/stages/solo/codex/` containing `command.json`, `events.jsonl`, `stderr.log`, `model-catalog.json`, `selected-model.json`, `raw-usage.json`, `result.json`, `final-message.md`, and `rollout.jsonl` when the session rollout was captured (see "Session rollout capture" above).
 
 ## Review and revision limits
 

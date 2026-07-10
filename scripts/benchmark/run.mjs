@@ -147,6 +147,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ou
   ]);
   const pricing = calculatePricing(usage.normalized, parsePricing(pricingSource, definition.stage.model));
   const finishedAt = new Date().toISOString();
+  const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, 'stages/solo/codex/rollout.jsonl'));
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -164,6 +165,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ou
       harness: { name: 'Codex CLI', version: commandRecord.cliVersion }, sessionId: usage.sessionId,
       promptSha256: (await readJson(path.join(outputDirectory, 'rendered-assignment.json'))).rendering.sha256,
       outputArtifactSha256: sha256(await fs.readFile(path.join(outputDirectory, 'stages/solo/codex/events.jsonl'), 'utf8')),
+      ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}),
       startedAt: commandRecord.startedAt, finishedAt: commandRecord.finishedAt, wallTimeSeconds: commandRecord.wallTimeSeconds,
       usage: usage.normalized, pricing: { status: 'measured', ...pricing.rates, costUsd: pricing.costUsd }, result: 'completed',
     }],
@@ -208,6 +210,9 @@ function calculatePricing(usage, source) {
 }
 
 async function hashFromCommit(commit, relativePath) { return sha256(await gitShow(commit, relativePath)); }
+async function hashIfPresent(filePath) {
+  try { return sha256(await fs.readFile(filePath, 'utf8')); } catch (error) { if (error?.code === 'ENOENT') return undefined; throw error; }
+}
 async function gitShow(commit, relativePath) {
   if (path.isAbsolute(relativePath) || relativePath.split('/').includes('..')) fail(`Artifact path must be repository-relative: ${relativePath}`);
   return (await command('git', ['show', `${commit}:${relativePath}`], ROOT)).stdout;
