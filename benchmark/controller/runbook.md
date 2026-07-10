@@ -117,7 +117,7 @@ For each stage in recipe order:
 1. Select the exact model snapshot, harness version, permissions, working-tree access, and fresh/continued session behavior declared by the recipe.
 2. Construct the exact stage prompt from frozen text and declared artifacts. Do not add advice, status commentary, or summaries.
 3. Start timing immediately before launch and stop after the harness returns.
-4. Capture the session identifier, raw prompt, declared inputs, raw output artifact, logs, result, all usage fields available from the harness, and — when the harness persists one — its own native session/rollout record, not just a summarized event stream. Losing this to a harness flag chosen for another reason (e.g. suppressing resumability) is a gap worth closing, not an accepted limitation; capture it best-effort so a missing rollout does not itself fail an otherwise-complete stage.
+4. Capture the session identifier, raw prompt, declared inputs, raw output artifact, logs, result, all usage fields available from the harness, and, when available, a best-effort copy of the harness's native session record.
 5. Hash prompt, input, output, and logs without printing their content into the controller transcript.
 6. If the next stage consumes this output, pass the captured artifact unchanged.
 7. Apply only the recipe's predeclared completion and failure behavior.

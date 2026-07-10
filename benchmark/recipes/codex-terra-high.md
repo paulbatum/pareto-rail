@@ -36,10 +36,10 @@ This is the first Codex configuration trial. It is one unattended solo stage, no
 - Model provider: OpenAI Codex subscription
 - Exact model selection: `gpt-5.6-terra` with `model_reasoning_effort="high"`. The CLI does not expose a dated Terra snapshot; capture `codex --version`, the complete `codex debug models --bundled` output, and the selected catalog entry. Do not describe this alias-like catalog slug as a weight-pinned snapshot.
 - Harness and version: Codex CLI `0.144.0` for this rehearsal. The adapter records the installed version at launch; an eligible recipe must pin that exact observed version or intentionally revise and rehearse again.
-- Session: fresh process, one new local session per stage. The controller never issues `codex exec resume`, `fork`, or any other continuation command; this is controller policy, not a technical restriction, because the adapter no longer passes `--ephemeral` (see "Session rollout capture" below).
+- Session: fresh process following the continuation policy above. Native session persistence remains enabled for rollout capture.
 - Working tree access: write access only to the entrant worktree through Codex `workspace-write` sandbox. No additional writable directories.
 - Input artifacts from earlier stages: none.
-- Required output artifact: code changes in the entrant worktree plus `final-message.md`, the `--json` event stream, and (best-effort) the CLI's native session rollout, all in private controller storage.
+- Required output artifact: code changes in the entrant worktree plus `final-message.md` and the `--json` event stream in private controller storage. The controller also copies the CLI's native session rollout when available.
 - Stage timeout: 10,800 seconds.
 - Completion condition: `codex exec` exits zero, reports one session id, and reports non-negative integer `input_tokens` and `output_tokens` in its final `turn.completed` JSONL event.
 
@@ -74,7 +74,7 @@ codex exec --json --color never --ignore-user-config --ignore-rules --strict-con
 
 ### Session rollout capture
 
-The adapter deliberately omits `--ephemeral` so Codex persists its own native session transcript — full reasoning and message/function-call payloads, not just the curated `--json` event stream — to `$CODEX_HOME/sessions/**/rollout-<timestamp>-<sessionId>.jsonl` (default `~/.codex/sessions`). After the stage exits, the adapter locates that file by the reported `thread.started` session id, copies it into private controller storage as `rollout.jsonl`, and deletes the host-side original so no run's session content lingers outside `benchmark/private/`. This is best-effort: a missing rollout file does not fail the stage, since the exact on-disk layout is a Codex CLI implementation detail, not a controller-owned contract. Record `result.json`'s `rollout` field (`captured`, and `sha256` when captured) verbatim; the controller does not issue `codex exec resume` against the copied session, and the copy is deleted from the host either way.
+The adapter omits `--ephemeral` so Codex persists its native session transcript — full reasoning and message/function-call payloads, not just the curated `--json` event stream — to `$CODEX_HOME/sessions/**/rollout-<timestamp>-<sessionId>.jsonl` (default `~/.codex/sessions`). After the stage exits, the adapter locates that file by the reported `thread.started` session id and copies it into private controller storage as `rollout.jsonl`. The original remains under the operator's normal Codex retention policy. Capture is best-effort: lookup or copy failure is recorded in `result.json` and does not fail an otherwise-complete stage. Record the `rollout` field verbatim; the controller does not issue `codex exec resume` against either copy.
 
 ### Usage and timing capture
 

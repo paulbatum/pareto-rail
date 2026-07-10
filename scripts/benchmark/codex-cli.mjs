@@ -212,26 +212,25 @@ function isUsage(value) {
   return value && typeof value === 'object';
 }
 
-// Without --ephemeral, Codex CLI persists its own richer session transcript
-// (full reasoning and message payloads, not just the curated --json stream)
-// to $CODEX_HOME/sessions/**/rollout-<timestamp>-<sessionId>.jsonl. Copy it
-// into private controller storage and remove the host-side copy so no run's
-// session content lingers outside benchmark/private/. Best-effort: a stage
-// with valid session id and usage still completes even if this fails, since
-// the harness's own persistence layout is not a controller-owned contract.
+// Without --ephemeral, Codex CLI persists its richer native session transcript
+// under $CODEX_HOME. Copy it into private controller storage when available.
+// The native session remains subject to the operator's normal Codex retention.
 async function captureRollout(sessionId, outputDirectory) {
   const codexHome = process.env.CODEX_HOME ? path.resolve(process.env.CODEX_HOME) : path.join(os.homedir(), '.codex');
   const sessionsDirectory = path.join(codexHome, 'sessions');
-  let sourcePath = await findRolloutFile(sessionsDirectory, sessionId);
-  if (!sourcePath) {
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    sourcePath = await findRolloutFile(sessionsDirectory, sessionId);
+  try {
+    let sourcePath = await findRolloutFile(sessionsDirectory, sessionId);
+    if (!sourcePath) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      sourcePath = await findRolloutFile(sessionsDirectory, sessionId);
+    }
+    if (!sourcePath) return { captured: false, reason: `No rollout file found under ${sessionsDirectory} for session ${sessionId}.` };
+    const content = await fs.readFile(sourcePath, 'utf8');
+    await fs.writeFile(path.join(outputDirectory, 'rollout.jsonl'), content, 'utf8');
+    return { captured: true, sourcePath, sha256: sha256(content) };
+  } catch (error) {
+    return { captured: false, reason: `Could not capture Codex rollout: ${error instanceof Error ? error.message : String(error)}` };
   }
-  if (!sourcePath) return { captured: false, reason: `No rollout file found under ${sessionsDirectory} for session ${sessionId}.` };
-  const content = await fs.readFile(sourcePath, 'utf8');
-  await fs.writeFile(path.join(outputDirectory, 'rollout.jsonl'), content, 'utf8');
-  await fs.unlink(sourcePath);
-  return { captured: true, sourcePath, sha256: sha256(content) };
 }
 
 async function findRolloutFile(directory, sessionId) {
