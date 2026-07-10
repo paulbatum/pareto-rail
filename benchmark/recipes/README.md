@@ -1,5 +1,7 @@
 # Agent recipes
 
-Store one versioned, verbatim recipe per benchmark configuration here. A recipe must state the model snapshot, harness, prompts and supplied files, session boundaries, allowed stages, review and revision rules, and how token and wall-time data are captured.
+Store one versioned, verbatim recipe per benchmark configuration. Start from `template.md`.
 
-The recipe is part of the intervention being measured. Do not revise a recipe after its first run; create a new version instead.
+A recipe states the exact model snapshot, harness and version, prompts and supplied files, session boundaries, allowed stages, time limits, review and revision rules, hidden harness defaults, and token and wall-time capture. The recipe is the intervention being measured.
+
+Recipes may change while the protocol is being designed and rehearsed. At the v1 freeze, hash the final files. After the first eligible run, never revise a recipe in place; a behavior-changing edit requires a new benchmark version.

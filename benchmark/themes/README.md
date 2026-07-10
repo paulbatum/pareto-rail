@@ -1,7 +1,7 @@
 # Themes
 
-Create exactly three Markdown files here, one per benchmark theme. Each theme is the text inserted into the `## Theme` section of `docs/level-brief.md` and must be identical for every configuration.
+At the v1 freeze, this directory should contain three eligible Markdown themes. Each theme is inserted unchanged into the `## Theme` section of `docs/level-brief.md` and must be identical for every configuration.
 
-Aim for roughly 120–200 words. Direct the desired world, visual language, dramatic arc, musical character, and signature player-facing moments; do not repeat the shared rail-shooter contract or prescribe source-level implementation. Give files stable descriptive names, such as `submerged-observatory.md`.
+Aim for roughly 120–200 words. Direct the desired world, visual language, dramatic arc, musical character, and signature player-facing moments without repeating the shared rail-shooter contract or prescribing source-level implementation. Compare the set for similar detail, ambition, and distance from aesthetics already rewarded by the hand-built gallery.
 
-Themes become immutable at the benchmark freeze. Record their paths and content hashes in run manifests.
+Themes may be revised or replaced before the freeze. At freeze, give each one a stable id and record its path and SHA-256 hash. Do not use an eligible theme to test the runner.

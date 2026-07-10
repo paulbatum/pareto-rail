@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run-manifest.schema.json",
+  "title": "raild benchmark run manifest",
+  "description": "Draft format for a complete run record. Keep records private until blind rankings are locked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "benchmarkVersion",
+    "runId",
+    "slotId",
+    "configuration",
+    "theme",
+    "baseline",
+    "recipe",
+    "runner",
+    "timing",
+    "stages",
+    "cost",
+    "gates",
+    "output",
+    "disposition"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "benchmarkVersion": { "type": "string", "minLength": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "slotId": { "type": "string", "minLength": 1 },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" }
+      }
+    },
+    "theme": { "$ref": "#/$defs/hashedArtifact" },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceCommit", "entrantCommit"],
+      "properties": {
+        "sourceCommit": { "$ref": "#/$defs/gitObject" },
+        "entrantCommit": { "$ref": "#/$defs/gitObject" },
+        "bundleManifestPath": { "type": "string", "minLength": 1 },
+        "bundleManifestSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "recipe": { "$ref": "#/$defs/hashedArtifact" },
+    "runner": { "$ref": "#/$defs/hashedArtifact" },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startedAt", "finishedAt", "wallTimeSeconds"],
+      "properties": {
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": "string", "format": "date-time" },
+        "wallTimeSeconds": { "type": "number", "minimum": 0 }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/stage" }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["currency", "listPriceDate", "totalUsd"],
+      "properties": {
+        "currency": { "const": "USD" },
+        "listPriceDate": { "type": "string", "format": "date" },
+        "totalUsd": { "type": "number", "minimum": 0 },
+        "dashboardReconciled": { "type": "boolean" },
+        "reconciliationNotes": { "type": "string" }
+      }
+    },
+    "gates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gate" }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "commit", "levelId"],
+      "properties": {
+        "branch": { "type": "string", "minLength": 1 },
+        "commit": { "$ref": "#/$defs/gitObject" },
+        "levelId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "disposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["playable", "dnf", "controller-failure", "rehearsal"] },
+        "reasonCode": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "gitObject": {
+      "type": "string",
+      "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+    },
+    "hashedArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "id": { "type": "string" },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "snapshotId"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1 },
+        "snapshotId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputTokens", "outputTokens"],
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "cacheReadInputTokens": { "type": "integer", "minimum": 0 },
+        "cacheWriteInputTokens": { "type": "integer", "minimum": 0 },
+        "reasoningTokens": { "type": "integer", "minimum": 0 },
+        "vendorFields": {
+          "type": "object",
+          "description": "Unmodified additional numeric usage fields reported by the provider.",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "pricing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputUsdPerMillion", "outputUsdPerMillion", "costUsd"],
+      "properties": {
+        "inputUsdPerMillion": { "type": "number", "minimum": 0 },
+        "outputUsdPerMillion": { "type": "number", "minimum": 0 },
+        "cacheReadUsdPerMillion": { "type": "number", "minimum": 0 },
+        "cacheWriteUsdPerMillion": { "type": "number", "minimum": 0 },
+        "costUsd": { "type": "number", "minimum": 0 },
+        "sourceUrl": { "type": "string", "format": "uri" }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "model", "harness", "sessionId", "startedAt", "finishedAt", "wallTimeSeconds", "usage", "pricing", "result"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["plan", "implement", "review", "revise", "solo"] },
+        "model": { "$ref": "#/$defs/model" },
+        "harness": { "$ref": "#/$defs/harness" },
+        "sessionId": { "type": "string", "minLength": 1 },
+        "promptSha256": { "$ref": "#/$defs/sha256" },
+        "inputArtifactSha256": { "$ref": "#/$defs/sha256" },
+        "outputArtifactSha256": { "$ref": "#/$defs/sha256" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": "string", "format": "date-time" },
+        "wallTimeSeconds": { "type": "number", "minimum": 0 },
+        "usage": { "$ref": "#/$defs/usage" },
+        "pricing": { "$ref": "#/$defs/pricing" },
+        "result": { "enum": ["completed", "failed", "timed-out"] }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "command", "passed", "exitCode", "wallTimeSeconds"],
+      "properties": {
+        "id": { "enum": ["typecheck", "build", "scope", "floor"] },
+        "command": { "type": "string", "minLength": 1 },
+        "passed": { "type": "boolean" },
+        "exitCode": { "type": "integer" },
+        "wallTimeSeconds": { "type": "number", "minimum": 0 },
+        "outputSha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
-# Run manifests
+# Published run manifests
 
-After each run, write one machine-readable manifest here. It will record the configuration, model snapshot identifiers, recipe version, theme path and hash, raw token counts, list-price cost, wall time, mechanical-gate results, frozen base commit, output branch, and anonymous slot id.
+Full run records remain under ignored `benchmark/private/` while ranking is blind. After rankings are locked and the slot key is opened, copy redacted publishable records here and validate them against `benchmark/schemas/run-manifest.schema.json`.
 
-The manifest must not reveal the configuration associated with an anonymous slot during blind ranking.
+A manifest records the configuration, exact model snapshots, recipe and theme hashes, stage-level token usage and list-price cost, wall time, frozen baseline, gate results, output commit, slot id, and final disposition. Preserve raw token fields so costs can be recomputed later.
+
+Do not redact failures or omit DNF spend. Remove credentials, private dashboard links, and sensitive harness session URLs before publication.

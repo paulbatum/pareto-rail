@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ranking.schema.json",
+  "title": "raild blind pairwise ranking",
+  "description": "A slot-only judgment written before unblinding. Configuration and model identities are intentionally absent.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "benchmarkVersion",
+    "rankingId",
+    "themeId",
+    "pairSlotIds",
+    "presentationOrder",
+    "playCounts",
+    "verdict",
+    "recordedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "benchmarkVersion": { "type": "string", "minLength": 1 },
+    "rankingId": { "type": "string", "minLength": 1 },
+    "themeId": { "type": "string", "minLength": 1 },
+    "pairSlotIds": { "$ref": "#/$defs/slotPair" },
+    "presentationOrder": { "$ref": "#/$defs/slotPair" },
+    "playCounts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slotId", "count"],
+        "properties": {
+          "slotId": { "type": "string", "minLength": 1 },
+          "count": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "verdict": { "enum": ["preference", "tie"] },
+    "winnerSlotId": {
+      "description": "Required by protocol when verdict is preference; absent when verdict is tie.",
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": { "type": "string" },
+    "recordedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "verdict": { "const": "preference" } },
+        "required": ["verdict"]
+      },
+      "then": { "required": ["winnerSlotId"] }
+    },
+    {
+      "if": {
+        "properties": { "verdict": { "const": "tie" } },
+        "required": ["verdict"]
+      },
+      "then": { "not": { "required": ["winnerSlotId"] } }
+    }
+  ],
+  "$defs": {
+    "slotPair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

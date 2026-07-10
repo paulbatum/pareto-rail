@@ -1,39 +1,122 @@
 # Benchmark plan
 
-raild's long-term goal: a minebench-style interactive benchmark where visitors play levels built by different models and agent scaffolds, rank them blind, and see results as a quality-vs-cost pareto curve (plus a personal pareto curve for visitors who rank enough pairs).
+raild's long-term goal is a minebench-style interactive benchmark where visitors play levels built by different models and agent scaffolds, rank them blind, and see the results as a quality-versus-cost Pareto curve. Visitors who rank enough pairs could also see a personal curve.
 
-The first experiment is personal: **is multi-agent delegation a sweet spot for this task — roughly 95% of solo-frontier quality at roughly 35% of the cost?** The public site is a later phase that reuses the same data. This is a fun project that should yield interesting insights, not a scientific publication; compromises that favor an engaging experience are acceptable as long as the cost accounting and blinding stay honest.
+The first experiment is personal: **is multi-agent delegation a useful sweet spot for this task—roughly 95% of solo-frontier quality at roughly 35% of the cost?** The public site is a later phase that can reuse the same records. This should be honest and repeatable, but it is a fun project rather than a scientific publication. Pairwise choices cannot establish a literal “95% quality” ratio; the decision rule must translate that motivation into observable wins, ties, reliability, and cost.
 
-## Decisions (locked)
+Everything below is the current protocol, not an irreversible commitment. A choice becomes fixed for v1 only when the freeze record is created. After the first eligible run, changing a recipe, theme, runner behavior, or evaluation rule requires restarting the affected experiment or calling it a new version.
 
-- **Configs (3):**
-  1. Fable solo
-  2. GPT-5.6 solo
-  3. Delegation: Fable plans and reviews, GPT-5.6 implements
-- **Replicates:** themes serve as replicates. 3 themes × 3 configs = 9 runs. Every config gets the same 3 themes, giving one matched pair per theme for each config contrast.
-- **No launch-week delay:** GPT-5.6 is used as soon as it's available; record exact model snapshot ids, not aliases.
-- **One-shot runs:** no retries, no fix-it continuation. A run that fails the mechanical gates (`typecheck`, `build`, `check:scope`, `check:floor`) is a DNF: excluded from play, kept in the data, and amortized into the config's cost-per-published-level.
-- **Cost metric:** list-price USD at run date, computed from token counts (in/out/cache). Raw tokens recorded too so results can be re-priced later. Multi-stage configs sum all stages, including planning and review.
-- **v1 scope:** personal-first. Generation pipeline plus a minimal blind pairwise ranking mode for one person. Public site (votes, sessions, per-user pareto) comes later.
-- **Blind play protocol:** same-theme pairs played back to back; the ranker decides how many plays before choosing. Rankings written down and timestamped before unblinding.
-- **Contamination control:** every run branches from the frozen baseline commit, where the gallery contains only the hand-built levels. No run ever sees another entrant's level.
-- **Anonymization:** finished levels get random slot ids assigned by script; the slot-to-config key file stays unopened until rankings are locked.
+## Current experiment shape
 
-## Open items
+- **Configurations:** Fable solo; GPT-5.6 solo; and delegation, where Fable plans and reviews while GPT-5.6 implements.
+- **Replicates:** three themes crossed with all three configurations, for nine eligible runs.
+- **Model identity:** use GPT-5.6 as soon as it is available and record exact model snapshot identifiers, not aliases.
+- **Run policy:** each run follows a fixed recipe without operator intervention. No operator-requested retry or repair is allowed. Predeclared planning, implementation, review, and revision stages inside a delegation recipe are part of one run, not retries.
+- **Mechanical eligibility:** `npm run typecheck`, `npm run build`, `npm run check:scope -- <level-id>`, and `npm run check:floor -- --level <level-id>` must pass. A failure is a DNF: keep its full cost and record, but do not present it for play.
+- **Cost:** record raw token counts and list-price USD at the run date. A multi-stage run includes every stage. Keep both direct cost per run and effective cost per published level so DNFs are visible rather than silently discarded.
+- **Blinding:** the ranker sees only random slot identifiers. Full run records, configuration identities, source branches, logs, and the slot key remain unopened until rankings are locked.
+- **Comparison:** play same-theme pairs back to back. With three configurations, a complete round robin is three pairs per theme and nine pair judgments overall. Randomize pair order and which slot appears first.
+- **Contamination control:** every eligible run starts from the same frozen entrant baseline and can see only its assigned theme and declared prompt material. It must not see another entrant, another eligible theme, the recipes for other configurations, the private schedule, or benchmark results.
 
-Items 1–3 must be resolved before item 4 (the freeze). Items 5–6 do not block generation.
+## Artifact lifecycle
 
-1. **Finalize the delegation recipe (verbatim).** What artifact Fable produces when planning (brief vs full design doc), the exact prompt the implementer receives, whether review is one pass with one revision round, continuation vs fresh session, and which harness runs each stage. The recipe is a benchmark subject; it goes in the run manifest.
-2. **Author and freeze the 3 themes.** Roughly 120–200 words each, directing the world, visual language, dramatic arc, musical character, and signature moments without prescribing source-level implementation. Decide who or what authors them, and check none favors an aesthetic the existing gallery already rewards.
-3. **Decide cost capture per harness + manifest schema.** How token counts come out of each harness for every stage; fallback is one API key per run read from the vendor usage dashboard. Manifest fields: config id, model snapshot ids, recipe version, theme, tokens, USD, wall time, gate results, base commit, output branch.
-4. **Pin the freeze commit (last).** Land any remaining engine/brief/docs changes first (including a pass over `docs/level-api-wishlist.md` and known brief ambiguities). After the pin, brief + engine + docs + gallery are the frozen prompt; any change means a benchmark v2.
-5. **Write the pre-registered decision rule.** Needed before unblinding, not before generation. One sentence defining what result makes delegation the adopted workflow (e.g. "wins or ties ≥2 of 3 same-theme pairs vs Fable solo at <40% cost"), plus a definition of a tie.
-6. **Decide the role of hand-built anchor levels (public phase).** Whether crystal etc. enter the public ranking pool as calibration anchors, shown as reference lines off the pareto curve (they have no honest cost coordinate). The personal blind phase is generated-vs-generated only.
+The tracked `benchmark/` tree holds authored inputs, schemas, locked slot-only rankings, and eventually published manifests. During generation, sensitive records live under ignored `benchmark/private/`:
 
-## After the freeze
+```text
+benchmark/
+  examples/       excluded theme exemplars used for authoring and rehearsal
+  themes/         the three eligible theme texts
+  recipes/        versioned verbatim configuration recipes
+  schemas/        machine-readable run-manifest and ranking formats
+  rankings/       locked records containing theme and slot ids only
+  manifests/      full records published only after unblinding
+  private/        ignored schedule, slot key, raw logs, and full run records
+```
 
-Not open questions yet, but planned work once items 1–4 close:
+Generated level code stays on isolated output branches or commits. Do not merge entrants into the frozen baseline. Before unblinding, any playable deployment or ranking launcher must expose a slot id without exposing its branch, configuration, model, logs, or source.
 
-- **Runner script:** for each config × theme, fresh checkout of the pinned commit, launch the agent unattended, commit the result to a branch, emit the manifest, assign the anonymous slot id. Runs execute in the background/overnight; no log-tailing, no diff reading, mechanical merges only.
-- **Blind ranking mode:** minimal UI to play same-theme pairs in random order and record choices with timestamps.
-- **Analysis + unblinding:** compare recorded rankings against the decision rule, then open the key file.
+The freeze record should identify both:
+
+1. the source commit from which the experiment was prepared; and
+2. the exact entrant-baseline commit or archive, plus hashes of every supplied prompt file.
+
+The entrant baseline should exclude benchmark control material that an agent is not meant to see. A commit hash alone is not sufficient if the working tree still exposes other themes and recipes.
+
+## Phases and gates
+
+### 1. Resolve the protocol
+
+Before runner implementation is considered stable:
+
+- write all three verbatim recipes, including prompts, supplied files, session boundaries, stage limits, review/revision behavior, harness versions, and usage capture;
+- author three eligible themes and check them for comparable specificity and distance from the hand-built gallery;
+- settle the run manifest and ranking formats;
+- define how every harness reports token usage and how dashboard totals are reconciled;
+- choose the DNF scoring rule, tie definition, quality aggregation, and delegation adoption rule;
+- decide what the ranker may write as notes and whether notes are visible between later judgments; and
+- generate the private randomized run schedule and slot mapping without opening them during ranking.
+
+### 2. Build and rehearse the pipeline
+
+Build the runner before the freeze. Exercise the complete path with an ineligible exemplar and a run that cannot enter the analysis:
+
+1. prepare an isolated entrant checkout;
+2. launch every stage without manual intervention;
+3. capture model snapshots, token usage, prices, wall time, prompts, logs, and output commits;
+4. run all four mechanical gates and exercise the DNF path;
+5. assign a random slot without leaking its configuration;
+6. make a passing output playable through the same mechanism intended for blind ranking;
+7. write and validate a slot-only ranking record; and
+8. reconcile computed cost against the harness or vendor dashboard.
+
+The rehearsal may be repeated because it is tooling validation, not an eligible run. Its model, theme, and output must be marked ineligible in advance. No eligible theme should be consumed during rehearsal.
+
+### 3. Freeze v1
+
+Freeze only after the protocol and rehearsal pass:
+
+- finish any engine, standing brief, authoring documentation, gallery, and API-wishlist work intended for the baseline;
+- create the sanitized entrant baseline;
+- record the source and entrant-baseline identities;
+- hash themes, recipes, prompts, harness versions, schemas, price inputs, and the runner;
+- lock the decision rule and ranking protocol; and
+- verify that a fresh entrant checkout contains exactly the intended material.
+
+After this point, any behavior-affecting change to the baseline, runner, recipe, theme, or evaluation protocol creates benchmark v2. Fixes to analysis or presentation code are allowed only when they do not alter recorded inputs or judgments.
+
+### 4. Generate the nine entrants
+
+Run in the precomputed order, using a fresh entrant checkout each time. Do not tail logs, inspect diffs, play partial outputs, or intervene. The controller may observe only enough process state to know whether a run has finished.
+
+After each run, mechanically capture the private full record, commit the output, run the gates, and mark it playable or DNF. A harness or infrastructure failure is not automatically the model's DNF: classify failure reasons in advance, and only rerun failures explicitly defined as controller failures.
+
+### 5. Rank blind
+
+Create the same-theme pair schedule mechanically. For each pair, record presentation order, play counts, choice or tie, optional notes, and timestamp. The ranker may replay either slot as often as desired before deciding.
+
+DNFs are never launched. Their treatment in quality scoring must already be fixed by the decision rule; omitting them from pairwise totals without a penalty would reward unreliable configurations.
+
+### 6. Lock, analyze, and unblind
+
+Commit or otherwise checksum the complete ranking set and record its lock timestamp before opening the slot key. Compute the preregistered result first. Exploratory observations are welcome afterward, but label them separately.
+
+After unblinding, publish redacted full manifests under `benchmark/manifests/`, add configuration identities to derived analysis rather than rewriting slot-only ranking records, and retain raw records so future prices or scoring methods can be applied.
+
+## Decisions still needed
+
+These are the next design tasks, in dependency order:
+
+1. **Delegation recipe:** planning artifact depth, implementer prompt, whether review gets one bounded revision, fresh versus continued sessions, and the harness for each stage.
+2. **Solo recipes:** equalize what can reasonably be equalized—prompt material, unattended time policy, and handoff expectations—without pretending different harnesses have identical controls.
+3. **Themes:** finish three 120–200 word themes. Decide whether they are authored by a person, a model excluded from the evaluated configurations, or a documented combination. `benchmark/examples/` is calibration material, not an eligible theme pool.
+4. **Cost capture:** map each harness's usage fields to the manifest schema, preserve vendor-specific counts, and record the exact list prices used.
+5. **Failure taxonomy:** distinguish entrant DNF from controller failure before any eligible run.
+6. **Decision rule:** define a tie, DNF treatment, the quality score derived from nine pair judgments, the relevant cost denominator, and the sentence that determines whether delegation becomes the adopted workflow.
+7. **Public anchors:** later, decide whether hand-built levels enter the public pool as calibration anchors. They have no honest generation-cost coordinate and are not part of personal v1.
+
+## Immediate next work
+
+1. Fill out one recipe from `benchmark/recipes/template.md`, preferably delegation because it has the most degrees of freedom.
+2. Draft the remaining two eligible themes alongside `benchmark/themes/deluge.md`, then compare all three for specificity, aesthetic overlap, and implementation burden.
+3. Adapt the draft schemas in `benchmark/schemas/` to real usage output from each selected harness.
+4. Write the excluded rehearsal command and make it produce a private run record without yet automating all nine eligible runs.

@@ -1,0 +1,94 @@
+# Recipe: <configuration id> v1
+
+Status: draft
+
+A recipe is the complete intervention for one configuration. Replace every placeholder and preserve the final text verbatim after the freeze. If a harness adds hidden system instructions or default tools, identify them here or attach a captured artifact and hash it.
+
+## Identity
+
+- Configuration id: `<stable-id>`
+- Recipe version: `1`
+- Eligible benchmark version: `v1`
+- Stages: `<ordered stage ids>`
+
+## Shared inputs
+
+List every file or generated artifact available to this configuration. At freeze time, record paths and SHA-256 hashes. State whether the agent may browse the rest of the entrant checkout.
+
+- Entrant baseline: `<freeze record reference>`
+- Standing brief: `docs/level-brief.md`
+- Assigned theme: `<injected theme path>`
+- Other supplied files: `<paths or none>`
+- Files intentionally unavailable: other themes, other recipes, private benchmark records, and other entrants
+
+## Runtime policy
+
+- Overall timeout: `<duration or none>`
+- Operator interaction after launch: none
+- Network access: `<policy>`
+- Harness continuation behavior: `<policy>`
+- Failure behavior: `<which failures stop the run>`
+- Commit behavior: `<who commits, and when>`
+
+Repeat the following section for every stage in execution order.
+
+## Stage: <stage id>
+
+- Role: `<plan | implement | review | revise | solo>`
+- Model provider: `<provider>`
+- Exact model snapshot: `<snapshot id; never an alias in the frozen recipe>`
+- Harness and version: `<name and version>`
+- Session: `<fresh session or continuation of stage id>`
+- Working tree access: `<read/write boundaries>`
+- Input artifacts from earlier stages: `<artifacts or none>`
+- Required output artifact: `<artifact, code change, or review>`
+- Stage timeout: `<duration or none>`
+- Completion condition: `<mechanical condition; no operator judgment>`
+
+### Verbatim prompt
+
+```text
+<exact prompt, including how the standing brief and theme are presented>
+```
+
+### Usage and timing capture
+
+- Usage source: `<harness log, API response, or vendor dashboard>`
+- Input-token field: `<field>`
+- Output-token field: `<field>`
+- Cache-read field: `<field or unavailable>`
+- Cache-write field: `<field or unavailable>`
+- Reasoning-token treatment: `<field and whether already included in output>`
+- Session identifier source: `<field>`
+- Wall-time boundaries: `<start and stop events>`
+- Raw record path: `<private path convention>`
+
+## Review and revision limits
+
+State the exact number of review and revision stages, what a reviewer receives, whether the implementer continues an existing session, and what happens if a review artifact is empty or a revision fails. For a solo recipe, state explicitly that this section does not apply.
+
+## Mechanical gates
+
+The controller, not the agent, runs these after the final stage:
+
+```sh
+npm run typecheck
+npm run build
+npm run check:scope -- <level-id>
+npm run check:floor -- --level <level-id>
+```
+
+Define whether any additional controller checks exist. They may record diagnostics but must not become undeclared eligibility gates.
+
+## Pricing
+
+- Price source: `<URL or captured source>`
+- Price date: `<YYYY-MM-DD>`
+- Input USD per million tokens: `<amount>`
+- Output USD per million tokens: `<amount>`
+- Cache-read USD per million tokens: `<amount or n/a>`
+- Cache-write USD per million tokens: `<amount or n/a>`
+
+## Known harness defaults
+
+Record behavior not expressed by the prompt but capable of affecting the result: system prompt, tool set, context compaction, retry policy, effort setting, permission mode, and automatic verification or review.
