@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "model": "claude-sonnet-5",
+  "serviceTier": "standard",
+  "contextTier": "standard",
+  "priceDate": "2026-07-10",
+  "currency": "USD",
+  "inputUsdPerMillion": 3,
+  "cacheReadUsdPerMillion": 0.3,
+  "cacheWriteUsdPerMillion": 3.75,
+  "outputUsdPerMillion": 15,
+  "sourceUrl": "https://platform.claude.com/docs/en/pricing"
+}
