@@ -14,7 +14,6 @@ import {
   readJson,
   requireOption,
   sha256,
-  writeJson,
 } from './common.mjs';
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, measureRunCost } from './ccusage-cost.mjs';
@@ -25,6 +24,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
 const RUNBOOK = 'benchmark/controller/runbook.md';
 const SHARED_CONTROLLER_PATHS = ['scripts/benchmark/admin.mjs', 'scripts/benchmark/common.mjs', 'scripts/benchmark/render-assignment.mjs'];
+
+async function writeJson(filePath, value) {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  const temporaryPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  await fs.rename(temporaryPath, filePath);
+}
 
 // One entry per supported `definition.stage.adapter`. Adds a harness without touching
 // the Codex path: same stage shape (model, effort, timeoutSeconds), different process runner.
