@@ -185,9 +185,9 @@ function extractUsage(eventLog, expectedSessionId) {
     raw: completion,
     normalized: {
       // Claude's terminal `usage.input_tokens` is already the uncached remainder, unlike
-      // Codex's `input_tokens` (a total that includes cache hits). run.mjs's calculatePricing
-      // expects the total-including-cached shape shared by every adapter, so add the cache
-      // read count back in here rather than special-casing the formula per adapter.
+      // Codex's `input_tokens` (a total that includes cache hits). Add the cache-read count back
+      // in so this normalized field matches the total-including-cached shape used across adapters.
+      // These normalized counts are recorded for audit; run cost is measured separately by ccusage.
       inputTokens: inputTokens + (Number.isInteger(raw.cache_read_input_tokens) ? raw.cache_read_input_tokens : 0),
       outputTokens,
       ...(Number.isInteger(raw.cache_read_input_tokens) ? { cacheReadInputTokens: raw.cache_read_input_tokens } : {}),

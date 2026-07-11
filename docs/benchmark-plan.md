@@ -13,7 +13,7 @@ Everything below is the current protocol, not an irreversible commitment. Drafts
 - **Model identity:** use GPT-5.6 as soon as it is available and record exact model snapshot identifiers, not aliases.
 - **Run policy:** each run follows a fixed recipe without operator intervention. No operator-requested retry or repair is allowed. Predeclared planning, implementation, review, and revision stages inside a delegation recipe are part of one run, not retries.
 - **Mechanical eligibility:** run `npm run typecheck`, `npm run build`, `npm run check:scope -- <level-id> <entrant-baseline-ref>`, and `npm run check:floor -- --level <level-id>` against the exact evaluated working tree, including its temporary registry and generated-gallery changes. The scope gate must use the frozen baseline ref, never moving `main`. A failure is a DNF: keep its full cost and record, but do not present it for play.
-- **Cost:** runs use paid subscriptions rather than API billing. Record raw token usage where the harness exposes it and compute API-list-price-equivalent USD at the run date as a model-usage comparison. Report subscription fees separately as actual expenditure; do not allocate monthly fees arbitrarily across runs. A multi-stage run includes every measured stage. Model-mediated orchestration usage must be declared and captured without double-counting; its treatment in the primary cost metric is fixed before the release. Keep both equivalent cost per run and effective equivalent cost per published level so DNFs remain visible.
+- **Cost:** runs use paid subscriptions rather than API billing. Cost is measured by [ccusage](https://github.com/ccusage/ccusage) (pinned in `package.json`), which parses each run's isolated harness home and prices the persisted rollouts — parent and any delegated subagents — with its own maintained rate database. The recorded basis is ccusage's computed USD per run, captured alongside the ccusage version; we do not maintain our own pricing tables, so no dated pricing artifact can rot when rates change. Report subscription fees separately as actual expenditure; do not allocate monthly fees arbitrarily across runs. Delegated-subagent usage is included in the run total without double-counting, because ccusage reads exactly one per-run home. Keep both cost per run and effective cost per published level so DNFs remain visible. ccusage misses a small Claude background auxiliary-model gap (~0.2%, no transcript); that is accepted and not reconciled.
 - **Blinding:** each run is preassigned a random four-character slot. Its implementation id combines the theme and slot, such as `deluge-a44f`, without encoding configuration or execution order. The private randomized run schedule is also the slot-to-configuration key. Full run records, configuration identities, source branches, logs, and that schedule remain unopened until rankings are locked.
 - **Comparison:** the primary judgment is one same-theme ranked set, with anonymous entrants placed into best-to-worst tiers and ties allowed. Randomize presentation order and record play counts. Binary pairs remain available for targeted comparisons or larger pools; a complete pairwise round robin is not required.
 - **Contamination control:** every eligible run starts from the same frozen entrant-baseline commit in an opaque worktree of this repository. The controller supplies only its assigned theme, opaque level identity, and declared prompt material; it does not direct an entrant to inspect another entrant, eligible theme, recipe, schedule, or benchmark result. This is a non-adversarial policy, not technical isolation: an entrant with ordinary Git and filesystem access can inspect repository history and unrelated tracked files. The private schedule, raw records, credentials, and session URLs remain outside the repository and unavailable to entrants.
@@ -41,9 +41,11 @@ The first run is an excluded one-theme, one-configuration rehearsal: `codex-terr
 
 `claude-fable-5-high` is the matching Fable solo configuration: `scripts/benchmark/claude-cli.mjs` drives one fresh `claude --print --output-format stream-json` session with `--effort high`, following the same pattern. `run.mjs` now dispatches on `definition.stage.adapter` (`codex-cli` or `claude-cli`) so either harness composes the same declared flow. A minimal live probe has verified the CLI's session/usage fields and native-transcript capture; this configuration remains rehearsal-only.
 
+The two within-harness delegation configurations — `claude-fable-5-opus-delegation` (Fable plans and reviews, Opus implements) and `codex-sol-terra-delegation` (Sol plans and reviews, Terra implements) — are built and rehearsed here in Phase 2. Both are same-provider and driven by the shared `benchmark/prompts/flexible-delegation.md` addendum; cross-provider delegation is deliberately out of scope. Their rehearsal uses low reasoning for both the parent and the delegated subagent to exercise the full path cheaply, and is explicitly ineligible.
+
 The ineligible rehearsal theme is `benchmark/examples/downpour.md`. `Rush` is metadata-marked as a technical test fixture, not a playable benchmark reference, so it is excluded from overlap, distinctiveness, and quality-reference checks while remaining available in development mode.
 
-The first rehearsal's API-list-price-equivalent cost uses the dated standard short-context Terra input in `benchmark/pricing/gpt-5.6-terra-standard-short.json`; actual Plus subscription expenditure remains separate. `benchmark/controller/failure-taxonomy.md` supplies the current draft classification rules. These materials are still drafts and are not a benchmark release.
+Run cost is measured by ccusage against each run's isolated harness home; actual subscription expenditure remains separate. `benchmark/controller/failure-taxonomy.md` supplies the current draft classification rules. These materials are still drafts and are not a benchmark release.
 
 ## Artifact lifecycle
 
@@ -56,7 +58,6 @@ benchmark/
   examples/       excluded theme exemplars used for authoring and rehearsal
   themes/         the three eligible theme texts
   recipes/        verbatim configuration workflows
-  pricing/        dated API list-price inputs for equivalent-cost calculation
   schemas/        freeze, private schedule, run-manifest, and ranking formats
   releases/       small immutable release records, not copies of the input tree
   rankings/       locked records containing theme and slot ids only
@@ -73,7 +74,7 @@ The protocol freeze record should identify both:
 1. the materials commit containing the exact controller runbook, shared prompt, themes, schemas, gates, judgment method, and shared administration components (`admin.mjs`, `common.mjs`, and `render-assignment.mjs`); and
 2. the exact entrant-baseline commit in this repository.
 
-Each configuration is separately pinned by its immutable id, recipe hash, runner and executor hashes, pricing input, exact model/harness settings, and configuration commit before its first assignment runs. The private schedule is an append-only ledger: extending it preserves all existing assignments and creates opaque assignments only for newly registered configuration × theme cells. Every run records the schedule revision hash that authorized it.
+Each configuration is separately pinned by its immutable id, recipe hash, runner and executor hashes, exact model/harness settings, and configuration commit before its first assignment runs. The private schedule is an append-only ledger: extending it preserves all existing assignments and creates opaque assignments only for newly registered configuration × theme cells. Every run records the schedule revision hash that authorized it.
 
 Entrant worktrees intentionally share this repository's tracked material and Git history. The controller must still keep the private schedule, raw records, credentials, and session URLs outside the repository. This convenience-over-isolation choice is fixed for the release and must be reported with the result.
 
@@ -98,7 +99,7 @@ Before runner implementation is considered stable:
 - write all three verbatim recipes, including stage prompts, supplied files, session boundaries, stage limits, review/revision behavior, harness versions, and usage capture;
 - author three eligible themes and check them for comparable specificity and distance from the hand-built gallery;
 - settle the run manifest and ranking formats from rehearsal output;
-- define the remaining harness usage mappings and how subscription dashboards are reconciled with equivalent-cost records;
+- define how subscription dashboards are reconciled with the ccusage-measured cost records;
 - choose the DNF scoring rule, tie definition, quality aggregation, and delegation adoption rule;
 - decide what the ranker may write as notes and whether notes are visible between later judgments; and
 - generate the initial private randomized run schedule against `benchmark/schemas/run-schedule.schema.json`, verify its complete registered-configuration × theme crossing and unique ids mechanically, and keep the mapping blind; later append-only extensions receive new schedule revision hashes.
@@ -127,7 +128,7 @@ Freeze only after the protocol and rehearsal pass:
 - record the frozen entrant-baseline commit used for all entrant worktrees;
 - generate and validate the initial private preassigned run schedule;
 - create the release record with the frozen shared materials and entrant-baseline identities;
-- hash the controller runbook, shared administration components, themes, prompts, schemas, gates, and judgment rules; pin each initial configuration's runner, executor, recipe, harness, model, and pricing inputs in the schedule before it runs;
+- hash the controller runbook, shared administration components, themes, prompts, schemas, gates, and judgment rules; pin each initial configuration's runner, executor, recipe, harness, and model in the schedule before it runs;
 - lock the decision rule and ranking protocol; and
 - verify that a fresh entrant checkout contains exactly the intended material.
 
@@ -166,7 +167,7 @@ These are the next design tasks, in dependency order:
 1. **Delegation recipe:** planning artifact depth, implementer prompt, whether review gets one bounded revision, fresh versus continued sessions, and the harness for each stage.
 2. **Solo recipes:** equalize what can reasonably be equalized—prompt material, unattended time policy, and handoff expectations—without pretending different harnesses have identical controls.
 3. **Themes:** finish three 120–200 word themes. Decide whether they are authored by a person, a model excluded from the evaluated configurations, or a documented combination. `benchmark/examples/` is calibration material, not an eligible theme pool.
-4. **Cost capture:** determine what per-run usage each subscription harness exposes, map available fields to the manifest schema, preserve vendor-specific counts, and record the exact API list prices used for equivalent-cost analysis. If exact tokens are unavailable, revise the metric before the freeze rather than presenting an estimate as measured usage.
+4. **Cost capture:** resolved. Cost is measured by ccusage (pinned in `package.json`) reading each run's isolated harness home; the recorded basis is ccusage's computed USD per run, captured with the ccusage version, and it includes delegated subagents. Claude exposes per-model cost; Codex exposes per-model tokens only, so its per-model `costUsd` is omitted and the run total stands. The accepted limitations are the small Claude auxiliary-model gap (~0.2%, no transcript) and Codex's missing per-model cost; both are documented rather than estimated.
 5. **Failure taxonomy:** distinguish entrant DNF from controller failure before any eligible run.
 6. **Decision rule:** confirm the tier semantics, normalized-rank summary, DNF reliability reporting, relevant cost denominator, and the sentence that determines whether delegation becomes the adopted workflow.
 7. **Integrated labels:** decide how the post-unblinding picker distinguishes same-theme entrants. Registry metadata can append a slot or configuration label without changing the evaluated level payload or its authored in-level title.
@@ -175,7 +176,7 @@ These are the next design tasks, in dependency order:
 ## Immediate next work
 
 1. Commit the final rehearsal materials, then create the private `rehearsal-definition.json` using the committed hashes and opaque ids documented in `benchmark/controller/README.md`.
-2. Run the one-theme Terra-high rehearsal without intervention. Preserve its evaluated commit, gate logs, payload when passing, raw usage, calculated equivalent cost, and controller-failure record when applicable.
+2. Run the rehearsal without intervention. Preserve its evaluated commit, gate logs, payload when passing, raw usage, ccusage-measured cost, and controller-failure record when applicable.
 3. Exercise the playable deployment and slot-only ranking-record path, including the DNF path if the rehearsal fails a gate.
 4. Reconcile the captured token record against the available subscription dashboard evidence; record any limitation instead of estimating unavailable fields.
 5. Use the rehearsal evidence to finalize the delegation and other solo recipes, three eligible themes, decision rule, ranking protocol, and release schedule before freezing `v1`.

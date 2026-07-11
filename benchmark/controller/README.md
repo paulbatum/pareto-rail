@@ -26,7 +26,7 @@ The output directory must be private or external to the repository and outside t
 
 ## Single-run rehearsal controller
 
-`npm run benchmark:run` executes one private run definition end-to-end. It is intended first for an explicitly ineligible rehearsal, not a one-cell eligible experiment. The definition pins commits, assignment artifacts, worktree and payload locations, the Codex stage settings, and a dated API-list-price input. The controller verifies every supplied artifact against the materials commit, requires a clean controller repository, renders the prompt privately, runs `npm ci`, launches the declared stage, seals, gates, extracts a passing payload, calculates equivalent cost from the captured JSONL usage, and writes either a private manifest or a controller-failure record.
+`npm run benchmark:run` executes one private run definition end-to-end. It is intended first for an explicitly ineligible rehearsal, not a one-cell eligible experiment. The definition pins commits, assignment artifacts, worktree and payload locations, the stage settings, and — for a delegation configuration — the `delegation` block (addendum artifact, delegate model, delegate effort). The controller verifies every supplied artifact against the materials commit, requires a clean controller repository, renders the prompt privately (appending the delegation addendum when present), runs `npm ci`, launches the declared stage in an isolated per-run harness home, seals, gates, extracts a passing payload, measures cost with ccusage against that home, and writes either a private manifest or a controller-failure record.
 
 ```sh
 npm run benchmark:run -- \
@@ -34,7 +34,7 @@ npm run benchmark:run -- \
   --out benchmark/private/runs/<opaque-run-id>
 ```
 
-The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`. An eligible definition additionally requires `release`, `schedule`, `runner`, and `executor` hashed artifacts plus `baseline.configurationCommit`. Before launching a model, the runner verifies the release against its `benchmark-<version>` tag, shared inputs against that release, the exact assignment against the private schedule revision, and runner/executor/recipe/pricing inputs against the configuration commit and current checkout.
+The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`. An eligible definition additionally requires `release`, `schedule`, `runner`, and `executor` hashed artifacts plus `baseline.configurationCommit`. Before launching a model, the runner verifies the release against its `benchmark-<version>` tag, shared inputs against that release, the exact assignment against the private schedule revision, and runner/executor/recipe inputs against the configuration commit and current checkout.
 
 ### Preflight and launch
 
@@ -47,9 +47,10 @@ sha256sum \
   benchmark/prompts/level-assignment.md \
   benchmark/examples/downpour.md \
   benchmark/recipes/codex-terra-high.md \
-  benchmark/controller/failure-taxonomy.md \
-  benchmark/pricing/gpt-5.6-terra-standard-short.json
+  benchmark/controller/failure-taxonomy.md
 ```
+
+For a delegation configuration, also hash `benchmark/prompts/flexible-delegation.md` and add it as the definition's `delegation.prompt` artifact.
 
 Create `benchmark/private/rehearsal-definition.json` from the shape below, replacing every placeholder with the commit and matching hash above. Predeclare a fresh opaque `runId` and four-character `slotId`; the level id must be `downpour-<slotId>`. Then launch exactly once:
 
@@ -82,8 +83,20 @@ Its required shape is:
   "failureTaxonomy": { "path": "benchmark/controller/failure-taxonomy.md", "sha256": "<sha256>" },
   "stage": { "adapter": "codex-cli", "model": "gpt-5.6-terra", "effort": "high", "timeoutSeconds": 10800 },
   "worktree": { "path": "/tmp/raild-<opaque-run-id>" },
-  "payload": { "path": "/tmp/raild-payload-<opaque-run-id>", "branch": "benchmark-payload-<opaque-run-id>" },
-  "pricing": { "path": "benchmark/pricing/gpt-5.6-terra-standard-short.json", "sha256": "<sha256>" }
+  "payload": { "path": "/tmp/raild-payload-<opaque-run-id>", "branch": "benchmark-payload-<opaque-run-id>" }
+}
+```
+
+A delegation configuration adds a `delegation` block and (for the rehearsal) sets both efforts to `low`:
+
+```json
+{
+  "stage": { "adapter": "codex-cli", "model": "gpt-5.6-sol", "effort": "low", "timeoutSeconds": 10800 },
+  "delegation": {
+    "prompt": { "path": "benchmark/prompts/flexible-delegation.md", "sha256": "<sha256>" },
+    "delegateModel": "gpt-5.6-terra",
+    "delegateEffort": "low"
+  }
 }
 ```
 
@@ -115,12 +128,11 @@ Create a private definition file containing the benchmark version, configuration
   "configurations": [
     {
       "id": "<configuration-id>",
-      "configurationCommit": "<commit-containing-runner-executor-recipe-and-pricing>",
+      "configurationCommit": "<commit-containing-runner-executor-and-recipe>",
       "runner": { "path": "scripts/benchmark/run.mjs", "sha256": "<sha256>" },
       "executor": { "path": "scripts/benchmark/<executor>.mjs", "sha256": "<sha256>" },
       "recipe": { "id": "<configuration-id>", "path": "benchmark/recipes/<recipe>.md", "sha256": "<sha256>" },
-      "stage": { "adapter": "<adapter-id>", "model": "<exact-model>", "effort": "high", "timeoutSeconds": 10800 },
-      "pricing": { "path": "benchmark/pricing/<pricing>.json", "sha256": "<sha256>" }
+      "stage": { "adapter": "<adapter-id>", "model": "<exact-model>", "effort": "high", "timeoutSeconds": 10800 }
     }
   ],
   "themes": [
@@ -145,7 +157,7 @@ npm run benchmark:schedule -- validate \
 
 Generation uses cryptographic randomness, assigns opaque run and slot ids, shuffles execution order, and does not print assignments. Validation reads each configuration artifact from its own `configurationCommit`, then enforces complete registered-configuration × theme coverage, unique ids, contiguous schedule indexes, execution/recipe/theme hash agreement, H1-derived titles, and `<theme-id>-<slot-id>` level ids.
 
-To register another configuration later, commit its recipe and pricing inputs, append it to the definition without changing existing entries, and extend the schedule in place (or through a temporary output followed by an atomic replacement):
+To register another configuration later, commit its recipe, append it to the definition without changing existing entries, and extend the schedule in place (or through a temporary output followed by an atomic replacement):
 
 ```sh
 npm run benchmark:schedule -- extend \

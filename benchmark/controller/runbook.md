@@ -8,7 +8,7 @@ The controller is benchmark administration, not an extra level designer. It prep
 
 Do not interpret the theme, suggest creative decisions, summarize one stage's artifact for another, review source, repair an entrant, or add an undeclared continuation. Pass artifacts between declared stages byte-for-byte. If the recipe assigns the controller itself a planning, implementation, review, or revision role, that work is a measured stage and follows the recipe's prompt and accounting.
 
-Any model usage required to orchestrate a run must be declared by the recipe and captured when the harness exposes it. Record separately measurable usage as an `orchestrate` stage unless it is already included in another measured stage; never double-count a shared session. Whether orchestration usage contributes to the primary equivalent-cost metric must be fixed before the release.
+Any model usage required to orchestrate a run must be declared by the recipe and captured when the harness exposes it. Record separately measurable usage as an `orchestrate` stage unless it is already included in another measured stage; never double-count a shared session. Whether orchestration usage contributes to the primary cost metric must be fixed before the release.
 
 ## Invocation boundaries
 
@@ -40,7 +40,7 @@ Do not start an eligible run until all of these exist and agree:
 - the materials commit and entrant-baseline commit named by that record;
 - a private append-only schedule revision containing the assignment, with its hash pinned by the run definition;
 - exactly one assignment selected from that schedule without exposing the other assignments;
-- the assignment's recipe and theme with matching paths and hashes, plus the immutable configuration commit containing its runner, executor, recipe, and pricing input;
+- the assignment's recipe and theme with matching paths and hashes, plus the immutable configuration commit containing its runner, executor, and recipe;
 - the frozen shared assignment template and controller runbook;
 - deterministic adapters or documented harness procedures for launching every recipe stage and capturing usage;
 - a predeclared failure taxonomy; and
@@ -75,7 +75,7 @@ Follow `benchmark/releases/README.md` in order:
 3. Create and validate the protocol freeze record, commit it, and create the annotated release tag.
 4. Generate the initial private randomized schedule against `benchmark/schemas/run-schedule.schema.json`.
 5. Mechanically verify complete registered-configuration × theme coverage, contiguous schedule positions, unique run/slot/level ids, fixed-length opaque slots, and exact `<theme-id>-<slot-id>` construction. Hash the schedule without printing its contents.
-6. For a later configuration, pin its runner, executor, recipe, and pricing at a configuration commit and extend the schedule. Preserve every earlier assignment and add only missing cells. New configuration code may implement delegation or different accounting, but it may not silently change shared task, baseline, gate, or judgment semantics.
+6. For a later configuration, pin its runner, executor, and recipe at a configuration commit and extend the schedule. Preserve every earlier assignment and add only missing cells. New configuration code may implement delegation or different accounting, but it may not silently change shared task, baseline, gate, or judgment semantics.
 7. Re-open a fresh entrant worktree and verify that it is at the declared baseline commit. Verify that private schedule data, raw records, credentials, and session URLs are absent; do not claim that tracked repository material or Git history is hidden.
 
 Do not hand-author or inspect the live slot mapping. If schedule generation or validation is not yet automated, the release is not ready to freeze.
