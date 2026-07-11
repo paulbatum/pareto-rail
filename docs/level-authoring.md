@@ -174,7 +174,7 @@ Use the run simulator while building levels to catch mechanical issues before as
 npm run simulate -- --level <level-id>
 ```
 
-The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events. Pass `--heatmap` to print an ASCII screen heatmap of enemy destructions relative to the player camera, along with destruction distance statistics and distribution histograms.
+The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events. Pass `--heatmap` to print an ASCII screen heatmap of enemy destructions relative to the player camera, along with destruction distance statistics and distribution histograms. Broad screen-space sweeping makes for a significantly better player experience, so the floor check requires enemies to be distributed throughout the viewport rather than clustering in the center or being destroyed too far away.
 
 The output opens with an "Engine defaults" section (also printed by `check:floor`) listing which engine-default timing fields, lock radius, and optional runner hooks the level inherits versus declares. It is informational, never a gate: inheriting a default is a valid choice, but it should be a considered one — the section exists so the author sees the inherited list instead of never knowing it was there.
 

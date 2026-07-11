@@ -31,6 +31,7 @@ Every level must have, at minimum:
 
 - At least three enemy kinds with distinct silhouettes and distinct motion — different shapes moving the same way don't count.
 - A spawn timeline choreographed against the soundtrack, not evenly spaced filler.
+- Spatial spread that utilizes the full width and height of the screen; avoid clumping enemy spawns in the dead center or keeping them too far away, as sweeping the reticle across the screen creates a much more engaging play experience.
 - Legible START/REPLAY letter glyphs, styled in the level's own visual language (see the glyph guidance in `docs/level-authoring.md`).
 - A composed soundtrack that emits `beat` events, plus sound design for locks, fire, hits, and kills that sits in the mix rather than on top of it.
 - A visual and audio response to rejected releases, plus visual responses to the core gameplay events: `spawn`, `lock`, `unlock`, `fire`, `hit`, `kill`, and `miss`.
