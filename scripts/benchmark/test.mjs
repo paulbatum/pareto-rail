@@ -1,11 +1,19 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { validateDefinition as validateRunDefinition } from './run.mjs';
 import { createSchedule, extendSchedule, validateSchedule } from './schedule.mjs';
 import { summarizeCost } from './ccusage-cost.mjs';
+import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
+
+const exec = promisify(execFile);
 
 const hash = (character) => character.repeat(64);
 const configuration = (id, character, model = `model-${id}`) => ({
@@ -267,5 +275,31 @@ const recoveredResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', m
 assert.equal(recoveredResult.state, 'completed');
 assert.equal(recoveredResult.recovered, true);
 assert.equal(recoveredResult.recoveryReason, 'infrastructure-timeout');
+
+const snapshotRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-snapshot-repo-'));
+const snapshotRun = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-snapshot-run-'));
+const snapshotWorktree = `${snapshotRepo}-worktree`;
+try {
+  await exec('git', ['init', '-q'], { cwd: snapshotRepo });
+  await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: snapshotRepo });
+  await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: snapshotRepo });
+  await fs.writeFile(path.join(snapshotRepo, 'tracked.txt'), 'base\n');
+  await exec('git', ['add', 'tracked.txt'], { cwd: snapshotRepo });
+  await exec('git', ['commit', '-qm', 'base'], { cwd: snapshotRepo });
+  await exec('git', ['worktree', 'add', '-qb', 'benchmark-run-test', snapshotWorktree], { cwd: snapshotRepo });
+  await fs.writeFile(path.join(snapshotWorktree, 'tracked.txt'), 'changed\n');
+  await fs.writeFile(path.join(snapshotWorktree, 'new.txt'), 'untracked\n');
+  const snapshot = await createRecoverySnapshot({ repo: snapshotRepo, runDirectory: snapshotRun, runId: 'run-test', worktree: snapshotWorktree, checkpoint: 'stage', reason: 'synthetic failure' });
+  assert.deepEqual(snapshot.changedPaths.sort(), ['new.txt', 'tracked.txt']);
+  await exec('git', ['worktree', 'remove', '--force', snapshotWorktree], { cwd: snapshotRepo });
+  await restoreRecoverySnapshot({ repo: snapshotRepo, runDirectory: snapshotRun, worktreeRecord: { worktree: snapshotWorktree, branch: 'benchmark-run-test' } });
+  assert.equal(await fs.readFile(path.join(snapshotWorktree, 'tracked.txt'), 'utf8'), 'changed\n');
+  assert.equal(await fs.readFile(path.join(snapshotWorktree, 'new.txt'), 'utf8'), 'untracked\n');
+  assert.match((await exec('git', ['status', '--porcelain'], { cwd: snapshotWorktree })).stdout, /tracked\.txt/);
+} finally {
+  await exec('git', ['worktree', 'remove', '--force', snapshotWorktree], { cwd: snapshotRepo }).catch(() => {});
+  await fs.rm(snapshotRepo, { recursive: true, force: true });
+  await fs.rm(snapshotRun, { recursive: true, force: true });
+}
 
 console.log('Benchmark controller tests passed.');

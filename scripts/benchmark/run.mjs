@@ -19,6 +19,7 @@ import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, measureRunCost } from './ccusage-cost.mjs';
 import { assertBaselineLevelAllowlist, levelIdsFromRegistry, validateBaselineLevelAllowlist } from './entrant-baseline.mjs';
 import { manifestErrors } from './results.mjs';
+import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -120,6 +121,10 @@ async function main() {
     worktree = await checkpoint(state, statePath, 'worktree', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'worktree.json'));
       if (existing) {
+        if (!await pathExists(existing.worktree)) {
+          const restored = await restoreRecoverySnapshot({ repo: ROOT, runDirectory: outputDirectory, worktreeRecord: existing });
+          if (!restored) fail(`Recorded entrant worktree is unavailable and no durable recovery snapshot exists: ${existing.worktree}`);
+        }
         await validateWorktree(existing, entrantBaseline);
         return existing;
       }
@@ -212,7 +217,20 @@ async function main() {
     console.log(JSON.stringify({ runId: definition.assignment.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null, resumed: resuming }));
     if (!passing) process.exitCode = 2;
   } catch (error) {
-    await appendControllerFailure(outputDirectory, error, worktree, state.currentCheckpoint);
+    let snapshotError;
+    try {
+      await createRecoverySnapshot({
+        repo: ROOT,
+        runDirectory: outputDirectory,
+        runId: definition.assignment.runId,
+        worktree: worktree?.worktree,
+        checkpoint: state.currentCheckpoint,
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    } catch (snapshotFailure) {
+      snapshotError = snapshotFailure instanceof Error ? snapshotFailure.message : String(snapshotFailure);
+    }
+    await appendControllerFailure(outputDirectory, error, worktree, state.currentCheckpoint, snapshotError);
     throw error;
   }
 }
@@ -269,6 +287,8 @@ async function validateWorktree(worktree, baseline) {
   const inside = (await command('git', ['rev-parse', '--is-inside-work-tree'], worktree.worktree)).stdout.trim();
   if (inside !== 'true') fail(`Recorded entrant worktree is unavailable: ${worktree.worktree}`);
   await gitCommit(baseline);
+  const ancestry = await command('git', ['merge-base', '--is-ancestor', baseline, 'HEAD'], worktree.worktree, { allowFailure: true });
+  if (ancestry.code !== 0) fail('Recorded entrant worktree is not based on the declared entrant baseline.');
 }
 
 async function validateEvaluated(evaluated, worktree) {
@@ -315,12 +335,13 @@ async function recordRecovery(outputDirectory, definition, worktree, launch) {
   return record;
 }
 
-async function appendControllerFailure(outputDirectory, error, worktree, checkpointId) {
+async function appendControllerFailure(outputDirectory, error, worktree, checkpointId, snapshotError) {
   const failure = {
     failedAt: new Date().toISOString(),
     checkpoint: checkpointId ?? null,
     message: error instanceof Error ? error.message : String(error),
     worktree,
+    ...(snapshotError ? { recoverySnapshotError: snapshotError } : {}),
   };
   const historyPath = path.join(outputDirectory, 'controller-failures.json');
   const history = await optionalJson(historyPath) ?? { schemaVersion: 1, failures: [] };

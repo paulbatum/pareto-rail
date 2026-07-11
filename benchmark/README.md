@@ -51,6 +51,8 @@ npm run benchmark:run -- \
 
 This records `recovery.json`. Recovery is provenance, not a result disposition: a recovered entrant that passes every gate and produces a valid payload is `playable`.
 
+Whenever a controller operation fails after a worktree exists, the runner also captures tracked and untracked source in a commit under `refs/benchmark-recovery/<run-id>/...` and records it in `recovery-snapshot.json`. The snapshot uses a temporary Git index and does not alter the entrant worktree. If `/tmp` later disappears, `--resume` reconstructs the worktree from this ref before continuing.
+
 Management is non-destructive by default:
 
 ```bash
@@ -60,7 +62,7 @@ npm run benchmark:manage -- archive-dnf
 npm run benchmark:manage -- unarchive --run <run-id>
 ```
 
-Archiving moves only the private run record. It never removes entrant or payload worktrees, branches, commits, or source. `prune` removes temporary worktree directories only after an evaluated commit exists, requires the run id twice as confirmation, and preserves the Git branches:
+Archiving moves only the private run record. It never removes entrant or payload worktrees, branches, commits, or source. `prune` requires the run id twice as confirmation and refuses unless each worktree is clean, its `HEAD` and branch exactly match the recorded evaluated or payload commit, and those commits resolve. It removes worktree directories without force and preserves every branch and recovery ref:
 
 ```bash
 npm run benchmark:manage -- prune --run <run-id> --confirm <run-id>

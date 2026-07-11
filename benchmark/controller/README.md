@@ -76,7 +76,7 @@ npm run benchmark:run -- \
   --accept-stage-output true
 ```
 
-Never delete an entrant worktree merely because the controller or harness failed. See `benchmark/README.md` for non-destructive archive, unarchive, and explicit prune commands.
+Never delete an entrant worktree merely because the controller or harness failed. Failures are snapshotted to durable `refs/benchmark-recovery/<run-id>/...` refs, including untracked files, without changing the entrant index. Resume reconstructs a missing temporary worktree from that snapshot. See `benchmark/README.md` for non-destructive archive, unarchive, and strictly verified prune commands.
 
 Its required shape is:
 

@@ -80,24 +80,52 @@ async function prune(runId, confirmation) {
   const runDirectory = path.join(RUNS_DIR, runId);
   const definition = await readJson(path.join(runDirectory, 'run-definition.json'));
   const evaluated = await readJson(path.join(runDirectory, 'evaluated.json'));
-  await git(['cat-file', '-e', `${evaluated.evaluatedCommit}^{commit}`]);
   const worktree = await optionalJson(path.join(runDirectory, 'worktree.json'));
+  const payload = await optionalJson(path.join(runDirectory, 'payload.json'));
   const targets = [
-    { path: worktree?.worktree ?? definition.worktree.path, branch: worktree?.branch ?? `benchmark-run-${runId}` },
-    { path: definition.payload.path, branch: definition.payload.branch },
+    {
+      kind: 'evaluated',
+      path: worktree?.worktree ?? definition.worktree.path,
+      branch: worktree?.branch ?? `benchmark-run-${runId}`,
+      commit: evaluated.evaluatedCommit,
+    },
+    ...(payload ? [{ kind: 'payload', path: payload.worktree ?? definition.payload.path, branch: payload.branch ?? definition.payload.branch, commit: payload.payloadCommit }] : []),
   ];
+
+  for (const target of targets) await assertSafeToPrune(target);
   for (const target of targets) {
-    console.log(`Pruning temporary worktree ${target.path}; durable commits remain.`);
-    await git(['worktree', 'remove', '--force', target.path], { allowFailure: true });
-    console.log(`  Preserved branch ${target.branch}.`);
+    if (await pathExists(target.path)) {
+      console.log(`Pruning verified ${target.kind} worktree ${target.path}.`);
+      await git(['worktree', 'remove', target.path]);
+    }
+    const branchCommit = (await git(['rev-parse', '--verify', `refs/heads/${target.branch}`])).output.trim();
+    if (branchCommit !== target.commit) fail(`Preserved branch ${target.branch} changed during pruning.`);
+    await git(['cat-file', '-e', `${target.commit}^{commit}`]);
+    console.log(`  Preserved branch ${target.branch} at ${target.commit}.`);
   }
   await writeJson(path.join(runDirectory, 'prune.json'), { schemaVersion: 1, prunedAt: new Date().toISOString(), evaluatedCommit: evaluated.evaluatedCommit, targets });
-  console.log('Temporary worktrees pruned. Primary-repository source was not modified.');
+  console.log('Verified temporary worktrees pruned. Primary-repository source and all Git refs were preserved.');
+}
+
+async function assertSafeToPrune(target) {
+  await git(['cat-file', '-e', `${target.commit}^{commit}`]);
+  const branchCommit = (await git(['rev-parse', '--verify', `refs/heads/${target.branch}`])).output.trim();
+  if (branchCommit !== target.commit) fail(`Refusing to prune ${target.kind}: branch ${target.branch} does not point to recorded commit ${target.commit}.`);
+  if (!await pathExists(target.path)) return;
+  const head = (await run('git', ['rev-parse', 'HEAD'], target.path)).output.trim();
+  if (head !== target.commit) fail(`Refusing to prune ${target.kind}: worktree HEAD ${head} does not match recorded commit ${target.commit}.`);
+  const status = (await run('git', ['status', '--porcelain=v1', '--untracked-files=all'], target.path)).output.trim();
+  if (status) fail(`Refusing to prune ${target.kind}: worktree is dirty.\n${status}`);
 }
 
 async function optionalJson(filePath) {
   try { return JSON.parse(await fs.readFile(filePath, 'utf8')); }
   catch (error) { if (error?.code === 'ENOENT') return null; throw error; }
+}
+
+async function pathExists(filePath) {
+  try { await fs.lstat(filePath); return true; }
+  catch (error) { if (error?.code === 'ENOENT') return false; throw error; }
 }
 
 function git(args, options) { return run('git', args, ROOT, options); }
