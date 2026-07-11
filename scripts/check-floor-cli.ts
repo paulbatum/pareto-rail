@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { formatEngineDefaultsReport, runSimulationSuite, validateLevelAudioConfig } from './simulation-cli';
+import { computeCenterMetrics, formatEngineDefaultsReport, runSimulationSuite, validateLevelAudioConfig } from './simulation-cli';
 import { analyzeOcclusionLevels, formatReports } from './target-occlusion.mjs';
 
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
@@ -22,6 +22,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   ]);
 
   const failures: string[] = [];
+  const warnings: string[] = [];
   const level = result.level;
 
   const spawnedKinds = new Set<string>();
@@ -34,6 +35,28 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   const rejectRun = result.runs.find((run) => run.policy === 'reject');
   if (!rejectRun || (rejectRun.counts.events.reject ?? 0) === 0) {
     failures.push('No reject event was observed under the forced reject policy.');
+  }
+
+  const perfectRun = result.runs.find((run) => run.policy === 'perfect');
+  if (perfectRun) {
+    const metrics = computeCenterMetrics(perfectRun);
+    if (metrics.kills > 0) {
+      const { avgDistance, centerPercent } = metrics;
+      
+      // Distance gate
+      if (avgDistance > 60.0) {
+        failures.push(`Average enemy destruction distance is too high (${avgDistance.toFixed(1)}m, limit 60.0m). Enemies must not spawn too far away.`);
+      } else if (avgDistance > 45.0) {
+        warnings.push(`Average enemy destruction distance is slightly high (${avgDistance.toFixed(1)}m, warning threshold 45.0m). Consider spawning enemies closer.`);
+      }
+
+      // Centerness gate
+      if (centerPercent > 70.0) {
+        failures.push(`Enemy destruction concentration in screen center is too high (${centerPercent.toFixed(1)}%, limit 70.0%). Enemies must not cluster in the center of the screen.`);
+      } else if (centerPercent > 25.0) {
+        warnings.push(`Enemy destruction concentration in screen center is slightly high (${centerPercent.toFixed(1)}%, warning threshold 25.0%). Consider spreading spawns away from the center.`);
+      }
+    }
   }
 
   const cardPath = path.join(root, 'src', 'levels', level.folder, 'level.md');
@@ -71,6 +94,14 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   lines.push(`target occlusion warnings: ${occlusionWarnings.length}`);
   lines.push(`performance gate failures: ${perfFailures.length}`);
   lines.push(`audio configuration failures: ${audioConfigErrors.length}`);
+  lines.push(`spawn centerness/distance warnings: ${warnings.length}`);
+  
+  if (warnings.length) {
+    lines.push('');
+    lines.push('Warnings:');
+    for (const warning of warnings) lines.push(`- ${warning}`);
+  }
+
   if (failures.length) {
     lines.push('');
     lines.push('Failures:');

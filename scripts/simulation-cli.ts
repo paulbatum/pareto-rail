@@ -26,6 +26,8 @@ type CliOptions = {
   suite: boolean;
   gapThreshold: number;
   engagement: boolean;
+  heatmap: boolean;
+  all: boolean;
 };
 
 type SimTarget = {
@@ -52,6 +54,14 @@ type PressureSample = {
   kinds: Record<string, number>;
 };
 
+type KillPosition = {
+  enemyId: number;
+  kind: string;
+  ndc: { x: number; y: number; z: number };
+  distance: number;
+  time: number;
+};
+
 type RunResult = {
   level: { id: string; folder: string; title: string; duration: number; bpm: number };
   policy: SimPolicy;
@@ -74,6 +84,7 @@ type RunResult = {
     misses: number;
     playerHits: number;
   };
+  heatmapKills?: KillPosition[];
 };
 
 type FieldSource = 'level-authored' | 'engine default';
@@ -227,7 +238,6 @@ async function resolveLevelTarget(levelIdOrAlias: string, rootDir: string): Prom
   if (!canonicalId || !cases.has(canonicalId)) {
     throw new Error(`Unsupported simulation level: ${levelIdOrAlias}`);
   }
-
   const folder = cases.get(canonicalId)!;
   return { canonical: canonicalId, folder, title };
 }
@@ -235,6 +245,66 @@ async function resolveLevelTarget(levelIdOrAlias: string, rootDir: string): Prom
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
   const options = parseArgs(argv);
+
+  if (options.all) {
+    const levels = await getAllLevels(root);
+    const results: Array<{
+      levelId: string;
+      levelTitle: string;
+      policyResults: Array<{
+        policy: string;
+        metrics: ReturnType<typeof computeCenterMetrics>;
+      }>;
+    }> = [];
+
+    console.log(`Simulating ${levels.length} levels...`);
+    
+    for (const levelTarget of levels) {
+      const result = await runSimulationSuite({
+        ...options,
+        level: levelTarget.canonical,
+      });
+      
+      const policyResults = result.runs.map(run => ({
+        policy: run.policy,
+        metrics: computeCenterMetrics(run),
+      }));
+
+      results.push({
+        levelId: levelTarget.canonical,
+        levelTitle: levelTarget.title,
+        policyResults,
+      });
+    }
+
+    if (options.json) {
+      console.log(JSON.stringify(results, null, 2));
+    } else {
+      const policiesUsed = options.policies;
+      for (const policy of policiesUsed) {
+        console.log(`\nSimulation comparison (policy: ${policy})`);
+        const header = `Level`.padEnd(25) + `Kills`.padStart(7) + `Avg Offset (NDC)`.padStart(18) + `Center % (r<0.25)`.padStart(19) + `Avg Dist (m)`.padStart(14) + `Off-Screen %`.padStart(14);
+        console.log(header);
+        console.log(`-`.repeat(header.length));
+        
+        for (const res of results) {
+          const runRes = res.policyResults.find(pr => pr.policy === policy);
+          if (!runRes) continue;
+          const m = runRes.metrics;
+          console.log(
+            res.levelTitle.padEnd(25) +
+            String(m.kills).padStart(7) +
+            (m.kills > 0 ? m.avgOffset.toFixed(2) : '-').padStart(18) +
+            (m.kills > 0 ? `${m.centerPercent.toFixed(1)}%` : '-').padStart(19) +
+            (m.kills > 0 ? `${m.avgDistance.toFixed(1)}m` : '-').padStart(14) +
+            (m.kills > 0 ? `${m.offScreenPercent.toFixed(1)}%` : '-').padStart(14)
+          );
+        }
+      }
+    }
+    return;
+  }
+
   const result = await runSimulationSuite(options);
 
   if (options.write) {
@@ -245,7 +315,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   }
 
   if (options.json) console.log(JSON.stringify(result, null, 2));
-  else console.log(formatSuite(result, options.gapThreshold));
+  else console.log(formatSuite(result, options.gapThreshold, options.heatmap));
 }
 
 export async function runSimulationSuite(options: Partial<CliOptions> & { level: string }): Promise<SuiteResult> {
@@ -258,6 +328,8 @@ export async function runSimulationSuite(options: Partial<CliOptions> & { level:
     suite: true,
     gapThreshold: 4,
     engagement: false,
+    heatmap: false,
+    all: false,
     ...options,
   };
   if (fullOptions.engagement) fullOptions.policies = ['none'];
@@ -321,6 +393,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
   const createdEnemyMeshes: Object3D[] = [];
   const activeTargets = new Map<number, SimTarget>();
   const events: LoggedEvent[] = [];
+  const killPositions: KillPosition[] = [];
   const eventCounts: Record<string, number> = {};
   const spawnedKinds: Record<string, number> = {};
   const pressureSamples: PressureSample[] = [];
@@ -390,8 +463,24 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
           target.locks = 0;
           if (target.kind !== 'letter') target.inFlight = true;
         }
-      } else if (type === 'kill' || type === 'miss') {
-        activeTargets.delete((payload as GameEvents['kill'] | GameEvents['miss']).enemyId);
+      } else if (type === 'kill') {
+        const kill = payload as GameEvents['kill'];
+        const target = activeTargets.get(kill.enemyId);
+        if (target) {
+          const projected = new Vector3().copy(kill.worldPosition).project(camera);
+          const distance = camera.position.distanceTo(kill.worldPosition);
+          killPositions.push({
+            enemyId: kill.enemyId,
+            kind: target.kind,
+            ndc: { x: projected.x, y: projected.y, z: projected.z },
+            distance: round(distance),
+            time: round(now),
+          });
+        }
+        activeTargets.delete(kill.enemyId);
+      } else if (type === 'miss') {
+        const miss = payload as GameEvents['miss'];
+        activeTargets.delete(miss.enemyId);
       } else if (type === 'reject') {
         rejectSeen = true;
         currentLocks = 0;
@@ -478,6 +567,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
       misses: eventCounts.miss ?? 0,
       playerHits: eventCounts.playerhit ?? 0,
     },
+    heatmapKills: killPositions,
   };
 
   function emitDueBeats() {
@@ -817,13 +907,15 @@ function summarizePressure(samples: PressureSample[], bpm: number, gapThreshold:
 
 function parseArgs(argv: string[]): CliOptions {
   let level = '';
-  let policy = 'suite';
+  let policy = '';
   let seed = 1;
   let dt = 1 / 60;
   let json = false;
   let write: string | undefined;
   let gapThreshold = 4;
   let engagement = false;
+  let heatmap = false;
+  let all = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -841,19 +933,24 @@ function parseArgs(argv: string[]): CliOptions {
     else if (arg === '--write') write = readValue();
     else if (arg === '--gap-threshold') gapThreshold = Number(readValue());
     else if (arg === '--engagement') engagement = true;
+    else if (arg === '--heatmap') heatmap = true;
+    else if (arg === '--all') all = true;
     else if (arg === '-h' || arg === '--help') printHelpAndExit();
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!level) throw new Error('Missing --level <id>');
+  if (!level && !all) throw new Error('Missing --level <id> or --all');
   if (!Number.isFinite(seed)) throw new Error('--seed must be a number');
   if (!Number.isFinite(dt) || dt <= 0) throw new Error('--dt must be positive');
   if (!Number.isFinite(gapThreshold) || gapThreshold < 0) throw new Error('--gap-threshold must be non-negative');
-  const policies = policy === 'suite'
+
+  const resolvedPolicy = policy || (all ? 'perfect' : 'suite');
+
+  const policies = resolvedPolicy === 'suite'
     ? ['none', 'perfect', 'imperfect'] as SimPolicy[]
-    : policy.split(',').map((item) => item.trim()).filter(Boolean) as SimPolicy[];
+    : resolvedPolicy.split(',').map((item) => item.trim()).filter(Boolean) as SimPolicy[];
   for (const item of policies) if (!['none', 'perfect', 'imperfect', 'reject'].includes(item)) throw new Error(`Unknown policy: ${item}`);
-  return { level, policies, seed, dt, json, write, suite: policy === 'suite', gapThreshold, engagement };
+  return { level, policies, seed, dt, json, write, suite: resolvedPolicy === 'suite', gapThreshold, engagement, heatmap, all };
 }
 
 export function formatEngineDefaultsReport(report: EngineDefaultsReport) {
@@ -899,8 +996,8 @@ const SHOT_DELAY_FIELDS = [
   'maxGridSeconds',
 ] as const satisfies Array<keyof ShotDelaySettings>;
 
-function formatSuite(result: SuiteResult, _gapThreshold: number) {
-  if (result.engagement) return formatEngagementReport(result);
+function formatSuite(result: SuiteResult, gapThreshold: number, showHeatmap = false) {
+  if (result.engagement) return formatEngagementReport(result, showHeatmap);
   const lines: string[] = [];
   lines.push(`${result.level.title} simulation (${result.level.duration.toFixed(1)}s @ ${result.level.bpm} BPM)`);
   lines.push('');
@@ -918,15 +1015,19 @@ function formatSuite(result: SuiteResult, _gapThreshold: number) {
     lines.push(`  events: locks ${run.counts.events.lock ?? 0}, fires ${run.counts.events.fire ?? 0}, hits ${run.counts.events.hit ?? 0}, kills ${run.counts.events.kill ?? 0}, misses ${run.counts.events.miss ?? 0}, player hits ${run.counts.playerHits}`);
     lines.push(`  spawned: ${spawned}`);
     lines.push(`  pressure: peak ${Math.max(0, ...run.pressure.samples.map((sample) => sample.count))}, gaps ${gaps}, impossible moments ${impossible}`);
+    if (showHeatmap) {
+      lines.push(``);
+      lines.push(...formatHeatmap(run));
+    }
   }
   lines.push(``);
   lines.push(`Event coverage never fired: ${result.eventCoverage.neverFired.join(', ') || 'none'}`);
   return lines.join('\n');
 }
 
-function formatEngagementReport(result: SuiteResult) {
+function formatEngagementReport(result: SuiteResult, showHeatmap = false) {
   const report = result.engagement;
-  if (!report) return formatSuite(result, 4);
+  if (!report) return formatSuite(result, 4, showHeatmap);
   const noneRun = result.runs.find((run) => run.policy === 'none');
   const lines: string[] = [];
   lines.push(`${result.level.title} engagement report (${result.level.duration.toFixed(1)}s @ ${result.level.bpm} BPM, policy none)`);
@@ -954,7 +1055,208 @@ function formatEngagementReport(result: SuiteResult) {
       lines.push(`  result: measured only`);
     }
   }
+  if (showHeatmap) {
+    for (const run of result.runs) {
+      if (run.heatmapKills && run.heatmapKills.length > 0) {
+        lines.push(``);
+        lines.push(`Heatmap for policy ${run.policy}:`);
+        lines.push(...formatHeatmap(run));
+      }
+    }
+  }
   return lines.join('\n');
+}
+
+function formatHeatmapGrid(kills: KillPosition[]): string[] {
+  const W = 25;
+  const H = 13;
+  const grid = Array.from({ length: H }, () => Array(W).fill(0));
+  let onScreenCount = 0;
+  let offScreenCount = 0;
+
+  for (const kill of kills) {
+    const { x, y, z } = kill.ndc;
+    const onScreen = z >= -1 && z <= 1 && Math.abs(x) <= 1.0 && Math.abs(y) <= 1.0;
+    if (onScreen) {
+      onScreenCount++;
+      const c = Math.min(W - 1, Math.max(0, Math.floor((x + 1) / 2 * W)));
+      const r = Math.min(H - 1, Math.max(0, Math.floor((1 - y) / 2 * H)));
+      grid[r][c]++;
+    } else {
+      offScreenCount++;
+    }
+  }
+
+  const maxInCell = Math.max(...grid.flat());
+  const SCALE = ['.', ':', 'o', 'x', 'X', '#', '@'];
+  
+  const lines: string[] = [];
+  lines.push(`  Enemy Destruction Heatmap (${kills.length} kills):`);
+  if (kills.length === 0) {
+    lines.push(`    No kills recorded.`);
+    return lines;
+  }
+
+  if (maxInCell > 0) {
+    const legendParts: string[] = [];
+    for (let i = 0; i < SCALE.length; i++) {
+      legendParts.push(`${SCALE[i]}`);
+    }
+    lines.push(`    Legend: ${legendParts.join(' ')} (max in cell = ${maxInCell})`);
+  }
+
+  lines.push(`    +${'-'.repeat(W)}+  Y=1.0 (Top)`);
+  for (let r = 0; r < H; r++) {
+    let rowStr = '';
+    for (let c = 0; c < W; c++) {
+      const count = grid[r][c];
+      if (count > 0) {
+        const intensity = Math.min(SCALE.length - 1, Math.floor(((count - 1) / (maxInCell - 1 || 1)) * (SCALE.length - 1)));
+        rowStr += SCALE[intensity];
+      } else {
+        if (r === 6 && c === 12) {
+          rowStr += '+';
+        } else if (r === 6) {
+          rowStr += '-';
+        } else if (c === 12) {
+          rowStr += '|';
+        } else {
+          rowStr += ' ';
+        }
+      }
+    }
+    lines.push(`    |${rowStr}|`);
+  }
+  lines.push(`    +${'-'.repeat(W)}+  Y=-1.0 (Bottom)`);
+  lines.push(`     X=-1.0${' '.repeat(Math.max(0, W - 11))}X=1.0`);
+  lines.push(`     (Left)${' '.repeat(Math.max(0, W - 13))}(Right)`);
+  lines.push(``);
+  const offPercent = kills.length > 0 ? (offScreenCount / kills.length * 100).toFixed(1) : '0.0';
+  lines.push(`    Kills off-screen: ${offScreenCount} (${offPercent}%)`);
+  return lines;
+}
+
+function formatHeatmap(run: RunResult): string[] {
+  const kills = run.heatmapKills ?? [];
+  const lines: string[] = [];
+
+  lines.push(...formatHeatmapGrid(kills));
+
+  if (kills.length > 0) {
+    const distances = kills.map(k => k.distance);
+    const minD = Math.min(...distances);
+    const maxD = Math.max(...distances);
+    const avgD = distances.reduce((sum, d) => sum + d, 0) / distances.length;
+
+    lines.push(`    Distance from camera at destruction:`);
+    lines.push(`      min: ${minD.toFixed(1)}m, max: ${maxD.toFixed(1)}m, avg: ${avgD.toFixed(1)}m`);
+    lines.push(`      Distribution:`);
+
+    const buckets = [
+      { label: '  < 20m: ', min: 0, max: 20 },
+      { label: ' 20–50m: ', min: 20, max: 50 },
+      { label: '50–100m: ', min: 50, max: 100 },
+      { label: '100–150m:', min: 100, max: 150 },
+      { label: '150–200m:', min: 150, max: 200 },
+      { label: ' ≥ 200m: ', min: 200, max: Infinity },
+    ];
+
+    const bucketCounts = buckets.map(() => 0);
+    for (const kill of kills) {
+      const d = kill.distance;
+      for (let i = 0; i < buckets.length; i++) {
+        if (d >= buckets[i].min && d < buckets[i].max) {
+          bucketCounts[i]++;
+          break;
+        }
+      }
+    }
+
+    const maxBucketCount = Math.max(...bucketCounts);
+    const maxBarWidth = 40;
+    for (let i = 0; i < buckets.length; i++) {
+      const count = bucketCounts[i];
+      const barLen = maxBucketCount > 0 ? Math.round((count / maxBucketCount) * maxBarWidth) : 0;
+      const barStr = '|'.repeat(barLen);
+      lines.push(`        ${buckets[i].label} [${String(count).padStart(3)}] ${barStr}`);
+    }
+  }
+
+  return lines;
+}
+
+async function getAllLevels(rootDir: string): Promise<LevelTarget[]> {
+  const registryPath = path.resolve(rootDir, 'src/levels/index.ts');
+  const registrySource = await fs.readFile(registryPath, 'utf8');
+
+  const caseRegex = /case\s+['"]([^'"]+)['"]:\s*\r?\n\s*return\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+);/g;
+  const cases = new Map<string, string>();
+  let match: RegExpExecArray | null;
+  while ((match = caseRegex.exec(registrySource))) {
+    const canonicalId = match[1];
+    const importPath = match[2];
+    const folder = importPath.replace(/^\.\//, '');
+    cases.set(canonicalId, folder);
+  }
+
+  const arrayMatch = registrySource.match(/export const levelMetadatas: LevelMetadata\[] = \[([\s\S]*?)\n\];/);
+  if (!arrayMatch) throw new Error('Could not find levelMetadatas array in src/levels/index.ts');
+  
+  const entryRegex = /\{\s*id:\s*['"]([^'"]+)['"]\s*,\s*title:\s*['"]([^'"]+)['"]/g;
+  const list: LevelTarget[] = [];
+  while ((match = entryRegex.exec(arrayMatch[1]))) {
+    const entryId = match[1];
+    const entryTitle = match[2];
+    const folder = cases.get(entryId);
+    if (folder) {
+      list.push({ canonical: entryId, folder, title: entryTitle });
+    }
+  }
+  return list;
+}
+
+export function computeCenterMetrics(run: RunResult) {
+  const kills = run.heatmapKills ?? [];
+  if (kills.length === 0) {
+    return {
+      kills: 0,
+      avgOffset: 0,
+      centerPercent: 0,
+      avgDistance: 0,
+      offScreenPercent: 0
+    };
+  }
+
+  let onScreenCount = 0;
+  let offScreenCount = 0;
+  let totalOffset = 0;
+  let centerCount = 0;
+  let totalDistance = 0;
+
+  for (const kill of kills) {
+    const { x, y, z } = kill.ndc;
+    const onScreen = z >= -1 && z <= 1 && Math.abs(x) <= 1.0 && Math.abs(y) <= 1.0;
+    totalDistance += kill.distance;
+    
+    if (onScreen) {
+      onScreenCount++;
+      const radialOffset = Math.hypot(x, y);
+      totalOffset += radialOffset;
+      if (radialOffset < 0.25) {
+        centerCount++;
+      }
+    } else {
+      offScreenCount++;
+    }
+  }
+
+  return {
+    kills: kills.length,
+    avgOffset: onScreenCount > 0 ? totalOffset / onScreenCount : 0,
+    centerPercent: onScreenCount > 0 ? (centerCount / onScreenCount) * 100 : 0,
+    avgDistance: totalDistance / kills.length,
+    offScreenPercent: (offScreenCount / kills.length) * 100
+  };
 }
 
 function createCanvasStub(width: number, height: number) {
@@ -1043,6 +1345,6 @@ function round(value: number) {
 }
 
 function printHelpAndExit(): never {
-  console.log(`Usage: npm run simulate -- --level <id> [--policy suite|none|perfect|imperfect|reject] [--engagement] [--seed n] [--json] [--write path]`);
+  console.log(`Usage: npm run simulate -- [--level <id> | --all] [--policy suite|none|perfect|imperfect|reject] [--engagement] [--heatmap] [--seed n] [--json] [--write path]`);
   process.exit(0);
 }
