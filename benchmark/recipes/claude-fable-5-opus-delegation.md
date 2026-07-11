@@ -28,7 +28,7 @@ This configuration is one unattended `claude --print` stage in which the primary
 
 ## Runtime policy
 
-- Overall timeout: 10,800 seconds, measured from process launch to exit.
+- Overall timeout: 43,200 seconds, measured from process launch to exit.
 - Operator interaction after launch: none.
 - Network access: unrestricted, matching the operator's own network access. Claude Code CLI has no OS-level sandbox equivalent to Codex's `workspace-write`.
 - Working tree access: **weaker isolation than the Codex configuration.** Unattended operation requires `--permission-mode bypassPermissions`, which skips every permission prompt. Confinement to the worktree is a non-adversarial convention identical in kind to the general worktree-access policy in `benchmark/controller/runbook.md`, not a technically enforced boundary, and must not be described as one.

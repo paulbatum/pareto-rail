@@ -21,7 +21,7 @@ This is the first Claude Code configuration trial. It is one unattended solo sta
 
 ## Runtime policy
 
-- Overall timeout: 10,800 seconds, measured from process launch to exit.
+- Overall timeout: 43,200 seconds, measured from process launch to exit.
 - Operator interaction after launch: none.
 - Network access: unrestricted, matching the operator's own network access. Claude Code CLI has no OS-level sandbox equivalent to Codex's `workspace-write`, so there is no network toggle to declare.
 - Working tree access: **weaker isolation than the Codex configuration.** Unattended operation requires `--permission-mode bypassPermissions`, which skips every permission prompt, including ones for filesystem writes or shell commands outside the worktree. Codex's `workspace-write` sandbox enforces filesystem confinement at the OS level; Claude Code CLI has no equivalent enforcement mechanism at any permission mode. Confinement to the worktree here is a non-adversarial convention identical in kind to the general worktree-access policy in `benchmark/controller/runbook.md`, not a technically enforced boundary, and it must not be described as one.
@@ -41,7 +41,7 @@ This is the first Claude Code configuration trial. It is one unattended solo sta
 - Working tree access: no OS sandbox (see Runtime policy above). `--setting-sources project` excludes the operator's personal `~/.claude/settings.json`; `--strict-mcp-config` with no `--mcp-config` loads zero MCP servers. This repository has no tracked `.claude/` directory, so no repository-declared hooks or MCP servers apply either.
 - Input artifacts from earlier stages: none.
 - Required output artifact: code changes in the entrant worktree plus `final-message.md` and the `stream-json` event log in private controller storage. The controller also copies the CLI's native session transcript when available.
-- Stage timeout: 10,800 seconds.
+- Stage timeout: 43,200 seconds.
 - Completion condition: `claude --print` exits zero, its JSONL output contains exactly one terminal `type: "result"` event whose `session_id` equals the pre-assigned `--session-id`, and that event reports non-negative integer `usage.input_tokens` and `usage.output_tokens`.
 
 ### Verbatim prompt
@@ -59,7 +59,7 @@ npm run benchmark:claude -- \
   --out benchmark/private/runs/<opaque-run-id>/stages/solo/claude \
   --model claude-fable-5 \
   --effort high \
-  --timeout-seconds 10800
+  --timeout-seconds 43200
 ```
 
 The adapter uses the following effective Claude Code arguments:

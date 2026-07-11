@@ -21,7 +21,7 @@ This is the first Codex configuration trial. It is one unattended solo stage, no
 
 ## Runtime policy
 
-- Overall timeout: 10,800 seconds, measured from process launch to exit.
+- Overall timeout: 43,200 seconds, measured from process launch to exit.
 - Operator interaction after launch: none.
 - Network access: no `--search`. The `workspace-write` sandbox's own network default blocks outbound connections and loopback `listen()`, which prevents the entrant's own dev-server-backed self-checks (e.g. the browser-backed phase of `npm run check:floor`) from running inside its session. The adapter overrides this with `-c sandbox_workspace_write.network_access=true`, keeping every other sandbox restriction (filesystem confined to the worktree, no elevated approvals) in place. This is a declared harness override, not the CLI's out-of-the-box default.
 - Harness continuation behavior: none. The controller starts one fresh local `codex exec` process per stage and never issues `codex exec resume`, `fork`, or any continuation command.
@@ -40,7 +40,7 @@ This is the first Codex configuration trial. It is one unattended solo stage, no
 - Working tree access: write access only to the entrant worktree through Codex `workspace-write` sandbox. No additional writable directories.
 - Input artifacts from earlier stages: none.
 - Required output artifact: code changes in the entrant worktree plus `final-message.md` and the `--json` event stream in private controller storage. The controller also copies the CLI's native session rollout when available.
-- Stage timeout: 10,800 seconds.
+- Stage timeout: 43,200 seconds.
 - Completion condition: `codex exec` exits zero, reports one session id, and reports non-negative integer `input_tokens` and `output_tokens` in its final `turn.completed` JSONL event.
 
 ### Verbatim prompt
@@ -58,7 +58,7 @@ npm run benchmark:codex -- \
   --out benchmark/private/runs/<opaque-run-id>/stages/solo/codex \
   --model gpt-5.6-terra \
   --effort high \
-  --timeout-seconds 10800
+  --timeout-seconds 43200
 ```
 
 The adapter uses the following effective Codex arguments after validating the local bundled model catalog:

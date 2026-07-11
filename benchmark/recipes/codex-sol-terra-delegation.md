@@ -28,7 +28,7 @@ This configuration is one unattended `codex exec` stage in which the primary age
 
 ## Runtime policy
 
-- Overall timeout: 10,800 seconds, measured from process launch to exit.
+- Overall timeout: 43,200 seconds, measured from process launch to exit.
 - Operator interaction after launch: none.
 - Network access: no `--search`. The `workspace-write` sandbox blocks outbound connections and loopback `listen()` by default, which prevents the entrant's own dev-server-backed self-checks from running. The adapter overrides this with `-c sandbox_workspace_write.network_access=true`, keeping every other sandbox restriction (filesystem confined to the worktree, no elevated approvals) in place. This is a declared harness override, not the CLI's out-of-the-box default.
 - Isolated per-run home: the controller sets `CODEX_HOME` to a fresh per-run home and copies the operator's `~/.codex/auth.json` into it so login works. `--ignore-user-config` still excludes the operator's `config.toml`; only auth is carried in. The credential copy is a declared operator convenience, of a kind with the worktree-access convention — not a security boundary. The home is retained as the run's rollout audit artifact and is the exact scope ccusage reads for cost.
