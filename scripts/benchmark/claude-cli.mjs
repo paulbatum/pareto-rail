@@ -19,6 +19,11 @@ import {
 const EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max']);
 
 async function main() {
+  // Disable 600s wait ceiling for background subagent tasks.
+  process.env.CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS = '0';
+  // Enable watchdog for resilient API request retries.
+  process.env.CLAUDE_CODE_RETRY_WATCHDOG = '1';
+
   const { options, rest } = parseArgs(process.argv.slice(2));
   if (options.help) {
     console.log(`Usage:
