@@ -10,6 +10,7 @@ export interface LevelMetadata {
 export const levelMetadatas: LevelMetadata[] = [
   { id: 'crystal-corridor', title: 'Crystal Corridor', aliases: ['crystal'] },
   { id: 'helios', title: 'Helios' },
+  { id: 'mass-driver-vyxj', title: 'Mass Driver', aliases: ['mass-driver'] },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'] },
   { id: 'rezdle', title: 'Rezdle' },
   { id: 'rush', title: 'Rush', kind: 'technical' },
@@ -37,6 +38,8 @@ export async function getLevelById(id: string | null): Promise<LevelDefinition> 
       return (await import('./rezdle')).rezdleLevel;
     case 'rush':
       return (await import('./rush')).rushLevel;
+    case 'mass-driver-vyxj':
+      return (await import('./mass-driver-vyxj')).massDriverVyxjLevel;
     default:
       throw new Error(`Unknown level: ${matched.id}`);
   }
