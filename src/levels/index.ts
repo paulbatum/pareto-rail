@@ -12,6 +12,7 @@ export const levelMetadatas: LevelMetadata[] = [
   { id: 'helios', title: 'Helios' },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'] },
   { id: 'rezdle', title: 'Rezdle' },
+  { id: 'mass-driver-7rkv', title: 'Mass Driver' },
   { id: 'rush', title: 'Rush', kind: 'technical' },
 ];
 
@@ -35,6 +36,8 @@ export async function getLevelById(id: string | null): Promise<LevelDefinition> 
       return (await import('./prism')).prismBloomLevel;
     case 'rezdle':
       return (await import('./rezdle')).rezdleLevel;
+    case 'mass-driver-7rkv':
+      return (await import('./mass-driver-7rkv')).massDriver7rkvLevel;
     case 'rush':
       return (await import('./rush')).rushLevel;
     default:
