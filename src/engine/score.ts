@@ -42,7 +42,112 @@ export type ScoreConfig<Chord, Section extends string | number> = {
 
 export type Score<Chord, Section extends string | number> = ReturnType<typeof createScore<Chord, Section>>;
 
+export function validateScoreConfig<Chord, Section extends string | number>(config: ScoreConfig<Chord, Section>) {
+  const issues: string[] = [];
+  const positiveInteger = (value: number | undefined, label: string) => {
+    if (value === undefined || !Number.isInteger(value) || value <= 0) issues.push(`${label} must be a positive integer`);
+  };
+
+  if (!Number.isFinite(config.bpm) || config.bpm <= 0) issues.push('bpm must be a positive finite number');
+  positiveInteger(config.stepsPerBar, 'stepsPerBar');
+  if (!config.chords.length) issues.push('chords must not be empty');
+  positiveInteger(config.barsPerChord ?? 1, 'barsPerChord');
+
+  const alternateSets = config.alternateChordSets ?? [];
+  for (const [index, set] of alternateSets.entries()) {
+    if (!Number.isInteger(set.fromBar) || set.fromBar < 0) issues.push(`alternateChordSets[${index}].fromBar must be a non-negative integer`);
+    if (set.toBar !== undefined && (!Number.isInteger(set.toBar) || set.toBar <= set.fromBar)) {
+      issues.push(`alternateChordSets[${index}].toBar must be greater than fromBar`);
+    }
+    if (!set.chords.length) issues.push(`alternateChordSets[${index}].chords must not be empty`);
+    positiveInteger(set.barsPerChord ?? config.barsPerChord ?? 1, `alternateChordSets[${index}].barsPerChord`);
+    for (const other of alternateSets.slice(index + 1)) {
+      const overlaps = (set.toBar === undefined || other.fromBar < set.toBar)
+        && (other.toBar === undefined || set.fromBar < other.toBar);
+      if (overlaps) issues.push(`alternateChordSets[${index}] overlaps another alternate chord set`);
+    }
+  }
+
+  const sections = [...(config.sections ?? [])].sort((a, b) => a.fromBar - b.fromBar);
+  const sectionIndexes = new Set<Section>();
+  const sectionBars = new Set<number>();
+  for (const section of sections) {
+    if (!Number.isInteger(section.fromBar) || section.fromBar < 0) issues.push(`section ${String(section.index)} fromBar must be a non-negative integer`);
+    if (sectionIndexes.has(section.index)) issues.push(`duplicate section index ${String(section.index)}`);
+    if (sectionBars.has(section.fromBar)) issues.push(`duplicate section fromBar ${section.fromBar}`);
+    sectionIndexes.add(section.index);
+    sectionBars.add(section.fromBar);
+    if (section.crossfadeBars !== undefined && (!Number.isFinite(section.crossfadeBars) || section.crossfadeBars < 0)) {
+      issues.push(`section ${String(section.index)} crossfadeBars must be non-negative`);
+    }
+  }
+
+  const killLanes = config.killLanes;
+  const laneEntries: Array<[string, readonly number[] | undefined]> = killLanes ? Object.entries(killLanes) : [];
+  if (laneEntries.length && !sections.length) issues.push('killLanes requires at least one section');
+  if (laneEntries.length) {
+    for (const section of sections) {
+      if (!Object.prototype.hasOwnProperty.call(killLanes, String(section.index))) issues.push(`missing kill lane for section ${String(section.index)}`);
+    }
+  }
+  for (const [section, lane] of laneEntries) {
+    if (!lane?.length) {
+      issues.push(`kill lane for section ${section} must not be empty`);
+      continue;
+    }
+    for (const [index, degree] of lane.entries()) {
+      if (!Number.isInteger(degree) || degree < 0) issues.push(`kill lane ${section}[${index}] must be a non-negative integer`);
+    }
+  }
+
+  const validGrid = Number.isInteger(config.stepsPerBar) && config.stepsPerBar > 0;
+  if (config.chords.length && laneEntries.length && validGrid) {
+    const chordPositions = config.chords.map((_chord, index) => index * (config.barsPerChord ?? 1) * config.stepsPerBar);
+    const alternatePositions = alternateSets.flatMap((set) => set.chords.map((_chord, index) => (set.fromBar + index * (set.barsPerChord ?? config.barsPerChord ?? 1)) * config.stepsPerBar));
+    const sectionPositions = sections.map((section) => section.fromBar * config.stepsPerBar);
+    const positions = [...new Set([0, ...chordPositions, ...alternatePositions, ...sectionPositions])];
+    const leads: Array<{ position: number; length: number }> = [];
+    for (const position of positions) {
+      const chord = chordAtPosition(config, position);
+      if (chord === undefined) {
+        issues.push(`chord set at position ${position} is empty`);
+        continue;
+      }
+      let lead: readonly number[] | undefined;
+      try {
+        lead = config.leadSet
+          ? config.leadSet(chord, position)
+          : (chord as { arp?: readonly number[] }).arp
+            ? [...(chord as { arp: readonly number[] }).arp, ...(chord as { arp: readonly number[] }).arp.map((midi) => midi + 12)]
+            : [];
+      } catch (error) {
+        issues.push(`lead set at position ${position} could not be evaluated: ${error instanceof Error ? error.message : String(error)}`);
+        continue;
+      }
+      if (!lead?.length) {
+        issues.push(`lead set at position ${position} must not be empty when killLanes are configured`);
+        continue;
+      }
+      for (const [index, midi] of lead.entries()) {
+        if (!Number.isFinite(midi)) issues.push(`lead set at position ${position} contains a non-finite MIDI value at index ${index}`);
+      }
+      leads.push({ position, length: lead.length });
+    }
+    for (const [section, lane] of laneEntries) {
+      if (!lane?.length) continue;
+      const maxDegree = Math.max(...lane);
+      for (const lead of leads) {
+        if (maxDegree >= lead.length) issues.push(`kill lane ${section} degree ${maxDegree} is outside the lead set at position ${lead.position}`);
+      }
+    }
+  }
+
+  return issues;
+}
+
 export function createScore<Chord, Section extends string | number>(config: ScoreConfig<Chord, Section>) {
+  const validationIssues = validateScoreConfig(config);
+  if (validationIssues.length) throw new Error(`Invalid score configuration:\n${validationIssues.map((issue) => `- ${issue}`).join('\n')}`);
   const stepSeconds = (60 / config.bpm * 4) / config.stepsPerBar;
   const sixteenthSeconds = 60 / config.bpm / 4;
   const sections = [...(config.sections ?? [])].sort((a, b) => a.fromBar - b.fromBar);
@@ -175,6 +280,14 @@ export function createScore<Chord, Section extends string | number>(config: Scor
     clearOverride,
     nextKill,
   };
+}
+
+function chordAtPosition<Chord, Section extends string | number>(config: ScoreConfig<Chord, Section>, position: number) {
+  const bar = Math.floor(position / config.stepsPerBar);
+  const alternate = config.alternateChordSets?.find((set) => bar >= set.fromBar && (set.toBar === undefined || bar < set.toBar));
+  const chordSet = alternate ?? config;
+  const barsPerChord = chordSet.barsPerChord ?? config.barsPerChord ?? 1;
+  return chordSet.chords[Math.floor(bar / barsPerChord) % chordSet.chords.length];
 }
 
 export function lerp(a: number, b: number, t: number) {

@@ -1,12 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { formatEngineDefaultsReport, runSimulationSuite } from './simulation-cli';
+import { formatEngineDefaultsReport, runSimulationSuite, validateLevelAudioConfig } from './simulation-cli';
 import { analyzeOcclusionLevels, formatReports } from './target-occlusion.mjs';
 
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
   const options = parseArgs(argv);
   const { analyzePerformanceLevels, formatPerformanceReports } = await import('./check-perf.mjs');
+  const audioConfigErrors = await validateLevelAudioConfig(options.level, root);
 
   const [result, occlusionReports, perfReports] = await Promise.all([
     runSimulationSuite({
@@ -58,6 +59,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   if (perfFailures.length > 0) {
     failures.push(`Performance check found ${perfFailures.length} failing gate${perfFailures.length === 1 ? '' : 's'}. Run npm run check:perf -- --level ${level.id} for details.`);
   }
+  for (const error of audioConfigErrors) failures.push(`Audio configuration validation failed: ${error}`);
 
   const lines: string[] = [];
   lines.push(`${level.title} floor check`);
@@ -68,6 +70,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   lines.push('');
   lines.push(`target occlusion warnings: ${occlusionWarnings.length}`);
   lines.push(`performance gate failures: ${perfFailures.length}`);
+  lines.push(`audio configuration failures: ${audioConfigErrors.length}`);
   if (failures.length) {
     lines.push('');
     lines.push('Failures:');

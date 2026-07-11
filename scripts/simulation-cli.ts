@@ -266,6 +266,23 @@ export async function runSimulationSuite(options: Partial<CliOptions> & { level:
 
 export const simulationLevels: string[] = [];
 
+export async function validateLevelAudioConfig(levelIdOrAlias: string, rootDir = process.cwd()): Promise<string[]> {
+  installDomStubs();
+  const target = await resolveLevelTarget(levelIdOrAlias, rootDir);
+  const bus = createEventBus();
+  try {
+    const mod = await import(`../src/levels/${target.folder}/audio`);
+    if (typeof mod.createAudio !== 'function') return [`${target.canonical} audio module does not export createAudio`];
+    const audio = mod.createAudio(bus);
+    audio.dispose();
+    return [];
+  } catch (error) {
+    return [error instanceof Error ? error.message : String(error)];
+  } finally {
+    bus.clear();
+  }
+}
+
 async function runSuite(options: CliOptions): Promise<SuiteResult> {
   const simulatedRuns: SimulatedRunResult[] = [];
   for (const policy of options.policies) {

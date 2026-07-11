@@ -52,7 +52,7 @@ npm run check:scope -- <level-id>
 npm run check:floor -- --level <level-id>
 ```
 
-`check:floor` includes simulation, target occlusion, and headless performance gates. Use focused tools such as `simulate`, `snapshot:gameplay`, `trace:audio`, and `check:perf` while investigating a specific problem, but `check:floor` is the level readiness gate.
+`check:floor` includes score/audio configuration validation, simulation, target occlusion, and headless performance gates. Use focused tools such as `simulate`, `snapshot:gameplay`, `trace:audio`, and `check:perf` while investigating a specific problem, but `check:floor` is the level readiness gate.
 
 ## Runner contract
 
