@@ -18,6 +18,7 @@ import {
 } from './common.mjs';
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, measureRunCost } from './ccusage-cost.mjs';
+import { assertBaselineLevelAllowlist, levelIdsFromRegistry, validateBaselineLevelAllowlist } from './entrant-baseline.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -348,6 +349,13 @@ async function validateEligibleControls(definition, materialsCommit, configurati
   if (release.benchmarkVersion !== definition.benchmarkVersion) fail('Eligible release benchmarkVersion does not match the run definition.');
   if (release.materialsCommit !== materialsCommit) fail('Eligible materialsCommit does not match the tagged release.');
   if (release.entrantBaseline?.identifier !== entrantBaseline) fail('Eligible entrantBaseline does not match the tagged release.');
+  const allowlistErrors = validateBaselineLevelAllowlist(release.entrantBaseline?.allowedLevelIds);
+  if (allowlistErrors.length) fail(`Eligible release record has an invalid entrant baseline allowlist:\n${allowlistErrors.map((error) => `- ${error}`).join('\n')}`);
+  const baselineRegistry = await gitShow(entrantBaseline, 'src/levels/index.ts');
+  assertBaselineLevelAllowlist({
+    actualLevelIds: levelIdsFromRegistry(baselineRegistry),
+    allowedLevelIds: release.entrantBaseline.allowedLevelIds,
+  });
   if (!Array.isArray(release.artifacts)) fail('Eligible release record has no artifact list.');
   for (const artifact of [definition.template, definition.assignment.theme, definition.failureTaxonomy]) {
     if (!release.artifacts.some((entry) => entry.path === artifact.path && entry.sha256 === artifact.sha256)) fail(`Eligible artifact ${artifact.path} is not frozen by the release.`);

@@ -37,7 +37,7 @@ Run preparation, eligible generation, blind ranking, and post-unblinding integra
 Do not start an eligible run until all of these exist and agree:
 
 - a frozen release record validated against `benchmark/schemas/freeze.schema.json`;
-- the materials commit and entrant-baseline commit named by that record;
+- the materials commit and entrant-baseline commit named by that record, plus its exact `entrantBaseline.allowedLevelIds` registry allowlist;
 - a private append-only schedule revision containing the assignment, with its hash pinned by the run definition;
 - exactly one assignment selected from that schedule without exposing the other assignments;
 - the assignment's recipe and theme with matching paths and hashes, plus the immutable configuration commit containing its runner, executor, and recipe;
@@ -71,7 +71,7 @@ Private paths are controller storage. Do not expose or mount the parent `benchma
 Follow `benchmark/releases/README.md` in order:
 
 1. Commit final canonical materials and record the materials commit.
-2. Record and verify the frozen entrant-baseline commit used for all opaque worktrees.
+2. Cut, record, and verify the frozen entrant-baseline commit used for all opaque worktrees. Record every permitted registry id in `entrantBaseline.allowedLevelIds`; the eligible runner rejects a baseline whose registry differs. See `benchmark/releases/README.md` for the clean-baseline procedure.
 3. Create and validate the protocol freeze record, commit it, and create the annotated release tag.
 4. Generate the initial private randomized schedule against `benchmark/schemas/run-schedule.schema.json`.
 5. Mechanically verify complete registered-configuration × theme coverage, contiguous schedule positions, unique run/slot/level ids, fixed-length opaque slots, and exact `<theme-id>-<slot-id>` construction. Hash the schedule without printing its contents.
