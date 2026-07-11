@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "benchmarkVersion": "v1",
+  "frozenAt": "2026-07-11T06:59:00.360Z",
+  "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+  "entrantBaseline": {
+    "kind": "git-commit",
+    "identifier": "a7acfa7f253926dab38f6620167dda9644cfa0be",
+    "allowedLevelIds": [
+      "crystal-corridor",
+      "helios",
+      "prism-bloom",
+      "rezdle",
+      "rush"
+    ]
+  },
+  "artifacts": [
+    {
+      "kind": "prompt",
+      "path": "benchmark/prompts/level-assignment.md",
+      "sha256": "128da6eb067e60c41ea29a94c7f8b0af6456d77344ad01b575722c4e8f0384c5"
+    },
+    {
+      "kind": "prompt",
+      "path": "benchmark/prompts/flexible-delegation.md",
+      "sha256": "aed79129e2186ab333616bfa8a8bc235385baae377ca271f3310cd0c9d8cdef9"
+    },
+    {
+      "kind": "theme",
+      "path": "benchmark/themes/hull-run.md",
+      "sha256": "b5545205ce956a0903b7c00eb3f32e026fbd863e35ee7e281da43bfdfd58f1b5"
+    },
+    {
+      "kind": "theme",
+      "path": "benchmark/themes/mass-driver.md",
+      "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+    },
+    {
+      "kind": "theme",
+      "path": "benchmark/themes/skyhook.md",
+      "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+    },
+    {
+      "kind": "controller-runbook",
+      "path": "benchmark/controller/runbook.md",
+      "sha256": "5d1f370ec351e0a96b2d923250689a1b3e8d35c990748dd8b2f34e10786c8506"
+    },
+    {
+      "kind": "controller-admin",
+      "path": "scripts/benchmark/admin.mjs",
+      "sha256": "cde4a58fb77079b3371cccc0205dd2e837fb324266edf2a5dc8f24e36ccea662"
+    },
+    {
+      "kind": "controller-admin",
+      "path": "scripts/benchmark/common.mjs",
+      "sha256": "64c981874f2cd3c56ab70175cf8b365a1f16a48cce4626ce7bf2da1b2c92feb8"
+    },
+    {
+      "kind": "controller-admin",
+      "path": "scripts/benchmark/render-assignment.mjs",
+      "sha256": "b03ce8a5e13594e6270d5c58a4b52967229278e40858d295d561269a140871d8"
+    },
+    {
+      "kind": "decision-rule",
+      "path": "benchmark/controller/failure-taxonomy.md",
+      "sha256": "018fc9b7a198fb5187bcab2b50f661cc86c645108cac74fe943f09b0e7a2e6d0"
+    },
+    {
+      "kind": "schema",
+      "path": "benchmark/schemas/freeze.schema.json",
+      "sha256": "94aa0b5d34a549e81e420f0a4a808f490121c87a8e673f3123d5fb9d7e4bf92e"
+    },
+    {
+      "kind": "schema",
+      "path": "benchmark/schemas/run-schedule.schema.json",
+      "sha256": "830b7145b2ba8d3d17f06068fd95dcd62222940349f6e5abae2efc097ab70a7d"
+    },
+    {
+      "kind": "schema",
+      "path": "benchmark/schemas/run-manifest.schema.json",
+      "sha256": "956f8c1fddea763a66f94c352db522c85bf2744bd17930219d9893d2887ad53d"
+    },
+    {
+      "kind": "schema",
+      "path": "benchmark/schemas/ranked-set.schema.json",
+      "sha256": "da5517d78ded5579901a77158ce238b222e717ec894accc986bc824e5ba44108"
+    },
+    {
+      "kind": "schema",
+      "path": "benchmark/schemas/ranking-snapshot.schema.json",
+      "sha256": "ae81ae2b79b560c432a4a4a3cd40b3885037dd36653c1baf1848b85a45702c34"
+    },
+    {
+      "kind": "schema",
+      "path": "benchmark/schemas/ranking.schema.json",
+      "sha256": "64415a4cf73ae8c3b8e584cbe018eaf132b2fad943623002876e3f76226668f9"
+    }
+  ],
+  "notes": "First personal experiment. Four configurations (claude-fable-5-high, codex-sol-high, claude-fable-5-opus-delegation, codex-sol-terra-delegation) across three themes. Same-provider delegation only. Convenience-over-isolation worktree policy per runbook. Failure taxonomy frozen as-is (draft status label retained; content is the frozen artifact of record)."
+}
