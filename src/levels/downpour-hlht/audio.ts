@@ -24,6 +24,7 @@ function createDownpourAudio(bus: EventBus, trace?: AudioTraceSink) {
   const score = createScore<typeof CHORDS[number], number>({
     bpm: DOWNPOUR_BPM, stepsPerBar: 16, chords: CHORDS, barsPerChord: 2,
     sections: [{ index: 0, fromBar: 0 }, { index: 1, fromBar: 10 }, { index: 2, fromBar: 28 }, { index: 3, fromBar: 36 }],
+    leadSet: (chord) => [...chord.tones, ...chord.tones.map((midi) => midi + 12)],
     killLanes: { 0: KILL_LANE, 1: KILL_LANE, 2: KILL_LANE, 3: KILL_LANE },
   });
   const runtime = createBeatLevelAudio({
