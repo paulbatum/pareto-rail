@@ -19,6 +19,7 @@ import {
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, measureRunCost } from './ccusage-cost.mjs';
 import { assertBaselineLevelAllowlist, levelIdsFromRegistry, validateBaselineLevelAllowlist } from './entrant-baseline.mjs';
+import { manifestErrors } from './results.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -101,7 +102,12 @@ async function main() {
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
-      if (existing) return { renderedPath: path.join(outputDirectory, 'rendered-assignment.md') };
+      const renderedPath = path.join(outputDirectory, 'rendered-assignment.md');
+      if (existing) {
+        const rendered = await fs.readFile(renderedPath, 'utf8');
+        if (sha256(rendered) !== existing.rendering?.sha256) fail('Recorded rendered assignment hash does not match its file.');
+        return { renderedPath };
+      }
       return prepareInputs(definition, materialsCommit, configurationCommit, outputDirectory);
     });
 
@@ -133,6 +139,8 @@ async function main() {
       const launch = await optionalJson(path.join(outputDirectory, 'stage-launch.json'));
       if (launch) {
         if (launch.exitCode === 0) return { exitCode: 0 };
+        const recovery = await optionalJson(path.join(outputDirectory, 'recovery.json'));
+        if (recovery?.policy === 'completed entrant work accepted; normal sealing and gates resumed') return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
         if (options['accept-stage-output'] === 'true') {
           await recordRecovery(outputDirectory, definition, worktree, launch);
           return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
@@ -176,7 +184,7 @@ async function main() {
       if (!passing) return null;
       const existing = await optionalJson(path.join(outputDirectory, 'payload.json'));
       if (existing) {
-        await gitCommit(existing.payloadCommit);
+        await validatePayload(existing, materialsCommit, definition.assignment.levelId);
         return existing;
       }
       const result = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.assignment.levelId, '--path', definition.payload.path, '--branch', definition.payload.branch], ROOT);
@@ -187,7 +195,10 @@ async function main() {
 
     const manifest = await checkpoint(state, statePath, 'manifest', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'manifest.json'));
-      if (existing) return existing;
+      if (existing) {
+        validateManifest(existing, definition, evaluated, payload, gateRecord);
+        return existing;
+      }
       const value = await createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt: state.startedAt });
       await writeJson(path.join(outputDirectory, 'manifest.json'), value);
       return value;
@@ -260,6 +271,24 @@ async function validateEvaluated(evaluated, worktree) {
   if (head !== commit) fail('Recorded evaluated commit does not match the entrant worktree HEAD.');
   const status = (await command('git', ['status', '--porcelain'], worktree.worktree)).stdout.trim();
   if (status) fail('Recorded evaluated worktree is not clean.');
+}
+
+async function validatePayload(payload, materialsCommit, levelId) {
+  const payloadCommit = await gitCommit(payload?.payloadCommit);
+  const levelDirectory = `src/levels/${levelId}/`;
+  const names = (await command('git', ['diff', '--name-only', `${materialsCommit}..${payloadCommit}`], ROOT)).stdout.trim().split('\n').filter(Boolean);
+  if (!names.length || names.some((name) => !name.startsWith(levelDirectory))) fail('Recorded payload does not contain exactly the assigned level directory.');
+}
+
+function validateManifest(manifest, definition, evaluated, payload, gateRecord) {
+  const errors = manifestErrors(manifest);
+  if (errors.length) fail(`Recorded manifest is invalid: ${errors.join('; ')}`);
+  if (manifest.runId !== definition.assignment.runId || manifest.output?.levelId !== definition.assignment.levelId) fail('Recorded manifest identity does not match the run definition.');
+  if (manifest.output?.evaluated?.commit !== evaluated.evaluatedCommit) fail('Recorded manifest evaluated commit does not match evaluated.json.');
+  if (payload && manifest.output?.payload?.commit !== payload.payloadCommit) fail('Recorded manifest payload commit does not match payload.json.');
+  const gates = new Map(gateRecord.gates.map((gate) => [gate.id, gate.status]));
+  for (const gate of manifest.gates) if (gates.get(gate.id) !== gate.status) fail(`Recorded manifest gate ${gate.id} does not match gates.json.`);
+  if (manifest.disposition?.status === 'playable' && (!payload || [...gates.values()].some((status) => status !== 'passed'))) fail('Playable manifest requires a payload and all gates passing.');
 }
 
 async function recordRecovery(outputDirectory, definition, worktree, launch) {
