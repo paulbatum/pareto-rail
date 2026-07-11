@@ -8,7 +8,7 @@ Every level is the same game at its core: the player flies forward automatically
 
 Build a complete level under `src/levels/<id>/` and register it in `src/levels/index.ts`. Within the shared lock-on mechanics you own everything: the rail, the spawn choreography, the enemy kinds and their motion, scoring, the entire visual language (environment, enemies, letter glyphs, effects), and the entire soundtrack and sound design. All of it procedural.
 
-Start from `npm run scaffold -- --id <id>`. Then read `docs/level-authoring.md`, `src/engine/lock-on-runner-types.ts`, and `docs/level-gallery.md`. For quality calibration, read the spine of the level the gallery identifies as the current bar. Full-source reading of other levels is optional depth, not a requirement. Distinctiveness, including what not to resemble, is checked against the gallery.
+Start from `npm run scaffold -- --id <id>`. Then read `docs/level-authoring.md`, `src/engine/lock-on-runner-types.ts`, and `docs/level-gallery.md`. For quality calibration, read the spine of the level the gallery identifies as the current bar. Full-source reading of other levels is optional depth, not a requirement.
 
 ## Theme
 
@@ -46,7 +46,7 @@ Your output will be compared against levels built by other agents from this same
 - **Musicality** — the run feels scored rather than accompanied; downbeats and phrase boundaries mean something on screen, and player actions land inside the music (quantized to the transport, pitched from the live harmony) rather than sitting on top of it as generic SFX. Kills should play notes drawn from the live harmony so a chained volley performs a melodic run — the player is the soloist. See "Musical action audio" in `docs/level-authoring.md`.
 - **Game feel** — locking is tactile, volleys land with weight, a full 6-lock release feels like an event.
 - **Choreography** — waves read as designed moments with build and payoff, not a stream of targets.
-- **Distinctiveness** — the level is recognizable at a glance and by ear as its own thing. Imitating an existing level's visual or musical language is a losing move.
+- **Distinctiveness** — the level is recognizable at a glance and by ear as its own thing.
 
 ## Handoff
 
