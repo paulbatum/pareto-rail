@@ -263,7 +263,9 @@ const eligibleResult = resultFromArtifacts({ directoryName: 'run-a1b2', manifest
 assert.equal(eligibleResult.identity, 'blinded');
 assert.equal(eligibleResult.configuration, null);
 assert.deepEqual(eligibleResult.models, []);
-const recoveredResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest, recovery: { recoveredAt: '2026-01-01T01:00:00.000Z' } });
-assert.equal(recoveredResult.state, 'recovered');
+const recoveredResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest, recovery: { recoveredAt: '2026-01-01T01:00:00.000Z', reason: 'infrastructure-timeout' } });
+assert.equal(recoveredResult.state, 'completed');
+assert.equal(recoveredResult.recovered, true);
+assert.equal(recoveredResult.recoveryReason, 'infrastructure-timeout');
 
 console.log('Benchmark controller tests passed.');

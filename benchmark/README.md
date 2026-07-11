@@ -33,22 +33,49 @@ npm run benchmark:results -- --identity blind
 
 Use `--identity unblind` only when the relevant ranking snapshot has been locked and its mapping opened. `--format csv` is also available, and `--runs <path>` can inspect another run-artifact directory.
 
-## Managing and Cleaning Up Runs
+## Resuming and managing runs
 
-Use `npm run benchmark:manage` to check the current run state and clean up/archive failed or incomplete runs (DNFs, controller failures, etc.) so that they can be retried cleanly from scratch.
+The runner checkpoints inputs, worktree creation, dependency setup, entrant execution, sealing, gates, payload extraction, and manifest generation in `controller-state.json`. Re-running with `--resume` validates existing artifacts and continues at the first unfinished operation:
 
-* **Check status:**
-  ```bash
-  npm run benchmark:manage -- status
-  ```
-* **Archive failed/DNF runs (dry run):**
-  ```bash
-  npm run benchmark:manage -- archive-dnf --dry-run true
-  ```
-* **Archive failed/DNF runs and clean up active worktrees:**
-  ```bash
-  npm run benchmark:manage -- archive-dnf
-  ```
+```bash
+npm run benchmark:run -- --resume benchmark/private/runs/<run-id>
+```
 
-This tool automatically detects failed/DNF/incomplete runs, cleans up their associated git worktrees and branches from `/tmp`, removes their local level folders from the primary repository, restores the level registry (`src/levels/index.ts`), and moves the run directories to `benchmark/private/archive/runs/` to preserve logs and billing details.
+A failed harness exit is not accepted automatically. If infrastructure timed out after the entrant completed its worktree, inspect that condition and explicitly resume normal sealing and gates:
+
+```bash
+npm run benchmark:run -- \
+  --resume benchmark/private/runs/<run-id> \
+  --accept-stage-output true
+```
+
+This records `recovery.json`. Recovery is provenance, not a result disposition: a recovered entrant that passes every gate and produces a valid payload is `playable`.
+
+Management is non-destructive by default:
+
+```bash
+npm run benchmark:manage -- status
+npm run benchmark:manage -- archive-dnf --dry-run true
+npm run benchmark:manage -- archive-dnf
+npm run benchmark:manage -- unarchive --run <run-id>
+```
+
+Archiving moves only the private run record. It never removes entrant or payload worktrees, branches, commits, or source. `prune` removes temporary worktree directories only after an evaluated commit exists, requires the run id twice as confirmation, and preserves the Git branches:
+
+```bash
+npm run benchmark:manage -- prune --run <run-id> --confirm <run-id>
+```
+
+Never remove a level directory or reset the registry in the primary repository as benchmark cleanup.
+
+## Reconstructing an incorrectly cleaned worktree
+
+`benchmark:restore-src` is a last-resort recovery tool for historical runs whose worktrees were destroyed. It replays only successful `Write` and `Edit` operations, uses recorded pre-edit snapshots when shell tooling created a file, and records the rollout hash in `source-recovery.json`.
+
+```bash
+npm run benchmark:restore-src -- <run-directory> --out <destination>
+npm run benchmark:restore-src -- <run-directory> --worktree /tmp/raild-<run-id>
+```
+
+After reconstructing a worktree, regenerate deterministic shell-produced artifacts such as `docs/level-gallery.md`, verify the worktree mechanically, and continue with `benchmark:run -- --resume ... --accept-stage-output true`.
 

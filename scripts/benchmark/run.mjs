@@ -59,75 +59,239 @@ const ADAPTERS = {
   },
 };
 
+const CHECKPOINTS = ['inputs', 'worktree', 'setup', 'stage', 'seal', 'gates', 'payload', 'manifest'];
+
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
   if (options.help) {
-    console.log('Usage: npm run benchmark:run -- --definition <private-run-definition.json> --out <private-run-directory>');
+    console.log(`Usage:
+  npm run benchmark:run -- --definition <definition.json> --out <run-directory>
+  npm run benchmark:run -- --resume <run-directory> [--accept-stage-output true]`);
     return;
   }
   if (rest.length) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'definition', 'out']));
-  const definitionPath = assertPrivateOrExternalPath(requireOption(options, 'definition'), ROOT);
-  const outputDirectory = assertPrivateOrExternalPath(requireOption(options, 'out'), ROOT);
-  await assertAbsent(outputDirectory, 'run output directory');
+  assertOnlyOptions(options, new Set(['help', 'definition', 'out', 'resume', 'accept-stage-output']));
+  const resuming = Boolean(options.resume);
+  if (resuming && (options.definition || options.out)) fail('--resume cannot be combined with --definition or --out.');
+  const outputDirectory = assertPrivateOrExternalPath(resuming ? options.resume : requireOption(options, 'out'), ROOT);
+  const definitionPath = resuming
+    ? path.join(outputDirectory, 'run-definition.json')
+    : assertPrivateOrExternalPath(requireOption(options, 'definition'), ROOT);
+  if (!resuming) await assertAbsent(outputDirectory, 'run output directory');
   const definition = await readJson(definitionPath);
   const errors = validateDefinition(definition);
   if (errors.length) fail(`Invalid run definition:\n${errors.map((error) => `- ${error}`).join('\n')}`);
-  if (path.basename(outputDirectory) !== definition.assignment.runId) fail('--out must end with the assignment runId.');
-  await assertCleanRepository();
-  await fs.mkdir(outputDirectory, { recursive: true });
-  await writeJson(path.join(outputDirectory, 'run-definition.json'), definition);
+  if (path.basename(outputDirectory) !== definition.assignment.runId) fail('Run directory must end with the assignment runId.');
+  if (!resuming) {
+    await assertCleanRepository();
+    await fs.mkdir(outputDirectory, { recursive: true });
+    await writeJson(path.join(outputDirectory, 'run-definition.json'), definition);
+  }
 
-  const startedAt = new Date().toISOString();
+  const statePath = path.join(outputDirectory, 'controller-state.json');
+  const state = await loadControllerState(statePath, definition.assignment.runId, outputDirectory);
   let worktree;
   try {
     const materialsCommit = await gitCommit(definition.baseline.materialsCommit);
     const entrantBaseline = await gitCommit(definition.baseline.entrantBaseline);
     const configurationCommit = await gitCommit(definition.baseline.configurationCommit ?? materialsCommit);
-    const eligibleControls = definition.mode === 'eligible' ? await validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline) : undefined;
-    const inputs = await prepareInputs(definition, materialsCommit, configurationCommit, outputDirectory);
-    const worktreeResult = await command(process.execPath, [ADMIN, 'worktree', '--baseline', entrantBaseline, '--run-id', definition.assignment.runId, '--path', definition.worktree.path], ROOT);
-    worktree = JSON.parse(worktreeResult.stdout);
-    await writeJson(path.join(outputDirectory, 'worktree.json'), worktree);
+    const eligibleControls = definition.mode === 'eligible'
+      ? await validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline, { historicalRunner: resuming })
+      : undefined;
 
-    // Gates never launch a browser; skip puppeteer's Chrome download so npm ci doesn't depend on unzip being installed.
-    const setup = await command('npm', ['ci'], worktree.worktree, { allowFailure: true, env: { PUPPETEER_SKIP_DOWNLOAD: 'true' } });
-    await writeCommandRecord(path.join(outputDirectory, 'setup.json'), ['npm', 'ci'], setup);
-    if (setup.code !== 0) fail(`Dependency provisioning failed; see ${path.join(outputDirectory, 'setup.json')}.`);
+    const inputs = await checkpoint(state, statePath, 'inputs', async () => {
+      const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
+      if (existing) return { renderedPath: path.join(outputDirectory, 'rendered-assignment.md') };
+      return prepareInputs(definition, materialsCommit, configurationCommit, outputDirectory);
+    });
+
+    worktree = await checkpoint(state, statePath, 'worktree', async () => {
+      const existing = await optionalJson(path.join(outputDirectory, 'worktree.json'));
+      if (existing) {
+        await validateWorktree(existing, entrantBaseline);
+        return existing;
+      }
+      const result = await command(process.execPath, [ADMIN, 'worktree', '--baseline', entrantBaseline, '--run-id', definition.assignment.runId, '--path', definition.worktree.path], ROOT);
+      const created = JSON.parse(result.stdout);
+      await writeJson(path.join(outputDirectory, 'worktree.json'), created);
+      return created;
+    });
+
+    await checkpoint(state, statePath, 'setup', async () => {
+      const existing = await optionalJson(path.join(outputDirectory, 'setup.json'));
+      if (existing?.exitCode === 0 && await pathExists(path.join(worktree.worktree, 'node_modules'))) return existing;
+      const setup = await command('npm', ['ci'], worktree.worktree, { allowFailure: true, env: { PUPPETEER_SKIP_DOWNLOAD: 'true' } });
+      const setupPath = existing ? path.join(outputDirectory, 'setup-resume.json') : path.join(outputDirectory, 'setup.json');
+      await writeCommandRecord(setupPath, ['npm', 'ci'], setup);
+      if (setup.code !== 0) fail(`Dependency provisioning failed; see ${setupPath}.`);
+      return { exitCode: setup.code };
+    });
 
     const adapter = ADAPTERS[definition.stage.adapter];
-    const harnessHome = await prepareHarnessHome(adapter, outputDirectory);
-    const executorPath = definition.mode === 'eligible' ? repositoryArtifactPath(definition.executor.path) : adapter.scriptPath;
-    const stageDirectory = path.join(outputDirectory, adapter.stageDir);
-    const stageArgs = [executorPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
-    if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
-    if (definition.delegation && adapter.delegationArgs) stageArgs.push(...adapter.delegationArgs);
-    const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
-    await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
-    if (stage.code !== 0) fail(`${adapter.harnessName} stage failed; see ${path.join(outputDirectory, 'stage-launch.json')}.`);
+    const harnessHome = path.join(outputDirectory, 'harness-home');
+    await checkpoint(state, statePath, 'stage', async () => {
+      const launch = await optionalJson(path.join(outputDirectory, 'stage-launch.json'));
+      if (launch) {
+        if (launch.exitCode === 0) return { exitCode: 0 };
+        if (options['accept-stage-output'] === 'true') {
+          await recordRecovery(outputDirectory, definition, worktree, launch);
+          return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
+        }
+        fail(`The recorded stage failed. Resume with --accept-stage-output true only after verifying that the entrant completed its worktree.`);
+      }
+      await prepareHarnessHome(adapter, outputDirectory);
+      const executorPath = definition.mode === 'eligible' ? repositoryArtifactPath(definition.executor.path) : adapter.scriptPath;
+      const stageDirectory = path.join(outputDirectory, adapter.stageDir);
+      const stageArgs = [executorPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
+      if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
+      if (definition.delegation && adapter.delegationArgs) stageArgs.push(...adapter.delegationArgs);
+      const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
+      await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
+      if (stage.code !== 0) fail(`${adapter.harnessName} stage failed; its worktree and artifacts were preserved for resumption.`);
+      return { exitCode: 0 };
+    });
 
-    const sealed = await command(process.execPath, [ADMIN, 'seal', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId], ROOT);
-    const evaluated = JSON.parse(sealed.stdout);
-    await writeJson(path.join(outputDirectory, 'evaluated.json'), evaluated);
+    const evaluated = await checkpoint(state, statePath, 'seal', async () => {
+      const existing = await optionalJson(path.join(outputDirectory, 'evaluated.json'));
+      if (existing) {
+        await validateEvaluated(existing, worktree);
+        return existing;
+      }
+      const sealed = await command(process.execPath, [ADMIN, 'seal', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId], ROOT);
+      const value = JSON.parse(sealed.stdout);
+      await writeJson(path.join(outputDirectory, 'evaluated.json'), value);
+      return value;
+    });
 
-    const gateDirectory = path.join(outputDirectory, 'gates');
-    await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--out', gateDirectory], ROOT);
-    const gateRecord = await readJson(path.join(gateDirectory, 'gates.json'));
+    const gateRecord = await checkpoint(state, statePath, 'gates', async () => {
+      const existing = await optionalJson(path.join(outputDirectory, 'gates', 'gates.json'));
+      if (existing?.evaluatedCommit === evaluated.evaluatedCommit && existing.gates?.length === 4) return existing;
+      const gateDirectory = path.join(outputDirectory, 'gates');
+      await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--out', gateDirectory], ROOT);
+      return readJson(path.join(gateDirectory, 'gates.json'));
+    });
     const passing = gateRecord.gates.every(({ status }) => status === 'passed');
-    let payload;
-    if (passing) {
-      const payloadResult = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.assignment.levelId, '--path', definition.payload.path, '--branch', definition.payload.branch], ROOT);
-      payload = JSON.parse(payloadResult.stdout);
-      await writeJson(path.join(outputDirectory, 'payload.json'), payload);
-    }
-    const manifest = await createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt });
-    await writeJson(path.join(outputDirectory, 'manifest.json'), manifest);
-    console.log(JSON.stringify({ runId: definition.assignment.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null }));
+
+    const payload = await checkpoint(state, statePath, 'payload', async () => {
+      if (!passing) return null;
+      const existing = await optionalJson(path.join(outputDirectory, 'payload.json'));
+      if (existing) {
+        await gitCommit(existing.payloadCommit);
+        return existing;
+      }
+      const result = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.assignment.levelId, '--path', definition.payload.path, '--branch', definition.payload.branch], ROOT);
+      const value = JSON.parse(result.stdout);
+      await writeJson(path.join(outputDirectory, 'payload.json'), value);
+      return value;
+    });
+
+    const manifest = await checkpoint(state, statePath, 'manifest', async () => {
+      const existing = await optionalJson(path.join(outputDirectory, 'manifest.json'));
+      if (existing) return existing;
+      const value = await createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt: state.startedAt });
+      await writeJson(path.join(outputDirectory, 'manifest.json'), value);
+      return value;
+    });
+    console.log(JSON.stringify({ runId: definition.assignment.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null, resumed: resuming }));
     if (!passing) process.exitCode = 2;
   } catch (error) {
-    await writeJson(path.join(outputDirectory, 'controller-failure.json'), { failedAt: new Date().toISOString(), message: error instanceof Error ? error.message : String(error), worktree });
+    await appendControllerFailure(outputDirectory, error, worktree, state.currentCheckpoint);
     throw error;
   }
+}
+
+async function loadControllerState(statePath, runId, outputDirectory) {
+  const existing = await optionalJson(statePath);
+  if (existing) return existing;
+  const setup = await optionalJson(path.join(outputDirectory, 'setup.json'));
+  const state = {
+    schemaVersion: 1,
+    runId,
+    startedAt: setup?.startedAt ?? new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    currentCheckpoint: null,
+    checkpoints: {},
+  };
+  await writeJson(statePath, state);
+  return state;
+}
+
+async function checkpoint(state, statePath, id, action) {
+  if (!CHECKPOINTS.includes(id)) fail(`Unknown checkpoint: ${id}`);
+  state.currentCheckpoint = id;
+  state.updatedAt = new Date().toISOString();
+  state.checkpoints[id] = { status: 'running', startedAt: new Date().toISOString() };
+  await writeJson(statePath, state);
+  try {
+    const value = await action();
+    state.checkpoints[id] = { ...state.checkpoints[id], status: 'completed', finishedAt: new Date().toISOString() };
+    state.currentCheckpoint = null;
+    state.updatedAt = new Date().toISOString();
+    await writeJson(statePath, state);
+    return value;
+  } catch (error) {
+    state.checkpoints[id] = { ...state.checkpoints[id], status: 'failed', finishedAt: new Date().toISOString(), error: error instanceof Error ? error.message : String(error) };
+    state.updatedAt = new Date().toISOString();
+    await writeJson(statePath, state);
+    throw error;
+  }
+}
+
+async function optionalJson(filePath) {
+  try { return JSON.parse(await fs.readFile(filePath, 'utf8')); }
+  catch (error) { if (error?.code === 'ENOENT') return null; throw error; }
+}
+
+async function pathExists(filePath) {
+  try { await fs.lstat(filePath); return true; }
+  catch (error) { if (error?.code === 'ENOENT') return false; throw error; }
+}
+
+async function validateWorktree(worktree, baseline) {
+  if (!worktree?.worktree) fail('worktree.json has no worktree path.');
+  const inside = (await command('git', ['rev-parse', '--is-inside-work-tree'], worktree.worktree)).stdout.trim();
+  if (inside !== 'true') fail(`Recorded entrant worktree is unavailable: ${worktree.worktree}`);
+  await gitCommit(baseline);
+}
+
+async function validateEvaluated(evaluated, worktree) {
+  const commit = await gitCommit(evaluated?.evaluatedCommit);
+  const head = (await command('git', ['rev-parse', 'HEAD'], worktree.worktree)).stdout.trim();
+  if (head !== commit) fail('Recorded evaluated commit does not match the entrant worktree HEAD.');
+  const status = (await command('git', ['status', '--porcelain'], worktree.worktree)).stdout.trim();
+  if (status) fail('Recorded evaluated worktree is not clean.');
+}
+
+async function recordRecovery(outputDirectory, definition, worktree, launch) {
+  const existing = await optionalJson(path.join(outputDirectory, 'recovery.json'));
+  if (existing) return existing;
+  const status = (await command('git', ['status', '--porcelain'], worktree.worktree)).stdout;
+  const record = {
+    schemaVersion: 1,
+    recoveredAt: new Date().toISOString(),
+    reason: 'infrastructure-timeout-after-completed-worktree',
+    policy: 'completed entrant work accepted; normal sealing and gates resumed',
+    originalStageExitCode: launch.exitCode,
+    entrantBaseline: definition.baseline.entrantBaseline,
+    worktree: worktree.worktree,
+    reconstructedTreeStatusSha256: sha256(status),
+  };
+  await writeJson(path.join(outputDirectory, 'recovery.json'), record);
+  return record;
+}
+
+async function appendControllerFailure(outputDirectory, error, worktree, checkpointId) {
+  const failure = {
+    failedAt: new Date().toISOString(),
+    checkpoint: checkpointId ?? null,
+    message: error instanceof Error ? error.message : String(error),
+    worktree,
+  };
+  const historyPath = path.join(outputDirectory, 'controller-failures.json');
+  const history = await optionalJson(historyPath) ?? { schemaVersion: 1, failures: [] };
+  history.failures.push(failure);
+  await writeJson(historyPath, history);
+  await writeJson(path.join(outputDirectory, 'controller-failure.json'), failure);
 }
 
 export function validateDefinition(value) {
@@ -222,9 +386,10 @@ async function prepareHarnessHome(adapter, outputDirectory) {
 
 async function createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
   const adapter = ADAPTERS[definition.stage.adapter];
-  const [usage, commandRecord, controller, recipe, theme, renderedMeta, eventLog] = await Promise.all([
-    readJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json')),
+  const [usage, commandRecord, stageLaunch, controller, recipe, theme, renderedMeta, eventLog] = await Promise.all([
+    loadStageUsage(outputDirectory, adapter, definition),
     readJson(path.join(outputDirectory, adapter.stageDir, 'command.json')),
+    readJson(path.join(outputDirectory, 'stage-launch.json')),
     artifactFromCommit(materialsCommit, { path: RUNBOOK, sha256: await hashFromCommit(materialsCommit, RUNBOOK) }),
     artifactFromCommit(configurationCommit, definition.assignment.recipe),
     artifactFromCommit(materialsCommit, definition.assignment.theme),
@@ -239,7 +404,8 @@ async function createManifest({ definition, materialsCommit, configurationCommit
   const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
   const runnerArtifact = definition.mode === 'eligible' ? definition.runner : await currentArtifact('scripts/benchmark/run.mjs');
   const executorArtifact = definition.mode === 'eligible' ? definition.executor : await currentArtifact(path.relative(ROOT, adapter.scriptPath));
-  const stages = buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog) });
+  const stageResult = stageLaunch.exitCode === 0 ? 'completed' : (commandRecord.timedOut ? 'timed-out' : 'failed');
+  const stages = buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult });
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -287,12 +453,12 @@ async function createManifest({ definition, materialsCommit, configurationCommit
 // init event) as `orchestrate`, the rest as `implement`. When per-model cost is unavailable (Codex),
 // the run collapses to a single stage carrying the run total. All stages share the one invocation's
 // session id, harness version, and wall-clock boundaries; the prompt hashes attach to the parent.
-function buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256 }) {
+function buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed' }) {
   const harness = { name: adapter.harnessName, version: commandRecord.cliVersion };
   const timing = { startedAt: commandRecord.startedAt, finishedAt: commandRecord.finishedAt, wallTimeSeconds: commandRecord.wallTimeSeconds };
   const promptSha256 = renderedMeta.rendering.sha256;
   const delegationPromptSha256 = renderedMeta.delegation?.sha256;
-  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: 'completed' };
+  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult };
   const delegated = Boolean(definition.delegation) && cost.models.length > 1;
 
   if (cost.perModelCostAvailable && cost.models.length >= 1) {
@@ -334,13 +500,28 @@ function stageUsage({ inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, ca
   };
 }
 
+async function loadStageUsage(outputDirectory, adapter, definition) {
+  const recorded = await optionalJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json'));
+  if (recorded) return recorded;
+  const eventSource = await fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8');
+  for (const line of eventSource.split('\n')) {
+    if (!line.trim()) continue;
+    const event = JSON.parse(line);
+    if (event.type === 'system' && event.subtype === 'init') {
+      return { sessionId: event.session_id, initResolvedModel: event.model ?? definition.stage.model };
+    }
+    if (event.type === 'thread.started') return { sessionId: event.thread_id, initResolvedModel: definition.stage.model };
+  }
+  fail('Could not recover the stage session identity from its event log.');
+}
+
 async function artifactFromCommit(commit, artifact) {
   const source = await gitShow(commit, artifact.path);
   if (sha256(source) !== artifact.sha256) fail(`Artifact hash mismatch for ${artifact.path} at declared commit.`);
   return source;
 }
 
-async function validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline) {
+async function validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline, { historicalRunner = false } = {}) {
   const releasePath = definition.release.path;
   const releaseSource = await gitShow(`benchmark-${definition.benchmarkVersion}`, releasePath);
   if (sha256(releaseSource) !== definition.release.sha256) fail('Eligible release record does not match its benchmark tag.');
@@ -360,10 +541,10 @@ async function validateEligibleControls(definition, materialsCommit, configurati
   for (const artifact of [definition.template, definition.assignment.theme, definition.failureTaxonomy]) {
     if (!release.artifacts.some((entry) => entry.path === artifact.path && entry.sha256 === artifact.sha256)) fail(`Eligible artifact ${artifact.path} is not frozen by the release.`);
   }
-  for (const sharedPath of SHARED_CONTROLLER_PATHS) await verifyProtocolCode(release, materialsCommit, sharedPath);
+  for (const sharedPath of SHARED_CONTROLLER_PATHS) await verifyProtocolCode(release, materialsCommit, sharedPath, { historicalRunner });
   if (definition.runner.path !== 'scripts/benchmark/run.mjs') fail('Eligible runner path must be scripts/benchmark/run.mjs.');
-  await verifyConfigurationCode(configurationCommit, definition.runner, 'runner', fileURLToPath(import.meta.url));
-  await verifyConfigurationCode(configurationCommit, definition.executor, 'executor');
+  await verifyConfigurationCode(configurationCommit, definition.runner, 'runner', fileURLToPath(import.meta.url), { historicalRunner });
+  await verifyConfigurationCode(configurationCommit, definition.executor, 'executor', undefined, { historicalRunner });
 
   const schedulePath = assertPrivateOrExternalPath(definition.schedule.path, ROOT);
   const scheduleSource = await fs.readFile(schedulePath, 'utf8');
@@ -392,20 +573,24 @@ function sameAssignment(left, right) {
     && sameArtifact(left.theme, right.theme);
 }
 
-async function verifyConfigurationCode(configurationCommit, artifact, label, executingPath = repositoryArtifactPath(artifact.path)) {
+async function verifyConfigurationCode(configurationCommit, artifact, label, executingPath = repositoryArtifactPath(artifact.path), { historicalRunner = false } = {}) {
   const frozenSource = await gitShow(configurationCommit, artifact.path);
   if (sha256(frozenSource) !== artifact.sha256) fail(`Eligible ${label} does not match the configuration commit.`);
-  const currentSource = await fs.readFile(executingPath, 'utf8');
-  if (sha256(currentSource) !== artifact.sha256) fail(`The executing configuration ${label} differs from its registered artifact.`);
+  if (!historicalRunner) {
+    const currentSource = await fs.readFile(executingPath, 'utf8');
+    if (sha256(currentSource) !== artifact.sha256) fail(`The executing configuration ${label} differs from its registered artifact.`);
+  }
 }
 
-async function verifyProtocolCode(release, materialsCommit, relativePath) {
+async function verifyProtocolCode(release, materialsCommit, relativePath, { historicalRunner = false } = {}) {
   const frozenSource = await gitShow(materialsCommit, relativePath);
   const frozenHash = sha256(frozenSource);
   const artifact = release.artifacts.find((entry) => entry.kind === 'controller-admin' && entry.path === relativePath);
   if (!artifact || artifact.sha256 !== frozenHash) fail(`The tagged release does not freeze shared controller component ${relativePath}.`);
-  const currentHash = sha256(await fs.readFile(repositoryArtifactPath(relativePath), 'utf8'));
-  if (currentHash !== frozenHash) fail(`Shared controller component ${relativePath} differs from the protocol release.`);
+  if (!historicalRunner) {
+    const currentHash = sha256(await fs.readFile(repositoryArtifactPath(relativePath), 'utf8'));
+    if (currentHash !== frozenHash) fail(`Shared controller component ${relativePath} differs from the protocol release.`);
+  }
 }
 
 function repositoryArtifactPath(relativePath) {

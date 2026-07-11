@@ -27,6 +27,7 @@
     "benchmark:run": "node scripts/benchmark/run.mjs",
     "benchmark:results": "node scripts/benchmark/results.mjs",
     "benchmark:manage": "node scripts/benchmark/manage-run.mjs",
+    "benchmark:restore-src": "node scripts/benchmark/restore-src.mjs",
     "benchmark:catalog": "node scripts/benchmark/catalog.mjs",
     "benchmark:thumbnails": "node scripts/benchmark/generate-thumbnails.mjs",
     "test:benchmark-catalog": "node scripts/benchmark/test-catalog.mjs",

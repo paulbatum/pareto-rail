@@ -26,7 +26,7 @@ The output directory must be private or external to the repository and outside t
 
 ## Single-run rehearsal controller
 
-`npm run benchmark:run` executes one private run definition end-to-end. It is intended first for an explicitly ineligible rehearsal, not a one-cell eligible experiment. The definition pins commits, assignment artifacts, worktree and payload locations, the stage settings, and — for a delegation configuration — the `delegation` block (addendum artifact, delegate model, delegate effort). The controller verifies every supplied artifact against the materials commit, requires a clean controller repository, renders the prompt privately (appending the delegation addendum when present), runs `npm ci`, launches the declared stage in an isolated per-run harness home, seals, gates, extracts a passing payload, measures cost with ccusage against that home, and writes either a private manifest or a controller-failure record.
+`npm run benchmark:run` executes one private run definition as a resumable sequence. The definition pins commits, assignment artifacts, worktree and payload locations, the stage settings, and — for a delegation configuration — the `delegation` block (addendum artifact, delegate model, delegate effort). The controller verifies every supplied artifact against the materials commit, requires a clean controller repository for a new run, renders the prompt privately, runs `npm ci`, launches the declared stage in an isolated per-run harness home, seals, gates, extracts a passing payload, measures cost with ccusage, and writes a private manifest. Each operation is checkpointed; failures preserve all prior artifacts and the entrant worktree.
 
 ```sh
 npm run benchmark:run -- \
@@ -61,6 +61,22 @@ npm run benchmark:run -- \
 ```
 
 Do not inspect entrant source or logs while it runs. When it finishes, inspect only its controller result and private manifest, then follow the rehearsal checklist in `benchmark/controller/runbook.md` for playable deployment, ranking-record validation, and cost reconciliation.
+
+Resume an interrupted controller without repeating completed work:
+
+```sh
+npm run benchmark:run -- --resume benchmark/private/runs/<opaque-run-id>
+```
+
+If a harness process timed out after leaving completed work, operator classification may explicitly accept that worktree and resume sealing. The resulting recovery record is audit provenance and does not demote a gate-passing playable result:
+
+```sh
+npm run benchmark:run -- \
+  --resume benchmark/private/runs/<opaque-run-id> \
+  --accept-stage-output true
+```
+
+Never delete an entrant worktree merely because the controller or harness failed. See `benchmark/README.md` for non-destructive archive, unarchive, and explicit prune commands.
 
 Its required shape is:
 

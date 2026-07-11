@@ -63,7 +63,9 @@ export async function readJson(filePath) {
 
 export async function writeJson(filePath, value) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  const temporaryPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  await fs.rename(temporaryPath, filePath);
 }
 
 export function sha256(value) {

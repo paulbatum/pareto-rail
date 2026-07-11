@@ -38,11 +38,11 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
   const configuration = manifest?.configuration?.id ?? definition?.assignment?.configurationId ?? null;
 
   let state = 'incomplete';
-  if (recovery) state = 'recovered';
-  else if (failedGates.length) state = 'gate-failed';
+  if (failedGates.length) state = 'gate-failed';
   else if (manifest?.disposition?.status === 'dnf') state = 'dnf';
-  else if (manifest?.disposition?.status === 'controller-failure' || failure) state = 'controller-failure';
+  else if (manifest?.disposition?.status === 'controller-failure') state = 'controller-failure';
   else if (manifest) state = 'completed';
+  else if (failure) state = 'controller-failure';
 
   return {
     runId: manifest?.runId ?? definition?.assignment?.runId ?? directoryName,
@@ -64,6 +64,7 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
     evaluatedCommit: manifest?.output?.evaluated?.commit ?? gates?.evaluatedCommit ?? null,
     payloadCommit: manifest?.output?.payload?.commit ?? null,
     recovered: Boolean(recovery),
+    recoveryReason: recovery?.reason ?? null,
     manifestState: !manifest ? 'missing' : (errors.length ? 'invalid' : 'complete'),
     manifestErrors: errors,
   };

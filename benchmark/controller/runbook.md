@@ -124,6 +124,8 @@ For each stage in recipe order:
 
 Do not retry a model error, extend a timeout, add a fix-it prompt, or ask the operator what to do. A continuation is allowed only when it is already a recipe stage. Classify infrastructure failures using the frozen failure taxonomy; when the taxonomy does not cover a failure, stop rather than inventing a favorable classification.
 
+Controller operations are checkpoints. Persist each completed operation atomically and validate it before skipping it on resume. A controller interruption must preserve the entrant worktree, branch, stage artifacts, and every completed checkpoint. A harness timeout does not by itself prove the entrant work is incomplete: when an operator classifies the worktree as completed, record that recovery decision and continue with the unchanged sealing and gate procedure. Recovery provenance is orthogonal to disposition; passing normal gates and payload validation still yields a playable run.
+
 The coding agent follows the repository's normal workflow. It may scaffold, register the level, regenerate the gallery, inspect the game, and commit as directed by repository instructions. Do not tell it to create benchmark manifests, payloads, deployments, or anonymization records.
 
 ### 5. Seal the evaluated commit
@@ -166,7 +168,7 @@ Only passing entrants enter the merge set. Create an opaque payload branch from 
 
 Payload derivation is deterministic administration, not a model revision. Do not rerun creative stages. The exact evaluated commit remains the source for blind play because it contains the registry and gallery state exercised by the gates.
 
-For a DNF, preserve the evaluated commit and do not create a mergeable passing payload. A diagnostic extraction, if ever needed, must not be confused with the passing merge set.
+For a DNF, preserve the evaluated commit and do not create a mergeable passing payload. A diagnostic extraction, if ever needed, must not be confused with the passing merge set. Archiving a DNF moves only its private controller record; it must not remove its worktree, branch, commit, or source. Destructive pruning is a separate confirmed operation and is forbidden until an evaluated commit is durable.
 
 ### 8. Finalize the private manifest
 
