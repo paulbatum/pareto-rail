@@ -8,6 +8,7 @@ export interface LevelMetadata {
 }
 
 export const levelMetadatas: LevelMetadata[] = [
+  { id: 'mass-driver-bczy', title: 'Mass Driver' },
   { id: 'crystal-corridor', title: 'Crystal Corridor', aliases: ['crystal'] },
   { id: 'helios', title: 'Helios' },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'] },
@@ -27,6 +28,8 @@ export async function getLevelById(id: string | null): Promise<LevelDefinition> 
   const matched = levelMetadatas.find((level) => level.id === id || level.aliases?.includes(id ?? '')) ?? levelMetadatas[0];
 
   switch (matched.id) {
+    case 'mass-driver-bczy':
+      return (await import('./mass-driver-bczy')).massDriverBczyLevel;
     case 'crystal-corridor':
       return (await import('./crystal')).crystalCorridorLevel;
     case 'helios':
