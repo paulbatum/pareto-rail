@@ -38,18 +38,27 @@ export function createPauseMenu(options: PauseMenuOptions) {
     fullscreen.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
   };
 
+  const onMusic = () => options.onMusicVolume(Number(music.value));
+  const onSfx = () => options.onSfxVolume(Number(sfx.value));
+  const onBloom = () => options.onBloom(Number(bloom.value));
+  const onMotionBlur = () => options.onMotionBlur(Number(motionBlur.value));
   resume.addEventListener('click', options.onResume);
   fullscreen.addEventListener('click', options.onFullscreen);
   document.addEventListener('fullscreenchange', updateFullscreenText);
-  music.addEventListener('input', () => options.onMusicVolume(Number(music.value)));
-  sfx.addEventListener('input', () => options.onSfxVolume(Number(sfx.value)));
-  bloom.addEventListener('input', () => options.onBloom(Number(bloom.value)));
-  motionBlur.addEventListener('input', () => options.onMotionBlur(Number(motionBlur.value)));
+  music.addEventListener('input', onMusic); sfx.addEventListener('input', onSfx);
+  bloom.addEventListener('input', onBloom); motionBlur.addEventListener('input', onMotionBlur);
 
   return {
     setPaused(paused: boolean) {
       overlay.classList.toggle('hidden', !paused);
       if (paused) resume.focus();
+    },
+    dispose() {
+      resume.removeEventListener('click', options.onResume);
+      fullscreen.removeEventListener('click', options.onFullscreen);
+      document.removeEventListener('fullscreenchange', updateFullscreenText);
+      music.removeEventListener('input', onMusic); sfx.removeEventListener('input', onSfx);
+      bloom.removeEventListener('input', onBloom); motionBlur.removeEventListener('input', onMotionBlur);
     },
   };
 }

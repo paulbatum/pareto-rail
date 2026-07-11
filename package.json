@@ -26,7 +26,11 @@
     "benchmark:claude": "node scripts/benchmark/claude-cli.mjs",
     "benchmark:run": "node scripts/benchmark/run.mjs",
     "benchmark:results": "node scripts/benchmark/results.mjs",
+    "benchmark:catalog": "node scripts/benchmark/catalog.mjs",
+    "benchmark:thumbnails": "node scripts/benchmark/generate-thumbnails.mjs",
+    "test:benchmark-catalog": "node scripts/benchmark/test-catalog.mjs",
     "test:benchmark-controller": "node scripts/benchmark/test.mjs",
+    "test:benchmark-domain": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs src/benchmark/domain.test.ts",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",
     "sim:crystal-debug:verbose": "node scripts/run-crystal-debug-sim.mjs --verbose"
   },

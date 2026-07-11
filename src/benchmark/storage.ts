@@ -1,0 +1,142 @@
+import type { ComparisonState, MatchupVote, RevealPayload } from './types';
+
+export const BENCHMARK_STORAGE_KEY = 'pareto-rail-benchmark';
+export const BENCHMARK_STORAGE_VERSION = 1;
+
+export interface CompletedMatchup {
+  matchupId: string;
+  vote: MatchupVote;
+  reveal: RevealPayload;
+}
+
+export interface LocalBenchmarkData {
+  participantId: string;
+  unfinishedMatchup?: ComparisonState;
+  completedMatchups: CompletedMatchup[];
+  /** Raw votes are retained so display ratings can be recomputed later. */
+  history: MatchupVote[];
+  themeHistory: string[];
+  revealedEntrants: RevealPayload['a'][];
+}
+
+export interface StorageEnvelope {
+  version: number;
+  data: LocalBenchmarkData;
+}
+
+export interface KeyValueStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem?(key: string): void;
+}
+
+const emptyData = (participantId: string): LocalBenchmarkData => ({
+  participantId,
+  completedMatchups: [],
+  history: [],
+  themeHistory: [],
+  revealedEntrants: [],
+});
+
+function randomParticipantId(): string {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi?.randomUUID) return cryptoApi.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (cryptoApi?.getRandomValues) cryptoApi.getRandomValues(bytes);
+  else for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function isData(value: unknown): value is LocalBenchmarkData {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as Partial<LocalBenchmarkData>;
+  return typeof data.participantId === 'string' && Array.isArray(data.completedMatchups)
+    && Array.isArray(data.history) && Array.isArray(data.themeHistory) && Array.isArray(data.revealedEntrants);
+}
+
+/** Versioned, corruption-tolerant local persistence. Storage failures (for
+ * example private browsing quota errors) leave the in-memory state usable. */
+export class BenchmarkLocalStore {
+  private readonly storage: KeyValueStorage;
+  private data: LocalBenchmarkData;
+
+  constructor(storage?: KeyValueStorage, key = BENCHMARK_STORAGE_KEY) {
+    this.storage = storage ?? (typeof localStorage !== 'undefined' ? localStorage : new MemoryStorage());
+    this.key = key;
+    this.data = this.read();
+  }
+
+  private readonly key: string;
+
+  private read(): LocalBenchmarkData {
+    let raw: string | null = null;
+    try { raw = this.storage.getItem(this.key); } catch { /* inaccessible storage */ }
+    if (!raw) return emptyData(randomParticipantId());
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && (parsed as StorageEnvelope).version === BENCHMARK_STORAGE_VERSION && isData((parsed as StorageEnvelope).data)) {
+        return this.normalize((parsed as StorageEnvelope).data);
+      }
+      const legacy = parsed && typeof parsed === 'object' && 'data' in parsed ? (parsed as { data?: unknown }).data : parsed;
+      if (isData(legacy)) return this.normalize(legacy);
+      // v0 was an unwrapped data object. Migrate the useful fields if present.
+      if (parsed && typeof parsed === 'object') {
+        const candidate = parsed as Partial<LocalBenchmarkData> & { votes?: MatchupVote[]; unfinished?: ComparisonState };
+        if (typeof candidate.participantId === 'string') {
+          return this.normalize({
+            participantId: candidate.participantId,
+            unfinishedMatchup: candidate.unfinishedMatchup ?? candidate.unfinished,
+            completedMatchups: candidate.completedMatchups ?? [],
+            history: candidate.history ?? candidate.votes ?? [],
+            themeHistory: candidate.themeHistory ?? [],
+            revealedEntrants: candidate.revealedEntrants ?? [],
+          });
+        }
+      }
+    } catch { /* recover below */ }
+    return emptyData(randomParticipantId());
+  }
+
+  private normalize(data: LocalBenchmarkData): LocalBenchmarkData {
+    return {
+      participantId: data.participantId || randomParticipantId(),
+      unfinishedMatchup: data.unfinishedMatchup,
+      completedMatchups: [...data.completedMatchups],
+      history: [...data.history],
+      themeHistory: [...data.themeHistory],
+      revealedEntrants: [...data.revealedEntrants],
+    };
+  }
+
+  get snapshot(): LocalBenchmarkData { return this.normalize(this.data); }
+  get participantId(): string { return this.data.participantId; }
+
+  save(data: Partial<LocalBenchmarkData>): LocalBenchmarkData {
+    this.data = this.normalize({ ...this.data, ...data });
+    const envelope: StorageEnvelope = { version: BENCHMARK_STORAGE_VERSION, data: this.data };
+    try { this.storage.setItem(this.key, JSON.stringify(envelope)); } catch { /* memory remains authoritative */ }
+    return this.snapshot;
+  }
+
+  setUnfinishedMatchup(state: ComparisonState | undefined): LocalBenchmarkData { return this.save({ unfinishedMatchup: state }); }
+  completeMatchup(completed: CompletedMatchup): LocalBenchmarkData {
+    const existing = this.data.completedMatchups.filter((item) => item.matchupId !== completed.matchupId);
+    const revealed = [...this.data.revealedEntrants, completed.reveal.a, completed.reveal.b]
+      .filter((entrant, index, all) => all.findIndex((other) => other.entrantId === entrant.entrantId) === index);
+    return this.save({ completedMatchups: [...existing, completed], history: [...this.data.history.filter((item) => item.matchupId !== completed.matchupId), completed.vote], revealedEntrants: revealed, unfinishedMatchup: undefined });
+  }
+
+  clear(): void {
+    this.data = emptyData(randomParticipantId());
+    try { this.storage.removeItem?.(this.key); } catch { /* ignore */ }
+  }
+}
+
+class MemoryStorage implements KeyValueStorage {
+  private values = new Map<string, string>();
+  getItem(key: string): string | null { return this.values.get(key) ?? null; }
+  setItem(key: string, value: string): void { this.values.set(key, value); }
+  removeItem(key: string): void { this.values.delete(key); }
+}
+
+export function createMemoryStorage(): KeyValueStorage { return new MemoryStorage(); }

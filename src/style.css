@@ -28,6 +28,18 @@ body {
   cursor: none; /* the in-world reticle is the cursor */
 }
 
+.hud-left { display: grid; gap: 8px; min-width: 140px; }
+.hud-hull .hud-value { display: flex; gap: 5px; min-height: 22px; align-items: center; }
+.hull-pip { transition: color 120ms ease, opacity 120ms ease, text-shadow 120ms ease; }
+.hull-pip.filled { color: #46e8ff; opacity: 1; text-shadow: 0 0 10px rgb(70 232 255 / 80%); }
+.hull-pip.empty { color: #526270; opacity: .48; text-shadow: none; }
+.damage-flash { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, transparent 32%, rgb(255 36 64 / 36%) 100%); mix-blend-mode: screen; }
+.damage-flash-pop { animation: damage-flash 350ms ease-out; }
+@keyframes damage-flash { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+.death-status { margin: 0 0 8px; color: #ff4964; font-size: 13px; text-shadow: 0 0 14px rgb(255 73 100 / 70%); }
+.end-screen .end-panel.died { border-color: rgb(255 73 100 / 65%); box-shadow: 0 0 45px rgb(255 73 100 / 22%), inset 0 0 60px rgb(255 73 100 / 10%); }
+.end-screen .end-panel.died .rank { background: none; -webkit-background-clip: initial; background-clip: initial; color: #ff4964; filter: drop-shadow(0 0 18px rgb(255 73 100 / 45%)); }
+
 #app {
   position: fixed;
   inset: 0;

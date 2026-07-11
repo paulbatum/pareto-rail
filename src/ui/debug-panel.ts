@@ -70,7 +70,7 @@ const DEFAULT_PRESET: TimingPreset = {
 };
 
 export function installDebugPanel(level: DebugPanelLevel) {
-  if (!import.meta.env.DEV) return;
+  if (!import.meta.env.DEV) return undefined;
 
   const thirtysecondSeconds = 60 / level.bpm / 8;
   const panel = document.createElement('details');
@@ -177,6 +177,7 @@ export function installDebugPanel(level: DebugPanelLevel) {
   splitInput.addEventListener('input', apply);
   growthInput.addEventListener('input', apply);
   initializeFromStore();
+  return { dispose: () => panel.remove() };
 }
 
 function createCameraSection() {

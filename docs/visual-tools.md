@@ -95,6 +95,38 @@ Sheet resolution is controlled by the thumbnail layout, not by the raw render si
 
 For example, the default 4-thumbnail sheet is `664x432`: two 320-pixel-wide thumbnails per row, 180-pixel thumbnail height from the 16:9 render aspect, a 24-pixel label strip, and 8-pixel gutters.
 
+### Deterministic benchmark cards
+
+Benchmark comparison cards use a fixed four-frame policy rather than a visual
+reviewer's ad-hoc capture:
+
+```sh
+npm run benchmark:thumbnails -- \
+  --level downpour-hlht --entrant entrant-a --dry-run
+```
+
+Remove `--dry-run` to render. The command delegates to `gameplay-snapshot` with
+seed `424242`, four evenly spaced run-time centers, immortal mode, hidden
+projectiles, `1280x720` source frames, `320px` thumbnails, four columns, and
+the `auto` fidelity policy (falling back through `full`, `postless`, then
+`flat`). It records the actually resolved fidelity for each frame and the
+aggregate fidelity. The command writes `<opaque-entrant-id>.png` plus a JSON
+manifest containing the resolved times, output dimensions, SHA-256, and the
+snapshot-script hash. The filename intentionally contains no model or
+workflow identity. If Chrome/WebGPU is unavailable, keep a development
+fixture's thumbnail status as `placeholder`; never claim a placeholder is an
+actual production asset.
+
+Catalog projections and hard production checks are built separately:
+
+```sh
+npm run benchmark:catalog -- build --source benchmark/public/fixtures/downpour-rehearsal.json \
+  --out /tmp/raild-catalog --mode development --fixture
+```
+
+See `benchmark/public/README.md` for the pre-vote/reveal boundary and the
+production rejection rules.
+
 ## Target occlusion check
 
 Use the target occlusion check to catch scenery or other large meshes blocking lockable target centers during an automated run:

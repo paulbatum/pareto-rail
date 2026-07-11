@@ -133,8 +133,8 @@ export function createHud(options: HudOptions = {}) {
   };
 }
 
-export function showUnsupported(message = 'This game requires WebGPU') {
-  document.body.innerHTML = `
+export function showUnsupported(message = 'This game requires WebGPU', host: HTMLElement = document.body) {
+  host.innerHTML = `
     <div class="unsupported">
       <div class="unsupported-panel">
         <h1>${message}</h1>
