@@ -19,3 +19,16 @@ The controller follows `benchmark/controller/runbook.md`; coding agents do not r
 Each run receives a four-character opaque slot and a globally unique level id such as `theme-a44f`. The agent develops normally in an opaque worktree, including temporary registry and gallery edits. After gates run, the controller derives a clean payload commit containing only `src/levels/<level-id>/`. Passing payloads remain separate through blind ranking, then merge into `main`; one post-unblinding integration commit registers all merged levels and regenerates the gallery.
 
 Author benchmark materials at stable paths without `v1` or `v2` suffixes. A version exists only when `benchmark/releases/<version>/freeze.json` and its matching `benchmark-<version>` Git tag are created. See `benchmark/releases/README.md`.
+
+## Inspecting run results
+
+Use `npm run benchmark:results` to summarize records under `benchmark/private/runs`. The table reports lifecycle state, gates, stage and controller elapsed time, cost, and manifest completeness without parsing entrant prose or raw logs. Rehearsal identities are visible by default; eligible benchmark identities remain blind by default.
+
+```bash
+npm run benchmark:results
+npm run benchmark:results -- --version rehearsal
+npm run benchmark:results -- --theme downpour --format json
+npm run benchmark:results -- --identity blind
+```
+
+Use `--identity unblind` only when the relevant ranking snapshot has been locked and its mapping opened. `--format csv` is also available, and `--runs <path>` can inspect another run-artifact directory.

@@ -25,6 +25,7 @@
     "benchmark:codex": "node scripts/benchmark/codex-cli.mjs",
     "benchmark:claude": "node scripts/benchmark/claude-cli.mjs",
     "benchmark:run": "node scripts/benchmark/run.mjs",
+    "benchmark:results": "node scripts/benchmark/results.mjs",
     "test:benchmark-controller": "node scripts/benchmark/test.mjs",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",
     "sim:crystal-debug:verbose": "node scripts/run-crystal-debug-sim.mjs --verbose"

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
+import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { validateDefinition as validateRunDefinition } from './run.mjs';
 import { createSchedule, extendSchedule, validateSchedule } from './schedule.mjs';
 import { summarizeCost } from './ccusage-cost.mjs';
@@ -230,5 +231,39 @@ assert.equal(codexCost.models.length, 2);
 assert.equal(codexCost.models.every((m) => m.costUsd === null), true);
 assert.equal(codexCost.totals.reasoningTokens, 5);
 assert.throws(() => summarizeCost('claude-cli', { sessions: [], totals: {} }), /totals\.totalCost was not a number/);
+
+assert.equal(shouldUnblind('rehearsal'), true);
+assert.equal(shouldUnblind('v1'), false);
+assert.equal(shouldUnblind('rehearsal', 'blind'), false);
+assert.equal(shouldUnblind('v1', 'unblind'), true);
+const resultManifest = {
+  schemaVersion: 2,
+  benchmarkVersion: 'rehearsal',
+  runId: 'rehearsal-a1b2',
+  slotId: 'a1b2',
+  configuration: { id: 'solo-a' },
+  theme: { id: 'cinder', path: 'benchmark/examples/cinder.md', sha256: hash('a') },
+  baseline: { materialsCommit: 'a'.repeat(40), entrantBaseline: { kind: 'git-commit', identifier: 'a'.repeat(40) } },
+  recipe: { path: 'benchmark/recipes/solo-a.md', sha256: hash('b') },
+  controller: { path: 'benchmark/controller/runbook.md', sha256: hash('c') },
+  timing: { startedAt: '2026-01-01T00:00:00.000Z', finishedAt: '2026-01-01T01:00:00.000Z', wallTimeSeconds: 3600 },
+  stages: [{ model: { snapshotId: 'model-a' }, startedAt: '2026-01-01T00:10:00.000Z', finishedAt: '2026-01-01T00:20:00.000Z', wallTimeSeconds: 600 }],
+  cost: { status: 'measured', totalUsd: 1.25 },
+  gates: [{ id: 'typecheck', status: 'passed' }, { id: 'floor', status: 'passed' }],
+  output: { levelId: 'cinder-a1b2', evaluated: { commit: 'a'.repeat(40) }, payload: { commit: 'b'.repeat(40) } },
+  disposition: { status: 'rehearsal' },
+};
+assert.deepEqual(manifestErrors(resultManifest), []);
+const rehearsalResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest });
+assert.equal(rehearsalResult.configuration, 'solo-a');
+assert.deepEqual(rehearsalResult.models, ['model-a']);
+assert.equal(rehearsalResult.stageWallTimeSeconds, 600);
+assert.equal(rehearsalResult.controllerWallTimeSeconds, 3600);
+const eligibleResult = resultFromArtifacts({ directoryName: 'run-a1b2', manifest: { ...resultManifest, benchmarkVersion: 'v1' } });
+assert.equal(eligibleResult.identity, 'blinded');
+assert.equal(eligibleResult.configuration, null);
+assert.deepEqual(eligibleResult.models, []);
+const recoveredResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest, recovery: { recoveredAt: '2026-01-01T01:00:00.000Z' } });
+assert.equal(recoveredResult.state, 'recovered');
 
 console.log('Benchmark controller tests passed.');
