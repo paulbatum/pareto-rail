@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -15,7 +16,8 @@ import {
   sha256,
   writeJson,
 } from './common.mjs';
-import { renderAssignment } from './render-assignment.mjs';
+import { renderAssignment, renderDelegation } from './render-assignment.mjs';
+import { ccusageVersion, measureRunCost } from './ccusage-cost.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -32,6 +34,11 @@ const ADAPTERS = {
     binFlag: '--codex-bin',
     harnessName: 'Codex CLI',
     modelProvider: 'OpenAI Codex subscription',
+    // Env var scoping the harness (and ccusage) to this run's isolated rollout home, plus the
+    // operator credential copied into that home so login works. `sourceRelative` is under the
+    // operator home dir; `dest` is under the per-run home.
+    homeEnvVar: 'CODEX_HOME',
+    credential: { sourceRelative: '.codex/auth.json', dest: 'auth.json' },
   },
   'claude-cli': {
     scriptPath: path.join(ROOT, 'scripts/benchmark/claude-cli.mjs'),
@@ -40,6 +47,8 @@ const ADAPTERS = {
     binFlag: '--claude-bin',
     harnessName: 'Claude Code CLI',
     modelProvider: 'Anthropic Claude Code subscription',
+    homeEnvVar: 'CLAUDE_CONFIG_DIR',
+    credential: { sourceRelative: '.claude/.credentials.json', dest: '.credentials.json' },
   },
 };
 
@@ -80,11 +89,12 @@ async function main() {
     if (setup.code !== 0) fail(`Dependency provisioning failed; see ${path.join(outputDirectory, 'setup.json')}.`);
 
     const adapter = ADAPTERS[definition.stage.adapter];
+    const harnessHome = await prepareHarnessHome(adapter, outputDirectory);
     const executorPath = definition.mode === 'eligible' ? repositoryArtifactPath(definition.executor.path) : adapter.scriptPath;
     const stageDirectory = path.join(outputDirectory, adapter.stageDir);
     const stageArgs = [executorPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
     if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
-    const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true });
+    const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
     await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
     if (stage.code !== 0) fail(`${adapter.harnessName} stage failed; see ${path.join(outputDirectory, 'stage-launch.json')}.`);
 
@@ -102,7 +112,7 @@ async function main() {
       payload = JSON.parse(payloadResult.stdout);
       await writeJson(path.join(outputDirectory, 'payload.json'), payload);
     }
-    const manifest = await createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, gateRecord, evaluated, payload, worktree, startedAt });
+    const manifest = await createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt });
     await writeJson(path.join(outputDirectory, 'manifest.json'), manifest);
     console.log(JSON.stringify({ runId: definition.assignment.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null }));
     if (!passing) process.exitCode = 2;
@@ -115,7 +125,7 @@ async function main() {
 export function validateDefinition(value) {
   const errors = [];
   if (!isPlainObject(value)) return ['definition must be an object.'];
-  const keys = new Set(['schemaVersion', 'benchmarkVersion', 'mode', 'assignment', 'baseline', 'release', 'schedule', 'runner', 'executor', 'template', 'failureTaxonomy', 'stage', 'worktree', 'payload', 'pricing']);
+  const keys = new Set(['schemaVersion', 'benchmarkVersion', 'mode', 'assignment', 'baseline', 'release', 'schedule', 'runner', 'executor', 'template', 'failureTaxonomy', 'stage', 'worktree', 'payload', 'delegation']);
   for (const key of Object.keys(value)) if (!keys.has(key)) errors.push(`definition has unknown field ${key}.`);
   if (value.schemaVersion !== 1) errors.push('definition.schemaVersion must equal 1.');
   if (typeof value.benchmarkVersion !== 'string' || !value.benchmarkVersion) errors.push('definition.benchmarkVersion is required.');
@@ -137,7 +147,7 @@ export function validateDefinition(value) {
     if (!isPlainObject(item) || typeof item.path !== 'string' || !item.path) errors.push(`definition.${key}.path is required.`);
     if (key === 'payload' && (!isPlainObject(item) || typeof item.branch !== 'string' || !item.branch)) errors.push('definition.payload.branch is required.');
   }
-  validateArtifact(value.pricing, 'definition.pricing', errors);
+  if (value.delegation !== undefined) validateDelegation(value.delegation, errors);
   if (value.mode === 'eligible') {
     validateArtifact(value.release, 'definition.release', errors);
     validateArtifact(value.schedule, 'definition.schedule', errors);
@@ -154,37 +164,74 @@ async function prepareInputs(definition, materialsCommit, configurationCommit, o
   const theme = await artifactFromCommit(materialsCommit, definition.assignment.theme);
   await artifactFromCommit(configurationCommit, definition.assignment.recipe);
   await artifactFromCommit(materialsCommit, definition.failureTaxonomy);
-  await artifactFromCommit(configurationCommit, definition.pricing);
   const inputDirectory = path.join(outputDirectory, 'inputs');
   await fs.mkdir(inputDirectory, { recursive: true });
   const templatePath = path.join(inputDirectory, 'assignment-template.md');
   const themePath = path.join(inputDirectory, 'theme.md');
   const renderedPath = path.join(outputDirectory, 'rendered-assignment.md');
-  const rendered = renderAssignment(template, { levelId: definition.assignment.levelId, levelTitle: definition.assignment.levelTitle, theme });
+  const baseRendering = renderAssignment(template, { levelId: definition.assignment.levelId, levelTitle: definition.assignment.levelTitle, theme });
+
+  // Delegation configurations append the rendered flexible-delegation addendum after the shared
+  // assignment body; the bytes sent to the primary agent as stdin are base + addendum. Solo
+  // configurations send the base rendering unchanged.
+  let rendered = baseRendering;
+  let delegationMeta;
+  if (definition.delegation) {
+    const delegationTemplate = await artifactFromCommit(materialsCommit, definition.delegation.prompt);
+    const addendum = renderDelegation(delegationTemplate, { delegateModel: definition.delegation.delegateModel, delegateEffort: definition.delegation.delegateEffort });
+    rendered = `${baseRendering}\n\n${addendum}`;
+    delegationMeta = { path: definition.delegation.prompt.path, delegateModel: definition.delegation.delegateModel, delegateEffort: definition.delegation.delegateEffort, sha256: sha256(addendum) };
+  }
+
   await Promise.all([fs.writeFile(templatePath, template), fs.writeFile(themePath, theme), fs.writeFile(renderedPath, rendered)]);
   await writeJson(path.join(outputDirectory, 'rendered-assignment.json'), {
     template: { path: definition.template.path, sha256: sha256(template) },
     theme: { path: definition.assignment.theme.path, sha256: sha256(theme) },
     rendering: { path: renderedPath, sha256: sha256(rendered) },
+    ...(delegationMeta ? { delegation: delegationMeta } : {}),
   });
   return { renderedPath };
 }
 
-async function createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, gateRecord, evaluated, payload, worktree, startedAt }) {
+// Each run gets an isolated harness home under its private output dir, with the operator credential
+// copied in so login works. Isolation gives clean cost attribution: everything ccusage sees in this
+// home belongs to this run (parent + any delegated subagents). The home is retained as the run's
+// rollout audit artifact. The credential copy is a declared operator convenience, of a kind with the
+// worktree-access convention in the runbook — not a security boundary.
+async function prepareHarnessHome(adapter, outputDirectory) {
+  const home = path.join(outputDirectory, 'harness-home');
+  const credentialSource = path.join(os.homedir(), adapter.credential.sourceRelative);
+  const credentialDest = path.join(home, adapter.credential.dest);
+  await fs.mkdir(path.dirname(credentialDest), { recursive: true });
+  try {
+    await fs.copyFile(credentialSource, credentialDest);
+  } catch (error) {
+    fail(`Could not copy the operator credential ${credentialSource} into the per-run home: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  await fs.chmod(credentialDest, 0o600);
+  return home;
+}
+
+async function createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
   const adapter = ADAPTERS[definition.stage.adapter];
-  const [usage, commandRecord, controller, recipe, theme, pricingSource] = await Promise.all([
+  const [usage, commandRecord, controller, recipe, theme, renderedMeta, eventLog] = await Promise.all([
     readJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json')),
     readJson(path.join(outputDirectory, adapter.stageDir, 'command.json')),
     artifactFromCommit(materialsCommit, { path: RUNBOOK, sha256: await hashFromCommit(materialsCommit, RUNBOOK) }),
     artifactFromCommit(configurationCommit, definition.assignment.recipe),
     artifactFromCommit(materialsCommit, definition.assignment.theme),
-    artifactFromCommit(configurationCommit, definition.pricing),
+    readJson(path.join(outputDirectory, 'rendered-assignment.json')),
+    fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8'),
   ]);
-  const pricing = calculatePricing(usage.normalized, parsePricing(pricingSource, definition.stage.model));
+  // Cost comes entirely from ccusage reading this run's isolated home: it parses the persisted
+  // rollouts (parent + any delegated subagent threads) and prices with its own maintained rate DB.
+  const cost = await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome });
+  const ccusage = await ccusageVersion();
   const finishedAt = new Date().toISOString();
   const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
   const runnerArtifact = definition.mode === 'eligible' ? definition.runner : await currentArtifact('scripts/benchmark/run.mjs');
   const executorArtifact = definition.mode === 'eligible' ? definition.executor : await currentArtifact(path.relative(ROOT, adapter.scriptPath));
+  const stages = buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog) });
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -204,19 +251,78 @@ async function createManifest({ definition, materialsCommit, configurationCommit
     runner: runnerArtifact,
     executor: executorArtifact,
     timing: { startedAt, finishedAt, wallTimeSeconds: (Date.parse(finishedAt) - Date.parse(startedAt)) / 1_000 },
-    stages: [{
-      id: 'solo', role: 'solo', model: { provider: adapter.modelProvider, snapshotId: definition.stage.model },
-      harness: { name: adapter.harnessName, version: commandRecord.cliVersion }, sessionId: usage.sessionId,
-      promptSha256: (await readJson(path.join(outputDirectory, 'rendered-assignment.json'))).rendering.sha256,
-      outputArtifactSha256: sha256(await fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8')),
-      ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}),
-      startedAt: commandRecord.startedAt, finishedAt: commandRecord.finishedAt, wallTimeSeconds: commandRecord.wallTimeSeconds,
-      usage: usage.normalized, pricing: { status: 'measured', ...pricing.rates, costUsd: pricing.costUsd }, result: 'completed',
-    }],
-    cost: { currency: 'USD', status: 'measured', listPriceDate: pricing.priceDate, totalUsd: pricing.costUsd, orchestrationTreatment: 'none' },
+    stages,
+    cost: {
+      currency: 'USD',
+      status: 'measured',
+      totalUsd: cost.totalUsd,
+      orchestrationTreatment: definition.delegation ? 'included' : 'none',
+      costSource: { tool: 'ccusage', version: ccusage, view: cost.view, command: `ccusage ${cost.view} session --json` },
+      models: cost.models.map((model) => ({
+        modelName: model.modelName,
+        ...(model.costUsd !== null ? { costUsd: model.costUsd } : {}),
+        inputTokens: model.inputTokens,
+        outputTokens: model.outputTokens,
+        cacheReadTokens: model.cacheReadTokens,
+        cacheWriteTokens: model.cacheWriteTokens,
+        ...(model.reasoningTokens ? { reasoningTokens: model.reasoningTokens } : {}),
+      })),
+    },
     gates: gateRecord.gates.map(({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason }) => ({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason })),
     output: { levelId: definition.assignment.levelId, evaluated: { commit: evaluated.evaluatedCommit, branch: worktree.branch }, ...(payload ? { payload: { commit: payload.payloadCommit, branch: payload.branch } } : {}) },
     disposition: { status: definition.mode === 'rehearsal' ? 'rehearsal' : payload ? 'playable' : 'dnf', ...(payload ? {} : { reasonCode: 'required-gate-failed' }) },
+  };
+}
+
+// One harness invocation produces the manifest's stages. When ccusage attributes cost per model
+// (Claude), a delegation run splits into one stage per model — parent (the model that answered the
+// init event) as `orchestrate`, the rest as `implement`. When per-model cost is unavailable (Codex),
+// the run collapses to a single stage carrying the run total. All stages share the one invocation's
+// session id, harness version, and wall-clock boundaries; the prompt hashes attach to the parent.
+function buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256 }) {
+  const harness = { name: adapter.harnessName, version: commandRecord.cliVersion };
+  const timing = { startedAt: commandRecord.startedAt, finishedAt: commandRecord.finishedAt, wallTimeSeconds: commandRecord.wallTimeSeconds };
+  const promptSha256 = renderedMeta.rendering.sha256;
+  const delegationPromptSha256 = renderedMeta.delegation?.sha256;
+  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: 'completed' };
+  const delegated = Boolean(definition.delegation) && cost.models.length > 1;
+
+  if (cost.perModelCostAvailable && cost.models.length >= 1) {
+    const parentModel = usage.initResolvedModel ?? definition.stage.model;
+    const hasParent = cost.models.some((model) => model.modelName === parentModel);
+    return cost.models.map((model, index) => {
+      const isParent = hasParent ? model.modelName === parentModel : index === 0;
+      return {
+        id: model.modelName,
+        role: delegated ? (isParent ? 'orchestrate' : 'implement') : 'solo',
+        model: { provider: adapter.modelProvider, snapshotId: model.modelName },
+        ...(isParent ? { promptSha256, ...(delegationPromptSha256 ? { delegationPromptSha256 } : {}) } : {}),
+        ...shared,
+        usage: stageUsage(model),
+        pricing: { status: 'measured', costUsd: model.costUsd ?? 0, source: 'ccusage' },
+      };
+    });
+  }
+
+  return [{
+    id: 'solo',
+    role: definition.delegation ? 'orchestrate' : 'solo',
+    model: { provider: adapter.modelProvider, snapshotId: definition.stage.model },
+    promptSha256,
+    ...(delegationPromptSha256 ? { delegationPromptSha256 } : {}),
+    ...shared,
+    usage: stageUsage(cost.totals),
+    pricing: { status: 'measured', costUsd: cost.totalUsd, source: 'ccusage' },
+  }];
+}
+
+function stageUsage({ inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, cacheWriteTokens = 0, reasoningTokens = 0 }) {
+  return {
+    inputTokens,
+    outputTokens,
+    ...(cacheReadTokens ? { cacheReadInputTokens: cacheReadTokens } : {}),
+    ...(cacheWriteTokens ? { cacheWriteInputTokens: cacheWriteTokens } : {}),
+    ...(reasoningTokens ? { reasoningTokens } : {}),
   };
 }
 
@@ -257,7 +363,6 @@ async function validateEligibleControls(definition, materialsCommit, configurati
   if (!sameArtifact(assignment.runner, definition.runner)) fail('Eligible runner differs from the private schedule.');
   if (!sameArtifact(assignment.executor, definition.executor)) fail('Eligible executor differs from the private schedule.');
   if (!sameStage(assignment.stage, definition.stage)) fail('Eligible stage settings differ from the private schedule.');
-  if (!sameArtifact(assignment.pricing, definition.pricing)) fail('Eligible pricing input differs from the private schedule.');
   return { release, schedule };
 }
 
@@ -317,7 +422,7 @@ function validateRuntimeSchedule(schedule, benchmarkVersion) {
     const cell = `${assignment.configurationId}\u0000${assignment.theme?.id}`;
     if (cells.has(cell)) return 'a configuration/theme cell is duplicated.';
     cells.add(cell);
-    if (!/^[a-f0-9]{40,64}$/.test(assignment.configurationCommit ?? '') || !validArtifact(assignment.runner) || !validArtifact(assignment.executor) || !validArtifact(assignment.recipe) || !validArtifact(assignment.pricing) || !isPlainObject(assignment.stage)) return 'an assignment has incomplete configuration inputs.';
+    if (!/^[a-f0-9]{40,64}$/.test(assignment.configurationCommit ?? '') || !validArtifact(assignment.runner) || !validArtifact(assignment.executor) || !validArtifact(assignment.recipe) || !isPlainObject(assignment.stage)) return 'an assignment has incomplete configuration inputs.';
   }
   for (let index = 1; index <= schedule.assignments.length; index += 1) if (!indices.has(index)) return `scheduleIndex ${index} is missing.`;
   return undefined;
@@ -325,33 +430,6 @@ function validateRuntimeSchedule(schedule, benchmarkVersion) {
 
 function validArtifact(value) {
   return isPlainObject(value) && typeof value.path === 'string' && value.path.length > 0 && /^[a-f0-9]{64}$/.test(value.sha256 ?? '');
-}
-
-function parsePricing(source, model) {
-  let value;
-  try { value = JSON.parse(source); } catch (error) { fail(`Pricing input is not valid JSON: ${error.message}`); }
-  const numericKeys = ['inputUsdPerMillion', 'cacheReadUsdPerMillion', 'cacheWriteUsdPerMillion', 'outputUsdPerMillion'];
-  if (value.schemaVersion !== 1 || value.model !== model || value.currency !== 'USD' || !/^\d{4}-\d{2}-\d{2}$/.test(value.priceDate ?? '') || typeof value.sourceUrl !== 'string') fail('Pricing input has an invalid model, currency, date, or source URL.');
-  for (const key of numericKeys) if (typeof value[key] !== 'number' || value[key] < 0) fail(`Pricing input ${key} must be a non-negative number.`);
-  return value;
-}
-
-function calculatePricing(usage, source) {
-  const cached = usage.cacheReadInputTokens ?? 0;
-  const cacheWrite = usage.cacheWriteInputTokens ?? 0;
-  if (cached > usage.inputTokens) fail('Cached input tokens exceed total input tokens.');
-  const costUsd = ((usage.inputTokens - cached) * source.inputUsdPerMillion + cached * source.cacheReadUsdPerMillion + cacheWrite * source.cacheWriteUsdPerMillion + usage.outputTokens * source.outputUsdPerMillion) / 1_000_000;
-  return {
-    priceDate: source.priceDate,
-    costUsd,
-    rates: {
-      inputUsdPerMillion: source.inputUsdPerMillion,
-      cacheReadUsdPerMillion: source.cacheReadUsdPerMillion,
-      cacheWriteUsdPerMillion: source.cacheWriteUsdPerMillion,
-      outputUsdPerMillion: source.outputUsdPerMillion,
-      sourceUrl: source.sourceUrl,
-    },
-  };
 }
 
 async function hashFromCommit(commit, relativePath) { return sha256(await gitShow(commit, relativePath)); }
@@ -377,6 +455,14 @@ function validateAssignment(value, errors) {
 }
 function validateArtifact(value, label, errors) {
   if (!isPlainObject(value) || typeof value.path !== 'string' || !value.path || !/^[a-f0-9]{64}$/.test(value.sha256 ?? '')) errors.push(`${label} must contain a path and SHA-256.`);
+}
+function validateDelegation(value, errors) {
+  if (!isPlainObject(value)) { errors.push('definition.delegation must be an object.'); return; }
+  const keys = new Set(['prompt', 'delegateModel', 'delegateEffort']);
+  for (const key of Object.keys(value)) if (!keys.has(key)) errors.push(`definition.delegation has unknown field ${key}.`);
+  validateArtifact(value.prompt, 'definition.delegation.prompt', errors);
+  if (typeof value.delegateModel !== 'string' || !value.delegateModel) errors.push('definition.delegation.delegateModel is required.');
+  if (!['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.delegateEffort)) errors.push('definition.delegation.delegateEffort is invalid.');
 }
 function validateCommit(value, label, errors) { if (typeof value !== 'string' || !/^[a-f0-9]{40,64}$/.test(value)) errors.push(`${label} must be a Git commit id.`); }
 async function assertAbsent(target, label) { try { await fs.lstat(target); } catch (error) { if (error?.code === 'ENOENT') return; throw error; } fail(`${label} already exists: ${target}`); }

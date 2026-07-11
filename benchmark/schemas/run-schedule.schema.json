@@ -67,7 +67,6 @@
         "executor",
         "recipe",
         "stage",
-        "pricing",
         "theme",
         "levelId",
         "levelTitle"
@@ -106,7 +105,6 @@
             "timeoutSeconds": { "type": "integer", "minimum": 1 }
           }
         },
-        "pricing": { "$ref": "#/$defs/hashedArtifact" },
         "theme": {
           "type": "object",
           "additionalProperties": false,

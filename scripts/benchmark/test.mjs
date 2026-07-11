@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { renderAssignment } from './render-assignment.mjs';
+import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { validateDefinition as validateRunDefinition } from './run.mjs';
 import { createSchedule, extendSchedule, validateSchedule } from './schedule.mjs';
+import { summarizeCost } from './ccusage-cost.mjs';
 
 const hash = (character) => character.repeat(64);
 const configuration = (id, character, model = `model-${id}`) => ({
@@ -13,7 +14,6 @@ const configuration = (id, character, model = `model-${id}`) => ({
   executor: { path: `scripts/benchmark/${id}.mjs`, sha256: hash(character) },
   recipe: { id, path: `benchmark/recipes/${id}.md`, sha256: hash(character) },
   stage: { adapter: 'codex-cli', model, effort: 'high', timeoutSeconds: 10_800 },
-  pricing: { path: `benchmark/pricing/${id}.json`, sha256: hash(character) },
 });
 
 function definition() {
@@ -134,11 +134,29 @@ const runDefinition = {
   stage: { adapter: 'codex-cli', model: 'gpt-5.6-terra', effort: 'high', timeoutSeconds: 10_800 },
   worktree: { path: '/tmp/raild-run-a1b2c3d4' },
   payload: { path: '/tmp/raild-payload-a1b2c3d4', branch: 'benchmark-payload-a1b2c3d4' },
-  pricing: { path: 'benchmark/pricing/gpt-5.6-terra-standard-short.json', sha256: hash('a') },
 };
 assert.deepEqual(validateRunDefinition(runDefinition), []);
 runDefinition.stage.effort = 'invalid';
 assert.ok(validateRunDefinition(runDefinition).some((error) => error.includes('stage.effort')));
+runDefinition.stage.effort = 'high';
+
+const delegationRunDefinition = {
+  ...structuredClone(runDefinition),
+  delegation: {
+    prompt: { path: 'benchmark/prompts/flexible-delegation.md', sha256: hash('a') },
+    delegateModel: 'gpt-5.6-terra',
+    delegateEffort: 'low',
+  },
+};
+assert.deepEqual(validateRunDefinition(delegationRunDefinition), []);
+const badDelegation = structuredClone(delegationRunDefinition);
+badDelegation.delegation.delegateEffort = 'invalid';
+assert.ok(validateRunDefinition(badDelegation).some((error) => error.includes('delegation.delegateEffort')));
+const missingDelegateModel = structuredClone(delegationRunDefinition);
+delete missingDelegateModel.delegation.delegateModel;
+assert.ok(validateRunDefinition(missingDelegateModel).some((error) => error.includes('delegation.delegateModel')));
+const legacyPricing = { ...structuredClone(runDefinition), pricing: { path: 'benchmark/pricing/x.json', sha256: hash('a') } };
+assert.ok(validateRunDefinition(legacyPricing).some((error) => error.includes('unknown field pricing')));
 
 const claudeRunDefinition = {
   ...structuredClone(runDefinition),
@@ -165,5 +183,52 @@ assert.ok(validateRunDefinition(eligibleRunDefinition).some((error) => error.inc
 eligibleRunDefinition.schedule = { path: 'benchmark/private/run-schedule.json', sha256: hash('2') };
 delete eligibleRunDefinition.runner;
 assert.ok(validateRunDefinition(eligibleRunDefinition).some((error) => error.includes('definition.runner')));
+
+const delegationAddendum = renderDelegation('Delegate to `{{DELEGATE_MODEL}}` at `{{DELEGATE_EFFORT}}`; report to {{DELEGATE_MODEL}}.', {
+  delegateModel: 'opus',
+  delegateEffort: 'low',
+});
+assert.equal(delegationAddendum, 'Delegate to `opus` at `low`; report to opus.');
+assert.throws(() => renderDelegation('Delegate to {{DELEGATE_MODEL}}.', { delegateModel: 'opus', delegateEffort: 'low' }), /missing the \{\{DELEGATE_EFFORT\}\}/);
+assert.throws(() => renderDelegation('{{DELEGATE_MODEL}} {{DELEGATE_EFFORT}} {{OTHER}}', { delegateModel: 'opus', delegateEffort: 'low' }), /Unknown delegation placeholder/);
+
+// ccusage claude report: per-model cost available (parent Fable + delegated Opus).
+const claudeReport = {
+  sessions: [{
+    sessionId: 's1',
+    totalCost: 0.39,
+    modelBreakdowns: [
+      { modelName: 'claude-fable-5', cost: 0.334, inputTokens: 2775, outputTokens: 222, cacheReadTokens: 1000, cacheCreationTokens: 40 },
+      { modelName: 'claude-opus-4-8', cost: 0.056, inputTokens: 2263, outputTokens: 29, cacheReadTokens: 500, cacheCreationTokens: 10 },
+    ],
+  }],
+  totals: { totalCost: 0.39, inputTokens: 5038, outputTokens: 251, cacheReadTokens: 1500, cacheCreationTokens: 50, totalTokens: 6839 },
+};
+const claudeCost = summarizeCost('claude-cli', claudeReport);
+assert.equal(claudeCost.perModelCostAvailable, true);
+assert.equal(claudeCost.totalUsd, 0.39);
+assert.equal(claudeCost.models.length, 2);
+assert.equal(claudeCost.models.find((m) => m.modelName === 'claude-opus-4-8').costUsd, 0.056);
+assert.equal(claudeCost.models.find((m) => m.modelName === 'claude-fable-5').cacheWriteTokens, 40);
+
+// ccusage codex report: per-model tokens only (no cost), so cost lives in the run total.
+const codexReport = {
+  sessions: [{
+    sessionId: 's2',
+    costUSD: 0.025,
+    models: {
+      'gpt-5.6-sol': { inputTokens: 8000, outputTokens: 14, cacheReadTokens: 10000, cacheCreationTokens: 0, reasoningOutputTokens: 5 },
+      'gpt-5.6-terra': { inputTokens: 5282, outputTokens: 33, cacheReadTokens: 23040, cacheCreationTokens: 0, reasoningOutputTokens: 0 },
+    },
+  }],
+  totals: { costUSD: 0.025, inputTokens: 13282, outputTokens: 47, cacheReadTokens: 33040, cacheCreationTokens: 0, reasoningOutputTokens: 5, totalTokens: 46416 },
+};
+const codexCost = summarizeCost('codex-cli', codexReport);
+assert.equal(codexCost.perModelCostAvailable, false);
+assert.equal(codexCost.totalUsd, 0.025);
+assert.equal(codexCost.models.length, 2);
+assert.equal(codexCost.models.every((m) => m.costUsd === null), true);
+assert.equal(codexCost.totals.reasoningTokens, 5);
+assert.throws(() => summarizeCost('claude-cli', { sessions: [], totals: {} }), /totals\.totalCost was not a number/);
 
 console.log('Benchmark controller tests passed.');

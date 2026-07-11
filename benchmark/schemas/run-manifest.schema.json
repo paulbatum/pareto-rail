@@ -93,17 +93,46 @@
       "properties": {
         "currency": { "const": "USD" },
         "status": { "enum": ["measured", "unavailable"] },
-        "listPriceDate": { "type": "string", "format": "date" },
         "totalUsd": { "type": "number", "minimum": 0 },
         "unavailableReason": { "type": "string", "minLength": 1 },
         "orchestrationTreatment": {
           "enum": ["included", "excluded", "already-included", "none", "unavailable"]
         },
+        "costSource": {
+          "description": "Tool and version that computed the cost. ccusage prices the persisted rollouts (parent plus any delegated subagents) with its own maintained rate DB.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tool", "version"],
+          "properties": {
+            "tool": { "type": "string", "minLength": 1 },
+            "version": { "type": "string", "minLength": 1 },
+            "view": { "type": "string", "minLength": 1 },
+            "command": { "type": "string", "minLength": 1 }
+          }
+        },
+        "models": {
+          "description": "Per-model detail from the cost source. Cost is present when the source attributes it per model (Claude); Codex reports per-model tokens only, so costUsd is omitted there.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["modelName", "inputTokens", "outputTokens"],
+            "properties": {
+              "modelName": { "type": "string", "minLength": 1 },
+              "costUsd": { "type": "number", "minimum": 0 },
+              "inputTokens": { "type": "integer", "minimum": 0 },
+              "outputTokens": { "type": "integer", "minimum": 0 },
+              "cacheReadTokens": { "type": "integer", "minimum": 0 },
+              "cacheWriteTokens": { "type": "integer", "minimum": 0 },
+              "reasoningTokens": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
         "dashboardReconciled": { "type": "boolean" },
         "reconciliationNotes": { "type": "string" }
       },
       "allOf": [
-        { "if": { "properties": { "status": { "const": "measured" } } }, "then": { "required": ["listPriceDate", "totalUsd"] } },
+        { "if": { "properties": { "status": { "const": "measured" } } }, "then": { "required": ["totalUsd"] } },
         { "if": { "properties": { "status": { "const": "unavailable" } } }, "then": { "required": ["unavailableReason"] } }
       ]
     },
@@ -211,16 +240,16 @@
       "required": ["status"],
       "properties": {
         "status": { "enum": ["measured", "unavailable"] },
-        "inputUsdPerMillion": { "type": "number", "minimum": 0 },
-        "outputUsdPerMillion": { "type": "number", "minimum": 0 },
-        "cacheReadUsdPerMillion": { "type": "number", "minimum": 0 },
-        "cacheWriteUsdPerMillion": { "type": "number", "minimum": 0 },
         "costUsd": { "type": "number", "minimum": 0 },
-        "sourceUrl": { "type": "string", "format": "uri" },
+        "source": {
+          "description": "How this stage's cost was computed. ccusage-sourced stages carry no per-token rates.",
+          "type": "string",
+          "minLength": 1
+        },
         "reason": { "type": "string", "minLength": 1 }
       },
       "allOf": [
-        { "if": { "properties": { "status": { "const": "measured" } } }, "then": { "required": ["inputUsdPerMillion", "outputUsdPerMillion", "costUsd"] } },
+        { "if": { "properties": { "status": { "const": "measured" } } }, "then": { "required": ["costUsd"] } },
         { "if": { "properties": { "status": { "const": "unavailable" } } }, "then": { "required": ["reason"] } }
       ]
     },
@@ -235,6 +264,7 @@
         "harness": { "$ref": "#/$defs/harness" },
         "sessionId": { "type": "string", "minLength": 1 },
         "promptSha256": { "$ref": "#/$defs/sha256" },
+        "delegationPromptSha256": { "$ref": "#/$defs/sha256" },
         "inputArtifactSha256": { "$ref": "#/$defs/sha256" },
         "outputArtifactSha256": { "$ref": "#/$defs/sha256" },
         "rolloutArtifactSha256": { "$ref": "#/$defs/sha256" },

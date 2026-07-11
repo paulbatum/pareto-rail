@@ -6,6 +6,7 @@ import { assertOnlyOptions, assertPrivateOrExternalPath, fail, parseArgs, requir
 
 const PLACEHOLDERS = ['LEVEL_ID', 'LEVEL_TITLE', 'THEME'];
 const REPEATABLE_PLACEHOLDERS = new Set(['LEVEL_ID']);
+const DELEGATION_PLACEHOLDERS = ['DELEGATE_MODEL', 'DELEGATE_EFFORT'];
 
 export function renderAssignment(template, { levelId, levelTitle, theme }) {
   if (!levelId || /\r|\n/.test(levelId)) fail('levelId must be a non-empty single-line value.');
@@ -25,6 +26,25 @@ export function renderAssignment(template, { levelId, levelTitle, theme }) {
     .replaceAll('{{LEVEL_ID}}', levelId)
     .replace('{{LEVEL_TITLE}}', levelTitle)
     .replace('{{THEME}}', theme);
+}
+
+// The delegation addendum (benchmark/prompts/flexible-delegation.md) is appended verbatim to the
+// shared assignment for delegation configurations. It carries only {{DELEGATE_MODEL}} and
+// {{DELEGATE_EFFORT}}; every occurrence of each is substituted, and no other placeholder is allowed.
+export function renderDelegation(template, { delegateModel, delegateEffort }) {
+  if (!delegateModel || /\r|\n/.test(delegateModel)) fail('delegateModel must be a non-empty single-line value.');
+  if (!delegateEffort || /\r|\n/.test(delegateEffort)) fail('delegateEffort must be a non-empty single-line value.');
+
+  const tokens = [...template.matchAll(/{{([^{}]+)}}/g)].map((match) => match[1]);
+  const unknown = tokens.filter((token) => !DELEGATION_PLACEHOLDERS.includes(token));
+  if (unknown.length > 0) fail(`Unknown delegation placeholder(s): ${[...new Set(unknown)].join(', ')}.`);
+  for (const placeholder of DELEGATION_PLACEHOLDERS) {
+    if (!tokens.includes(placeholder)) fail(`Delegation prompt is missing the {{${placeholder}}} placeholder.`);
+  }
+
+  return template
+    .replaceAll('{{DELEGATE_MODEL}}', delegateModel)
+    .replaceAll('{{DELEGATE_EFFORT}}', delegateEffort);
 }
 
 async function main() {

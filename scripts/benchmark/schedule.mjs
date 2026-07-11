@@ -22,11 +22,11 @@ import {
 } from './common.mjs';
 
 const SCHEDULE_KEYS = new Set(['schemaVersion', 'benchmarkVersion', 'generatedAt', 'randomization', 'assignments']);
-const ASSIGNMENT_KEYS = new Set(['scheduleIndex', 'runId', 'slotId', 'configurationId', 'configurationCommit', 'runner', 'executor', 'recipe', 'stage', 'pricing', 'theme', 'levelId', 'levelTitle']);
+const ASSIGNMENT_KEYS = new Set(['scheduleIndex', 'runId', 'slotId', 'configurationId', 'configurationCommit', 'runner', 'executor', 'recipe', 'stage', 'theme', 'levelId', 'levelTitle']);
 const ARTIFACT_KEYS = new Set(['id', 'path', 'sha256']);
 const THEME_KEYS = new Set(['id', 'path', 'sha256']);
 const DEFINITION_KEYS = new Set(['benchmarkVersion', 'configurations', 'themes']);
-const CONFIGURATION_KEYS = new Set(['id', 'configurationCommit', 'runner', 'executor', 'recipe', 'stage', 'pricing']);
+const CONFIGURATION_KEYS = new Set(['id', 'configurationCommit', 'runner', 'executor', 'recipe', 'stage']);
 const STAGE_KEYS = new Set(['adapter', 'model', 'effort', 'timeoutSeconds']);
 const DEFINITION_THEME_KEYS = new Set(['id', 'path', 'sha256', 'levelTitle']);
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -55,7 +55,6 @@ export function validateDefinition(definition) {
     validateArtifact(configuration.recipe, `${label}.recipe`, errors);
     validateStringPattern(configuration.configurationCommit, /^[a-f0-9]{40,64}$/, `${label}.configurationCommit`, errors);
     validateStage(configuration.stage, `${label}.stage`, errors);
-    validateArtifact(configuration.pricing, `${label}.pricing`, errors);
   }
 
   const themeIds = new Set();
@@ -82,7 +81,6 @@ export async function validateDefinitionFiles(definition, root = process.cwd()) 
     await validateArtifactAtCommit(configuration.configurationCommit, configuration.runner, `definition.configurations[${index}].runner`, root, errors);
     await validateArtifactAtCommit(configuration.configurationCommit, configuration.executor, `definition.configurations[${index}].executor`, root, errors);
     await validateArtifactAtCommit(configuration.configurationCommit, configuration.recipe, `definition.configurations[${index}].recipe`, root, errors);
-    await validateArtifactAtCommit(configuration.configurationCommit, configuration.pricing, `definition.configurations[${index}].pricing`, root, errors);
   }
   for (const [index, theme] of (definition.themes ?? []).entries()) {
     const label = `definition.themes[${index}]`;
@@ -139,7 +137,6 @@ export function createSchedule(definition, random = randomBytes) {
         executor: { ...configuration.executor },
         recipe: { ...configuration.recipe },
         stage: { ...configuration.stage },
-        pricing: { ...configuration.pricing },
         theme: { id: theme.id, path: theme.path, sha256: theme.sha256 },
         levelId: `${theme.id}-${slotId}`,
         levelTitle: theme.levelTitle,
@@ -172,7 +169,7 @@ export function extendSchedule(schedule, definition, random = randomBytes) {
     const theme = themes.get(assignment.theme?.id);
     if (!configuration || !theme) throw new Error('Schedule extension definitions may not remove an existing configuration or theme.');
     if (!sameArtifact(assignment.recipe, configuration.recipe)) throw new Error(`Configuration ${configuration.id} changed its registered recipe; create a new configuration id.`);
-    if (assignment.configurationCommit !== configuration.configurationCommit || !sameArtifact(assignment.runner, configuration.runner) || !sameArtifact(assignment.executor, configuration.executor) || !sameStage(assignment.stage, configuration.stage) || !sameArtifact(assignment.pricing, configuration.pricing)) throw new Error(`Configuration ${configuration.id} changed its registered execution inputs; create a new configuration id.`);
+    if (assignment.configurationCommit !== configuration.configurationCommit || !sameArtifact(assignment.runner, configuration.runner) || !sameArtifact(assignment.executor, configuration.executor) || !sameStage(assignment.stage, configuration.stage)) throw new Error(`Configuration ${configuration.id} changed its registered execution inputs; create a new configuration id.`);
     if (!sameTheme(assignment.theme, theme) || assignment.levelTitle !== theme.levelTitle) throw new Error(`Theme ${theme.id} changed after assignments were created; create a new benchmark protocol.`);
     occupied.add(`${configuration.id}\u0000${theme.id}`);
     usedSlots.add(assignment.slotId);
@@ -193,7 +190,6 @@ export function extendSchedule(schedule, definition, random = randomBytes) {
         executor: { ...configuration.executor },
         recipe: { ...configuration.recipe },
         stage: { ...configuration.stage },
-        pricing: { ...configuration.pricing },
         theme: { id: theme.id, path: theme.path, sha256: theme.sha256 },
         levelId: `${theme.id}-${slotId}`,
         levelTitle: theme.levelTitle,
@@ -258,7 +254,6 @@ export function validateSchedule(schedule, definition) {
     validateArtifact(assignment.executor, `${label}.executor`, errors);
     validateArtifact(assignment.recipe, `${label}.recipe`, errors);
     validateStage(assignment.stage, `${label}.stage`, errors);
-    validateArtifact(assignment.pricing, `${label}.pricing`, errors);
     validateTheme(assignment.theme, `${label}.theme`, errors);
     validateId(assignment.levelId, `${label}.levelId`, errors);
     validateString(assignment.levelTitle, `${label}.levelTitle`, errors);
@@ -276,7 +271,6 @@ export function validateSchedule(schedule, definition) {
     if (!sameArtifact(assignment.runner, configuration.runner)) errors.push(`${label}.runner does not match its configuration definition.`);
     if (!sameArtifact(assignment.executor, configuration.executor)) errors.push(`${label}.executor does not match its configuration definition.`);
     if (!sameStage(assignment.stage, configuration.stage)) errors.push(`${label}.stage does not match its configuration definition.`);
-    if (!sameArtifact(assignment.pricing, configuration.pricing)) errors.push(`${label}.pricing does not match its configuration definition.`);
     if (!sameTheme(assignment.theme, theme)) errors.push(`${label}.theme does not match its theme definition.`);
     if (assignment.levelId !== `${theme.id}-${assignment.slotId}`) errors.push(`${label}.levelId must equal ${theme.id}-${assignment.slotId}.`);
     if (assignment.levelTitle !== theme.levelTitle) errors.push(`${label}.levelTitle does not match its theme definition.`);

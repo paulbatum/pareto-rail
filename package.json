@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.185.0",
+    "ccusage": "20.0.17",
     "puppeteer": "^25.3.0",
     "typescript": "latest",
     "vite": "latest"
