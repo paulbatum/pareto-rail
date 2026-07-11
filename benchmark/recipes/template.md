@@ -83,14 +83,9 @@ Define whether any additional controller checks exist. They may record diagnosti
 
 The gates run against the exact evaluated working tree, including the agent's normal temporary registry and generated-gallery changes. After recording those results, the controller mechanically creates a separate payload commit from the frozen materials commit containing only `src/levels/<level-id>/`. Payload creation is benchmark administration, not an agent revision stage.
 
-## Pricing
+## Cost
 
-- Price source: `<URL or captured source>`
-- Price date: `<YYYY-MM-DD>`
-- Input USD per million tokens: `<amount>`
-- Output USD per million tokens: `<amount>`
-- Cache-read USD per million tokens: `<amount or n/a>`
-- Cache-write USD per million tokens: `<amount or n/a>`
+Cost is measured by ccusage (pinned in the repository's `package.json`; the controller records the exact version in the manifest), invoked with the repository's own Node against this run's isolated harness home (`ccusage <claude|codex> session --json`). State that here. Do not include a dated rate table: ccusage prices the persisted rollouts (parent plus any delegated subagents) with its own maintained rate database, and the manifest records ccusage's computed USD as `cost.totalUsd`, per-model detail in `cost.models`, and the tool/version provenance in `cost.costSource`. Note whether per-model cost is available (Claude) or only per-model tokens (Codex), and that subscription expenditure is reported separately.
 
 ## Known harness defaults
 

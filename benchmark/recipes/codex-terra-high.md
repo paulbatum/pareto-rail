@@ -96,11 +96,11 @@ This is a solo configuration. There are no plan, review, revision, continuation,
 
 The controller runs only the four standard gates specified in `benchmark/controller/runbook.md` after sealing. No additional eligibility gate is declared by this recipe.
 
-## Pricing
+## Cost
 
-Use the dated [`benchmark/pricing/gpt-5.6-terra-standard-short.json`](../pricing/gpt-5.6-terra-standard-short.json) artifact for API-list-price-equivalent cost. It records the official standard short-context rates at authoring: $2.50/M uncached input, $0.25/M cached input, $3.125/M cache writes, and $15.00/M output. Calculate one stage as `(input_tokens - cached_input_tokens) × input rate + cached_input_tokens × cache-read rate + cache-write tokens × cache-write rate + output_tokens × output rate`, divided by one million. `reasoning_output_tokens` is not added separately because it is reported as a vendor field alongside `output_tokens`.
+Cost is measured by [ccusage](https://github.com/ccusage/ccusage), pinned in the repository's `package.json` (`20.0.17`) and invoked with the repository's own Node. After the stage, the controller runs `ccusage codex session --json` scoped to this run's isolated `CODEX_HOME`. ccusage parses the persisted session rollouts and prices them with its own maintained rate database; the manifest records ccusage's computed USD as `cost.totalUsd` and the tool/version provenance in `cost.costSource`. ccusage attributes per-model **tokens** for Codex but not per-model cost, so `cost.models` carries per-model token detail with no per-model `costUsd`, and the manifest's single stage carries the run total. We do not compute prices ourselves, so no frozen pricing artifact can rot when rates change.
 
-The actual run remains a Plus subscription run; record subscription expenditure separately and do not allocate the monthly fee across entrants. A run using another service or context tier must use another frozen pricing artifact rather than reusing the standard short-context input.
+The actual run remains a subscription run; record subscription expenditure separately and do not allocate the monthly fee across entrants.
 
 ## Known harness defaults
 

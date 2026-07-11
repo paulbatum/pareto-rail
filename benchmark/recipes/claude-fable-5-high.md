@@ -82,13 +82,13 @@ The adapter omits `--no-session-persistence`, so Claude Code persists its native
 ### Usage and timing capture
 
 - Usage source: Claude `--output-format stream-json` stdout. Preserve it exactly as `events.jsonl`; preserve stderr separately.
-- Input-token field: the terminal `result` event's `usage.input_tokens`. Unlike Codex, this is already the uncached remainder, not a total that includes cache hits — the adapter adds `usage.cache_read_input_tokens` back in before recording `inputTokens`, so the normalized field matches the total-including-cached shape the shared cost formula expects from every adapter.
+- Input-token field: the terminal `result` event's `usage.input_tokens`. Unlike Codex, this is already the uncached remainder, not a total that includes cache hits — the adapter adds `usage.cache_read_input_tokens` back in before recording `inputTokens`, so the normalized field matches the total-including-cached shape used across adapters. These normalized counts are recorded for audit; run cost is measured by ccusage (see Cost below), not derived from them.
 - Output-token field: the terminal `result` event's `usage.output_tokens`.
 - Cache-read field: `usage.cache_read_input_tokens`.
-- Cache-write field: `usage.cache_creation_input_tokens`. Unlike Codex, Claude Code reports this directly, so the frozen pricing formula's cache-write term is populated rather than always zero.
-- Reasoning-token treatment: Claude Code does not report a separate thinking/reasoning token field — thinking tokens are folded into `usage.output_tokens` with no distinct field. Record `modelUsage` (a per-model cost breakdown reported alongside `usage`) and `total_cost_usd` as vendor fields for audit only; they are not part of the frozen cost formula.
+- Cache-write field: `usage.cache_creation_input_tokens`. Unlike Codex, Claude Code reports this directly.
+- Reasoning-token treatment: Claude Code does not report a separate thinking/reasoning token field — thinking tokens are folded into `usage.output_tokens` with no distinct field. Record `modelUsage` (a per-model breakdown reported alongside `usage`) and `total_cost_usd` as vendor fields for audit only.
 - Session identifier source: the terminal `result` event's `session_id`, cross-checked by the adapter against the pre-assigned `--session-id`.
-- Multi-model sessions: if the agent delegates to a subagent that runs under a different resolved model, the terminal `result` event's `modelUsage` will contain more than one key. This recipe assumes a single model throughout the session (matching the standing repository's default subagent behavior, which inherits the parent model unless a subagent explicitly overrides it). A rehearsal that observes more than one `modelUsage` key must revise this recipe's pricing rule before it becomes eligible — the current per-token formula assumes one flat rate.
+- Multi-model sessions: this solo configuration expects a single resolved model, so the terminal `result` event's `modelUsage` should contain one key. If a run nonetheless records more than one model, the ccusage cost method already attributes cost per model and the manifest emits one stage per model — no per-token pricing rule is involved. Deliberate delegation is a separate configuration (see `claude-fable-5-opus-delegation.md`).
 - Wall-time boundaries: immediately before process spawn and after process exit, stored in `command.json`.
 - Raw record path: `benchmark/private/runs/<opaque-run-id>/stages/solo/claude/` containing `command.json`, `events.jsonl`, `stderr.log`, `selected-model.json`, `raw-usage.json`, `result.json`, `final-message.md`, and `rollout.jsonl` when the session transcript was captured (see "Session rollout capture" above).
 
@@ -100,11 +100,11 @@ This is a solo configuration. There are no plan, review, revision, continuation,
 
 The controller runs only the four standard gates specified in `benchmark/controller/runbook.md` after sealing. No additional eligibility gate is declared by this recipe.
 
-## Pricing
+## Cost
 
-Use the dated [`benchmark/pricing/claude-fable-5-standard.json`](../pricing/claude-fable-5-standard.json) artifact for API-list-price-equivalent cost. It records the standard rates at authoring: $10.00/M input, $1.00/M cache read, $20.00/M cache write, and $50.00/M output. A rehearsal run observed Claude Code CLI writing cache entries exclusively under the 1-hour ephemeral TTL (2x the input rate), not the 5-minute TTL (1.25x) originally assumed here; the adapter does not pass an explicit TTL flag, so this is the CLI's own default and the pricing artifact now reflects it. Calculate one stage as `(input_tokens - cached_input_tokens) × input rate + cached_input_tokens × cache-read rate + cache-write tokens × cache-write rate + output_tokens × output rate`, divided by one million, where `input_tokens` is the adapter-normalized total (see "Usage and timing capture" above), not the raw `usage.input_tokens` field.
+Cost is measured by [ccusage](https://github.com/ccusage/ccusage), pinned in the repository's `package.json` (`20.0.17`) and invoked with the repository's own Node. After the stage, the controller runs `ccusage claude session --json` scoped to this run's isolated `CLAUDE_CONFIG_DIR` home. ccusage parses the persisted rollouts and prices them with its own maintained rate database; the manifest records ccusage's computed USD as `cost.totalUsd`, the per-model detail from `modelBreakdowns` in `cost.models` (Claude reports per-model cost), and the tool/version provenance in `cost.costSource`. We do not compute prices ourselves, so no frozen pricing artifact can rot when rates change. The controller records the exact ccusage version in the manifest.
 
-The actual run remains a subscription run; record subscription expenditure separately and do not allocate the monthly fee across entrants. A run using another service tier must use another frozen pricing artifact rather than reusing this one.
+The actual run remains a subscription run; record subscription expenditure separately and do not allocate the monthly fee across entrants. ccusage misses the small Claude background auxiliary-model usage that has no transcript (measured ~0.2%); that gap is accepted and not reconciled.
 
 ## Known harness defaults
 
