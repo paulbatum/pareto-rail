@@ -21,7 +21,7 @@ This configuration is one unattended `codex exec` stage in which the primary age
 
 ## Delegation
 
-- Mechanism: Codex's built-in `spawn_agent` tool (feature `multi_agent`). Its `model` field inherits the parent unless told otherwise; the addendum instructs the primary to spawn the implementer with `model="gpt-5.6-terra"`.
+- Mechanism: Codex's built-in agent-spawn tool. The addendum instructs the primary to spawn the implementer with `model="gpt-5.6-terra"`. The controller enables the `multi_agent_v2` feature via explicit `-c` overrides (`features.multi_agent_v2.hide_spawn_agent_metadata=false`, `features.multi_agent_v2.tool_namespace="agents"`); without it the older spawn path silently inherits the parent model instead of honoring the requested delegate model. Because the run uses `--ignore-user-config` and an isolated `CODEX_HOME`, the operator's own config.toml (which normally carries this feature) is not loaded, so the adapter re-declares it for delegation runs only.
 - Delegate model: `gpt-5.6-terra`. Delegate reasoning level: `{{DELEGATE_EFFORT}}` in the addendum — **high** for the real configuration; the rehearsal definition overrides both parent and delegate effort to **low** to exercise the path cheaply.
 - The addendum is the only thing that induces delegation: no harness flag sets the delegate model. Whether the primary actually delegates, and whether the requested delegate effort is honored, are empirical questions confirmed at rehearsal; if the effort request is not settable it is a documented best-effort limitation.
 - Each subagent runs as a separate thread with its own rollout file under `$CODEX_HOME/sessions`, inside the isolated per-run home, so ccusage sums the delegated cost into the run total.
@@ -56,12 +56,14 @@ The controller supplies the rendered benchmark assignment followed by the render
 
 ### Harness invocation
 
-The controller launches this configuration through `npm run benchmark:run` with a delegation-bearing run definition (the `delegation` object carries the addendum artifact, `delegateModel`, and `delegateEffort`); the adapter arguments are identical to `codex-sol-high`:
+The controller launches this configuration through `npm run benchmark:run` with a delegation-bearing run definition (the `delegation` object carries the addendum artifact, `delegateModel`, and `delegateEffort`); the adapter arguments extend `codex-sol-high` with the `multi_agent_v2` overrides:
 
 ```text
 codex exec --json --color never --ignore-user-config --ignore-rules --strict-config \
   -m gpt-5.6-sol -c model_reasoning_effort="high" -c approval_policy="never" \
   -c sandbox_workspace_write.network_access=true \
+  -c features.multi_agent_v2.hide_spawn_agent_metadata=false \
+  -c features.multi_agent_v2.tool_namespace="agents" \
   -s workspace-write -C <worktree> --output-last-message <private-final-message> -
 ```
 

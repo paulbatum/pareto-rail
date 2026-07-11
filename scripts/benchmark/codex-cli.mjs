@@ -28,11 +28,12 @@ async function main() {
     --model <catalog-model-slug> \\
     --effort <low|medium|high|xhigh|max|ultra> \\
     [--timeout-seconds <positive-integer>] \\
-    [--codex-bin <path-or-command>]`);
+    [--codex-bin <path-or-command>] \\
+    [--enable-multi-agent true]`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'codex-bin']));
+  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'codex-bin', 'enable-multi-agent']));
 
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const promptPath = path.resolve(requireOption(options, 'prompt'));
@@ -41,6 +42,7 @@ async function main() {
   if (!EFFORTS.has(effort)) fail(`Unsupported --effort: ${effort}.`);
   const timeoutSeconds = parseTimeout(options['timeout-seconds']);
   const codexBin = options['codex-bin'] ?? 'codex';
+  const enableMultiAgent = options['enable-multi-agent'] === 'true';
   const repositoryRoot = await primaryRepository(worktree);
   const outputDirectory = assertPrivateOrExternalPath(requireOption(options, 'out'), repositoryRoot);
   if (pathInside(outputDirectory, worktree)) fail('Codex stage output must be outside the entrant worktree.');
@@ -79,6 +81,11 @@ async function main() {
     '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
     '-c', 'approval_policy="never"',
     '-c', 'sandbox_workspace_write.network_access=true',
+    // Delegation configurations enable the multi_agent_v2 feature so a spawned subagent can run a
+    // different model than its parent. `--ignore-user-config` drops the operator's config.toml
+    // (which normally carries this), so it is re-declared here as an explicit `-c` override. Without
+    // it, the older spawn path silently inherits the parent model.
+    ...(enableMultiAgent ? ['-c', 'features.multi_agent_v2.hide_spawn_agent_metadata=false', '-c', 'features.multi_agent_v2.tool_namespace="agents"'] : []),
     '-s', 'workspace-write',
     '-C', worktree,
     '--output-last-message', finalMessage,

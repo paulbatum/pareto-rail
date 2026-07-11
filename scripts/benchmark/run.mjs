@@ -39,6 +39,11 @@ const ADAPTERS = {
     // operator home dir; `dest` is under the per-run home.
     homeEnvVar: 'CODEX_HOME',
     credential: { sourceRelative: '.codex/auth.json', dest: 'auth.json' },
+    // Extra adapter args applied only when the run definition carries a `delegation` block. Codex
+    // needs the multi_agent_v2 feature enabled for a subagent to run a different model than its
+    // parent; the isolated per-run home does not inherit the operator's config.toml, so the adapter
+    // re-declares it. Claude's Agent tool needs no equivalent, so claude-cli has no delegation args.
+    delegationArgs: ['--enable-multi-agent', 'true'],
   },
   'claude-cli': {
     scriptPath: path.join(ROOT, 'scripts/benchmark/claude-cli.mjs'),
@@ -94,6 +99,7 @@ async function main() {
     const stageDirectory = path.join(outputDirectory, adapter.stageDir);
     const stageArgs = [executorPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
     if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
+    if (definition.delegation && adapter.delegationArgs) stageArgs.push(...adapter.delegationArgs);
     const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
     await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
     if (stage.code !== 0) fail(`${adapter.harnessName} stage failed; see ${path.join(outputDirectory, 'stage-launch.json')}.`);
