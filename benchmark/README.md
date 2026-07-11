@@ -32,3 +32,23 @@ npm run benchmark:results -- --identity blind
 ```
 
 Use `--identity unblind` only when the relevant ranking snapshot has been locked and its mapping opened. `--format csv` is also available, and `--runs <path>` can inspect another run-artifact directory.
+
+## Managing and Cleaning Up Runs
+
+Use `npm run benchmark:manage` to check the current run state and clean up/archive failed or incomplete runs (DNFs, controller failures, etc.) so that they can be retried cleanly from scratch.
+
+* **Check status:**
+  ```bash
+  npm run benchmark:manage -- status
+  ```
+* **Archive failed/DNF runs (dry run):**
+  ```bash
+  npm run benchmark:manage -- archive-dnf --dry-run true
+  ```
+* **Archive failed/DNF runs and clean up active worktrees:**
+  ```bash
+  npm run benchmark:manage -- archive-dnf
+  ```
+
+This tool automatically detects failed/DNF/incomplete runs, cleans up their associated git worktrees and branches from `/tmp`, removes their local level folders from the primary repository, restores the level registry (`src/levels/index.ts`), and moves the run directories to `benchmark/private/archive/runs/` to preserve logs and billing details.
+
