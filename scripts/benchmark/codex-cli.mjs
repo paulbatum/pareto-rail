@@ -84,7 +84,8 @@ async function main() {
     // Delegation configurations enable the multi_agent_v2 feature so a spawned subagent can run a
     // different model than its parent. `--ignore-user-config` drops the operator's config.toml
     // (which normally carries this), so it is re-declared here as an explicit `-c` override. Without
-    // it, the older spawn path silently inherits the parent model.
+    // it, the older spawn path silently inherits the parent model. These lines are a workaround for
+    // https://github.com/openai/codex/issues/31814 and can be removed once that is fixed.
     ...(enableMultiAgent ? ['-c', 'features.multi_agent_v2.hide_spawn_agent_metadata=false', '-c', 'features.multi_agent_v2.tool_namespace="agents"'] : []),
     '-s', 'workspace-write',
     '-C', worktree,

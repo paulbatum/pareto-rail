@@ -42,7 +42,8 @@ const ADAPTERS = {
     // Extra adapter args applied only when the run definition carries a `delegation` block. Codex
     // needs the multi_agent_v2 feature enabled for a subagent to run a different model than its
     // parent; the isolated per-run home does not inherit the operator's config.toml, so the adapter
-    // re-declares it. Claude's Agent tool needs no equivalent, so claude-cli has no delegation args.
+    // re-declares it (workaround for https://github.com/openai/codex/issues/31814). Claude's Agent
+    // tool needs no equivalent, so claude-cli has no delegation args.
     delegationArgs: ['--enable-multi-agent', 'true'],
   },
   'claude-cli': {
