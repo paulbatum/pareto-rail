@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { selectableLevelGroups } from '../../levels';
 import { homeCopy } from '../content';
 import { RouteLink } from '../components/RouteLink';
@@ -33,7 +34,7 @@ export function PlayPage({ activeId, onNavigate }: { activeId?: string; onNaviga
   const groups = selectableLevelGroups();
   const sections = [
     { label: 'Built-in levels', levels: groups.builtIn, meta: (id: string) => id === 'crystal-corridor' ? 'Reference run' : 'Built-in level' },
-    { label: 'Benchmark levels', levels: groups.benchmark, meta: () => 'Benchmark output' },
+    { label: 'Benchmark levels', levels: groups.benchmark, meta: (id: string) => `Benchmark output · ${levelIdSuffix(id)}` },
   ];
 
   return (
@@ -48,7 +49,8 @@ export function PlayPage({ activeId, onNavigate }: { activeId?: string; onNaviga
             <div className="level-grid">
               {section.levels.map((level) => (
                 <RouteLink
-                  className={`level-card${level.id === activeId ? ' selected' : ''}${level.contentImages ? ' has-content' : ''}`}
+                  className={`level-card${level.id === activeId ? ' selected' : ''}${level.contentImages ? ' has-content' : ' text-only'}`}
+                  style={level.contentImages ? undefined : { '--card-hue': levelCardHue(level.id) } as CSSProperties}
                   href={`/play/${encodeURIComponent(level.id)}`}
                   onNavigate={onNavigate}
                   key={level.id}
@@ -82,7 +84,7 @@ export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => 
       <p className="eyebrow">Leaderboard</p>
       <h1>Quality meets cost.</h1>
       <p className="lede">Aggregate benchmark rankings will appear here as public comparisons accumulate.</p>
-      <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Until the first release, this page remains useful context-free: no WebGPU, no account, and no game required.</p></div>
+      <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Aggregate results will appear here once the first benchmark release ships. Play some matchups meanwhile — your personal curve is yours immediately.</p></div>
       <RouteLink className="text-link" href="/about" onNavigate={onNavigate}>Read the methodology →</RouteLink>
     </section>
   );
@@ -102,4 +104,14 @@ export function AboutPage() {
       <p>Early ratings are estimates. Browser play is voluntary and subjective. We never expose private prompts, credentials, raw logs, or unpublished entrant mappings.</p>
     </section>
   );
+}
+
+function levelCardHue(id: string): number {
+  let hash = 0;
+  for (const character of id) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  return 178 + (hash % 150);
+}
+
+function levelIdSuffix(id: string): string {
+  return id.slice(id.lastIndexOf('-') + 1);
 }

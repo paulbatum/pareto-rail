@@ -1,6 +1,6 @@
 body:not(.game-active) { overflow: auto; cursor: auto; background: #060a13; }
 body:not(.game-active) #app { position: relative; min-height: 100dvh; height: auto; }
-.app-shell { min-height: 100dvh; color: #e8f6ff; background: radial-gradient(circle at 75% 0%, rgb(20 50 86 / 38%), transparent 42%), #060a13; }
+.app-shell { min-height: 100dvh; color: #e8f6ff; background: radial-gradient(circle at 75% 0%, rgb(20 50 86 / 38%), transparent 42%), #060a13; font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 .site-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px clamp(20px, 5vw, 72px); background: rgb(6 10 19 / 88%); border-bottom: 1px solid rgb(70 232 255 / 16%); backdrop-filter: blur(14px); }
 .site-nav nav { display: flex; gap: clamp(12px, 3vw, 32px); }
 .site-nav a { color: #a6c4d4; text-decoration: none; letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
@@ -97,3 +97,197 @@ body.game-active .site-nav a { pointer-events: auto; }
 .game-toolbar a:hover { color: #46e8ff; }
 .game-mount { position: absolute; inset: 0; }
 @media (max-width: 640px) { .site-nav { align-items: flex-start; flex-direction: column; padding: 16px 20px; } .site-nav nav { width: 100%; justify-content: space-between; } .home-choice-grid { grid-template-columns: 1fr; } .info-grid, .compare-grid, .reveal-grid { grid-template-columns: 1fr; } .vote-grid { grid-template-columns: 1fr; } }
+
+/* Site typography uses a sans display voice against deliberately monospace data. */
+.app-shell h1,
+.app-shell h2,
+.app-shell h3 {
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: -.025em;
+}
+
+.app-shell .page-panel h1 {
+  max-width: 900px;
+  font-size: clamp(38px, 6.5vw, 68px);
+  font-weight: 800;
+  line-height: .98;
+  letter-spacing: -.04em;
+}
+
+.app-shell .eyebrow,
+.app-shell .choice-eyebrow,
+.app-shell .step,
+.app-shell .site-nav a,
+.app-shell .button,
+.app-shell .level-card-meta,
+.app-shell .muted,
+.app-shell .identity,
+.app-shell .cost,
+.app-shell .curve-progress,
+.app-shell .curve-panel h2 span,
+.app-shell .curve-panel .axis-label,
+.app-shell kbd,
+.app-shell .compare-stats,
+.app-shell .game-toolbar a,
+.app-shell .game-toolbar span {
+  font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
+}
+
+.app-shell .home-choice h2,
+.app-shell .info-grid h2,
+.app-shell .prose h2,
+.app-shell .assignment-card h2,
+.app-shell .vote-heading,
+.app-shell .curve-panel h2 {
+  font-weight: 750;
+}
+
+.level-card.text-only {
+  --card-hue: 210;
+  position: relative;
+  grid-template-rows: 46px 1fr;
+  min-height: 146px;
+  padding: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 84% 12%, hsl(var(--card-hue) 100% 72% / 18%), transparent 43%),
+    rgb(10 22 38 / 78%);
+  border-color: hsl(var(--card-hue) 72% 68% / 34%);
+}
+.level-card.text-only::before {
+  content: '';
+  display: block;
+  border-bottom: 1px solid hsl(var(--card-hue) 80% 70% / 35%);
+  background:
+    linear-gradient(135deg, transparent 0 48%, hsl(var(--card-hue) 100% 74% / 48%) 48.5% 49.5%, transparent 50%),
+    repeating-linear-gradient(90deg, transparent 0 22px, hsl(var(--card-hue) 90% 70% / 12%) 22px 23px),
+    linear-gradient(90deg, hsl(var(--card-hue) 100% 66% / 15%), transparent 74%);
+}
+.level-card.text-only::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 10px, hsl(var(--card-hue) 90% 70% / 4%) 10px 11px);
+  opacity: .8;
+}
+.level-card.text-only .level-card-copy {
+  position: relative;
+  z-index: 1;
+  gap: 7px;
+  padding: 14px 18px 16px;
+}
+.level-card.text-only .level-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -.025em;
+}
+.level-card.text-only .level-card-meta {
+  color: hsl(var(--card-hue) 76% 74% / 76%);
+}
+
+.compare-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  align-items: baseline;
+}
+.run-score {
+  color: #46e8ff;
+}
+
+.reveal-card {
+  position: relative;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+.reveal-card.is-picked {
+  background: linear-gradient(145deg, rgb(15 46 61 / 88%), rgb(10 22 38 / 78%));
+  border-color: #46e8ff;
+  box-shadow: 0 0 34px rgb(70 232 255 / 17%), inset 0 0 32px rgb(70 232 255 / 7%);
+}
+.reveal-card.is-rejected {
+  border-color: rgb(255 73 100 / 52%);
+  box-shadow: inset 0 0 28px rgb(255 73 100 / 7%);
+}
+.reveal-tag {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
+  padding: 5px 8px;
+  color: #02040a;
+  background: #46e8ff;
+  font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.reveal-card.is-rejected .reveal-tag {
+  color: #ffd8dd;
+  background: rgb(255 73 100 / 20%);
+  border: 1px solid rgb(255 73 100 / 48%);
+}
+.reveal-card .cost {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+}
+.reveal-card .cost-value {
+  color: #ffcf77;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 800;
+  line-height: .95;
+  letter-spacing: -.04em;
+  text-shadow: 0 0 18px rgb(255 177 61 / 30%);
+}
+.reveal-card .cost-label {
+  color: #a47d45;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.cost-comparison {
+  max-width: 680px;
+  margin: 14px 0 22px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.webgpu-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(880px, 100%);
+  margin: 0 auto 24px;
+  padding: 10px 12px 10px 14px;
+  color: #a6c4d4;
+  background: rgb(10 22 38 / 82%);
+  border: 1px solid rgb(255 177 61 / 35%);
+  border-left: 2px solid #ffb13d;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.webgpu-notice button {
+  flex: 0 0 auto;
+  padding: 3px 0;
+  color: #ffcf77;
+  background: transparent;
+  border: 0;
+  font: 11px ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.webgpu-notice button:hover,
+.webgpu-notice button:focus-visible {
+  color: #fff;
+}
+
+.app-shell .game-frame {
+  font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
+}

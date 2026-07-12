@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { routePath, type AppRoute } from '../router';
 import { RouteLink } from '../components/RouteLink';
 
@@ -37,7 +37,17 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
           })}
         </nav>
       </header>
-      <main className="app-content">{children}</main>
+      <main className="app-content">{isEntryPoint(route) && <WebGPUNotice />}{children}</main>
     </div>
   );
+}
+
+function isEntryPoint(route: AppRoute): boolean {
+  return (route.kind === 'play' && !route.levelId) || (route.kind === 'rank' && !route.playSide);
+}
+
+function WebGPUNotice() {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed || typeof navigator === 'undefined' || 'gpu' in navigator) return null;
+  return <aside className="webgpu-notice" role="status"><span>This game needs WebGPU — recent Chrome or Edge.</span><button type="button" aria-label="Dismiss WebGPU notice" onClick={() => setDismissed(true)}>Dismiss</button></aside>;
 }
