@@ -1,10 +1,12 @@
 import type { LevelDefinition } from '../engine/types';
+import type { LevelContentImages } from '../levels/content-images';
 
 /** Metadata shipped with a generated benchmark level. */
 export interface BenchmarkLevelDescriptor {
   id: string;
   title: string;
   aliases?: string[];
+  contentImages?: LevelContentImages;
 }
 
 export type BenchmarkLevelModule = Record<string, unknown>;

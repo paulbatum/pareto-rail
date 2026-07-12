@@ -79,7 +79,7 @@ async function captureStill(browser, baseUrl, outDir, options, time) {
   const result = await captureWithFallbacks(browser, baseUrl, options, time);
   const label = options.musicalLabels[time];
   const timeLabel = label ? `${formatTime(time)}-${label}` : formatTime(time);
-  const outputPath = path.join(outDir, `${safeName(options.level)}-${timeLabel}-${result.fidelity}${projectileSuffix(options)}${mortalitySuffix(options)}.png`);
+  const outputPath = path.join(outDir, `${safeName(options.level)}-${timeLabel}-${result.fidelity}${projectileSuffix(options)}${mortalitySuffix(options)}${startScreenSuffix(options)}.png`);
   await fs.writeFile(outputPath, addSnapshotSeedTextChunk(decodePngDataUrl(result.dataUrl), result.seed));
   logCapture(outputPath, result);
 }
@@ -103,7 +103,7 @@ async function captureSheet(browser, baseUrl, outDir, options) {
   const sheetType = options.sections ? 'sections-' : '';
   const outputPath = path.join(
     outDir,
-    `${safeName(options.level)}-${sheetType}thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}${mortalitySuffix(options)}.png`,
+    `${safeName(options.level)}-${sheetType}thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}${mortalitySuffix(options)}${startScreenSuffix(options)}.png`,
   );
   await fs.writeFile(outputPath, addSnapshotSeedTextChunk(decodePngDataUrl(dataUrl), captures[0].seed));
   console.log(`${path.relative(process.cwd(), outputPath)} thumbnails=${captures.length} fidelity=${fidelityLabel}`);
@@ -123,7 +123,7 @@ async function readLevelMetadata(browser, baseUrl, options) {
 
   try {
     await page.setViewport({ width: options.width, height: options.height, deviceScaleFactor: 1 });
-    const url = newGameplaySnapshotUrl(baseUrl, options, 0, 'postless');
+    const url = newGameplaySnapshotUrl(baseUrl, { ...options, startScreen: false }, 0, 'postless');
     await page.goto(url.href, { waitUntil: 'networkidle0' });
     await page.evaluate(() => window.__gameplaySnapshot.ready);
     const metadata = await page.evaluate(() => window.__gameplaySnapshot.metadata());
@@ -180,6 +180,7 @@ function newGameplaySnapshotUrl(baseUrl, options, time, fidelity) {
   url.searchParams.set('height', String(options.height));
   url.searchParams.set('fidelity', fidelity);
   if (options.immortal) url.searchParams.set('immortal', '1');
+  if (options.startScreen) url.searchParams.set('startScreen', '1');
   if (options.projectiles) url.searchParams.set('projectiles', '1');
   if (options.debugValue !== undefined) url.searchParams.set('debugValue', options.debugValue);
   if (options.seed !== undefined) url.searchParams.set('seed', String(options.seed));
@@ -258,6 +259,7 @@ function parseArgs(argv) {
     dt: DEFAULT_DT,
     fidelity: 'auto',
     immortal: true,
+    startScreen: false,
     projectiles: false,
     debugValue: undefined,
     seed: undefined,
@@ -298,6 +300,11 @@ function parseArgs(argv) {
     if (key === 'sections') {
       parsed.sections = true;
       parsed.sheet = true;
+      continue;
+    }
+
+    if (key === 'start-screen') {
+      parsed.startScreen = true;
       continue;
     }
 
@@ -374,6 +381,7 @@ function parseArgs(argv) {
   }
 
   if (!parsed.level) throw new Error('Missing required option: --level <id>');
+  if (parsed.startScreen && parsed.times.length === 0 && parsed.atsRaw.length === 0) parsed.times.push(0.8);
   const hasTimeInput = parsed.times.length > 0 || parsed.atsRaw.length > 0 || parsed.sections || parsed.thumbnailCount !== undefined;
   if (parsed.sheet) {
     if (!hasTimeInput) {
@@ -443,6 +451,10 @@ function projectileSuffix(options) {
 
 function mortalitySuffix(options) {
   return options.immortal ? '' : '-mortal';
+}
+
+function startScreenSuffix(options) {
+  return options.startScreen ? '-start-screen' : '';
 }
 
 function formatTime(seconds) {

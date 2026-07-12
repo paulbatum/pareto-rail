@@ -116,10 +116,24 @@ function parseDescriptor(value: unknown, assetPath: string): BenchmarkLevelDescr
   if (value.aliases !== undefined && (!Array.isArray(value.aliases) || value.aliases.some((alias) => typeof alias !== 'string' || alias.length === 0))) {
     throw new Error(`Benchmark descriptor ${assetPath} has invalid aliases; aliases must be non-empty strings.`);
   }
+  const contentImages = parseContentImages(value.contentImages, assetPath);
   return {
     id: value.id,
     title: value.title,
     ...(value.aliases === undefined ? {} : { aliases: [...value.aliases] as string[] }),
+    ...(contentImages === undefined ? {} : { contentImages }),
+  };
+}
+
+function parseContentImages(value: unknown, assetPath: string): BenchmarkLevelDescriptor['contentImages'] {
+  if (value === undefined) return undefined;
+  if (!isRecord(value) || ['overview', 'start', 'hero'].some((key) => typeof value[key] !== 'string' || value[key].length === 0)) {
+    throw new Error(`Benchmark descriptor ${assetPath} has invalid contentImages; overview, start, and hero must be non-empty strings.`);
+  }
+  return {
+    overview: value.overview as string,
+    start: value.start as string,
+    hero: value.hero as string,
   };
 }
 

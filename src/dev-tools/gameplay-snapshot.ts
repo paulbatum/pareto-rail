@@ -163,6 +163,7 @@ const targetTime = readNonNegativeNumber(params.get('time')) ?? 0;
 const fixedDt = readPositiveNumber(params.get('dt')) ?? DEFAULT_DT;
 const fidelity = readFidelity(params.get('fidelity'));
 const showProjectiles = params.get('projectiles') === '1';
+const startScreen = params.get('startScreen') === '1';
 const skipRenders = params.get('render') === 'sample';
 
 let renderer: SnapshotRenderer | null = null;
@@ -313,7 +314,7 @@ async function bootstrap() {
   });
 
   runtimeUpdate = runtime.update;
-  startRunViaInput();
+  if (!startScreen) startRunViaInput();
   advanceRuntime(runtime.update, targetTime, fixedDt);
 
   if (!showProjectiles) hideProjectiles(scene);

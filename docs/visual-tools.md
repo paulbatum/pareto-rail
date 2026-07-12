@@ -69,7 +69,7 @@ npm run snapshot:gameplay -- --level crystal --sections   # contact sheet at eac
 * `--ats <list>` — a comma-separated list of musical positions or named markers.
 * `--sections` — captures a thumbnail sheet at each arrangement section boundary, sourced from per-level marker and section metadata.
 
-Single-frame outputs are named with the level, timestamp, resolved musical position (if applicable), fidelity, and any non-default modes.
+Single-frame outputs are named with the level, timestamp, resolved musical position (if applicable), fidelity, and any non-default modes. Capture the attract/start screen without beginning a run with `npm run snapshot:gameplay -- --level crystal --start-screen --time 0.8`; `--start-screen` defaults to an 0.8-second attract capture when no time is supplied.
 
 ## Gameplay thumbnail sheets
 
@@ -149,6 +149,16 @@ By default the tool drives a simple perfect lock-on policy, then warns when a ta
 --no-fail                       # print warnings without a failing exit code
 ```
 
-## Crystal enemy tuning gallery
+## Level content image sets
+
+A public level showcase can carry three optional images: `overview` is a four-frame contact sheet, `start` is the attract screen, and `hero` is the strongest single gameplay frame. Store them under `public/level-content/<level-id>/` and expose their paths through `contentImages` on the level catalog metadata (or the benchmark `level.json` descriptor). For Crystal Corridor, the checked-in set is `public/level-content/crystal-corridor/`.
+
+A reproducible Crystal set can be regenerated with:
+
+```sh
+npm run snapshot:gameplay -- --level crystal --sheet --times 4,8,18,36 --thumb-width 480 --columns 2 --out /tmp/crystal-content --fidelity full --seed 424242
+npm run snapshot:gameplay -- --level crystal --start-screen --time 0.8 --out /tmp/crystal-content --fidelity full --seed 424242
+npm run snapshot:gameplay -- --level crystal --time 36 --out /tmp/crystal-content --fidelity full --seed 424242
+```
 
 The `/dev` enemy gallery is specifically for `crystal-corridor`; it reads and writes `src/levels/crystal/visuals/crystal-template.json`.

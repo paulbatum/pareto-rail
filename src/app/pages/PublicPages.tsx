@@ -48,13 +48,24 @@ export function PlayPage({ activeId, onNavigate }: { activeId?: string; onNaviga
             <div className="level-grid">
               {section.levels.map((level) => (
                 <RouteLink
-                  className={`level-card${level.id === activeId ? ' selected' : ''}`}
+                  className={`level-card${level.id === activeId ? ' selected' : ''}${level.contentImages ? ' has-content' : ''}`}
                   href={`/play/${encodeURIComponent(level.id)}`}
                   onNavigate={onNavigate}
                   key={level.id}
                 >
-                  <span className="level-card-title">{level.title}</span>
-                  <span className="level-card-meta">{section.meta(level.id)}</span>
+                  {level.contentImages && (
+                    <span className="level-card-images" aria-label={`${level.title} visual preview`}>
+                      <img className="level-card-hero" src={level.contentImages.hero} alt={`${level.title} highlight`} loading="lazy" />
+                      <span className="level-card-supporting">
+                        <img src={level.contentImages.overview} alt={`${level.title} four-moment overview`} loading="lazy" />
+                        <img src={level.contentImages.start} alt={`${level.title} start screen`} loading="lazy" />
+                      </span>
+                    </span>
+                  )}
+                  <span className="level-card-copy">
+                    <span className="level-card-title">{level.title}</span>
+                    <span className="level-card-meta">{section.meta(level.id)}</span>
+                  </span>
                 </RouteLink>
               ))}
             </div>

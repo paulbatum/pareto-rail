@@ -37,6 +37,7 @@ function createEntry(
     id: descriptor.id,
     title: descriptor.title,
     ...(descriptor.aliases === undefined ? {} : { aliases: [...descriptor.aliases] }),
+    ...(descriptor.contentImages === undefined ? {} : { contentImages: descriptor.contentImages }),
     directoryName,
     load: () => {
       loaded ??= loadModule().then((moduleValue) => validateLoadedBenchmarkLevel(

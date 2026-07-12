@@ -30,7 +30,14 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .level-group h2 { margin: 0 0 12px; color: #fff; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; }
 .level-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .level-card { display: grid; gap: 10px; min-height: 104px; padding: 18px; color: #e8f6ff; background: rgb(10 22 38 / 72%); border: 1px solid rgb(70 232 255 / 22%); text-decoration: none; }
+.level-card.has-content { gap: 0; padding: 0; overflow: hidden; }
 .level-card:hover, .level-card.selected { border-color: #46e8ff; background: rgb(14 38 59 / 86%); }
+.level-card-images { display: grid; gap: 4px; background: #02040a; }
+.level-card-images img { display: block; width: 100%; object-fit: cover; }
+.level-card-hero { aspect-ratio: 16 / 9; }
+.level-card-supporting { display: grid; grid-template-columns: 1.07fr 1fr; gap: 4px; }
+.level-card-supporting img { aspect-ratio: 16 / 9; }
+.level-card-copy { display: grid; gap: 10px; padding: 18px; }
 .level-card-title { color: #fff; font-size: 16px; }
 .level-card-meta, .muted { color: #7090a2; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
 .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 42px 0; }

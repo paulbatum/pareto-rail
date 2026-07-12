@@ -1,4 +1,5 @@
 import type { LevelDefinition } from '../engine/types';
+import type { LevelContentImages } from './content-images';
 import {
   benchmarkLevelCatalog,
   validateBenchmarkIdentityCollisions,
@@ -12,6 +13,7 @@ export interface BuiltInLevelMetadata {
   title: string;
   aliases?: string[];
   kind: BuiltInLevelKind;
+  contentImages?: LevelContentImages;
 }
 
 /** Compatibility name for the human-maintained built-in registry API. */
@@ -25,7 +27,17 @@ export interface BuiltInLevelCatalogEntry extends BuiltInLevelMetadata {
 export type LevelCatalogEntry = BuiltInLevelCatalogEntry | BenchmarkLevelCatalogEntry;
 
 export const levelMetadatas: LevelMetadata[] = [
-  { id: 'crystal-corridor', title: 'Crystal Corridor', aliases: ['crystal'], kind: 'playable' },
+  {
+    id: 'crystal-corridor',
+    title: 'Crystal Corridor',
+    aliases: ['crystal'],
+    kind: 'playable',
+    contentImages: {
+      overview: '/level-content/crystal-corridor/overview.png',
+      start: '/level-content/crystal-corridor/start.png',
+      hero: '/level-content/crystal-corridor/hero.png',
+    },
+  },
   { id: 'helios', title: 'Helios', kind: 'playable' },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'], kind: 'playable' },
   { id: 'rezdle', title: 'Rezdle', kind: 'playable' },
