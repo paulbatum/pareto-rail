@@ -109,6 +109,9 @@ async function main() {
     const eligibleControls = definition.mode === 'eligible'
       ? await validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline, { historicalRunner: resuming })
       : undefined;
+    if (controllerDrift.length) {
+      await fs.writeFile(path.join(outputDirectory, 'controller-drift.json'), `${JSON.stringify({ acceptedAt: new Date().toISOString(), drift: controllerDrift }, null, 2)}\n`, 'utf8');
+    }
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
@@ -664,12 +667,32 @@ function sameAssignment(left, right) {
     && sameArtifact(left.theme, right.theme);
 }
 
+/**
+ * Frozen entrant-facing material (theme, recipe, prompt template, baseline) is
+ * always strictly verified. Controller-code drift may instead be accepted and
+ * recorded when RAILD_ACCEPT_CONTROLLER_DRIFT=1: each drifted path is appended
+ * to controllerDrift for persistence as controller-drift.json in the run
+ * directory, so later runs remain launchable from a repository whose
+ * controller code has moved past the release freeze.
+ */
+const controllerDrift = [];
+
+function controllerDriftAccepted() {
+  return process.env.RAILD_ACCEPT_CONTROLLER_DRIFT === '1';
+}
+
+function handleControllerDrift(relativePath, frozenSha256, executingSha256, message) {
+  if (!controllerDriftAccepted()) fail(`${message} Set RAILD_ACCEPT_CONTROLLER_DRIFT=1 to accept and record controller-code drift.`);
+  controllerDrift.push({ path: relativePath, frozenSha256, executingSha256 });
+  console.warn(`Accepted controller drift for ${relativePath} (frozen ${frozenSha256.slice(0, 12)}, executing ${executingSha256.slice(0, 12)}).`);
+}
+
 async function verifyConfigurationCode(configurationCommit, artifact, label, executingPath = repositoryArtifactPath(artifact.path), { historicalRunner = false } = {}) {
   const frozenSource = await gitShow(configurationCommit, artifact.path);
   if (sha256(frozenSource) !== artifact.sha256) fail(`Eligible ${label} does not match the configuration commit.`);
   if (!historicalRunner) {
-    const currentSource = await fs.readFile(executingPath, 'utf8');
-    if (sha256(currentSource) !== artifact.sha256) fail(`The executing configuration ${label} differs from its registered artifact.`);
+    const currentHash = sha256(await fs.readFile(executingPath, 'utf8'));
+    if (currentHash !== artifact.sha256) handleControllerDrift(artifact.path, artifact.sha256, currentHash, `The executing configuration ${label} differs from its registered artifact.`);
   }
 }
 
@@ -680,7 +703,7 @@ async function verifyProtocolCode(release, materialsCommit, relativePath, { hist
   if (!artifact || artifact.sha256 !== frozenHash) fail(`The tagged release does not freeze shared controller component ${relativePath}.`);
   if (!historicalRunner) {
     const currentHash = sha256(await fs.readFile(repositoryArtifactPath(relativePath), 'utf8'));
-    if (currentHash !== frozenHash) fail(`Shared controller component ${relativePath} differs from the protocol release.`);
+    if (currentHash !== frozenHash) handleControllerDrift(relativePath, frozenHash, currentHash, `Shared controller component ${relativePath} differs from the protocol release.`);
   }
 }
 

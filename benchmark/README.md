@@ -33,6 +33,8 @@ npm run benchmark:results -- --identity blind
 
 Use `--identity unblind` only when the relevant ranking snapshot has been locked and its mapping opened. `--format csv` is also available, and `--runs <path>` can inspect another run-artifact directory.
 
+Fresh launches verify the executing controller code against the release's frozen hashes. Once post-freeze controller development has drifted those files, launch with `RAILD_ACCEPT_CONTROLLER_DRIFT=1`; each drifted path is recorded with its frozen and executing hashes in the run's `controller-drift.json`. Entrant-facing frozen material (theme, recipe, prompt template, baseline) is always strictly verified regardless of this flag.
+
 ## Resuming and managing runs
 
 The runner checkpoints inputs, worktree creation, dependency setup, entrant execution, sealing, gates, payload extraction, and manifest generation in `controller-state.json`. Re-running with `--resume` validates existing artifacts and continues at the first unfinished operation:
