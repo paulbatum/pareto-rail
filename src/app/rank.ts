@@ -2,6 +2,7 @@ import {
   recomputePersonalCurve,
   personalHistoryFromReveals,
 } from '../benchmark/personal-curve';
+import { rankCatalog } from '../benchmark/catalog';
 import { ComparisonStateMachine } from '../benchmark/state';
 import { BenchmarkLocalStore } from '../benchmark/storage';
 import type {
@@ -36,7 +37,9 @@ export class RankController {
   get participantId() { return this.store.participantId; }
   get curve() {
     const data = this.store.snapshot;
-    return recomputePersonalCurve(personalHistoryFromReveals(data.history, data.completedMatchups.map((item) => item.reveal)));
+    return recomputePersonalCurve(personalHistoryFromReveals(data.history, data.completedMatchups.map((item) => item.reveal)), {
+      catalog: rankCatalog.entrants,
+    });
   }
 
   subscribe(listener: Listener) {
@@ -143,7 +146,7 @@ export class RankController {
 
   private persist(state: ComparisonState) {
     const prior = this.store.snapshot.themeHistory;
-    this.store.save({ unfinishedMatchup: state, themeHistory: prior.includes(state.assignment.theme.id) ? prior : [...prior, state.assignment.theme.id] });
+    this.store.save({ unfinishedMatchup: state, themeHistory: [...prior, state.assignment.theme.id] });
   }
 
   private emit() { for (const listener of this.listeners) listener(); }

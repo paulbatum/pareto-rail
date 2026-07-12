@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { LevelDefinition } from '../../engine/types';
 import type { RunSummary } from '../../engine/scoring';
-import { getBenchmarkLevelById, getLevelById, getLevelEntryById } from '../../levels';
+import { getBenchmarkLevelById, getLevelEntryById } from '../../levels';
 import { mountGame, type GameMount, type GameLaunchContext } from '../../game';
 import type { AppRoute } from '../router';
 import { RouteLink } from '../components/RouteLink';
@@ -91,5 +91,5 @@ export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { ki
 }
 
 export async function loadRankLevel(levelId: string): Promise<LevelDefinition> {
-  return import.meta.env.DEV ? getLevelById(levelId) : getBenchmarkLevelById(levelId);
+  return getBenchmarkLevelById(levelId);
 }

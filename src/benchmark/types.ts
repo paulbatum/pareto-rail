@@ -23,8 +23,9 @@ export interface PreVoteEntrant {
 export interface RevealEntrant extends PreVoteEntrant {
   entrantId: string;
   levelId: string;
+  configurationId?: string;
   modelName: string;
-  snapshotLabel: string;
+  snapshotLabel?: string;
   workflowName: string;
   generationCost: number;
   costCurrency?: string;

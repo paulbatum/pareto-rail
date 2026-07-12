@@ -16,6 +16,8 @@ export interface LocalBenchmarkData {
   /** Raw votes are retained so display ratings can be recomputed later. */
   history: MatchupVote[];
   themeHistory: string[];
+  /** Number of completed judgments in which each level was exposed. */
+  levelExposureCounts: Record<string, number>;
   revealedEntrants: RevealPayload['a'][];
 }
 
@@ -35,6 +37,7 @@ const emptyData = (participantId: string): LocalBenchmarkData => ({
   completedMatchups: [],
   history: [],
   themeHistory: [],
+  levelExposureCounts: {},
   revealedEntrants: [],
 });
 
@@ -89,6 +92,7 @@ export class BenchmarkLocalStore {
             completedMatchups: candidate.completedMatchups ?? [],
             history: candidate.history ?? candidate.votes ?? [],
             themeHistory: candidate.themeHistory ?? [],
+            levelExposureCounts: candidate.levelExposureCounts ?? {},
             revealedEntrants: candidate.revealedEntrants ?? [],
           });
         }
@@ -104,6 +108,7 @@ export class BenchmarkLocalStore {
       completedMatchups: [...data.completedMatchups],
       history: [...data.history],
       themeHistory: [...data.themeHistory],
+      levelExposureCounts: exposureCounts(data),
       revealedEntrants: [...data.revealedEntrants],
     };
   }
@@ -120,10 +125,17 @@ export class BenchmarkLocalStore {
 
   setUnfinishedMatchup(state: ComparisonState | undefined): LocalBenchmarkData { return this.save({ unfinishedMatchup: state }); }
   completeMatchup(completed: CompletedMatchup): LocalBenchmarkData {
+    const prior = this.data.completedMatchups.find((item) => item.matchupId === completed.matchupId);
     const existing = this.data.completedMatchups.filter((item) => item.matchupId !== completed.matchupId);
     const revealed = [...this.data.revealedEntrants, completed.reveal.a, completed.reveal.b]
       .filter((entrant, index, all) => all.findIndex((other) => other.entrantId === entrant.entrantId) === index);
-    return this.save({ completedMatchups: [...existing, completed], history: [...this.data.history.filter((item) => item.matchupId !== completed.matchupId), completed.vote], revealedEntrants: revealed, unfinishedMatchup: undefined });
+    const levelExposureCounts = { ...this.data.levelExposureCounts };
+    if (!prior) {
+      for (const levelId of [completed.reveal.a.levelId, completed.reveal.b.levelId]) {
+        levelExposureCounts[levelId] = (levelExposureCounts[levelId] ?? 0) + 1;
+      }
+    }
+    return this.save({ completedMatchups: [...existing, completed], history: [...this.data.history.filter((item) => item.matchupId !== completed.matchupId), completed.vote], levelExposureCounts, revealedEntrants: revealed, unfinishedMatchup: undefined });
   }
 
   clear(): void {
@@ -140,3 +152,14 @@ class MemoryStorage implements KeyValueStorage {
 }
 
 export function createMemoryStorage(): KeyValueStorage { return new MemoryStorage(); }
+
+function exposureCounts(data: LocalBenchmarkData): Record<string, number> {
+  if (data.levelExposureCounts && Object.keys(data.levelExposureCounts).length > 0) return { ...data.levelExposureCounts };
+  const counts: Record<string, number> = {};
+  for (const completed of data.completedMatchups) {
+    for (const levelId of [completed.reveal.a.levelId, completed.reveal.b.levelId]) {
+      counts[levelId] = (counts[levelId] ?? 0) + 1;
+    }
+  }
+  return counts;
+}

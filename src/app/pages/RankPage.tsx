@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RunSummary } from '../../engine/scoring';
 import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, RevealPayload, VoteVerdict } from '../../benchmark/types';
+import { CatalogBenchmarkApi } from '../../benchmark/catalog-api';
+import { rankCatalog } from '../../benchmark/catalog';
+import { BenchmarkLocalStore } from '../../benchmark/storage';
 import { RankController, type RankLaunch } from '../rank';
 import { RouteLink } from '../components/RouteLink';
 import type { AppRoute } from '../router';
@@ -80,7 +83,7 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
 }
 
 function RankStage({ state, onLaunch, onVote, onNext }: { state: ComparisonState; onLaunch: (side: MatchupSide) => void; onVote: (verdict: VoteVerdict) => void; onNext: () => void }) {
-  const card = (side: MatchupSide) => <div className="compare-card"><div className="placeholder-strip" aria-label={`Level ${side.toUpperCase()} placeholder thumbnail`}><span>Level {side.toUpperCase()}</span><i /><i /><i /><i /></div><h2>Level {side.toUpperCase()}</h2><p>{state.playCounts[side]} completed run{state.playCounts[side] === 1 ? '' : 's'}</p></div>;
+  const card = (side: MatchupSide) => <div className="compare-card"><LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} /><h2>Level {side.toUpperCase()}</h2><p>{state.playCounts[side]} completed run{state.playCounts[side] === 1 ? '' : 's'}</p></div>;
 
   if (state.kind === 'assignment') return <div className="assignment-card"><h2>Ready when you are</h2><p>Play both anonymous levels before voting.</p><button className="button primary" type="button" onClick={() => onLaunch('a')}>Play Level A</button></div>;
   if (state.kind === 'a-complete') return <><div className="compare-grid">{card('a')}{card('b')}</div><div className="rank-actions"><button className="button primary" type="button" onClick={() => onLaunch('b')}>Play Level B</button><button className="button" type="button" onClick={() => onLaunch('a')}>Replay Level A</button></div></>;
@@ -93,21 +96,27 @@ function RankStage({ state, onLaunch, onVote, onNext }: { state: ComparisonState
 function RevealStage({ reveal, onNext }: { reveal: RevealPayload; onNext: () => void }) {
   const card = (side: MatchupSide) => {
     const entrant = reveal[side];
-    return <article className="reveal-card"><div className="placeholder-strip"><span>Level {side.toUpperCase()}</span><i /><i /><i /><i /></div><h2>Level {side.toUpperCase()}</h2><p className="identity">{entrant.modelName} · {entrant.snapshotLabel} · {entrant.workflowName}</p><p className="cost">${entrant.generationCost.toFixed(2)} measured generation cost</p></article>;
+    return <article className="reveal-card"><LevelThumbnail side={side} path={entrant.thumbnailPath} /><h2>Level {side.toUpperCase()}</h2><p className="identity">{entrant.modelName}{entrant.snapshotLabel ? ` · ${entrant.snapshotLabel}` : ''} · {entrant.workflowName}</p><p className="cost">${entrant.generationCost.toFixed(2)} measured generation cost</p></article>;
   };
   return <><div className="reveal-grid">{card('a')}{card('b')}</div><p className="vote-result">You chose <strong>{verdictLabel(reveal.vote.verdict)}</strong>.</p><button className="button primary" type="button" onClick={onNext}>Next matchup</button></>;
 }
 
 function PersonalCurve({ controller }: { controller: RankController }) {
   const curve = controller.curve;
-  if (curve.comparisonCount < 3) return <p className="curve-progress">Your Pareto curve unlocks after {3 - curve.comparisonCount} more comparison{curve.comparisonCount === 2 ? '' : 's'}.</p>;
+  if (!curve.unlocked) return <p className="curve-progress">Your Pareto curve unlocks after {4 - curve.comparisonCount} more matchup{curve.comparisonCount === 3 ? '' : 's'}.</p>;
   const maxCost = Math.max(...curve.points.map((point) => point.meanCost), 1);
   const minCost = Math.min(...curve.points.map((point) => point.meanCost), 0);
   const span = Math.max(maxCost - minCost, .01);
-  const plotted = curve.points.map((point) => ({ ...point, x: 28 + ((point.meanCost - minCost) / span) * 260, y: Math.max(20, Math.min(170, 170 - ((point.rating - 900) / 220) * 130)) }));
+  const plotted = curve.points.map((point) => ({ ...point, x: 38 + ((point.meanCost - minCost) / span) * 262, y: Math.max(28, Math.min(180, 180 - ((point.rating - 900) / 220) * 152)) }));
   const frontier = plotted.filter((point) => point.frontier).sort((left, right) => left.x - right.x);
   const frontierPath = frontier.length > 1 ? `M${frontier.map((point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join('L')}` : null;
-  return <div className="curve-panel"><h2>Your Pareto curve <span>early estimate · {curve.comparisonCount} comparisons</span></h2><svg viewBox="0 0 320 200" role="img" aria-label="Personal quality versus cost curve"><path d="M28 170H300M28 170V20" />{frontierPath && <path className="frontier-line" d={frontierPath} />}{plotted.map((point) => <circle key={point.entrantId} cx={point.x} cy={point.y} r={point.frontier ? 7 : 5} className={point.frontier ? 'frontier' : ''}><title>{point.entrantId} · {point.rating.toFixed(0)} rating · ${point.meanCost.toFixed(2)}</title></circle>)}</svg><p className="muted">Frontier points balance lower measured cost with a higher personal rating.</p></div>;
+  return <div className="curve-panel"><h2>Your Pareto curve <span>{curve.isFull ? 'full curve' : 'early estimate'} · {curve.comparisonCount} comparisons</span></h2><svg viewBox="0 0 320 220" role="img" aria-label="Personal preference rating versus generation cost in dollars"><path d="M38 180H300M38 180V28" /><text className="axis-label axis-x" x="170" y="210">Cost ($)</text><text className="axis-label axis-y" x="11" y="110" transform="rotate(-90 11 110)">Preference rating</text>{frontierPath && <path className="frontier-line" d={frontierPath} />}{plotted.map((point) => <circle key={point.configurationId} cx={point.x} cy={point.y} r={point.frontier ? 7 : 5} className={point.frontier ? 'frontier' : ''}><title>{point.label} · {point.rating.toFixed(0)} rating · ${point.meanCost.toFixed(2)}</title></circle>)}</svg><p className="muted">Frontier points balance lower measured cost with a higher personal rating.</p></div>;
+}
+
+function LevelThumbnail({ side, path }: { side: MatchupSide; path?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!path || failed) return <div className="thumbnail-fallback" aria-label={`Level ${side.toUpperCase()} thumbnail unavailable`}><span>Level {side.toUpperCase()}</span></div>;
+  return <img className="level-thumbnail" src={path} alt={`Anonymous Level ${side.toUpperCase()}`} onError={() => setFailed(true)} />;
 }
 
 function ProductionRankPage() {
@@ -131,9 +140,9 @@ function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavi
 }
 
 function createRankController(): RankController {
-  // Rehearsal levels are retained privately for benchmark provenance, not exposed
-  // through the participant-facing ranking flow.
-  return new RankController();
+  const store = new BenchmarkLocalStore();
+  const api = new CatalogBenchmarkApi(rankCatalog, store);
+  return new RankController({ api, store, resolvePlayable: (ref) => ref });
 }
 
 function BenchmarkInvitation({ side, onNavigate }: { side: 'a' | 'b'; onNavigate: (path: string) => void }) {

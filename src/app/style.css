@@ -57,16 +57,16 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .rank-note { max-width: 700px; padding: 12px 16px; color: #90aebf; border-left: 2px solid #46e8ff; line-height: 1.55; }
 .prompt-details { margin: 22px 0; color: #a6c4d4; border-top: 1px solid rgb(70 232 255 / 18%); border-bottom: 1px solid rgb(70 232 255 / 18%); }
 .prompt-details summary { padding: 14px 0; color: #46e8ff; cursor: pointer; }
-.prompt-details p { max-width: 760px; padding: 0 0 14px; color: #96b1c0; line-height: 1.65; }
+.prompt-details p { max-width: 760px; padding: 0 0 14px; color: #96b1c0; line-height: 1.65; white-space: pre-line; }
 .assignment-card { margin: 28px 0; padding: 24px; background: rgb(10 22 38 / 72%); border: 1px solid rgb(70 232 255 / 30%); }
 .assignment-card h2 { margin-top: 0; color: #fff; }
 .compare-grid, .reveal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 28px 0 18px; }
 .compare-card, .reveal-card { padding: 14px; background: rgb(10 22 38 / 70%); border: 1px solid rgb(70 232 255 / 23%); }
 .compare-card h2, .reveal-card h2 { margin: 13px 0 6px; color: #fff; font-size: 18px; }
 .compare-card p, .reveal-card p { margin: 0; color: #89a9ba; font-size: 12px; }
-.placeholder-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; min-height: 76px; padding: 7px; background: #071322; border: 1px solid rgb(70 232 255 / 22%); }
-.placeholder-strip span { grid-column: 1 / -1; color: #46e8ff; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; }
-.placeholder-strip i { display: block; min-height: 35px; background: linear-gradient(145deg, rgb(70 232 255 / 18%), rgb(255 61 191 / 26%)); border: 1px solid rgb(70 232 255 / 18%); }
+.level-thumbnail, .thumbnail-fallback { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #071322; border: 1px solid rgb(70 232 255 / 22%); }
+.thumbnail-fallback { display: grid; place-items: center; background: linear-gradient(145deg, rgb(70 232 255 / 18%), rgb(255 61 191 / 26%)); }
+.thumbnail-fallback span { color: #46e8ff; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; }
 .rank-actions, .invitation-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .vote-heading { margin: 28px 0 12px; color: #fff; font-size: 20px; }
 .vote-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -81,6 +81,7 @@ kbd { padding: 3px 7px; color: #46e8ff; border: 1px solid rgb(70 232 255 / 45%);
 .curve-panel h2 span { color: #7090a2; font-size: 10px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
 .curve-panel svg { display: block; width: min(100%, 420px); height: auto; margin: 12px 0; overflow: visible; }
 .curve-panel svg path:first-child { fill: none; stroke: rgb(166 196 212 / 35%); stroke-width: 1; }
+.curve-panel svg .axis-label { fill: #7090a2; font-size: 9px; letter-spacing: .05em; text-transform: uppercase; }
 .curve-panel svg circle { fill: #46e8ff; stroke: #02040a; stroke-width: 2; }
 .curve-panel svg circle.frontier { fill: #ff3dbf; }
 .curve-panel svg .frontier-line { fill: none; stroke: rgb(255 61 191 / 58%); stroke-dasharray: 4 4; stroke-width: 1; }

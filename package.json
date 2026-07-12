@@ -35,6 +35,7 @@
     "benchmark:restore-src": "node scripts/benchmark/restore-src.mjs",
     "benchmark:catalog": "node scripts/benchmark/catalog.mjs",
     "benchmark:thumbnails": "node scripts/benchmark/generate-thumbnails.mjs",
+    "benchmark:export-rank-catalog": "node scripts/benchmark/export-rank-catalog.mjs",
     "test:benchmark-catalog": "node scripts/benchmark/test-catalog.mjs",
     "test:benchmark-controller": "node scripts/benchmark/test.mjs",
     "test:benchmark-promotion": "node scripts/benchmark/test-promotion.mjs",

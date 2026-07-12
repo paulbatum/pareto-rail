@@ -2,8 +2,13 @@
  * dependency-free so the domain can be verified without a browser. */
 // @ts-ignore Node's assert types are intentionally not a production dependency.
 import assert from 'node:assert/strict';
+// @ts-ignore Node fs types are intentionally not a production dependency.
+import { readFileSync } from 'node:fs';
 import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
+import { CatalogBenchmarkApi } from './catalog-api';
+import { nextScheduledMatchup, pairId } from './scheduler';
 import { mapVerdict, type MatchupAssignment } from './types';
+import type { RankCatalog } from './catalog';
 import { ComparisonStateMachine } from './state';
 import { BenchmarkLocalStore, createMemoryStorage } from './storage';
 import { recomputePersonalCurve, paretoFrontier, type PersonalHistoryEntry } from './personal-curve';
@@ -16,6 +21,28 @@ function assignment(): MatchupAssignment {
 
 export async function runBenchmarkDomainTests(): Promise<void> {
   assert.deepEqual(mapVerdict('a-better'), { verdict: 'a-better', relative: 'a' });
+
+  const schedulerCatalog = makeSchedulerCatalog(4);
+  const generatedCatalog = JSON.parse(readFileSync(new URL('./rank-catalog.json', import.meta.url), 'utf8')) as RankCatalog;
+  assertCoverage(generatedCatalog, generatedCatalog.entrants.length / 2, generatedCatalog.entrants.length);
+  assertCoverage(schedulerCatalog, 4, 8);
+  assertCoverage(makeSchedulerCatalog(6), 6, 12);
+  const catalogStorage = createMemoryStorage();
+  const catalogStore = new BenchmarkLocalStore(catalogStorage, 'catalog-api');
+  const catalogApi = new CatalogBenchmarkApi(schedulerCatalog, catalogStore);
+  const participantId = catalogStore.participantId;
+  const catalogAssignment = await catalogApi.nextMatchup({ participantId });
+  assert.ok(catalogAssignment);
+  await catalogApi.recordPlay({ matchupId: catalogAssignment!.matchupId, participantId, side: 'a' });
+  await catalogApi.recordPlay({ matchupId: catalogAssignment!.matchupId, participantId, side: 'b' });
+  await catalogApi.submitVote({ matchupId: catalogAssignment!.matchupId, participantId, verdict: 'a-better', playCounts: { a: 1, b: 1 } });
+  const catalogReveal = await catalogApi.reveal(catalogAssignment!.matchupId, participantId);
+  assert.equal(catalogReveal.a.dataClass, 'eligible');
+  assert.equal(catalogStore.snapshot.levelExposureCounts[catalogReveal.a.levelId], 1);
+  const refreshedApi = new CatalogBenchmarkApi(schedulerCatalog, new BenchmarkLocalStore(catalogStorage, 'catalog-api'));
+  const refreshedAssignment = await refreshedApi.nextMatchup({ participantId });
+  assert.ok(refreshedAssignment);
+  assert.notEqual(refreshedAssignment!.matchupId, catalogAssignment!.matchupId);
   assert.deepEqual(mapVerdict('b-better'), { verdict: 'b-better', relative: 'b' });
   assert.equal(mapVerdict('both-good').sentiment, 'positive');
   assert.equal(mapVerdict('both-bad').sentiment, 'negative');
@@ -52,8 +79,45 @@ export async function runBenchmarkDomainTests(): Promise<void> {
     { vote: { ...vote, matchupId: 'm2', relative: 'tie', verdict: 'both-good' }, a: { entrantId: vote.aEntrantId, generationCost: 3 }, b: { entrantId: vote.bEntrantId, generationCost: 2 } },
     { vote: { ...vote, matchupId: 'm3', relative: 'tie', verdict: 'both-bad' }, a: { entrantId: vote.aEntrantId, generationCost: 1 }, b: { entrantId: vote.bEntrantId, generationCost: 2 } },
   ];
-  assert.equal(recomputePersonalCurve(history).unlocked, true);
+  assert.equal(recomputePersonalCurve(history).unlocked, false);
+  assert.equal(recomputePersonalCurve([...history, { ...history[0], vote: { ...history[0].vote, matchupId: 'm4' } }]).unlocked, true);
   assert.ok(paretoFrontier([{ entrantId: 'a', meanCost: 1, rating: 1000 }, { entrantId: 'b', meanCost: 2, rating: 900 }]).some((point) => point.entrantId === 'a'));
+}
+
+function makeSchedulerCatalog(levelsPerTheme: number) {
+  const themes = [
+    { id: 'theme-a', title: 'Theme A', summary: 'A', prompt: 'A' },
+    { id: 'theme-b', title: 'Theme B', summary: 'B', prompt: 'B' },
+  ];
+  const entrants = themes.flatMap((theme) => Array.from({ length: levelsPerTheme }, (_, index) => ({
+    levelId: `${theme.id}-${index}`,
+    themeId: theme.id,
+    configurationId: `configuration-${index}`,
+    modelName: `Model ${index}`,
+    workflowName: 'solo',
+    generationCost: index + 1,
+  })));
+  return { generatedAt: 'test', themes, entrants };
+}
+
+function assertCoverage(catalog: RankCatalog, matchupCount: number, expectedLevels: number) {
+  const judgedMatchupIds: string[] = [];
+  const levelExposureCounts: Record<string, number> = {};
+  const themeHistory: string[] = [];
+  const seen = new Set<string>();
+  for (let index = 0; index < matchupCount; index += 1) {
+    const next = nextScheduledMatchup(catalog, 'coverage-participant', { judgedMatchupIds, levelExposureCounts, themeHistory });
+    assert.ok(next);
+    assert.equal(index === 0 || next!.themeId !== themeHistory.at(-1), true);
+    assert.equal(levelExposureCounts[next!.levelIdA] ?? 0, 0);
+    assert.equal(levelExposureCounts[next!.levelIdB] ?? 0, 0);
+    seen.add(next!.levelIdA); seen.add(next!.levelIdB);
+    levelExposureCounts[next!.levelIdA] = 1;
+    levelExposureCounts[next!.levelIdB] = 1;
+    judgedMatchupIds.push(pairId(next!.themeId, next!.levelIdA, next!.levelIdB));
+    themeHistory.push(next!.themeId);
+  }
+  assert.equal(seen.size, expectedLevels);
 }
 
 if (process && process.argv[1] && import.meta.url === new URL(process.argv[1], 'file:').href) {

@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-07-12T23:10:14.217Z",
+  "themes": [
+    {
+      "id": "mass-driver",
+      "title": "Mass Driver",
+      "summary": "Build a level where you're riding a payload down a huge orbital railgun.",
+      "prompt": "Build a level where you're riding a payload down a huge orbital railgun. The whole thing is basically a tunnel of glowing accelerator rings and you pass through one ring exactly on every beat, so the speed and the music are the same thing. As the run goes on the rings get spaced further apart (you're accelerating) but you still hit them on the beat, and they glow hotter as you go faster. Hot here means electric, not fire: arc blue through violet toward blinding white. The gun is also the instrument - a bass hum that climbs in pitch across the whole run, under a locked, hypnotic pulse.\n\nEnemies are defense drones threading between the coils.\n\nBoss: the gun's safety mechanisms are jammed and the final firing charge is already building. You can hear it - rising hum, rings burning hotter, the whole tunnel ramping up. Blow up the jammed safety interlocks before the charge peaks. Clear them all in time and the gun fires, launching you out of the muzzle into open space at insane speed, everything goes quiet, level ends. Too slow and the charge has nowhere to go - the barrel blows with you in it."
+    },
+    {
+      "id": "skyhook",
+      "title": "Skyhook",
+      "summary": "Build a level where you're riding a climber car up a space elevator, defending it all the way to the station at the top.",
+      "prompt": "Build a level where you're riding a climber car up a space elevator, defending it all the way to the station at the top. The climb is the whole arc: you start down in the weather, punch through the cloud deck, the sky thins from blue to black, and by the end there's stars above and the planet curving away below. Let the sky do the coloring - storm grey, sunlit blue, indigo, black - and keep the hardware utilitarian: white paneling, hazard orange, nothing neon. Speed comes from the world falling away - clouds whipping past, the ground dropping, debris streaking down around you. The car can take damage, so enemies going after it matter as much as enemies going after you. Score the climb the way the air behaves: wide and airy down low, losing layers as it thins, so that by the top the music is barely there.\n\nEnemies attack in waves - wind-riding things down in the weather, vacuum-hardened things up top - and some of them go for the car instead of you.\n\nBoss: something huge latches onto the tether way above and starts climbing down toward you. You can see it the whole fight, working its way closer, getting bigger. Kill it before it reaches the car or it tears the climber apart. Once it's dead the last stretch is clear - the station opens up overhead, swallows the car, everything decelerates and goes quiet, docked, level ends."
+    }
+  ],
+  "entrants": [
+    {
+      "levelId": "mass-driver-7rkv",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-high",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 2.99751,
+      "thumbnailPath": "/level-content/mass-driver-7rkv/hero.png"
+    },
+    {
+      "levelId": "mass-driver-bczy",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-terra-delegation",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "delegated",
+      "generationCost": 4.4546065,
+      "thumbnailPath": "/level-content/mass-driver-bczy/hero.png"
+    },
+    {
+      "levelId": "mass-driver-vyxj",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-high",
+      "modelName": "Claude Fable 5",
+      "workflowName": "solo",
+      "generationCost": 65.529086,
+      "thumbnailPath": "/level-content/mass-driver-vyxj/hero.png"
+    },
+    {
+      "levelId": "mass-driver-wo4m",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-opus-delegation",
+      "modelName": "Claude Fable 5",
+      "workflowName": "delegated",
+      "generationCost": 53.6681755,
+      "thumbnailPath": "/level-content/mass-driver-wo4m/hero.png"
+    },
+    {
+      "levelId": "skyhook-81u5",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-terra-delegation",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "delegated",
+      "generationCost": 5.137225,
+      "thumbnailPath": "/level-content/skyhook-81u5/hero.png"
+    },
+    {
+      "levelId": "skyhook-9uib",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-high",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 2.945069,
+      "thumbnailPath": "/level-content/skyhook-9uib/hero.png"
+    },
+    {
+      "levelId": "skyhook-lkor",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-opus-delegation",
+      "modelName": "Claude Fable 5",
+      "workflowName": "delegated",
+      "generationCost": 83.0224675,
+      "thumbnailPath": "/level-content/skyhook-lkor/hero.png"
+    },
+    {
+      "levelId": "skyhook-snxd",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-high",
+      "modelName": "Claude Fable 5",
+      "workflowName": "solo",
+      "generationCost": 71.365946,
+      "thumbnailPath": "/level-content/skyhook-snxd/hero.png"
+    }
+  ]
+}
