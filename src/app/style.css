@@ -20,6 +20,8 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .button.primary { color: #02040a; background: #46e8ff; border-color: #46e8ff; }
 .home-note { max-width: 650px; margin-top: 48px; padding: 18px 20px; color: #90aebf; border-left: 2px solid #ff3dbf; line-height: 1.6; }
 .home-note strong { color: #fff; }
+.level-groups { display: grid; gap: 36px; }
+.level-group h2 { margin: 0 0 12px; color: #fff; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; }
 .level-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .level-card { display: grid; gap: 10px; min-height: 104px; padding: 18px; color: #e8f6ff; background: rgb(10 22 38 / 72%); border: 1px solid rgb(70 232 255 / 22%); text-decoration: none; }
 .level-card:hover, .level-card.selected { border-color: #46e8ff; background: rgb(14 38 59 / 86%); }

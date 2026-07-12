@@ -1,6 +1,6 @@
 import './style.css';
 import './app/style.css';
-import { getLevelById } from './levels';
+import { getBenchmarkLevelById, getLevelById, getLevelEntryById } from './levels';
 import { createAppShell, createGameFrame } from './app/shell';
 import { navigate, parseRoute } from './app/router';
 import { mountGame, type GameMount } from './game';
@@ -38,7 +38,12 @@ async function bootstrap() {
       if (!route.playSide) return;
       const launch = rank.launch(route.playSide);
       if (!launch) return;
-      const level = await getLevelById(launch.levelId);
+      // Development rehearsal fixtures still point at their legacy local
+      // modules. A production matchup is resolved through the benchmark-only
+      // catalog, never by searching the mixed browsing list.
+      const level = import.meta.env.DEV
+        ? await getLevelById(launch.levelId)
+        : await getBenchmarkLevelById(launch.levelId);
       if (token !== renderToken) return;
       const frame = createGameFrame(`Level ${launch.side.toUpperCase()}`, '/rank', 'Matchup');
       shell.main.replaceChildren(frame);
@@ -51,7 +56,8 @@ async function bootstrap() {
       return;
     }
     if (route.kind !== 'play' || !route.levelId) return;
-    const level = await getLevelById(route.levelId);
+    const entry = await getLevelEntryById(route.levelId);
+    const level = await entry.load();
     if (token !== renderToken) return;
     shell.render(route);
     const frame = createGameFrame(level.title);
@@ -59,7 +65,7 @@ async function bootstrap() {
     const host = frame.querySelector<HTMLElement>('.game-mount');
     if (!host) return;
     document.title = `Pareto Rail — ${level.title}`;
-    game = await mountGame({ host, level, launchContext: { source: 'play', levelId: level.id, mode: level.id === 'crystal-corridor' ? 'reference' : 'benchmark' } });
+    game = await mountGame({ host, level, launchContext: { source: 'play', levelId: level.id, mode: entry.domain === 'benchmark' ? 'benchmark' : 'reference' } });
   };
   window.addEventListener('popstate', () => void render());
   await render();

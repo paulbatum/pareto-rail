@@ -12,9 +12,8 @@ async function resolveLevelTarget(levelIdOrAlias, rootDir) {
   const registryPath = path.resolve(rootDir, 'src/levels/index.ts');
   const registrySource = await fs.readFile(registryPath, 'utf8');
 
-  // Find dynamic import case mappings
-  // e.g. case 'crystal-corridor': return (await import('./crystal')).crystalCorridorLevel;
-  const caseRegex = /case\s+['"]([^'"]+)['"]:\s*\r?\n\s*return\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+);/g;
+  // Find the human-maintained built-in loader mappings.
+  const caseRegex = /['"]([^'"]+)['"]:\s*async\s*\(\)\s*=>\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+),/g;
   const cases = new Map();
   let match;
   while ((match = caseRegex.exec(registrySource))) {

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run validate:level-catalog && vite build",
     "typecheck": "tsc --noEmit",
     "check:scope": "bash scripts/check-level-scope.sh",
     "snapshot": "node scripts/snapshot.mjs",
@@ -18,6 +18,7 @@
     "check:occlusion": "node scripts/target-occlusion.mjs",
     "scaffold": "node scripts/scaffold-level.mjs",
     "gallery": "node scripts/collect-gallery.mjs",
+    "validate:level-catalog": "node scripts/validate-level-catalog.mjs",
     "benchmark:render": "node scripts/benchmark/render-assignment.mjs",
     "benchmark:schedule": "node scripts/benchmark/schedule.mjs",
     "benchmark:ranking": "node scripts/benchmark/ranking.mjs",
@@ -33,6 +34,7 @@
     "test:benchmark-catalog": "node scripts/benchmark/test-catalog.mjs",
     "test:benchmark-controller": "node scripts/benchmark/test.mjs",
     "test:benchmark-domain": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs src/benchmark/domain.test.ts",
+    "test:benchmark-level-domain": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs src/benchmark-levels/domain.test.ts",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",
     "sim:crystal-debug:verbose": "node scripts/run-crystal-debug-sim.mjs --verbose"
   },

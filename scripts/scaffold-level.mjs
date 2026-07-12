@@ -77,14 +77,14 @@ function namesForId(value) {
 }
 
 function appendRegistry(source, { id, title, exportName }) {
-  const metadataLine = `  { id: '${id}', title: '${escapeSingle(title)}' },`;
-  const withMetadata = source.replace(/(export const levelMetadatas: LevelMetadata\[] = \[[\s\S]*?)(\n\];)/, `$1\n${metadataLine}$2`);
+  const metadataLine = `  { id: '${id}', title: '${escapeSingle(title)}', kind: 'playable' },`;
+  const withMetadata = source.replace(/(export const levelMetadatas: (?:LevelMetadata|BuiltInLevelMetadata)\[] = \[[\s\S]*?)(\n\];)/, `$1\n${metadataLine}$2`);
   if (withMetadata === source) fail('Could not find levelMetadatas array in src/levels/index.ts');
 
-  const caseBlock = `    case '${id}':\n      return (await import('./${id}')).${exportName};\n`;
-  const withSwitch = withMetadata.replace(/(    default:\n      throw new Error\(`Unknown level: \$\{matched\.id\}`\);\n)/, `${caseBlock}$1`);
-  if (withSwitch === withMetadata) fail('Could not find getLevelById default case in src/levels/index.ts');
-  return withSwitch;
+  const loaderLine = `  '${id}': async () => (await import('./${id}')).${exportName},`;
+  const withLoader = withMetadata.replace(/(const builtInLoaders: Record<string, \(\) => Promise<LevelDefinition>> = \{\n)/, `$1${loaderLine}\n`);
+  if (withLoader === withMetadata) fail('Could not find builtInLoaders in src/levels/index.ts');
+  return withLoader;
 }
 
 function escapeSingle(value) {

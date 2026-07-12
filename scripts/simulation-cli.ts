@@ -189,8 +189,8 @@ async function resolveLevelTarget(levelIdOrAlias: string, rootDir: string): Prom
   const registryPath = path.resolve(rootDir, 'src/levels/index.ts');
   const registrySource = await fs.readFile(registryPath, 'utf8');
 
-  // Find dynamic import case mappings
-  const caseRegex = /case\s+['"]([^'"]+)['"]:\s*\r?\n\s*return\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+);/g;
+  // Find the human-maintained built-in loader mappings.
+  const caseRegex = /['"]([^'"]+)['"]:\s*async\s*\(\)\s*=>\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+),/g;
   const cases = new Map<string, string>();
   let match: RegExpExecArray | null;
   while ((match = caseRegex.exec(registrySource))) {
@@ -1189,7 +1189,7 @@ async function getAllLevels(rootDir: string): Promise<LevelTarget[]> {
   const registryPath = path.resolve(rootDir, 'src/levels/index.ts');
   const registrySource = await fs.readFile(registryPath, 'utf8');
 
-  const caseRegex = /case\s+['"]([^'"]+)['"]:\s*\r?\n\s*return\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+);/g;
+  const caseRegex = /['"]([^'"]+)['"]:\s*async\s*\(\)\s*=>\s*\(await\s*import\(['"]([^'"]+)['"]\)\)\.([A-Za-z0-9_]+),/g;
   const cases = new Map<string, string>();
   let match: RegExpExecArray | null;
   while ((match = caseRegex.exec(registrySource))) {

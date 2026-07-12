@@ -1,4 +1,4 @@
-import { selectableLevels } from '../levels';
+import { selectableLevelGroups } from '../levels';
 import type { AppRoute } from './router';
 import { navigate, routePath } from './router';
 
@@ -43,19 +43,39 @@ function renderHome(host: HTMLElement) {
 }
 
 function renderPlay(host: HTMLElement, activeId?: string) {
-  const levels = selectableLevels();
-  host.innerHTML = `<section class="page-panel"><p class="eyebrow">Play</p><h1>Choose a level</h1><p class="lede">Start with Crystal Corridor, then explore every playable rail in the collection.</p><div class="level-grid"></div></section>`;
-  const grid = host.querySelector<HTMLElement>('.level-grid');
-  if (!grid) return;
-  levels.forEach((level) => {
-    const card = document.createElement('a');
-    card.className = `level-card${level.id === activeId ? ' selected' : ''}`;
-    card.href = `/play/${encodeURIComponent(level.id)}`;
-    card.dataset.route = card.getAttribute('href')!;
-    card.innerHTML = `<span class="level-card-title"></span><span class="level-card-meta">${level.id === 'crystal-corridor' ? 'Reference run' : 'Playable level'}</span>`;
-    card.querySelector('.level-card-title')!.textContent = level.title;
-    grid.append(card);
-  });
+  const groups = selectableLevelGroups();
+  host.innerHTML = `<section class="page-panel"><p class="eyebrow">Play</p><h1>Choose a level</h1><p class="lede">Start with Crystal Corridor, then explore the curated collection and generated benchmark outputs.</p><div class="level-groups"></div></section>`;
+  const groupsHost = host.querySelector<HTMLElement>('.level-groups');
+  if (!groupsHost) return;
+  const sections = [
+    { label: 'Built-in levels', levels: groups.builtIn, meta: (id: string) => id === 'crystal-corridor' ? 'Reference run' : 'Built-in level' },
+    { label: 'Benchmark levels', levels: groups.benchmark, meta: () => 'Benchmark output' },
+  ];
+  for (const section of sections) {
+    if (section.levels.length === 0) continue;
+    const wrapper = document.createElement('section');
+    wrapper.className = 'level-group';
+    const heading = document.createElement('h2');
+    heading.textContent = section.label;
+    const grid = document.createElement('div');
+    grid.className = 'level-grid';
+    for (const level of section.levels) {
+      const card = document.createElement('a');
+      card.className = `level-card${level.id === activeId ? ' selected' : ''}`;
+      card.href = `/play/${encodeURIComponent(level.id)}`;
+      card.dataset.route = card.getAttribute('href')!;
+      const title = document.createElement('span');
+      title.className = 'level-card-title';
+      title.textContent = level.title;
+      const meta = document.createElement('span');
+      meta.className = 'level-card-meta';
+      meta.textContent = section.meta(level.id);
+      card.append(title, meta);
+      grid.append(card);
+    }
+    wrapper.append(heading, grid);
+    groupsHost.append(wrapper);
+  }
 }
 
 function renderRank(host: HTMLElement) {

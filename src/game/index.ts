@@ -7,7 +7,7 @@ import { getStartScreenTip } from '../ui/client-tip';
 import { installDevErrorOverlay } from '../ui/dev-error-overlay';
 import { createHud, showUnsupported } from '../ui/hud';
 import { createPauseMenu } from '../ui/pause';
-import { selectableLevels } from '../levels';
+import { selectableLevelGroups } from '../levels';
 import type { LevelDefinition } from '../engine/types';
 import { navigate } from '../app/router';
 
@@ -156,7 +156,22 @@ function addCrystalInvitation(summary: RunSummary, frame: HTMLElement) {
 function installLevelPicker(host: HTMLElement, activeId: string, includeTechnical: boolean) {
   const picker = document.createElement('label'); picker.className = 'level-picker'; picker.textContent = 'Level ';
   const select = document.createElement('select');
-  for (const level of selectableLevels({ includeTechnical })) { const option = document.createElement('option'); option.value = level.id; option.textContent = level.title; option.selected = level.id === activeId; select.append(option); }
+  const groups = selectableLevelGroups({ includeTechnical });
+  const appendGroup = (label: string, levels: readonly { id: string; title: string }[]) => {
+    if (levels.length === 0) return;
+    const group = document.createElement('optgroup');
+    group.label = label;
+    for (const level of levels) {
+      const option = document.createElement('option');
+      option.value = level.id;
+      option.textContent = level.title;
+      option.selected = level.id === activeId;
+      group.append(option);
+    }
+    select.append(group);
+  };
+  appendGroup('Built-in levels', groups.builtIn);
+  appendGroup('Benchmark levels', groups.benchmark);
   select.addEventListener('change', () => navigate(`/play/${encodeURIComponent(select.value)}`)); picker.append(select); host.append(picker);
 }
 function canUseFullscreen() { return Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen); }

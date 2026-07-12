@@ -41,6 +41,10 @@ This is a default, not a law. Rezdle legitimately decomposes differently, and `c
 
 A level task should only touch `src/levels/<id>/`, one registry line in `src/levels/index.ts`, and the regenerated `docs/level-gallery.md`. Use `npm run check:scope -- <level-id>` to verify that boundary.
 
+### Promoting a benchmark output
+
+Benchmark outputs use the separate `src/benchmark-levels/<id>/` domain. Add a `level.json` descriptor with the public `id` and `title`, an `index.ts` exporting exactly one `LevelDefinition`, and a `level.md` identity card. The permanent discovery module associates the matching files automatically; do not add benchmark outputs to `src/levels/index.ts`. The descriptor id must equal its directory name, and the loaded definition must use the descriptor's id and title.
+
 ## Handoff checks
 
 Before handing off a level change, run the general project checks and the level floor gate:
