@@ -1,4 +1,9 @@
 {
   "id": "skyhook-81u5",
-  "title": "Skyhook"
+  "title": "Skyhook",
+  "contentImages": {
+    "overview": "/level-content/skyhook-81u5/overview.png",
+    "start": "/level-content/skyhook-81u5/start.png",
+    "hero": "/level-content/skyhook-81u5/hero.png"
+  }
 }
