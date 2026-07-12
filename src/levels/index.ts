@@ -13,6 +13,7 @@ export const levelMetadatas: LevelMetadata[] = [
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'] },
   { id: 'rezdle', title: 'Rezdle' },
   { id: 'rush', title: 'Rush', kind: 'technical' },
+  { id: 'mass-driver-wo4m', title: 'Mass Driver' },
 ];
 
 export function selectableLevels({ includeTechnical = false }: { includeTechnical?: boolean } = {}): LevelMetadata[] {
@@ -37,6 +38,8 @@ export async function getLevelById(id: string | null): Promise<LevelDefinition> 
       return (await import('./rezdle')).rezdleLevel;
     case 'rush':
       return (await import('./rush')).rushLevel;
+    case 'mass-driver-wo4m':
+      return (await import('./mass-driver-wo4m')).massDriverWo4mLevel;
     default:
       throw new Error(`Unknown level: ${matched.id}`);
   }
