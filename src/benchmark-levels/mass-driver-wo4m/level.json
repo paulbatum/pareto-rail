@@ -1,4 +1,9 @@
 {
   "id": "mass-driver-wo4m",
-  "title": "Mass Driver"
+  "title": "Mass Driver",
+  "contentImages": {
+    "overview": "/level-content/mass-driver-wo4m/overview.png",
+    "start": "/level-content/mass-driver-wo4m/start.png",
+    "hero": "/level-content/mass-driver-wo4m/hero.png"
+  }
 }
