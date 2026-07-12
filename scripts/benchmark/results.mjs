@@ -15,6 +15,16 @@ export function manifestErrors(manifest) {
   if (manifest.schemaVersion !== 2) errors.push('schemaVersion must equal 2');
   if (!Array.isArray(manifest.stages)) errors.push('stages must be an array');
   if (!Array.isArray(manifest.gates)) errors.push('gates must be an array');
+  const themeIsObject = manifest.theme && typeof manifest.theme === 'object' && !Array.isArray(manifest.theme);
+  const outputIsObject = manifest.output && typeof manifest.output === 'object' && !Array.isArray(manifest.output);
+  if (themeIsObject && outputIsObject) {
+    const hasThemeId = Object.hasOwn(manifest.theme, 'id');
+    const hasOutputTitle = Object.hasOwn(manifest.output, 'title');
+    if (hasThemeId !== hasOutputTitle) errors.push('theme.id and output.title must be present together');
+    if (hasThemeId && (typeof manifest.theme.id !== 'string' || !manifest.theme.id || typeof manifest.output.title !== 'string' || !manifest.output.title)) {
+      errors.push('current theme/output metadata is incomplete');
+    }
+  }
   return errors;
 }
 

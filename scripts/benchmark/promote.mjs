@@ -124,10 +124,7 @@ async function validatePreflight(context) {
 
   if (manifest.benchmarkVersion !== definition.benchmarkVersion || manifest.runId !== assignmentRunId || manifest.slotId !== slotId) throw new Error('Manifest run, version, or slot metadata does not match the run definition.');
   if (manifest.configuration?.id !== assignment.configurationId) throw new Error('Manifest configuration metadata does not match the run definition.');
-  if (!isRecord(manifest.theme) || manifest.theme.id !== themeId || manifest.theme.path !== assignment.theme.path || manifest.theme.sha256 !== assignment.theme.sha256) {
-    throw new Error('Manifest theme metadata does not match the run definition.');
-  }
-  if (manifest.output?.levelId !== levelId || manifest.output?.title !== title) throw new Error('Manifest level or title metadata does not match the run definition.');
+  validateManifestAssignmentMetadata(manifest, assignment, { levelId, title, themeId });
   if (manifest.baseline?.materialsCommit !== definition.baseline?.materialsCommit) throw new Error('Manifest materials commit does not match the run definition.');
 
   const gateRecords = manifest.gates;
@@ -161,6 +158,8 @@ async function validatePreflight(context) {
   const evaluatedEntries = await treeEntries(root, evaluatedCommit, `${SOURCE_ROOT}/${levelId}`);
   const payloadEntries = await treeEntries(root, payloadCommit, `${SOURCE_ROOT}/${levelId}`);
   if (!evaluatedEntries.length || !payloadEntries.length) throw new Error('Evaluated and payload commits must contain a non-empty assigned level directory.');
+  assertNoSymlinks(evaluatedEntries, 'evaluated');
+  assertNoSymlinks(payloadEntries, 'payload');
   assertSameTree(evaluatedEntries, payloadEntries, 'evaluated and payload source trees');
 
   const changed = await payloadDiff(root, materialsCommit, payloadCommit, `${SOURCE_ROOT}/${levelId}`);
@@ -418,9 +417,32 @@ function assertManifestShape(manifest) {
   for (const key of ['configuration', 'theme', 'baseline', 'recipe', 'controller', 'timing', 'cost', 'output', 'disposition']) {
     if (!isRecord(manifest[key])) throw new Error(`Promotion manifest field ${key} is incomplete.`);
   }
+  const hasThemeId = Object.hasOwn(manifest.theme, 'id');
+  const hasOutputTitle = Object.hasOwn(manifest.output, 'title');
+  if (hasThemeId !== hasOutputTitle) throw new Error('Promotion manifest uses an incomplete current or legacy metadata shape.');
+  if (hasThemeId && (typeof manifest.theme.id !== 'string' || !manifest.theme.id || typeof manifest.output.title !== 'string' || !manifest.output.title)) {
+    throw new Error('Promotion manifest current metadata shape is incomplete.');
+  }
   if (!isRecord(manifest.output.evaluated)) throw new Error('Promotion manifest evaluated output is incomplete.');
   if (!isRecord(manifest.output.payload)) throw new Error('Promotion manifest payload output is incomplete.');
   if (manifest.cost.status !== 'measured' && manifest.cost.status !== 'unavailable') throw new Error('Promotion manifest cost record is incomplete.');
+}
+
+function validateManifestAssignmentMetadata(manifest, assignment, { levelId, title, themeId }) {
+  if (!isRecord(manifest.theme) || manifest.theme.path !== assignment.theme.path || manifest.theme.sha256 !== assignment.theme.sha256) {
+    throw new Error('Manifest theme metadata does not match the run definition.');
+  }
+  if (Object.hasOwn(manifest.theme, 'id') && manifest.theme.id !== themeId) {
+    throw new Error('Manifest theme metadata does not match the run definition.');
+  }
+  if (manifest.output?.levelId !== levelId) throw new Error('Manifest level metadata does not match the run definition.');
+  if (Object.hasOwn(manifest.output, 'title') && manifest.output.title !== title) {
+    throw new Error('Manifest title metadata does not match the run definition.');
+  }
+}
+
+function assertNoSymlinks(entries, label) {
+  if (entries.some((entry) => entry.mode === '120000')) throw new Error(`${label} payload contains a symbolic link; promotion accepts regular files only.`);
 }
 
 function validateRequiredGates(gates) {
@@ -513,11 +535,9 @@ async function materializeTree(root, commit, prefix, destination, entries) {
     const target = safeJoin(destination, entry.relativePath);
     await fs.mkdir(path.dirname(target), { recursive: true });
     const bytes = await gitBuffer(root, ['cat-file', 'blob', entry.oid]);
-    if (entry.mode === '120000') await fs.symlink(bytes.toString('utf8'), target);
-    else {
-      await fs.writeFile(target, bytes);
-      await fs.chmod(target, entry.mode === '100755' ? 0o755 : 0o644);
-    }
+    if (entry.mode === '120000') throw new Error('Payload contains a symbolic link; promotion accepts regular files only.');
+    await fs.writeFile(target, bytes);
+    await fs.chmod(target, entry.mode === '100755' ? 0o755 : 0o644);
   }
 }
 
@@ -559,9 +579,8 @@ async function verifyPayloadTreeWithRoot(directory, entries, root = ROOT, ignore
   for (const [relativePath, expectedEntry] of expected) {
     const item = actual.files.get(relativePath);
     if (!item) throw new Error(`Relocated payload is missing ${relativePath}.`);
-    const isSymlink = expectedEntry.mode === '120000';
-    if (isSymlink !== (item.kind === 'symlink')) throw new Error(`Relocated payload changed entry type at ${relativePath}.`);
-    const actualBytes = item.kind === 'symlink' ? Buffer.from(await fs.readlink(item.path)) : await fs.readFile(item.path);
+    if (item.kind === 'symlink') throw new Error(`Relocated payload contains a symbolic link at ${relativePath}.`);
+    const actualBytes = await fs.readFile(item.path);
     const expectedBytes = await gitBuffer(root, ['cat-file', 'blob', expectedEntry.oid]);
     if (!actualBytes.equals(expectedBytes)) throw new Error(`Relocated payload changed bytes at ${relativePath}.`);
     if (item.kind === 'file') {

@@ -63,6 +63,29 @@ async function main() {
     }
   }
 
+  {
+    const fixture = await createFixture({ legacyManifest: true });
+    try {
+      const manifestBefore = await fs.readFile(path.join(fixture.runDirectory, 'manifest.json'));
+      const result = await promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory });
+      await assertPromotion(fixture, result.promotionCommit);
+      assert.deepEqual(await fs.readFile(path.join(fixture.runDirectory, 'manifest.json')), manifestBefore, 'legacy manifest remains byte-for-byte unchanged');
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+
+  {
+    const fixture = await createFixture({ payloadSymlink: true });
+    try {
+      await assert.rejects(() => promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory }), /symbolic link/);
+      assert.equal(await exists(path.join(fixture.root, 'src/benchmark-levels/synthetic-a1b2')), false, 'symlink payload is rejected before destination creation');
+      assert.equal((await git(fixture.root, ['rev-list', '--count', `${fixture.base}..HEAD`])).trim(), '0', 'symlink payload creates no application commit');
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+
   await assertTamper('manifest', async (fixture) => {
     const manifest = JSON.parse(await fs.readFile(path.join(fixture.runDirectory, 'manifest.json'), 'utf8'));
     manifest.output.title = 'Tampered title';
@@ -118,7 +141,7 @@ async function assertPromotion(fixture, promotionCommit) {
   assert.equal((await git(fixture.root, ['show', '--format=%P', '--no-patch', promotionCommit])).trim(), fixture.base);
 }
 
-async function createFixture({ payloadWorktree = false } = {}) {
+async function createFixture({ payloadWorktree = false, legacyManifest = false, payloadSymlink = false } = {}) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-promotion-repo-'));
   const externalPayloadWorktree = `${root}-payload-worktree`;
   const runDirectory = path.join(root, 'benchmark/private/runs/synthetic-run-a1b2');
@@ -144,12 +167,12 @@ async function createFixture({ payloadWorktree = false } = {}) {
     'src/levels/synthetic-a1b2/level.md': '# Synthetic Promotion\n\nSynthetic test payload.\n',
   };
   await git(root, ['switch', '-c', 'evaluated-run']);
-  for (const [file, contents] of Object.entries(sourceFiles)) await writeText(path.join(root, file), contents);
+  for (const [file, contents] of Object.entries(sourceFiles)) await writePayloadFile(path.join(root, file), contents, payloadSymlink);
   await git(root, ['add', 'src/levels/synthetic-a1b2']);
   await git(root, ['commit', '-qm', 'synthetic evaluated level']);
   const evaluatedCommit = (await git(root, ['rev-parse', 'HEAD'])).trim();
   await git(root, ['switch', '-q', '-c', 'payload-run', base]);
-  for (const [file, contents] of Object.entries(sourceFiles)) await writeText(path.join(root, file), contents);
+  for (const [file, contents] of Object.entries(sourceFiles)) await writePayloadFile(path.join(root, file), contents, payloadSymlink);
   await git(root, ['add', 'src/levels/synthetic-a1b2']);
   await git(root, ['commit', '-qm', 'synthetic payload']);
   const payloadCommit = (await git(root, ['rev-parse', 'HEAD'])).trim();
@@ -179,7 +202,7 @@ async function createFixture({ payloadWorktree = false } = {}) {
     runId: assignment.runId,
     slotId: assignment.slotId,
     configuration: { id: assignment.configurationId },
-    theme: assignment.theme,
+    theme: { ...assignment.theme },
     baseline: { materialsCommit: base, entrantBaseline: { kind: 'git-commit', identifier: base } },
     recipe: assignment.recipe,
     controller: { path: 'synthetic/controller.md', sha256: 'c'.repeat(64) },
@@ -191,6 +214,10 @@ async function createFixture({ payloadWorktree = false } = {}) {
     disposition: { status: 'playable' },
   };
   const payload = { payloadCommit, branch: 'payload-run', ...(payloadWorktree ? { worktree: externalPayloadWorktree } : {}) };
+  if (legacyManifest) {
+    delete manifest.theme.id;
+    delete manifest.output.title;
+  }
   await writeJson(path.join(runDirectory, 'run-definition.json'), definition);
   await writeJson(path.join(runDirectory, 'manifest.json'), manifest);
   await writeJson(path.join(runDirectory, 'evaluated.json'), { evaluatedCommit });
@@ -211,6 +238,11 @@ async function createFixture({ payloadWorktree = false } = {}) {
 
 async function git(cwd, args) { return (await execFileAsync('git', args, { cwd, encoding: 'utf8' })).stdout; }
 async function writeText(filePath, contents) { await fs.mkdir(path.dirname(filePath), { recursive: true }); await fs.writeFile(filePath, contents, 'utf8'); }
+async function writePayloadFile(filePath, contents, symlink) {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  if (symlink && filePath.endsWith('/index.ts')) await fs.symlink('/outside/verified-payload-boundary', filePath);
+  else await fs.writeFile(filePath, contents, 'utf8');
+}
 async function writeJson(filePath, value) { await writeText(filePath, `${JSON.stringify(value, null, 2)}\n`); }
 async function exists(filePath) { try { await fs.lstat(filePath); return true; } catch (error) { if (error?.code === 'ENOENT') return false; throw error; } }
 

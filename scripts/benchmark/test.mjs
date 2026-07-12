@@ -258,10 +258,17 @@ const resultManifest = {
   stages: [{ model: { snapshotId: 'model-a' }, startedAt: '2026-01-01T00:10:00.000Z', finishedAt: '2026-01-01T00:20:00.000Z', wallTimeSeconds: 600 }],
   cost: { status: 'measured', totalUsd: 1.25 },
   gates: [{ id: 'typecheck', status: 'passed' }, { id: 'floor', status: 'passed' }],
-  output: { levelId: 'cinder-a1b2', evaluated: { commit: 'a'.repeat(40) }, payload: { commit: 'b'.repeat(40) } },
+  output: { levelId: 'cinder-a1b2', title: 'Cinder', evaluated: { commit: 'a'.repeat(40) }, payload: { commit: 'b'.repeat(40) } },
   disposition: { status: 'rehearsal' },
 };
 assert.deepEqual(manifestErrors(resultManifest), []);
+const legacyManifest = structuredClone(resultManifest);
+delete legacyManifest.theme.id;
+delete legacyManifest.output.title;
+assert.deepEqual(manifestErrors(legacyManifest), [], 'schema-v2 legacy manifests remain recognized');
+const mixedManifest = structuredClone(resultManifest);
+delete mixedManifest.output.title;
+assert.ok(manifestErrors(mixedManifest).some((error) => error.includes('present together')), 'mixed legacy/current metadata is rejected');
 const rehearsalResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest });
 assert.equal(rehearsalResult.configuration, 'solo-a');
 assert.deepEqual(rehearsalResult.models, ['model-a']);
