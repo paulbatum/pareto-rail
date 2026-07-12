@@ -57,6 +57,15 @@ A finalized playable run is promoted automatically by the controller. Operators 
 npm run benchmark:promote -- --run <run-id>
 ```
 
+Existing-output administration builds its inventory only from private and published manifests, then invokes the same verified promotion path for each playable eligible record:
+
+```bash
+npm run benchmark:promote -- --inventory true --out benchmark/private/migrations/inventory.json
+npm run benchmark:migrate -- --version <benchmark-version>
+```
+
+The migration inventory and its machine-readable promotion record are kept under `benchmark/private/migrations/`. They coalesce consistent private and published copies, record public rollout evidence, and include payload and application commit provenance without changing the run manifests, dispositions, evaluated branches, payload branches, or recovery refs. Verified non-playable source copies are recorded as administrative cleanups rather than promoted or made ranking-eligible.
+
 Promotion checkpoints and its private payload/promotion commit provenance live in `promotion.json`. A promotion failure never edits the run manifest or changes its playable disposition; `benchmark:manage -- status` reports the completed run as promotion-pending or promotion-failed and prints this resume command.
 
 Whenever a controller operation fails after a worktree exists, the runner also captures tracked and untracked source in a commit under `refs/benchmark-recovery/<run-id>/...` and records it in `recovery-snapshot.json`. The snapshot uses a temporary Git index and does not alter the entrant worktree. If `/tmp` later disappears, `--resume` reconstructs the worktree from this ref before continuing.

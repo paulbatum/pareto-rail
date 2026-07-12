@@ -15,6 +15,7 @@ import {
   sha256,
 } from './common.mjs';
 import { manifestErrors } from './results.mjs';
+import { buildMigrationInventory } from './inventory.mjs';
 
 const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -39,7 +40,7 @@ export class PromotionInterrupted extends Error {
  * controller and synthetic repository tests use exactly the same operation.
  * It never edits a run manifest.
  */
-export async function promoteRun({ root = ROOT, runDirectory, interruptAfter } = {}) {
+export async function promoteRun({ root = ROOT, runDirectory, interruptAfter, migration = false } = {}) {
   const repositoryRoot = path.resolve(root);
   if (!runDirectory) throw new Error('Promotion requires a run directory.');
   const resolvedRunDirectory = path.resolve(runDirectory);
@@ -52,7 +53,9 @@ export async function promoteRun({ root = ROOT, runDirectory, interruptAfter } =
     const runId = path.basename(resolvedRunDirectory);
     if (!RUN_ID_PATTERN.test(runId)) throw new Error(`Run directory must end with an opaque run id: ${runId}`);
     state = await loadOrCreateState(resolvedRunDirectory, runId);
-    const context = { root: repositoryRoot, runDirectory: resolvedRunDirectory, runId, state };
+    const context = { root: repositoryRoot, runDirectory: resolvedRunDirectory, runId, state, migration: migration || state.migration === true };
+    if (state.migration !== undefined && state.migration !== context.migration) throw new Error('Promotion migration mode does not match its recorded state.');
+    state.migration = context.migration;
 
     const validation = await checkpoint(context, 'validation', () => validatePreflight(context));
     context.preflight = validation;
@@ -169,8 +172,12 @@ async function validatePreflight(context) {
   if (payloadEntries.some((entry) => entry.relativePath === 'level.json')) throw new Error('Payload may not contain level.json; the controller owns the benchmark descriptor.');
 
   const builtInIdentities = await readBuiltInIdentities(root);
-  if (builtInIdentities.has(levelId)) throw new Error(`Assigned level id collides with a built-in level: ${levelId}`);
-  if (await pathExists(path.join(root, SOURCE_ROOT, levelId))) throw new Error(`Assigned source directory already exists: ${SOURCE_ROOT}/${levelId}`);
+  const legacySourcePath = path.join(root, SOURCE_ROOT, levelId);
+  const legacySourcePresent = await pathExists(legacySourcePath);
+  const legacySourceWasPresent = legacySourcePresent || state.source?.legacySourcePresent === true;
+  if (legacySourcePresent && !context.migration) throw new Error(`Assigned source directory already exists: ${SOURCE_ROOT}/${levelId}`);
+  if (legacySourcePresent && !builtInIdentities.has(levelId)) throw new Error(`Existing assigned source directory is not registered as a built-in level: ${SOURCE_ROOT}/${levelId}`);
+  if (context.migration && !legacySourcePresent && builtInIdentities.has(levelId) && !state.source?.levelId) throw new Error(`Migration expected a built-in source directory for ${levelId}.`);
   const benchmarkIdentities = await readPromotedIdentities(root);
   const destination = path.join(root, DESTINATION_ROOT, levelId);
   if (benchmarkIdentities.has(levelId) && !state.source?.levelId) throw new Error(`Assigned level id is already a promoted benchmark level: ${levelId}`);
@@ -179,7 +186,10 @@ async function validatePreflight(context) {
   const status = await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
   const existingPromotion = Boolean(state.source?.levelId);
   const galleryMayBePromotionChange = existingPromotion && (state.currentCheckpoint === 'catalog' || state.checkpoints.catalog?.status === 'completed' || state.checkpoints.commit?.status === 'completed');
-  assertOnlyPromotionChanges(status, root, destination, existingPromotion, galleryMayBePromotionChange);
+  assertOnlyPromotionChanges(status, root, destination, existingPromotion, galleryMayBePromotionChange, context.migration ? legacySourcePath : null, context.migration ? path.join(root, 'src/levels/index.ts') : null);
+  if (context.migration && legacySourcePresent) {
+    await verifyPayloadTree(legacySourcePath, payloadEntries, root);
+  }
   if (await pathExists(destination)) {
     if (!existingPromotion) throw new Error(`Promotion destination already exists: ${destination}`);
     await verifyDestination(destination, payloadEntries, descriptorBytes(levelId, title), { allowDescriptor: true, descriptorOptional: true }, root);
@@ -201,6 +211,7 @@ async function validatePreflight(context) {
     payloadDiffSha256: sha256(JSON.stringify(changed)),
     sourcePath: `${SOURCE_ROOT}/${levelId}/`,
     destinationPath: `${DESTINATION_ROOT}/${levelId}/`,
+    legacySourcePresent: legacySourceWasPresent,
     descriptor: {
       source: 'controller-owned assignment data',
       id: levelId,
@@ -214,19 +225,27 @@ async function validatePreflight(context) {
   if (state.source?.baseCommit) await resolveCommit(root, state.source.baseCommit, 'promotion base commit');
   const promotionCommit = state.promotionCommit ?? state.checkpoints.commit?.promotionCommit;
   if (promotionCommit) await resolveCommit(root, promotionCommit, 'recorded promotion commit');
-  return { source: { ...sourceSnapshot, baseCommit }, definition, manifest, evaluated, payload, payloadEntries, changed, destination };
+  return { source: { ...sourceSnapshot, baseCommit }, definition, manifest, evaluated, payload, payloadEntries, changed, destination, legacySourcePath };
 }
 
 async function extractPayload(context) {
   const { root, runId } = context;
   const { source, payloadEntries, destination } = context.preflight;
+  const legacySourcePath = context.preflight.legacySourcePath;
   const gitDirectory = path.resolve(root, (await gitText(root, ['rev-parse', '--git-dir'])).trim());
   const stage = path.join(gitDirectory, 'raild-promotion-staging', `${source.levelId}-${runId}`);
   await fs.mkdir(path.dirname(destination), { recursive: true });
   if (await pathExists(destination)) {
     await verifyDestination(destination, payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true, descriptorOptional: true }, root);
     if (await pathExists(stage)) await fs.rm(stage, { recursive: true, force: true });
+    if (context.migration) await removeBuiltInRegistryEntry(root, source.levelId, { allowMissing: true });
     return { destination: source.destinationPath, files: payloadEntries.length, reused: true };
+  }
+  if (context.migration && source.legacySourcePresent && await pathExists(legacySourcePath)) {
+    await fs.rename(legacySourcePath, destination);
+    await verifyPayloadTree(destination, payloadEntries, root);
+    await removeBuiltInRegistryEntry(root, source.levelId, { allowMissing: false });
+    return { destination: source.destinationPath, files: payloadEntries.length, reused: false, relocated: true };
   }
   if (await pathExists(stage)) await fs.rm(stage, { recursive: true, force: true });
   await materializeTree(root, source.payloadCommit, `${SOURCE_ROOT}/${source.levelId}`, stage, payloadEntries);
@@ -284,7 +303,7 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
       const record = await optionalJson(path.join(runDirectory, 'promotion-checks', `${check.id}.json`));
       if (!record || record.exitCode !== check.exitCode || record.stdoutSha256 !== check.stdoutSha256 || record.stderrSha256 !== check.stderrSha256) throw new Error(`Promotion check record ${check.id} is missing or tampered.`);
     }
-    await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, true);
+    await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, true, ...promotionPathArgs(context));
     return previousData;
   }
   const gallery = await runCommand(root, 'npm', ['run', 'gallery']);
@@ -297,7 +316,7 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
   const commands = [
     ['typecheck', 'npm', ['run', 'typecheck']],
     ['build', 'npm', ['run', 'build']],
-    ['scope', process.execPath, [path.join(root, 'scripts', 'check-benchmark-scope.mjs'), '--level', source.levelId, '--base', baseCommit]],
+    ['scope', process.execPath, [path.join(root, 'scripts', 'check-benchmark-scope.mjs'), '--level', source.levelId, '--base', baseCommit, ...(context.migration && source.legacySourcePresent ? ['--migration'] : [])]],
     ['floor', 'npm', ['run', 'check:floor', '--', '--level', source.levelId]],
   ];
   for (const [id, executable, args] of commands) {
@@ -306,7 +325,7 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
     checks.push({ id, command: [executable, ...args].join(' '), exitCode: result.code, stdoutSha256: sha256(result.stdout), stderrSha256: sha256(result.stderr), wallTimeSeconds: result.wallTimeSeconds });
     if (result.code !== 0) throw new Error(`Promotion ${id} check failed: ${result.stderr || result.stdout}`);
   }
-  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, true);
+  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, true, ...promotionPathArgs(context));
   return { gallerySha256: sha256(gallerySource), checks };
 }
 
@@ -316,8 +335,12 @@ async function commitPromotion(context) {
   const expectedPrefix = `${DESTINATION_ROOT}/${source.levelId}/`;
   const expected = new Set([GALLERY_PATH]);
   for (const entry of await listFiles(destination)) expected.add(`${expectedPrefix}${entry}`);
+  if (context.migration && source.legacySourcePresent) {
+    expected.add('src/levels/index.ts');
+    for (const entry of context.preflight.payloadEntries) expected.add(`${SOURCE_ROOT}/${source.levelId}/${entry.relativePath}`);
+  }
   const status = await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
-  assertOnlyPromotionChanges(status, root, destination, true, true);
+  assertOnlyPromotionChanges(status, root, destination, true, true, ...promotionPathArgs(context));
   const head = await currentHead(root);
   const baseCommit = source.baseCommit;
   if (context.state.promotionCommit || context.state.checkpoints.commit?.promotionCommit) {
@@ -329,7 +352,9 @@ async function commitPromotion(context) {
     await verifyPromotionCommit(root, head, baseCommit, expected, source);
     return { promotionCommit: head, reused: true };
   }
-  await git(root, ['add', '--', DESTINATION_ROOT + '/' + source.levelId, GALLERY_PATH]);
+  const addPaths = [DESTINATION_ROOT + '/' + source.levelId, GALLERY_PATH];
+  if (context.migration && source.legacySourcePresent) addPaths.push(SOURCE_ROOT + '/' + source.levelId, 'src/levels/index.ts');
+  await git(root, ['add', '--', ...addPaths]);
   const staged = await gitText(root, ['diff', '--cached', '--name-only']);
   const stagedNames = staged.split('\n').map((line) => line.trim()).filter(Boolean);
   if (!stagedNames.length || stagedNames.some((name) => !expected.has(name))) throw new Error('Refusing to commit files outside the verified promotion payload and gallery.');
@@ -378,24 +403,32 @@ async function checkpoint(context, id, action) {
 async function verifyApplicationChanges(context, allowGallery) {
   const { root } = context;
   const destination = path.join(root, context.preflight.source.destinationPath);
-  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, allowGallery);
+  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, allowGallery, ...promotionPathArgs(context));
 }
 
 async function assertNoUnexpectedApplicationChanges(context, { allowGallery }) {
   await verifyApplicationChanges(context, allowGallery);
 }
 
-function assertOnlyPromotionChanges(status, root, destination, allowPromotionChanges, allowGallery) {
+function assertOnlyPromotionChanges(status, root, destination, allowPromotionChanges, allowGallery, legacySource = null, registryPath = null) {
   const paths = parsePorcelain(status);
   if (!paths.length) return;
   if (!allowPromotionChanges) throw new Error(`Refusing to overwrite unrelated local changes: ${paths.join(', ')}`);
   const destinationRelative = path.relative(root, destination).replaceAll(path.sep, '/');
   const destinationRoot = `${destinationRelative}/`;
+  const legacyRelative = legacySource ? path.relative(root, legacySource).replaceAll(path.sep, '/') : null;
+  const registryRelative = registryPath ? path.relative(root, registryPath).replaceAll(path.sep, '/') : null;
   for (const item of paths) {
     const normalized = item.replaceAll(path.sep, '/');
-    if ((allowGallery && normalized === GALLERY_PATH) || normalized.startsWith(destinationRoot)) continue;
+    if ((allowGallery && normalized === GALLERY_PATH) || normalized.startsWith(destinationRoot) || (legacyRelative && (normalized === legacyRelative || normalized.startsWith(`${legacyRelative}/`))) || (registryRelative && normalized === registryRelative)) continue;
     throw new Error(`Refusing to overwrite unrelated local changes: ${item}`);
   }
+}
+
+function promotionPathArgs(context) {
+  const source = context.preflight?.source;
+  if (!context.migration || !source?.legacySourcePresent) return [null, null];
+  return [path.join(context.root, SOURCE_ROOT, source.levelId), path.join(context.root, 'src/levels/index.ts')];
 }
 
 async function validateOptionalWorktree(worktree, expectedCommit, label) {
@@ -450,6 +483,34 @@ function validateRequiredGates(gates) {
   const ids = gates.map((gate) => gate?.id);
   if (new Set(ids).size !== ids.length || REQUIRED_GATES.some((id) => !ids.includes(id))) throw new Error('Manifest must account for exactly the four required gates.');
   for (const gate of gates) if (gate.status !== 'passed') throw new Error(`Required gate ${gate.id} did not pass.`);
+}
+
+export async function removeBuiltInRegistryEntry(root, levelId, { allowMissing }) {
+  const registryPath = path.join(root, 'src', 'levels', 'index.ts');
+  const source = await readText(registryPath);
+  const escapedId = levelId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const metadataStart = source.indexOf('export const levelMetadatas');
+  const metadataEnd = source.indexOf('\n];', metadataStart);
+  const loaderStart = source.indexOf('const builtInLoaders');
+  const loaderEnd = source.indexOf('\n};', loaderStart);
+  if (metadataStart < 0 || metadataEnd < 0 || loaderStart < 0 || loaderEnd < 0) throw new Error('Could not locate the built-in level registry sections.');
+  const metadataSection = source.slice(metadataStart, metadataEnd);
+  const loaderSection = source.slice(loaderStart, loaderEnd);
+  const metadataPattern = new RegExp(`^\\s*\\{\\s*id:\\s*'${escapedId}'\\s*,[^\\n]*(?:\\n|$)`, 'gm');
+  const loaderPattern = new RegExp(`^\\s*'${escapedId}':\\s*async \\(\\) =>[^\\n]*(?:\\n|$)`, 'gm');
+  const metadataMatches = metadataSection.match(metadataPattern) ?? [];
+  const loaderMatches = loaderSection.match(loaderPattern) ?? [];
+  if (!metadataMatches.length && !loaderMatches.length && allowMissing) return false;
+  if (metadataMatches.length !== 1 || loaderMatches.length !== 1) throw new Error(`Built-in registry entry for ${levelId} is incomplete or duplicated; refusing to edit it (metadata=${metadataMatches.length}, loader=${loaderMatches.length}).`);
+  const nextMetadata = metadataSection.replace(metadataPattern, '');
+  const nextLoader = loaderSection.replace(loaderPattern, '');
+  const next = source.slice(0, metadataStart) + nextMetadata + source.slice(metadataEnd, loaderStart) + nextLoader + source.slice(loaderEnd);
+  await writeAtomicBytes(registryPath, Buffer.from(next, 'utf8'));
+  return true;
+}
+
+export async function builtInRegistryHasEntry(root, levelId) {
+  return (await readBuiltInIdentities(root)).has(levelId);
 }
 
 async function readBuiltInIdentities(root) {
@@ -664,7 +725,7 @@ function assertSnapshot(previous, next) {
   if (previous.descriptor?.sha256 !== next.descriptor.sha256 || previous.descriptor?.id !== next.descriptor.id || previous.descriptor?.title !== next.descriptor.title) throw new Error('Promotion descriptor provenance changed.');
 }
 
-async function acquirePromotionLock(root) {
+export async function acquirePromotionLock(root) {
   const gitDirectory = await gitText(root, ['rev-parse', '--git-dir']);
   const lockPath = path.resolve(root, gitDirectory.trim(), PROMOTION_LOCK_NAME);
   await fs.mkdir(path.dirname(lockPath), { recursive: true });
@@ -752,19 +813,34 @@ async function writeAtomicBytes(filePath, bytes) { await fs.mkdir(path.dirname(f
 async function writeAtomicJson(filePath, value) { await writeAtomicBytes(filePath, Buffer.from(`${JSON.stringify(value, null, 2)}\n`, 'utf8')); }
 
 async function main() {
-  const { options, rest } = parseArgs(process.argv.slice(2));
+  const rawArgs = process.argv.slice(2);
+  const normalizedArgs = rawArgs.flatMap((argument, index) => (
+    (argument === '--inventory' || argument === '--migration') && (rawArgs[index + 1] === undefined || rawArgs[index + 1].startsWith('--'))
+      ? [argument, 'true']
+      : [argument]
+  ));
+  const { options, rest } = parseArgs(normalizedArgs);
   if (options.help) {
-    console.log('Usage: npm run benchmark:promote -- --run <run-id-or-private-run-directory> [--repo <repository>]');
+    console.log('Usage: npm run benchmark:promote -- --run <run-id-or-private-run-directory> [--repo <repository>] [--migration true]\n       npm run benchmark:promote -- --inventory true [--repo <repository>] [--out <private-report-path>]');
     return;
   }
   if (rest.length) fail(`Unexpected argument: ${rest.join(' ')}`);
-  assertOnlyOptions(options, new Set(['help', 'run', 'repo']));
+  assertOnlyOptions(options, new Set(['help', 'run', 'repo', 'migration', 'inventory', 'out']));
   const root = path.resolve(options.repo ?? ROOT);
+  if (options.inventory !== undefined) {
+    if (options.run !== undefined || options.migration !== undefined) fail('--inventory cannot be combined with --run or --migration.');
+    const inventory = await buildMigrationInventory({ root, allowBlocked: true });
+    if (options.out) await writeAtomicJson(path.resolve(options.out), inventory);
+    console.log(JSON.stringify(inventory));
+    if (inventory.blocked) process.exitCode = 1;
+    return;
+  }
   const runOption = requireOption(options, 'run');
   const runDirectory = path.isAbsolute(runOption) || runOption.includes('/') || runOption.includes(path.sep)
     ? path.resolve(runOption)
     : path.join(root, 'benchmark/private/runs', runOption);
-  const result = await promoteRun({ root, runDirectory, interruptAfter: process.env.RAILD_PROMOTION_INTERRUPT_AFTER });
+  const migration = options.migration === 'true';
+  const result = await promoteRun({ root, runDirectory, migration, interruptAfter: process.env.RAILD_PROMOTION_INTERRUPT_AFTER });
   console.log(JSON.stringify(result));
 }
 

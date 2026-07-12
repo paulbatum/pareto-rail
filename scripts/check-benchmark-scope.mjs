@@ -6,14 +6,19 @@ import { fileURLToPath } from 'node:url';
 
 const execFileAsync = promisify(execFile);
 
-export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD' } = {}) {
+export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD', migration = false } = {}) {
   if (!levelId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(levelId)) throw new Error('A safe benchmark level id is required.');
   const allowedPrefix = `src/benchmark-levels/${levelId}/`;
+  const legacyPrefix = `src/levels/${levelId}/`;
   const changed = new Set();
   const tracked = await git(root, ['diff', '--name-only', base]);
   const untracked = await git(root, ['ls-files', '--others', '--exclude-standard']);
   for (const name of `${tracked}\n${untracked}`.split('\n').map((value) => value.trim()).filter(Boolean)) changed.add(name);
-  const outOfScope = [...changed].filter((name) => name !== 'docs/level-gallery.md' && !name.startsWith(allowedPrefix));
+  const outOfScope = [...changed].filter((name) => {
+    if (name === 'docs/level-gallery.md' || name.startsWith(allowedPrefix)) return false;
+    if (migration && (name === 'src/levels/index.ts' || name.startsWith(legacyPrefix))) return false;
+    return true;
+  });
   if (outOfScope.length) throw new Error(`Out-of-scope files for benchmark level '${levelId}':\n${outOfScope.join('\n')}`);
   if (![...changed].some((name) => name.startsWith(allowedPrefix))) throw new Error(`Benchmark scope contains no promoted level directory for '${levelId}'.`);
   return [...changed].sort();
@@ -31,8 +36,9 @@ async function main() {
   };
   const levelId = get('--level');
   const base = get('--base') ?? 'HEAD';
+  const migration = args.includes('--migration');
   const root = path.resolve(get('--root') ?? process.cwd());
-  const changed = await checkBenchmarkScope({ root, levelId, base });
+  const changed = await checkBenchmarkScope({ root, levelId, base, migration });
   console.log(`benchmark scope valid (${changed.length} paths)`);
 }
 
