@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 
 const templatePath = path.resolve(process.cwd(), 'src/levels/crystal/visuals/crystal-template.json');
 
 export default defineConfig({
-  plugins: [crystalTemplateDevPlugin()],
+  plugins: [react(), crystalTemplateDevPlugin()],
   build: {
     chunkSizeWarningLimit: 1200,
   },

@@ -388,13 +388,14 @@ Production builds must exclude rehearsal pairings by construction, not merely hi
 
 ## Frontend architecture
 
-The current `src/main.ts` directly boots one level and installs global UI. Split responsibilities without moving level-owned behavior into the website shell.
+Keep the website shell separate from level-owned behavior. The React entrypoint owns route composition, while the imperative game runtime remains a mountable view.
 
-Suggested seams:
+Current seams:
 
 ```text
-src/app/                 Route handling, navigation, page shells
-src/game/                Existing WebGPU game bootstrap adapted as a mountable view
+src/main.tsx             React entrypoint
+src/app/                 Route handling, layout, pages, components, and benchmark controller
+src/game/                WebGPU game runtime and mount/disposal bridge
 src/benchmark/           Matchup state machine, API client, local history, scoring
 src/ui/                  Shared DOM components and current game HUD/pause UI
 src/levels/              Unchanged independent level modules and registry

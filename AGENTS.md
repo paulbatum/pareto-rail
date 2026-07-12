@@ -6,7 +6,9 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 
 ## Architecture — respect the seams
 
-- `src/main.ts` — shared app shell: WebGPU renderer, scene/camera setup, pause menu, player volume/bloom settings, level picker, resize loop, and postprocessing.
+- `src/main.tsx` — React entrypoint for the route-based website shell.
+- `src/app/` — React layout, pages, reusable links, benchmark controller, and route lifecycle. `GameFrame` bridges React pages to the imperative game runtime.
+- `src/game/` — WebGPU renderer, scene/camera setup, pause menu, player volume/bloom settings, level picker, resize loop, postprocessing, and game-runtime mount/disposal.
 - `src/engine/` — reusable mechanics and utilities. `lock-on-runner.ts` provides the shared lock-on rail-shooter flow; `input.ts`, `rail.ts`, `scoring.ts`, `music.ts`, and `spawn-patterns.ts` are level-agnostic helpers; `post.ts` owns shared bloom/vignette.
 - `src/events.ts` — typed event bus (`spawn`, `lock`, `fire`, `hit`, `kill`, `beat`, `runstart`, …). Gameplay, visuals, and audio coordinate through events.
 - `src/levels/<level-id>/` — independent built-in level modules. A level owns its gameplay design, rail, enemy types, visual language, effects, environment, and procedural music/SFX. Do not turn an existing level into a parameterized template for new levels.
