@@ -21,6 +21,8 @@ import { assertBaselineLevelAllowlist, levelIdsFromRegistry, validateBaselineLev
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 import { promoteRun } from './promote.mjs';
+import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
+import { protocolForVersion } from './protocol.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -107,6 +109,9 @@ async function main() {
     const eligibleControls = definition.mode === 'eligible'
       ? await validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline, { historicalRunner: resuming })
       : undefined;
+    if (controllerDrift.length) {
+      await fs.writeFile(path.join(outputDirectory, 'controller-drift.json'), `${JSON.stringify({ acceptedAt: new Date().toISOString(), drift: controllerDrift }, null, 2)}\n`, 'utf8');
+    }
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
@@ -177,7 +182,7 @@ async function main() {
         await validateEvaluated(existing, worktree);
         return existing;
       }
-      const sealed = await command(process.execPath, [ADMIN, 'seal', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId], ROOT);
+      const sealed = await command(process.execPath, [ADMIN, 'seal', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--version', definition.benchmarkVersion, '--level-title', definition.assignment.levelTitle], ROOT);
       const value = JSON.parse(sealed.stdout);
       await writeJson(path.join(outputDirectory, 'evaluated.json'), value);
       return value;
@@ -187,7 +192,7 @@ async function main() {
       const existing = await optionalJson(path.join(outputDirectory, 'gates', 'gates.json'));
       if (existing?.evaluatedCommit === evaluated.evaluatedCommit && existing.gates?.length === 4) return existing;
       const gateDirectory = path.join(outputDirectory, 'gates');
-      await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--out', gateDirectory], ROOT);
+      await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--out', gateDirectory, '--version', definition.benchmarkVersion], ROOT);
       return readJson(path.join(gateDirectory, 'gates.json'));
     });
     const passing = gateRecord.gates.every(({ status }) => status === 'passed');
@@ -196,10 +201,10 @@ async function main() {
       if (!passing) return null;
       const existing = await optionalJson(path.join(outputDirectory, 'payload.json'));
       if (existing) {
-        await validatePayload(existing, materialsCommit, definition.assignment.levelId);
+        await validatePayload(existing, materialsCommit, definition.assignment.levelId, definition.benchmarkVersion);
         return existing;
       }
-      const result = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.assignment.levelId, '--path', definition.payload.path, '--branch', definition.payload.branch], ROOT);
+      const result = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.assignment.levelId, '--level-title', definition.assignment.levelTitle, '--path', definition.payload.path, '--branch', definition.payload.branch, '--version', definition.benchmarkVersion], ROOT);
       const value = JSON.parse(result.stdout);
       await writeJson(path.join(outputDirectory, 'payload.json'), value);
       return value;
@@ -216,13 +221,15 @@ async function main() {
       return value;
     });
     let promotionStatus = 'not-applicable';
-    if (manifest.disposition.status === 'playable') {
+    if (manifest.disposition.status === 'playable' && protocolForVersion(definition.benchmarkVersion).promotionRequired) {
       try {
         promotionStatus = (await promoteRun({ root: ROOT, runDirectory: outputDirectory })).status;
       } catch (promotionError) {
         promotionStatus = 'failed';
         console.error(`Automatic promotion failed; the playable run is unchanged. Resume with: npm run benchmark:promote -- --run ${definition.assignment.runId}`);
       }
+    } else if (manifest.disposition.status === 'playable') {
+      promotionStatus = 'not-required';
     }
     console.log(JSON.stringify({ runId: definition.assignment.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null, promotionStatus, resumed: resuming }));
     if (!passing) process.exitCode = 2;
@@ -309,9 +316,9 @@ async function validateEvaluated(evaluated, worktree) {
   if (status) fail('Recorded evaluated worktree is not clean.');
 }
 
-async function validatePayload(payload, materialsCommit, levelId) {
+async function validatePayload(payload, materialsCommit, levelId, benchmarkVersion = 'v1') {
   const payloadCommit = await gitCommit(payload?.payloadCommit);
-  const levelDirectory = `src/levels/${levelId}/`;
+  const levelDirectory = `${protocolForVersion(benchmarkVersion).sourceRoot}/${levelId}/`;
   const names = (await command('git', ['diff', '--name-only', `${materialsCommit}..${payloadCommit}`], ROOT)).stdout.trim().split('\n').filter(Boolean);
   if (!names.length || names.some((name) => !name.startsWith(levelDirectory))) fail('Recorded payload does not contain exactly the assigned level directory.');
 }
@@ -367,6 +374,9 @@ export function validateDefinition(value) {
   for (const key of Object.keys(value)) if (!keys.has(key)) errors.push(`definition has unknown field ${key}.`);
   if (value.schemaVersion !== 1) errors.push('definition.schemaVersion must equal 1.');
   if (typeof value.benchmarkVersion !== 'string' || !value.benchmarkVersion) errors.push('definition.benchmarkVersion is required.');
+  else {
+    try { protocolForVersion(value.benchmarkVersion); } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
+  }
   if (!['rehearsal', 'eligible'].includes(value.mode)) errors.push('definition.mode must be rehearsal or eligible.');
   validateAssignment(value.assignment, errors);
   validateCommit(value.baseline?.materialsCommit, 'definition.baseline.materialsCommit', errors);
@@ -509,7 +519,7 @@ async function createManifest({ definition, materialsCommit, configurationCommit
       })),
     },
     gates: gateRecord.gates.map(({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason }) => ({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason })),
-    output: { levelId: definition.assignment.levelId, title: definition.assignment.levelTitle, evaluated: { commit: evaluated.evaluatedCommit, branch: worktree.branch }, ...(payload ? { payload: { commit: payload.payloadCommit, branch: payload.branch } } : {}) },
+    output: { sourceRoot: protocolForVersion(definition.benchmarkVersion).sourceRoot, levelId: definition.assignment.levelId, title: definition.assignment.levelTitle, evaluated: { commit: evaluated.evaluatedCommit, branch: worktree.branch }, ...(payload ? { payload: { commit: payload.payloadCommit, branch: payload.branch } } : {}) },
     disposition: { status: definition.mode === 'rehearsal' ? 'rehearsal' : payload ? 'playable' : 'dnf', ...(payload ? {} : { reasonCode: 'required-gate-failed' }) },
   };
 }
@@ -596,18 +606,36 @@ async function validateEligibleControls(definition, materialsCommit, configurati
   if (release.benchmarkVersion !== definition.benchmarkVersion) fail('Eligible release benchmarkVersion does not match the run definition.');
   if (release.materialsCommit !== materialsCommit) fail('Eligible materialsCommit does not match the tagged release.');
   if (release.entrantBaseline?.identifier !== entrantBaseline) fail('Eligible entrantBaseline does not match the tagged release.');
-  const allowlistErrors = validateBaselineLevelAllowlist(release.entrantBaseline?.allowedLevelIds);
-  if (allowlistErrors.length) fail(`Eligible release record has an invalid entrant baseline allowlist:\n${allowlistErrors.map((error) => `- ${error}`).join('\n')}`);
-  const baselineRegistry = await gitShow(entrantBaseline, 'src/levels/index.ts');
-  assertBaselineLevelAllowlist({
-    actualLevelIds: levelIdsFromRegistry(baselineRegistry),
-    allowedLevelIds: release.entrantBaseline.allowedLevelIds,
-  });
+  const protocol = protocolForVersion(definition.benchmarkVersion);
+  if (protocol.directoryOnly) {
+    if (release.entrantBaseline?.outputRoot !== protocol.sourceRoot) fail(`Eligible release must declare outputRoot ${protocol.sourceRoot} for ${definition.benchmarkVersion}.`);
+    const expectedBuiltInLevelIds = release.entrantBaseline?.expectedBuiltInLevelIds;
+    if (!Array.isArray(expectedBuiltInLevelIds) || !release.entrantBaseline?.builtInTreeSha256) fail('Directory-only release must declare expectedBuiltInLevelIds and builtInTreeSha256 for the entrant baseline.');
+    const baselineResult = await assertBenchmarkBaseline({
+      root: ROOT,
+      ref: entrantBaseline,
+      benchmarkVersion: definition.benchmarkVersion,
+      expectedBuiltInLevelIds,
+      expectedBuiltInTreeSha256: release.entrantBaseline?.builtInTreeSha256,
+    });
+    if (!baselineResult) fail('Could not validate the directory-only entrant baseline.');
+  } else {
+    const allowlistErrors = validateBaselineLevelAllowlist(release.entrantBaseline?.allowedLevelIds);
+    if (allowlistErrors.length) fail(`Eligible release record has an invalid entrant baseline allowlist:\n${allowlistErrors.map((error) => `- ${error}`).join('\n')}`);
+    const baselineRegistry = await gitShow(entrantBaseline, 'src/levels/index.ts');
+    assertBaselineLevelAllowlist({
+      actualLevelIds: levelIdsFromRegistry(baselineRegistry),
+      allowedLevelIds: release.entrantBaseline.allowedLevelIds,
+    });
+  }
   if (!Array.isArray(release.artifacts)) fail('Eligible release record has no artifact list.');
   for (const artifact of [definition.template, definition.assignment.theme, definition.failureTaxonomy]) {
     if (!release.artifacts.some((entry) => entry.path === artifact.path && entry.sha256 === artifact.sha256)) fail(`Eligible artifact ${artifact.path} is not frozen by the release.`);
   }
-  for (const sharedPath of SHARED_CONTROLLER_PATHS) await verifyProtocolCode(release, materialsCommit, sharedPath, { historicalRunner });
+  const protocolPaths = protocol.directoryOnly
+    ? [...SHARED_CONTROLLER_PATHS, 'scripts/check-benchmark-baseline.mjs', 'scripts/check-benchmark-scope.mjs', 'scripts/benchmark/protocol.mjs']
+    : SHARED_CONTROLLER_PATHS;
+  for (const sharedPath of protocolPaths) await verifyProtocolCode(release, materialsCommit, sharedPath, { historicalRunner });
   if (definition.runner.path !== 'scripts/benchmark/run.mjs') fail('Eligible runner path must be scripts/benchmark/run.mjs.');
   await verifyConfigurationCode(configurationCommit, definition.runner, 'runner', fileURLToPath(import.meta.url), { historicalRunner });
   await verifyConfigurationCode(configurationCommit, definition.executor, 'executor', undefined, { historicalRunner });
@@ -639,12 +667,32 @@ function sameAssignment(left, right) {
     && sameArtifact(left.theme, right.theme);
 }
 
+/**
+ * Frozen entrant-facing material (theme, recipe, prompt template, baseline) is
+ * always strictly verified. Controller-code drift may instead be accepted and
+ * recorded when RAILD_ACCEPT_CONTROLLER_DRIFT=1: each drifted path is appended
+ * to controllerDrift for persistence as controller-drift.json in the run
+ * directory, so later runs remain launchable from a repository whose
+ * controller code has moved past the release freeze.
+ */
+const controllerDrift = [];
+
+function controllerDriftAccepted() {
+  return process.env.RAILD_ACCEPT_CONTROLLER_DRIFT === '1';
+}
+
+function handleControllerDrift(relativePath, frozenSha256, executingSha256, message) {
+  if (!controllerDriftAccepted()) fail(`${message} Set RAILD_ACCEPT_CONTROLLER_DRIFT=1 to accept and record controller-code drift.`);
+  controllerDrift.push({ path: relativePath, frozenSha256, executingSha256 });
+  console.warn(`Accepted controller drift for ${relativePath} (frozen ${frozenSha256.slice(0, 12)}, executing ${executingSha256.slice(0, 12)}).`);
+}
+
 async function verifyConfigurationCode(configurationCommit, artifact, label, executingPath = repositoryArtifactPath(artifact.path), { historicalRunner = false } = {}) {
   const frozenSource = await gitShow(configurationCommit, artifact.path);
   if (sha256(frozenSource) !== artifact.sha256) fail(`Eligible ${label} does not match the configuration commit.`);
   if (!historicalRunner) {
-    const currentSource = await fs.readFile(executingPath, 'utf8');
-    if (sha256(currentSource) !== artifact.sha256) fail(`The executing configuration ${label} differs from its registered artifact.`);
+    const currentHash = sha256(await fs.readFile(executingPath, 'utf8'));
+    if (currentHash !== artifact.sha256) handleControllerDrift(artifact.path, artifact.sha256, currentHash, `The executing configuration ${label} differs from its registered artifact.`);
   }
 }
 
@@ -655,7 +703,7 @@ async function verifyProtocolCode(release, materialsCommit, relativePath, { hist
   if (!artifact || artifact.sha256 !== frozenHash) fail(`The tagged release does not freeze shared controller component ${relativePath}.`);
   if (!historicalRunner) {
     const currentHash = sha256(await fs.readFile(repositoryArtifactPath(relativePath), 'utf8'));
-    if (currentHash !== frozenHash) fail(`Shared controller component ${relativePath} differs from the protocol release.`);
+    if (currentHash !== frozenHash) handleControllerDrift(relativePath, frozenHash, currentHash, `Shared controller component ${relativePath} differs from the protocol release.`);
   }
 }
 

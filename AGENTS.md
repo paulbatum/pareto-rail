@@ -26,12 +26,12 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 
 ## Verification
 
-`npm run typecheck` and `npm run build` must pass. Level-building tasks must also pass `npm run check:scope -- <level-id>`. `npm run dev` to playtest.
+`npm run typecheck` and `npm run build` must pass. Level-building tasks must also pass `npm run check:scope -- <level-id>`. Directory-only benchmark tasks use `npm run check:benchmark-scope -- --version v2 --level <level-id> --base <entrant-baseline-ref>`. `npm run dev` to playtest.
 
 Use `npm run benchmark:manage -- status` to check benchmark run status, and `npm run benchmark:manage -- archive-dnf` to archive failed/DNF benchmark runs and clean up active worktrees.
 
 
-Use `npm run scaffold -- --id <level-id> [--title <Title>] [--bpm <n>]` to create a blank level scaffold.
+Use `npm run scaffold -- --id <level-id> [--title <Title>] [--bpm <n>]` to create a built-in blank level scaffold. Future directory-only benchmark entrants use `npm run scaffold -- --mode benchmark --id <level-id> --title <Title>`; this creates the assigned `src/benchmark-levels/<level-id>/` directory without editing the built-in registry.
 
 Use `npm run gallery` to regenerate `docs/level-gallery.md` from per-level `level.md` cards.
 

@@ -10,3 +10,5 @@ Work through these briefs in order. Each brief should leave the repository commi
 6. `06-publication-and-evidence.md` — publish levels, manifests, sanitized rollouts, and ranking evidence safely.
 
 The benchmark runner's generation result and later application promotion are separate records. A promotion or publication failure must never change a completed run's disposition.
+
+Resilience philosophy: this is a fun project, not a hardened pipeline. Interruptions (session limits, timeouts, crashes) are expected, and the recovery story is "run the command again" — commands should be idempotent and verify before destroying, not maintain checkpoint/resume state machines.

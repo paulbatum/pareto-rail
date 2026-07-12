@@ -109,30 +109,30 @@ Inspection captures: `carriage-8` (word combos, bar 8), `carriage-16` (midnight 
 
 ---
 
-# Mass Driver
+# Rush
 
-A 60-second launch down the barrel of an orbital railgun. The tunnel is 120 accelerator rings and the payload crosses exactly one on every beat — ring spacing widens as the launch accelerates, so the speed and the music are the same thing. The gun's safety interlocks are jammed, the firing charge builds anyway, and the run ends either shot into open space at muzzle velocity or scattered across it.
+Rush is a night flight down a city street canyon built to test how fast this engine can feel. The speed rig is still the point, but the velocity now reads through asphalt lane dashes, tower faces, streetlights, gantries, traffic, FOV pulls, and the shared depth-reprojection blur.
 
 ## Visual language
-Electric heat, not fire: the ring tunnel charges arc blue through violet toward blinding white across the run, with gunmetal coil housings, six ionized conduit rails, and hexagonal geometry everywhere (coils, shockwaves, the reticle, the charge collar). Defense drones carry magenta signal light; the player's reticle, locks, and tracers are kinetic amber. Lightning arcs — jagged, strobing — are the level's signature effect, and the muzzle exit breaks the fog wall into starfield, planet limb, and silence.
+Near-black low-poly city geometry with flat-shaded road, curbs, sidewalks, and skyscraper walls. Small cyan windows, cyan-white headlights, amber streetlights, taillights, and beat-strobing gantries provide the hot accents without turning bloom into a whiteout.
 
 ## Musical language
-128 BPM electro; 32 bars is exactly 60 seconds. The gun is the instrument: a persistent hum (sub sine plus resonant coil whine) climbs a two-octave E-minor ladder one rung every two bars, the harmony riding it, and a ring-crossing tick plays every beat because a ring passes every beat. Stage drops land on bars 4 and 12, the interlock alarm strips the track to the naked hum, the charge window stacks risers, and the firing cuts everything to a weightless shimmer. Locks, shots, and kills are pitched from the live rung; kills walk hidden melodic lanes; interlock kills are escalating metal clangs.
+170 BPM and deliberately blunt: a relentless kick, closed hat, and one distorted bass figure. Player actions answer with terse zaps, ticks, and rejects inside the same harsh electronic palette.
 
 ## Mechanical signature
-A 3-point hull and a monotonically accelerating rail (rail-paced spawns): weavers are tri-blade spinners wheeling around the full tunnel clock, sliders grind the conduit rails with surging approaches, armored sentinels telegraph interceptable arc bolts. At bar 22 the jammed charge collar arrives — six hex-mounted interlocks, two casings deep — and all six must be cleared before bar 30 or the barrel detonates with the player in it. Clear them and the gun fires you out of the muzzle at ~3× peak speed for a silent two-bar coda.
+A 30-second speed-feel testbed with a long rail, authored speed surges, simple pods, strafing darts, and heavier armored targets. Scenery cars are non-interactive speed cues: same-direction traffic gets overtaken fast, while oncoming headlights close at absurd speed.
 
 ## What to read
-- `src/levels/mass-driver-vyxj/timing.ts`
-- `src/levels/mass-driver-vyxj/gameplay.ts`
-- `src/levels/mass-driver-vyxj/audio.ts`
-- `src/levels/mass-driver-vyxj/visuals/index.ts`
-- `src/levels/mass-driver-vyxj/visuals/environment.ts`
+- `src/levels/rush/tuning.ts`
+- `src/levels/rush/gameplay.ts`
+- `src/levels/rush/visuals/index.ts`
+- `src/levels/rush/post-fx.ts`
+- `src/levels/rush/audio.ts`
 
 ## Status & notes
-Built to the standing brief from the Mass Driver theme assignment. Verified headless (typecheck, build, scope, floor: simulate/occlusion/perf, audio trace); WebGPU visuals and the mix need a human playtest — check first that ring crossings feel beat-locked and that the muzzle exit reads as a release.
+Technical test fixture demonstrating high-speed engine features (e.g., rail pacing); however, as a stripped-down, limited testbed, it is excluded from the level picker and must not be used as a reference for level design quality or distinctiveness.
 
----
+## Benchmark levels
 
 # Downpour 7SNM
 
@@ -155,6 +155,33 @@ Four distinct city hunters—formation-flying interceptors, wall-crawling turret
 
 ## Status & notes
 Showcase build. Inspection markers: `firstPlunge` (bar 4), `secondDescent` (bar 20), `hunterReveal` (bar 30), and `cloudbreak` (bar 42).
+
+---
+
+# Downpour F2E6
+
+A hunted courier drone racing a rain-lashed neon megacity: down the storm-lit faces of its towers, through signage-lit avenue canyons and a sodium tube, along a flooded canal, and up the security citadel with the city's own gunship in pursuit.
+
+## Visual language
+Rain-grey black and blue-slate city geometry, lit by cyan/magenta signage, sodium-amber undercity light, and hazard-white security forces, with acid green reserved for the gunship alone. Recycling rain streaks read as the level's constant speed cue; two cloud decks (a storm ceiling and a break above it) bracket the run in lightning and, at the end, moonlight.
+
+## Musical language
+176 BPM drum & bass in D minor. Sparse pad and weather noise before the first plunge, a rolling break through the streets and the tube, a half-time drop into canal menace that escalates through the citadel hunt, and a near-silent moonlit outro. Locks, fire, hits, and kills are pitched from the live chord and section-tinted; kills walk a hidden melodic lane per movement.
+
+## Mechanical signature
+A 60-second run with a 3-point hull, four enemy kinds — thin swept-wing interceptors, bolted turret sentries that fire homing bolts, flat canal-skimming trawlers, and a 3-stage hunter-gunship boss — choreographed against two musical drops (the tower plunge and the undercity plunge) and a half-time-to-hunt escalation into the boss fight.
+
+## What to read
+- `src/levels/downpour-f2e6/index.ts`
+- `src/levels/downpour-f2e6/gameplay.ts`
+- `src/levels/downpour-f2e6/timing.ts`
+- `src/levels/downpour-f2e6/audio.ts`
+- `src/levels/downpour-f2e6/audio-voices.ts`
+- `src/levels/downpour-f2e6/visuals/index.ts`
+- `src/levels/downpour-f2e6/visuals/environment.ts`
+
+## Status & notes
+First pass, built from the standing brief and the Downpour theme assignment. Verified by typecheck, build, check:scope, check:floor (simulate, occlusion, perf), and trace:audio in this environment; WebGPU visuals and the music mix have not been confirmed by a human playtest — see handoff notes.
 
 ---
 
@@ -206,33 +233,6 @@ Showcase level. First human pass should check rain density and gunship readabili
 
 ---
 
-# Downpour F2E6
-
-A hunted courier drone racing a rain-lashed neon megacity: down the storm-lit faces of its towers, through signage-lit avenue canyons and a sodium tube, along a flooded canal, and up the security citadel with the city's own gunship in pursuit.
-
-## Visual language
-Rain-grey black and blue-slate city geometry, lit by cyan/magenta signage, sodium-amber undercity light, and hazard-white security forces, with acid green reserved for the gunship alone. Recycling rain streaks read as the level's constant speed cue; two cloud decks (a storm ceiling and a break above it) bracket the run in lightning and, at the end, moonlight.
-
-## Musical language
-176 BPM drum & bass in D minor. Sparse pad and weather noise before the first plunge, a rolling break through the streets and the tube, a half-time drop into canal menace that escalates through the citadel hunt, and a near-silent moonlit outro. Locks, fire, hits, and kills are pitched from the live chord and section-tinted; kills walk a hidden melodic lane per movement.
-
-## Mechanical signature
-A 60-second run with a 3-point hull, four enemy kinds — thin swept-wing interceptors, bolted turret sentries that fire homing bolts, flat canal-skimming trawlers, and a 3-stage hunter-gunship boss — choreographed against two musical drops (the tower plunge and the undercity plunge) and a half-time-to-hunt escalation into the boss fight.
-
-## What to read
-- `src/levels/downpour-f2e6/index.ts`
-- `src/levels/downpour-f2e6/gameplay.ts`
-- `src/levels/downpour-f2e6/timing.ts`
-- `src/levels/downpour-f2e6/audio.ts`
-- `src/levels/downpour-f2e6/audio-voices.ts`
-- `src/levels/downpour-f2e6/visuals/index.ts`
-- `src/levels/downpour-f2e6/visuals/environment.ts`
-
-## Status & notes
-First pass, built from the standing brief and the Downpour theme assignment. Verified by typecheck, build, check:scope, check:floor (simulate, occlusion, perf), and trace:audio in this environment; WebGPU visuals and the music mix have not been confirmed by a human playtest — see handoff notes.
-
----
-
 # Downpour WPXK
 
 A hunted courier drone flees through a rain-lashed neon megacity at night: off the storm ceiling, down a tower face, through avenue canyons and the sodium-lit undercity, along a flooded canal, and up a security citadel into moonlight — with the city's acid-green hunter-gunship on its tail. Rain rides the camera the whole way, and lightning cracks on the same bars the score does.
@@ -257,25 +257,224 @@ Built to the standing brief as a one-shot showcase; simulation, occlusion, and p
 
 ---
 
-# Rush
+# Hull Run
 
-Rush is a night flight down a city street canyon built to test how fast this engine can feel. The speed rig is still the point, but the velocity now reads through asphalt lane dashes, tower faces, streetlights, gantries, traffic, FOV pulls, and the shared depth-reprojection blur.
+An exactly sixty-second strike along the skin of a capital ship: the horizon holds still while seams, ridges, hatches, and antenna masts tear past underneath. The vessel begins almost black, then alert lamps and defense batteries wake in a red-and-amber chain all the way to its bow.
 
 ## Visual language
-Near-black low-poly city geometry with flat-shaded road, curbs, sidewalks, and skyscraper walls. Small cyan windows, cyan-white headlights, amber streetlights, taillights, and beat-strobing gantries provide the hot accents without turning bloom into a whiteout.
+Low gunmetal deck plates, close-passing bulkhead ridges and eye-level masts, tiny naval running lights, hatch steam, red target optics, and a bow turret whose armor physically opens around a white-hot vent core. Player fire alone is cold blue-white.
 
 ## Musical language
-170 BPM and deliberately blunt: a relentless kick, closed hat, and one distorted bass figure. Player actions answer with terse zaps, ticks, and rejects inside the same harsh electronic palette.
+144 BPM industrial martial percussion built from synthesized metal, turbine bass, filtered klaxons, and ship-scale impacts. Each wake phase adds a layer; player locks and volleys retune to the live harmony, while chained kills play an authored melodic lane.
 
 ## Mechanical signature
-A 30-second speed-feel testbed with a long rail, authored speed surges, simple pods, strafing darts, and heavier armored targets. Scenery cars are non-interactive speed cues: same-direction traffic gets overtaken fast, while oncoming headlights close at absurd speed.
+A four-point hull and three defense grammars—hatch-rising watchers, lateral blade skaters, and rooted twin-barrel sentries—plus interceptable red shells. The staged bow battery is invulnerable through each down-deck volley and opens its heat shutters between salvos for three decisive core hits, followed by the rail launching clean off the bow.
 
 ## What to read
-- `src/levels/rush/tuning.ts`
-- `src/levels/rush/gameplay.ts`
-- `src/levels/rush/visuals/index.ts`
-- `src/levels/rush/post-fx.ts`
-- `src/levels/rush/audio.ts`
+- `src/levels/hull-run-cvs3/index.ts`
+- `src/levels/hull-run-cvs3/gameplay.ts`
+- `src/levels/hull-run-cvs3/audio.ts`
+- `src/levels/hull-run-cvs3/visuals/index.ts`
+- `src/levels/hull-run-cvs3/visuals/environment.ts`
+- `src/levels/hull-run-cvs3/visuals/models.ts`
 
 ## Status & notes
-Technical test fixture demonstrating high-speed engine features (e.g., rail pacing); however, as a stripped-down, limited testbed, it is excluded from the level picker and must not be used as a reference for level design quality or distinctiveness.
+Showcase build. Inspection markers: `firstWake` (bar 4), `batteriesOnline` (bar 12), `fullAlert` (bar 20), `turretRise` (bar 26), and `offTheBow` (bar 35). WebGPU visuals and final mix still require a human playtest.
+
+---
+
+# Hull Run
+
+A 63-second strike flown meters above a capital ship's armored skin. The ship is black on arrival; red running lights chase forward, amber hatches wake in sequence, and the defense rhythm thickens until the last bow battery rises into the flight path. Destroy it during its heat vents and the rail carries you over the wreck and clean off the bow.
+
+## Visual language
+Gunmetal plates, welded seams, low bulkhead ridges, hatch frames, antenna forests, and a nearly fixed black horizon make the hull read as terrain. Red and amber are functional light only: alert strips, hot drone eyes, open vents, and impacts. Procedural 5×7 lamps in armored plaques form LAUNCH and REARM. The deck ends visibly before the rail does.
+
+## Musical language
+144 BPM industrial martial percussion in six escalating stretches. A dark metal pulse gains marching kick, iron snare, high-pressure hats, sub machinery, and klaxon calls as each part of the ship wakes. The turret section folds artillery cadence into the beat; the bow escape strips the arrangement back to venting air. Locks and volleys snap to the transport, kills play a written melodic lane from the live chord, and turret stages duck the ship mix for warning calls.
+
+## Mechanical signature
+Four-point hull; hatch-skimming drones, rising sentry pods with interceptable shells, lateral blade interceptors, and spinning proximity mines fill broad screen-space formations. The three-stage bow turret takes fifteen locks and is targetable only while its armor vents between shell volleys. A perfect six-kill release earns a formation bonus.
+
+## What to read
+- `src/levels/hull-run-ns5n/index.ts`
+- `src/levels/hull-run-ns5n/gameplay.ts`
+- `src/levels/hull-run-ns5n/audio.ts`
+- `src/levels/hull-run-ns5n/visuals/index.ts`
+
+## Status & notes
+Showcase build. Inspection markers: `firstWake` (bar 4), `batteriesOnline` (bar 12), `fullAlert` (bar 20), `bowTurret` (bar 27), and `bowDrop` (bar 36). Human playtest should first check the low-deck speed read, bloom-zero target contrast, turret vent legibility, and the percussion/klaxon balance.
+
+---
+
+# Mass Driver
+
+A sixty-second payload ride down a colossal orbital railgun, where every accelerator ring meets the camera on a beat and the barrel's growing physical spacing makes acceleration visible. The run climbs from cold blue injection through violet compression into a white-hot electrical final charge, then either breaks into silent open space or ruptures around the player.
+
+## Visual language
+Arc blue, induction violet, and muzzle white are carried by thin HDR conductor seams and accelerator coils against an almost-black steel barrel. Rings are physically spaced from the authored speed integral, defense drones use distinct swept-wing, gyroscopic, and braced silhouettes, and six magenta safety interlocks clamp around the barrel for the finale.
+
+## Musical language
+144 BPM, exactly 36 bars and 144 ring crossings. A locked four-on-the-floor induction pulse and dry high-voltage ticks sit under the gun's own sixty-second rising fundamental; added induction voices grow denser as the payload accelerates. Locks, volleys, impacts, and a section-specific kill lane are transport-quantized and tuned to live harmony.
+
+## Mechanical signature
+A 60-second variable-speed run with lateral skimmers, helical weavers, two-hit wall clamps, and six two-stage safety interlocks. The safeties pace the payload through the final eight bars: destroy all six before peak charge to fire through the muzzle; leave even one and the barrel overload kills the player.
+
+## What to read
+- `src/levels/mass-driver-7rkv/timing.ts`
+- `src/levels/mass-driver-7rkv/gameplay.ts`
+- `src/levels/mass-driver-7rkv/audio.ts`
+- `src/levels/mass-driver-7rkv/audio-voices.ts`
+- `src/levels/mass-driver-7rkv/visuals/index.ts`
+
+## Status & notes
+Showcase build. Human playtest should first confirm one-ring-per-beat sync, the rising-hum balance, bloom-zero target readability, and the contrast between successful silent muzzle release and containment failure.
+
+---
+
+# Mass Driver
+
+Mass Driver is a sixty-second ride through a superconducting launch barrel. One blue-to-violet coil lands on every beat, its spacing physically opening as the rail accelerates; defense drones haunt the gaps until a jammed safety array decides whether the barrel launches or tears itself apart.
+
+## Visual language
+Thin electric-blue conductor lines, one enormous accelerator ring per beat, violet high-energy coils, and white-hot launch heat. Skimmers cut sideways, coilguards orbit their cores, and slab-like safety interlocks brace across the final barrel.
+
+## Musical language
+128 BPM hypnotic pulse music: a climbing bass hum and every-beat sine impact build into bright electrical ticks. Locks, volleys, impacts, and kills are quantized into the same live harmonic lane; clearing the array ends in a rising launch tone.
+
+## Mechanical signature
+A variable-speed rail where widening coil gaps are the speedometer. Three motion grammars build to eight two-hit safety interlocks; clear all of them for launch, or miss them and the driver reports a barrel detonation.
+
+## What to read
+- `src/levels/mass-driver-bczy/index.ts`
+- `src/levels/mass-driver-bczy/gameplay.ts`
+- `src/levels/mass-driver-bczy/audio.ts`
+- `src/levels/mass-driver-bczy/visuals/index.ts`
+
+## Status & notes
+Showcase build. Inspection markers: `blueBank` (bar 8), `violetBank` (bar 16), and `interlocks` (bar 24). Human playtest should check that the physical growth in ring spacing remains clear with bloom at zero and that the final array is readable at full speed.
+
+---
+
+# Mass Driver
+
+A 60-second launch down the barrel of an orbital railgun. The tunnel is 120 accelerator rings and the payload crosses exactly one on every beat — ring spacing widens as the launch accelerates, so the speed and the music are the same thing. The gun's safety interlocks are jammed, the firing charge builds anyway, and the run ends either shot into open space at muzzle velocity or scattered across it.
+
+## Visual language
+Electric heat, not fire: the ring tunnel charges arc blue through violet toward blinding white across the run, with gunmetal coil housings, six ionized conduit rails, and hexagonal geometry everywhere (coils, shockwaves, the reticle, the charge collar). Defense drones carry magenta signal light; the player's reticle, locks, and tracers are kinetic amber. Lightning arcs — jagged, strobing — are the level's signature effect, and the muzzle exit breaks the fog wall into starfield, planet limb, and silence.
+
+## Musical language
+128 BPM electro; 32 bars is exactly 60 seconds. The gun is the instrument: a persistent hum (sub sine plus resonant coil whine) climbs a two-octave E-minor ladder one rung every two bars, the harmony riding it, and a ring-crossing tick plays every beat because a ring passes every beat. Stage drops land on bars 4 and 12, the interlock alarm strips the track to the naked hum, the charge window stacks risers, and the firing cuts everything to a weightless shimmer. Locks, shots, and kills are pitched from the live rung; kills walk hidden melodic lanes; interlock kills are escalating metal clangs.
+
+## Mechanical signature
+A 3-point hull and a monotonically accelerating rail (rail-paced spawns): weavers are tri-blade spinners wheeling around the full tunnel clock, sliders grind the conduit rails with surging approaches, armored sentinels telegraph interceptable arc bolts. At bar 22 the jammed charge collar arrives — six hex-mounted interlocks, two casings deep — and all six must be cleared before bar 30 or the barrel detonates with the player in it. Clear them and the gun fires you out of the muzzle at ~3× peak speed for a silent two-bar coda.
+
+## What to read
+- `src/levels/mass-driver-vyxj/timing.ts`
+- `src/levels/mass-driver-vyxj/gameplay.ts`
+- `src/levels/mass-driver-vyxj/audio.ts`
+- `src/levels/mass-driver-vyxj/visuals/index.ts`
+- `src/levels/mass-driver-vyxj/visuals/environment.ts`
+
+## Status & notes
+Built to the standing brief from the Mass Driver theme assignment. Verified headless (typecheck, build, scope, floor: simulate/occlusion/perf, audio trace); WebGPU visuals and the mix need a human playtest — check first that ring crossings feel beat-locked and that the muzzle exit reads as a release.
+
+---
+
+# Mass Driver
+
+A sixty-second ride down the barrel of an orbital railgun, where the music is the gun: the payload crosses one glowing accelerator ring on every beat of a locked 128 BPM pulse, the rings burn from arc blue through violet toward blinding white as the run accelerates, and the bass hum underneath climbs in pitch from breech to muzzle. The finale jams the gun's own safety interlocks in your face — clear all six before the charge peaks and the shot throws you out of the muzzle into silent open space.
+
+## Visual language
+Near-black void and gunmetal barrel structure; 112 beat-spaced accelerator rings on an electric heat ramp (arc blue → violet → blinding white), four HDR conductor rails, and camera-riding ion streaks. Hazard amber is reserved for the jammed interlocks, charge warnings, and denial. Letters are stencil plates off the gun housing; the reticle is a six-segment breech charge gauge that fills one segment per lock.
+
+## Musical language
+128 BPM locked minimal techno in E minor, 32 bars = exactly 60 seconds. The gun is the instrument: a persistent bass hum climbs from E1 across the whole run and accelerates into the firing charge through the interlock bars, cutting dead on the bar-28 shot. Locks, shots, hits, and kills are transport-quantized and pitched from the live harmony; kills walk hidden per-section melodic lanes; each interlock destroyed plays a climbing confirmation. After the shot, everything strips to a quiet E-major bloom in open space.
+
+## Mechanical signature
+A 60-second run with a 3-point hull and a strictly accelerating speed profile that spikes ~3× on the bar-28 shot. Wall-riding coil sentries that lob interceptable arc bolts, needle threaders corkscrewing through the bore, two-stage capacitor banks, and a six-interlock boss on a hard musical deadline: clear them before bar 28 and the gun fires you into space; fail and the barrel detonates with you in it.
+
+## What to read
+- `src/levels/mass-driver-wo4m/timing.ts`
+- `src/levels/mass-driver-wo4m/gameplay.ts`
+- `src/levels/mass-driver-wo4m/audio.ts`
+- `src/levels/mass-driver-wo4m/visuals/index.ts`
+- `src/levels/mass-driver-wo4m/visuals/environment.ts`
+
+## Status & notes
+Built to the standing brief from the Mass Driver theme assignment. Verified by typecheck, build, check:scope, check:floor (simulation, occlusion, perf), and trace:audio; WSL2 cannot render WebGPU headless, so ring-pass feel, bloom discipline, and the music mix still need a human playtest. First things to check by hand: rings landing on the beat, the bar-28 shot moment, and interlock readability against the charge glow.
+
+---
+
+# Skyhook
+
+A sixty-second defense of Climber 07 on its full space-elevator ascent: storm-grey weather falls away into hard blue sunlight, indigo thin air, black orbit, and the open capture jaws of the station. The tether never leaves the frame; at the summit, a vast crawler uses it to climb down toward the car.
+
+## Visual language
+Utilitarian white paneling, graphite mechanisms, and hazard orange ride against a sky-driven palette rather than neon. Wind-riders flex through rain and cloud, vacuum sentinels arrive as armored satellites, the planet's curved limb replaces the ground, and the climber remains visible at the bottom of the frame as the thing being defended.
+
+## Musical language
+96 BPM in D, scored as air being removed: broad filtered wind, low cabin pulses, soft chord clouds, and metal ticks gather below the cloud deck; parts disappear through the blue and indigo until the boss is carried by tether knocks and a skeletal low pulse. Lock, fire, hit, and kill notes are transport-quantized from live harmony, while docking resolves into one long, quiet chord.
+
+## Mechanical signature
+A 60-second, four-integrity climb with wind-riding kites, two-lock boarding clamps that converge on and damage the car, orbiting vacuum sentinels, falling interceptable debris, and a three-stage tether crawler. The boss starts small and distant, grows continuously as it descends, and destroys the climber if it reaches the car before all three armor stages break.
+
+## What to read
+- `src/levels/skyhook-81u5/timing.ts`
+- `src/levels/skyhook-81u5/gameplay.ts`
+- `src/levels/skyhook-81u5/audio.ts`
+- `src/levels/skyhook-81u5/visuals/index.ts`
+
+## Status & notes
+Showcase build. First human pass should check the continuity of the sky transition, the boarder-to-car impact read, the crawler's apparent approach, and the docking deceleration with bloom disabled.
+
+---
+
+# Skyhook
+
+Ride an exposed climber car from the storm layer to an orbital station while the planet falls away beneath you. The white-and-hazard-orange tether is the visual constant; everything around it changes from rain-grey cloud to blue glare, indigo air, black space, and finally the station mouth.
+
+## Visual language
+Matte white utility paneling and hazard orange against sky-driven color. Cloud chunks and maintenance collars stream down the tether, stars emerge as fog thins, the curved planet occupies the lower world, and the final tether clamp grows entirely through its descent toward the car.
+
+## Musical language
+120 BPM in open fifths: wind-noise percussion and a broad low pulse at the bottom shed layers through cloudbreak and thin air. The clamp restores a spare industrial pulse; docking removes it again until only two long sine tones remain. Locks, hits, stage breaks, and kills are transport-quantized notes from the live harmony.
+
+## Mechanical signature
+A 60-second, four-hull ascent with wind-riding sailwings, car-seeking grapplers, tether-orbiting vacuum drones, and a seven-lock three-stage clamp boss. Grapplers damage the shared climber hull if they attach; the clamp destroys it outright if it reaches the car.
+
+## What to read
+- `src/levels/skyhook-9uib/index.ts`
+- `src/levels/skyhook-9uib/gameplay.ts`
+- `src/levels/skyhook-9uib/audio.ts`
+- `src/levels/skyhook-9uib/visuals/index.ts`
+
+## Status & notes
+Showcase build. Inspection markers: `cloudbreak` (bar 8), `thinAir` (bar 16), `clampfall` (bar 21), and `docking` (bar 27). Human playtest should first confirm the planet limb reads below the car, the clamp remains targetable throughout its approach, and the sparse upper-atmosphere mix still carries player notes.
+
+---
+
+# Skyhook
+
+Sixty seconds up a space elevator, defending the climber car from the storm anchor to the station: launch in grey weather, punch the cloud deck on the drop, watch the sky thin from sunlit blue to indigo to starfield black while the planet curves away below — then something huge takes the tether overhead and starts climbing down toward the car.
+
+## Visual language
+The sky does all the coloring: storm grey, sunlit blue, indigo, vacuum black, with a curving cloud-swirled planet falling away below and stars arriving on schedule. The hardware stays utilitarian — white paneling and hazard orange for the tether, climber car, letters, reticle, and station; hostiles are gunmetal silhouettes with pale worklight edges and signal-red slits. Rain, cloud wisps, and falling debris streak downward past the camera the whole way up; the Lamprey boss is a segmented gripper the size of a house, its iris of plates opening over an orange core once its claws are cut.
+
+## Musical language
+128 BPM in A minor, 32 bars = 60 seconds, and the arrangement is an altimeter: wide wind-bedded pads and four-on-the-floor in the storm, a brighter drop through the cloud deck, then the kit strips as the air thins — half-time pulse and glass bells in the stratosphere, and near-vacuum for the boss (sub pulses, hull ticks, a low two-saw dread motif over Am–Bb–Am–E). The dock resolves to A major at a whisper with a mechanical latch. Locks, shots, chips, and kills snap to the transport, read the live chord, and kills walk hidden per-act melody lanes.
+
+## Mechanical signature
+A 60-second run with a 3-point hull that is the car itself: sappers dive past you, latch onto the climber, and drill on a visible lamp timer unless pried off; a two-stage breaker crawls down the tether; storm gliders and updraft sprites own the weather while thruster-hopping spikers throw interceptable railgun bolts up top. The Lamprey latches at bar 19 and hauls itself down the tether for nine bars — three grip claws gate its staged core, and if it reaches the car it tears a hull point off every two seconds until killed. Variable rail speed surges through the cloud punch and decelerates hard into the docking collar.
+
+## What to read
+- `src/levels/skyhook-snxd/timing.ts`
+- `src/levels/skyhook-snxd/gameplay.ts`
+- `src/levels/skyhook-snxd/lamprey.ts`
+- `src/levels/skyhook-snxd/audio.ts`
+- `src/levels/skyhook-snxd/audio-voices.ts`
+- `src/levels/skyhook-snxd/visuals/index.ts`
+- `src/levels/skyhook-snxd/visuals/environment.ts`
+
+## Status & notes
+Built to the standing brief from the Skyhook theme assignment. Typecheck, build, check:scope, and check:floor verified headless; WebGPU visuals and the final mix need a human playtest (WSL2 cannot render WebGPU). First things to check by eye: the cloud-deck punch at bar 8, tether/car readability with bloom at zero, and the Lamprey's descent reading clearly as "it is getting closer".

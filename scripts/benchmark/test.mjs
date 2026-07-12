@@ -12,6 +12,9 @@ import { validateDefinition as validateRunDefinition } from './run.mjs';
 import { createSchedule, extendSchedule, validateSchedule } from './schedule.mjs';
 import { summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
+import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
+import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
+import { protocolForVersion } from './protocol.mjs';
 
 const exec = promisify(execFile);
 
@@ -172,6 +175,10 @@ const claudeRunDefinition = {
   stage: { adapter: 'claude-cli', model: 'claude-fable-5', effort: 'high', timeoutSeconds: 10_800 },
 };
 assert.deepEqual(validateRunDefinition(claudeRunDefinition), []);
+const directoryOnlyRunDefinition = { ...structuredClone(runDefinition), benchmarkVersion: 'v2', mode: 'rehearsal' };
+assert.deepEqual(validateRunDefinition(directoryOnlyRunDefinition), []);
+const unknownProtocol = { ...structuredClone(runDefinition), benchmarkVersion: 'v0' };
+assert.ok(validateRunDefinition(unknownProtocol).some((error) => error.includes('Unsupported benchmark protocol version')));
 const unknownAdapter = { ...structuredClone(claudeRunDefinition), stage: { ...claudeRunDefinition.stage, adapter: 'unknown-cli' } };
 assert.ok(validateRunDefinition(unknownAdapter).some((error) => error.includes('stage.adapter')));
 
@@ -311,6 +318,59 @@ try {
   await exec('git', ['worktree', 'remove', '--force', snapshotWorktree], { cwd: snapshotRepo }).catch(() => {});
   await fs.rm(snapshotRepo, { recursive: true, force: true });
   await fs.rm(snapshotRun, { recursive: true, force: true });
+}
+
+const scopeRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-directory-only-scope-'));
+try {
+  await fs.mkdir(path.join(scopeRepo, 'src/levels'), { recursive: true });
+  await fs.mkdir(path.join(scopeRepo, 'src/benchmark-levels'), { recursive: true });
+  await fs.writeFile(path.join(scopeRepo, 'src/levels/index.ts'), "export const levelMetadatas: LevelMetadata[] = [\n  { id: 'anchor', title: 'Anchor' },\n];\n");
+  await exec('git', ['init', '-q'], { cwd: scopeRepo });
+  await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: scopeRepo });
+  await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: scopeRepo });
+  await exec('git', ['add', '.'], { cwd: scopeRepo });
+  await exec('git', ['commit', '-qm', 'scope baseline'], { cwd: scopeRepo });
+  await fs.mkdir(path.join(scopeRepo, 'src/benchmark-levels/synthetic-a1b2'), { recursive: true });
+  await fs.writeFile(path.join(scopeRepo, 'src/benchmark-levels/synthetic-a1b2/index.ts'), 'synthetic\n');
+  assert.deepEqual(
+    await checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', benchmarkVersion: 'v2' }),
+    ['src/benchmark-levels/synthetic-a1b2/index.ts'],
+  );
+  await fs.writeFile(path.join(scopeRepo, 'src/levels/index.ts'), 'unrelated\n');
+  await assert.rejects(
+    () => checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', benchmarkVersion: 'v2' }),
+    /Out-of-scope files/,
+  );
+} finally {
+  await fs.rm(scopeRepo, { recursive: true, force: true });
+}
+
+const directoryOnlyRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-directory-only-baseline-'));
+try {
+  await fs.mkdir(path.join(directoryOnlyRepo, 'src/levels'), { recursive: true });
+  await fs.mkdir(path.join(directoryOnlyRepo, 'src/benchmark-levels/test-fixtures'), { recursive: true });
+  await fs.writeFile(path.join(directoryOnlyRepo, 'src/levels/index.ts'), "export const levelMetadatas: LevelMetadata[] = [\n  { id: 'anchor', title: 'Anchor' },\n];\n");
+  for (const file of ['catalog.ts', 'domain.test.ts', 'index.ts', 'types.ts', 'validation.ts']) {
+    await fs.writeFile(path.join(directoryOnlyRepo, 'src/benchmark-levels', file), 'permanent infrastructure\n');
+  }
+  await exec('git', ['init', '-q'], { cwd: directoryOnlyRepo });
+  await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: directoryOnlyRepo });
+  await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: directoryOnlyRepo });
+  await exec('git', ['add', '.'], { cwd: directoryOnlyRepo });
+  await exec('git', ['commit', '-qm', 'directory-only baseline'], { cwd: directoryOnlyRepo });
+  assert.equal(protocolForVersion('v2').sourceRoot, 'src/benchmark-levels');
+  assert.equal(protocolForVersion('v1').sourceRoot, 'src/levels');
+  await assertBenchmarkBaseline({ root: directoryOnlyRepo, ref: 'HEAD', benchmarkVersion: 'v2', expectedBuiltInLevelIds: ['anchor'] });
+  await fs.mkdir(path.join(directoryOnlyRepo, 'src/benchmark-levels/promoted-a1b2'), { recursive: true });
+  await fs.writeFile(path.join(directoryOnlyRepo, 'src/benchmark-levels/promoted-a1b2/index.ts'), 'promoted\n');
+  await exec('git', ['add', '.'], { cwd: directoryOnlyRepo });
+  await exec('git', ['commit', '-qm', 'invalid promoted output'], { cwd: directoryOnlyRepo });
+  await assert.rejects(
+    () => assertBenchmarkBaseline({ root: directoryOnlyRepo, ref: 'HEAD', benchmarkVersion: 'v2', expectedBuiltInLevelIds: ['anchor'] }),
+    /output root is not empty/,
+  );
+} finally {
+  await fs.rm(directoryOnlyRepo, { recursive: true, force: true });
 }
 
 console.log('Benchmark controller tests passed.');

@@ -16,9 +16,9 @@ During generation, keep the append-only randomized run schedule (which is also t
 
 The controller follows `benchmark/controller/runbook.md`; coding agents do not receive that administrative prompt. The standing level-building brief remains `docs/level-brief.md`. `benchmark/prompts/level-assignment.md` adds benchmark-wide identity, duration, and polish expectations without duplicating the brief. At protocol freeze, the release record identifies the materials commit, entrant-baseline commit, and shared artifact hashes. Each configuration registration separately pins its orchestration runner, harness executor, recipe, execution settings, and configuration commit. Cost is measured after the run by ccusage and is not a pinned per-configuration input. Entrant worktree access follows the controller runbook.
 
-Each run receives a four-character opaque slot and a globally unique level id such as `theme-a44f`. The agent develops normally in an opaque worktree, including temporary registry and gallery edits. After gates run, the controller derives a clean payload commit containing only `src/levels/<level-id>/`. Passing payloads remain separate through blind ranking, then the resumable promotion command relocates one verified payload under `src/benchmark-levels/<level-id>/`, creates its controller-owned descriptor, regenerates the gallery, runs application checks, and records a separate administrative commit. One post-unblinding integration commit is a later operation.
+Each run receives a four-character opaque slot and a globally unique level id such as `theme-a44f`. Frozen v1 runs develop normally in an opaque worktree, including temporary registry and gallery edits; their payloads remain rooted at `src/levels/<level-id>/` until the historical promotion path relocates them. The directory-only protocol introduced after v1 instead selects `src/benchmark-levels/<level-id>/` from the recorded benchmark version. Its scaffold creates the descriptor, the entrant never edits `src/levels/index.ts`, and payload extraction preserves the assigned directory directly. It does not use v1 relocation or controller-owned descriptor creation. After rankings lock, directory-only payloads are integrated in the benchmark domain. Never infer the protocol from whichever source directory exists.
 
-Author benchmark materials at stable paths without `v1` or `v2` suffixes. A version exists only when `benchmark/releases/<version>/freeze.json` and its matching `benchmark-<version>` Git tag are created. See `benchmark/releases/README.md`.
+Author benchmark materials at stable paths without `v1` or `v2` suffixes. A version exists only when `benchmark/releases/<version>/freeze.json` and its matching `benchmark-<version>` Git tag are created. For a directory-only release, the freeze records `entrantBaseline.outputRoot: "src/benchmark-levels"` and the expected built-in baseline fingerprint. See `benchmark/releases/README.md`.
 
 ## Inspecting run results
 
@@ -32,6 +32,8 @@ npm run benchmark:results -- --identity blind
 ```
 
 Use `--identity unblind` only when the relevant ranking snapshot has been locked and its mapping opened. `--format csv` is also available, and `--runs <path>` can inspect another run-artifact directory.
+
+Fresh launches verify the executing controller code against the release's frozen hashes. Once post-freeze controller development has drifted those files, launch with `RAILD_ACCEPT_CONTROLLER_DRIFT=1`; each drifted path is recorded with its frozen and executing hashes in the run's `controller-drift.json`. Entrant-facing frozen material (theme, recipe, prompt template, baseline) is always strictly verified regardless of this flag.
 
 ## Resuming and managing runs
 
@@ -56,6 +58,17 @@ A finalized playable run is promoted automatically by the controller. Operators 
 ```bash
 npm run benchmark:promote -- --run <run-id>
 ```
+
+Existing-output administration builds its inventory only from private and published manifests, then invokes the same verified promotion path for each playable eligible record:
+
+```bash
+npm run benchmark:promote -- --inventory true --out benchmark/private/migrations/inventory.json
+npm run benchmark:migrate -- --version <benchmark-version> [--accept-diverged <level-id>[,<level-id>...]]
+```
+
+Use `--accept-diverged` only for explicitly reviewed post-run source maintenance. The migration records the payload commit and diverging source paths for each accepted derivative; unlisted divergences remain blocking.
+
+The migration inventory and its machine-readable promotion record are kept under `benchmark/private/migrations/`. They coalesce consistent private and published copies, record public rollout evidence, and include payload and application commit provenance without changing the run manifests, dispositions, evaluated branches, payload branches, or recovery refs. Verified non-playable source copies are recorded as administrative cleanups rather than promoted or made ranking-eligible.
 
 Promotion checkpoints and its private payload/promotion commit provenance live in `promotion.json`. A promotion failure never edits the run manifest or changes its playable disposition; `benchmark:manage -- status` reports the completed run as promotion-pending or promotion-failed and prints this resume command.
 

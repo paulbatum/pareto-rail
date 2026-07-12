@@ -7,7 +7,7 @@ Build a complete level according to `docs/level-brief.md`. Read `AGENTS.md` and 
 - Level id: `{{LEVEL_ID}}`
 - Display title: `{{LEVEL_TITLE}}`
 
-Use this identity consistently in the level directory, registry entry, metadata, and generated gallery card. The level directory must be exactly `src/levels/{{LEVEL_ID}}/`; do not use a shortened module-folder name.
+Use this identity consistently in the level directory, descriptor, metadata, and generated gallery card. This benchmark protocol uses the directory-only output contract: the level directory must be exactly `src/benchmark-levels/{{LEVEL_ID}}/`; do not use a shortened module-folder name, edit `src/levels/index.ts`, or add a benchmark registry entry. Start with `npm run scaffold -- --mode benchmark --id {{LEVEL_ID}} --title '{{LEVEL_TITLE}}'`.
 
 ## Benchmark additions
 

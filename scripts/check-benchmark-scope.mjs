@@ -6,16 +6,31 @@ import { fileURLToPath } from 'node:url';
 
 const execFileAsync = promisify(execFile);
 
-export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD' } = {}) {
+// Keep this checker self-contained: promotion tests and entrant worktrees copy
+// this one file into small repositories. The recorded version, not filesystem
+// probing, still selects the contract.
+function protocolForVersion(version) {
+  if (version === 'v1' || version === 'rehearsal') return { sourceRoot: 'src/levels', directoryOnly: false };
+  if (/^v[2-9][0-9]*$/.test(version ?? '')) return { sourceRoot: 'src/benchmark-levels', directoryOnly: true };
+  throw new Error(`Unsupported benchmark protocol version: ${version}`);
+}
+
+export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD', benchmarkVersion = 'v2', migration = false } = {}) {
   if (!levelId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(levelId)) throw new Error('A safe benchmark level id is required.');
-  const allowedPrefix = `src/benchmark-levels/${levelId}/`;
+  const protocol = protocolForVersion(benchmarkVersion);
+  const allowedPrefix = `${protocol.sourceRoot}/${levelId}/`;
+  const legacyPrefix = 'src/levels/';
   const changed = new Set();
   const tracked = await git(root, ['diff', '--name-only', base]);
   const untracked = await git(root, ['ls-files', '--others', '--exclude-standard']);
   for (const name of `${tracked}\n${untracked}`.split('\n').map((value) => value.trim()).filter(Boolean)) changed.add(name);
-  const outOfScope = [...changed].filter((name) => name !== 'docs/level-gallery.md' && !name.startsWith(allowedPrefix));
+  const outOfScope = [...changed].filter((name) => {
+    if (name === 'docs/level-gallery.md' || name.startsWith(allowedPrefix)) return false;
+    if (migration && (name === 'src/levels/index.ts' || name.startsWith(`${legacyPrefix}${levelId}/`))) return false;
+    return true;
+  });
   if (outOfScope.length) throw new Error(`Out-of-scope files for benchmark level '${levelId}':\n${outOfScope.join('\n')}`);
-  if (![...changed].some((name) => name.startsWith(allowedPrefix))) throw new Error(`Benchmark scope contains no promoted level directory for '${levelId}'.`);
+  if (![...changed].some((name) => name.startsWith(allowedPrefix))) throw new Error(`Benchmark scope contains no assigned output directory for '${levelId}'.`);
   return [...changed].sort();
 }
 
@@ -31,8 +46,10 @@ async function main() {
   };
   const levelId = get('--level');
   const base = get('--base') ?? 'HEAD';
+  const benchmarkVersion = get('--version') ?? get('--benchmark-version') ?? 'v2';
+  const migration = args.includes('--migration');
   const root = path.resolve(get('--root') ?? process.cwd());
-  const changed = await checkBenchmarkScope({ root, levelId, base });
+  const changed = await checkBenchmarkScope({ root, levelId, base, benchmarkVersion, migration });
   console.log(`benchmark scope valid (${changed.length} paths)`);
 }
 

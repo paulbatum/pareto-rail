@@ -23,7 +23,7 @@
     "entrantBaseline": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "identifier", "allowedLevelIds"],
+      "required": ["kind", "identifier"],
       "properties": {
         "kind": { "const": "git-commit" },
         "identifier": { "$ref": "#/$defs/gitObject" },
@@ -36,6 +36,17 @@
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           }
         },
+        "expectedBuiltInLevelIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "builtInTreeSha256": { "$ref": "#/$defs/sha256" },
+        "outputRoot": { "enum": ["src/levels", "src/benchmark-levels"] },
         "sha256": { "$ref": "#/$defs/sha256" }
       }
     },

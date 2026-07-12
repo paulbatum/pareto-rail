@@ -8,17 +8,21 @@ const id = args.id;
 if (!id) fail('Missing --id <id>');
 if (!/^[a-z][a-z0-9-]*$/.test(id)) fail('Level id must match /^[a-z][a-z0-9-]*$/');
 
+const mode = args.mode ?? (args.benchmark ? 'benchmark' : 'built-in');
+if (mode !== 'built-in' && mode !== 'benchmark') fail('--mode must be built-in or benchmark');
+const benchmarkMode = mode === 'benchmark';
 const title = args.title ?? titleFromId(id);
 const bpm = args.bpm === undefined ? 120 : Number(args.bpm);
 if (!Number.isFinite(bpm) || bpm <= 0) fail('BPM must be a positive number');
 
 const root = process.cwd();
-const levelDir = path.join(root, 'src', 'levels', id);
-if (await exists(levelDir)) fail(`Refusing to overwrite existing level directory: src/levels/${id}`);
+const sourceRoot = benchmarkMode ? 'benchmark-levels' : 'levels';
+const levelDir = path.join(root, 'src', sourceRoot, id);
+if (await exists(levelDir)) fail(`Refusing to overwrite existing level directory: src/${sourceRoot}/${id}`);
 
 const registryPath = path.join(root, 'src', 'levels', 'index.ts');
-const registry = await readFile(registryPath, 'utf8');
-if (registry.includes(`id: '${id}'`) || registry.includes(`aliases: ['${id}'`)) {
+const registry = benchmarkMode ? undefined : await readFile(registryPath, 'utf8');
+if (!benchmarkMode && (registry.includes(`id: '${id}'`) || registry.includes(`aliases: ['${id}'`))) {
   fail(`Refusing to add duplicate level id or alias: ${id}`);
 }
 
@@ -29,11 +33,12 @@ await Promise.all([
   writeFile(path.join(levelDir, 'gameplay.ts'), gameplayTs({ bpm, ...names })),
   writeFile(path.join(levelDir, 'audio.ts'), audioTs({ bpm, ...names })),
   writeFile(path.join(levelDir, 'visuals', 'index.ts'), visualsTs()),
-  writeFile(path.join(levelDir, 'level.md'), levelMd({ id, title })),
+  writeFile(path.join(levelDir, 'level.md'), levelMd({ id, title, sourceRoot: `src/${sourceRoot}` })),
+  ...(benchmarkMode ? [writeFile(path.join(levelDir, 'level.json'), descriptorJson({ id, title }))] : []),
 ]);
 
-await writeFile(registryPath, appendRegistry(registry, { id, title, exportName: names.exportName }));
-console.log(`Scaffolded src/levels/${id}`);
+if (!benchmarkMode) await writeFile(registryPath, appendRegistry(registry, { id, title, exportName: names.exportName }));
+console.log(`Scaffolded src/${sourceRoot}/${id}${benchmarkMode ? ' (benchmark; registry unchanged)' : ''}`);
 
 function parseArgs(argv) {
   const parsed = {};
@@ -41,6 +46,14 @@ function parseArgs(argv) {
     const arg = argv[i];
     if (!arg.startsWith('--')) fail(`Unexpected argument: ${arg}`);
     const key = arg.slice(2);
+    if (key === 'benchmark') {
+      const next = argv[i + 1];
+      if (next && !next.startsWith('--')) {
+        parsed.benchmark = next;
+        i += 1;
+      } else parsed.benchmark = true;
+      continue;
+    }
     const value = argv[i + 1];
     if (!value || value.startsWith('--')) fail(`Missing value for --${key}`);
     parsed[key] = value;
@@ -107,6 +120,10 @@ function visualsTs() {
   return `import { BoxGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial, RingGeometry, Scene, SphereGeometry, TorusGeometry } from 'three';\nimport type { Object3D } from 'three';\nimport type { EventBus } from '../../../events';\nimport { glyphOnCells } from '../../../engine/glyphs';\n\n// Spine: keep palette and event choreography decisions here. Move mesh\n// construction to leaf files as this level grows. These flat magenta primitive\n// placeholders are intentionally unshippable.\nconst MAGENTA = 0xff00ff;\nconst material = () => new MeshBasicMaterial({ color: MAGENTA, side: DoubleSide });\n\nexport function createEnvironment(_scene: Scene) {\n  // Empty by design: replace with authored environment geometry.\n}\n\nexport function installVisualEventHandlers(_bus: EventBus, _scene: Scene) {\n  // Empty by design: replace with authored event choreography.\n}\n\nexport function createEnemyMesh(kind: string, letter?: string) {\n  if (kind === 'letter' || letter) return createLetterMesh(letter ?? 'A');\n  return new Mesh(new SphereGeometry(0.75, 8, 6), material());\n}\n\nexport function setEnemyLocked(mesh: Object3D, locked: boolean) {\n  mesh.scale.setScalar(locked ? 1.25 : 1);\n}\n\nexport function setEnemyDenied(mesh: Object3D) {\n  mesh.scale.setScalar(0.75);\n}\n\nexport function createProjectileMesh() {\n  return new Mesh(new SphereGeometry(0.16, 8, 4), material());\n}\n\nexport function createReticle() {\n  return new Mesh(new RingGeometry(0.5, 0.56, 24), material());\n}\n\nexport function setReticleActive(reticle: Object3D, active: boolean, lockCount: number) {\n  reticle.visible = true;\n  reticle.scale.setScalar(1 + lockCount * 0.05 + (active ? 0.1 : 0));\n}\n\nfunction createLetterMesh(character: string) {\n  const group = new Group();\n  const cells = glyphOnCells(character);\n  const geometry = new BoxGeometry(0.24, 0.24, 0.08);\n  for (const cell of cells) {\n    const block = new Mesh(geometry, material());\n    block.position.set((cell.x - 2) * 0.3, (3 - cell.y) * 0.3, 0);\n    group.add(block);\n  }\n  group.add(new Mesh(new TorusGeometry(0.95, 0.025, 6, 24), material()));\n  return group;\n}\n`;
 }
 
-function levelMd({ id, title }) {
-  return `# ${title}\n\nTODO: one short paragraph naming the world, mood, and what makes this level recognizable at a glance and by ear.\n\n## Visual language\nTODO.\n\n## Musical language\nTODO.\n\n## Mechanical signature\nTODO.\n\n## What to read\n- \`src/levels/${id}/index.ts\`\n- \`src/levels/${id}/gameplay.ts\`\n- \`src/levels/${id}/audio.ts\`\n- \`src/levels/${id}/visuals/index.ts\`\n\n## Status & notes\nTODO. Preserve owner notes on regeneration.\n`;
+function descriptorJson({ id, title }) {
+  return `${JSON.stringify({ id, title }, null, 2)}\n`;
+}
+
+function levelMd({ id, title, sourceRoot }) {
+  return `# ${title}\n\nTODO: one short paragraph naming the world, mood, and what makes this level recognizable at a glance and by ear.\n\n## Visual language\nTODO.\n\n## Musical language\nTODO.\n\n## Mechanical signature\nTODO.\n\n## What to read\n- \`${sourceRoot}/${id}/index.ts\`\n- \`${sourceRoot}/${id}/gameplay.ts\`\n- \`${sourceRoot}/${id}/audio.ts\`\n- \`${sourceRoot}/${id}/visuals/index.ts\`\n\n## Status & notes\nTODO. Preserve owner notes on regeneration.\n`;
 }

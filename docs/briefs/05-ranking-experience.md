@@ -1,76 +1,46 @@
-# 05 — Build local and public pair ranking
+# 05 — Build local pair ranking
 
 ## Objective
 
-As promoted runs accumulate, automatically offer blind pair comparisons for themes with at least two playable benchmark levels. Each participant plays anonymously, commits a judgment, and only then sees entrant identities and evidence.
+As promoted runs accumulate, automatically offer blind pair comparisons for any theme with at least two playable benchmark levels. A participant plays both levels anonymously, records a judgment, and then sees who made what.
 
 ## Blinding model
 
-Blinding is a presentation policy, not a security boundary. The repository and deployed JavaScript may contain identities. The interface must avoid presenting identity before judgment, but it does not need to resist a participant deliberately inspecting source or network data.
-
-State this policy clearly in user-facing ranking instructions.
-
-## Catalog model
-
-Create a benchmark ranking catalog that distinguishes:
-
-- public level identity and title;
-- opaque slot and theme membership;
-- run and payload provenance;
-- playable/promotion status;
-- reveal metadata such as configuration, model, cost, source, manifest, and rollout links; and
-- ranking-snapshot membership.
-
-Do not infer theme membership from the level id when authoritative manifest data exists.
+Blinding is a presentation courtesy, not a security boundary. Identities exist in the repo and the deployed JavaScript; the interface just doesn't show them before judgment. Say this plainly in the ranking instructions.
 
 ## Pair availability
 
-1. Read promoted playable benchmark entries only.
-2. Group them by theme.
-3. Make a theme rankable as soon as it has at least two entries.
-4. Generate stable pair or ranked-set identifiers and randomized presentation order.
-5. Preserve existing judgments as later runs add new pairs.
-6. Avoid presenting the same unordered pair repeatedly to one participant unless replay is explicitly requested.
+1. Group promoted playable benchmark entries by theme, using manifest data (not level-id parsing).
+2. A theme becomes rankable at two entries; new entries add new pairs without disturbing existing judgments.
+3. Randomize A/B presentation order and record which order was shown.
+4. Don't re-present a pair the participant has already judged unless they ask to replay it.
 
-Use existing ranking schedule and validation machinery where it fits; extend it rather than creating an incompatible second record format.
+Reuse the existing ranking schedule/validation machinery where it fits rather than inventing a parallel record format.
 
 ## Participant flow
 
-For each comparison:
+1. Tell the participant identities are hidden until they judge.
+2. Present the pair as anonymous A/B; guide them to play both.
+3. Accept a preference or a tie.
+4. Save the judgment, then reveal model, configuration, cost, and evidence links for the pair.
+5. Offer the next available comparison.
 
-1. Explain that identities remain hidden until judgment.
-2. Present anonymous A/B levels in randomized order.
-3. Require or strongly guide the participant to play both.
-4. Accept preference or tie, plus the existing required play-count evidence.
-5. Persist and lock the judgment before reveal.
-6. Reveal model, configuration, cost, source, manifest, and sanitized rollout links for that pair.
-7. Continue to the next available comparison.
+Persist progress in local storage or similar. Keep the storage access behind a small interface so a server-backed store could replace it later, but don't build the server side now.
 
-Persist progress locally for local use. Design the storage boundary so a public deployment can later use a server-side participant/session store without rewriting ranking logic.
+Losing an in-progress (unjudged) comparison to a refresh is acceptable; losing recorded judgments is not. A recorded judgment stays recorded — don't offer silent replacement after reveal.
 
 ## Ordinary browsing
 
-The regular level browser may show all built-in and benchmark levels openly. Ranking anonymity applies only inside the ranking flow. Clearly label benchmark outputs and keep built-in levels out of pair generation.
-
-## Constraints
-
-- Never reveal one side before the judgment is durably recorded.
-- Do not count navigation or a partial comparison as a ranking.
-- Do not change old judgments when new entrants arrive.
-- Do not expose private credentials, operator paths, or unpublished schedule information in reveal metadata.
-- Preserve opaque presentation order in ranking records.
+The regular level browser shows everything openly, benchmark outputs clearly labeled. Anonymity applies only inside the ranking flow. Built-in levels never enter pair generation.
 
 ## Verification
 
-- Zero or one promoted level for a theme produces no comparison.
-- A second playable promoted level makes a comparison available without a code edit.
-- Built-in levels never enter ranking sets.
-- Refreshing mid-pair preserves safe progress without recording a verdict.
-- Refreshing after judgment shows the reveal and does not permit silent verdict replacement.
-- Adding a third level preserves prior judgments and adds only newly possible comparisons.
-- Validate generated ranking records with benchmark ranking tooling.
-- Test local and production builds.
+- A theme with fewer than two promoted levels produces no comparison; adding a second makes one available with no code edit.
+- Adding a third level preserves prior judgments and adds only the new pairs.
+- Judging then refreshing shows the reveal, not a fresh judgment prompt.
+- Generated ranking records validate with the existing ranking tooling.
+- `npm run typecheck` and `npm run build`
 
 ## Done when
 
-A participant can work through automatically available benchmark comparisons, remain presentation-blind until each judgment, and inspect full entrant evidence immediately after committing it.
+A participant can work through the available comparisons blind, and inspect full entrant evidence right after each judgment.

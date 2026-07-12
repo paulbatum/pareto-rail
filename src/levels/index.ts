@@ -29,12 +29,6 @@ export const levelMetadatas: LevelMetadata[] = [
   { id: 'helios', title: 'Helios', kind: 'playable' },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'], kind: 'playable' },
   { id: 'rezdle', title: 'Rezdle', kind: 'playable' },
-  { id: 'mass-driver-vyxj', title: 'Mass Driver', kind: 'playable' },
-  { id: 'downpour-7snm', title: 'Downpour 7SNM', kind: 'playable' },
-  { id: 'downpour-hlht', title: 'Downpour HLHT', kind: 'playable' },
-  { id: 'downpour-ou7e', title: 'Downpour OU7E', kind: 'playable' },
-  { id: 'downpour-f2e6', title: 'Downpour F2E6', kind: 'playable' },
-  { id: 'downpour-wpxk', title: 'Downpour WPXK', kind: 'playable' },
   { id: 'rush', title: 'Rush', kind: 'technical' },
 ];
 
@@ -43,12 +37,6 @@ const builtInLoaders: Record<string, () => Promise<LevelDefinition>> = {
   helios: async () => (await import('./helios')).heliosLevel,
   'prism-bloom': async () => (await import('./prism')).prismBloomLevel,
   rezdle: async () => (await import('./rezdle')).rezdleLevel,
-  'mass-driver-vyxj': async () => (await import('./mass-driver-vyxj')).massDriverVyxjLevel,
-  'downpour-7snm': async () => (await import('./downpour-7snm')).downpour7snmLevel,
-  'downpour-hlht': async () => (await import('./downpour-hlht')).downpourHlhtLevel,
-  'downpour-ou7e': async () => (await import('./downpour-ou7e')).downpourOu7eLevel,
-  'downpour-f2e6': async () => (await import('./downpour-f2e6')).downpourF2e6Level,
-  'downpour-wpxk': async () => (await import('./downpour-wpxk')).downpourWpxkLevel,
   rush: async () => (await import('./rush')).rushLevel,
 };
 
