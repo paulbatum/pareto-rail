@@ -39,7 +39,7 @@ export function createAppShell(onRoute: (path: string) => void) {
 }
 
 function renderHome(host: HTMLElement) {
-  host.innerHTML = `<section class="hero page-panel"><p class="eyebrow">A browser rail shooter benchmark</p><h1>One rail. Six locks.<br><span>Endless possibilities.</span></h1><p class="lede">Models build one-shot rail-shooter levels. People play them blind, then decide what feels best.</p><div class="action-row"><a class="button primary" href="/play/crystal-corridor" data-route="/play/crystal-corridor">Play Crystal</a><a class="button" href="/rank" data-route="/rank">Rank model levels</a></div></section><section class="home-note"><strong>Crystal Corridor</strong> is a polished reference run — a quick way to learn the lock-on rhythm before exploring generated levels.</section>`;
+  host.innerHTML = `<section class="hero page-panel"><p class="eyebrow">A playable benchmark for generative worlds</p><h1>Tired of being told which model is best?<br><span>Decide for yourself.</span></h1><p class="lede">Play 60-second rail-shooter levels built by models. Rank them blind, then see which models you prefer.</p><div class="action-row"><a class="button primary" href="/play/crystal-corridor" data-route="/play/crystal-corridor">Play Crystal Corridor</a><a class="button" href="/rank" data-route="/rank">Start ranking</a></div></section><section class="home-note"><strong>New here? Start with Crystal Corridor.</strong> It’s the polished reference run models use when building their own levels. Learn the rhythm, then play four levels to build your personalized Pareto curve: the models that best balance quality and cost for you.</section>`;
 }
 
 function renderPlay(host: HTMLElement, activeId?: string) {
