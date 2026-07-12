@@ -2,56 +2,33 @@
 
 ## Objective
 
-Update the next benchmark protocol so entrants author directly under `src/benchmark-levels/<id>/` and never modify shared registry code. Simplify entrant-baseline contamination checks around the separate benchmark source domain.
+Update the next benchmark protocol version so entrants author directly under `src/benchmark-levels/<id>/` and never edit shared registry code. This simplifies scope checking and baseline preparation.
 
 ## Protocol boundary
 
-Historical releases and manifests are immutable. Existing versions continue to validate against their frozen paths and hashes. Introduce the new source-root contract only through a new protocol/configuration version with appropriately frozen runner, admin, prompt, schema, and documentation artifacts.
+Historical releases and manifests stay as they are and keep validating against their original paths. Introduce the new source-root contract as a new protocol version; dispatch on the recorded benchmark version rather than probing which directory exists.
 
 ## Work
 
-1. Extend scaffolding with a benchmark mode that creates:
-   - `src/benchmark-levels/<id>/index.ts`;
-   - the lightweight descriptor from the assigned id and title;
-   - the normal spine/leaf files and `level.md`; and
-   - no central registry edit.
-2. Update benchmark assignment text and level-authoring guidance to use the benchmark root.
-3. Parameterize scope checking and sealing around the declared output root. A benchmark entrant should be limited to its own directory and explicitly permitted derived artifacts only.
-4. Update payload derivation and verification to extract `src/benchmark-levels/<id>/` for the new protocol.
-5. Update floor, simulation, snapshot, audio-trace, and gameplay tooling to resolve benchmark-discovered levels.
-6. Replace the mixed-registry allowlist control with baseline checks that:
-   - verify the intended built-in tree and registry;
-   - require the entrant baseline's benchmark output area to be empty except for permanent discovery infrastructure; and
-   - fail on any previously promoted benchmark directory.
-7. Keep generated application promotion outside the measured entrant stage.
-8. Update release records and schemas where the output root or descriptor contract must be explicit.
-9. Add compatibility dispatch based on benchmark version rather than probing whichever directory happens to exist.
-10. Update synthetic controller tests for old and new protocol versions.
-
-## Baseline preparation
-
-Provide one deterministic command that constructs or validates a clean entrant baseline. It should print only a concise pass/fail report and should not require manually maintaining a list of every acceptable level id.
-
-The command must distinguish permanent benchmark discovery infrastructure from promoted output directories.
+1. Add a benchmark mode to the scaffolder that creates `src/benchmark-levels/<id>/` with `index.ts`, the descriptor (from the assigned id and title), the usual spine/leaf files, and `level.md` — no registry edit.
+2. Update the benchmark assignment text and level-authoring guidance to use the benchmark root.
+3. Point scope checking and payload extraction at the declared output root: an entrant touches only its own directory plus explicitly permitted derived artifacts.
+4. Make floor, simulation, snapshot, and gameplay tooling resolve benchmark-discovered levels.
+5. Replace the mixed-registry allowlist with a baseline check: the built-in tree matches expectations and the benchmark output area is empty apart from permanent discovery infrastructure. One command, concise pass/fail output.
+6. Update controller tests to cover both the old and new protocol versions.
 
 ## Constraints
 
-- Do not modify frozen historical records.
-- Do not make existing v1 run recovery depend on the new path.
-- Do not let the descriptor become an unvalidated second source of gameplay identity.
-- Do not weaken the directory-only payload guarantee.
+- Don't modify frozen historical records, and don't make v1 run recovery depend on the new path.
+- The descriptor must not become a second, unvalidated source of gameplay identity.
 
 ## Verification
 
-- Scaffold a synthetic new-protocol benchmark level without changing any shared registry.
-- Confirm the level appears in development, simulation, snapshot, and floor tooling.
-- Confirm scope accepts only the assigned benchmark directory and permitted generated files.
-- Confirm a previously promoted benchmark directory makes baseline validation fail.
-- Confirm historical definitions and manifests still parse and validate under their original contract.
-- `npm run test:benchmark-controller`
-- `npm run typecheck`
-- `npm run build`
+- Scaffold a synthetic new-protocol level and confirm it appears in dev, simulation, snapshot, and floor tooling with no registry edit.
+- Confirm scope checking rejects edits outside the assigned directory.
+- Confirm baseline validation fails when a previously promoted benchmark directory is present.
+- `npm run test:benchmark-controller`, `npm run typecheck`, `npm run build`
 
 ## Done when
 
-A future entrant can create a complete, discoverable, gateable benchmark level while touching only its assigned directory, and baseline preparation no longer depends on a mixed level allowlist.
+A future entrant can build a complete, discoverable, gateable benchmark level while touching only its assigned directory.
