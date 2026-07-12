@@ -165,6 +165,10 @@ function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavi
 
 function createRankController(): RankController {
   const store = new BenchmarkLocalStore();
+  store.pruneToCatalog(
+    new Set(rankCatalog.entrants.map((entrant) => entrant.levelId)),
+    new Set(rankCatalog.themes.map((theme) => theme.id)),
+  );
   const api = new CatalogBenchmarkApi(rankCatalog, store);
   return new RankController({ api, store, resolvePlayable: (ref) => ref });
 }

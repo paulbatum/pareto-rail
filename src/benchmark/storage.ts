@@ -138,6 +138,28 @@ export class BenchmarkLocalStore {
     return this.save({ completedMatchups: [...existing, completed], history: [...this.data.history.filter((item) => item.matchupId !== completed.matchupId), completed.vote], levelExposureCounts, revealedEntrants: revealed, unfinishedMatchup: undefined });
   }
 
+  /** Drop persisted rounds, votes, and reveals that reference levels or themes
+   * absent from the published catalog (for example retired rehearsal data). */
+  pruneToCatalog(knownLevelIds: ReadonlySet<string>, knownThemeIds: ReadonlySet<string>): LocalBenchmarkData {
+    const data = this.data;
+    const revealKnown = (reveal: RevealPayload) => knownLevelIds.has(reveal.a.levelId) && knownLevelIds.has(reveal.b.levelId);
+    const completedMatchups = data.completedMatchups.filter((item) => revealKnown(item.reveal));
+    const keptMatchupIds = new Set(completedMatchups.map((item) => item.matchupId));
+    const unfinished = data.unfinishedMatchup;
+    const unfinishedValid = !!unfinished
+      && knownThemeIds.has(unfinished.assignment.theme.id)
+      && knownLevelIds.has(unfinished.assignment.a.playableRef)
+      && knownLevelIds.has(unfinished.assignment.b.playableRef);
+    return this.save({
+      unfinishedMatchup: unfinishedValid ? unfinished : undefined,
+      completedMatchups,
+      history: data.history.filter((vote) => keptMatchupIds.has(vote.matchupId)),
+      themeHistory: data.themeHistory.filter((themeId) => knownThemeIds.has(themeId)),
+      levelExposureCounts: Object.fromEntries(Object.entries(data.levelExposureCounts).filter(([levelId]) => knownLevelIds.has(levelId))),
+      revealedEntrants: data.revealedEntrants.filter((entrant) => knownLevelIds.has(entrant.levelId)),
+    });
+  }
+
   clear(): void {
     this.data = emptyData(randomParticipantId());
     try { this.storage.removeItem?.(this.key); } catch { /* ignore */ }

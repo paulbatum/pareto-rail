@@ -43,6 +43,32 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   const refreshedAssignment = await refreshedApi.nextMatchup({ participantId });
   assert.ok(refreshedAssignment);
   assert.notEqual(refreshedAssignment!.matchupId, catalogAssignment!.matchupId);
+
+  // Stale rehearsal data (retired theme/levels) must be pruned on restore, not resurrected.
+  const staleStore = new BenchmarkLocalStore(catalogStorage, 'catalog-api');
+  const staleAssignment = {
+    matchupId: 'downpour:asset-a__asset-b',
+    benchmarkVersion: 'fixture-downpour-v1',
+    theme: { id: 'downpour', title: 'Downpour', summary: 's', prompt: 'p' },
+    a: { playableRef: 'asset-a' },
+    b: { playableRef: 'asset-b' },
+    assignedAt: 'then',
+  };
+  staleStore.save({
+    unfinishedMatchup: { kind: 'assignment', assignment: staleAssignment, playCounts: { a: 0, b: 0 } },
+    themeHistory: [...staleStore.snapshot.themeHistory, 'downpour'],
+  });
+  const knownLevels = new Set(schedulerCatalog.entrants.map((entrant) => entrant.levelId));
+  const knownThemes = new Set(schedulerCatalog.themes.map((theme) => theme.id));
+  const pruned = staleStore.pruneToCatalog(knownLevels, knownThemes);
+  assert.equal(pruned.unfinishedMatchup, undefined);
+  assert.ok(!pruned.themeHistory.includes('downpour'));
+  assert.equal(pruned.completedMatchups.length, 1);
+  assert.equal(pruned.history.length, 1);
+  const currentRound = await new CatalogBenchmarkApi(schedulerCatalog, staleStore).nextMatchup({ participantId });
+  assert.ok(currentRound);
+  assert.notEqual(currentRound!.theme.id, 'downpour');
+
   assert.deepEqual(mapVerdict('b-better'), { verdict: 'b-better', relative: 'b' });
   assert.equal(mapVerdict('both-good').sentiment, 'positive');
   assert.equal(mapVerdict('both-bad').sentiment, 'negative');
