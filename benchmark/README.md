@@ -61,8 +61,10 @@ Existing-output administration builds its inventory only from private and publis
 
 ```bash
 npm run benchmark:promote -- --inventory true --out benchmark/private/migrations/inventory.json
-npm run benchmark:migrate -- --version <benchmark-version>
+npm run benchmark:migrate -- --version <benchmark-version> [--accept-diverged <level-id>[,<level-id>...]]
 ```
+
+Use `--accept-diverged` only for explicitly reviewed post-run source maintenance. The migration records the payload commit and diverging source paths for each accepted derivative; unlisted divergences remain blocking.
 
 The migration inventory and its machine-readable promotion record are kept under `benchmark/private/migrations/`. They coalesce consistent private and published copies, record public rollout evidence, and include payload and application commit provenance without changing the run manifests, dispositions, evaluated branches, payload branches, or recovery refs. Verified non-playable source copies are recorded as administrative cleanups rather than promoted or made ranking-eligible.
 

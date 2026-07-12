@@ -17,8 +17,9 @@ const MANIFEST_KEYS = new Set(['schemaVersion', 'benchmarkVersion', 'runId', 'sl
  * inventory. Directory names and visual similarity are never used as evidence
  * that a level is benchmark output.
  */
-export async function buildMigrationInventory({ root = process.cwd(), privateRoot, publicRoots, allowBlocked = false } = {}) {
+export async function buildMigrationInventory({ root = process.cwd(), privateRoot, publicRoots, allowBlocked = false, acceptedDiverged = [] } = {}) {
   const repositoryRoot = path.resolve(root);
+  const acceptedDivergedLevels = new Set(acceptedDiverged);
   const privateDirectory = path.resolve(privateRoot ?? path.join(repositoryRoot, 'benchmark/private'));
   const publishedDirectories = (publicRoots ?? [
     path.join(repositoryRoot, 'benchmark/public'),
@@ -41,7 +42,7 @@ export async function buildMigrationInventory({ root = process.cwd(), privateRoo
     assertConsistentManifestCopies(copies);
     const authoritative = copies.find((file) => file.kind === 'private' || file.kind === 'private-archive') ?? copies[0];
     const publicManifestPaths = copies.filter((file) => file.kind === 'published').map((file) => relative(repositoryRoot, file.path)).sort();
-    const record = await makeRecord({ repositoryRoot, privateDirectory, publishedDirectories, file: authoritative, manifest: authoritative.manifest, manifestCopies: copies, publicManifestPaths });
+    const record = await makeRecord({ repositoryRoot, privateDirectory, publishedDirectories, acceptedDivergedLevels, file: authoritative, manifest: authoritative.manifest, manifestCopies: copies, publicManifestPaths });
     if (record.levelId) {
       const duplicateLevel = byLevelId.get(record.levelId);
       if (duplicateLevel) throw new Error(`Migration inventory has duplicate level id ${record.levelId}: ${duplicateLevel} and ${record.manifestPath}`);
@@ -79,7 +80,7 @@ export async function buildMigrationInventory({ root = process.cwd(), privateRoo
   };
 }
 
-async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectories, file, manifest, manifestCopies = [], publicManifestPaths = [] }) {
+async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectories, acceptedDivergedLevels, file, manifest, manifestCopies = [], publicManifestPaths = [] }) {
   const manifestPath = relative(repositoryRoot, file.path);
   const runId = manifest.runId;
   if (typeof runId !== 'string' || !runId) throw new Error(`Manifest ${manifestPath} has no runId.`);
@@ -129,6 +130,7 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
       treeSha256: null,
       applicationCommit: null,
       applicationTreeSha256: null,
+      derivative: null,
     },
     publicManifest: {
       present: resolvedPublicManifestPaths.length > 0,
@@ -194,11 +196,24 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
       else {
         record.source.applicationCommit = applicationCommit;
         record.source.applicationTreeSha256 = treeEntriesSha256(applicationEntries);
-        if (record.source.applicationTreeSha256 !== record.source.payloadTreeSha256) record.errors.push('primary source differs from the current application commit.');
+        if (record.source.applicationTreeSha256 !== record.source.payloadTreeSha256 && !acceptedDivergedLevels.has(levelId)) record.errors.push('primary source differs from the current application commit.');
       }
       try {
-        record.source.treeSha256 = await verifyFilesystemTree(sourcePath, payloadEntries, repositoryRoot);
-        record.source.bytesAgreeWithPayload = true;
+        const verification = await verifyFilesystemTree(sourcePath, payloadEntries, repositoryRoot);
+        record.source.treeSha256 = verification.treeSha256;
+        if (verification.divergingPaths.length > 0) {
+          if (acceptedDivergedLevels.has(levelId)) {
+            record.source.bytesAgreeWithPayload = false;
+            record.source.derivative = {
+              payloadCommit,
+              divergingPaths: verification.divergingPaths,
+            };
+          } else {
+            record.errors.push(`primary source differs from payload at ${verification.divergingPaths.join(', ')}.`);
+          }
+        } else {
+          record.source.bytesAgreeWithPayload = true;
+        }
       } catch (error) {
         record.errors.push(error instanceof Error ? error.message : String(error));
       }
@@ -211,7 +226,7 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
     record.promotion = privateRun ? await optionalJson(path.join(privateRun, 'promotion.json')) : null;
     record.status = record.disposition === 'playable'
       ? (record.promotion?.status === 'completed' ? 'already-promoted' : (record.source.presentInPrimaryWorktree ? 'ready-for-legacy-relocation' : 'ready-for-payload-promotion'))
-      : 'ready-for-source-cleanup';
+      : (record.source.derivative ? 'ready-for-derivative-migration' : 'ready-for-source-cleanup');
   } catch (error) {
     record.errors.push(error instanceof Error ? error.message : String(error));
   }
@@ -387,6 +402,7 @@ async function verifyFilesystemTree(directory, entries, root) {
   if ([...actual.directories].some((directoryName) => !expectedDirectories.has(directoryName))) throw new Error('primary source contains an unexpected directory.');
   if (actual.files.size !== expected.size) throw new Error('primary source file count does not match the payload commit.');
   const digests = [];
+  const divergentPaths = [];
   const failures = [];
   for (const [relativePath, expectedEntry] of expected) {
     const item = actual.files.get(relativePath);
@@ -394,13 +410,15 @@ async function verifyFilesystemTree(directory, entries, root) {
     if (item.kind === 'symlink') { failures.push(`primary source contains a symbolic link at ${relativePath}.`); continue; }
     const actualBytes = await fs.readFile(item.path);
     const expectedBytes = await gitBuffer(root, ['cat-file', 'blob', expectedEntry.oid]);
-    if (!actualBytes.equals(expectedBytes)) failures.push(`primary source differs from payload at ${relativePath}.`);
     const executable = ((await fs.stat(item.path)).mode & 0o111) !== 0;
-    if (executable !== (expectedEntry.mode === '100755')) failures.push(`primary source changed executable mode at ${relativePath}.`);
+    if (!actualBytes.equals(expectedBytes) || executable !== (expectedEntry.mode === '100755')) divergentPaths.push(relativePath);
     digests.push({ path: relativePath, mode: executable ? '100755' : '100644', sha256: sha256(actualBytes) });
   }
   if (failures.length) throw new Error(failures.join('; '));
-  return sha256(JSON.stringify(digests.sort((left, right) => left.path.localeCompare(right.path))));
+  return {
+    treeSha256: sha256(JSON.stringify(digests.sort((left, right) => left.path.localeCompare(right.path)))),
+    divergingPaths: divergentPaths.sort(),
+  };
 }
 
 async function collectFilesystemEntries(directory) {

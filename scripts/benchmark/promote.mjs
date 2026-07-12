@@ -40,7 +40,7 @@ export class PromotionInterrupted extends Error {
  * controller and synthetic repository tests use exactly the same operation.
  * It never edits a run manifest.
  */
-export async function promoteRun({ root = ROOT, runDirectory, interruptAfter, migration = false } = {}) {
+export async function promoteRun({ root = ROOT, runDirectory, interruptAfter, migration = false, acceptDiverged = null } = {}) {
   const repositoryRoot = path.resolve(root);
   if (!runDirectory) throw new Error('Promotion requires a run directory.');
   const resolvedRunDirectory = path.resolve(runDirectory);
@@ -53,9 +53,11 @@ export async function promoteRun({ root = ROOT, runDirectory, interruptAfter, mi
     const runId = path.basename(resolvedRunDirectory);
     if (!RUN_ID_PATTERN.test(runId)) throw new Error(`Run directory must end with an opaque run id: ${runId}`);
     state = await loadOrCreateState(resolvedRunDirectory, runId);
-    const context = { root: repositoryRoot, runDirectory: resolvedRunDirectory, runId, state, migration: migration || state.migration === true };
+    const context = { root: repositoryRoot, runDirectory: resolvedRunDirectory, runId, state, migration: migration || state.migration === true, acceptDiverged: acceptDiverged ?? state.acceptDiverged ?? null };
     if (state.migration !== undefined && state.migration !== context.migration) throw new Error('Promotion migration mode does not match its recorded state.');
+    if (state.acceptDiverged && JSON.stringify(state.acceptDiverged) !== JSON.stringify(context.acceptDiverged)) throw new Error('Promotion divergence acceptance does not match its recorded state.');
     state.migration = context.migration;
+    if (context.acceptDiverged) state.acceptDiverged = context.acceptDiverged;
 
     const validation = await checkpoint(context, 'validation', () => validatePreflight(context));
     context.preflight = validation;
@@ -109,8 +111,8 @@ async function validatePreflight(context) {
   const errors = manifestErrors(manifest);
   if (errors.length) throw new Error(`Promotion requires a complete manifest: ${errors.join('; ')}`);
   assertManifestShape(manifest);
-  if (definition?.mode !== 'eligible') throw new Error('Only eligible benchmark runs can be promoted.');
-  if (manifest.disposition?.status !== 'playable') throw new Error('Promotion requires a playable run disposition.');
+  if (definition?.mode !== 'eligible' && !context.acceptDiverged) throw new Error('Only eligible benchmark runs can be promoted.');
+  if (manifest.disposition?.status !== 'playable' && !context.acceptDiverged) throw new Error('Promotion requires a playable run disposition.');
   if (!isRecord(assignment)) throw new Error('Run definition has no assignment.');
 
   const levelId = assignment.levelId;
@@ -147,6 +149,7 @@ async function validatePreflight(context) {
 
   if (!manifest.output?.payload) throw new Error('Playable manifest has no payload output.');
   const payloadCommit = await resolveCommit(root, payload?.payloadCommit, 'payload commit');
+  if (context.acceptDiverged && context.acceptDiverged.payloadCommit !== payloadCommit) throw new Error('Accepted divergence payload commit does not match the recorded payload commit.');
   if (manifest.output.payload.commit !== payloadCommit || manifest.output.payload.branch !== payload?.branch) {
     throw new Error('payload.json and the manifest disagree about the payload ref.');
   }
@@ -188,11 +191,12 @@ async function validatePreflight(context) {
   const galleryMayBePromotionChange = existingPromotion && (state.currentCheckpoint === 'catalog' || state.checkpoints.catalog?.status === 'completed' || state.checkpoints.commit?.status === 'completed');
   assertOnlyPromotionChanges(status, root, destination, existingPromotion, galleryMayBePromotionChange, context.migration ? legacySourcePath : null, context.migration ? path.join(root, 'src/levels/index.ts') : null);
   if (context.migration && legacySourcePresent) {
-    await verifyPayloadTree(legacySourcePath, payloadEntries, root);
+    const divergence = await verifyPayloadTree(legacySourcePath, payloadEntries, root, context.acceptDiverged?.divergingPaths ?? []);
+    if (context.acceptDiverged && !samePathSet(divergence, context.acceptDiverged.divergingPaths)) throw new Error('Accepted divergence paths do not match the current source.');
   }
   if (await pathExists(destination)) {
     if (!existingPromotion) throw new Error(`Promotion destination already exists: ${destination}`);
-    await verifyDestination(destination, payloadEntries, descriptorBytes(levelId, title), { allowDescriptor: true, descriptorOptional: true }, root);
+    await verifyDestination(destination, payloadEntries, descriptorBytes(levelId, title), { allowDescriptor: true, descriptorOptional: true, allowedDivergencePaths: context.acceptDiverged?.divergingPaths ?? [] }, root);
   }
 
   const sourceSnapshot = {
@@ -212,6 +216,7 @@ async function validatePreflight(context) {
     sourcePath: `${SOURCE_ROOT}/${levelId}/`,
     destinationPath: `${DESTINATION_ROOT}/${levelId}/`,
     legacySourcePresent: legacySourceWasPresent,
+    derivative: context.acceptDiverged,
     descriptor: {
       source: 'controller-owned assignment data',
       id: levelId,
@@ -228,6 +233,12 @@ async function validatePreflight(context) {
   return { source: { ...sourceSnapshot, baseCommit }, definition, manifest, evaluated, payload, payloadEntries, changed, destination, legacySourcePath };
 }
 
+function samePathSet(left, right) {
+  const a = [...left].sort();
+  const b = [...right].sort();
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
 async function extractPayload(context) {
   const { root, runId } = context;
   const { source, payloadEntries, destination } = context.preflight;
@@ -236,14 +247,15 @@ async function extractPayload(context) {
   const stage = path.join(gitDirectory, 'raild-promotion-staging', `${source.levelId}-${runId}`);
   await fs.mkdir(path.dirname(destination), { recursive: true });
   if (await pathExists(destination)) {
-    await verifyDestination(destination, payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true, descriptorOptional: true }, root);
+    await verifyDestination(destination, payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true, descriptorOptional: true, allowedDivergencePaths: source.derivative?.divergingPaths ?? [] }, root);
     if (await pathExists(stage)) await fs.rm(stage, { recursive: true, force: true });
     if (context.migration) await removeBuiltInRegistryEntry(root, source.levelId, { allowMissing: true });
     return { destination: source.destinationPath, files: payloadEntries.length, reused: true };
   }
   if (context.migration && source.legacySourcePresent && await pathExists(legacySourcePath)) {
     await fs.rename(legacySourcePath, destination);
-    await verifyPayloadTree(destination, payloadEntries, root);
+    const divergence = await verifyPayloadTree(destination, payloadEntries, root, source.derivative?.divergingPaths ?? []);
+    if (source.derivative && !samePathSet(divergence, source.derivative.divergingPaths)) throw new Error('Relocated source divergence does not match its acceptance record.');
     await removeBuiltInRegistryEntry(root, source.levelId, { allowMissing: false });
     return { destination: source.destinationPath, files: payloadEntries.length, reused: false, relocated: true };
   }
@@ -254,7 +266,7 @@ async function extractPayload(context) {
     await fs.rename(stage, destination);
   } catch (error) {
     if (error?.code !== 'EEXIST') throw error;
-    await verifyPayloadTree(destination, payloadEntries, root);
+    await verifyPayloadTree(destination, payloadEntries, root, source.derivative?.divergingPaths ?? []);
     await fs.rm(stage, { recursive: true, force: true });
   }
   await fs.rm(stage, { recursive: true, force: true });
@@ -279,12 +291,12 @@ async function createDescriptor(context) {
 
 async function verifyApplication(context) {
   const { destination, payloadEntries, source } = context.preflight;
-  await verifyDestination(destination, payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true }, context.root);
+  await verifyDestination(destination, payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true, allowedDivergencePaths: source.derivative?.divergingPaths ?? [] }, context.root);
   const module = payloadEntries.find((entry) => entry.relativePath === 'index.ts');
   const card = payloadEntries.find((entry) => entry.relativePath === 'level.md');
   if (!module || !card) throw new Error('Promoted payload must contain index.ts and level.md.');
   const cardText = (await fs.readFile(path.join(destination, 'level.md'), 'utf8')).trimStart();
-  if (cardText.split(/\r?\n/, 1)[0] !== `# ${source.title}`) throw new Error('Benchmark level.md title does not match controller-owned assignment data.');
+  if (!source.derivative?.divergingPaths.includes('level.md') && cardText.split(/\r?\n/, 1)[0] !== `# ${source.title}`) throw new Error('Benchmark level.md title does not match controller-owned assignment data.');
   const galleryWasGenerated = context.state.currentCheckpoint === 'catalog' || context.state.checkpoints.catalog?.status === 'completed' || context.state.checkpoints.commit?.status === 'completed';
   await assertNoUnexpectedApplicationChanges(context, { allowGallery: galleryWasGenerated });
   return { destination: source.destinationPath, verifiedFiles: payloadEntries.length + 1 };
@@ -602,14 +614,14 @@ async function materializeTree(root, commit, prefix, destination, entries) {
   }
 }
 
-async function verifyPayloadTree(directory, entries, root) {
-  await verifyPayloadTreeWithRoot(directory, entries, root);
+async function verifyPayloadTree(directory, entries, root, allowedDivergencePaths = []) {
+  return verifyPayloadTreeWithRoot(directory, entries, root, [], allowedDivergencePaths);
 }
 
-async function verifyDestination(destination, payloadEntries, descriptor, { allowDescriptor, descriptorOptional = false }, root = ROOT) {
+async function verifyDestination(destination, payloadEntries, descriptor, { allowDescriptor, descriptorOptional = false, allowedDivergencePaths = [] }, root = ROOT) {
   const destinationInfo = await fs.lstat(destination);
   if (!destinationInfo.isDirectory()) throw new Error('Benchmark destination is not a regular directory.');
-  await verifyPayloadTreeWithRoot(destination, payloadEntries, root, ['level.json']);
+  await verifyPayloadTreeWithRoot(destination, payloadEntries, root, ['level.json'], allowedDivergencePaths);
   const descriptorPath = path.join(destination, 'level.json');
   const descriptorExists = await pathExists(descriptorPath);
   if (allowDescriptor) {
@@ -626,7 +638,7 @@ async function verifyDestination(destination, payloadEntries, descriptor, { allo
   if (files.length !== expected.size || files.some((file) => !expected.has(file))) throw new Error('Benchmark destination contains unexpected files.');
 }
 
-async function verifyPayloadTreeWithRoot(directory, entries, root = ROOT, ignoredFiles = []) {
+async function verifyPayloadTreeWithRoot(directory, entries, root = ROOT, ignoredFiles = [], allowedDivergencePaths = []) {
   const actual = await collectFilesystemEntries(directory);
   for (const ignoredFile of ignoredFiles) actual.files.delete(ignoredFile);
   const expected = new Map(entries.map((entry) => [entry.relativePath, entry]));
@@ -637,18 +649,27 @@ async function verifyPayloadTreeWithRoot(directory, entries, root = ROOT, ignore
   }
   if ([...actual.directories].some((directory) => !expectedDirectories.has(directory))) throw new Error('Relocated payload contains an unexpected directory.');
   if (actual.files.size !== expected.size) throw new Error('Relocated payload file count does not match the payload commit.');
+  const allowedDivergences = new Set(allowedDivergencePaths);
+  const divergentPaths = [];
   for (const [relativePath, expectedEntry] of expected) {
     const item = actual.files.get(relativePath);
     if (!item) throw new Error(`Relocated payload is missing ${relativePath}.`);
     if (item.kind === 'symlink') throw new Error(`Relocated payload contains a symbolic link at ${relativePath}.`);
     const actualBytes = await fs.readFile(item.path);
     const expectedBytes = await gitBuffer(root, ['cat-file', 'blob', expectedEntry.oid]);
-    if (!actualBytes.equals(expectedBytes)) throw new Error(`Relocated payload changed bytes at ${relativePath}.`);
+    const byteDifference = !actualBytes.equals(expectedBytes);
+    let modeDifference = false;
     if (item.kind === 'file') {
       const executable = ((await fs.stat(item.path)).mode & 0o111) !== 0;
-      if (executable !== (expectedEntry.mode === '100755')) throw new Error(`Relocated payload changed executable mode at ${relativePath}.`);
+      modeDifference = executable !== (expectedEntry.mode === '100755');
+    }
+    if (byteDifference || modeDifference) {
+      if (allowedDivergences.has(relativePath)) divergentPaths.push(relativePath);
+      else if (byteDifference) throw new Error(`Relocated payload changed bytes at ${relativePath}.`);
+      else throw new Error(`Relocated payload changed executable mode at ${relativePath}.`);
     }
   }
+  return divergentPaths.sort();
 }
 
 async function collectFilesystemEntries(directory) {
@@ -723,6 +744,7 @@ function assertSnapshot(previous, next) {
   const fields = ['runId', 'slotId', 'themeId', 'levelId', 'title', 'materialsCommit', 'evaluatedCommit', 'payloadCommit', 'manifestSha256', 'definitionSha256', 'evaluatedSha256', 'payloadSha256', 'payloadDiffSha256', 'sourcePath', 'destinationPath'];
   for (const field of fields) if (previous[field] !== next[field]) throw new Error(`Promotion provenance changed for ${field}.`);
   if (previous.descriptor?.sha256 !== next.descriptor.sha256 || previous.descriptor?.id !== next.descriptor.id || previous.descriptor?.title !== next.descriptor.title) throw new Error('Promotion descriptor provenance changed.');
+  if (JSON.stringify(previous.derivative ?? null) !== JSON.stringify(next.derivative ?? null)) throw new Error('Promotion derivative provenance changed.');
 }
 
 export async function acquirePromotionLock(root) {

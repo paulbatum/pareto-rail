@@ -18,6 +18,7 @@ async function main() {
   await testVerifiedRehearsalCleanupAndFinalDomains();
   await testCleanupCommitDurabilityAndDirtyRefusal();
   await testDivergentSourceAndRefsRefuseCleanup();
+  await testAcceptedDivergedMigration();
   await testResumptionAndIdempotency();
   console.log('Benchmark migration inventory tests passed.');
 }
@@ -154,6 +155,31 @@ async function testDivergentSourceAndRefsRefuseCleanup() {
     await assert.rejects(() => buildMigrationInventory({ root: refs.root }), /payload branch does not resolve|manifest and payload.json disagree/);
   } finally {
     await refs.cleanup();
+  }
+}
+
+async function testAcceptedDivergedMigration() {
+  const fixture = await createFixture({ playable: true, rehearsal: false, manualPlayable: true });
+  try {
+    const levelPath = path.join(fixture.root, 'src/levels', fixture.levelId, 'level.md');
+    await writeText(levelPath, '# Manual Level Derivative\n\nThis intentional post-run maintenance is retained during migration.\n');
+    await git(fixture.root, ['add', levelPath]);
+    await git(fixture.root, ['commit', '-qm', 'retain accepted derivative']);
+    await assert.rejects(() => buildMigrationInventory({ root: fixture.root }), /primary source differs from payload/);
+    const accepted = await buildMigrationInventory({ root: fixture.root, acceptedDiverged: [fixture.levelId] });
+    const record = accepted.records.find((candidate) => candidate.runId === fixture.runId);
+    assert.deepEqual(record.source.derivative, {
+      payloadCommit: record.payloadCommit,
+      divergingPaths: ['level.md'],
+    });
+    const result = await migrateExistingOutputs({ root: fixture.root, version: 'synthetic', acceptDiverged: [fixture.levelId] });
+    assert.equal(result.promoted, 1);
+    assert.equal(await exists(path.join(fixture.root, 'src/levels', fixture.levelId)), false);
+    assert.equal(await fs.readFile(path.join(fixture.root, 'src/benchmark-levels', fixture.levelId, 'level.md'), 'utf8').then((text) => text.split('\n', 1)[0]), '# Manual Level Derivative');
+    const migration = JSON.parse(await fs.readFile(path.join(fixture.root, 'benchmark/private/migrations/synthetic.json'), 'utf8'));
+    assert.deepEqual(migration.entries[0].derivative, record.source.derivative);
+  } finally {
+    await fixture.cleanup();
   }
 }
 

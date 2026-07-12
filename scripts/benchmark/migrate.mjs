@@ -22,16 +22,19 @@ export class CleanupInterrupted extends Error {
 }
 
 /** Run the existing-output migration as a sequence of ordinary verified promotions. */
-export async function migrateExistingOutputs({ root = ROOT, version, inventoryPath } = {}) {
+export async function migrateExistingOutputs({ root = ROOT, version, inventoryPath, acceptDiverged = [] } = {}) {
   const repositoryRoot = path.resolve(root);
-  const inventory = await buildMigrationInventory({ root: repositoryRoot, allowBlocked: true });
+  const acceptedDiverged = [...new Set(acceptDiverged)];
+  const inventory = await buildMigrationInventory({ root: repositoryRoot, allowBlocked: true, acceptedDiverged });
   const migrationDirectory = path.join(repositoryRoot, 'benchmark/private/migrations');
   await fs.mkdir(migrationDirectory, { recursive: true });
   const reportPath = path.resolve(inventoryPath ?? path.join(migrationDirectory, `${version ?? 'all'}-inventory.json`));
   await writeJson(reportPath, inventory);
   if (inventory.blocked) throw new Error(`Migration inventory rejected with ${inventory.errors.length} safety error(s); see ${path.relative(repositoryRoot, reportPath).replaceAll(path.sep, '/')}.`);
-  const selected = inventory.records.filter((record) => record.disposition === 'playable' && (!version || record.benchmarkVersion === version));
-  const cleanups = inventory.records.filter((record) => record.disposition !== 'playable' && (record.source.presentInPrimaryWorktree || (record.cleanup && record.cleanup.status !== 'completed')) && (!version || record.benchmarkVersion === version));
+  const knownLevelIds = new Set(inventory.records.map((record) => record.levelId));
+  for (const levelId of acceptedDiverged) if (!knownLevelIds.has(levelId)) throw new Error(`Cannot accept divergence for unknown level ${levelId}.`);
+  const selected = inventory.records.filter((record) => (record.disposition === 'playable' || record.source.derivative) && (!version || record.benchmarkVersion === version));
+  const cleanups = inventory.records.filter((record) => record.disposition !== 'playable' && !record.source.derivative && (record.source.presentInPrimaryWorktree || (record.cleanup && record.cleanup.status !== 'completed')) && (!version || record.benchmarkVersion === version));
   if (!selected.length && !cleanups.length) throw new Error('Migration inventory contains no playable records or verified source copies for the requested benchmark version.');
   for (const record of selected) {
     if (!record.privateRunDirectory) throw new Error(`Playable run ${record.runId} has no private run record required by the promotion path.`);
@@ -63,6 +66,7 @@ export async function migrateExistingOutputs({ root = ROOT, version, inventoryPa
         root: repositoryRoot,
         runDirectory: path.join(repositoryRoot, candidate.privateRunDirectory),
         migration: true,
+        acceptDiverged: candidate.source.derivative,
       });
       const entry = {
         benchmarkVersion: candidate.benchmarkVersion,
@@ -74,6 +78,7 @@ export async function migrateExistingOutputs({ root = ROOT, version, inventoryPa
         destinationPath: candidate.destination?.path ?? `src/benchmark-levels/${candidate.levelId}/`,
         sourcePresentInPrimaryWorktree: candidate.source.presentInPrimaryWorktree,
         sourceBytesAgreeWithPayload: candidate.source.bytesAgreeWithPayload,
+        ...(candidate.source.derivative ? { derivative: candidate.source.derivative } : {}),
         promotionCommit: result.promotionCommit,
       };
       upsertMigrationEntry(migration.entries, entry);
@@ -377,7 +382,7 @@ async function writeJson(filePath, value) {
 async function main() {
   const args = process.argv.slice(2);
   if (args.includes('--help')) {
-    console.log('Usage: npm run benchmark:migrate -- [--repo <repository>] [--version <benchmark-version>] [--inventory <private-report-path>]');
+    console.log('Usage: npm run benchmark:migrate -- [--repo <repository>] [--version <benchmark-version>] [--inventory <private-report-path>] [--accept-diverged <level-id>[,<level-id>...]]');
     return;
   }
   const options = parseOptions(args);
@@ -395,7 +400,13 @@ function parseOptions(args) {
     if (name === '--repo') options.root = path.resolve(value);
     else if (name === '--version') options.version = value;
     else if (name === '--inventory') options.inventoryPath = path.resolve(value);
-    else throw new Error(`Unknown option ${name}`);
+    else if (name === '--accept-diverged') {
+      options.acceptDiverged ??= [];
+      for (const levelId of value.split(',')) {
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(levelId)) throw new Error(`Invalid level id for --accept-diverged: ${levelId}`);
+        options.acceptDiverged.push(levelId);
+      }
+    } else throw new Error(`Unknown option ${name}`);
     index += 1;
   }
   return options;
