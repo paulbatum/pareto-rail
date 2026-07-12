@@ -1,4 +1,9 @@
 {
   "id": "hull-run-ns5n",
-  "title": "Hull Run"
+  "title": "Hull Run",
+  "contentImages": {
+    "overview": "/level-content/hull-run-ns5n/overview.png",
+    "start": "/level-content/hull-run-ns5n/start.png",
+    "hero": "/level-content/hull-run-ns5n/hero.png"
+  }
 }
