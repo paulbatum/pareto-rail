@@ -225,13 +225,14 @@
       "additionalProperties": false,
       "required": ["levelId", "evaluated"],
       "properties": {
+        "sourceRoot": { "enum": ["src/levels", "src/benchmark-levels"] },
         "levelId": { "type": "string", "minLength": 1 },
         "evaluated": {
           "description": "Exact registered working tree used for mechanical gates and blind play.",
           "$ref": "#/$defs/outputCommit"
         },
         "payload": {
-          "description": "Derived commit based on the frozen materials commit that contains only src/levels/<level-id>/.",
+          "description": "Derived commit based on the frozen materials commit that contains only the assigned level directory under the source root selected by benchmarkVersion.",
           "$ref": "#/$defs/outputCommit"
         },
         "integrationCommit": {
@@ -245,6 +246,7 @@
       "additionalProperties": false,
       "required": ["levelId", "title", "evaluated"],
       "properties": {
+        "sourceRoot": { "enum": ["src/levels", "src/benchmark-levels"] },
         "levelId": { "type": "string", "minLength": 1 },
         "title": { "type": "string", "minLength": 1 },
         "evaluated": {
@@ -252,7 +254,7 @@
           "$ref": "#/$defs/outputCommit"
         },
         "payload": {
-          "description": "Derived commit based on the frozen materials commit that contains only src/levels/<level-id>/.",
+          "description": "Derived commit based on the frozen materials commit that contains only the assigned level directory under the source root selected by benchmarkVersion.",
           "$ref": "#/$defs/outputCommit"
         },
         "integrationCommit": {

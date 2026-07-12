@@ -57,18 +57,46 @@ async function resolveLevelTarget(levelIdOrAlias, rootDir) {
     }
   }
 
-  if (!canonicalId || !cases.has(canonicalId)) {
-    throw new Error(`Unsupported spawn trace level: ${levelIdOrAlias}`);
+  if (canonicalId && cases.has(canonicalId)) {
+    const { folder } = cases.get(canonicalId);
+    return {
+      level: canonicalId,
+      title,
+      folder,
+      module: `/src/levels/${folder}/gameplay.ts`,
+      syncModule: `/src/levels/${folder}/timing.ts`
+    };
   }
 
-  const { folder } = cases.get(canonicalId);
-  return {
-    level: canonicalId,
-    title,
-    folder,
-    module: `/src/levels/${folder}/gameplay.ts`,
-    syncModule: `/src/levels/${folder}/timing.ts`
-  };
+  const benchmarkTarget = await findBenchmarkTarget(rootDir, levelIdOrAlias);
+  if (benchmarkTarget) return benchmarkTarget;
+  throw new Error(`Unsupported spawn trace level: ${levelIdOrAlias}`);
+}
+
+async function findBenchmarkTarget(rootDir, requested) {
+  const benchmarkRoot = path.resolve(rootDir, 'src/benchmark-levels');
+  try {
+    const entries = await fs.readdir(benchmarkRoot, { withFileTypes: true });
+    for (const entry of entries.filter((item) => item.isDirectory() && item.name !== 'test-fixtures')) {
+      try {
+        const descriptor = JSON.parse(await fs.readFile(path.join(benchmarkRoot, entry.name, 'level.json'), 'utf8'));
+        if (descriptor.id === requested || descriptor.aliases?.includes(requested)) {
+          return {
+            level: descriptor.id,
+            title: descriptor.title,
+            folder: entry.name,
+            module: `/src/benchmark-levels/${entry.name}/gameplay.ts`,
+            syncModule: `/src/benchmark-levels/${entry.name}/timing.ts`,
+          };
+        }
+      } catch {
+        // Ignore incomplete directories; catalog/build reports their exact error.
+      }
+    }
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  return undefined;
 }
 
 main().catch((error) => {

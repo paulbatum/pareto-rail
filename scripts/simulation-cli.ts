@@ -226,14 +226,8 @@ async function resolveLevelTarget(levelIdOrAlias: string, rootDir: string): Prom
     return { canonical: canonicalId, folder: cases.get(canonicalId)!, sourceRoot: 'levels', title };
   }
 
-  const benchmarkPath = path.resolve(rootDir, 'src/benchmark-levels', levelIdOrAlias);
-  try {
-    const descriptor = JSON.parse(await fs.readFile(path.join(benchmarkPath, 'level.json'), 'utf8')) as { id?: string; title?: string; aliases?: string[] };
-    if (descriptor.id === levelIdOrAlias || descriptor.aliases?.includes(levelIdOrAlias)) {
-      return { canonical: descriptor.id!, folder: descriptor.id!, sourceRoot: 'benchmark-levels', title: descriptor.title ?? descriptor.id! };
-    }
-  } catch {
-    // The benchmark directory is optional for built-in-only worktrees.
+  for (const target of await readBenchmarkTargets(rootDir)) {
+    if (target.canonical === levelIdOrAlias || target.aliases.includes(levelIdOrAlias)) return target;
   }
 
   throw new Error(`Unsupported simulation level: ${levelIdOrAlias}`);
@@ -1210,7 +1204,31 @@ async function getAllLevels(rootDir: string): Promise<LevelTarget[]> {
       list.push({ canonical: entryId, folder, sourceRoot: 'levels', title: entryTitle });
     }
   }
-  return list;
+  return [...list, ...(await readBenchmarkTargets(rootDir))];
+}
+
+async function readBenchmarkTargets(rootDir: string): Promise<Array<LevelTarget & { aliases: string[] }>> {
+  const benchmarkRoot = path.resolve(rootDir, 'src/benchmark-levels');
+  let entries;
+  try {
+    entries = await fs.readdir(benchmarkRoot, { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw error;
+  }
+  const targets: Array<LevelTarget & { aliases: string[] }> = [];
+  for (const entry of entries.filter((item) => item.isDirectory() && item.name !== 'test-fixtures').sort((a, b) => a.name.localeCompare(b.name))) {
+    const descriptorPath = path.join(benchmarkRoot, entry.name, 'level.json');
+    try {
+      const descriptor = JSON.parse(await fs.readFile(descriptorPath, 'utf8')) as { id?: string; title?: string; aliases?: string[] };
+      if (descriptor.id !== entry.name || !descriptor.title) throw new Error(`Benchmark descriptor ${descriptorPath} must match its directory and contain a title.`);
+      targets.push({ canonical: descriptor.id, folder: entry.name, sourceRoot: 'benchmark-levels', title: descriptor.title, aliases: descriptor.aliases ?? [] });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+      throw error;
+    }
+  }
+  return targets;
 }
 
 export function computeCenterMetrics(run: RunResult) {

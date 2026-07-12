@@ -26,7 +26,7 @@ The output directory must be private or external to the repository and outside t
 
 ## Single-run rehearsal controller
 
-`npm run benchmark:run` executes one private run definition as a resumable sequence. The definition pins commits, assignment artifacts, worktree and payload locations, the stage settings, and — for a delegation configuration — the `delegation` block (addendum artifact, delegate model, delegate effort). The controller verifies every supplied artifact against the materials commit, requires a clean controller repository for a new run, renders the prompt privately, runs `npm ci`, launches the declared stage in an isolated per-run harness home, seals, gates, extracts a passing payload, measures cost with ccusage, and writes a private manifest. Each operation is checkpointed; failures preserve all prior artifacts and the entrant worktree.
+`npm run benchmark:run` executes one private run definition as a resumable sequence. The definition pins commits, assignment artifacts, worktree and payload locations, the stage settings, and — for a delegation configuration — the `delegation` block (addendum artifact, delegate model, delegate effort). The controller verifies every supplied artifact against the materials commit, requires a clean controller repository for a new run, renders the prompt privately, runs `npm ci`, launches the declared stage in an isolated per-run harness home, seals, gates, extracts a passing payload, measures cost with ccusage, and writes a private manifest. Each operation is checkpointed; failures preserve all prior artifacts and the entrant worktree. The recorded benchmark version selects the source root: v1/rehearsal uses the historical `src/levels/<level-id>/` payload contract, while the directory-only protocol uses `src/benchmark-levels/<level-id>/` and does not run relocation promotion.
 
 ```sh
 npm run benchmark:run -- \
@@ -34,7 +34,7 @@ npm run benchmark:run -- \
   --out benchmark/private/runs/<opaque-run-id>
 ```
 
-The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`. An eligible definition additionally requires `release`, `schedule`, `runner`, and `executor` hashed artifacts plus `baseline.configurationCommit`. Before launching a model, the runner verifies the release against its `benchmark-<version>` tag, shared inputs against that release, the exact assignment against the private schedule revision, and runner/executor/recipe inputs against the configuration commit and current checkout.
+The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`. An eligible definition additionally requires `release`, `schedule`, `runner`, and `executor` hashed artifacts plus `baseline.configurationCommit`. Before launching a model, the runner verifies the release against its `benchmark-<version>` tag, shared inputs against that release, the exact assignment against the private schedule revision, the selected source-root baseline contract, and runner/executor/recipe inputs against the configuration commit and current checkout.
 
 ### Preflight and launch
 
@@ -118,7 +118,7 @@ A delegation configuration adds a `delegation` block and (for the rehearsal) set
 
 ## Generic controller tools
 
-The shared `admin.mjs`, `common.mjs`, and `render-assignment.mjs` components implement deterministic administration and are frozen as `controller-admin` protocol artifacts. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. `benchmark:run` is the separate configuration-scoped runner above. Pin the runner and executor hashes in every configuration registration; those two are not protocol-wide frozen artifacts.
+The shared `admin.mjs`, `common.mjs`, and `render-assignment.mjs` components implement deterministic administration and are frozen as `controller-admin` protocol artifacts. A directory-only release also freezes the version-dispatch, scope, and baseline-check components. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. `benchmark:run` is the separate configuration-scoped runner above. Pin the runner and executor hashes in every configuration registration; those two are not protocol-wide frozen artifacts.
 
 ### Render the shared assignment
 
@@ -204,13 +204,13 @@ The legacy `pairs` and `validate` commands remain available for targeted binary 
 
 ### Promote a finalized playable run
 
-Promotion is separate post-run administration. It validates the private manifest, gate record, evaluated and payload refs, and assignment metadata before touching application source. It then relocates the payload directory byte-for-byte under `src/benchmark-levels/<level-id>/`, creates a controller-owned `level.json`, regenerates the derived gallery, runs typecheck, build, benchmark scope, and floor checks, and records a separate administrative commit. The private `promotion.json` record is checkpointed atomically and includes the payload and promotion commit provenance; it never changes `manifest.json` or its playable disposition.
+Promotion is separate post-run administration for historical v1 outputs. It validates the private manifest, gate record, evaluated and payload refs, and assignment metadata before relocating a v1 payload byte-for-byte under `src/benchmark-levels/<level-id>/`, creating its controller-owned `level.json`, regenerating the derived gallery, running typecheck, build, benchmark scope, and floor checks, and recording a separate administrative commit. Directory-only protocol outputs already live under the discovered benchmark root and do not use this relocation step. The private `promotion.json` record is checkpointed atomically and includes the payload and promotion commit provenance; it never changes `manifest.json` or its playable disposition.
 
 ```sh
 npm run benchmark:promote -- --run <opaque-run-id>
 ```
 
-The controller automatically invokes the same command path after finalizing a playable manifest. If that invocation fails, `benchmark:manage status` reports `run completed, promotion pending` or `run completed, promotion failed` and prints the resume command. Promotion operations use a Git lock and refuse unrelated local changes. Repeating the command validates completed checkpoints and reuses the existing source and administrative commit.
+The controller automatically invokes the same command path after finalizing a playable v1 manifest. If that invocation fails, `benchmark:manage status` reports `run completed, promotion pending` or `run completed, promotion failed` and prints the resume command. Directory-only manifests report promotion as not required. Promotion operations use a Git lock and refuse unrelated local changes. Repeating the command validates completed checkpoints and reuses the existing source and administrative commit.
 
 ### Administer worktrees, gates, and payloads
 

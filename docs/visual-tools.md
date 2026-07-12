@@ -30,6 +30,8 @@ Use gameplay snapshots to inspect the actual level runtime from the rail camera:
 
 ```sh
 npm run snapshot:gameplay -- --level helios --time 12
+# Discovered benchmark levels use their descriptor id; no registry edit is needed.
+npm run snapshot:gameplay -- --level <benchmark-level-id> --time 12
 ```
 
 Defaults are chosen for visual review:

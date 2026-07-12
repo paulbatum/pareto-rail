@@ -28,16 +28,22 @@ Run preparation, eligible generation, blind ranking, and post-unblinding integra
 - Prompts, stage order, model snapshots, session boundaries, time limits, tool access, and review/revision count come from the configuration's registered recipe. The controller does not improvise them.
 - No operator follows logs, reads diffs, plays partial output, supplies feedback, or requests a retry.
 - Gates run against the exact evaluated working tree. Blind play serves that same evaluated commit.
-- A payload is derived only after evaluation and contains only `src/levels/<level-id>/` relative to the frozen materials commit.
+- A payload is derived only after evaluation and contains only the assigned directory under the source root selected by the recorded benchmark version: `src/levels/<level-id>/` for v1 or `src/benchmark-levels/<level-id>/` for the directory-only protocol.
 - Nothing is merged into `main` before rankings are locked and the schedule is opened.
 - Secrets, credentials, and private session URLs never enter commits, public logs, or player-facing deployments. Before unblinding, configuration mappings do not enter them either.
+
+## Source-root protocol dispatch
+
+The recorded `benchmarkVersion` selects the source-root contract. Historical v1 (and rehearsal) uses `src/levels/<level-id>/` and its legacy registry-aware scope and payload rules. The directory-only protocol uses `src/benchmark-levels/<level-id>/`; its entrant starts with benchmark-mode scaffolding, includes `level.json`, does not edit `src/levels/index.ts`, and is checked with `scripts/check-benchmark-scope.mjs --version <version>`. Payload extraction uses the same selected root. Never choose a root by probing which directory exists.
+
+For directory-only releases, run `npm run check:benchmark-baseline` against the recorded entrant baseline before launching a model. It verifies the expected built-in tree and rejects promoted benchmark output from the baseline. The descriptor is authored input, but the application catalog must validate its id and title against the loaded definition before the output is considered discoverable.
 
 ## Required inputs
 
 Do not start an eligible run until all of these exist and agree:
 
 - a frozen release record validated against `benchmark/schemas/freeze.schema.json`;
-- the materials commit and entrant-baseline commit named by that record, plus its exact `entrantBaseline.allowedLevelIds` registry allowlist;
+- the materials commit and entrant-baseline commit named by that record, plus its v1 registry allowlist or directory-only baseline contract;
 - a private append-only schedule revision containing the assignment, with its hash pinned by the run definition;
 - exactly one assignment selected from that schedule without exposing the other assignments;
 - the assignment's recipe and theme with matching paths and hashes, plus the immutable configuration commit containing its runner, executor, and recipe;
@@ -71,7 +77,7 @@ Private paths are controller storage. Do not expose or mount the parent `benchma
 Follow `benchmark/releases/README.md` in order:
 
 1. Commit final canonical materials and record the materials commit.
-2. Cut, record, and verify the frozen entrant-baseline commit used for all opaque worktrees. Record every permitted registry id in `entrantBaseline.allowedLevelIds`; the eligible runner rejects a baseline whose registry differs. See `benchmark/releases/README.md` for the clean-baseline procedure.
+2. Cut, record, and verify the frozen entrant-baseline commit used for all opaque worktrees. For v1, record every permitted registry id in `entrantBaseline.allowedLevelIds`; for the directory-only protocol, record the output root and expected built-in baseline fingerprint, then run the baseline check to reject promoted output. See `benchmark/releases/README.md` for the clean-baseline procedure.
 3. Create and validate the protocol freeze record, commit it, and create the annotated release tag.
 4. Generate the initial private randomized schedule against `benchmark/schemas/run-schedule.schema.json`.
 5. Mechanically verify complete registered-configuration × theme coverage, contiguous schedule positions, unique run/slot/level ids, fixed-length opaque slots, and exact `<theme-id>-<slot-id>` construction. Hash the schedule without printing its contents.
@@ -159,14 +165,14 @@ Any failed required gate makes the entrant a DNF unless the frozen failure taxon
 
 Only passing entrants enter the merge set. Create an opaque payload branch from the frozen **materials commit**, not from the entrant-baseline commit:
 
-1. Verify `src/levels/<level-id>/` does not exist at the materials commit.
+1. Verify the assigned directory under the version-selected source root does not exist at the materials commit.
 2. Copy exactly that directory from the evaluated commit.
 3. Commit it without editing its contents.
 4. Compare payload tip to the materials commit.
-5. Require a non-empty diff in which every path begins `src/levels/<level-id>/` and no path is deleted or renamed from outside that directory.
+5. Require a non-empty diff in which every path begins the version-selected assigned directory and no path is deleted or renamed from outside that directory. Directory-only payloads must retain their authored `level.json`; v1 payloads must not contain one.
 6. Record the payload commit and private branch under `output.payload`.
 
-Payload derivation is deterministic administration, not a model revision. Do not rerun creative stages. The exact evaluated commit remains the source for blind play because it contains the registry and gallery state exercised by the gates.
+Payload derivation is deterministic administration, not a model revision. Do not rerun creative stages. The exact evaluated commit remains the source for blind play because it contains the evaluated application state exercised by the gates; directory-only evaluated trees are discovered without a temporary registry edit.
 
 For a DNF, preserve the evaluated commit and do not create a mergeable passing payload. A diagnostic extraction, if ever needed, must not be confused with the passing merge set. Archiving a DNF moves only its private controller record; it must not remove its worktree, branch, commit, or source. Destructive pruning is a separate confirmed operation and is forbidden until an evaluated commit is durable.
 
@@ -213,11 +219,11 @@ After unblinding:
 
 1. Tag every exact evaluated commit with benchmark version and slot.
 2. Create an integration branch from current `main`, never from the frozen entrant baseline.
-3. Merge each passing directory-only payload. Stop on any unexpected path conflict rather than resolving source creatively.
-4. Update `src/levels/index.ts` once to register all merged entrants, using the frozen publication-label decision.
+3. Merge each passing payload. Stop on any unexpected path conflict rather than resolving source creatively.
+4. For v1, update `src/levels/index.ts` once to register all merged entrants, using the frozen publication-label decision. Directory-only payloads require no registry edit.
 5. Run `npm run gallery` once.
 6. Run `npm run typecheck`, `npm run build`, and `npm run check:floor -- --level <level-id>` for every integrated entrant.
-7. Commit the registry/gallery integration and record that commit id.
+7. Commit the gallery integration (and the v1 registry integration when applicable) and record that commit id.
 8. Write redacted published manifests referencing that integration commit and commit them separately.
 9. Merge the integration branch to `main`.
 10. Delete temporary evaluated and payload branches only after evaluated commits are tagged and payload commits are merged.

@@ -59,17 +59,44 @@ async function resolveLevelTarget(levelIdOrAlias, rootDir) {
     }
   }
 
-  if (!canonicalId || !cases.has(canonicalId)) {
-    throw new Error(`Unsupported audio trace level: ${levelIdOrAlias}`);
+  if (canonicalId && cases.has(canonicalId)) {
+    const { folder } = cases.get(canonicalId);
+    return {
+      level: canonicalId,
+      title,
+      folder,
+      module: `/src/levels/${folder}/audio.ts`
+    };
   }
 
-  const { folder } = cases.get(canonicalId);
-  return {
-    level: canonicalId,
-    title,
-    folder,
-    module: `/src/levels/${folder}/audio.ts`
-  };
+  const benchmarkTarget = await findBenchmarkTarget(rootDir, levelIdOrAlias);
+  if (benchmarkTarget) return benchmarkTarget;
+  throw new Error(`Unsupported audio trace level: ${levelIdOrAlias}`);
+}
+
+async function findBenchmarkTarget(rootDir, requested) {
+  const benchmarkRoot = path.resolve(rootDir, 'src/benchmark-levels');
+  try {
+    const entries = await fs.readdir(benchmarkRoot, { withFileTypes: true });
+    for (const entry of entries.filter((item) => item.isDirectory() && item.name !== 'test-fixtures')) {
+      try {
+        const descriptor = JSON.parse(await fs.readFile(path.join(benchmarkRoot, entry.name, 'level.json'), 'utf8'));
+        if (descriptor.id === requested || descriptor.aliases?.includes(requested)) {
+          return {
+            level: descriptor.id,
+            title: descriptor.title,
+            folder: entry.name,
+            module: `/src/benchmark-levels/${entry.name}/audio.ts`,
+          };
+        }
+      } catch {
+        // Ignore incomplete directories; catalog/build reports their exact error.
+      }
+    }
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  return undefined;
 }
 
 main().catch((error) => {
@@ -149,7 +176,7 @@ async function captureTrace(options) {
 
 async function captureWebAudioGraph(options) {
   const target = await resolveLevelTarget(options.level, root);
-  const modulePath = `/src/levels/${target.folder}/audio.ts`;
+  const modulePath = target.module;
   const rawEvents = [];
 
   const server = await createServer({

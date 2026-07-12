@@ -73,7 +73,11 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
     costStatus: manifest?.cost?.status ?? 'unavailable',
     evaluatedCommit: manifest?.output?.evaluated?.commit ?? gates?.evaluatedCommit ?? null,
     payloadCommit: manifest?.output?.payload?.commit ?? null,
-    promotionStatus: manifest?.disposition?.status === 'playable' ? (promotion?.status === 'completed' ? 'completed' : promotion?.status === 'failed' ? 'failed' : 'pending') : 'not-applicable',
+    promotionStatus: manifest?.disposition?.status === 'playable'
+      ? manifest.output?.sourceRoot === 'src/benchmark-levels'
+        ? 'not-required'
+        : (promotion?.status === 'completed' ? 'completed' : promotion?.status === 'failed' ? 'failed' : 'pending')
+      : 'not-applicable',
     promotionCommit: promotion?.promotionCommit ?? null,
     recovered: Boolean(recovery),
     recoveryReason: recovery?.reason ?? null,

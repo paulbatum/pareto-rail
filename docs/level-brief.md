@@ -6,7 +6,7 @@ This is the standing brief for building a new level. It is handed to an implemen
 
 Every level is the same game at its core: the player flies forward automatically along a rail through your world, holds to charge, sweeps the reticle across up to six targets, and releases to fire the whole volley — Rez is the common ancestor. Runs are short and meant to be replayed. The theme supplies the world, mood, and arc this happens in; it does not restate these mechanics.
 
-Build a complete level under `src/levels/<id>/` and register it in `src/levels/index.ts`. Within the shared lock-on mechanics you own everything: the rail, the spawn choreography, the enemy kinds and their motion, scoring, the entire visual language (environment, enemies, letter glyphs, effects), and the entire soundtrack and sound design. All of it procedural.
+For a built-in level, build a complete level under `src/levels/<id>/` and register it in `src/levels/index.ts`. A benchmark entrant uses the same mechanics and quality bar but the directory-only output contract: build under `src/benchmark-levels/<id>/`, include the scaffolded `level.json` descriptor, and do not edit `src/levels/index.ts`. Within the shared lock-on mechanics you own everything: the rail, the spawn choreography, the enemy kinds and their motion, scoring, the entire visual language (environment, enemies, letter glyphs, effects), and the entire soundtrack and sound design. All of it is procedural.
 
 Start from `npm run scaffold -- --id <id>`. Then read `docs/level-authoring.md`, `src/engine/lock-on-runner-types.ts`, and `docs/level-gallery.md`. For quality calibration, read the spine of the level the gallery identifies as the current bar. Full-source reading of other levels is optional depth, not a requirement.
 
@@ -21,7 +21,7 @@ This is a showcase piece, not a prototype or a proof of concept. Polish is the p
 ## Hard constraints
 
 - Use `createLockOnRunner`. Do not build a bespoke runtime or modify the engine.
-- Touch only `src/levels/<id>/` plus one registry line. `npm run check:scope -- <id>` must pass.
+- A built-in level touches only `src/levels/<id>/` plus one registry line. A benchmark entrant touches only `src/benchmark-levels/<id>/` and explicitly permitted derived gallery output; `npm run check:benchmark-scope -- --version v2 --level <id> --base <entrant-baseline-ref>` must pass.
 - No imports from other levels' directories.
 - `npm run typecheck`, `npm run build`, and `npm run check:floor -- --level <id>` must pass.
 

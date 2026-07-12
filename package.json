@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "check:scope": "bash scripts/check-level-scope.sh",
     "check:benchmark-scope": "node scripts/check-benchmark-scope.mjs",
+    "check:benchmark-baseline": "node scripts/check-benchmark-baseline.mjs",
     "snapshot": "node scripts/snapshot.mjs",
     "snapshot:gameplay": "node scripts/gameplay-snapshot.mjs",
     "trace:audio": "node scripts/audio-trace.mjs",

@@ -119,7 +119,23 @@ async function readLevelIds() {
   const source = await fs.readFile(registryPath, 'utf8');
   const arrayMatch = source.match(/export const levelMetadatas: LevelMetadata\[] = \[([\s\S]*?)\n\];/);
   if (!arrayMatch) throw new Error('Could not find levelMetadatas array in src/levels/index.ts');
-  return [...arrayMatch[1].matchAll(/\bid:\s*['"]([^'"]+)['"]/g)].map((match) => match[1]);
+  const builtIns = [...arrayMatch[1].matchAll(/\bid:\s*['"]([^'"]+)['"]/g)].map((match) => match[1]);
+  const benchmarks = [];
+  const benchmarkRoot = path.resolve(root, 'src/benchmark-levels');
+  try {
+    for (const entry of await fs.readdir(benchmarkRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name === 'test-fixtures') continue;
+      try {
+        const descriptor = JSON.parse(await fs.readFile(path.join(benchmarkRoot, entry.name, 'level.json'), 'utf8'));
+        if (descriptor.id === entry.name) benchmarks.push(descriptor.id);
+      } catch {
+        // Catalog validation reports malformed benchmark directories separately.
+      }
+    }
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  return [...builtIns, ...benchmarks.sort()];
 }
 
 function defaultOptions() {
