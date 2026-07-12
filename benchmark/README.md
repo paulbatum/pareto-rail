@@ -16,7 +16,7 @@ During generation, keep the append-only randomized run schedule (which is also t
 
 The controller follows `benchmark/controller/runbook.md`; coding agents do not receive that administrative prompt. The standing level-building brief remains `docs/level-brief.md`. `benchmark/prompts/level-assignment.md` adds benchmark-wide identity, duration, and polish expectations without duplicating the brief. At protocol freeze, the release record identifies the materials commit, entrant-baseline commit, and shared artifact hashes. Each configuration registration separately pins its orchestration runner, harness executor, recipe, execution settings, and configuration commit. Cost is measured after the run by ccusage and is not a pinned per-configuration input. Entrant worktree access follows the controller runbook.
 
-Each run receives a four-character opaque slot and a globally unique level id such as `theme-a44f`. The agent develops normally in an opaque worktree, including temporary registry and gallery edits. After gates run, the controller derives a clean payload commit containing only `src/levels/<level-id>/`. Passing payloads remain separate through blind ranking, then merge into `main`; one post-unblinding integration commit registers all merged levels and regenerates the gallery.
+Each run receives a four-character opaque slot and a globally unique level id such as `theme-a44f`. The agent develops normally in an opaque worktree, including temporary registry and gallery edits. After gates run, the controller derives a clean payload commit containing only `src/levels/<level-id>/`. Passing payloads remain separate through blind ranking, then the resumable promotion command relocates one verified payload under `src/benchmark-levels/<level-id>/`, creates its controller-owned descriptor, regenerates the gallery, runs application checks, and records a separate administrative commit. One post-unblinding integration commit is a later operation.
 
 Author benchmark materials at stable paths without `v1` or `v2` suffixes. A version exists only when `benchmark/releases/<version>/freeze.json` and its matching `benchmark-<version>` Git tag are created. See `benchmark/releases/README.md`.
 
@@ -50,6 +50,14 @@ npm run benchmark:run -- \
 ```
 
 This records `recovery.json`. Recovery is provenance, not a result disposition: a recovered entrant that passes every gate and produces a valid payload is `playable`.
+
+A finalized playable run is promoted automatically by the controller. Operators can resume the same operation without rerunning generation:
+
+```bash
+npm run benchmark:promote -- --run <run-id>
+```
+
+Promotion checkpoints and its private payload/promotion commit provenance live in `promotion.json`. A promotion failure never edits the run manifest or changes its playable disposition; `benchmark:manage -- status` reports the completed run as promotion-pending or promotion-failed and prints this resume command.
 
 Whenever a controller operation fails after a worktree exists, the runner also captures tracked and untracked source in a commit under `refs/benchmark-recovery/<run-id>/...` and records it in `recovery-snapshot.json`. The snapshot uses a temporary Git index and does not alter the entrant worktree. If `/tmp` later disappears, `--resume` reconstructs the worktree from this ref before continuing.
 

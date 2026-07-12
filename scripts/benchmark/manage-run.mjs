@@ -36,7 +36,11 @@ async function showStatus() {
   const failed = results.filter((result) => FAILED_STATES.has(result.state));
   console.log('=== Benchmark Run Status ===');
   console.log(`Successful/Completed: ${successful.length}`);
-  for (const result of successful) console.log(`  - ${result.runId} (${result.levelId}) [${result.state}${result.recovered ? ', recovered' : ''}]`);
+  for (const result of successful) {
+    const promotion = result.promotionStatus === 'not-applicable' ? '' : `, promotion ${result.promotionStatus}`;
+    console.log(`  - ${result.runId} (${result.levelId}) [run completed${promotion}${result.recovered ? ', recovered' : ''}]`);
+    if (result.promotionStatus === 'pending' || result.promotionStatus === 'failed') console.log(`    Resume: npm run benchmark:promote -- --run ${result.runId}`);
+  }
   console.log(`Failed/DNF/Incomplete: ${failed.length}`);
   for (const result of failed) console.log(`  - ${result.runId} (${result.levelId}) [${result.state}]`);
 }

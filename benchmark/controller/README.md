@@ -202,6 +202,16 @@ Set generation creates one randomized presentation per theme for every snapshot 
 
 The legacy `pairs` and `validate` commands remain available for targeted binary judgments. `extend-pairs` preserves existing pair ids and presentation orders while adding only newly possible pairs; exhaustive pair coverage is optional policy rather than the primary workflow.
 
+### Promote a finalized playable run
+
+Promotion is separate post-run administration. It validates the private manifest, gate record, evaluated and payload refs, and assignment metadata before touching application source. It then relocates the payload directory byte-for-byte under `src/benchmark-levels/<level-id>/`, creates a controller-owned `level.json`, regenerates the derived gallery, runs typecheck, build, benchmark scope, and floor checks, and records a separate administrative commit. The private `promotion.json` record is checkpointed atomically and includes the payload and promotion commit provenance; it never changes `manifest.json` or its playable disposition.
+
+```sh
+npm run benchmark:promote -- --run <opaque-run-id>
+```
+
+The controller automatically invokes the same command path after finalizing a playable manifest. If that invocation fails, `benchmark:manage status` reports `run completed, promotion pending` or `run completed, promotion failed` and prints the resume command. Promotion operations use a Git lock and refuse unrelated local changes. Repeating the command validates completed checkpoints and reuses the existing source and administrative commit.
+
 ### Administer worktrees, gates, and payloads
 
 All worktree paths must be outside the primary working tree. Gate output must be in `benchmark/private/` or outside the repository. These commands emit only opaque identifiers and commit ids; store the full records privately.

@@ -24,7 +24,7 @@ export function shouldUnblind(benchmarkVersion, identity = 'auto') {
   return benchmarkVersion === 'rehearsal';
 }
 
-export function resultFromArtifacts({ directoryName, manifest, definition, gates, failure, recovery }, identity = 'auto') {
+export function resultFromArtifacts({ directoryName, manifest, definition, gates, failure, recovery, promotion }, identity = 'auto') {
   const benchmarkVersion = manifest?.benchmarkVersion ?? definition?.benchmarkVersion ?? null;
   const unblinded = shouldUnblind(benchmarkVersion, identity);
   const gateRecords = manifest?.gates ?? gates?.gates ?? [];
@@ -63,6 +63,8 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
     costStatus: manifest?.cost?.status ?? 'unavailable',
     evaluatedCommit: manifest?.output?.evaluated?.commit ?? gates?.evaluatedCommit ?? null,
     payloadCommit: manifest?.output?.payload?.commit ?? null,
+    promotionStatus: manifest?.disposition?.status === 'playable' ? (promotion?.status === 'completed' ? 'completed' : promotion?.status === 'failed' ? 'failed' : 'pending') : 'not-applicable',
+    promotionCommit: promotion?.promotionCommit ?? null,
     recovered: Boolean(recovery),
     recoveryReason: recovery?.reason ?? null,
     manifestState: !manifest ? 'missing' : (errors.length ? 'invalid' : 'complete'),
@@ -88,6 +90,7 @@ export async function loadResults(runsDirectory, { version, theme, identity = 'a
       gates: await optionalJson(path.join(runDirectory, 'gates', 'gates.json')),
       failure: await optionalJson(path.join(runDirectory, 'controller-failure.json')),
       recovery: await optionalJson(path.join(runDirectory, 'recovery.json')),
+      promotion: await optionalJson(path.join(runDirectory, 'promotion.json')),
     };
     if (!artifacts.manifest && !artifacts.definition) continue;
     const result = resultFromArtifacts(artifacts, identity);

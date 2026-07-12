@@ -20,6 +20,7 @@ import { ccusageVersion, measureRunCost } from './ccusage-cost.mjs';
 import { assertBaselineLevelAllowlist, levelIdsFromRegistry, validateBaselineLevelAllowlist } from './entrant-baseline.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
+import { promoteRun } from './promote.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -214,7 +215,16 @@ async function main() {
       await writeJson(path.join(outputDirectory, 'manifest.json'), value);
       return value;
     });
-    console.log(JSON.stringify({ runId: definition.assignment.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null, resumed: resuming }));
+    let promotionStatus = 'not-applicable';
+    if (manifest.disposition.status === 'playable') {
+      try {
+        promotionStatus = (await promoteRun({ root: ROOT, runDirectory: outputDirectory })).status;
+      } catch (promotionError) {
+        promotionStatus = 'failed';
+        console.error(`Automatic promotion failed; the playable run is unchanged. Resume with: npm run benchmark:promote -- --run ${definition.assignment.runId}`);
+      }
+    }
+    console.log(JSON.stringify({ runId: definition.assignment.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null, promotionStatus, resumed: resuming }));
     if (!passing) process.exitCode = 2;
   } catch (error) {
     let snapshotError;
@@ -468,7 +478,7 @@ async function createManifest({ definition, materialsCommit, configurationCommit
     runId: definition.assignment.runId,
     slotId: definition.assignment.slotId,
     configuration: { id: definition.assignment.configurationId },
-    theme: { path: definition.assignment.theme.path, sha256: sha256(theme) },
+    theme: { id: definition.assignment.theme.id, path: definition.assignment.theme.path, sha256: sha256(theme) },
     baseline: {
       materialsCommit,
       configurationCommit,
@@ -499,7 +509,7 @@ async function createManifest({ definition, materialsCommit, configurationCommit
       })),
     },
     gates: gateRecord.gates.map(({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason }) => ({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason })),
-    output: { levelId: definition.assignment.levelId, evaluated: { commit: evaluated.evaluatedCommit, branch: worktree.branch }, ...(payload ? { payload: { commit: payload.payloadCommit, branch: payload.branch } } : {}) },
+    output: { levelId: definition.assignment.levelId, title: definition.assignment.levelTitle, evaluated: { commit: evaluated.evaluatedCommit, branch: worktree.branch }, ...(payload ? { payload: { commit: payload.payloadCommit, branch: payload.branch } } : {}) },
     disposition: { status: definition.mode === 'rehearsal' ? 'rehearsal' : payload ? 'playable' : 'dnf', ...(payload ? {} : { reasonCode: 'required-gate-failed' }) },
   };
 }

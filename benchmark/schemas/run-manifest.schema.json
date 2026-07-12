@@ -143,9 +143,10 @@
     "output": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["levelId", "evaluated"],
+      "required": ["levelId", "title", "evaluated"],
       "properties": {
         "levelId": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
         "evaluated": {
           "description": "Exact registered working tree used for mechanical gates and blind play.",
           "$ref": "#/$defs/outputCommit"
