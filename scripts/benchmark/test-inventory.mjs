@@ -19,6 +19,7 @@ async function main() {
   await testCleanupCommitDurabilityAndDirtyRefusal();
   await testDivergentSourceAndRefsRefuseCleanup();
   await testAcceptedDivergedMigration();
+  await testHistoricalFloorFailureAndPartialMigrationRecovery();
   await testResumptionAndIdempotency();
   console.log('Benchmark migration inventory tests passed.');
 }
@@ -183,6 +184,42 @@ async function testAcceptedDivergedMigration() {
   }
 }
 
+async function testHistoricalFloorFailureAndPartialMigrationRecovery() {
+  const historical = await createFixture({ playable: true, rehearsal: false, manualPlayable: true, floorFailure: true });
+  try {
+    const result = await migrateExistingOutputs({ root: historical.root, version: 'synthetic' });
+    assert.equal(result.promoted, 1);
+    const migration = JSON.parse(await fs.readFile(path.join(historical.root, 'benchmark/private/migrations/synthetic.json'), 'utf8'));
+    assert.equal(migration.entries[0].floor.status, 'historical-failure');
+    assert.equal(migration.entries[0].floor.result.exitCode, 1);
+    assert.match(migration.entries[0].floor.note, /manifest records that the floor gate passed/);
+    assert.match(migration.entries[0].promotionCommit, /^[a-f0-9]{40}$/);
+  } finally {
+    await historical.cleanup();
+  }
+
+  const partial = await createFixture({ playable: false, rehearsal: true, manualPlayable: true });
+  try {
+    const levelPath = path.join(partial.root, 'src/levels', partial.levelId, 'level.md');
+    await writeText(levelPath, '# Rehearsal Level Derivative\n\nThis accepted source maintenance is retained.\n');
+    await git(partial.root, ['add', levelPath]);
+    await git(partial.root, ['commit', '-qm', 'retain rehearsal derivative']);
+    const inventory = await buildMigrationInventory({ root: partial.root, acceptedDiverged: [partial.levelId] });
+    const record = inventory.records.find((candidate) => candidate.runId === partial.runId);
+    await assert.rejects(() => promoteRun({ root: partial.root, runDirectory: partial.runDirectory, migration: true, acceptDiverged: record.source.derivative, migrationLevelIds: [partial.levelId], interruptAfter: 'extraction' }), (error) => error instanceof PromotionInterrupted);
+    const result = await migrateExistingOutputs({ root: partial.root, version: 'synthetic', acceptDiverged: [partial.levelId] });
+    assert.equal(result.promoted, 1);
+    assert.equal(await exists(path.join(partial.root, 'src/levels', partial.levelId)), false);
+    assert.equal(await exists(path.join(partial.root, 'src/benchmark-levels', partial.levelId, 'level.json')), true);
+    const migration = JSON.parse(await fs.readFile(path.join(partial.root, 'benchmark/private/migrations/synthetic.json'), 'utf8'));
+    assert.equal(migration.status, 'completed');
+    assert.equal(migration.entries.length, 1);
+    assert.match(migration.entries[0].promotionCommit, /^[a-f0-9]{40}$/);
+  } finally {
+    await partial.cleanup();
+  }
+}
+
 async function testResumptionAndIdempotency() {
   const fixture = await createFixture({ playable: true, rehearsal: false, manualPlayable: true });
   try {
@@ -196,7 +233,7 @@ async function testResumptionAndIdempotency() {
   }
 }
 
-async function createFixture({ playable, rehearsal, manualPlayable, levelId = playable ? 'manual-a1b2' : 'rehearsal-c3d4' }) {
+async function createFixture({ playable, rehearsal, manualPlayable, floorFailure = false, levelId = playable ? 'manual-a1b2' : 'rehearsal-c3d4' }) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-inventory-repo-'));
   const runId = `run-${levelId}`;
   const rehearsalLevelId = 'rehearsal-c3d4';
@@ -214,7 +251,7 @@ async function createFixture({ playable, rehearsal, manualPlayable, levelId = pl
       gallery: 'node gallery.mjs',
       typecheck: 'node -e "process.exit(0)"',
       build: 'node -e "process.exit(0)"',
-      'check:floor': 'node -e "process.exit(0)" --',
+      'check:floor': floorFailure ? 'node -e "console.error(\'historical floor\'); process.exit(1)" --' : 'node -e "process.exit(0)" --',
     },
   });
   await writeText(path.join(root, 'gallery.mjs'), "import fs from 'node:fs/promises'; const entries = await fs.readdir('src/benchmark-levels', { withFileTypes: true }); const titles = []; for (const entry of entries.filter((item) => item.isDirectory())) { const descriptor = JSON.parse(await fs.readFile(`src/benchmark-levels/${entry.name}/level.json`, 'utf8')); titles.push(`# ${descriptor.title}`); } await fs.writeFile('docs/level-gallery.md', `# Level gallery\\n\\n## Built-in levels\\n\\n## Benchmark levels\\n\\n${titles.join('\\n') }\\n`);\n");

@@ -90,6 +90,7 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
   const evaluatedRecord = privateRun ? await optionalJson(path.join(privateRun, 'evaluated.json')) : null;
   const gatesRecord = privateRun ? await optionalJson(path.join(privateRun, 'gates', 'gates.json')) : null;
   const cleanupRecord = privateRun ? await optionalJson(path.join(privateRun, 'source-cleanup.json')) : null;
+  const promotionRecord = privateRun ? await optionalJson(path.join(privateRun, 'promotion.json')) : null;
   const levelId = manifest.output?.levelId ?? definition?.assignment?.levelId ?? null;
   const resolvedPublicManifestPaths = publicManifestPaths.length > 0
     ? publicManifestPaths
@@ -139,11 +140,18 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
     rolloutEvidence: rollout,
     privateRunDirectory: privateRun ? relative(repositoryRoot, privateRun) : null,
     cleanup: cleanupRecord ? { status: cleanupRecord.status ?? null, cleanupCommit: cleanupRecord.cleanupCommit ?? null, statePath: relative(repositoryRoot, path.join(privateRun, 'source-cleanup.json')) } : null,
+    promotion: promotionRecord,
     errors: [],
   };
 
   if (record.disposition !== 'playable' && !record.source.presentInPrimaryWorktree) {
-    record.status = 'not-applicable';
+    if (promotionRecord?.migration === true && promotionRecord.acceptDiverged) {
+      record.source.bytesAgreeWithPayload = false;
+      record.source.derivative = promotionRecord.acceptDiverged;
+      record.status = promotionRecord.status === 'completed' ? 'already-promoted' : 'ready-for-derivative-migration';
+    } else {
+      record.status = 'not-applicable';
+    }
     return record;
   }
   const shapeErrors = manifestErrors(manifest);
@@ -223,7 +231,6 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
       path: `${DESTINATION_ROOT}/${levelId}/`,
       presentInPrimaryWorktree: await exists(destinationPath),
     };
-    record.promotion = privateRun ? await optionalJson(path.join(privateRun, 'promotion.json')) : null;
     record.status = record.disposition === 'playable'
       ? (record.promotion?.status === 'completed' ? 'already-promoted' : (record.source.presentInPrimaryWorktree ? 'ready-for-legacy-relocation' : 'ready-for-payload-promotion'))
       : (record.source.derivative ? 'ready-for-derivative-migration' : 'ready-for-source-cleanup');

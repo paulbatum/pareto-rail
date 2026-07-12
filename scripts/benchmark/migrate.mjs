@@ -35,6 +35,7 @@ export async function migrateExistingOutputs({ root = ROOT, version, inventoryPa
   for (const levelId of acceptedDiverged) if (!knownLevelIds.has(levelId)) throw new Error(`Cannot accept divergence for unknown level ${levelId}.`);
   const selected = inventory.records.filter((record) => (record.disposition === 'playable' || record.source.derivative) && (!version || record.benchmarkVersion === version));
   const cleanups = inventory.records.filter((record) => record.disposition !== 'playable' && !record.source.derivative && (record.source.presentInPrimaryWorktree || (record.cleanup && record.cleanup.status !== 'completed')) && (!version || record.benchmarkVersion === version));
+  const migrationPlanLevelIds = [...new Set(inventory.records.filter((record) => (!version || record.benchmarkVersion === version) && (record.disposition === 'playable' || acceptedDiverged.includes(record.levelId) || record.source.derivative)).map((record) => record.levelId))].sort();
   if (!selected.length && !cleanups.length) throw new Error('Migration inventory contains no playable records or verified source copies for the requested benchmark version.');
   for (const record of selected) {
     if (!record.privateRunDirectory) throw new Error(`Playable run ${record.runId} has no private run record required by the promotion path.`);
@@ -56,6 +57,7 @@ export async function migrateExistingOutputs({ root = ROOT, version, inventoryPa
       entries: [],
       cleanups: [],
     };
+  migration.migrationLevelIds = migrationPlanLevelIds;
   migration.entries ??= [];
   migration.cleanups ??= [];
   await writeJson(recordPath, migration);
@@ -67,6 +69,7 @@ export async function migrateExistingOutputs({ root = ROOT, version, inventoryPa
         runDirectory: path.join(repositoryRoot, candidate.privateRunDirectory),
         migration: true,
         acceptDiverged: candidate.source.derivative,
+        migrationLevelIds: migrationPlanLevelIds,
       });
       const entry = {
         benchmarkVersion: candidate.benchmarkVersion,
@@ -79,6 +82,7 @@ export async function migrateExistingOutputs({ root = ROOT, version, inventoryPa
         sourcePresentInPrimaryWorktree: candidate.source.presentInPrimaryWorktree,
         sourceBytesAgreeWithPayload: candidate.source.bytesAgreeWithPayload,
         ...(candidate.source.derivative ? { derivative: candidate.source.derivative } : {}),
+        floor: await migrationFloorCheck(repositoryRoot, path.join(repositoryRoot, candidate.privateRunDirectory), result.checks),
         promotionCommit: result.promotionCommit,
       };
       upsertMigrationEntry(migration.entries, entry);
@@ -319,6 +323,24 @@ function upsertMigrationEntry(entries, entry) {
   const index = entries.findIndex((candidate) => candidate.runId === entry.runId);
   if (index < 0) entries.push(entry);
   else entries[index] = entry;
+}
+
+async function migrationFloorCheck(root, runDirectory, checks = []) {
+  const check = checks.find((candidate) => candidate.id === 'floor');
+  if (!check) return null;
+  const log = await optionalJson(path.join(runDirectory, 'promotion-checks', 'floor.json'));
+  return {
+    status: check.status ?? (check.exitCode === 0 ? 'passed' : 'failed'),
+    command: check.command,
+    result: {
+      exitCode: check.exitCode,
+      stdout: log?.stdout ?? null,
+      stderr: log?.stderr ?? null,
+      stdoutSha256: check.stdoutSha256,
+      stderrSha256: check.stderrSha256,
+    },
+    note: check.note ?? (check.exitCode === 0 ? 'Floor check passed during migration.' : 'Floor check failed during migration.'),
+  };
 }
 
 async function optionalJson(filePath) {
