@@ -204,6 +204,11 @@ async function testHistoricalFloorFailureAndPartialMigrationRecovery() {
     await writeText(levelPath, '# Rehearsal Level Derivative\n\nThis accepted source maintenance is retained.\n');
     await git(partial.root, ['add', levelPath]);
     await git(partial.root, ['commit', '-qm', 'retain rehearsal derivative']);
+    const manifestPath = path.join(partial.runDirectory, 'manifest.json');
+    const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+    delete manifest.theme.id;
+    delete manifest.output.title;
+    await writeJson(manifestPath, manifest);
     const inventory = await buildMigrationInventory({ root: partial.root, acceptedDiverged: [partial.levelId] });
     const record = inventory.records.find((candidate) => candidate.runId === partial.runId);
     await assert.rejects(() => promoteRun({ root: partial.root, runDirectory: partial.runDirectory, migration: true, acceptDiverged: record.source.derivative, migrationLevelIds: [partial.levelId], interruptAfter: 'extraction' }), (error) => error instanceof PromotionInterrupted);
