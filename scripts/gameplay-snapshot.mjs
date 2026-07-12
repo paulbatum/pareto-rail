@@ -191,9 +191,9 @@ async function composeSheet(browser, captures, options) {
   const page = await browser.newPage();
   try {
     const dataUrl = await page.evaluate(
-      async ({ captures: serializableCaptures, thumbWidth, sourceWidth, sourceHeight, columns, gutter }) => {
+      async ({ captures: serializableCaptures, thumbWidth, sourceWidth, sourceHeight, columns, gutter, showLabels }) => {
         const thumbHeight = Math.round(thumbWidth * (sourceHeight / sourceWidth));
-        const labelHeight = 24;
+        const labelHeight = showLabels ? 24 : 0;
         const rows = Math.ceil(serializableCaptures.length / columns);
         const canvas = document.createElement('canvas');
         canvas.width = columns * thumbWidth + (columns + 1) * gutter;
@@ -224,11 +224,13 @@ async function composeSheet(browser, captures, options) {
           const x = gutter + column * (thumbWidth + gutter);
           const y = gutter + row * (thumbHeight + labelHeight + gutter);
           context.drawImage(images[index], x, y, thumbWidth, thumbHeight);
-          context.fillStyle = 'rgba(2, 4, 10, 0.82)';
-          context.fillRect(x, y + thumbHeight, thumbWidth, labelHeight);
-          context.fillStyle = '#d8f6ff';
-          const labelPart = capture.label ? ` (${capture.label})` : '';
-          context.fillText(`${capture.time.toFixed(1)}s${labelPart} · ${capture.fidelity} · ${capture.state}`, x + 8, y + thumbHeight + labelHeight / 2);
+          if (showLabels) {
+            context.fillStyle = 'rgba(2, 4, 10, 0.82)';
+            context.fillRect(x, y + thumbHeight, thumbWidth, labelHeight);
+            context.fillStyle = '#d8f6ff';
+            const labelPart = capture.label ? ` (${capture.label})` : '';
+            context.fillText(`${capture.time.toFixed(1)}s${labelPart} · ${capture.fidelity} · ${capture.state}`, x + 8, y + thumbHeight + labelHeight / 2);
+          }
         });
 
         return canvas.toDataURL('image/png');
@@ -239,7 +241,8 @@ async function composeSheet(browser, captures, options) {
         sourceWidth: options.width,
         sourceHeight: options.height,
         columns: options.columns ?? defaultColumns(captures.length),
-        gutter: DEFAULT_GUTTER,
+        gutter: options.noBorders ? 0 : DEFAULT_GUTTER,
+        showLabels: options.showLabels,
       },
     );
     if (typeof dataUrl !== 'string') throw new Error('Sheet composition did not return a data URL');
@@ -269,6 +272,8 @@ function parseArgs(argv) {
     columns: undefined,
     atsRaw: [],
     sections: false,
+    showLabels: true,
+    noBorders: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -305,6 +310,16 @@ function parseArgs(argv) {
 
     if (key === 'start-screen') {
       parsed.startScreen = true;
+      continue;
+    }
+
+    if (key === 'no-labels') {
+      parsed.showLabels = false;
+      continue;
+    }
+
+    if (key === 'no-borders') {
+      parsed.noBorders = true;
       continue;
     }
 
