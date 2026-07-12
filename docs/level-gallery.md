@@ -107,129 +107,6 @@ Inspection captures: `carriage-8` (word combos, bar 8), `carriage-16` (midnight 
 
 ---
 
-# Downpour 7SNM
-
-A sixty-second courier run from a storm ceiling down tower faces, through the avenue and amber undercity, over a flooded canal, and up a security citadel with the city's hunter-gunship closing behind.
-
-## Visual language
-Rain-grey black and deep blue-slate megastructures, close-passing girders and tunnel ribs, cyan and magenta sign cuts, sodium-amber undercity light, and hazard-white security silhouettes. Acid green belongs exclusively to the hunter-gunship.
-
-## Musical language
-176 BPM drum and bass: rain-noise and sparse pads gather before the first plunge, rolling breaks drive both descents, half-time bass announces the hunt, and the cloudbreak strips back to a near-silent high pad. Locks, volleys, hits, and kills are tuned into the live harmony, with kills playing a section-specific melodic lane.
-
-## Mechanical signature
-Four distinct city hunters—formation-flying interceptors, wall-crawling turrets, canal skimmers, and staged citadel sentinels—lead into an eighteen-lock gunship pursuit. Two speed-profile plunges and a final ascent land on musical boundaries.
-
-## What to read
-- `src/levels/downpour-7snm/index.ts`
-- `src/levels/downpour-7snm/gameplay.ts`
-- `src/levels/downpour-7snm/audio.ts`
-- `src/levels/downpour-7snm/visuals/index.ts`
-
-## Status & notes
-Showcase build. Inspection markers: `firstPlunge` (bar 4), `secondDescent` (bar 20), `hunterReveal` (bar 30), and `cloudbreak` (bar 42).
-
----
-
-# Downpour HLHT
-
-Downpour is a 60-second nocturne for a hunted courier: a rain-slashed plunge from tower rooflines into sodium undercity, through a flooded canal, and up through the storm ceiling with the hunter-gunship in pursuit.
-
-## Visual language
-Rain-grey towers and blue-slate structure rush close to the rail. Cyan/magenta window strips and signage cut through the weather, sodium amber marks the undercity, and acid green is reserved for the hunter alone. Security hardware is hard-edged, readable white.
-
-## Musical language
-176 BPM drum and bass: sparse rain-pad prelude, rolling breaks for both descents, a half-time hunter phrase, and a near-silent cloudbreak. Locks, volleys, impacts, kills, misses, damage, and rejected releases are all voiced from the same wet electrical palette.
-
-## Mechanical signature
-Four silhouettes with four motion grammars: swooping courier interceptors, braced wall turrets, canal-skating skiffs, and a staged hunter-gunship. Two rail-speed drops land on musical downbeats; the final gunship encounter resolves into the release above the clouds.
-
-## What to read
-- `src/levels/downpour-hlht/index.ts`
-- `src/levels/downpour-hlht/gameplay.ts`
-- `src/levels/downpour-hlht/audio.ts`
-- `src/levels/downpour-hlht/visuals/index.ts`
-
-## Status & notes
-Inspection captures: `firstDrop` (towerfall), `secondDrop` (canal descent), `hunt` (gunship phase), and `release` (cloudbreak). Human playtest should first check that rain remains readable with bloom at zero and that the green gunship never gets lost against city lights.
-
----
-
-# Downpour OU7E
-
-A 60-second courier escape through a rain-lashed neon megacity. The route drops from the storm ceiling down tower faces and wet avenues, through a drowned undercity canal, and into a security citadel where an acid-green hunter gunship takes the sky.
-
-## Visual language
-Ink-black storm ceiling, moving cyan rain, tower-face girders, avenue skyways and trains, tunnel ribs, a moonlit flooded canal, and a citadel gate. Pink security hardware contrasts with a single acid-green pursuer.
-
-## Musical language
-176 BPM drum-and-bass moves from a sparse rain opening through two lightning-drop breaks, halftime undercity pressure, a near-silent moonlit canal release, and a hostile sawtooth pursuit. Player notes snap to the sixteenth grid.
-
-## Mechanical signature
-Three-point courier hull; hovering hunter drones, lateral skater interceptors, fixed security turrets, then a three-stage gunship chase finale.
-
-## What to read
-- `src/levels/downpour-ou7e/index.ts`
-- `src/levels/downpour-ou7e/gameplay.ts`
-- `src/levels/downpour-ou7e/audio.ts`
-- `src/levels/downpour-ou7e/visuals/index.ts`
-
-## Status & notes
-Showcase level. First human pass should check rain density and gunship readability with bloom disabled.
-
----
-
-# Downpour F2E6
-
-A hunted courier drone racing a rain-lashed neon megacity: down the storm-lit faces of its towers, through signage-lit avenue canyons and a sodium tube, along a flooded canal, and up the security citadel with the city's own gunship in pursuit.
-
-## Visual language
-Rain-grey black and blue-slate city geometry, lit by cyan/magenta signage, sodium-amber undercity light, and hazard-white security forces, with acid green reserved for the gunship alone. Recycling rain streaks read as the level's constant speed cue; two cloud decks (a storm ceiling and a break above it) bracket the run in lightning and, at the end, moonlight.
-
-## Musical language
-176 BPM drum & bass in D minor. Sparse pad and weather noise before the first plunge, a rolling break through the streets and the tube, a half-time drop into canal menace that escalates through the citadel hunt, and a near-silent moonlit outro. Locks, fire, hits, and kills are pitched from the live chord and section-tinted; kills walk a hidden melodic lane per movement.
-
-## Mechanical signature
-A 60-second run with a 3-point hull, four enemy kinds — thin swept-wing interceptors, bolted turret sentries that fire homing bolts, flat canal-skimming trawlers, and a 3-stage hunter-gunship boss — choreographed against two musical drops (the tower plunge and the undercity plunge) and a half-time-to-hunt escalation into the boss fight.
-
-## What to read
-- `src/levels/downpour-f2e6/index.ts`
-- `src/levels/downpour-f2e6/gameplay.ts`
-- `src/levels/downpour-f2e6/timing.ts`
-- `src/levels/downpour-f2e6/audio.ts`
-- `src/levels/downpour-f2e6/audio-voices.ts`
-- `src/levels/downpour-f2e6/visuals/index.ts`
-- `src/levels/downpour-f2e6/visuals/environment.ts`
-
-## Status & notes
-First pass, built from the standing brief and the Downpour theme assignment. Verified by typecheck, build, check:scope, check:floor (simulate, occlusion, perf), and trace:audio in this environment; WebGPU visuals and the music mix have not been confirmed by a human playtest — see handoff notes.
-
----
-
-# Downpour WPXK
-
-A hunted courier drone flees through a rain-lashed neon megacity at night: off the storm ceiling, down a tower face, through avenue canyons and the sodium-lit undercity, along a flooded canal, and up a security citadel into moonlight — with the city's acid-green hunter-gunship on its tail. Rain rides the camera the whole way, and lightning cracks on the same bars the score does.
-
-## Visual language
-Wet slate and ink towers lit by cyan and magenta signage, sodium-amber tunnel ribs and passing trains, hazard-white security hardware, and a single reserved acid green for the gunship. The player's reticle, locks, and shots are cold moonlight; letters are neon signage; kills over the canal splash.
-
-## Musical language
-176 BPM drum & bass in C minor, 44 bars = 60 seconds: weather noise and glassy pads at the ceiling, rolling breaks from the plunge, a darker roller in the undercity, half-time menace on the canal (Cm–Db under the hunt), a 303-style acid lead reserved for the gunship, and a near-silent moonlit summit. Authored lightning bars strike in the music and the sky at once; kills walk hidden melodic lanes.
-
-## Mechanical signature
-A 60-second run with a 3-point hull and a variable-speed rail whose two great descents are the drops. Spotter-drone wheels, banking skimmer crossings, telegraphed sentry pods firing interceptable tracers, two-stage armored enforcers, and a three-stage gunship boss that shadows the canal untouchable, engages on the climb, and escapes if not downed by the summit.
-
-## What to read
-- `src/levels/downpour-wpxk/timing.ts`
-- `src/levels/downpour-wpxk/gameplay.ts`
-- `src/levels/downpour-wpxk/audio.ts`
-- `src/levels/downpour-wpxk/visuals/index.ts`
-
-## Status & notes
-Built to the standing brief as a one-shot showcase; simulation, occlusion, and perf gates pass. Visual and audio quality still needs a human playtest (WSL2 cannot render WebGPU headless).
-
----
-
 # Rush
 
 Rush is a night flight down a city street canyon built to test how fast this engine can feel. The speed rig is still the point, but the velocity now reads through asphalt lane dashes, tower faces, streetlights, gantries, traffic, FOV pulls, and the shared depth-reprojection blur.
@@ -252,3 +129,27 @@ A 30-second speed-feel testbed with a long rail, authored speed surges, simple p
 
 ## Status & notes
 Technical test fixture demonstrating high-speed engine features (e.g., rail pacing); however, as a stripped-down, limited testbed, it is excluded from the level picker and must not be used as a reference for level design quality or distinctiveness.
+
+---
+
+# Skyhook
+
+Ride an exposed climber car from the storm layer to an orbital station while the planet falls away beneath you. The white-and-hazard-orange tether is the visual constant; everything around it changes from rain-grey cloud to blue glare, indigo air, black space, and finally the station mouth.
+
+## Visual language
+Matte white utility paneling and hazard orange against sky-driven color. Cloud chunks and maintenance collars stream down the tether, stars emerge as fog thins, the curved planet occupies the lower world, and the final tether clamp grows entirely through its descent toward the car.
+
+## Musical language
+120 BPM in open fifths: wind-noise percussion and a broad low pulse at the bottom shed layers through cloudbreak and thin air. The clamp restores a spare industrial pulse; docking removes it again until only two long sine tones remain. Locks, hits, stage breaks, and kills are transport-quantized notes from the live harmony.
+
+## Mechanical signature
+A 60-second, four-hull ascent with wind-riding sailwings, car-seeking grapplers, tether-orbiting vacuum drones, and a seven-lock three-stage clamp boss. Grapplers damage the shared climber hull if they attach; the clamp destroys it outright if it reaches the car.
+
+## What to read
+- `src/levels/skyhook-9uib/index.ts`
+- `src/levels/skyhook-9uib/gameplay.ts`
+- `src/levels/skyhook-9uib/audio.ts`
+- `src/levels/skyhook-9uib/visuals/index.ts`
+
+## Status & notes
+Showcase build. Inspection markers: `cloudbreak` (bar 8), `thinAir` (bar 16), `clampfall` (bar 21), and `docking` (bar 27). Human playtest should first confirm the planet limb reads below the car, the clamp remains targetable throughout its approach, and the sparse upper-atmosphere mix still carries player notes.
