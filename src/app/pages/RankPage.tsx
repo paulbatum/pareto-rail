@@ -22,13 +22,9 @@ export function RankPage({ route, onNavigate }: RankPageProps) {
   const [, refresh] = useState(0);
 
   useEffect(() => {
-    let active = true;
-    void createRankController().then((created) => {
-      if (!active) return;
-      controllerRef.current = created;
-      setController(created);
-    });
-    return () => { active = false; };
+    const created = createRankController();
+    controllerRef.current = created;
+    setController(created);
   }, []);
 
   useEffect(() => {
@@ -72,7 +68,7 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
 
   return (
     <section className="page-panel rank-panel">
-      <p className="eyebrow">Rank <span className="rehearsal-badge">DEV REHEARSAL</span></p>
+      <p className="eyebrow">Rank</p>
       <h1>{assignment.theme.title}</h1>
       <p className="lede">{assignment.theme.summary}</p>
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
@@ -134,11 +130,10 @@ function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavi
   return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} backPath="/rank" backLabel="Matchup" launchContext={{ source: 'rank', levelId: launch.levelId, mode: 'benchmark' }} showLevelPicker={false} onNavigate={onNavigate} onRunEnd={onRunEnd} runEndContent={<BenchmarkInvitation side={launch.side} onNavigate={onNavigate} />} />;
 }
 
-async function createRankController(): Promise<RankController> {
-  if (!import.meta.env.DEV) return new RankController();
-  const { createDevelopmentFixtureApi, createFixtureCatalog, playableLevelId } = await import('../../benchmark/fixtures');
-  const catalog = createFixtureCatalog('development');
-  return new RankController({ api: createDevelopmentFixtureApi(), resolvePlayable: (ref) => playableLevelId(ref, catalog) });
+function createRankController(): RankController {
+  // Rehearsal levels are retained privately for benchmark provenance, not exposed
+  // through the participant-facing ranking flow.
+  return new RankController();
 }
 
 function BenchmarkInvitation({ side, onNavigate }: { side: 'a' | 'b'; onNavigate: (path: string) => void }) {

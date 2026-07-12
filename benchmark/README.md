@@ -12,7 +12,7 @@ This directory holds the inputs and records for the raild level-generation bench
 - `rankings/` contains immutable blind-ranking snapshots locked before their slot mappings are opened.
 - `manifests/` contains redacted full run records published after unblinding.
 
-During generation, keep the append-only randomized run schedule (which is also the slot-to-configuration key), raw logs, and complete run records under `benchmark/private/`. That directory is ignored by Git. Do not publish a full manifest until the ranking snapshot containing that slot is locked because a full manifest necessarily reveals its configuration, model, recipe, and output branch.
+During generation, keep the append-only randomized run schedule (which is also the slot-to-configuration key), raw logs, and complete run records under `benchmark/private/`. Retired benchmark source outputs may also be kept under `benchmark/private/outputs/`; they are ignored by Git and are not application level modules. Do not publish a full manifest until the ranking snapshot containing that slot is locked because a full manifest necessarily reveals its configuration, model, recipe, and output branch.
 
 The controller follows `benchmark/controller/runbook.md`; coding agents do not receive that administrative prompt. The standing level-building brief remains `docs/level-brief.md`. `benchmark/prompts/level-assignment.md` adds benchmark-wide identity, duration, and polish expectations without duplicating the brief. At protocol freeze, the release record identifies the materials commit, entrant-baseline commit, and shared artifact hashes. Each configuration registration separately pins its orchestration runner, harness executor, recipe, execution settings, and configuration commit. Cost is measured after the run by ccusage and is not a pinned per-configuration input. Entrant worktree access follows the controller runbook.
 
@@ -89,7 +89,7 @@ Archiving moves only the private run record. It never removes entrant or payload
 npm run benchmark:manage -- prune --run <run-id> --confirm <run-id>
 ```
 
-Never remove a level directory or reset the registry in the primary repository as benchmark cleanup.
+Routine benchmark management does not remove level directories or reset the registry in the primary repository. For an intentional retirement, preserve any needed source output under `benchmark/private/outputs/` first, then remove it from the application tree and regenerate the gallery.
 
 ## Reconstructing an incorrectly cleaned worktree
 

@@ -13,7 +13,7 @@ npm run dev
 
 Requires a WebGPU-capable browser (recent Chrome/Edge). Esc pauses and opens volume/glow/fullscreen settings. On iPhone/iPad Safari, use Share → Add to Home Screen for the closest fullscreen experience.
 
-Development mode exposes the five passing Downpour rehearsal entrants through the real local comparison flow. Production builds exclude the rehearsal fixture and show a provisional Rank page until an eligible public catalog and backend are connected. Built-in levels live under `src/levels/`; promoted benchmark outputs are discovered from self-contained directories under `src/benchmark-levels/`.
+The Rank page stays provisional until an eligible public catalog and backend are connected; rehearsal levels are retained only in ignored benchmark records and are not playable or rankable in the app. Built-in levels live under `src/levels/`; promoted benchmark outputs are discovered from self-contained directories under `src/benchmark-levels/`.
 
 ## Tools
 
@@ -23,6 +23,5 @@ npm run snapshot:gameplay -- --level crystal-corridor --time 12
 npm run snapshot:gameplay -- --level helios --thumbnails 8
 npm run snapshot:gameplay -- --level helios --sheet --times 4,12,24,48
 npm run snapshot:gameplay -- --level helios --time 12 --projectiles
-npm run benchmark:catalog -- validate --source benchmark/public/fixtures/downpour-rehearsal.json --mode development --fixture
-npm run benchmark:thumbnails -- --level downpour-hlht --entrant entrant-a --dry-run
+npm run benchmark:catalog -- validate --source path/to/catalog.json --mode production
 ```

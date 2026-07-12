@@ -359,32 +359,9 @@ Before voting, thumbnails may appear only as Level A and Level B comparison aids
 
 ## Development and rehearsal mode
 
-When `import.meta.env.DEV` is true, make the five passing integrated Downpour rehearsal levels available to the comparison scheduler:
+Downpour rehearsal outputs are retained under the ignored `benchmark/private/` directory for provenance and inspection. They are not discovered by the application catalog, exposed by the Rank page, or included in player-facing comparisons. The failed `downpour-xgz7` output is retained there alongside the five promoted rehearsal outputs, but remains non-playable.
 
-```text
-downpour-7snm
-downpour-hlht
-downpour-ou7e
-downpour-f2e6
-downpour-wpxk
-```
-
-The failed `downpour-xgz7` rehearsal remains excluded because it did not pass all gates and is not integrated as playable.
-
-Development behavior should:
-
-- expose Downpour as an explicitly labeled rehearsal theme;
-- schedule all five passing entrants across binary comparisons;
-- exercise theme exhaustion and unseen-pair fallback;
-- use the real four-choice vote and reveal interfaces;
-- reveal the known rehearsal model/workflow/cost metadata after voting;
-- write to a development API/database namespace or an in-memory/local fixture server;
-- visibly mark leaderboard and personal-curve data as rehearsal data; and
-- make it impossible for development submissions to enter eligible production aggregates.
-
-Do not rely only on a manually selected `?level=` URL for testing. The development catalog should exercise the same state machine and API contracts as production.
-
-Production builds must exclude rehearsal pairings by construction, not merely hide them with CSS. A build-time catalog validation should fail if an ineligible or rehearsal entrant appears in an eligible pool.
+Any future development fixture must be explicitly separate from the application level catalog and must be impossible to enter eligible production aggregates. Production builds must exclude rehearsal pairings by construction, not merely hide them with CSS.
 
 ## Frontend architecture
 
@@ -604,7 +581,7 @@ Keep documentation responsibilities separated:
 - Local browser history powers resumption and the personal view.
 - Anonymous votes are submitted to a backend for aggregate results.
 - The personal Pareto curve appears after three comparisons.
-- Five passing Downpour rehearsals populate development comparison mode only.
+- Rehearsal outputs remain private and excluded from development comparison mode.
 - Four-frame generated gameplay sheets are used as comparison cards.
 
 ## Deferred implementation choices
