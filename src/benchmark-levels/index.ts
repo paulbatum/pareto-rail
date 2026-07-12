@@ -7,7 +7,8 @@ export * from './validation';
 
 // Descriptors are intentionally eager so menus and catalogs never need to load
 // generated gameplay. The corresponding index modules stay lazy until a level
-// is actually launched.
+// is actually launched. This is deliberately a direct-child glob: nested
+// test-fixtures are not promoted catalog entries.
 const descriptorAssets = import.meta.glob<BenchmarkLevelDescriptor>('./*/level.json', {
   eager: true,
   import: 'default',

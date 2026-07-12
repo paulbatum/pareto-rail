@@ -10,10 +10,12 @@ Use separate source roots:
 
 ```text
 src/levels/                 # Built-in levels
-src/benchmark-levels/       # Promoted benchmark outputs
+src/benchmark-levels/       # Promoted benchmark outputs only
 ```
 
-Keep the built-in registry human-maintained. Do not add one shared mutable registry entry per benchmark output. Instead, implement one permanent benchmark registry module that discovers level directories through Vite's `import.meta.glob` support.
+Only direct child directories of `src/benchmark-levels/` are production outputs. Keep discovery fixtures under `src/benchmark-levels/test-fixtures/`; they must remain outside the production catalog and gallery.
+
+Keep the built-in registry human-maintained. Do not add one shared mutable registry entry per benchmark output. Instead, implement one permanent benchmark registry module that discovers direct-child level directories through Vite's `import.meta.glob` support. The production benchmark catalog is empty until a real output is promoted.
 
 Each benchmark level must have a lightweight descriptor, preferably `level.json`, containing at least its public level id and title. Load descriptors eagerly for menus and catalogs while keeping full level modules lazy.
 
@@ -41,13 +43,15 @@ Each benchmark level must have a lightweight descriptor, preferably `level.json`
 - Do not infer ranking eligibility from names, themes, or an optional `kind` field.
 - Keep procedural-asset constraints intact.
 - Do not migrate existing generated levels in this brief; establish and test the destination first.
+- Test fixtures must not be eligible for browsing or ranking, appear in the generated gallery, or be included in the production Vite glob.
 
 ## Verification
 
 - `npm run typecheck`
 - `npm run build`
 - Existing built-in level tests and floor checks still pass.
-- A small fixture benchmark directory is discovered without editing a central registry.
+- The production benchmark catalog and gallery are empty before the first real output is promoted.
+- A small fixture benchmark directory in the dedicated test-fixtures location is discovered by focused tests without editing a central registry.
 - Removing its descriptor or module produces a clear validation failure.
 - Duplicate built-in/benchmark ids produce a clear validation failure.
 

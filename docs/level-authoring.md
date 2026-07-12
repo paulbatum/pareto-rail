@@ -43,7 +43,7 @@ A level task should only touch `src/levels/<id>/`, one registry line in `src/lev
 
 ### Promoting a benchmark output
 
-Benchmark outputs use the separate `src/benchmark-levels/<id>/` domain. Add a `level.json` descriptor with the public `id` and `title`, an `index.ts` exporting exactly one `LevelDefinition`, and a `level.md` identity card. The permanent discovery module associates the matching files automatically; do not add benchmark outputs to `src/levels/index.ts`. The descriptor id must equal its directory name, and the loaded definition must use the descriptor's id and title.
+Benchmark outputs use the separate `src/benchmark-levels/<id>/` domain. Add a `level.json` descriptor with the public `id` and `title`, an `index.ts` exporting exactly one `LevelDefinition`, and a `level.md` identity card. The permanent discovery module associates the matching direct-child files automatically; do not add benchmark outputs to `src/levels/index.ts`. The descriptor id must equal its directory name, and the loaded definition must use the descriptor's id and title. Test-only benchmark fixtures belong under `src/benchmark-levels/test-fixtures/`; they are intentionally excluded from discovery and the gallery.
 
 ## Handoff checks
 

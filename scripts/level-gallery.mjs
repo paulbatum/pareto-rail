@@ -1,6 +1,8 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
+const BENCHMARK_TEST_FIXTURES = 'test-fixtures';
+
 export async function buildGallery(root) {
   const builtIns = await readBuiltInCards(root);
   const benchmarks = await readBenchmarkCards(root);
@@ -36,7 +38,7 @@ async function readBenchmarkCards(root) {
     throw error;
   }
   const cards = [];
-  for (const child of children.filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const child of children.filter((entry) => entry.isDirectory() && entry.name !== BENCHMARK_TEST_FIXTURES).sort((a, b) => a.name.localeCompare(b.name))) {
     const directory = child.name;
     const directoryRoot = path.join(benchmarkRoot, directory);
     const descriptorPath = path.join(directoryRoot, 'level.json');

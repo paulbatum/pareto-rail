@@ -1,4 +1,4 @@
-import type { LevelDefinition } from '../../engine/types';
+import type { LevelDefinition } from '../../../engine/types';
 
 /** A tiny procedural module used to keep discovery coverage in the repository. */
 export const catalogFixtureLevel: LevelDefinition = {
