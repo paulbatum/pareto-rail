@@ -30,7 +30,6 @@ export const levelMetadatas: LevelMetadata[] = [
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'], kind: 'playable' },
   { id: 'rezdle', title: 'Rezdle', kind: 'playable' },
   { id: 'mass-driver-vyxj', title: 'Mass Driver', kind: 'playable' },
-  { id: 'downpour-wpxk', title: 'Downpour WPXK', kind: 'playable' },
   { id: 'rush', title: 'Rush', kind: 'technical' },
 ];
 
@@ -40,7 +39,6 @@ const builtInLoaders: Record<string, () => Promise<LevelDefinition>> = {
   'prism-bloom': async () => (await import('./prism')).prismBloomLevel,
   rezdle: async () => (await import('./rezdle')).rezdleLevel,
   'mass-driver-vyxj': async () => (await import('./mass-driver-vyxj')).massDriverVyxjLevel,
-  'downpour-wpxk': async () => (await import('./downpour-wpxk')).downpourWpxkLevel,
   rush: async () => (await import('./rush')).rushLevel,
 };
 
