@@ -10,11 +10,44 @@ const levelsRoot = path.join(root, 'src/benchmark-levels');
 const outputPath = path.join(levelsRoot, '..', 'benchmark', 'rank-catalog.json');
 
 const configurationLabels = {
-  'claude-fable-5-high': { modelName: 'Claude Fable 5', workflowName: 'solo', featured: true },
-  'claude-fable-5-opus-delegation': { modelName: 'Claude Fable 5', workflowName: 'delegated' },
-  'codex-sol-high': { modelName: 'GPT-5.6 Sol', workflowName: 'solo', featured: true },
-  'codex-sol-terra-delegation': { modelName: 'GPT-5.6 Sol', workflowName: 'delegated' },
+  'claude-fable-5-high': {
+    modelName: 'Claude Fable 5',
+    workflowName: 'solo',
+    primaryModel: 'claude-fable-5',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+    featured: true,
+  },
+  'claude-fable-5-opus-delegation': {
+    modelName: 'Claude Fable 5',
+    workflowName: 'delegated',
+    primaryModel: 'claude-fable-5',
+    effort: 'high',
+    delegateModel: 'opus',
+    delegateEffort: 'high',
+    workflowSummary: 'Fable remains the planner and reviewer while an Opus subagent implements inside the same unattended Claude Code session.',
+  },
+  'codex-sol-high': {
+    modelName: 'GPT-5.6 Sol',
+    workflowName: 'solo',
+    primaryModel: 'gpt-5.6-sol',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+    featured: true,
+  },
+  'codex-sol-terra-delegation': {
+    modelName: 'GPT-5.6 Sol',
+    workflowName: 'delegated',
+    primaryModel: 'gpt-5.6-sol',
+    effort: 'high',
+    delegateModel: 'gpt-5.6-terra',
+    delegateEffort: 'high',
+    workflowSummary: 'Sol remains the planner and reviewer while a Terra subagent implements inside the same unattended Codex session.',
+  },
 };
+
+const delegationIntroduction = 'Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.';
+const delegationResponsibility = 'You remain fully responsible for the quality of the final product. Take an active role in refining the outputs from the subagent, not just passive review.';
 
 function readJson(filePath) {
   try {
@@ -45,7 +78,7 @@ function promotedDirectory(levelId) {
   return fs.existsSync(directory) && fs.statSync(directory).isDirectory();
 }
 
-function generationCost(assignment) {
+function runManifest(assignment) {
   const manifestPath = path.join(root, 'benchmark/private/runs', assignment.runId, 'manifest.json');
   if (!fs.existsSync(manifestPath)) {
     throw new Error(`Promoted level ${assignment.levelId} is missing its run manifest: ${path.relative(root, manifestPath)}`);
@@ -54,6 +87,13 @@ function generationCost(assignment) {
   if (!Array.isArray(manifest.stages) || manifest.stages.length === 0) {
     throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} has no stages with pricing.`);
   }
+  if (!Array.isArray(manifest.cost?.models) || manifest.cost.models.length === 0) {
+    throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} has no per-model usage.`);
+  }
+  return manifest;
+}
+
+function generationCost(assignment, manifest) {
   let total = 0;
   for (const [index, stage] of manifest.stages.entries()) {
     const cost = stage?.pricing?.costUsd;
@@ -65,7 +105,34 @@ function generationCost(assignment) {
   return total;
 }
 
-function entrantFor(assignment, cost) {
+function runMetrics(assignment, manifest, labels) {
+  const generationWallTimeSeconds = Math.max(...manifest.stages.map((stage) => stage.wallTimeSeconds ?? 0));
+  const totalWallTimeSeconds = manifest.timing?.wallTimeSeconds;
+  if (!Number.isFinite(generationWallTimeSeconds) || !Number.isFinite(totalWallTimeSeconds)) {
+    throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} is missing timing data.`);
+  }
+  const firstModel = manifest.cost.models[0]?.modelName;
+  const models = manifest.cost.models.map((model) => ({
+    modelName: model.modelName,
+    role: labels.workflowName === 'solo' ? 'solo' : model.modelName === firstModel ? 'orchestrate' : 'implement',
+    inputTokens: model.inputTokens ?? 0,
+    outputTokens: model.outputTokens ?? 0,
+    ...(model.cacheReadTokens !== undefined ? { cacheReadTokens: model.cacheReadTokens } : {}),
+    ...(model.cacheWriteTokens !== undefined ? { cacheWriteTokens: model.cacheWriteTokens } : {}),
+    ...(model.reasoningTokens !== undefined ? { reasoningTokens: model.reasoningTokens } : {}),
+    ...(model.costUsd !== undefined ? { costUsd: Number(model.costUsd.toFixed(8)) } : {}),
+  }));
+  const incomplete = manifest.stages.find((stage) => stage.result !== 'completed');
+  return {
+    generationWallTimeSeconds: Number(generationWallTimeSeconds.toFixed(3)),
+    totalWallTimeSeconds: Number(totalWallTimeSeconds.toFixed(3)),
+    result: incomplete?.result ?? 'completed',
+    orchestrationTreatment: manifest.cost.orchestrationTreatment,
+    models,
+  };
+}
+
+function entrantFor(assignment, cost, manifest) {
   const descriptorPath = path.join(levelsRoot, assignment.levelId, 'level.json');
   const descriptor = readJson(descriptorPath);
   if (descriptor.id !== assignment.levelId) {
@@ -88,6 +155,7 @@ function entrantFor(assignment, cost) {
     modelName: labels.modelName,
     workflowName: labels.workflowName,
     generationCost: Number(cost.toFixed(8)),
+    run: runMetrics(assignment, manifest, labels),
     thumbnailPath: descriptor.contentImages.hero,
     ...(labels.featured ? { featured: true } : {}),
   };
@@ -100,9 +168,11 @@ function main() {
   // Validate every already-promoted assignment before applying theme completeness.
   // This prevents a bad promoted entry from being silently hidden by an incomplete
   // theme while still allowing not-yet-promoted assignments to remain unpublished.
-  const costs = new Map();
+  const runData = new Map();
   for (const assignment of schedule.assignments) {
-    if (promotedDirectory(assignment.levelId)) costs.set(assignment.levelId, generationCost(assignment));
+    if (!promotedDirectory(assignment.levelId)) continue;
+    const manifest = runManifest(assignment);
+    runData.set(assignment.levelId, { manifest, cost: generationCost(assignment, manifest) });
   }
 
   const assignmentsByTheme = new Map();
@@ -121,12 +191,21 @@ function main() {
     if (assignments.some((assignment) => !promotedDirectory(assignment.levelId))) continue;
     themes.push(parseTheme(themeId));
     for (const assignment of [...assignments].sort((left, right) => left.levelId.localeCompare(right.levelId))) {
-      entrants.push(entrantFor(assignment, costs.get(assignment.levelId)));
+      const data = runData.get(assignment.levelId);
+      entrants.push(entrantFor(assignment, data.cost, data.manifest));
     }
   }
 
+  const configurations = Object.entries(configurationLabels).map(([id, labels]) => ({
+    id,
+    ...labels,
+    ...(labels.delegateModel ? {
+      delegationGuidance: `${delegationIntroduction}\n\nDelegate to model: ${labels.delegateModel} with reasoning level ${labels.delegateEffort}\n\n${delegationResponsibility}`,
+    } : {}),
+  }));
   const catalog = {
     generatedAt: new Date().toISOString(),
+    configurations,
     themes,
     entrants,
   };

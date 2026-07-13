@@ -1,5 +1,47 @@
 {
-  "generatedAt": "2026-07-13T02:27:41.441Z",
+  "generatedAt": "2026-07-13T08:17:51.980Z",
+  "configurations": [
+    {
+      "id": "claude-fable-5-high",
+      "modelName": "Claude Fable 5",
+      "workflowName": "solo",
+      "primaryModel": "claude-fable-5",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
+      "featured": true
+    },
+    {
+      "id": "claude-fable-5-opus-delegation",
+      "modelName": "Claude Fable 5",
+      "workflowName": "delegated",
+      "primaryModel": "claude-fable-5",
+      "effort": "high",
+      "delegateModel": "opus",
+      "delegateEffort": "high",
+      "workflowSummary": "Fable remains the planner and reviewer while an Opus subagent implements inside the same unattended Claude Code session.",
+      "delegationGuidance": "Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.\n\nDelegate to model: opus with reasoning level high\n\nYou remain fully responsible for the quality of the final product. Take an active role in refining the outputs from the subagent, not just passive review."
+    },
+    {
+      "id": "codex-sol-high",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "primaryModel": "gpt-5.6-sol",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
+      "featured": true
+    },
+    {
+      "id": "codex-sol-terra-delegation",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "delegated",
+      "primaryModel": "gpt-5.6-sol",
+      "effort": "high",
+      "delegateModel": "gpt-5.6-terra",
+      "delegateEffort": "high",
+      "workflowSummary": "Sol remains the planner and reviewer while a Terra subagent implements inside the same unattended Codex session.",
+      "delegationGuidance": "Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.\n\nDelegate to model: gpt-5.6-terra with reasoning level high\n\nYou remain fully responsible for the quality of the final product. Take an active role in refining the outputs from the subagent, not just passive review."
+    }
+  ],
   "themes": [
     {
       "id": "mass-driver",
@@ -22,6 +64,23 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 2.99751,
+      "run": {
+        "generationWallTimeSeconds": 638.06,
+        "totalWallTimeSeconds": 655.293,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 209414,
+            "outputTokens": 26764,
+            "cacheReadTokens": 2295040,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 4607
+          }
+        ]
+      },
       "thumbnailPath": "/level-content/mass-driver-7rkv/hero.png",
       "featured": true
     },
@@ -32,6 +91,32 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "delegated",
       "generationCost": 4.4546065,
+      "run": {
+        "generationWallTimeSeconds": 1141.861,
+        "totalWallTimeSeconds": 1214.899,
+        "result": "completed",
+        "orchestrationTreatment": "included",
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "orchestrate",
+            "inputTokens": 213256,
+            "outputTokens": 16342,
+            "cacheReadTokens": 4015104,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 5665
+          },
+          {
+            "modelName": "gpt-5.6-terra",
+            "role": "implement",
+            "inputTokens": 83161,
+            "outputTokens": 16972,
+            "cacheReadTokens": 1712128,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 1760
+          }
+        ]
+      },
       "thumbnailPath": "/level-content/mass-driver-bczy/hero.png"
     },
     {
@@ -41,6 +126,23 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 65.529086,
+      "run": {
+        "generationWallTimeSeconds": 10801.024,
+        "totalWallTimeSeconds": 14063.214,
+        "result": "timed-out",
+        "orchestrationTreatment": "none",
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "solo",
+            "inputTokens": 4367,
+            "outputTokens": 231850,
+            "cacheReadTokens": 44291336,
+            "cacheWriteTokens": 480079,
+            "costUsd": 65.529086
+          }
+        ]
+      },
       "thumbnailPath": "/level-content/mass-driver-vyxj/hero.png",
       "featured": true
     },
@@ -51,6 +153,32 @@
       "modelName": "Claude Fable 5",
       "workflowName": "delegated",
       "generationCost": 53.6681755,
+      "run": {
+        "generationWallTimeSeconds": 3106.863,
+        "totalWallTimeSeconds": 3173.678,
+        "result": "completed",
+        "orchestrationTreatment": "included",
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "orchestrate",
+            "inputTokens": 174,
+            "outputTokens": 93774,
+            "cacheReadTokens": 23206399,
+            "cacheWriteTokens": 355497,
+            "costUsd": 35.006779
+          },
+          {
+            "modelName": "claude-opus-4-8",
+            "role": "implement",
+            "inputTokens": 4377,
+            "outputTokens": 217400,
+            "cacheReadTokens": 16533123,
+            "cacheWriteTokens": 790072,
+            "costUsd": 18.6613965
+          }
+        ]
+      },
       "thumbnailPath": "/level-content/mass-driver-wo4m/hero.png"
     },
     {
@@ -60,6 +188,32 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "delegated",
       "generationCost": 5.137225,
+      "run": {
+        "generationWallTimeSeconds": 915.773,
+        "totalWallTimeSeconds": 975.275,
+        "result": "completed",
+        "orchestrationTreatment": "included",
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "orchestrate",
+            "inputTokens": 258412,
+            "outputTokens": 33549,
+            "cacheReadTokens": 4557056,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 8496
+          },
+          {
+            "modelName": "gpt-5.6-terra",
+            "role": "implement",
+            "inputTokens": 92662,
+            "outputTokens": 12992,
+            "cacheReadTokens": 534528,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 2159
+          }
+        ]
+      },
       "thumbnailPath": "/level-content/skyhook-81u5/hero.png"
     },
     {
@@ -69,6 +223,23 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 2.945069,
+      "run": {
+        "generationWallTimeSeconds": 539.351,
+        "totalWallTimeSeconds": 584.191,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 217345,
+            "outputTokens": 23852,
+            "cacheReadTokens": 2285568,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 3437
+          }
+        ]
+      },
       "thumbnailPath": "/level-content/skyhook-9uib/hero.png",
       "featured": true
     },
@@ -79,6 +250,32 @@
       "modelName": "Claude Fable 5",
       "workflowName": "delegated",
       "generationCost": 83.0224675,
+      "run": {
+        "generationWallTimeSeconds": 4465.95,
+        "totalWallTimeSeconds": 4826.032,
+        "result": "completed",
+        "orchestrationTreatment": "included",
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "orchestrate",
+            "inputTokens": 351,
+            "outputTokens": 170496,
+            "cacheReadTokens": 34141181,
+            "cacheWriteTokens": 1096012,
+            "costUsd": 58.820116
+          },
+          {
+            "modelName": "claude-opus-4-8",
+            "role": "implement",
+            "inputTokens": 1290,
+            "outputTokens": 283249,
+            "cacheReadTokens": 21573278,
+            "cacheWriteTokens": 1012486,
+            "costUsd": 24.2023515
+          }
+        ]
+      },
       "thumbnailPath": "/level-content/skyhook-lkor/hero.png"
     },
     {
@@ -88,6 +285,23 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 71.365946,
+      "run": {
+        "generationWallTimeSeconds": 3987.595,
+        "totalWallTimeSeconds": 4238.032,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "solo",
+            "inputTokens": 265,
+            "outputTokens": 255277,
+            "cacheReadTokens": 48741206,
+            "cacheWriteTokens": 492912,
+            "costUsd": 71.365946
+          }
+        ]
+      },
       "thumbnailPath": "/level-content/skyhook-snxd/hero.png",
       "featured": true
     }

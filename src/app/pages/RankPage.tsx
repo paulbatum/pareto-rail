@@ -4,7 +4,7 @@ import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, RevealPayload, VoteVerdict } from '../../benchmark/types';
 import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { CatalogBenchmarkApi } from '../../benchmark/catalog-api';
-import { rankCatalog } from '../../benchmark/catalog';
+import { rankCatalog, type RankCatalogConfiguration } from '../../benchmark/catalog';
 import { BenchmarkLocalStore, type CompletedMatchup } from '../../benchmark/storage';
 import { RankController, type RankLaunch } from '../rank';
 import { RouteLink } from '../components/RouteLink';
@@ -79,7 +79,7 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
       <p className="rank-note">Two levels were generated independently from this assignment. Model and workflow identities stay hidden until you vote.</p>
       <RankStage controller={controller} state={state} lastUndoneVerdict={controller.lastUndoneVerdict} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
-      {controller.curve.comparisonCount > 0 && <PersonalCurve controller={controller} />}
+      {controller.curve.comparisonCount > 0 && <PersonalCurve controller={controller} onNavigate={onNavigate} />}
     </section>
   );
 }
@@ -119,10 +119,56 @@ function RevealStage({ reveal, onNext }: { reveal: RevealPayload; onNext: () => 
       <h2>Level {side.toUpperCase()}</h2>
       <p className="identity">{entrant.modelName}{entrant.snapshotLabel ? ` · ${entrant.snapshotLabel}` : ''} · {entrant.workflowName}</p>
       <p className="cost"><strong className="cost-value">${entrant.generationCost.toFixed(2)}</strong><span className="cost-label">measured generation cost</span></p>
+      <GenerationDetails entrant={entrant} />
     </article>;
   };
   const comparison = costComparison(reveal);
   return <><div className="reveal-grid">{card('a')}{card('b')}</div><p className="vote-result">You chose <strong>{verdictLabel(reveal.vote.verdict)}</strong>.</p>{comparison && <p className="cost-comparison">{comparison}</p>}<button className="button primary" type="button" onClick={onNext}>Next matchup</button></>;
+}
+
+function GenerationDetails({ entrant }: { entrant: RevealPayload['a'] }) {
+  const published = rankCatalog.entrants.find((candidate) => candidate.levelId === entrant.levelId);
+  const run = entrant.run ?? published?.run;
+  if (!run) return null;
+  const configuration = configurationFor(entrant.configurationId);
+  return <details className="run-details">
+    <summary><span>Generation details</span><span>{formatDuration(run.generationWallTimeSeconds)} · {run.models.length} model{run.models.length === 1 ? '' : 's'}</span></summary>
+    <div className="run-details-body">
+      <dl className="run-facts">
+        <div><dt>Level ID</dt><dd>{entrant.levelId}</dd></div>
+        <div><dt>Generation</dt><dd title={`${run.generationWallTimeSeconds.toLocaleString('en-US')} seconds`}>{formatDuration(run.generationWallTimeSeconds)}</dd></div>
+        <div><dt>Full run</dt><dd title={`${run.totalWallTimeSeconds.toLocaleString('en-US')} seconds`}>{formatDuration(run.totalWallTimeSeconds)}</dd></div>
+        <div><dt>Result</dt><dd>{formatRunResult(run.result)}</dd></div>
+      </dl>
+      <div className="model-usage-list" aria-label="Token usage by model">
+        <p>Token usage by model</p>
+        {run.models.map((model) => <section className="model-usage" key={`${model.modelName}-${model.role}`}>
+          <header><span><strong>{model.modelName}</strong><small>{model.role}</small></span><span>{model.costUsd === undefined ? 'Per-model cost unavailable' : `$${model.costUsd.toFixed(2)}`}</span></header>
+          <dl>
+            <TokenMetric label="Input" value={model.inputTokens} />
+            <TokenMetric label="Cache read" value={model.cacheReadTokens} />
+            <TokenMetric label="Cache write" value={model.cacheWriteTokens} />
+            <TokenMetric label="Output" value={model.outputTokens} />
+            <TokenMetric label="Reasoning" value={model.reasoningTokens} />
+          </dl>
+        </section>)}
+      </div>
+      {configuration && <WorkflowDetails configuration={configuration} />}
+      <p className="run-data-note">Generation time covers the model session. Full run time also includes deterministic setup, sealing, and verification. Cache and reasoning fields are shown separately rather than folded into input or output.</p>
+    </div>
+  </details>;
+}
+
+function TokenMetric({ label, value }: { label: string; value?: number }) {
+  return <div><dt>{label}</dt><dd title={value === undefined ? undefined : value.toLocaleString('en-US')}>{value === undefined ? '—' : formatTokenCount(value)}</dd></div>;
+}
+
+function WorkflowDetails({ configuration }: { configuration: RankCatalogConfiguration }) {
+  return <div className="workflow-details">
+    <p><strong>{configuration.modelName} · {configuration.workflowName}</strong> {configuration.workflowSummary}</p>
+    <dl><div><dt>Primary</dt><dd>{configuration.primaryModel} · {configuration.effort} effort</dd></div>{configuration.delegateModel && <div><dt>Requested delegate</dt><dd>{configuration.delegateModel} · {configuration.delegateEffort} effort</dd></div>}</dl>
+    {configuration.delegationGuidance && <blockquote><span>Delegation guidance</span>{configuration.delegationGuidance}</blockquote>}
+  </div>;
 }
 
 const CURVE_CHART = { width: 720, height: 410, left: 72, right: 24, top: 42, bottom: 68 } as const;
@@ -157,7 +203,7 @@ type CurveDebugChart = {
   frontierPath: string | null;
 };
 
-function PersonalCurve({ controller }: { controller: RankController }) {
+function PersonalCurve({ controller, onNavigate }: { controller: RankController; onNavigate: (path: string) => void }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const curve = controller.curve;
@@ -238,7 +284,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
         <span className="curve-status">{curveStatusNarrative(curve)}</span>
       </div>
     </div>
-    <p className="curve-intro">Each plotted point is a model and workflow you have played. The best trade-offs move toward the <strong>upper left</strong>: higher personal preference at lower generation cost.</p>
+    <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels. The best trade-offs move toward the <strong>upper left</strong>: higher personal preference at lower generation cost.</p>
     <div className="curve-legend" aria-label="Chart legend"><span><i className="legend-point frontier" />Pareto frontier</span><span><i className="legend-point" />Other configuration</span><span><i className="legend-point early-estimate" />Early estimate</span><span className="best-direction">↖ Better value</span></div>
     <div className="curve-chart-wrap">
       <svg className="curve-chart" viewBox={`0 0 ${CURVE_CHART.width} ${CURVE_CHART.height}`} role="img" aria-label="Scatter plot of your preference rating by measured generation cost. Higher ratings are better and lower costs are better.">
@@ -263,7 +309,8 @@ function PersonalCurve({ controller }: { controller: RankController }) {
           {plotted.map((point) => {
             const labelOnLeft = point.x > CURVE_CHART.width * .62;
             const labelX = point.x + (labelOnLeft ? -14 : 14);
-            return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${point.comparisons} comparisons. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
+            const levelNames = levelsForConfiguration(point.configurationId).map((level) => `${level.themeTitle}: ${level.levelId}`).join(', ');
+            return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${point.comparisons} comparisons. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''} Levels: ${levelNames}.`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
               <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
               <circle cx={point.x} cy={point.y} r={point.frontier ? 8 : 6} />
               <text className="point-label" x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{point.modelName}</tspan><tspan x={labelX} dy="14">{point.workflowName}</tspan></text>
@@ -275,11 +322,12 @@ function PersonalCurve({ controller }: { controller: RankController }) {
         <strong>{active.modelName}</strong><span>{active.workflowName}</span>
         <dl><div><dt>Preference</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>${active.meanCost.toFixed(2)}</dd></div><div><dt>Evidence</dt><dd>{active.comparisons} comparison{active.comparisons === 1 ? '' : 's'}</dd></div></dl>
         <p>{statusLabel(active.status)} · {active.frontier ? 'On your Pareto frontier' : 'Dominated by a higher-value option'}</p>
+        <div className="curve-tooltip-levels"><span>Levels behind this point</span><ul>{levelsForConfiguration(active.configurationId).map((level) => <li key={level.levelId}><strong>{level.themeTitle}</strong><code>{level.levelId}</code></li>)}</ul></div>
       </div>}
     </div>
     <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; dashed points are early estimates that firm up with more matchups. They are personal estimates, not public benchmark scores.</p>
     {pendingPoints.length > 0 && <p className="curve-unplotted">Not yet ranked: {pendingPoints.map((point) => point.label).join(', ')}</p>}
-    <PersonalCurveTable points={curve.points} showFrontier />
+    <PersonalCurveTable points={curve.points} showFrontier onNavigate={onNavigate} />
     <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} /></details>
   </section>;
 }
@@ -287,6 +335,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
 function VerdictLog({ matchups, onUndo }: { matchups: readonly CompletedMatchup[]; onUndo?: () => void }) {
   return <ol className="verdict-log" aria-label="Your verdicts">{[...matchups].reverse().map((matchup, index) => <li key={matchup.matchupId}>
     <div><strong className="verdict-theme">{themeTitleForMatchup(matchup.matchupId)}</strong><span className="verdict-separator"> — </span><span className={`verdict-outcome verdict-${matchup.vote.verdict}`}>{verdictOutcome(matchup.vote.verdict, matchup.reveal)}</span></div>
+    <details className="verdict-data"><summary>Inspect level generation records</summary><div className="verdict-run-grid"><article><h4>Level A</h4><GenerationDetails entrant={matchup.reveal.a} /></article><article><h4>Level B</h4><GenerationDetails entrant={matchup.reveal.b} /></article></div></details>
     {import.meta.env.DEV && index === 0 && onUndo && <button className="verdict-undo" type="button" onClick={onUndo}>Undo</button>}
   </li>)}</ol>;
 }
@@ -312,15 +361,50 @@ function themeTitleForMatchup(matchupId: string): string {
   return rankCatalog.themes.find((theme) => theme.id === themeId)?.title ?? themeId;
 }
 
-function PersonalCurveTable({ points, showFrontier }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean }) {
+function PersonalCurveTable({ points, showFrontier, onNavigate }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean; onNavigate: (path: string) => void }) {
   const ordered = [...points].sort((left, right) => (right.rating ?? -Infinity) - (left.rating ?? -Infinity) || left.configurationId.localeCompare(right.configurationId));
-  return <div className="curve-table-wrap"><table className="curve-table"><caption>Chart data</caption><thead><tr><th scope="col">Model</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
+  return <div className="curve-table-wrap"><table className="curve-table"><caption>Chart data and underlying levels</caption><thead><tr><th scope="col">Model</th><th scope="col">Levels</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
     const frontierStatus = showFrontier && point.frontier;
     const record = point.comparisons === 0
       ? <span aria-label="No comparisons yet">—</span>
       : <span aria-label={recordAriaLabel(point)}>{point.wins}–{point.ties}–{point.losses}</span>;
-    return <tr key={point.configurationId}><th scope="row"><strong>{point.modelName}</strong><span>{point.workflowName}</span></th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
+    const levels = levelsForConfiguration(point.configurationId);
+    return <tr key={point.configurationId}><th scope="row"><strong>{point.modelName}</strong><span>{point.workflowName}</span></th><td className="curve-levels">{levels.map((level) => <RouteLink key={level.levelId} href={`/play/${encodeURIComponent(level.levelId)}`} onNavigate={onNavigate}><strong>{level.themeTitle}</strong><code>{level.levelId}</code></RouteLink>)}</td><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
   })}</tbody></table></div>;
+}
+
+function configurationFor(configurationId?: string): RankCatalogConfiguration | undefined {
+  return configurationId ? rankCatalog.configurations?.find((configuration) => configuration.id === configurationId) : undefined;
+}
+
+function levelsForConfiguration(configurationId: string): { levelId: string; themeTitle: string }[] {
+  return rankCatalog.entrants
+    .filter((entrant) => entrant.configurationId === configurationId)
+    .map((entrant) => ({
+      levelId: entrant.levelId,
+      themeTitle: rankCatalog.themes.find((theme) => theme.id === entrant.themeId)?.title ?? entrant.themeId,
+    }))
+    .sort((left, right) => left.themeTitle.localeCompare(right.themeTitle));
+}
+
+function formatDuration(seconds: number): string {
+  const rounded = Math.round(seconds);
+  const hours = Math.floor(rounded / 3600);
+  const minutes = Math.floor((rounded % 3600) / 60);
+  const remainingSeconds = rounded % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${remainingSeconds}s`;
+  return `${remainingSeconds}s`;
+}
+
+function formatTokenCount(value: number): string {
+  return value.toLocaleString('en-US');
+}
+
+function formatRunResult(result: string): string {
+  if (result === 'completed') return 'Completed';
+  if (result === 'timed-out') return 'Timed out · playable output retained';
+  return result.replaceAll('-', ' ');
 }
 
 function curveStatusNarrative(curve: PersonalCurve): string {

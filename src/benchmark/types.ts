@@ -20,6 +20,25 @@ export interface PreVoteEntrant {
   thumbnailPath?: string;
 }
 
+export interface BenchmarkModelUsage {
+  modelName: string;
+  role: 'solo' | 'orchestrate' | 'implement';
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+  reasoningTokens?: number;
+  costUsd?: number;
+}
+
+export interface BenchmarkRunMetrics {
+  generationWallTimeSeconds: number;
+  totalWallTimeSeconds: number;
+  result: string;
+  orchestrationTreatment: string;
+  models: readonly BenchmarkModelUsage[];
+}
+
 export interface RevealEntrant extends PreVoteEntrant {
   entrantId: string;
   levelId: string;
@@ -29,6 +48,7 @@ export interface RevealEntrant extends PreVoteEntrant {
   workflowName: string;
   generationCost: number;
   costCurrency?: string;
+  run?: BenchmarkRunMetrics;
   dataClass: BenchmarkDataClass;
 }
 

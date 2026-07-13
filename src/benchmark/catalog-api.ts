@@ -169,6 +169,7 @@ function revealFor(entrant: RankCatalogEntrant): RevealPayload['a'] {
     modelName: entrant.modelName,
     workflowName: entrant.workflowName,
     generationCost: entrant.generationCost,
+    ...(entrant.run ? { run: entrant.run } : {}),
     ...(entrant.thumbnailPath ? { thumbnailPath: entrant.thumbnailPath } : {}),
     dataClass: 'eligible',
   };
