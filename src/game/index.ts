@@ -27,16 +27,18 @@ export type GameMountOptions = {
 
 export type GameMount = { dispose(): void };
 
+// A stale async mount must not clear the class for the mount that replaced it.
+const activeGameMounts = new Set<symbol>();
+
 export async function mountGame({ host, level, launchContext, showLevelPicker, onRunEnd }: GameMountOptions): Promise<GameMount> {
   if (import.meta.env.DEV) installDevErrorOverlay();
   const frame = host;
-  document.body.classList.add('game-active');
-  document.body.classList.remove('booting');
+  const releaseGameActivity = acquireGameActivity();
   const removeUiShortcut = installUiShortcut();
 
   if (!('gpu' in navigator)) {
     showUnsupported(frame, 'This game requires WebGPU');
-    return { dispose() { removeUiShortcut(); document.body.classList.remove('game-active'); } };
+    return { dispose() { removeUiShortcut(); releaseGameActivity(); } };
   }
 
   const app = frame.querySelector<HTMLElement>('[data-game="app"]')!;
@@ -54,11 +56,11 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
   } catch (error) {
     console.error(error);
     showUnsupported(frame, 'This game requires WebGPU');
-    return { dispose() { removeUiShortcut(); renderer.dispose(); document.body.classList.remove('game-active'); } };
+    return { dispose() { removeUiShortcut(); renderer.dispose(); releaseGameActivity(); } };
   }
   if (!host.isConnected) {
     renderer.dispose();
-    return { dispose() { removeUiShortcut(); document.body.classList.remove('game-active'); } };
+    return { dispose() { removeUiShortcut(); releaseGameActivity(); } };
   }
   app.append(renderer.domElement);
 
@@ -137,8 +139,19 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
     if (disposed) return; disposed = true;
     removeUiShortcut(); offRunEnd(); window.removeEventListener('resize', resize); renderer.setAnimationLoop(null);
     perfOverlay?.dispose(); debugPanel?.dispose?.(); removeLevelPicker?.(); runtime.dispose(); audio.dispose(); bus.clear(); pauseMenu.dispose?.();
-    renderer.domElement.remove(); renderer.dispose(); document.body.classList.remove('game-active');
+    renderer.domElement.remove(); renderer.dispose(); releaseGameActivity();
   } };
+}
+
+function acquireGameActivity() {
+  const mount = Symbol('game-mount');
+  activeGameMounts.add(mount);
+  document.body.classList.add('game-active');
+  document.body.classList.remove('booting');
+  return () => {
+    if (!activeGameMounts.delete(mount)) return;
+    if (activeGameMounts.size === 0) document.body.classList.remove('game-active');
+  };
 }
 
 function installUiShortcut() {
