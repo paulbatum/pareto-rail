@@ -6,20 +6,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="Play procedural rail-shooter levels and compare generated game quality against measured cost." />
-    <meta name="theme-color" content="#FAF8F3" />
+    <meta name="theme-color" content="#171410" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox=%220 0 22 22%22%3E%3Crect x=%224.5%22 y=%224.5%22 width=%2213%22 height=%2213%22 transform=%22rotate(45 11 11)%22 fill=%22none%22 stroke=%22%231B1813%22 stroke-width=%221.4%22%2F%3E%3Ccircle cx=%2211%22 cy=%2211%22 r=%223%22 fill=%22%23C42463%22%2F%3E%3C%2Fsvg%3E" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox=%220 0 22 22%22%3E%3Crect x=%224.5%22 y=%224.5%22 width=%2213%22 height=%2213%22 transform=%22rotate(45 11 11)%22 fill=%22none%22 stroke=%22%23F2EDDF%22 stroke-width=%221.4%22%2F%3E%3Ccircle cx=%2211%22 cy=%2211%22 r=%223%22 fill=%22%23E85D93%22%2F%3E%3C%2Fsvg%3E" />
     <title>Pareto Rail</title>
     <style>
-      html, body { margin: 0; min-width: 320px; min-height: 100dvh; background: #FAF8F3; color: #1B1813; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-      #loading { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #FAF8F3; }
+      html, body { margin: 0; min-width: 320px; min-height: 100dvh; background: #171410; color: #F2EDDF; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+      #loading { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #171410; }
       body:not(.booting) #loading { display: none; }
       .loading-panel { width: min(360px, calc(100vw - 48px)); letter-spacing: .22em; text-align: center; text-transform: uppercase; }
-      .loading-label { margin-bottom: 14px; color: #C42463; }
-      .loading-track { height: 2px; overflow: hidden; background: #E7E1D4; }
-      .loading-bar { width: 45%; height: 100%; background: #C42463; animation: loading-sweep 1.05s ease-in-out infinite; }
+      .loading-label { margin-bottom: 14px; color: #E85D93; }
+      .loading-track { height: 2px; overflow: hidden; background: #332E22; }
+      .loading-bar { width: 45%; height: 100%; background: #E85D93; animation: loading-sweep 1.05s ease-in-out infinite; }
       @keyframes loading-sweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(250%); } }
     </style>
   </head>

@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 import './app/style.css';
+import './app/pareto-rail-dark.css';
 import { App } from './app/App';
 import { installDevErrorOverlay } from './ui/dev-error-overlay';
 

@@ -1,32 +1,10 @@
 /* ============================================================
-   PARETO RAIL — "Paper & Signal" theme (design refresh)
-   Drop-in replacement for src/style.css.
+   PARETO RAIL application layout.
 
-   Palette
-     paper        #FAF8F3   page background
-     card         #FFFFFF   raised surfaces
-     ink          #1B1813   primary text / solid buttons
-     body-text    #5F594C   ledes
-     soft-text    #6E6759   card body copy
-     muted        #7A7263   metadata, mono labels
-     hairline     #E7E1D4   borders, rules
-     hairline-2   #EFEAE0   subtle row rules
-     ghost        #B8AF9A   faint line-work
-     accent       #C42463   raspberry — the one accent
-     accent-tint  #F0DCE5   accent shadow/tint
-
-   Type
-     Display/body: Archivo (variable width — headings use 'wdth' 88)
-     Data/labels:  IBM Plex Mono
-   Load in index.html:
-     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-   Note: the .wordmark-mark SVG in SiteLayout.tsx was designed for the
-   neon theme. Suggested replacement mark (reticle):
-     <svg className="wordmark-mark" viewBox="0 0 22 22" aria-hidden="true">
-       <rect x="4.5" y="4.5" width="13" height="13" transform="rotate(45 11 11)" />
-       <circle className="wordmark-dot" cx="11" cy="11" r="3" />
-     </svg>
+   The active dark theme is loaded from pareto-rail-dark.css and maps its
+   design tokens onto these semantic application variables. These defaults
+   keep this stylesheet readable and provide a safe fallback if the theme is
+   not loaded.
    ============================================================ */
 
 .app-shell {
