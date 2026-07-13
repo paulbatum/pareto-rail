@@ -53,7 +53,7 @@ export function GameFrame({ level, title = level.title, backPath = '/play', back
       disposed = true;
       game?.dispose();
     };
-  }, [level, title, launchContext, showLevelPicker, onRunEnd]);
+  }, [level, title, launchContext?.source, launchContext?.levelId, launchContext?.mode, showLevelPicker, onRunEnd]);
 
   return <>
     <section className="game-frame" aria-label={`${title} game`} ref={frameRef}>
