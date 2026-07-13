@@ -78,7 +78,7 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
       <p className="rank-note">Two levels were generated independently from this assignment. Model and workflow identities stay hidden until you vote.</p>
       <RankStage controller={controller} state={state} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
-      <PersonalCurve controller={controller} />
+      {controller.hasPlayed && <PersonalCurve controller={controller} />}
     </section>
   );
 }

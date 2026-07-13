@@ -35,6 +35,7 @@ export class RankController {
   get assignment(): MatchupAssignment | null { return this.machine?.state.assignment ?? null; }
   get state(): ComparisonState | null { return this.machine?.state ?? null; }
   get participantId() { return this.store.participantId; }
+  get hasPlayed() { return this.store.snapshot.levelRuns.length > 0; }
   /** Complete local inputs for development-only diagnostics and reproducible exports. */
   get debugSnapshot() { return this.store.snapshot; }
   get curve() {
