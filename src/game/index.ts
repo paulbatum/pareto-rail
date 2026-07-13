@@ -29,17 +29,14 @@ export type GameMount = { dispose(): void };
 
 export async function mountGame({ host, level, launchContext, showLevelPicker, onRunEnd }: GameMountOptions): Promise<GameMount> {
   if (import.meta.env.DEV) installDevErrorOverlay();
-  const frame = document.createElement('div');
-  frame.className = 'game-runtime';
-  frame.innerHTML = gameMarkup();
-  host.append(frame);
+  const frame = host;
   document.body.classList.add('game-active');
   document.body.classList.remove('booting');
   const removeUiShortcut = installUiShortcut();
 
   if (!('gpu' in navigator)) {
-    showUnsupported('This game requires WebGPU', frame);
-    return { dispose() { removeUiShortcut(); frame.remove(); document.body.classList.remove('game-active'); } };
+    showUnsupported(frame, 'This game requires WebGPU');
+    return { dispose() { removeUiShortcut(); document.body.classList.remove('game-active'); } };
   }
 
   const app = frame.querySelector<HTMLElement>('[data-game="app"]')!;
@@ -56,12 +53,11 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
     await renderer.init();
   } catch (error) {
     console.error(error);
-    showUnsupported('This game requires WebGPU', frame);
-    return { dispose() { removeUiShortcut(); renderer.dispose(); frame.remove(); document.body.classList.remove('game-active'); } };
+    showUnsupported(frame, 'This game requires WebGPU');
+    return { dispose() { removeUiShortcut(); renderer.dispose(); document.body.classList.remove('game-active'); } };
   }
   if (!host.isConnected) {
     renderer.dispose();
-    frame.remove();
     return { dispose() { removeUiShortcut(); document.body.classList.remove('game-active'); } };
   }
   app.append(renderer.domElement);
@@ -116,9 +112,10 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
   const runtime = level.createRuntime({ scene, camera, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(fullscreenAvailable), debugValue });
   const offRunEnd = bus.on('runend', (summary) => {
     onRunEnd?.(summary, launchContext);
-    if (level.id === 'crystal-corridor') addCrystalInvitation(summary, frame);
   });
-  if (showLevelPicker !== false) installLevelPicker(frame, level.id, import.meta.env.DEV);
+  const removeLevelPicker = showLevelPicker !== false
+    ? installLevelPicker(frame, level.id, import.meta.env.DEV)
+    : undefined;
   let debugPanel: { dispose?: () => void } | undefined;
   if (import.meta.env.DEV) {
     try {
@@ -139,8 +136,8 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
   return { dispose() {
     if (disposed) return; disposed = true;
     removeUiShortcut(); offRunEnd(); window.removeEventListener('resize', resize); renderer.setAnimationLoop(null);
-    perfOverlay?.dispose(); debugPanel?.dispose?.(); runtime.dispose(); audio.dispose(); bus.clear(); pauseMenu.dispose?.();
-    renderer.dispose(); frame.remove(); document.body.classList.remove('game-active');
+    perfOverlay?.dispose(); debugPanel?.dispose?.(); removeLevelPicker?.(); runtime.dispose(); audio.dispose(); bus.clear(); pauseMenu.dispose?.();
+    renderer.domElement.remove(); renderer.dispose(); document.body.classList.remove('game-active');
   } };
 }
 
@@ -157,19 +154,6 @@ function installUiShortcut() {
     window.removeEventListener('keydown', onKeyDown);
     document.body.classList.remove('game-ui-hidden');
   };
-}
-
-function gameMarkup() {
-  return `<div data-game="app"></div><div id="hud" data-game-ui class="hud"><div class="hud-left"><div class="hud-cell"><span class="hud-label">Score</span><span class="hud-value" data-hud="score">0</span></div><div class="hud-cell hud-hull hidden" data-hud="hull-cell"><span class="hud-label">Hull</span><span class="hud-value" data-hud="hull-pips"></span></div></div><div class="hud-cell hud-time" data-hud="time-cell"><span class="hud-value hud-time-value" data-hud="time">0.0</span></div><div class="hud-cell hud-right"><span class="hud-label">Lock</span><span class="hud-value"><span data-hud="locks">0</span>/6</span></div></div><div id="end-screen" data-game-ui class="end-screen hidden"><div class="end-panel"><div class="label">Score</div><div class="score" data-end="score">0</div><div class="death-status hidden" data-end="death">Signal lost</div><div class="end-detail" data-end="kills">Kills 0/0</div><div class="rank" data-end="rank">D</div><div class="end-extra hidden" data-end="details"></div><div class="replay">Lock all six to replay</div></div></div><div id="damage-flash" data-game-ui class="damage-flash" aria-hidden="true"></div><div id="max-lock-flash" data-game-ui class="max-lock-flash hidden" aria-hidden="true">MAX</div><div id="callout" data-game-ui class="callout hidden" aria-live="polite"></div><div id="tip" data-game-ui class="tip hidden">HOLD to charge — SWEEP across all six targets — RELEASE to fire</div><div id="pause" data-game-ui class="pause-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="pause-panel"><h1 id="pause-title">Paused</h1><button type="button" data-pause="resume">Resume</button><button type="button" data-pause="end-run">End Run</button><button type="button" data-pause="fullscreen">Fullscreen</button><label><span>Music</span><input data-pause="music" type="range" min="0" max="100" value="80" /></label><label><span>Sound Effects</span><input data-pause="sfx" type="range" min="0" max="100" value="80" /></label><label><span>Bloom</span><input data-pause="bloom" type="range" min="0" max="100" value="100" /></label><label><span>Motion Blur</span><input data-pause="motion-blur" type="range" min="0" max="100" value="100" /></label></div></div><div class="scanlines" aria-hidden="true"></div>`;
-}
-
-function addCrystalInvitation(summary: RunSummary, frame: HTMLElement) {
-  if (frame.querySelector('.crystal-invitation')) return;
-  const panel = frame.querySelector('.end-panel'); if (!panel) return;
-  const invitation = document.createElement('section'); invitation.className = 'crystal-invitation'; invitation.setAttribute('aria-label', 'What next');
-  invitation.innerHTML = `<p><strong>Crystal Corridor</strong> is the polished reference. Ready to see what models can build?</p><div class="invitation-actions"><a class="button primary" href="/rank" data-route="/rank">Rank model levels</a><a class="button" href="/play/crystal-corridor" data-route="/play/crystal-corridor">Replay Crystal</a><a class="button" href="/play" data-route="/play">Explore levels</a></div>`;
-  panel.append(invitation);
-  void summary;
 }
 
 function installLevelPicker(host: HTMLElement, activeId: string, includeTechnical: boolean) {
@@ -191,7 +175,14 @@ function installLevelPicker(host: HTMLElement, activeId: string, includeTechnica
   };
   appendGroup('Built-in levels', groups.builtIn);
   appendGroup('Benchmark levels', groups.benchmark);
-  select.addEventListener('change', () => navigate(`/play/${encodeURIComponent(select.value)}`)); picker.append(select); host.append(picker);
+  const onChange = () => navigate(`/play/${encodeURIComponent(select.value)}`);
+  select.addEventListener('change', onChange);
+  picker.append(select);
+  host.append(picker);
+  return () => {
+    select.removeEventListener('change', onChange);
+    picker.remove();
+  };
 }
 function canUseFullscreen() { return Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen); }
 async function setFullscreen(enabled: boolean) { try { if (enabled) await document.documentElement.requestFullscreen(); else if (document.fullscreenElement) await document.exitFullscreen(); } catch (error) { console.warn('Fullscreen request failed', error); } }

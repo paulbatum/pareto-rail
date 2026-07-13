@@ -4,6 +4,7 @@ import type { LevelDefinition } from '../../engine/types';
 import type { RunSummary } from '../../engine/scoring';
 import { getLevelEntryById } from '../../levels';
 import { mountGame, type GameMount, type GameLaunchContext } from '../../game';
+import { GameRuntimeShell } from '../../game/GameRuntimeShell';
 import type { AppRoute } from '../router';
 import { RouteLink } from '../components/RouteLink';
 import { PlayPage } from './PublicPages';
@@ -22,20 +23,20 @@ type GameFrameProps = {
 
 export function GameFrame({ level, title = level.title, backPath = '/play', backLabel = 'Levels', launchContext, showLevelPicker, onNavigate, onRunEnd, runEndContent }: GameFrameProps) {
   const frameRef = useRef<HTMLElement>(null);
-  const hostRef = useRef<HTMLDivElement>(null);
+  const runtimeRef = useRef<HTMLDivElement>(null);
   const [endPanel, setEndPanel] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    const host = hostRef.current;
+    const runtimeRoot = runtimeRef.current;
     const frame = frameRef.current;
-    if (!host || !frame) return;
+    if (!runtimeRoot || !frame) return;
     let disposed = false;
     let game: GameMount | null = null;
     setEndPanel(null);
     document.title = `Pareto Rail — ${title}`;
 
     void mountGame({
-      host,
+      host: runtimeRoot,
       level,
       launchContext,
       showLevelPicker,
@@ -55,16 +56,33 @@ export function GameFrame({ level, title = level.title, backPath = '/play', back
     };
   }, [level, title, launchContext?.source, launchContext?.levelId, launchContext?.mode, showLevelPicker, onRunEnd]);
 
+  const endContent = runEndContent ?? (level.id === 'crystal-corridor' ? <CrystalInvitation onNavigate={onNavigate} /> : null);
+
   return <>
     <section className="game-frame" aria-label={`${title} game`} ref={frameRef}>
       <div className="game-toolbar" data-game-ui>
         <RouteLink className="game-back" href={backPath} onNavigate={onNavigate}>← {backLabel}</RouteLink>
         <span className="game-title">{title}</span>
       </div>
-      <div className="game-mount" ref={hostRef} />
+      <div className="game-mount">
+        <GameRuntimeShell ref={runtimeRef} />
+      </div>
     </section>
-    {endPanel && runEndContent ? createPortal(runEndContent, endPanel) : null}
+    {endPanel && endContent ? createPortal(endContent, endPanel) : null}
   </>;
+}
+
+function CrystalInvitation({ onNavigate }: { onNavigate: (path: string) => void }) {
+  return (
+    <section className="crystal-invitation" aria-label="What next">
+      <p><strong>Crystal Corridor</strong> is the polished reference. Ready to see what models can build?</p>
+      <div className="invitation-actions">
+        <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank model levels</RouteLink>
+        <RouteLink className="button" href="/play/crystal-corridor" onNavigate={onNavigate}>Replay Crystal</RouteLink>
+        <RouteLink className="button" href="/play" onNavigate={onNavigate}>Explore levels</RouteLink>
+      </div>
+    </section>
+  );
 }
 
 export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { kind: 'play' }>; onNavigate: (path: string) => void }) {
