@@ -1,7 +1,7 @@
 import type { ComparisonState, MatchupVote, RevealPayload } from './types';
 
 export const BENCHMARK_STORAGE_KEY = 'pareto-rail-benchmark';
-export const BENCHMARK_STORAGE_VERSION = 1;
+export const BENCHMARK_STORAGE_VERSION = 2;
 
 export interface CompletedMatchup {
   matchupId: string;
@@ -88,24 +88,6 @@ export class BenchmarkLocalStore {
       const parsed: unknown = JSON.parse(raw);
       if (parsed && typeof parsed === 'object' && (parsed as StorageEnvelope).version === BENCHMARK_STORAGE_VERSION && isData((parsed as StorageEnvelope).data)) {
         return this.normalize((parsed as StorageEnvelope).data);
-      }
-      const legacy = parsed && typeof parsed === 'object' && 'data' in parsed ? (parsed as { data?: unknown }).data : parsed;
-      if (isData(legacy)) return this.normalize(legacy);
-      // v0 was an unwrapped data object. Migrate the useful fields if present.
-      if (parsed && typeof parsed === 'object') {
-        const candidate = parsed as Partial<LocalBenchmarkData> & { votes?: MatchupVote[]; unfinished?: ComparisonState };
-        if (typeof candidate.participantId === 'string') {
-          return this.normalize({
-            participantId: candidate.participantId,
-            unfinishedMatchup: candidate.unfinishedMatchup ?? candidate.unfinished,
-            levelRuns: candidate.levelRuns ?? [],
-            completedMatchups: candidate.completedMatchups ?? [],
-            history: candidate.history ?? candidate.votes ?? [],
-            themeHistory: candidate.themeHistory ?? [],
-            levelExposureCounts: candidate.levelExposureCounts ?? {},
-            revealedEntrants: candidate.revealedEntrants ?? [],
-          });
-        }
       }
     } catch { /* recover below */ }
     return emptyData(randomParticipantId());
@@ -195,7 +177,6 @@ export function createMemoryStorage(): KeyValueStorage { return new MemoryStorag
 function normalizeUnfinishedMatchup(value: unknown): ComparisonState | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const state = value as { kind?: unknown };
-  if (state.kind === 'a-complete') return { ...value as Omit<ComparisonState, 'kind'>, kind: 'assignment' };
   if (state.kind === 'assignment' || state.kind === 'playing-a' || state.kind === 'playing-b' || state.kind === 'ready-to-vote' || state.kind === 'submitting' || state.kind === 'reveal') {
     return value as ComparisonState;
   }

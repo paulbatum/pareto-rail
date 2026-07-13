@@ -27,11 +27,10 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
   async nextMatchup(request: NextMatchupRequest): Promise<MatchupAssignment | null> {
     this.requireParticipant(request.participantId);
     const data = this.store.snapshot;
-    const judgedMatchupIds = data.history.map((vote) => vote.matchupId);
     const scheduled = nextScheduledMatchup(this.catalog, this.store.participantId, {
-      judgedMatchupIds: judgedMatchupIds.length > 0 ? judgedMatchupIds : request.judgedMatchupIds,
+      judged: data.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })),
       levelExposureCounts: data.levelExposureCounts,
-      themeHistory: data.themeHistory.length > 0 ? data.themeHistory : request.seenThemeIds,
+      themeHistory: data.themeHistory,
     });
     if (!scheduled) return null;
     const theme = this.catalog.themes.find((candidate) => candidate.id === scheduled.themeId);

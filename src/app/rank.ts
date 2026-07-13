@@ -122,7 +122,7 @@ export class RankController {
     if (!this.api || this.busy) return;
     this.busy = true;
     try {
-      const assignment = await this.api.nextMatchup({ participantId: this.store.participantId, judgedMatchupIds: this.store.snapshot.completedMatchups.map((item) => item.matchupId), seenThemeIds: this.store.snapshot.themeHistory });
+      const assignment = await this.api.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
       if (!assignment) return;
       this.machine = new ComparisonStateMachine(assignment);
       this.persist(this.machine.state);
@@ -144,7 +144,7 @@ export class RankController {
       fixture.restoreAssignment?.(safe.assignment, this.store.participantId, safe.playCounts);
       return;
     }
-    const assignment = await this.api!.nextMatchup({ participantId: this.store.participantId, judgedMatchupIds: this.store.snapshot.completedMatchups.map((item) => item.matchupId), seenThemeIds: this.store.snapshot.themeHistory });
+    const assignment = await this.api!.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
     if (!assignment) return;
     this.machine = new ComparisonStateMachine(assignment);
     this.persist(this.machine.state);

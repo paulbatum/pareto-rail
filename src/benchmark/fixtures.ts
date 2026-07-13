@@ -74,8 +74,8 @@ export class FixtureBenchmarkApi implements BenchmarkApi {
   }
 
   async nextMatchup(request: NextMatchupRequest): Promise<MatchupAssignment | null> {
-    const judged = new Set(request.judgedMatchupIds ?? []);
-    const theme = this.catalog.themes.find((candidate) => !new Set(request.seenThemeIds ?? []).has(candidate.id)) ?? this.catalog.themes[0];
+    const judged = new Set((request.judged ?? []).map((item) => item.matchupId));
+    const theme = this.catalog.themes[0];
     if (!theme) return null;
     const entrants = this.catalog.entrants.filter((entrant) => entrant.playable);
     const pairs: [FixtureEntrant, FixtureEntrant][] = [];
