@@ -104,7 +104,7 @@ export class BenchmarkLocalStore {
   private normalize(data: LocalBenchmarkData): LocalBenchmarkData {
     return {
       participantId: data.participantId || randomParticipantId(),
-      unfinishedMatchup: data.unfinishedMatchup,
+      unfinishedMatchup: normalizeUnfinishedMatchup(data.unfinishedMatchup),
       completedMatchups: [...data.completedMatchups],
       history: [...data.history],
       themeHistory: [...data.themeHistory],
@@ -174,6 +174,16 @@ class MemoryStorage implements KeyValueStorage {
 }
 
 export function createMemoryStorage(): KeyValueStorage { return new MemoryStorage(); }
+
+function normalizeUnfinishedMatchup(value: unknown): ComparisonState | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const state = value as { kind?: unknown };
+  if (state.kind === 'a-complete') return { ...value as Omit<ComparisonState, 'kind'>, kind: 'assignment' };
+  if (state.kind === 'assignment' || state.kind === 'playing-a' || state.kind === 'playing-b' || state.kind === 'ready-to-vote' || state.kind === 'submitting' || state.kind === 'reveal') {
+    return value as ComparisonState;
+  }
+  return undefined;
+}
 
 function exposureCounts(data: LocalBenchmarkData): Record<string, number> {
   if (data.levelExposureCounts && Object.keys(data.levelExposureCounts).length > 0) return { ...data.levelExposureCounts };

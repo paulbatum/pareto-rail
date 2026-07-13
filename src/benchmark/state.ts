@@ -8,6 +8,8 @@ import {
 } from './types';
 
 export type ComparisonEvent =
+  | { type: 'start'; side: MatchupSide }
+  /** Legacy event names remain valid for callers that dispatch directly. */
   | { type: 'start-a' }
   | { type: 'start-b' }
   | { type: 'run-end'; side: MatchupSide }
@@ -21,34 +23,27 @@ const copyCounts = (state: ComparisonState) => ({ ...state.playCounts });
  * changing the round, which is important when a page resumes after refresh. */
 export function reduceComparison(state: ComparisonState, event: ComparisonEvent): ComparisonState {
   switch (event.type) {
+    case 'start':
     case 'start-a':
-      if (state.kind === 'assignment' || state.kind === 'a-complete' || state.kind === 'ready-to-vote') {
-        return { kind: 'playing-a', assignment: state.assignment, playCounts: copyCounts(state) };
+    case 'start-b': {
+      const side = event.type === 'start' ? event.side : event.type === 'start-a' ? 'a' : 'b';
+      if (state.kind === 'assignment' || state.kind === 'ready-to-vote') {
+        return { kind: side === 'a' ? 'playing-a' : 'playing-b', assignment: state.assignment, playCounts: copyCounts(state) };
       }
       break;
-    case 'start-b':
-      if (state.kind === 'a-complete' || state.kind === 'ready-to-vote') {
-        return { kind: 'playing-b', assignment: state.assignment, playCounts: copyCounts(state) };
-      }
-      break;
+    }
     case 'run-end': {
       if ((state.kind === 'playing-a' && event.side === 'a') || (state.kind === 'playing-b' && event.side === 'b')) {
         const playCounts = copyCounts(state);
         playCounts[event.side] += 1;
-        // A replay after the other entrant has completed must go straight
-        // back to voting; readiness is derived from both counts, not from the
-        // side that just ended.
-        const kind = playCounts.a > 0 && playCounts.b > 0 ? 'ready-to-vote' : 'a-complete';
+        const kind = playCounts.a > 0 && playCounts.b > 0 ? 'ready-to-vote' : 'assignment';
         return { kind, assignment: state.assignment, playCounts };
       }
       break;
     }
     case 'replay':
-      if (event.side === 'a' && (state.kind === 'a-complete' || state.kind === 'ready-to-vote')) {
-        return { kind: 'playing-a', assignment: state.assignment, playCounts: copyCounts(state) };
-      }
-      if (event.side === 'b' && state.kind === 'ready-to-vote') {
-        return { kind: 'playing-b', assignment: state.assignment, playCounts: copyCounts(state) };
+      if ((state.kind === 'assignment' || state.kind === 'ready-to-vote') && state.playCounts[event.side] > 0) {
+        return { kind: event.side === 'a' ? 'playing-a' : 'playing-b', assignment: state.assignment, playCounts: copyCounts(state) };
       }
       break;
     case 'submit':
@@ -89,8 +84,9 @@ export class ComparisonStateMachine {
 
   /** A run is counted only when the game reports runend (finish or death). */
   completeRun(side: MatchupSide): ComparisonState { return this.dispatch({ type: 'run-end', side }); }
-  startA(): ComparisonState { return this.dispatch({ type: 'start-a' }); }
-  startB(): ComparisonState { return this.dispatch({ type: 'start-b' }); }
+  start(side: MatchupSide): ComparisonState { return this.dispatch({ type: 'start', side }); }
+  startA(): ComparisonState { return this.start('a'); }
+  startB(): ComparisonState { return this.start('b'); }
   replay(side: MatchupSide): ComparisonState { return this.dispatch({ type: 'replay', side }); }
   submit(verdict: VoteVerdict): ComparisonState { return this.dispatch({ type: 'submit', verdict }); }
   reveal(payload: RevealPayload): ComparisonState { return this.dispatch({ type: 'revealed', payload }); }

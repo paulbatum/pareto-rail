@@ -81,12 +81,37 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   assert.equal(machine.state.kind, 'submitting');
   assert.throws(() => machine.reveal({ matchupId: 'other', a: undefined as never, b: undefined as never, vote: undefined as never }));
 
+  const bFirst = new ComparisonStateMachine(assignment());
+  bFirst.start('b'); bFirst.completeRun('b');
+  assert.equal(bFirst.state.kind, 'assignment');
+  bFirst.start('a'); bFirst.completeRun('a');
+  assert.equal(bFirst.state.kind, 'ready-to-vote');
+  bFirst.replay('a');
+  assert.equal(bFirst.state.kind, 'playing-a');
+  bFirst.completeRun('a');
+  assert.equal(bFirst.state.kind, 'ready-to-vote');
+  bFirst.replay('b');
+  assert.equal(bFirst.state.kind, 'playing-b');
+  bFirst.completeRun('b');
+  assert.equal(bFirst.state.kind, 'ready-to-vote');
+  assert.throws(() => new ComparisonStateMachine(assignment()).completeRun('a'));
+  assert.throws(() => new ComparisonStateMachine(assignment()).replay('a'));
+
   const storage = createMemoryStorage();
   storage.setItem('x', '{not-json');
   const recovered = new BenchmarkLocalStore(storage, 'x');
   assert.ok(recovered.participantId);
   storage.setItem('v0', JSON.stringify({ participantId: 'p', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] }));
   assert.equal(new BenchmarkLocalStore(storage, 'v0').participantId, 'p');
+  storage.setItem('legacy-a-complete', JSON.stringify({
+    version: 1,
+    data: {
+      participantId: 'legacy-participant',
+      unfinishedMatchup: { kind: 'a-complete', assignment: assignment(), playCounts: { a: 1, b: 0 } },
+      completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [],
+    },
+  }));
+  assert.equal(new BenchmarkLocalStore(storage, 'legacy-a-complete').snapshot.unfinishedMatchup?.kind, 'assignment');
 
   assert.equal(createFixtureCatalog('production').entrants.length, 0);
   const api = createDevelopmentFixtureApi();

@@ -61,15 +61,11 @@ export class RankController {
       const ref = side === 'a' ? state.assignment.a.playableRef : state.assignment.b.playableRef;
       return { side, levelId: this.resolvePlayable(ref) };
     }
-    const canStart = side === 'a'
-      ? state.kind === 'assignment' || state.kind === 'a-complete' || state.kind === 'ready-to-vote'
-      : state.kind === 'a-complete' || state.kind === 'ready-to-vote';
+    const canStart = state.kind === 'assignment' || state.kind === 'ready-to-vote';
     if (!canStart) return null;
-    const next = state.kind === 'assignment' && side === 'a'
-      ? this.machine!.startA()
-      : state.kind === 'a-complete' && side === 'b'
-        ? this.machine!.startB()
-        : this.machine!.replay(side);
+    const next = state.kind === 'ready-to-vote'
+      ? this.machine!.replay(side)
+      : this.machine!.start(side);
     this.persist(next);
     this.emit();
     return { side, levelId: this.resolvePlayable(side === 'a' ? next.assignment.a.playableRef : next.assignment.b.playableRef) };
@@ -130,8 +126,10 @@ export class RankController {
     const unfinished = this.store.snapshot.unfinishedMatchup;
     if (unfinished) {
       let safe = unfinished;
-      if (safe.kind === 'playing-a') safe = { kind: 'assignment', assignment: safe.assignment, playCounts: { ...safe.playCounts } };
-      if (safe.kind === 'playing-b') safe = { kind: safe.playCounts.a > 0 ? 'a-complete' : 'assignment', assignment: safe.assignment, playCounts: { ...safe.playCounts } } as ComparisonState;
+      if (safe.kind === 'playing-a' || safe.kind === 'playing-b') {
+        const kind = safe.playCounts.a > 0 && safe.playCounts.b > 0 ? 'ready-to-vote' : 'assignment';
+        safe = { kind, assignment: safe.assignment, playCounts: { ...safe.playCounts } };
+      }
       this.machine = new ComparisonStateMachine(safe.assignment, safe);
       this.store.setUnfinishedMatchup(safe);
       const fixture = this.api as BenchmarkApi & { restoreAssignment?: (assignment: MatchupAssignment, participantId: string, counts: { a: number; b: number }) => void };

@@ -96,15 +96,26 @@ function RankContent({ controller, state, runScores, onNavigate }: { controller:
 }
 
 function RankStage({ state, runScores, onLaunch, onVote, onNext }: { state: ComparisonState; runScores?: Partial<Record<MatchupSide, number>>; onLaunch: (side: MatchupSide) => void; onVote: (verdict: VoteVerdict) => void; onNext: () => void }) {
+  const nextSide = state.kind === 'assignment' && (state.playCounts.a > 0) !== (state.playCounts.b > 0)
+    ? state.playCounts.a > 0 ? 'b' : 'a'
+    : null;
   const card = (side: MatchupSide) => {
     const score = runScores?.[side];
-    return <div className="compare-card"><LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} /><h2>Level {side.toUpperCase()}</h2><p className="compare-stats"><span>{state.playCounts[side]} completed run{state.playCounts[side] === 1 ? '' : 's'}</span>{score !== undefined && <span className="run-score">Your run: {score.toLocaleString('en-US')}</span>}</p></div>;
+    const completedRuns = state.playCounts[side] > 0;
+    const label = completedRuns ? 'Replay' : 'Play';
+    const emphasized = nextSide === side ? ' is-next' : '';
+    return <article className={`compare-card${emphasized}`}>
+      <LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} />
+      <h2>Level {side.toUpperCase()}</h2>
+      <p className="compare-stats"><span>{state.playCounts[side]} completed run{state.playCounts[side] === 1 ? '' : 's'}</span>{score !== undefined && <span className="run-score">Your run: {score.toLocaleString('en-US')}</span>}</p>
+      <button className={`button${nextSide === side ? ' primary' : ''}`} type="button" onClick={() => onLaunch(side)}>{label} Level {side.toUpperCase()}</button>
+    </article>;
   };
+  const versusLayout = <div className="compare-grid">{card('a')}<div className="versus-divider" aria-label="Versus"><span>VS</span></div>{card('b')}</div>;
 
-  if (state.kind === 'assignment') return <div className="assignment-card"><h2>Ready when you are</h2><p>Play both anonymous levels before voting.</p><button className="button primary" type="button" onClick={() => onLaunch('a')}>Play Level A</button></div>;
-  if (state.kind === 'a-complete') return <><div className="compare-grid">{card('a')}{card('b')}</div><div className="rank-actions"><button className="button primary" type="button" onClick={() => onLaunch('b')}>Play Level B</button><button className="button" type="button" onClick={() => onLaunch('a')}>Replay Level A</button></div></>;
+  if (state.kind === 'assignment') return versusLayout;
   if (state.kind === 'playing-a' || state.kind === 'playing-b') return <div className="assignment-card"><h2>Level {state.kind === 'playing-a' ? 'A' : 'B'} is in progress</h2><p>Your run will be counted when it ends. Refreshing returns here without counting it.</p></div>;
-  if (state.kind === 'ready-to-vote') return <><div className="compare-grid">{card('a')}{card('b')}</div><div className="rank-actions"><button className="button" type="button" onClick={() => onLaunch('a')}>Replay Level A</button><button className="button" type="button" onClick={() => onLaunch('b')}>Replay Level B</button></div><h2 className="vote-heading">Which run felt better?</h2><div className="vote-grid" role="group" aria-label="Choose a verdict"><button className="button primary" type="button" onClick={() => onVote('a-better')}>A is better</button><button className="button primary" type="button" onClick={() => onVote('b-better')}>B is better</button><button className="button" type="button" onClick={() => onVote('both-good')}>Both are good</button><button className="button" type="button" onClick={() => onVote('both-bad')}>Both are bad</button></div></>;
+  if (state.kind === 'ready-to-vote') return <>{versusLayout}<h2 className="vote-heading">Which run felt better?</h2><div className="vote-grid" role="group" aria-label="Choose a verdict"><button className="button primary" type="button" onClick={() => onVote('a-better')}>A is better</button><button className="button primary" type="button" onClick={() => onVote('b-better')}>B is better</button><button className="button" type="button" onClick={() => onVote('both-good')}>Both are good</button><button className="button" type="button" onClick={() => onVote('both-bad')}>Both are bad</button></div></>;
   if (state.kind === 'reveal') return <RevealStage reveal={state.reveal} onNext={onNext} />;
   return <div className="assignment-card"><h2>Saving your vote…</h2></div>;
 }

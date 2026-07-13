@@ -71,9 +71,9 @@ export interface RevealPayload {
 }
 
 export type ComparisonState =
+  /** The idle pre-vote state. One side may already have completed runs. */
   | { kind: 'assignment'; assignment: MatchupAssignment; playCounts: PlayCounts }
   | { kind: 'playing-a'; assignment: MatchupAssignment; playCounts: PlayCounts }
-  | { kind: 'a-complete'; assignment: MatchupAssignment; playCounts: PlayCounts }
   | { kind: 'playing-b'; assignment: MatchupAssignment; playCounts: PlayCounts }
   | { kind: 'ready-to-vote'; assignment: MatchupAssignment; playCounts: PlayCounts }
   | { kind: 'submitting'; assignment: MatchupAssignment; playCounts: PlayCounts; verdict: VoteVerdict }
