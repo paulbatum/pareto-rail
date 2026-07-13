@@ -164,38 +164,40 @@ function PersonalCurve({ controller }: { controller: RankController }) {
   const frontierPath = frontier.length > 1 ? `M${frontier.map((point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join('L')}` : null;
   const active = plotted.find((point) => point.configurationId === activeId) ?? null;
   const copyDebugData = async () => {
-    const snapshot = controller.debugSnapshot;
-    const payload = {
-      schemaVersion: 1,
-      exportedAt: new Date().toISOString(),
-      catalog: rankCatalog,
-      explicitJudgments: snapshot.completedMatchups.map(({ vote, reveal }) => ({
-        matchupId: vote.matchupId,
-        submittedAt: vote.submittedAt,
-        verdict: vote.verdict,
-        relative: vote.relative,
-        sentiment: vote.sentiment ?? null,
-        playCounts: vote.playCounts,
-        a: reveal.a,
-        b: reveal.b,
-      })),
-      raw: snapshot,
-      derived: {
-        ratingAlgorithm: { name: 'online Elo', initialRating: 1000, kFactor: 32, tieScore: 0.5 },
-        personalCurve: curve,
-        chart: {
-          dimensions: CURVE_CHART,
-          costDomain: [0, costMax],
-          costTicks,
-          ratingDomain: [ratingMin, ratingMax],
-          ratingTicks,
-          plottedPoints: plotted,
-          frontierPath,
-        },
-      },
-    };
+    const judgments = controller.debugSnapshot.completedMatchups;
+    const lines = [
+      `PARETO RAIL PERSONAL CURVE DEBUG v2 | exported=${new Date().toISOString()} | comparisons=${curve.comparisonCount} | unlocked=${curve.unlocked} | full=${curve.isFull}`,
+      'ALGORITHM | online Elo | initial=1000 | k=32 | tie=0.5',
+      `CHART | size=${CURVE_CHART.width}x${CURVE_CHART.height} | costDomain=0..${costMax} | costTicks=${costTicks.join(',')} | ratingDomain=${ratingMin}..${ratingMax} | ratingTicks=${ratingTicks.join(',')}`,
+      'JUDGMENTS',
+      ...judgments.map(({ vote, reveal }, index) => [
+        `J${index + 1}`,
+        `id=${vote.matchupId}`,
+        `at=${vote.submittedAt}`,
+        `verdict=${vote.verdict}`,
+        `relative=${vote.relative}`,
+        `sentiment=${vote.sentiment ?? '-'}`,
+        `plays=${vote.playCounts.a}/${vote.playCounts.b}`,
+        `A=${debugEntrant(reveal.a)}`,
+        `B=${debugEntrant(reveal.b)}`,
+      ].join(' | ')),
+      'DERIVED POINTS',
+      ...plotted.map((point, index) => [
+        `P${index + 1}`,
+        `config=${point.configurationId}`,
+        `label=${point.modelName}/${point.workflowName}`,
+        `rating=${point.rating.toFixed(4)}`,
+        `meanCost=${point.meanCost.toFixed(6)}`,
+        `comparisons=${point.comparisons}`,
+        `frontier=${point.frontier}`,
+        `x=${point.x.toFixed(2)}`,
+        `y=${point.y.toFixed(2)}`,
+        `labelY=${point.labelY.toFixed(2)}`,
+      ].join(' | ')),
+      `FRONTIER PATH | ${frontierPath ?? '-'}`,
+    ];
     try {
-      await copyText(JSON.stringify(payload, null, 2));
+      await copyText(lines.join('\n'));
       setCopyStatus('copied');
     } catch (error) {
       console.warn('Could not copy personal results debug data', error);
@@ -253,6 +255,10 @@ function PersonalCurve({ controller }: { controller: RankController }) {
     <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; they are personal estimates, not public benchmark scores.</p>
     <div className="curve-table-wrap"><table className="curve-table"><caption>Values shown in the chart</caption><thead><tr><th scope="col">Configuration</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Comparisons</th><th scope="col">Status</th></tr></thead><tbody>{[...curve.points].sort((a, b) => b.rating - a.rating).map((point) => <tr key={point.configurationId}><th scope="row"><strong>{point.modelName}</strong><span>{point.workflowName}</span></th><td>{point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td>{point.comparisons}</td><td className={point.frontier ? 'frontier-status' : ''}>{point.frontier ? 'Frontier' : 'Dominated'}</td></tr>)}</tbody></table></div>
   </section>;
+}
+
+function debugEntrant(entrant: RevealPayload['a']): string {
+  return `${entrant.modelName}/${entrant.workflowName} config=${entrant.configurationId ?? '-'} entrant=${entrant.entrantId} level=${entrant.levelId} cost=${entrant.generationCost.toFixed(6)}`;
 }
 
 async function copyText(text: string): Promise<void> {
