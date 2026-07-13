@@ -125,7 +125,7 @@ export class RankController {
     try {
       const assignment = await this.api.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
       if (!assignment) return;
-      this.machine = new ComparisonStateMachine(assignment);
+      this.machine = this.machineForAssignment(assignment);
       this.persist(this.machine.state);
       this.emit();
     } finally { this.busy = false; }
@@ -147,8 +147,19 @@ export class RankController {
     }
     const assignment = await this.api!.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
     if (!assignment) return;
-    this.machine = new ComparisonStateMachine(assignment);
+    this.machine = this.machineForAssignment(assignment);
     this.persist(this.machine.state);
+  }
+
+  /** Catalog-backed APIs precompute whether either level has been played in a
+   * previous matchup. Preserve that prepared state instead of replacing it
+   * with the zero-count initial state. */
+  private machineForAssignment(assignment: MatchupAssignment): ComparisonStateMachine {
+    const prepared = this.store.snapshot.unfinishedMatchup;
+    return new ComparisonStateMachine(
+      assignment,
+      prepared?.assignment.matchupId === assignment.matchupId ? prepared : undefined,
+    );
   }
 
   private persist(state: ComparisonState) {
