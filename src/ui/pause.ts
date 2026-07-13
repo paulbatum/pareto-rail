@@ -11,6 +11,7 @@ export type PauseMenuOptions = {
   initialMotionBlur: number;
   fullscreenAvailable: boolean;
   onResume: () => void;
+  onEndRun: () => void;
   onFullscreen: () => void;
   onMusicVolume: (value: number) => void;
   onSfxVolume: (value: number) => void;
@@ -21,6 +22,7 @@ export type PauseMenuOptions = {
 export function createPauseMenu(options: PauseMenuOptions) {
   const overlay = requireElement<HTMLElement>('#pause');
   const resume = requireElement<HTMLButtonElement>('[data-pause="resume"]');
+  const endRun = requireElement<HTMLButtonElement>('[data-pause="end-run"]');
   const fullscreen = requireElement<HTMLButtonElement>('[data-pause="fullscreen"]');
   const music = requireElement<HTMLInputElement>('[data-pause="music"]');
   const sfx = requireElement<HTMLInputElement>('[data-pause="sfx"]');
@@ -43,6 +45,7 @@ export function createPauseMenu(options: PauseMenuOptions) {
   const onBloom = () => options.onBloom(Number(bloom.value));
   const onMotionBlur = () => options.onMotionBlur(Number(motionBlur.value));
   resume.addEventListener('click', options.onResume);
+  endRun.addEventListener('click', options.onEndRun);
   fullscreen.addEventListener('click', options.onFullscreen);
   document.addEventListener('fullscreenchange', updateFullscreenText);
   music.addEventListener('input', onMusic); sfx.addEventListener('input', onSfx);
@@ -55,6 +58,7 @@ export function createPauseMenu(options: PauseMenuOptions) {
     },
     dispose() {
       resume.removeEventListener('click', options.onResume);
+      endRun.removeEventListener('click', options.onEndRun);
       fullscreen.removeEventListener('click', options.onFullscreen);
       document.removeEventListener('fullscreenchange', updateFullscreenText);
       music.removeEventListener('input', onMusic); sfx.removeEventListener('input', onSfx);

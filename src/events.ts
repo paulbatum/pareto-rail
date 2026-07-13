@@ -60,6 +60,8 @@ export type GameEvents = {
   volley: { volleyId: number; size: number; kills: number; scoreAwarded: number };
   beat: { beatNumber: number; isDownbeat: boolean; audioTime: number };
   runstart: { runNumber: number; duration: number; totalEnemies: number };
+  /** Requests an active run to end immediately, such as from the pause menu. */
+  runendrequest: undefined;
   playerhit: { damage: number; healthRemaining: number };
   runend: {
     score: number;

@@ -1164,6 +1164,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     spawnWord(replayWord, 'replay-letter');
   }
 
+  const offEndRunRequest = bus.on('runendrequest', () => {
+    if (state === 'running') endRun();
+  });
+
   function clearRunObjects() {
     for (const enemy of enemies.values()) scene.remove(enemy.mesh);
     for (const projectile of projectiles.values()) scene.remove(projectile.mesh);
@@ -1182,6 +1186,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     dispose() {
       document.removeEventListener('fullscreenchange', updateStartTipVisibility);
       offBeat();
+      offEndRunRequest();
       input.dispose();
       scene.remove(reticle);
       clearRunObjects();
