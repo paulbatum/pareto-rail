@@ -171,6 +171,8 @@ function PersonalCurve({ controller }: { controller: RankController }) {
       ...(chart
         ? [`CHART | size=${CURVE_CHART.width}x${CURVE_CHART.height} | costDomain=0..${chart.costMax} | costTicks=${chart.costTicks.join(',')} | ratingDomain=${chart.ratingMin}..${chart.ratingMax} | ratingTicks=${chart.ratingTicks.join(',')}`]
         : ['VERDICTS | chart=not-rendered']),
+      'CURRENT MATCHUP',
+      ...debugCurrentMatchup(controller),
       'JUDGMENTS',
       ...judgments.map(({ vote, reveal }, index) => [
         `J${index + 1}`,
@@ -357,6 +359,28 @@ function debugPointLine(point: PersonalRatingPoint | PlottedCurvePoint, index: n
 
 function debugEntrant(entrant: RevealPayload['a']): string {
   return `${entrant.modelName}/${entrant.workflowName} config=${entrant.configurationId ?? '-'} entrant=${entrant.entrantId} level=${entrant.levelId} cost=${entrant.generationCost.toFixed(6)}`;
+}
+
+function debugCurrentMatchup(controller: RankController): string[] {
+  const state = controller.state;
+  if (!state) return ['none'];
+
+  const { assignment, playCounts } = state;
+  const snapshot = controller.debugSnapshot;
+  const levelLine = (side: MatchupSide) => {
+    const entrant = assignment[side];
+    const run = snapshot.levelRuns.find((candidate) => candidate.levelId === entrant.playableRef);
+    const exposures = snapshot.levelExposureCounts[entrant.playableRef] ?? 0;
+    return `${side.toUpperCase()} | playableRef=${entrant.playableRef} | currentPlays=${playCounts[side]} | priorRuns=${run?.count ?? 0} | priorJudgmentExposures=${exposures}`;
+  };
+
+  return [
+    `state=${state.kind} | matchupId=${assignment.matchupId} | benchmarkVersion=${assignment.benchmarkVersion} | assignedAt=${assignment.assignedAt}`,
+    `themeId=${assignment.theme.id} | themeTitle=${JSON.stringify(assignment.theme.title)}`,
+    levelLine('a'),
+    levelLine('b'),
+    ...(state.kind === 'reveal' ? [`A_REVEAL | ${debugEntrant(state.reveal.a)}`, `B_REVEAL | ${debugEntrant(state.reveal.b)}`] : []),
+  ];
 }
 
 async function copyText(text: string): Promise<void> {
