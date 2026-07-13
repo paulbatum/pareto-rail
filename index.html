@@ -6,17 +6,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="Play procedural rail-shooter levels and compare generated game quality against measured cost." />
-    <meta name="theme-color" content="#060a13" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox=%220 0 36 24%22%3E%3Cpath d=%22M2 20h32M4 18 11 11l6 4 8-10 7 3M26 3h6v6%22 fill=%22none%22 stroke=%22%23ff3dbf%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%2F%3E%3C%2Fsvg%3E" />
+    <meta name="theme-color" content="#FAF8F3" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox=%220 0 22 22%22%3E%3Crect x=%224.5%22 y=%224.5%22 width=%2213%22 height=%2213%22 transform=%22rotate(45 11 11)%22 fill=%22none%22 stroke=%22%231B1813%22 stroke-width=%221.4%22%2F%3E%3Ccircle cx=%2211%22 cy=%2211%22 r=%223%22 fill=%22%23C42463%22%2F%3E%3C%2Fsvg%3E" />
     <title>Pareto Rail</title>
     <style>
-      html, body { margin: 0; min-width: 320px; min-height: 100dvh; background: #02040a; color: #e8f6ff; font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace; }
-      #loading { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgb(10 20 40 / 55%), rgb(1 2 6 / 92%)); }
+      html, body { margin: 0; min-width: 320px; min-height: 100dvh; background: #FAF8F3; color: #1B1813; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+      #loading { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #FAF8F3; }
       body:not(.booting) #loading { display: none; }
       .loading-panel { width: min(360px, calc(100vw - 48px)); letter-spacing: .22em; text-align: center; text-transform: uppercase; }
-      .loading-label { margin-bottom: 14px; color: #46e8ff; text-shadow: 0 0 14px rgb(70 232 255 / 65%); }
-      .loading-track { height: 2px; overflow: hidden; background: rgb(70 232 255 / 18%); }
-      .loading-bar { width: 45%; height: 100%; background: #46e8ff; box-shadow: 0 0 18px rgb(70 232 255 / 90%); animation: loading-sweep 1.05s ease-in-out infinite; }
+      .loading-label { margin-bottom: 14px; color: #C42463; }
+      .loading-track { height: 2px; overflow: hidden; background: #E7E1D4; }
+      .loading-bar { width: 45%; height: 100%; background: #C42463; animation: loading-sweep 1.05s ease-in-out infinite; }
       @keyframes loading-sweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(250%); } }
     </style>
   </head>

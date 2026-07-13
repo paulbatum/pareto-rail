@@ -6,10 +6,16 @@ import { RouteLink } from '../components/RouteLink';
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <>
-      <section className="hero page-panel">
-        <p className="eyebrow">{homeCopy.eyebrow}</p>
-        <h1>{homeCopy.title}<br /><span>{homeCopy.titleAccent}</span></h1>
-        <p className="lede">{homeCopy.lede}</p>
+      <section className="hero page-panel hero-with-graphic">
+        <div className="hero-copy">
+          <p className="eyebrow">{homeCopy.eyebrow}</p>
+          <h1>{homeCopy.title}<br /><span>{homeCopy.titleAccent}</span></h1>
+          <p className="lede">{homeCopy.lede}</p>
+        </div>
+        <div className="hero-graphic">
+          <HeroTunnel />
+          <span className="hero-graphic-caption">Crystal Corridor · T+00:04</span>
+        </div>
       </section>
       <section className="home-choice-grid" aria-label="Choose where to start">
         <article className="home-choice">
@@ -27,6 +33,48 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
       </section>
       <section className="home-note"><strong>Keep going to build your personal curve.</strong> {homeCopy.payoff}</section>
     </>
+  );
+}
+
+function HeroTunnel() {
+  return (
+    <svg viewBox="0 0 340 420" role="img" aria-label="Line drawing of a lock-on reticle inside the game's octagonal tunnel">
+      <defs>
+        <polygon id="hero-oct" points="49.7,120 120,49.7 120,-49.7 49.7,-120 -49.7,-120 -120,-49.7 -120,49.7 -49.7,120" fill="none" />
+      </defs>
+      <g stroke="#DCD5C4" strokeWidth="1">
+        <g transform="translate(155 220) scale(1.85)"><use href="#hero-oct" /></g>
+        <g transform="translate(165 217) scale(1.43)"><use href="#hero-oct" /></g>
+        <g transform="translate(174 214) scale(1.1)"><use href="#hero-oct" /></g>
+        <g transform="translate(182 211) scale(0.85)"><use href="#hero-oct" /></g>
+        <g transform="translate(189 209) scale(0.65)"><use href="#hero-oct" /></g>
+        <g transform="translate(195 207) scale(0.5)"><use href="#hero-oct" /></g>
+        <g transform="translate(200 206) scale(0.38)"><use href="#hero-oct" /></g>
+      </g>
+      <g stroke="#B8AF9A" strokeWidth="1">
+        <g transform="translate(204 205) scale(0.29)"><use href="#hero-oct" /></g>
+        <g transform="translate(207 204) scale(0.22)"><use href="#hero-oct" /></g>
+        <g transform="translate(210 203) scale(0.16)"><use href="#hero-oct" /></g>
+      </g>
+      <g transform="translate(122 152)">
+        <rect x="-44" y="-44" width="88" height="88" fill="none" stroke="#1B1813" strokeWidth="1.5" transform="rotate(45)" />
+        <circle r="33" fill="none" stroke="#1B1813" strokeWidth="1.5" />
+        <line x1="0" y1="-53" x2="0" y2="-66" stroke="#1B1813" strokeWidth="1.5" />
+        <line x1="0" y1="53" x2="0" y2="66" stroke="#1B1813" strokeWidth="1.5" />
+        <line x1="-53" y1="0" x2="-66" y2="0" stroke="#1B1813" strokeWidth="1.5" />
+        <line x1="53" y1="0" x2="66" y2="0" stroke="#1B1813" strokeWidth="1.5" />
+        <circle r="7" fill="#C42463" />
+      </g>
+      <g transform="translate(246 296)">
+        <rect x="-21" y="-21" width="42" height="42" fill="none" stroke="#C42463" strokeWidth="1.3" transform="rotate(45)" />
+        <circle r="15.5" fill="none" stroke="#C42463" strokeWidth="1.3" />
+        <circle r="3.6" fill="#1B1813" />
+      </g>
+      <g fill="none" stroke="#B8AF9A" strokeWidth="1">
+        <rect x="40" y="330" width="17" height="17" transform="rotate(24 48 338)" />
+        <rect x="276" y="82" width="12" height="12" transform="rotate(-18 282 88)" />
+      </g>
+    </svg>
   );
 }
 
