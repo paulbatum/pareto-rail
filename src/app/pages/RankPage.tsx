@@ -5,7 +5,7 @@ import type { ComparisonState, MatchupSide, RevealPayload, VoteVerdict } from '.
 import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { CatalogBenchmarkApi } from '../../benchmark/catalog-api';
 import { rankCatalog } from '../../benchmark/catalog';
-import { BenchmarkLocalStore } from '../../benchmark/storage';
+import { BenchmarkLocalStore, type CompletedMatchup } from '../../benchmark/storage';
 import { RankController, type RankLaunch } from '../rank';
 import { RouteLink } from '../components/RouteLink';
 import type { AppRoute } from '../router';
@@ -78,7 +78,7 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
       <p className="rank-note">Two levels were generated independently from this assignment. Model and workflow identities stay hidden until you vote.</p>
       <RankStage controller={controller} state={state} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
-      {controller.hasPlayed && <PersonalCurve controller={controller} />}
+      {controller.curve.comparisonCount > 0 && <PersonalCurve controller={controller} />}
     </section>
   );
 }
@@ -144,7 +144,7 @@ type PlottedCurvePoint = {
   labelY: number;
 };
 
-type CurveDebugStage = 'standings' | 'chart';
+type CurveDebugStage = 'verdicts' | 'chart';
 
 type CurveDebugChart = {
   costMax: number;
@@ -163,13 +163,13 @@ function PersonalCurve({ controller }: { controller: RankController }) {
   const pendingPoints = curve.points.filter((point) => point.status === 'pending');
   const placedPoints = curve.points.filter((point): point is typeof point & { rating: number } => point.status !== 'pending' && point.rating !== undefined);
   const copyDebugData = async (stage: CurveDebugStage, chart?: CurveDebugChart) => {
-    const judgments = controller.debugSnapshot.completedMatchups;
+    const judgments = controller.judgedMatchups;
     const lines = [
       `PARETO RAIL PERSONAL CURVE DEBUG v3 | stage=${stage} | exported=${new Date().toISOString()} | comparisons=${curve.comparisonCount} | configurations=${curve.points.length}`,
       'ALGORITHM | regularized Bradley-Terry | anchor=1 | pseudo-result=tie | rating=1000+400log10(strength)',
       ...(chart
         ? [`CHART | size=${CURVE_CHART.width}x${CURVE_CHART.height} | costDomain=0..${chart.costMax} | costTicks=${chart.costTicks.join(',')} | ratingDomain=${chart.ratingMin}..${chart.ratingMax} | ratingTicks=${chart.ratingTicks.join(',')}`]
-        : ['STANDINGS | chart=not-rendered']),
+        : ['VERDICTS | chart=not-rendered']),
       'JUDGMENTS',
       ...judgments.map(({ vote, reveal }, index) => [
         `J${index + 1}`,
@@ -195,13 +195,16 @@ function PersonalCurve({ controller }: { controller: RankController }) {
     }
   };
 
+  const judgedMatchups = controller.judgedMatchups;
+
   if (!curve.frontierReady) return <section className="curve-panel" aria-labelledby="personal-curve-title">
     <div className="curve-heading">
-      <div><p className="eyebrow">Personal results</p><h2 id="personal-curve-title">Your standings</h2></div>
-      {import.meta.env.DEV && <button className="curve-debug-copy" type="button" onClick={() => void copyDebugData('standings')}>{copyStatus === 'copied' ? 'Copied debug data' : copyStatus === 'failed' ? 'Copy failed' : 'Copy debug data'}</button>}
+      <div><p className="eyebrow">Your verdicts</p><h2 id="personal-curve-title">How you rank the models</h2></div>
+      {import.meta.env.DEV && <button className="curve-debug-copy" type="button" onClick={() => void copyDebugData('verdicts')}>{copyStatus === 'copied' ? 'Copied debug data' : copyStatus === 'failed' ? 'Copy failed' : 'Copy debug data'}</button>}
     </div>
-    <p className="curve-progress">{standingsProgress(curve)}</p>
-    <PersonalCurveTable points={curve.points} showFrontier={false} />
+    <p className="curve-intro">Every verdict ranks the model and workflow behind each level — your run scores don't affect this.</p>
+    <p className="curve-progress">Your Pareto chart unlocks as verdicts accumulate.</p>
+    <VerdictLog matchups={judgedMatchups} />
   </section>;
 
   const costs = placedPoints.map((point) => point.meanCost);
@@ -272,14 +275,42 @@ function PersonalCurve({ controller }: { controller: RankController }) {
       </div>}
     </div>
     <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; dashed points are early estimates that firm up with more matchups. They are personal estimates, not public benchmark scores.</p>
-    {pendingPoints.length > 0 && <p className="curve-unplotted">Not yet on the board: {pendingPoints.map((point) => point.label).join(', ')}</p>}
+    {pendingPoints.length > 0 && <p className="curve-unplotted">Not yet ranked: {pendingPoints.map((point) => point.label).join(', ')}</p>}
     <PersonalCurveTable points={curve.points} showFrontier />
+    <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} /></details>
   </section>;
+}
+
+function VerdictLog({ matchups }: { matchups: readonly CompletedMatchup[] }) {
+  return <ol className="verdict-log" aria-label="Your verdicts">{[...matchups].reverse().map((matchup) => <li key={matchup.matchupId}>
+    <strong className="verdict-theme">{themeTitleForMatchup(matchup.matchupId)}</strong><span className="verdict-separator"> — </span><span className={`verdict-outcome verdict-${matchup.vote.verdict}`}>{verdictOutcome(matchup.vote.verdict, matchup.reveal)}</span>
+  </li>)}</ol>;
+}
+
+function verdictOutcome(verdict: VoteVerdict, reveal: RevealPayload) {
+  if (verdict === 'both-good' || verdict === 'both-bad') {
+    return <>{verdict === 'both-good' ? 'Both impressed you: ' : 'Neither impressed you: '}<span className="verdict-identity">{entrantIdentity(reveal.a)}</span>{' and '}<span className="verdict-identity">{entrantIdentity(reveal.b)}</span></>;
+  }
+  const preferredSide = verdict === 'a-better' ? 'a' : 'b';
+  const otherSide = preferredSide === 'a' ? 'b' : 'a';
+  const preferred = reveal[preferredSide];
+  const other = reveal[otherSide];
+  return <><span className="verdict-identity">{entrantIdentity(preferred)}</span>{' beat '}<span className="verdict-identity">{entrantIdentity(other)}</span>{' '}<span className="verdict-costs">(${preferred.generationCost.toFixed(2)} vs ${other.generationCost.toFixed(2)})</span></>;
+}
+
+function entrantIdentity(entrant: RevealPayload['a']): string {
+  return `${entrant.modelName}${entrant.snapshotLabel ? ` · ${entrant.snapshotLabel}` : ''} · ${entrant.workflowName}`;
+}
+
+function themeTitleForMatchup(matchupId: string): string {
+  const separator = matchupId.indexOf(':');
+  const themeId = separator > 0 ? matchupId.slice(0, separator) : matchupId;
+  return rankCatalog.themes.find((theme) => theme.id === themeId)?.title ?? themeId;
 }
 
 function PersonalCurveTable({ points, showFrontier }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean }) {
   const ordered = [...points].sort((left, right) => (right.rating ?? -Infinity) - (left.rating ?? -Infinity) || left.configurationId.localeCompare(right.configurationId));
-  return <div className="curve-table-wrap"><table className="curve-table"><caption>Your configuration standings</caption><thead><tr><th scope="col">Configuration</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
+  return <div className="curve-table-wrap"><table className="curve-table"><caption>Chart data</caption><thead><tr><th scope="col">Model</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
     const frontierStatus = showFrontier && point.frontier;
     const record = point.comparisons === 0
       ? <span aria-label="No comparisons yet">—</span>
@@ -288,17 +319,10 @@ function PersonalCurveTable({ points, showFrontier }: { points: readonly Persona
   })}</tbody></table></div>;
 }
 
-function standingsProgress(curve: PersonalCurve): string {
-  if (curve.comparisonCount === 0) return 'Play a matchup to start your personal standings.';
-  return `${curve.placedCount} of ${curve.points.length} configurations are on the board — keep voting to reveal your chart.`;
-}
-
 function curveStatusNarrative(curve: PersonalCurve): string {
-  if (curve.points.some((point) => point.status === 'pending')) return `${curve.placedCount} of ${curve.points.length} configurations on the board`;
-  const stillMoving = curve.points.filter((point) => point.status !== 'stable').length;
-  return stillMoving === 0
-    ? `All ${curve.points.length} configurations settled`
-    : `${curve.placedCount} on the board · ${stillMoving} still moving`;
+  if (curve.points.every((point) => point.status === 'stable')) return 'All settled';
+  const pending = curve.points.filter((point) => point.status === 'pending').length;
+  return pending > 0 ? `${curve.placedCount} ranked · ${pending} pending` : `${curve.placedCount} ranked · still settling`;
 }
 
 function statusLabel(status: PersonalRatingPoint['status']): string {

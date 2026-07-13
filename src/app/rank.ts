@@ -4,7 +4,7 @@ import {
 } from '../benchmark/personal-curve';
 import { rankCatalog } from '../benchmark/catalog';
 import { ComparisonStateMachine } from '../benchmark/state';
-import { BenchmarkLocalStore } from '../benchmark/storage';
+import { BenchmarkLocalStore, type CompletedMatchup } from '../benchmark/storage';
 import type {
   BenchmarkApi,
   ComparisonState,
@@ -35,7 +35,7 @@ export class RankController {
   get assignment(): MatchupAssignment | null { return this.machine?.state.assignment ?? null; }
   get state(): ComparisonState | null { return this.machine?.state ?? null; }
   get participantId() { return this.store.participantId; }
-  get hasPlayed() { return this.store.snapshot.levelRuns.length > 0; }
+  get judgedMatchups(): readonly CompletedMatchup[] { return this.store.snapshot.completedMatchups; }
   /** Complete local inputs for development-only diagnostics and reproducible exports. */
   get debugSnapshot() { return this.store.snapshot; }
   get curve() {
