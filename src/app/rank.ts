@@ -35,6 +35,8 @@ export class RankController {
   get assignment(): MatchupAssignment | null { return this.machine?.state.assignment ?? null; }
   get state(): ComparisonState | null { return this.machine?.state ?? null; }
   get participantId() { return this.store.participantId; }
+  /** Complete local inputs for development-only diagnostics and reproducible exports. */
+  get debugSnapshot() { return this.store.snapshot; }
   get curve() {
     const data = this.store.snapshot;
     return recomputePersonalCurve(personalHistoryFromReveals(data.history, data.completedMatchups.map((item) => item.reveal)), {

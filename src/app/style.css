@@ -87,6 +87,9 @@ kbd { padding: 3px 7px; color: #46e8ff; border: 1px solid rgb(70 232 255 / 45%);
 .curve-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
 .curve-heading .eyebrow { margin-bottom: 7px; }
 .curve-panel h2 { margin: 0; color: #fff; font-size: clamp(21px, 3vw, 28px); }
+.curve-heading-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+.curve-debug-copy { min-height: 28px; padding: 5px 9px; color: #ffcf77; background: rgb(255 177 61 / 7%); border: 1px dashed rgb(255 177 61 / 42%); font: 9px ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.curve-debug-copy:hover, .curve-debug-copy:focus-visible { color: #fff; border-color: #ffcf77; }
 .curve-status { flex: 0 0 auto; padding: 6px 8px; color: #9ab7c7; background: rgb(70 232 255 / 7%); border: 1px solid rgb(70 232 255 / 18%); font: 10px ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; }
 .curve-intro { max-width: 720px; margin: 18px 0; color: #a6c4d4; font-size: 14px; line-height: 1.6; }
 .curve-intro strong { color: #fff; }
@@ -145,7 +148,7 @@ body.game-active .site-nav a { pointer-events: auto; }
 .game-toolbar a, .game-toolbar span { pointer-events: auto; color: #9ab7c7; font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
 .game-toolbar a:hover { color: #46e8ff; }
 .game-mount { position: absolute; inset: 0; }
-@media (max-width: 640px) { .site-nav { align-items: flex-start; flex-direction: column; padding: 16px 20px; } .site-nav nav { width: 100%; justify-content: space-between; flex-wrap: wrap; } .wordmark { min-width: 0; } .home-choice-grid { grid-template-columns: 1fr; } .info-grid, .reveal-grid { grid-template-columns: 1fr; } .compare-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; } .versus-divider { flex-direction: row; min-height: 20px; } .versus-divider::before, .versus-divider::after { width: auto; height: 1px; background: linear-gradient(90deg, transparent, rgb(70 232 255 / 55%), rgb(255 61 191 / 48%), transparent); } .compare-card { padding: 10px; } .compare-card h2 { font-size: 15px; } .vote-grid { grid-template-columns: 1fr; } .curve-heading { align-items: flex-start; flex-direction: column; gap: 12px; } .curve-legend .best-direction { width: 100%; margin-left: 0; } .curve-tooltip { width: 190px; } .curve-table { min-width: 580px; } }
+@media (max-width: 640px) { .site-nav { align-items: flex-start; flex-direction: column; padding: 16px 20px; } .site-nav nav { width: 100%; justify-content: space-between; flex-wrap: wrap; } .wordmark { min-width: 0; } .home-choice-grid { grid-template-columns: 1fr; } .info-grid, .reveal-grid { grid-template-columns: 1fr; } .compare-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; } .versus-divider { flex-direction: row; min-height: 20px; } .versus-divider::before, .versus-divider::after { width: auto; height: 1px; background: linear-gradient(90deg, transparent, rgb(70 232 255 / 55%), rgb(255 61 191 / 48%), transparent); } .compare-card { padding: 10px; } .compare-card h2 { font-size: 15px; } .vote-grid { grid-template-columns: 1fr; } .curve-heading { align-items: flex-start; flex-direction: column; gap: 12px; } .curve-heading-actions { justify-content: flex-start; } .curve-legend .best-direction { width: 100%; margin-left: 0; } .curve-tooltip { width: 190px; } .curve-table { min-width: 580px; } }
 
 /* Site typography uses a sans display voice against deliberately monospace data. */
 .app-shell h1,

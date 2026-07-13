@@ -141,6 +141,7 @@ type PlottedCurvePoint = {
 
 function PersonalCurve({ controller }: { controller: RankController }) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const curve = controller.curve;
   if (!curve.unlocked) return <p className="curve-progress">Your Pareto curve unlocks after {4 - curve.comparisonCount} more matchup{curve.comparisonCount === 3 ? '' : 's'}.</p>;
 
@@ -162,11 +163,53 @@ function PersonalCurve({ controller }: { controller: RankController }) {
   const frontier = plotted.filter((point) => point.frontier).sort((left, right) => left.x - right.x);
   const frontierPath = frontier.length > 1 ? `M${frontier.map((point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join('L')}` : null;
   const active = plotted.find((point) => point.configurationId === activeId) ?? null;
+  const copyDebugData = async () => {
+    const snapshot = controller.debugSnapshot;
+    const payload = {
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      catalog: rankCatalog,
+      explicitJudgments: snapshot.completedMatchups.map(({ vote, reveal }) => ({
+        matchupId: vote.matchupId,
+        submittedAt: vote.submittedAt,
+        verdict: vote.verdict,
+        relative: vote.relative,
+        sentiment: vote.sentiment ?? null,
+        playCounts: vote.playCounts,
+        a: reveal.a,
+        b: reveal.b,
+      })),
+      raw: snapshot,
+      derived: {
+        ratingAlgorithm: { name: 'online Elo', initialRating: 1000, kFactor: 32, tieScore: 0.5 },
+        personalCurve: curve,
+        chart: {
+          dimensions: CURVE_CHART,
+          costDomain: [0, costMax],
+          costTicks,
+          ratingDomain: [ratingMin, ratingMax],
+          ratingTicks,
+          plottedPoints: plotted,
+          frontierPath,
+        },
+      },
+    };
+    try {
+      await copyText(JSON.stringify(payload, null, 2));
+      setCopyStatus('copied');
+    } catch (error) {
+      console.warn('Could not copy personal results debug data', error);
+      setCopyStatus('failed');
+    }
+  };
 
   return <section className="curve-panel" aria-labelledby="personal-curve-title">
     <div className="curve-heading">
       <div><p className="eyebrow">Personal results</p><h2 id="personal-curve-title">Your Pareto curve</h2></div>
-      <span className="curve-status">{curve.isFull ? 'full curve' : 'early estimate'} · {curve.comparisonCount} comparisons</span>
+      <div className="curve-heading-actions">
+        {import.meta.env.DEV && <button className="curve-debug-copy" type="button" onClick={() => void copyDebugData()}>{copyStatus === 'copied' ? 'Copied debug data' : copyStatus === 'failed' ? 'Copy failed' : 'Copy debug data'}</button>}
+        <span className="curve-status">{curve.isFull ? 'full curve' : 'early estimate'} · {curve.comparisonCount} comparisons</span>
+      </div>
     </div>
     <p className="curve-intro">Each point is a model and workflow you have played. The best trade-offs move toward the <strong>upper left</strong>: higher personal preference at lower generation cost.</p>
     <div className="curve-legend" aria-label="Chart legend"><span><i className="legend-point frontier" />Pareto frontier</span><span><i className="legend-point" />Other configuration</span><span className="best-direction">↖ Better value</span></div>
@@ -210,6 +253,24 @@ function PersonalCurve({ controller }: { controller: RankController }) {
     <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; they are personal estimates, not public benchmark scores.</p>
     <div className="curve-table-wrap"><table className="curve-table"><caption>Values shown in the chart</caption><thead><tr><th scope="col">Configuration</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Comparisons</th><th scope="col">Status</th></tr></thead><tbody>{[...curve.points].sort((a, b) => b.rating - a.rating).map((point) => <tr key={point.configurationId}><th scope="row"><strong>{point.modelName}</strong><span>{point.workflowName}</span></th><td>{point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td>{point.comparisons}</td><td className={point.frontier ? 'frontier-status' : ''}>{point.frontier ? 'Frontier' : 'Dominated'}</td></tr>)}</tbody></table></div>
   </section>;
+}
+
+async function copyText(text: string): Promise<void> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+  } catch { /* fall back for browsers that deny the async clipboard API */ }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.append(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  textarea.remove();
+  if (!copied) throw new Error('Clipboard API unavailable');
 }
 
 function ticksFromZero(maximum: number, intervals: number): number[] {
