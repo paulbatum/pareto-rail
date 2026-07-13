@@ -8,6 +8,7 @@ Work through these briefs in order. Each brief should leave the repository commi
 4. `04-benchmark-authoring-protocol.md` — make future entrants author directory-only benchmark levels without registry edits.
 5. `05-ranking-experience.md` — make eligible local comparisons appear automatically and implement per-user play, judgment, and reveal.
 6. `06-publication-and-evidence.md` — publish levels, manifests, sanitized rollouts, and ranking evidence safely.
+7. `07-personal-rank-season.md` — replace personal Elo with Bradley-Terry and make matchup scheduling adaptive.
 
 The benchmark runner's generation result and later application promotion are separate records. A promotion or publication failure must never change a completed run's disposition.
 
