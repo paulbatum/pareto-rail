@@ -142,7 +142,8 @@ kbd { padding: 3px 7px; color: #46e8ff; border: 1px solid rgb(70 232 255 / 45%);
 .curve-table .frontier-status { color: #ff66ca; }
 .crystal-invitation, .benchmark-invitation { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgb(70 232 255 / 25%); color: #a6c4d4; line-height: 1.5; }
 .crystal-invitation p, .benchmark-invitation p { margin: 0 0 14px; }
-.end-screen:has(.crystal-invitation), .end-screen:has(.benchmark-invitation) { pointer-events: auto; }
+.end-screen:has(.crystal-invitation) .crystal-invitation,
+.end-screen:has(.benchmark-invitation) .benchmark-invitation { pointer-events: auto; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 body.game-active .site-nav { pointer-events: none; }
 body.game-active .site-nav a { pointer-events: auto; }
