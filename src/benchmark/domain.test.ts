@@ -333,6 +333,9 @@ async function testApisAndStateMachine(): Promise<void> {
   const reveal = await api.reveal(next!.matchupId, participantId);
   assert.equal(reveal.a.dataClass, 'eligible');
   assert.equal(store.snapshot.history.length, 1);
+  api.restoreAssignment(next!, participantId, { a: 0, b: 0 });
+  assert.equal(store.snapshot.unfinishedMatchup?.kind, 'ready-to-vote');
+  assert.deepEqual(store.snapshot.unfinishedMatchup?.playCounts, { a: 1, b: 1 });
 }
 
 function simulateAssignments(catalog: RankCatalog, count: number, participantId = 'test-participant'): { judged: Judged[]; exposures: Record<string, number>; themes: string[]; assignments: { themeId: string; levelIdA: string; levelIdB: string }[] } {

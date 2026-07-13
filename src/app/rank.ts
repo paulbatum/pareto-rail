@@ -139,10 +139,12 @@ export class RankController {
         const kind = safe.playCounts.a > 0 && safe.playCounts.b > 0 ? 'ready-to-vote' : 'assignment';
         safe = { kind, assignment: safe.assignment, playCounts: { ...safe.playCounts } };
       }
-      this.machine = new ComparisonStateMachine(safe.assignment, safe);
-      this.store.setUnfinishedMatchup(safe);
       const fixture = this.api as BenchmarkApi & { restoreAssignment?: (assignment: MatchupAssignment, participantId: string, counts: { a: number; b: number }) => void };
       fixture.restoreAssignment?.(safe.assignment, this.store.participantId, safe.playCounts);
+      const restored = this.store.snapshot.unfinishedMatchup;
+      const initial = restored?.assignment.matchupId === safe.assignment.matchupId ? restored : safe;
+      this.machine = new ComparisonStateMachine(safe.assignment, initial);
+      this.store.setUnfinishedMatchup(this.machine.state);
       return;
     }
     const assignment = await this.api!.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });

@@ -18,10 +18,12 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
   /** Rehydrate an assignment after the controller restores an unfinished round. */
   restoreAssignment(assignment: MatchupAssignment, _participantId: string, playCounts: PlayCounts = { a: 0, b: 0 }): void {
     this.assignments.set(assignment.matchupId, assignment);
-    const current = this.store.snapshot.unfinishedMatchup;
-    if (!current || current.assignment.matchupId !== assignment.matchupId) {
-      this.store.setUnfinishedMatchup(newState(assignment, playCounts));
-    }
+    const recorded = this.playCountsFor(assignment);
+    const counts = {
+      a: Math.max(playCounts.a, recorded.a),
+      b: Math.max(playCounts.b, recorded.b),
+    };
+    this.store.setUnfinishedMatchup(newState(assignment, counts));
   }
 
   async nextMatchup(request: NextMatchupRequest): Promise<MatchupAssignment | null> {
