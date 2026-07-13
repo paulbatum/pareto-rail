@@ -31,6 +31,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testConnectionPromotes();
   testSelfHealingSchedule();
   testStorageVersioning();
+  testStorageUndo();
   testSchedulerCoverage();
   testFeaturedFirstMatchup();
   testFeaturedThemeCoverage();
@@ -153,6 +154,24 @@ function testStorageVersioning(): void {
   const envelope = JSON.parse(currentStorage.getItem('current')!) as StorageEnvelope;
   assert.equal(envelope.version, 2);
   assert.equal(new BenchmarkLocalStore(currentStorage, 'current').participantId, 'current-participant');
+}
+
+function testStorageUndo(): void {
+  const store = new BenchmarkLocalStore(createMemoryStorage(), 'undo');
+  const vote: MatchupVote = { matchupId: 'm', aEntrantId: 'a', bEntrantId: 'b', verdict: 'a-better', relative: 'a', playCounts: { a: 2, b: 1 }, submittedAt: 'now' };
+  const reveal = {
+    matchupId: 'm',
+    a: { entrantId: 'a', playableRef: 'a', levelId: 'a', modelName: 'A', workflowName: 'solo', generationCost: 1, dataClass: 'eligible' as const },
+    b: { entrantId: 'b', playableRef: 'b', levelId: 'b', modelName: 'B', workflowName: 'solo', generationCost: 2, dataClass: 'eligible' as const },
+    vote,
+  };
+  store.completeMatchup({ matchupId: 'm', vote, reveal });
+  const undone = store.undoLastVerdict();
+  assert.equal(undone?.vote.verdict, 'a-better');
+  assert.equal(store.snapshot.completedMatchups.length, 0);
+  assert.equal(store.snapshot.history.length, 0);
+  assert.deepEqual(store.snapshot.levelExposureCounts, {});
+  assert.deepEqual(store.snapshot.revealedEntrants, []);
 }
 
 function testSchedulerCoverage(): void {

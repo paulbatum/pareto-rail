@@ -135,6 +135,20 @@ export class BenchmarkLocalStore {
     }
     return this.save({ completedMatchups: [...existing, completed], history: [...this.data.history.filter((item) => item.matchupId !== completed.matchupId), completed.vote], levelExposureCounts, revealedEntrants: revealed, unfinishedMatchup: undefined });
   }
+  /** Remove the newest local judgment for development-only correction tools. */
+  undoLastVerdict(): CompletedMatchup | undefined {
+    const undone = this.data.completedMatchups.at(-1);
+    if (!undone) return undefined;
+    const completedMatchups = this.data.completedMatchups.slice(0, -1);
+    const completedIds = new Set(completedMatchups.map((item) => item.matchupId));
+    this.save({
+      completedMatchups,
+      history: this.data.history.filter((vote) => completedIds.has(vote.matchupId)),
+      levelExposureCounts: exposureCountsFromMatchups(completedMatchups),
+      revealedEntrants: revealedEntrantsFromMatchups(completedMatchups),
+    });
+    return undone;
+  }
 
   /** Drop persisted rounds, votes, and reveals that reference levels or themes
    * absent from the published catalog (for example retired rehearsal data). */
@@ -228,11 +242,20 @@ function mergeLevelRuns(...collections: readonly LevelRun[][]): LevelRun[] {
 
 function exposureCounts(data: LocalBenchmarkData): Record<string, number> {
   if (data.levelExposureCounts && Object.keys(data.levelExposureCounts).length > 0) return { ...data.levelExposureCounts };
+  return exposureCountsFromMatchups(data.completedMatchups);
+}
+
+function exposureCountsFromMatchups(matchups: readonly CompletedMatchup[]): Record<string, number> {
   const counts: Record<string, number> = {};
-  for (const completed of data.completedMatchups) {
+  for (const completed of matchups) {
     for (const levelId of [completed.reveal.a.levelId, completed.reveal.b.levelId]) {
       counts[levelId] = (counts[levelId] ?? 0) + 1;
     }
   }
   return counts;
+}
+
+function revealedEntrantsFromMatchups(matchups: readonly CompletedMatchup[]): RevealPayload['a'][] {
+  return matchups.flatMap((completed) => [completed.reveal.a, completed.reveal.b])
+    .filter((entrant, index, all) => all.findIndex((other) => other.entrantId === entrant.entrantId) === index);
 }

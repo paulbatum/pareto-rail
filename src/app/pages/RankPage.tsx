@@ -78,13 +78,13 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
       <p className="lede">{assignment.theme.summary}</p>
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
       <p className="rank-note">Two levels were generated independently from this assignment. Model and workflow identities stay hidden until you vote.</p>
-      <RankStage controller={controller} state={state} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
+      <RankStage controller={controller} state={state} lastUndoneVerdict={controller.lastUndoneVerdict} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
       {controller.curve.comparisonCount > 0 && <PersonalCurve controller={controller} />}
     </section>
   );
 }
 
-function RankStage({ controller, state, onLaunch, onVote, onNext }: { controller: RankController; state: ComparisonState; onLaunch: (side: MatchupSide) => void; onVote: (verdict: VoteVerdict) => void; onNext: () => void }) {
+function RankStage({ controller, state, lastUndoneVerdict, onLaunch, onVote, onNext }: { controller: RankController; state: ComparisonState; lastUndoneVerdict: VoteVerdict | null; onLaunch: (side: MatchupSide) => void; onVote: (verdict: VoteVerdict) => void; onNext: () => void }) {
   const nextSide = state.kind === 'assignment' && (state.playCounts.a > 0) !== (state.playCounts.b > 0)
     ? state.playCounts.a > 0 ? 'b' : 'a'
     : null;
@@ -104,7 +104,7 @@ function RankStage({ controller, state, onLaunch, onVote, onNext }: { controller
 
   if (state.kind === 'assignment') return versusLayout;
   if (state.kind === 'playing-a' || state.kind === 'playing-b') return <div className="assignment-card"><h2>Level {state.kind === 'playing-a' ? 'A' : 'B'} is in progress</h2><p>Your run will be counted when it ends. Refreshing returns here without counting it.</p></div>;
-  if (state.kind === 'ready-to-vote') return <>{versusLayout}<h2 className="vote-heading">Which run felt better?</h2><div className="vote-grid" role="group" aria-label="Choose a verdict"><button className="button primary" type="button" onClick={() => onVote('a-better')}>A is better</button><button className="button primary" type="button" onClick={() => onVote('b-better')}>B is better</button><button className="button" type="button" onClick={() => onVote('both-good')}>Both are good</button><button className="button" type="button" onClick={() => onVote('both-bad')}>Both are bad</button></div></>;
+  if (state.kind === 'ready-to-vote') return <>{versusLayout}{import.meta.env.DEV && lastUndoneVerdict && <p className="debug-undo-notice" role="status">Last verdict undone: <strong>{verdictText(lastUndoneVerdict)}</strong></p>}<h2 className="vote-heading">Which run felt better?</h2><div className="vote-grid" role="group" aria-label="Choose a verdict"><button className="button primary" type="button" onClick={() => onVote('a-better')}>A is better</button><button className="button primary" type="button" onClick={() => onVote('b-better')}>B is better</button><button className="button" type="button" onClick={() => onVote('both-good')}>Both are good</button><button className="button" type="button" onClick={() => onVote('both-bad')}>Both are bad</button></div></>;
   if (state.kind === 'reveal') return <RevealStage reveal={state.reveal} onNext={onNext} />;
   return <div className="assignment-card"><h2>Saving your vote…</h2></div>;
 }
@@ -207,7 +207,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
     </div>
     <p className="curve-intro">Every verdict ranks the model and workflow behind each level — your run scores don't affect this.</p>
     <p className="curve-progress">Your Pareto chart unlocks as verdicts accumulate.</p>
-    <VerdictLog matchups={judgedMatchups} />
+    <VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} />
   </section>;
 
   const costs = placedPoints.map((point) => point.meanCost);
@@ -280,13 +280,14 @@ function PersonalCurve({ controller }: { controller: RankController }) {
     <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; dashed points are early estimates that firm up with more matchups. They are personal estimates, not public benchmark scores.</p>
     {pendingPoints.length > 0 && <p className="curve-unplotted">Not yet ranked: {pendingPoints.map((point) => point.label).join(', ')}</p>}
     <PersonalCurveTable points={curve.points} showFrontier />
-    <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} /></details>
+    <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} /></details>
   </section>;
 }
 
-function VerdictLog({ matchups }: { matchups: readonly CompletedMatchup[] }) {
-  return <ol className="verdict-log" aria-label="Your verdicts">{[...matchups].reverse().map((matchup) => <li key={matchup.matchupId}>
-    <strong className="verdict-theme">{themeTitleForMatchup(matchup.matchupId)}</strong><span className="verdict-separator"> — </span><span className={`verdict-outcome verdict-${matchup.vote.verdict}`}>{verdictOutcome(matchup.vote.verdict, matchup.reveal)}</span>
+function VerdictLog({ matchups, onUndo }: { matchups: readonly CompletedMatchup[]; onUndo?: () => void }) {
+  return <ol className="verdict-log" aria-label="Your verdicts">{[...matchups].reverse().map((matchup, index) => <li key={matchup.matchupId}>
+    <div><strong className="verdict-theme">{themeTitleForMatchup(matchup.matchupId)}</strong><span className="verdict-separator"> — </span><span className={`verdict-outcome verdict-${matchup.vote.verdict}`}>{verdictOutcome(matchup.vote.verdict, matchup.reveal)}</span></div>
+    {import.meta.env.DEV && index === 0 && onUndo && <button className="verdict-undo" type="button" onClick={onUndo}>Undo</button>}
   </li>)}</ol>;
 }
 
@@ -494,3 +495,4 @@ function costComparison(reveal: RevealPayload): string | null {
 }
 
 function verdictLabel(verdict: VoteVerdict) { return verdict === 'a-better' ? 'Level A' : verdict === 'b-better' ? 'Level B' : verdict === 'both-good' ? 'both good' : 'both bad'; }
+function verdictText(verdict: VoteVerdict) { return verdict === 'a-better' ? 'A is better' : verdict === 'b-better' ? 'B is better' : verdict === 'both-good' ? 'Both are good' : 'Both are bad'; }

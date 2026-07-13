@@ -84,11 +84,15 @@ kbd { padding: 3px 7px; color: #46e8ff; border: 1px solid rgb(70 232 255 / 45%);
 .vote-result { margin: 22px 0; color: #a6c4d4; }
 .curve-progress { margin-top: 38px; color: #7090a2; font-size: 12px; letter-spacing: .04em; }
 .verdict-log { display: grid; gap: 0; margin: 24px 0 0; padding: 0; list-style: none; border-top: 1px solid rgb(70 232 255 / 16%); }
-.verdict-log li { padding: 11px 0; color: #a6c4d4; border-bottom: 1px solid rgb(166 196 212 / 10%); font-size: 12px; line-height: 1.5; }
+.verdict-log li { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 11px 0; color: #a6c4d4; border-bottom: 1px solid rgb(166 196 212 / 10%); font-size: 12px; line-height: 1.5; }
 .verdict-theme { color: #fff; font-size: 13px; }
 .verdict-separator { color: #668495; }
 .verdict-identity { color: #e8f6ff; font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace; }
 .verdict-costs { color: #ffcf77; font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace; white-space: nowrap; }
+.verdict-undo { flex: 0 0 auto; padding: 4px 7px; color: #ffcf77; background: rgb(255 177 61 / 7%); border: 1px dashed rgb(255 177 61 / 42%); font: 9px ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.verdict-undo:hover, .verdict-undo:focus-visible { color: #fff; border-color: #ffcf77; }
+.debug-undo-notice { margin: 22px 0 -8px; padding: 10px 12px; color: #ffcf77; background: rgb(255 177 61 / 7%); border-left: 2px solid #ffb13d; font: 11px ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace; letter-spacing: .03em; }
+.debug-undo-notice strong { color: #fff; }
 .verdict-details { margin-top: 26px; border-top: 1px solid rgb(70 232 255 / 16%); }
 .verdict-details summary { padding: 13px 0 10px; color: #46e8ff; font: 10px ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace; letter-spacing: .09em; text-transform: uppercase; cursor: pointer; }
 .verdict-details .verdict-log { margin-top: 0; }

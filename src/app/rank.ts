@@ -25,6 +25,7 @@ export class RankController {
   private readonly listeners = new Set<Listener>();
   private machine: ComparisonStateMachine | null = null;
   private busy = false;
+  private undoneVerdict: VoteVerdict | null = null;
 
   constructor(options: { api?: BenchmarkApi; store?: BenchmarkLocalStore; resolvePlayable?: (ref: string) => string } = {}) {
     this.store = options.store ?? new BenchmarkLocalStore();
@@ -36,6 +37,7 @@ export class RankController {
   get state(): ComparisonState | null { return this.machine?.state ?? null; }
   get participantId() { return this.store.participantId; }
   get judgedMatchups(): readonly CompletedMatchup[] { return this.store.snapshot.completedMatchups; }
+  get lastUndoneVerdict(): VoteVerdict | null { return this.undoneVerdict; }
   /** Complete local inputs for development-only diagnostics and reproducible exports. */
   get debugSnapshot() { return this.store.snapshot; }
   get curve() {
@@ -96,6 +98,7 @@ export class RankController {
 
   async submit(verdict: VoteVerdict) {
     if (!this.machine || !this.api || this.machine.state.kind !== 'ready-to-vote' || this.busy) return;
+    this.undoneVerdict = null;
     this.busy = true;
     try {
       const submitting = this.machine.submit(verdict);
@@ -121,6 +124,7 @@ export class RankController {
 
   async nextMatchup() {
     if (!this.api || this.busy) return;
+    this.undoneVerdict = null;
     this.busy = true;
     try {
       const assignment = await this.api.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
@@ -129,6 +133,27 @@ export class RankController {
       this.persist(this.machine.state);
       this.emit();
     } finally { this.busy = false; }
+  }
+
+  /** Development-only correction for the newest completed judgment. */
+  undoLastVerdict(): VoteVerdict | null {
+    if (!import.meta.env.DEV || this.busy) return null;
+    const latest = this.store.snapshot.completedMatchups.at(-1);
+    if (!latest) return null;
+    const assignment = assignmentFromCompleted(latest);
+    if (!assignment) return null;
+    const undone = this.store.undoLastVerdict();
+    if (!undone) return null;
+    const restored: ComparisonState = {
+      kind: 'ready-to-vote',
+      assignment,
+      playCounts: { ...undone.vote.playCounts },
+    };
+    this.machine = new ComparisonStateMachine(assignment, restored);
+    this.store.setUnfinishedMatchup(restored);
+    this.undoneVerdict = undone.vote.verdict;
+    this.emit();
+    return this.undoneVerdict;
   }
 
   private async ensureRound() {
@@ -170,4 +195,23 @@ export class RankController {
   }
 
   private emit() { for (const listener of this.listeners) listener(); }
+}
+
+function assignmentFromCompleted(completed: CompletedMatchup): MatchupAssignment | null {
+  const separator = completed.matchupId.indexOf(':');
+  const themeId = separator > 0 ? completed.matchupId.slice(0, separator) : '';
+  const theme = rankCatalog.themes.find((candidate) => candidate.id === themeId);
+  if (!theme) return null;
+  const preVote = (side: MatchupSide) => {
+    const entrant = completed.reveal[side];
+    return { playableRef: entrant.playableRef, ...(entrant.thumbnailPath ? { thumbnailPath: entrant.thumbnailPath } : {}) };
+  };
+  return {
+    matchupId: completed.matchupId,
+    benchmarkVersion: 'rank-catalog-v1',
+    theme,
+    a: preVote('a'),
+    b: preVote('b'),
+    assignedAt: completed.vote.submittedAt,
+  };
 }
