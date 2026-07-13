@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-12T23:10:14.217Z",
+  "generatedAt": "2026-07-13T02:27:41.441Z",
   "themes": [
     {
       "id": "mass-driver",
@@ -22,7 +22,8 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 2.99751,
-      "thumbnailPath": "/level-content/mass-driver-7rkv/hero.png"
+      "thumbnailPath": "/level-content/mass-driver-7rkv/hero.png",
+      "featured": true
     },
     {
       "levelId": "mass-driver-bczy",
@@ -40,7 +41,8 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 65.529086,
-      "thumbnailPath": "/level-content/mass-driver-vyxj/hero.png"
+      "thumbnailPath": "/level-content/mass-driver-vyxj/hero.png",
+      "featured": true
     },
     {
       "levelId": "mass-driver-wo4m",
@@ -67,7 +69,8 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 2.945069,
-      "thumbnailPath": "/level-content/skyhook-9uib/hero.png"
+      "thumbnailPath": "/level-content/skyhook-9uib/hero.png",
+      "featured": true
     },
     {
       "levelId": "skyhook-lkor",
@@ -85,7 +88,8 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 71.365946,
-      "thumbnailPath": "/level-content/skyhook-snxd/hero.png"
+      "thumbnailPath": "/level-content/skyhook-snxd/hero.png",
+      "featured": true
     }
   ]
 }

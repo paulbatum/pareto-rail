@@ -9,6 +9,7 @@ export interface RankCatalogEntrant {
   workflowName: string;
   generationCost: number;
   thumbnailPath?: string;
+  featured?: boolean;
 }
 
 export interface RankCatalog {

@@ -28,8 +28,11 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testPersonalCurve();
   testStorageVersioning();
   testSchedulerCoverage();
+  testFeaturedFirstMatchup();
+  testFeaturedThemeCoverage();
   testNewcomerAnchoring();
   testNewThemeCoverage();
+  testFeaturedNewThemeOpener();
   testThemeBalance();
   testConvergenceAndStability();
   testSameConfigurationPairs();
@@ -100,6 +103,33 @@ function testSchedulerCoverage(): void {
   assert.ok(Object.values(exposures).every((count) => count === 1));
 }
 
+function testFeaturedFirstMatchup(): void {
+  const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
+  for (const participantId of ['participant-a', 'participant-b']) {
+    const { assignments } = simulateAssignments(catalog, catalog.themes.length, participantId);
+    const firstByTheme = new Map<string, { themeId: string; levelIdA: string; levelIdB: string }>();
+    for (const matchup of assignments) if (!firstByTheme.has(matchup.themeId)) firstByTheme.set(matchup.themeId, matchup);
+    assert.equal(firstByTheme.size, catalog.themes.length);
+    for (const [themeId, matchup] of firstByTheme) {
+      const a = catalog.entrants.find((entrant) => entrant.levelId === matchup.levelIdA)!;
+      const b = catalog.entrants.find((entrant) => entrant.levelId === matchup.levelIdB)!;
+      assert.equal(themeId, matchup.themeId);
+      assert.equal(a.featured, true, `${participantId} opened ${themeId} without a featured entrant`);
+      assert.equal(b.featured, true, `${participantId} opened ${themeId} without a featured entrant`);
+    }
+  }
+}
+
+function testFeaturedThemeCoverage(): void {
+  const catalog = makeSchedulerCatalog(4, 1, false, [0, 1]);
+  const simulated = simulateAssignments(catalog, 3);
+  assert.equal(simulated.assignments[0]?.themeId, 'theme-a');
+  assert.ok(simulated.exposures['theme-a-0'] > 0);
+  assert.ok(simulated.exposures['theme-a-1'] > 0);
+  assert.ok(simulated.exposures['theme-a-2'] > 0);
+  assert.ok(simulated.exposures['theme-a-3'] > 0, 'coverage continues after the featured opener');
+}
+
 function testNewcomerAnchoring(): void {
   const established = makeSchedulerCatalog(4, 2);
   const simulated = simulateAssignments(established, 4);
@@ -154,6 +184,19 @@ function testNewThemeCoverage(): void {
     appendJudgment(catalog, next!, history, exposures, themeHistory);
   }
   assert.ok([...newThemeLevels].every((levelId) => (exposures[levelId] ?? 0) > 0), 'the new theme gets covered');
+}
+
+function testFeaturedNewThemeOpener(): void {
+  const established = makeSchedulerCatalog(8, 2, false, [0, 1]);
+  const simulated = simulateAssignments(established, 12);
+  const catalog = makeSchedulerCatalog(8, 3, false, [0, 1]);
+  const next = scheduleOne(catalog, simulated.judged, simulated.exposures, simulated.themes);
+  assert.ok(next);
+  assert.equal(next!.themeId, 'theme-c');
+  const a = catalog.entrants.find((entrant) => entrant.levelId === next!.levelIdA)!;
+  const b = catalog.entrants.find((entrant) => entrant.levelId === next!.levelIdB)!;
+  assert.equal(a.featured, true, 'a newly added theme opens with a featured entrant');
+  assert.equal(b.featured, true, 'a newly added theme opens with a featured entrant');
 }
 
 function testThemeBalance(): void {
@@ -229,13 +272,13 @@ async function testApisAndStateMachine(): Promise<void> {
   assert.equal(store.snapshot.history.length, 1);
 }
 
-function simulateAssignments(catalog: RankCatalog, count: number): { judged: Judged[]; exposures: Record<string, number>; themes: string[]; assignments: { themeId: string; levelIdA: string; levelIdB: string }[] } {
+function simulateAssignments(catalog: RankCatalog, count: number, participantId = 'test-participant'): { judged: Judged[]; exposures: Record<string, number>; themes: string[]; assignments: { themeId: string; levelIdA: string; levelIdB: string }[] } {
   const judged: Judged[] = [];
   const exposures: Record<string, number> = {};
   const themes: string[] = [];
   const assignments: { themeId: string; levelIdA: string; levelIdB: string }[] = [];
   for (let index = 0; index < count; index += 1) {
-    const next = scheduleOne(catalog, judged, exposures, themes);
+    const next = scheduleOne(catalog, judged, exposures, themes, participantId);
     assert.ok(next);
     assignments.push(next!);
     appendJudgment(catalog, next!, judged, exposures, themes);
@@ -243,8 +286,8 @@ function simulateAssignments(catalog: RankCatalog, count: number): { judged: Jud
   return { judged, exposures, themes, assignments };
 }
 
-function scheduleOne(catalog: RankCatalog, judged: readonly Judged[], exposures: Readonly<Record<string, number>>, themes: readonly string[]) {
-  return nextScheduledMatchup(catalog, 'test-participant', { judged, levelExposureCounts: exposures, themeHistory: themes });
+function scheduleOne(catalog: RankCatalog, judged: readonly Judged[], exposures: Readonly<Record<string, number>>, themes: readonly string[], participantId = 'test-participant') {
+  return nextScheduledMatchup(catalog, participantId, { judged, levelExposureCounts: exposures, themeHistory: themes });
 }
 
 function appendJudgment(catalog: RankCatalog, matchup: { themeId: string; levelIdA: string; levelIdB: string }, judged: Judged[], exposures: Record<string, number>, themes: string[]): void {
@@ -282,7 +325,7 @@ function historyEntry(matchupId: string, aConfigurationId: string, bConfiguratio
   return { vote, a: { configurationId: aConfigurationId, modelName: aConfigurationId, workflowName: 'solo', generationCost: aCost }, b: { configurationId: bConfigurationId, modelName: bConfigurationId, workflowName: 'solo', generationCost: bCost } };
 }
 
-function makeSchedulerCatalog(configurations: number, themeCount: number, sameConfiguration = false): RankCatalog {
+function makeSchedulerCatalog(configurations: number, themeCount: number, sameConfiguration = false, featuredConfigurations: readonly number[] = []): RankCatalog {
   const themes = Array.from({ length: themeCount }, (_, index) => ({ id: `theme-${String.fromCharCode(97 + index)}`, title: `Theme ${index}`, summary: 'S', prompt: 'P' }));
   const entrants: RankCatalogEntrant[] = themes.flatMap((theme) => Array.from({ length: configurations }, (_, index) => ({
     levelId: `${theme.id}-${index}`,
@@ -291,6 +334,7 @@ function makeSchedulerCatalog(configurations: number, themeCount: number, sameCo
     modelName: sameConfiguration ? 'Shared' : `Model ${index}`,
     workflowName: 'solo',
     generationCost: index + 1,
+    ...(featuredConfigurations.includes(index) ? { featured: true } : {}),
   })));
   return { generatedAt: 'test', themes, entrants };
 }

@@ -10,9 +10,9 @@ const levelsRoot = path.join(root, 'src/benchmark-levels');
 const outputPath = path.join(levelsRoot, '..', 'benchmark', 'rank-catalog.json');
 
 const configurationLabels = {
-  'claude-fable-5-high': { modelName: 'Claude Fable 5', workflowName: 'solo' },
+  'claude-fable-5-high': { modelName: 'Claude Fable 5', workflowName: 'solo', featured: true },
   'claude-fable-5-opus-delegation': { modelName: 'Claude Fable 5', workflowName: 'delegated' },
-  'codex-sol-high': { modelName: 'GPT-5.6 Sol', workflowName: 'solo' },
+  'codex-sol-high': { modelName: 'GPT-5.6 Sol', workflowName: 'solo', featured: true },
   'codex-sol-terra-delegation': { modelName: 'GPT-5.6 Sol', workflowName: 'delegated' },
 };
 
@@ -89,6 +89,7 @@ function entrantFor(assignment, cost) {
     workflowName: labels.workflowName,
     generationCost: Number(cost.toFixed(8)),
     thumbnailPath: descriptor.contentImages.hero,
+    ...(labels.featured ? { featured: true } : {}),
   };
 }
 

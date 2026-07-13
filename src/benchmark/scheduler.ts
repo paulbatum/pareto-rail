@@ -66,6 +66,12 @@ function selectCoveragePhase(
   const themeId = selectCoverageTheme(entrantsByTheme, candidates, exposureCounts, lastThemeId);
   if (!themeId) return null;
   const themeCandidates = candidates.filter((candidate) => candidate.themeId === themeId);
+  if (!judged.some((item) => parsePairId(item.matchupId)?.themeId === themeId)) {
+    const featuredPair = themeCandidates
+      .filter((candidate) => candidate.a.featured === true && candidate.b.featured === true)
+      .sort((left, right) => left.id.localeCompare(right.id))[0] ?? null;
+    if (featuredPair) return featuredPair;
+  }
   // Seed each theme with a placed pool before switching to anchored
   // arrivals. Existing placed configurations keep new catalog entries
   // attached to the same component.
