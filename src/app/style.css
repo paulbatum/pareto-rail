@@ -146,6 +146,8 @@ kbd { padding: 3px 7px; color: #46e8ff; border: 1px solid rgb(70 232 255 / 45%);
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 body.game-active .site-nav { pointer-events: none; }
 body.game-active .site-nav a { pointer-events: auto; }
+html:fullscreen .site-nav,
+html:fullscreen .game-toolbar { display: none; }
 .game-frame { position: fixed; inset: 0; background: #02040a; }
 .game-toolbar { position: fixed; top: 0; left: 0; right: 0; z-index: 15; display: flex; justify-content: space-between; padding: 14px 20px; pointer-events: none; background: linear-gradient(rgb(2 4 10 / 72%), transparent); }
 .game-toolbar a, .game-toolbar span { pointer-events: auto; color: #9ab7c7; font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
