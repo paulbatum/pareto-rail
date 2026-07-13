@@ -91,6 +91,7 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
   const togglePause = () => setPaused(!paused);
   const toggleFullscreen = () => { if (fullscreenAvailable) void setFullscreen(!document.fullscreenElement); };
   const pauseMenu = createPauseMenu({
+    root: frame,
     fullscreenAvailable,
     initialMusicVolume: audio.getMusicVolume() * 100,
     initialSfxVolume: audio.getSfxVolume() * 100,

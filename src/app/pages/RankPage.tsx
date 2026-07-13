@@ -9,7 +9,8 @@ import { BenchmarkLocalStore, type CompletedMatchup } from '../../benchmark/stor
 import { RankController, type RankLaunch } from '../rank';
 import { RouteLink } from '../components/RouteLink';
 import type { AppRoute } from '../router';
-import { GameFrame, loadRankLevel } from './GamePage';
+import { GameFrame } from './GamePage';
+import { loadRankLevel } from '../rank-level';
 
 type RankRoute = Extract<AppRoute, { kind: 'rank' }>;
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { LevelDefinition } from '../../engine/types';
 import type { RunSummary } from '../../engine/scoring';
-import { getBenchmarkLevelById, getLevelEntryById } from '../../levels';
+import { getLevelEntryById } from '../../levels';
 import { mountGame, type GameMount, type GameLaunchContext } from '../../game';
 import type { AppRoute } from '../router';
 import { RouteLink } from '../components/RouteLink';
@@ -88,8 +88,4 @@ export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { ki
   if (error) return <section className="page-panel"><p className="eyebrow">Play</p><h1>Level unavailable</h1><p className="lede">{error}</p><RouteLink className="button" href="/play" onNavigate={onNavigate}>Back to levels</RouteLink></section>;
   if (!level) return <section className="page-panel"><p className="eyebrow">Loading</p><h1>Preparing level…</h1></section>;
   return <GameFrame level={level} onNavigate={onNavigate} />;
-}
-
-export async function loadRankLevel(levelId: string): Promise<LevelDefinition> {
-  return getBenchmarkLevelById(levelId);
 }
