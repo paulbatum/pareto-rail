@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Requires a WebGPU-capable browser (recent Chrome/Edge). Esc pauses and opens volume/glow/fullscreen settings. On iPhone/iPad Safari, use Share → Add to Home Screen for the closest fullscreen experience.
+Requires a WebGPU-capable browser (recent Chrome/Edge). Esc pauses and opens volume/glow/fullscreen settings. Shift+D toggles the play UI for a clean view. On iPhone/iPad Safari, use Share → Add to Home Screen for the closest fullscreen experience.
 
 The Rank page stays provisional until an eligible public catalog and backend are connected; rehearsal levels are retained only in ignored benchmark records and are not playable or rankable in the app. Built-in levels live under `src/levels/`; promoted benchmark outputs are discovered from self-contained directories under `src/benchmark-levels/`.
 

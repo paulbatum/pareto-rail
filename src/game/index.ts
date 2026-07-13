@@ -35,10 +35,11 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
   host.append(frame);
   document.body.classList.add('game-active');
   document.body.classList.remove('booting');
+  const removeUiShortcut = installUiShortcut();
 
   if (!('gpu' in navigator)) {
     showUnsupported('This game requires WebGPU', frame);
-    return { dispose() { frame.remove(); document.body.classList.remove('game-active'); } };
+    return { dispose() { removeUiShortcut(); frame.remove(); document.body.classList.remove('game-active'); } };
   }
 
   const app = frame.querySelector<HTMLElement>('[data-game="app"]')!;
@@ -56,12 +57,12 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
   } catch (error) {
     console.error(error);
     showUnsupported('This game requires WebGPU', frame);
-    return { dispose() { renderer.dispose(); frame.remove(); document.body.classList.remove('game-active'); } };
+    return { dispose() { removeUiShortcut(); renderer.dispose(); frame.remove(); document.body.classList.remove('game-active'); } };
   }
   if (!host.isConnected) {
     renderer.dispose();
     frame.remove();
-    return { dispose() { document.body.classList.remove('game-active'); } };
+    return { dispose() { removeUiShortcut(); document.body.classList.remove('game-active'); } };
   }
   app.append(renderer.domElement);
 
@@ -137,14 +138,29 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
 
   return { dispose() {
     if (disposed) return; disposed = true;
-    offRunEnd(); window.removeEventListener('resize', resize); renderer.setAnimationLoop(null);
+    removeUiShortcut(); offRunEnd(); window.removeEventListener('resize', resize); renderer.setAnimationLoop(null);
     perfOverlay?.dispose(); debugPanel?.dispose?.(); runtime.dispose(); audio.dispose(); bus.clear(); pauseMenu.dispose?.();
     renderer.dispose(); frame.remove(); document.body.classList.remove('game-active');
   } };
 }
 
+function installUiShortcut() {
+  let uiHidden = false;
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (!event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.key.toLowerCase() !== 'd') return;
+    event.preventDefault();
+    uiHidden = !uiHidden;
+    document.body.classList.toggle('game-ui-hidden', uiHidden);
+  };
+  window.addEventListener('keydown', onKeyDown);
+  return () => {
+    window.removeEventListener('keydown', onKeyDown);
+    document.body.classList.remove('game-ui-hidden');
+  };
+}
+
 function gameMarkup() {
-  return `<div data-game="app"></div><div id="hud" class="hud"><div class="hud-left"><div class="hud-cell"><span class="hud-label">Score</span><span class="hud-value" data-hud="score">0</span></div><div class="hud-cell hud-hull hidden" data-hud="hull-cell"><span class="hud-label">Hull</span><span class="hud-value" data-hud="hull-pips"></span></div></div><div class="hud-cell hud-time" data-hud="time-cell"><span class="hud-value hud-time-value" data-hud="time">0.0</span></div><div class="hud-cell hud-right"><span class="hud-label">Lock</span><span class="hud-value"><span data-hud="locks">0</span>/6</span></div></div><div id="end-screen" class="end-screen hidden"><div class="end-panel"><div class="label">Score</div><div class="score" data-end="score">0</div><div class="death-status hidden" data-end="death">Signal lost</div><div class="end-detail" data-end="kills">Kills 0/0</div><div class="rank" data-end="rank">D</div><div class="end-extra hidden" data-end="details"></div><div class="replay">Lock all six to replay</div></div></div><div id="damage-flash" class="damage-flash" aria-hidden="true"></div><div id="max-lock-flash" class="max-lock-flash hidden" aria-hidden="true">MAX</div><div id="callout" class="callout hidden" aria-live="polite"></div><div id="tip" class="tip hidden">HOLD to charge — SWEEP across all six targets — RELEASE to fire</div><div id="pause" class="pause-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="pause-panel"><h1 id="pause-title">Paused</h1><button type="button" data-pause="resume">Resume</button><button type="button" data-pause="end-run">End Run</button><button type="button" data-pause="fullscreen">Fullscreen</button><label><span>Music</span><input data-pause="music" type="range" min="0" max="100" value="80" /></label><label><span>Sound Effects</span><input data-pause="sfx" type="range" min="0" max="100" value="80" /></label><label><span>Bloom</span><input data-pause="bloom" type="range" min="0" max="100" value="100" /></label><label><span>Motion Blur</span><input data-pause="motion-blur" type="range" min="0" max="100" value="100" /></label></div></div><div class="scanlines" aria-hidden="true"></div>`;
+  return `<div data-game="app"></div><div id="hud" data-game-ui class="hud"><div class="hud-left"><div class="hud-cell"><span class="hud-label">Score</span><span class="hud-value" data-hud="score">0</span></div><div class="hud-cell hud-hull hidden" data-hud="hull-cell"><span class="hud-label">Hull</span><span class="hud-value" data-hud="hull-pips"></span></div></div><div class="hud-cell hud-time" data-hud="time-cell"><span class="hud-value hud-time-value" data-hud="time">0.0</span></div><div class="hud-cell hud-right"><span class="hud-label">Lock</span><span class="hud-value"><span data-hud="locks">0</span>/6</span></div></div><div id="end-screen" data-game-ui class="end-screen hidden"><div class="end-panel"><div class="label">Score</div><div class="score" data-end="score">0</div><div class="death-status hidden" data-end="death">Signal lost</div><div class="end-detail" data-end="kills">Kills 0/0</div><div class="rank" data-end="rank">D</div><div class="end-extra hidden" data-end="details"></div><div class="replay">Lock all six to replay</div></div></div><div id="damage-flash" data-game-ui class="damage-flash" aria-hidden="true"></div><div id="max-lock-flash" data-game-ui class="max-lock-flash hidden" aria-hidden="true">MAX</div><div id="callout" data-game-ui class="callout hidden" aria-live="polite"></div><div id="tip" data-game-ui class="tip hidden">HOLD to charge — SWEEP across all six targets — RELEASE to fire</div><div id="pause" data-game-ui class="pause-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="pause-panel"><h1 id="pause-title">Paused</h1><button type="button" data-pause="resume">Resume</button><button type="button" data-pause="end-run">End Run</button><button type="button" data-pause="fullscreen">Fullscreen</button><label><span>Music</span><input data-pause="music" type="range" min="0" max="100" value="80" /></label><label><span>Sound Effects</span><input data-pause="sfx" type="range" min="0" max="100" value="80" /></label><label><span>Bloom</span><input data-pause="bloom" type="range" min="0" max="100" value="100" /></label><label><span>Motion Blur</span><input data-pause="motion-blur" type="range" min="0" max="100" value="100" /></label></div></div><div class="scanlines" aria-hidden="true"></div>`;
 }
 
 function addCrystalInvitation(summary: RunSummary, frame: HTMLElement) {
@@ -157,7 +173,7 @@ function addCrystalInvitation(summary: RunSummary, frame: HTMLElement) {
 }
 
 function installLevelPicker(host: HTMLElement, activeId: string, includeTechnical: boolean) {
-  const picker = document.createElement('label'); picker.className = 'level-picker'; picker.textContent = 'Level ';
+  const picker = document.createElement('label'); picker.className = 'level-picker'; picker.dataset.gameUi = 'true'; picker.textContent = 'Level ';
   const select = document.createElement('select');
   const groups = selectableLevelGroups({ includeTechnical });
   const appendGroup = (label: string, levels: readonly { id: string; title: string }[]) => {

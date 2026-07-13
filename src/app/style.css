@@ -364,6 +364,11 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 
 /* ---------- Game frame (stays dark — the game is the one neon thing) ---------- */
 body.game-active .site-nav { pointer-events: none; }
+body.game-ui-hidden .site-nav,
+body.game-ui-hidden [data-game-ui],
+body.game-ui-hidden .level-picker,
+body.game-ui-hidden .debug-panel,
+body.game-ui-hidden .perf-overlay { display: none !important; }
 body.game-active .site-nav a { pointer-events: auto; }
 html:fullscreen .site-nav,
 html:fullscreen .game-toolbar { display: none; }

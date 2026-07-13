@@ -57,7 +57,7 @@ export function GameFrame({ level, title = level.title, backPath = '/play', back
 
   return <>
     <section className="game-frame" aria-label={`${title} game`} ref={frameRef}>
-      <div className="game-toolbar">
+      <div className="game-toolbar" data-game-ui>
         <RouteLink className="game-back" href={backPath} onNavigate={onNavigate}>← {backLabel}</RouteLink>
         <span className="game-title">{title}</span>
       </div>
