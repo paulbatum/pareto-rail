@@ -15,7 +15,6 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
         </div>
         <div className="hero-graphic">
           <HeroTunnel />
-          <span className="hero-graphic-caption">Crystal Corridor · T+00:04</span>
         </div>
       </section>
       <section className="home-choice-grid" aria-label="Choose where to start">
