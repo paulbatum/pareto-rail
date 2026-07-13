@@ -12,6 +12,7 @@ Work through these briefs in order. Each brief should leave the repository commi
 8. `08-personal-rank-presentation.md` — stage the personal results UI: standings first, then the chart with settled and early-estimate points.
 9. `09-featured-first-matchup.md` — open every theme with the featured solo-vs-solo pairing.
 10. `10-verdict-log-before-chart.md` — show a verdict log until the personal chart is ready, and keep leaderboard language out of it.
+11. `11-island-placement.md` — plot disconnected comparison islands as early estimates instead of hiding them.
 
 The benchmark runner's generation result and later application promotion are separate records. A promotion or publication failure must never change a completed run's disposition.
 
