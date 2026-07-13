@@ -28,6 +28,7 @@ export function routePath(route: AppRoute): string {
 }
 
 export function navigate(path: string, replace = false) {
+  if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
   if (replace) window.history.replaceState({}, '', path);
   else window.history.pushState({}, '', path);
   window.dispatchEvent(new PopStateEvent('popstate'));
