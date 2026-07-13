@@ -17,17 +17,11 @@ type RankPageProps = {
   onNavigate: (path: string) => void;
 };
 
-type RunScores = {
-  matchupId: string;
-  scores: Partial<Record<MatchupSide, number>>;
-};
-
 export function RankPage({ route, onNavigate }: RankPageProps) {
   const controllerRef = useRef<RankController | null>(null);
   const [controller, setController] = useState<RankController | null>(null);
   const [prepared, setPrepared] = useState(false);
   const [launch, setLaunch] = useState<RankLaunch | null>(null);
-  const [runScores, setRunScores] = useState<RunScores | null>(null);
   const [, refresh] = useState(0);
 
   useEffect(() => {
@@ -59,23 +53,16 @@ export function RankPage({ route, onNavigate }: RankPageProps) {
     const side = context?.source === 'rank' && context.levelId ? route.playSide : null;
     const matchupId = current?.assignment?.matchupId;
     if (!current || !side || !matchupId) return;
-    await current.completeRun(side);
-    setRunScores((previous) => ({
-      matchupId,
-      scores: {
-        ...(previous?.matchupId === matchupId ? previous.scores : {}),
-        [side]: summary.score,
-      },
-    }));
+    await current.completeRun(side, summary.score);
   }, [route.playSide]);
 
   if (!controller || !prepared) return <section className="page-panel"><p className="eyebrow">Rank</p><h1>Preparing a matchup…</h1></section>;
   if (launch) return <RankGame launch={launch} onNavigate={onNavigate} onRunEnd={handleRunEnd} />;
   if (!controller.state) return <ProductionRankPage />;
-  return <RankContent controller={controller} state={controller.state} runScores={runScores?.matchupId === controller.state.assignment.matchupId ? runScores.scores : undefined} onNavigate={onNavigate} />;
+  return <RankContent controller={controller} state={controller.state} onNavigate={onNavigate} />;
 }
 
-function RankContent({ controller, state, runScores, onNavigate }: { controller: RankController; state: ComparisonState; runScores?: Partial<Record<MatchupSide, number>>; onNavigate: (path: string) => void }) {
+function RankContent({ controller, state, onNavigate }: { controller: RankController; state: ComparisonState; onNavigate: (path: string) => void }) {
   const assignment = state.assignment;
   const launch = (side: MatchupSide) => {
     const next = controller.launch(side);
@@ -89,25 +76,25 @@ function RankContent({ controller, state, runScores, onNavigate }: { controller:
       <p className="lede">{assignment.theme.summary}</p>
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
       <p className="rank-note">Two levels were generated independently from this assignment. Model and workflow identities stay hidden until you vote.</p>
-      <RankStage state={state} runScores={runScores} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
+      <RankStage controller={controller} state={state} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
       <PersonalCurve controller={controller} />
     </section>
   );
 }
 
-function RankStage({ state, runScores, onLaunch, onVote, onNext }: { state: ComparisonState; runScores?: Partial<Record<MatchupSide, number>>; onLaunch: (side: MatchupSide) => void; onVote: (verdict: VoteVerdict) => void; onNext: () => void }) {
+function RankStage({ controller, state, onLaunch, onVote, onNext }: { controller: RankController; state: ComparisonState; onLaunch: (side: MatchupSide) => void; onVote: (verdict: VoteVerdict) => void; onNext: () => void }) {
   const nextSide = state.kind === 'assignment' && (state.playCounts.a > 0) !== (state.playCounts.b > 0)
     ? state.playCounts.a > 0 ? 'b' : 'a'
     : null;
   const card = (side: MatchupSide) => {
-    const score = runScores?.[side];
+    const priorRun = controller.levelRun(state.assignment[side].playableRef);
     const completedRuns = state.playCounts[side] > 0;
     const label = completedRuns ? 'Replay' : 'Play';
     const emphasized = nextSide === side ? ' is-next' : '';
     return <article className={`compare-card${emphasized}`}>
       <LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} />
       <h2>Level {side.toUpperCase()}</h2>
-      <p className="compare-stats"><span>{state.playCounts[side]} completed run{state.playCounts[side] === 1 ? '' : 's'}</span>{score !== undefined && <span className="run-score">Your run: {score.toLocaleString('en-US')}</span>}</p>
+      <p className="compare-stats">{completedRuns && <span>Completed run</span>}{priorRun?.score !== undefined && <span className="run-score">Latest score: {priorRun.score.toLocaleString('en-US')}</span>}</p>
       <button className={`button${nextSide === side ? ' primary' : ''}`} type="button" onClick={() => onLaunch(side)}>{label} Level {side.toUpperCase()}</button>
     </article>;
   };

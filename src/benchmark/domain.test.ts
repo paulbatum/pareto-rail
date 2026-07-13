@@ -39,10 +39,23 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   const catalogReveal = await catalogApi.reveal(catalogAssignment!.matchupId, participantId);
   assert.equal(catalogReveal.a.dataClass, 'eligible');
   assert.equal(catalogStore.snapshot.levelExposureCounts[catalogReveal.a.levelId], 1);
+  assert.ok(catalogStore.snapshot.levelRuns.some((run) => run.levelId === catalogReveal.a.levelId));
   const refreshedApi = new CatalogBenchmarkApi(schedulerCatalog, new BenchmarkLocalStore(catalogStorage, 'catalog-api'));
   const refreshedAssignment = await refreshedApi.nextMatchup({ participantId });
   assert.ok(refreshedAssignment);
   assert.notEqual(refreshedAssignment!.matchupId, catalogAssignment!.matchupId);
+
+  // A level already played in an earlier comparison is immediately eligible to vote on.
+  const replayStorage = createMemoryStorage();
+  const replayStore = new BenchmarkLocalStore(replayStorage, 'replay-runs');
+  for (const entrant of schedulerCatalog.entrants) replayStore.recordLevelRun(entrant.levelId, 1000, '2026-01-01T00:00:00.000Z');
+  replayStore.recordLevelRun(schedulerCatalog.entrants[0]!.levelId, 2500, '2026-01-02T00:00:00.000Z');
+  const latestRun = replayStore.snapshot.levelRuns.find((run) => run.levelId === schedulerCatalog.entrants[0]!.levelId);
+  assert.deepEqual(latestRun && { score: latestRun.score, count: latestRun.count }, { score: 2500, count: 2 });
+  const replayAssignment = await new CatalogBenchmarkApi(schedulerCatalog, replayStore).nextMatchup({ participantId: replayStore.participantId });
+  assert.ok(replayAssignment);
+  assert.deepEqual(replayStore.snapshot.unfinishedMatchup?.playCounts, { a: 1, b: 1 });
+  assert.equal(replayStore.snapshot.unfinishedMatchup?.kind, 'ready-to-vote');
 
   // Stale rehearsal data (retired theme/levels) must be pruned on restore, not resurrected.
   const staleStore = new BenchmarkLocalStore(catalogStorage, 'catalog-api');

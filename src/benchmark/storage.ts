@@ -9,9 +9,17 @@ export interface CompletedMatchup {
   reveal: RevealPayload;
 }
 
+export interface LevelRun {
+  levelId: string;
+  score?: number;
+  completedAt: string;
+  count: number;
+}
+
 export interface LocalBenchmarkData {
   participantId: string;
   unfinishedMatchup?: ComparisonState;
+  levelRuns: LevelRun[];
   completedMatchups: CompletedMatchup[];
   /** Raw votes are retained so display ratings can be recomputed later. */
   history: MatchupVote[];
@@ -34,6 +42,7 @@ export interface KeyValueStorage {
 
 const emptyData = (participantId: string): LocalBenchmarkData => ({
   participantId,
+  levelRuns: [],
   completedMatchups: [],
   history: [],
   themeHistory: [],
@@ -89,6 +98,7 @@ export class BenchmarkLocalStore {
           return this.normalize({
             participantId: candidate.participantId,
             unfinishedMatchup: candidate.unfinishedMatchup ?? candidate.unfinished,
+            levelRuns: candidate.levelRuns ?? [],
             completedMatchups: candidate.completedMatchups ?? [],
             history: candidate.history ?? candidate.votes ?? [],
             themeHistory: candidate.themeHistory ?? [],
@@ -108,6 +118,7 @@ export class BenchmarkLocalStore {
       completedMatchups: [...data.completedMatchups],
       history: [...data.history],
       themeHistory: [...data.themeHistory],
+      levelRuns: mergeLevelRuns(levelRunsFromCompletedMatchups(data.completedMatchups), normalizeLevelRuns(data.levelRuns)),
       levelExposureCounts: exposureCounts(data),
       revealedEntrants: [...data.revealedEntrants],
     };
@@ -124,6 +135,11 @@ export class BenchmarkLocalStore {
   }
 
   setUnfinishedMatchup(state: ComparisonState | undefined): LocalBenchmarkData { return this.save({ unfinishedMatchup: state }); }
+  recordLevelRun(levelId: string, score: number, completedAt = new Date().toISOString()): LocalBenchmarkData {
+    const prior = this.data.levelRuns.find((run) => run.levelId === levelId);
+    const run: LevelRun = { levelId, score, completedAt, count: (prior?.count ?? 0) + 1 };
+    return this.save({ levelRuns: [...this.data.levelRuns.filter((item) => item.levelId !== levelId), run] });
+  }
   completeMatchup(completed: CompletedMatchup): LocalBenchmarkData {
     const prior = this.data.completedMatchups.find((item) => item.matchupId === completed.matchupId);
     const existing = this.data.completedMatchups.filter((item) => item.matchupId !== completed.matchupId);
@@ -152,6 +168,7 @@ export class BenchmarkLocalStore {
       && knownLevelIds.has(unfinished.assignment.b.playableRef);
     return this.save({
       unfinishedMatchup: unfinishedValid ? unfinished : undefined,
+      levelRuns: data.levelRuns.filter((run) => knownLevelIds.has(run.levelId)),
       completedMatchups,
       history: data.history.filter((vote) => keptMatchupIds.has(vote.matchupId)),
       themeHistory: data.themeHistory.filter((themeId) => knownThemeIds.has(themeId)),
@@ -183,6 +200,49 @@ function normalizeUnfinishedMatchup(value: unknown): ComparisonState | undefined
     return value as ComparisonState;
   }
   return undefined;
+}
+
+function normalizeLevelRuns(value: unknown): LevelRun[] {
+  if (!Array.isArray(value)) return [];
+  const newest = new Map<string, LevelRun>();
+  for (const candidate of value) {
+    if (!candidate || typeof candidate !== 'object') continue;
+    const run = candidate as Partial<LevelRun>;
+    if (typeof run.levelId !== 'string' || (run.score !== undefined && (typeof run.score !== 'number' || !Number.isFinite(run.score)))) continue;
+    const normalized: LevelRun = {
+      levelId: run.levelId,
+      ...(typeof run.score === 'number' ? { score: run.score } : {}),
+      completedAt: typeof run.completedAt === 'string' ? run.completedAt : '',
+      count: typeof run.count === 'number' && run.count > 0 ? Math.floor(run.count) : 1,
+    };
+    const existing = newest.get(normalized.levelId);
+    if (!existing || existing.completedAt <= normalized.completedAt) newest.set(normalized.levelId, normalized);
+  }
+  return [...newest.values()];
+}
+
+function levelRunsFromCompletedMatchups(matchups: readonly CompletedMatchup[]): LevelRun[] {
+  return matchups.flatMap((completed) => [
+    { levelId: completed.reveal.a.levelId, completedAt: completed.vote.submittedAt, count: Math.max(1, completed.vote.playCounts.a) },
+    { levelId: completed.reveal.b.levelId, completedAt: completed.vote.submittedAt, count: Math.max(1, completed.vote.playCounts.b) },
+  ]);
+}
+
+function mergeLevelRuns(...collections: readonly LevelRun[][]): LevelRun[] {
+  const runs = new Map<string, LevelRun>();
+  for (const collection of collections) {
+    for (const run of collection) {
+      const prior = runs.get(run.levelId);
+      if (!prior) { runs.set(run.levelId, run); continue; }
+      const latest = prior.completedAt > run.completedAt ? prior : run;
+      runs.set(run.levelId, {
+        ...latest,
+        ...(latest.score === undefined && prior.score !== undefined ? { score: prior.score } : {}),
+        count: Math.max(prior.count, run.count),
+      });
+    }
+  }
+  return [...runs.values()];
 }
 
 function exposureCounts(data: LocalBenchmarkData): Record<string, number> {

@@ -71,12 +71,18 @@ export class RankController {
     return { side, levelId: this.resolvePlayable(side === 'a' ? next.assignment.a.playableRef : next.assignment.b.playableRef) };
   }
 
-  async completeRun(side: MatchupSide) {
+  levelRun(levelId: string) {
+    return this.store.snapshot.levelRuns.find((run) => run.levelId === levelId);
+  }
+
+  async completeRun(side: MatchupSide, score: number) {
     if (!this.machine || this.busy || !this.api) return;
     const state = this.machine.state;
     if ((state.kind !== 'playing-a' && state.kind !== 'playing-b') || (state.kind === 'playing-a' ? 'a' : 'b') !== side) return;
     this.busy = true;
     try {
+      const levelId = side === 'a' ? state.assignment.a.playableRef : state.assignment.b.playableRef;
+      this.store.recordLevelRun(levelId, score);
       const counts = await this.api.recordPlay({ matchupId: state.assignment.matchupId, side, participantId: this.store.participantId });
       const next = this.machine.completeRun(side);
       this.machine = new ComparisonStateMachine(next.assignment, { ...next, playCounts: counts } as ComparisonState);

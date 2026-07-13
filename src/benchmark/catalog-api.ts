@@ -47,7 +47,7 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
       assignedAt: new Date().toISOString(),
     };
     this.assignments.set(assignment.matchupId, assignment);
-    this.store.setUnfinishedMatchup(initialComparisonState(assignment));
+    this.store.setUnfinishedMatchup(newState(assignment, this.playCountsFor(assignment)));
     return assignment;
   }
 
@@ -134,6 +134,14 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
     return assignment;
   }
 
+  private playCountsFor(assignment: MatchupAssignment): PlayCounts {
+    const completed = new Set(this.store.snapshot.levelRuns.map((run) => run.levelId));
+    return {
+      a: completed.has(assignment.a.playableRef) ? 1 : 0,
+      b: completed.has(assignment.b.playableRef) ? 1 : 0,
+    };
+  }
+
   private entrant(levelId: string): RankCatalogEntrant | undefined {
     return this.catalog.entrants.find((candidate) => candidate.levelId === levelId);
   }
@@ -145,7 +153,10 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
 }
 
 function newState(assignment: MatchupAssignment, playCounts: PlayCounts): ComparisonState {
-  return { kind: 'assignment', assignment, playCounts: { ...playCounts } };
+  const counts = { ...playCounts };
+  return counts.a > 0 && counts.b > 0
+    ? { kind: 'ready-to-vote', assignment, playCounts: counts }
+    : { kind: 'assignment', assignment, playCounts: counts };
 }
 
 function revealFor(entrant: RankCatalogEntrant): RevealPayload['a'] {
