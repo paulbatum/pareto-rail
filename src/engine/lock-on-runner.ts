@@ -1165,7 +1165,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   }
 
   const offEndRunRequest = bus.on('runendrequest', () => {
-    if (state === 'running') endRun();
+    if (state === 'running' || state === 'attract') endRun();
   });
 
   function clearRunObjects() {
