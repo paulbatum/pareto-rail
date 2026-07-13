@@ -171,6 +171,8 @@ npm run benchmark:schedule -- validate \
   --schedule benchmark/private/run-schedule.json
 ```
 
+A configuration may add `"budget": { "usd": 20 }` to its `stage`. The amount must be positive and finite; omitting it preserves the single-turn adapter path and artifacts.
+
 Generation uses cryptographic randomness, assigns opaque run and slot ids, shuffles execution order, and does not print assignments. Validation reads each configuration artifact from its own `configurationCommit`, then enforces complete registered-configuration × theme coverage, unique ids, contiguous schedule indexes, execution/recipe/theme hash agreement, H1-derived titles, and `<theme-id>-<slot-id>` level ids.
 
 To register another configuration later, commit its recipe, append it to the definition without changing existing entries, and extend the schedule in place (or through a temporary output followed by an atomic replacement):

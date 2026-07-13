@@ -27,7 +27,8 @@ const ARTIFACT_KEYS = new Set(['id', 'path', 'sha256']);
 const THEME_KEYS = new Set(['id', 'path', 'sha256']);
 const DEFINITION_KEYS = new Set(['benchmarkVersion', 'configurations', 'themes']);
 const CONFIGURATION_KEYS = new Set(['id', 'configurationCommit', 'runner', 'executor', 'recipe', 'stage']);
-const STAGE_KEYS = new Set(['adapter', 'model', 'effort', 'timeoutSeconds']);
+const STAGE_KEYS = new Set(['adapter', 'model', 'effort', 'timeoutSeconds', 'budget']);
+const BUDGET_KEYS = new Set(['usd']);
 const DEFINITION_THEME_KEYS = new Set(['id', 'path', 'sha256', 'levelTitle']);
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -340,6 +341,13 @@ function validateStage(value, label, errors) {
   validateString(value.model, `${label}.model`, errors);
   if (!['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.effort)) errors.push(`${label}.effort is invalid.`);
   if (!Number.isInteger(value.timeoutSeconds) || value.timeoutSeconds < 1) errors.push(`${label}.timeoutSeconds must be a positive integer.`);
+  if (value.budget !== undefined) validateBudget(value.budget, `${label}.budget`, errors);
+}
+
+function validateBudget(value, label, errors) {
+  if (!isPlainObject(value)) { errors.push(`${label} must be an object.`); return; }
+  assertAllowedKeys(value, BUDGET_KEYS, label, errors);
+  if (!(typeof value.usd === 'number' && Number.isFinite(value.usd) && value.usd > 0)) errors.push(`${label}.usd must be a positive finite number.`);
 }
 
 function validateId(value, label, errors) {
@@ -367,7 +375,11 @@ function sameTheme(left, right) {
 }
 
 function sameStage(left, right) {
-  return left?.adapter === right?.adapter && left?.model === right?.model && left?.effort === right?.effort && left?.timeoutSeconds === right?.timeoutSeconds;
+  return left?.adapter === right?.adapter
+    && left?.model === right?.model
+    && left?.effort === right?.effort
+    && left?.timeoutSeconds === right?.timeoutSeconds
+    && left?.budget?.usd === right?.budget?.usd;
 }
 
 function isIsoDate(value) {

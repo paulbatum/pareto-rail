@@ -38,6 +38,7 @@
     "benchmark:export-rank-catalog": "node scripts/benchmark/export-rank-catalog.mjs",
     "test:benchmark-catalog": "node scripts/benchmark/test-catalog.mjs",
     "test:benchmark-controller": "node scripts/benchmark/test.mjs",
+    "test:benchmark-budget": "node scripts/benchmark/test-budget.mjs",
     "test:benchmark-promotion": "node scripts/benchmark/test-promotion.mjs",
     "test:benchmark-inventory": "node scripts/benchmark/test-inventory.mjs",
     "test:benchmark-domain": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs src/benchmark/domain.test.ts",

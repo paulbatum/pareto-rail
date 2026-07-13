@@ -14,6 +14,11 @@ export function manifestErrors(manifest) {
   for (const key of REQUIRED_MANIFEST_KEYS) if (!Object.hasOwn(manifest, key)) errors.push(`missing ${key}`);
   if (manifest.schemaVersion !== 2) errors.push('schemaVersion must equal 2');
   if (!Array.isArray(manifest.stages)) errors.push('stages must be an array');
+  else {
+    for (const [index, stage] of manifest.stages.entries()) {
+      if (stage?.budget !== undefined && !validBudgetSummary(stage.budget)) errors.push(`stages[${index}].budget is invalid`);
+    }
+  }
   if (!Array.isArray(manifest.gates)) errors.push('gates must be an array');
   const themeIsObject = manifest.theme && typeof manifest.theme === 'object' && !Array.isArray(manifest.theme);
   const outputIsObject = manifest.output && typeof manifest.output === 'object' && !Array.isArray(manifest.output);
@@ -26,6 +31,24 @@ export function manifestErrors(manifest) {
     }
   }
   return errors;
+}
+
+function validBudgetSummary(value) {
+  return value
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && typeof value.budgetUsd === 'number'
+    && Number.isFinite(value.budgetUsd)
+    && value.budgetUsd > 0
+    && Array.isArray(value.noticeHistory)
+    && Array.isArray(value.resumes)
+    && typeof value.finalSpendUsd === 'number'
+    && Number.isFinite(value.finalSpendUsd)
+    && typeof value.finalFraction === 'number'
+    && Number.isFinite(value.finalFraction)
+    && value.protocol?.noticeStepPct === 25
+    && value.protocol?.minimumSubmitFraction === 0.75
+    && value.protocol?.maxResumeRounds === 3;
 }
 
 export function shouldUnblind(benchmarkVersion, identity = 'auto') {

@@ -7,8 +7,9 @@ import { assertOnlyOptions, assertPrivateOrExternalPath, fail, parseArgs, requir
 const PLACEHOLDERS = ['LEVEL_ID', 'LEVEL_TITLE', 'THEME'];
 const REPEATABLE_PLACEHOLDERS = new Set(['LEVEL_ID']);
 const DELEGATION_PLACEHOLDERS = ['DELEGATE_MODEL', 'DELEGATE_EFFORT'];
+export const BUDGET_ASSIGNMENT_PARAGRAPH = 'There is a cost budget for this task. You will receive task budget status updates as you work.';
 
-export function renderAssignment(template, { levelId, levelTitle, theme }) {
+export function renderAssignment(template, { levelId, levelTitle, theme, budget = false }) {
   if (!levelId || /\r|\n/.test(levelId)) fail('levelId must be a non-empty single-line value.');
   if (!levelTitle || /\r|\n/.test(levelTitle)) fail('levelTitle must be a non-empty single-line value.');
 
@@ -22,10 +23,11 @@ export function renderAssignment(template, { levelId, levelTitle, theme }) {
     if (!expected) fail(`Expected ${REPEATABLE_PLACEHOLDERS.has(placeholder) ? 'at least one' : 'exactly one'} {{${placeholder}}} placeholder; found ${count}.`);
   }
 
-  return template
+  const rendered = template
     .replaceAll('{{LEVEL_ID}}', levelId)
     .replace('{{LEVEL_TITLE}}', levelTitle)
     .replace('{{THEME}}', theme);
+  return budget ? `${rendered}\n\n${BUDGET_ASSIGNMENT_PARAGRAPH}` : rendered;
 }
 
 // The delegation addendum (benchmark/prompts/flexible-delegation.md) is appended verbatim to the

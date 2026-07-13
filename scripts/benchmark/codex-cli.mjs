@@ -4,6 +4,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { initializeBudgetDirectory, POLL_INTERVAL_MS, resumeMessage, shouldResume } from './budget.mjs';
+import { copyLastMessage, parseBudgetUsd, shellQuote, startBudgetPoller, writeBudgetSummary } from './budget-runtime.mjs';
 import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
@@ -28,12 +30,13 @@ async function main() {
     --model <catalog-model-slug> \\
     --effort <low|medium|high|xhigh|max|ultra> \\
     [--timeout-seconds <positive-integer>] \\
+    [--budget-usd <positive-number>] \\
     [--codex-bin <path-or-command>] \\
     [--enable-multi-agent true]`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'codex-bin', 'enable-multi-agent']));
+  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'budget-usd', 'codex-bin', 'enable-multi-agent']));
 
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const promptPath = path.resolve(requireOption(options, 'prompt'));
@@ -41,6 +44,7 @@ async function main() {
   const effort = requireOption(options, 'effort');
   if (!EFFORTS.has(effort)) fail(`Unsupported --effort: ${effort}.`);
   const timeoutSeconds = parseTimeout(options['timeout-seconds']);
+  const budgetUsd = parseBudgetUsd(options['budget-usd']);
   const codexBin = options['codex-bin'] ?? 'codex';
   const enableMultiAgent = options['enable-multi-agent'] === 'true';
   const repositoryRoot = await primaryRepository(worktree);
@@ -68,15 +72,7 @@ async function main() {
   });
 
   const finalMessage = path.join(outputDirectory, 'final-message.md');
-  const eventLog = path.join(outputDirectory, 'events.jsonl');
-  const stderrLog = path.join(outputDirectory, 'stderr.log');
-  const args = [
-    'exec',
-    '--json',
-    '--color', 'never',
-    '--ignore-user-config',
-    '--ignore-rules',
-    '--strict-config',
+  const configOverrides = [
     '-m', model,
     '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
     '-c', 'approval_policy="never"',
@@ -87,22 +83,142 @@ async function main() {
     // it, the older spawn path silently inherits the parent model. These lines are a workaround for
     // https://github.com/openai/codex/issues/31814 and can be removed once that is fixed.
     ...(enableMultiAgent ? ['-c', 'features.multi_agent_v2.hide_spawn_agent_metadata=false', '-c', 'features.multi_agent_v2.tool_namespace="agents"'] : []),
+  ];
+
+  let budgetDirectory;
+  let poller;
+  let deadline = Infinity;
+  let trustBypassArgs = [];
+  const codexHome = process.env.CODEX_HOME ? path.resolve(process.env.CODEX_HOME) : path.join(os.homedir(), '.codex');
+  if (budgetUsd !== undefined) {
+    budgetDirectory = path.join(outputDirectory, 'budget');
+    await initializeBudgetDirectory(budgetDirectory, budgetUsd);
+    await fs.mkdir(codexHome, { recursive: true });
+    const hookPath = fileURLToPath(new URL('./budget-hook.mjs', import.meta.url));
+    await writeJson(path.join(codexHome, 'hooks.json'), {
+      hooks: {
+        PostToolUse: [{ hooks: [{ type: 'command', command: `node ${shellQuote(hookPath)} ${shellQuote(budgetDirectory)}` }] }],
+      },
+    });
+    trustBypassArgs = ['--dangerously-bypass-hook-trust'];
+    poller = startBudgetPoller({ adapter: 'codex-cli', home: codexHome, budgetDirectory, budgetUsd, intervalMs: POLL_INTERVAL_MS });
+  }
+
+  const firstArgs = [
+    'exec',
+    '--json',
+    '--color', 'never',
+    '--ignore-user-config',
+    '--ignore-rules',
+    '--strict-config',
+    ...configOverrides,
+    ...trustBypassArgs,
     '-s', 'workspace-write',
     '-C', worktree,
     '--output-last-message', finalMessage,
     '-',
   ];
-  const startedAt = new Date().toISOString();
-  const result = await runCommand(codexBin, args, { cwd: worktree, input: prompt, timeoutSeconds, allowFailure: true });
-  const finishedAt = new Date().toISOString();
-  await fs.writeFile(eventLog, result.stdout, 'utf8');
-  await fs.writeFile(stderrLog, result.stderr, 'utf8');
-  await writeJson(path.join(outputDirectory, 'command.json'), {
+  if (timeoutSeconds !== undefined) deadline = Date.now() + timeoutSeconds * 1_000;
+  let turn = await runTurn({
     executable: codexBin,
+    args: firstArgs,
+    cwd: worktree,
+    input: prompt,
+    timeoutSeconds,
+    outputDirectory,
+    cliVersion,
+    expectedSessionId: undefined,
+    round: 0,
+  });
+  const sessionId = turn.usage.sessionId;
+
+  const resumes = [];
+  let finalSpend;
+  if (budgetUsd !== undefined && turn.result.code === 0) {
+    finalSpend = await poller.refresh();
+    while (shouldResume({ finalFraction: finalSpend.fraction, roundsUsed: resumes.length, remainingMs: remainingTime(deadline) })) {
+      const round = resumes.length + 1;
+      const resumeFinalMessage = path.join(outputDirectory, `final-message-resume-${round}.md`);
+      const resumeArgs = [
+        // In the pinned CLI `--color` belongs to `exec`, not the `resume` subcommand parser. Keeping
+        // it before `resume` preserves color-free JSONL; placing it after the thread id exits 2.
+        'exec', '--color', 'never', 'resume', sessionId,
+        '--json',
+        '--ignore-user-config',
+        '--ignore-rules',
+        '--strict-config',
+        '-m', model,
+        '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
+        '-c', 'approval_policy="never"',
+        '-c', 'sandbox_mode="workspace-write"',
+        '-c', 'sandbox_workspace_write.network_access=true',
+        ...(enableMultiAgent ? ['-c', 'features.multi_agent_v2.hide_spawn_agent_metadata=false', '-c', 'features.multi_agent_v2.tool_namespace="agents"'] : []),
+        ...trustBypassArgs,
+        '--output-last-message', resumeFinalMessage,
+        '-',
+      ];
+      const resumeStartedAt = new Date().toISOString();
+      turn = await runTurn({
+        executable: codexBin,
+        args: resumeArgs,
+        cwd: worktree,
+        input: resumeMessage(finalSpend.fraction),
+        timeoutSeconds: remainingTimeoutSeconds(deadline),
+        outputDirectory,
+        cliVersion,
+        expectedSessionId: sessionId,
+        round,
+      });
+      await copyLastMessage(resumeFinalMessage, finalMessage);
+      resumes.push({
+        round,
+        spentUsd: finalSpend.spentUsd,
+        fraction: finalSpend.fraction,
+        startedAt: resumeStartedAt,
+        finishedAt: turn.finishedAt,
+        exitCode: turn.result.code,
+      });
+      if (turn.result.code !== 0) break;
+      finalSpend = await poller.refresh();
+    }
+  }
+
+  let budgetSummary;
+  if (budgetUsd !== undefined) {
+    finalSpend = await poller.refresh();
+    poller.stop();
+    budgetSummary = await writeBudgetSummary({ outputDirectory, budgetDirectory, budgetUsd, resumes, finalSpend });
+  }
+  const rollout = await captureRollout(sessionId, outputDirectory);
+  await writeJson(path.join(outputDirectory, 'result.json'), {
+    result: turn.result.code === 0 ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
+    exitCode: turn.result.code,
+    timedOut: turn.result.timedOut,
+    sessionId: turn.usage.sessionId,
+    usageSha256: sha256(JSON.stringify(turn.usage)),
+    eventLogSha256: sha256(turn.result.stdout),
+    stderrSha256: sha256(turn.result.stderr),
+    rollout,
+    ...(budgetSummary ? { budget: { path: 'budget.json' } } : {}),
+  });
+
+  if (turn.result.code !== 0) process.exitCode = turn.result.code || 1;
+  else console.log(JSON.stringify({ sessionId: turn.usage.sessionId, usage: turn.usage.normalized, wallTimeSeconds: turn.result.wallTimeSeconds }));
+}
+
+async function runTurn({ executable, args, cwd, input, timeoutSeconds, outputDirectory, cliVersion, expectedSessionId, round }) {
+  const suffix = round === 0 ? '' : `-resume-${round}`;
+  const startedAt = new Date().toISOString();
+  const result = await runCommand(executable, args, { cwd, input, timeoutSeconds, allowFailure: true });
+  const finishedAt = new Date().toISOString();
+  await fs.writeFile(path.join(outputDirectory, `events${suffix}.jsonl`), result.stdout, 'utf8');
+  await fs.writeFile(path.join(outputDirectory, `stderr${suffix}.log`), result.stderr, 'utf8');
+  await writeJson(path.join(outputDirectory, `command${suffix}.json`), {
+    executable,
     arguments: args,
     cliVersion: cliVersion.stdout.trim(),
     cliVersionStderr: cliVersion.stderr,
-    workingDirectory: worktree,
+    workingDirectory: cwd,
     startedAt,
     finishedAt,
     wallTimeSeconds: result.wallTimeSeconds,
@@ -110,23 +226,18 @@ async function main() {
     exitCode: result.code,
     timedOut: result.timedOut,
   });
+  const usage = extractUsage(result.stdout, expectedSessionId);
+  await writeJson(path.join(outputDirectory, `raw-usage${suffix}.json`), usage);
+  return { result, usage, startedAt, finishedAt };
+}
 
-  const usage = extractUsage(result.stdout);
-  await writeJson(path.join(outputDirectory, 'raw-usage.json'), usage);
-  const rollout = await captureRollout(usage.sessionId, outputDirectory);
-  await writeJson(path.join(outputDirectory, 'result.json'), {
-    result: result.code === 0 ? 'completed' : result.timedOut ? 'timed-out' : 'failed',
-    exitCode: result.code,
-    timedOut: result.timedOut,
-    sessionId: usage.sessionId,
-    usageSha256: sha256(JSON.stringify(usage)),
-    eventLogSha256: sha256(result.stdout),
-    stderrSha256: sha256(result.stderr),
-    rollout,
-  });
+function remainingTime(deadline) {
+  return deadline === Infinity ? Infinity : Math.max(0, deadline - Date.now());
+}
 
-  if (result.code !== 0) process.exitCode = result.code || 1;
-  else console.log(JSON.stringify({ sessionId: usage.sessionId, usage: usage.normalized, wallTimeSeconds: result.wallTimeSeconds }));
+function remainingTimeoutSeconds(deadline) {
+  if (deadline === Infinity) return undefined;
+  return Math.max(1, Math.floor(remainingTime(deadline) / 1_000));
 }
 
 function parseTimeout(value) {
@@ -182,7 +293,7 @@ function findModel(source, model) {
   return record;
 }
 
-function extractUsage(eventLog) {
+function extractUsage(eventLog, expectedSessionId) {
   const events = eventLog.split('\n').filter(Boolean).map((line, index) => {
     try {
       return JSON.parse(line);
@@ -193,6 +304,9 @@ function extractUsage(eventLog) {
   const thread = events.find(({ type }) => type === 'thread.started');
   const completion = [...events].reverse().find((event) => event.type === 'turn.completed' && isUsage(event.usage));
   if (!thread?.thread_id) fail('Codex JSONL did not report a thread.started session identifier.');
+  if (expectedSessionId !== undefined && thread.thread_id !== expectedSessionId) {
+    fail(`Codex reported thread id ${thread.thread_id}, expected the original ${expectedSessionId}.`);
+  }
   if (!completion) fail('Codex JSONL did not report usage in a turn.completed event.');
   const raw = completion.usage;
   const inputTokens = raw.input_tokens;

@@ -5,6 +5,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { initializeBudgetDirectory, POLL_INTERVAL_MS, resumeMessage, shouldResume } from './budget.mjs';
+import { parseBudgetUsd, shellQuote, startBudgetPoller, writeBudgetSummary } from './budget-runtime.mjs';
 import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
@@ -34,11 +36,12 @@ async function main() {
     --model <model-alias-or-full-name> \\
     --effort <low|medium|high|xhigh|max> \\
     [--timeout-seconds <positive-integer>] \\
+    [--budget-usd <positive-number>] \\
     [--claude-bin <path-or-command>]`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'claude-bin']));
+  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'budget-usd', 'claude-bin']));
 
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const promptPath = path.resolve(requireOption(options, 'prompt'));
@@ -46,6 +49,7 @@ async function main() {
   const effort = requireOption(options, 'effort');
   if (!EFFORTS.has(effort)) fail(`Unsupported --effort: ${effort}.`);
   const timeoutSeconds = parseTimeout(options['timeout-seconds']);
+  const budgetUsd = parseBudgetUsd(options['budget-usd']);
   const claudeBin = options['claude-bin'] ?? 'claude';
   const repositoryRoot = await primaryRepository(worktree);
   const outputDirectory = assertPrivateOrExternalPath(requireOption(options, 'out'), repositoryRoot);
@@ -59,30 +63,123 @@ async function main() {
 
   const sessionId = randomUUID();
   const finalMessage = path.join(outputDirectory, 'final-message.md');
-  const eventLog = path.join(outputDirectory, 'events.jsonl');
-  const stderrLog = path.join(outputDirectory, 'stderr.log');
-  const args = [
-    '--print',
-    '--output-format', 'stream-json',
-    '--verbose',
+  const printArgs = ['--print', '--output-format', 'stream-json', '--verbose'];
+  const sharedArgs = [
     '--model', model,
     '--effort', effort,
     '--permission-mode', 'bypassPermissions',
     '--setting-sources', 'project',
     '--strict-mcp-config',
-    '--session-id', sessionId,
   ];
-  const startedAt = new Date().toISOString();
-  const result = await runCommand(claudeBin, args, { cwd: worktree, input: prompt, timeoutSeconds, allowFailure: true });
-  const finishedAt = new Date().toISOString();
-  await fs.writeFile(eventLog, result.stdout, 'utf8');
-  await fs.writeFile(stderrLog, result.stderr, 'utf8');
-  await writeJson(path.join(outputDirectory, 'command.json'), {
+
+  let budgetDirectory;
+  let poller;
+  let deadline = Infinity;
+  if (budgetUsd !== undefined) {
+    budgetDirectory = path.join(outputDirectory, 'budget');
+    await initializeBudgetDirectory(budgetDirectory, budgetUsd);
+    const hookPath = fileURLToPath(new URL('./budget-hook.mjs', import.meta.url));
+    const settingsPath = path.join(budgetDirectory, 'hook-settings.json');
+    await writeJson(settingsPath, {
+      hooks: {
+        PostToolUse: [{ matcher: '', hooks: [{ type: 'command', command: `node ${shellQuote(hookPath)} ${shellQuote(budgetDirectory)}` }] }],
+      },
+    });
+    sharedArgs.push('--settings', settingsPath);
+    const claudeHome = process.env.CLAUDE_CONFIG_DIR ? path.resolve(process.env.CLAUDE_CONFIG_DIR) : path.join(os.homedir(), '.claude');
+    poller = startBudgetPoller({ adapter: 'claude-cli', home: claudeHome, budgetDirectory, budgetUsd, intervalMs: POLL_INTERVAL_MS });
+  }
+
+  const firstArgs = [...printArgs, ...sharedArgs, '--session-id', sessionId];
+  if (timeoutSeconds !== undefined) deadline = Date.now() + timeoutSeconds * 1_000;
+  let turn = await runTurn({
     executable: claudeBin,
+    args: firstArgs,
+    cwd: worktree,
+    input: prompt,
+    timeoutSeconds,
+    outputDirectory,
+    cliVersion,
+    expectedSessionId: sessionId,
+    round: 0,
+  });
+  await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
+  await writeJson(path.join(outputDirectory, 'selected-model.json'), {
+    requestedModel: model,
+    initResolvedModel: turn.usage.initResolvedModel,
+    modelUsageKeys: Object.keys(turn.usage.raw.modelUsage ?? {}),
+    selectedReasoningEffort: effort,
+  });
+
+  const resumes = [];
+  let finalSpend;
+  if (budgetUsd !== undefined && turn.result.code === 0) {
+    finalSpend = await poller.refresh();
+    while (shouldResume({ finalFraction: finalSpend.fraction, roundsUsed: resumes.length, remainingMs: remainingTime(deadline) })) {
+      const round = resumes.length + 1;
+      const resumeStartedAt = new Date().toISOString();
+      const resumeArgs = [...printArgs, '--resume', sessionId, ...sharedArgs];
+      turn = await runTurn({
+        executable: claudeBin,
+        args: resumeArgs,
+        cwd: worktree,
+        input: resumeMessage(finalSpend.fraction),
+        timeoutSeconds: remainingTimeoutSeconds(deadline),
+        outputDirectory,
+        cliVersion,
+        expectedSessionId: sessionId,
+        round,
+      });
+      await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
+      resumes.push({
+        round,
+        spentUsd: finalSpend.spentUsd,
+        fraction: finalSpend.fraction,
+        startedAt: resumeStartedAt,
+        finishedAt: turn.finishedAt,
+        exitCode: turn.result.code,
+      });
+      if (turn.result.code !== 0) break;
+      finalSpend = await poller.refresh();
+    }
+  }
+
+  let budgetSummary;
+  if (budgetUsd !== undefined) {
+    finalSpend = await poller.refresh();
+    poller.stop();
+    budgetSummary = await writeBudgetSummary({ outputDirectory, budgetDirectory, budgetUsd, resumes, finalSpend });
+  }
+  const rollout = await captureRollout(sessionId, worktree, outputDirectory);
+  await writeJson(path.join(outputDirectory, 'result.json'), {
+    result: turn.result.code === 0 ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
+    exitCode: turn.result.code,
+    timedOut: turn.result.timedOut,
+    sessionId: turn.usage.sessionId,
+    usageSha256: sha256(JSON.stringify(turn.usage)),
+    eventLogSha256: sha256(turn.result.stdout),
+    stderrSha256: sha256(turn.result.stderr),
+    rollout,
+    ...(budgetSummary ? { budget: { path: 'budget.json' } } : {}),
+  });
+
+  if (turn.result.code !== 0) process.exitCode = turn.result.code || 1;
+  else console.log(JSON.stringify({ sessionId: turn.usage.sessionId, usage: turn.usage.normalized, wallTimeSeconds: turn.result.wallTimeSeconds }));
+}
+
+async function runTurn({ executable, args, cwd, input, timeoutSeconds, outputDirectory, cliVersion, expectedSessionId, round }) {
+  const suffix = round === 0 ? '' : `-resume-${round}`;
+  const startedAt = new Date().toISOString();
+  const result = await runCommand(executable, args, { cwd, input, timeoutSeconds, allowFailure: true });
+  const finishedAt = new Date().toISOString();
+  await fs.writeFile(path.join(outputDirectory, `events${suffix}.jsonl`), result.stdout, 'utf8');
+  await fs.writeFile(path.join(outputDirectory, `stderr${suffix}.log`), result.stderr, 'utf8');
+  await writeJson(path.join(outputDirectory, `command${suffix}.json`), {
+    executable,
     arguments: args,
     cliVersion: cliVersion.stdout.trim(),
     cliVersionStderr: cliVersion.stderr,
-    workingDirectory: worktree,
+    workingDirectory: cwd,
     startedAt,
     finishedAt,
     wallTimeSeconds: result.wallTimeSeconds,
@@ -90,30 +187,19 @@ async function main() {
     exitCode: result.code,
     timedOut: result.timedOut,
   });
+  const usage = extractUsage(result.stdout, expectedSessionId);
+  await writeJson(path.join(outputDirectory, `raw-usage${suffix}.json`), usage);
+  if (round > 0) await fs.writeFile(path.join(outputDirectory, `final-message${suffix}.md`), usage.finalMessage, 'utf8');
+  return { result, usage, startedAt, finishedAt };
+}
 
-  const usage = extractUsage(result.stdout, sessionId);
-  await fs.writeFile(finalMessage, usage.finalMessage, 'utf8');
-  await writeJson(path.join(outputDirectory, 'raw-usage.json'), usage);
-  await writeJson(path.join(outputDirectory, 'selected-model.json'), {
-    requestedModel: model,
-    initResolvedModel: usage.initResolvedModel,
-    modelUsageKeys: Object.keys(usage.raw.modelUsage ?? {}),
-    selectedReasoningEffort: effort,
-  });
-  const rollout = await captureRollout(sessionId, worktree, outputDirectory);
-  await writeJson(path.join(outputDirectory, 'result.json'), {
-    result: result.code === 0 ? 'completed' : result.timedOut ? 'timed-out' : 'failed',
-    exitCode: result.code,
-    timedOut: result.timedOut,
-    sessionId: usage.sessionId,
-    usageSha256: sha256(JSON.stringify(usage)),
-    eventLogSha256: sha256(result.stdout),
-    stderrSha256: sha256(result.stderr),
-    rollout,
-  });
+function remainingTime(deadline) {
+  return deadline === Infinity ? Infinity : Math.max(0, deadline - Date.now());
+}
 
-  if (result.code !== 0) process.exitCode = result.code || 1;
-  else console.log(JSON.stringify({ sessionId: usage.sessionId, usage: usage.normalized, wallTimeSeconds: result.wallTimeSeconds }));
+function remainingTimeoutSeconds(deadline) {
+  if (deadline === Infinity) return undefined;
+  return Math.max(1, Math.floor(remainingTime(deadline) / 1_000));
 }
 
 function parseTimeout(value) {

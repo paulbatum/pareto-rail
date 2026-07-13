@@ -12,4 +12,6 @@ Cost is not a per-configuration frozen input. Every configuration's cost is meas
 
 `claude-fable-5-high.md` is the first Claude Code configuration trial, using the same one-stage non-interactive pattern against `claude --print --output-format stream-json`. It documents a material difference from the Codex configurations: Claude Code CLI has no OS-level sandbox, so unattended operation relies on `--permission-mode bypassPermissions` rather than an enforced filesystem/network boundary. It remains rehearsal-only.
 
+`claude-fable-5-high-b20.md` and `codex-sol-high-b20.md` are the corresponding soft-budget configurations. They declare `budget.usd: 20`, relative mid-turn notices, and deadline-bounded same-session continuation when an entrant submits well under budget.
+
 `claude-fable-5-opus-delegation.md` and `codex-sol-terra-delegation.md` are the within-harness, same-provider delegation drafts: the primary agent plans and reviews while delegating implementation to a cheaper same-provider subagent (Fable → Opus; Sol → Terra) via the harness's built-in subagent support. Both append the shared `benchmark/prompts/flexible-delegation.md` addendum to the assignment and run in an isolated per-run home so ccusage captures the full parent-plus-subagent cost. They are rehearsal-only.

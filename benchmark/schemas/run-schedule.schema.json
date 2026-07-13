@@ -102,7 +102,15 @@
             "adapter": { "type": "string", "minLength": 1 },
             "model": { "type": "string", "minLength": 1 },
             "effort": { "enum": ["low", "medium", "high", "xhigh", "max", "ultra"] },
-            "timeoutSeconds": { "type": "integer", "minimum": 1 }
+            "timeoutSeconds": { "type": "integer", "minimum": 1 },
+            "budget": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["usd"],
+              "properties": {
+                "usd": { "type": "number", "exclusiveMinimum": 0 }
+              }
+            }
           }
         },
         "theme": {

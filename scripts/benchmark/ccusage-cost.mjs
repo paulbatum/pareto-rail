@@ -110,18 +110,25 @@ export async function ccusageVersion(node = process.execPath) {
 }
 
 // Run `ccusage <view> session --json` scoped to the per-run home and return the parsed report.
-export async function measureRunCost({ adapter, home, node = process.execPath }) {
-  const harness = harnessForAdapter(adapter);
-  const { stdout } = await run(node, [CCUSAGE_CLI, harness.view, 'session', '--json'], {
-    env: { ...process.env, [harness.homeEnvVar]: home },
-  });
-  let report;
+export async function measureRunCost({ adapter, home, node = process.execPath, tolerateEmpty = false }) {
   try {
-    report = JSON.parse(stdout);
+    const harness = harnessForAdapter(adapter);
+    const { stdout } = await run(node, [CCUSAGE_CLI, harness.view, 'session', '--json'], {
+      env: { ...process.env, [harness.homeEnvVar]: home },
+    });
+    let report;
+    try {
+      report = JSON.parse(stdout);
+    } catch (error) {
+      fail(`ccusage ${harness.view} session --json did not return valid JSON: ${error.message}`);
+    }
+    return assertMeasurable(summarizeCost(adapter, report));
   } catch (error) {
-    fail(`ccusage ${harness.view} session --json did not return valid JSON: ${error.message}`);
+    // Live homes are empty until the harness persists its first rollout. Budget polling is advisory,
+    // so its explicitly tolerant path reports no measurement rather than aborting a long-running CLI.
+    if (tolerateEmpty) return null;
+    throw error;
   }
-  return assertMeasurable(summarizeCost(adapter, report));
 }
 
 function numberOr(value, fallback) {

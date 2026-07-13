@@ -42,7 +42,20 @@ async function showStatus() {
     if (result.promotionStatus === 'pending' || result.promotionStatus === 'failed') console.log(`    Resume: npm run benchmark:promote -- --run ${result.runId}`);
   }
   console.log(`Failed/DNF/Incomplete: ${failed.length}`);
-  for (const result of failed) console.log(`  - ${result.runId} (${result.levelId}) [${result.state}]`);
+  for (const result of failed) {
+    const spend = result.state === 'incomplete' ? await activeBudgetSpend(result.runId) : null;
+    const budgetStatus = spend ? `, task budget ${Math.round(spend.fraction * 100)}%` : '';
+    console.log(`  - ${result.runId} (${result.levelId}) [${result.state}${budgetStatus}]`);
+  }
+}
+
+async function activeBudgetSpend(runId) {
+  const runDirectory = path.join(RUNS_DIR, runId);
+  const definition = await optionalJson(path.join(runDirectory, 'run-definition.json'));
+  const stageDirectory = definition?.stage?.adapter === 'claude-cli' ? 'stages/solo/claude' : definition?.stage?.adapter === 'codex-cli' ? 'stages/solo/codex' : null;
+  if (!definition?.stage?.budget || !stageDirectory) return null;
+  const spend = await optionalJson(path.join(runDirectory, stageDirectory, 'budget', 'spend.json'));
+  return Number.isFinite(spend?.fraction) ? spend : null;
 }
 
 async function archiveDnf(options) {

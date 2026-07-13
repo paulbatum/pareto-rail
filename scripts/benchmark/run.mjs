@@ -168,6 +168,7 @@ async function main() {
       const executorPath = definition.mode === 'eligible' ? repositoryArtifactPath(definition.executor.path) : adapter.scriptPath;
       const stageDirectory = path.join(outputDirectory, adapter.stageDir);
       const stageArgs = [executorPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
+      if (definition.stage.budget) stageArgs.push('--budget-usd', String(definition.stage.budget.usd));
       if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
       if (definition.delegation && adapter.delegationArgs) stageArgs.push(...adapter.delegationArgs);
       const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
@@ -386,10 +387,19 @@ export function validateDefinition(value) {
   validateArtifact(value.failureTaxonomy, 'definition.failureTaxonomy', errors);
   if (!isPlainObject(value.stage)) errors.push('definition.stage must be an object.');
   else {
+    const stageKeys = new Set(['adapter', 'model', 'effort', 'timeoutSeconds', 'budget', 'codexBin', 'claudeBin']);
+    for (const key of Object.keys(value.stage)) if (!stageKeys.has(key)) errors.push(`definition.stage has unknown field ${key}.`);
     if (!Object.hasOwn(ADAPTERS, value.stage.adapter)) errors.push(`definition.stage.adapter must be one of: ${Object.keys(ADAPTERS).join(', ')}.`);
     if (typeof value.stage.model !== 'string' || !value.stage.model) errors.push('definition.stage.model is required.');
     if (!['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.stage.effort)) errors.push('definition.stage.effort is invalid.');
     if (!Number.isInteger(value.stage.timeoutSeconds) || value.stage.timeoutSeconds < 1) errors.push('definition.stage.timeoutSeconds must be a positive integer.');
+    if (value.stage.budget !== undefined) {
+      if (!isPlainObject(value.stage.budget)) errors.push('definition.stage.budget must be an object.');
+      else {
+        for (const key of Object.keys(value.stage.budget)) if (key !== 'usd') errors.push(`definition.stage.budget has unknown field ${key}.`);
+        if (!(typeof value.stage.budget.usd === 'number' && Number.isFinite(value.stage.budget.usd) && value.stage.budget.usd > 0)) errors.push('definition.stage.budget.usd must be a positive finite number.');
+      }
+    }
   }
   for (const [key, item] of [['worktree', value.worktree], ['payload', value.payload]]) {
     if (!isPlainObject(item) || typeof item.path !== 'string' || !item.path) errors.push(`definition.${key}.path is required.`);
@@ -417,7 +427,12 @@ async function prepareInputs(definition, materialsCommit, configurationCommit, o
   const templatePath = path.join(inputDirectory, 'assignment-template.md');
   const themePath = path.join(inputDirectory, 'theme.md');
   const renderedPath = path.join(outputDirectory, 'rendered-assignment.md');
-  const baseRendering = renderAssignment(template, { levelId: definition.assignment.levelId, levelTitle: definition.assignment.levelTitle, theme });
+  const baseRendering = renderAssignment(template, {
+    levelId: definition.assignment.levelId,
+    levelTitle: definition.assignment.levelTitle,
+    theme,
+    budget: Boolean(definition.stage.budget),
+  });
 
   // Delegation configurations append the rendered flexible-delegation addendum after the shared
   // assignment body; the bytes sent to the primary agent as stdin are base + addendum. Solo
@@ -462,7 +477,7 @@ async function prepareHarnessHome(adapter, outputDirectory) {
 
 async function createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
   const adapter = ADAPTERS[definition.stage.adapter];
-  const [usage, commandRecord, stageLaunch, controller, recipe, theme, renderedMeta, eventLog] = await Promise.all([
+  const [usage, commandRecord, stageLaunch, controller, recipe, theme, renderedMeta, eventLog, budget] = await Promise.all([
     loadStageUsage(outputDirectory, adapter, definition),
     readJson(path.join(outputDirectory, adapter.stageDir, 'command.json')),
     readJson(path.join(outputDirectory, 'stage-launch.json')),
@@ -471,7 +486,9 @@ async function createManifest({ definition, materialsCommit, configurationCommit
     artifactFromCommit(materialsCommit, definition.assignment.theme),
     readJson(path.join(outputDirectory, 'rendered-assignment.json')),
     fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8'),
+    optionalJson(path.join(outputDirectory, adapter.stageDir, 'budget.json')),
   ]);
+  if (Boolean(definition.stage.budget) !== Boolean(budget)) fail('Stage budget summary presence does not match the run definition.');
   // Cost comes entirely from ccusage reading this run's isolated home: it parses the persisted
   // rollouts (parent + any delegated subagent threads) and prices with its own maintained rate DB.
   const cost = await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome });
@@ -481,7 +498,7 @@ async function createManifest({ definition, materialsCommit, configurationCommit
   const runnerArtifact = definition.mode === 'eligible' ? definition.runner : await currentArtifact('scripts/benchmark/run.mjs');
   const executorArtifact = definition.mode === 'eligible' ? definition.executor : await currentArtifact(path.relative(ROOT, adapter.scriptPath));
   const stageResult = stageLaunch.exitCode === 0 ? 'completed' : (commandRecord.timedOut ? 'timed-out' : 'failed');
-  const stages = buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult });
+  const stages = buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget });
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -529,12 +546,18 @@ async function createManifest({ definition, materialsCommit, configurationCommit
 // init event) as `orchestrate`, the rest as `implement`. When per-model cost is unavailable (Codex),
 // the run collapses to a single stage carrying the run total. All stages share the one invocation's
 // session id, harness version, and wall-clock boundaries; the prompt hashes attach to the parent.
-function buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed' }) {
+function buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null }) {
   const harness = { name: adapter.harnessName, version: commandRecord.cliVersion };
-  const timing = { startedAt: commandRecord.startedAt, finishedAt: commandRecord.finishedAt, wallTimeSeconds: commandRecord.wallTimeSeconds };
+  const lastResume = budget?.resumes?.at(-1);
+  const finishedAt = lastResume?.finishedAt ?? commandRecord.finishedAt;
+  const timing = {
+    startedAt: commandRecord.startedAt,
+    finishedAt,
+    wallTimeSeconds: lastResume ? (Date.parse(finishedAt) - Date.parse(commandRecord.startedAt)) / 1_000 : commandRecord.wallTimeSeconds,
+  };
   const promptSha256 = renderedMeta.rendering.sha256;
   const delegationPromptSha256 = renderedMeta.delegation?.sha256;
-  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult };
+  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, ...(budget ? { budget } : {}) };
   const delegated = Boolean(definition.delegation) && cost.models.length > 1;
 
   if (cost.perModelCostAvailable && cost.models.length >= 1) {
@@ -721,7 +744,11 @@ function sameArtifact(left, right) {
 }
 
 function sameStage(left, right) {
-  return left?.adapter === right?.adapter && left?.model === right?.model && left?.effort === right?.effort && left?.timeoutSeconds === right?.timeoutSeconds;
+  return left?.adapter === right?.adapter
+    && left?.model === right?.model
+    && left?.effort === right?.effort
+    && left?.timeoutSeconds === right?.timeoutSeconds
+    && left?.budget?.usd === right?.budget?.usd;
 }
 
 function validateRuntimeSchedule(schedule, benchmarkVersion) {

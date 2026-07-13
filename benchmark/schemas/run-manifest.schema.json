@@ -338,6 +338,7 @@
         "sessionId": { "type": "string", "minLength": 1 },
         "promptSha256": { "$ref": "#/$defs/sha256" },
         "delegationPromptSha256": { "$ref": "#/$defs/sha256" },
+        "budget": { "$ref": "#/$defs/budgetSummary" },
         "inputArtifactSha256": { "$ref": "#/$defs/sha256" },
         "outputArtifactSha256": { "$ref": "#/$defs/sha256" },
         "rolloutArtifactSha256": { "$ref": "#/$defs/sha256" },
@@ -347,6 +348,58 @@
         "usage": { "$ref": "#/$defs/usage" },
         "pricing": { "$ref": "#/$defs/pricing" },
         "result": { "enum": ["completed", "failed", "timed-out"] }
+      }
+    },
+    "budgetSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["budgetUsd", "protocol", "noticeHistory", "resumes", "finalSpendUsd", "finalFraction"],
+      "properties": {
+        "budgetUsd": { "type": "number", "exclusiveMinimum": 0 },
+        "protocol": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["noticeStepPct", "minimumSubmitFraction", "maxResumeRounds", "pollIntervalSeconds", "minimumResumeRemainingSeconds"],
+          "properties": {
+            "noticeStepPct": { "const": 25 },
+            "minimumSubmitFraction": { "const": 0.75 },
+            "maxResumeRounds": { "const": 3 },
+            "pollIntervalSeconds": { "const": 30 },
+            "minimumResumeRemainingSeconds": { "const": 600 }
+          }
+        },
+        "noticeHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pct", "spentUsd", "at"],
+            "properties": {
+              "pct": { "type": "integer", "minimum": 25, "multipleOf": 25 },
+              "spentUsd": { "type": "number", "minimum": 0 },
+              "at": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "resumes": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["round", "spentUsd", "fraction", "startedAt", "finishedAt", "exitCode"],
+            "properties": {
+              "round": { "type": "integer", "minimum": 1, "maximum": 3 },
+              "spentUsd": { "type": "number", "minimum": 0 },
+              "fraction": { "type": "number", "minimum": 0 },
+              "startedAt": { "type": "string", "format": "date-time" },
+              "finishedAt": { "type": "string", "format": "date-time" },
+              "exitCode": { "type": "integer" }
+            }
+          }
+        },
+        "finalSpendUsd": { "type": "number", "minimum": 0 },
+        "finalFraction": { "type": "number", "minimum": 0 }
       }
     },
     "gate": {

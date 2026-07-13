@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { renderAssignment, renderDelegation } from './render-assignment.mjs';
+import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { validateDefinition as validateRunDefinition } from './run.mjs';
@@ -49,6 +49,18 @@ assert.equal(schedule.assignments.length, 9);
 assert.deepEqual(validateSchedule(schedule, definition()), []);
 assert.equal(new Set(schedule.assignments.map((assignment) => assignment.slotId)).size, 9);
 for (const assignment of schedule.assignments) assert.equal(assignment.levelId, `${assignment.theme.id}-${assignment.slotId}`);
+
+const budgetDefinition = definition();
+budgetDefinition.configurations[0].stage.budget = { usd: 20 };
+const budgetSchedule = createSchedule(budgetDefinition);
+assert.equal(budgetSchedule.assignments.find(({ configurationId }) => configurationId === 'solo-a').stage.budget.usd, 20);
+assert.deepEqual(validateSchedule(budgetSchedule, budgetDefinition), []);
+const invalidBudgetDefinition = structuredClone(budgetDefinition);
+invalidBudgetDefinition.configurations[0].stage.budget.usd = 0;
+assert.ok(validateSchedule(budgetSchedule, invalidBudgetDefinition).some((error) => error.includes('budget.usd')));
+const unknownBudgetField = structuredClone(budgetDefinition);
+unknownBudgetField.configurations[0].stage.budget.extra = true;
+assert.ok(validateSchedule(budgetSchedule, unknownBudgetField).some((error) => error.includes('unknown field extra')));
 
 const brokenSchedule = structuredClone(schedule);
 brokenSchedule.assignments[0].levelId = 'wrong';
@@ -124,6 +136,10 @@ const rendered = renderAssignment('id={{LEVEL_ID}} title={{LEVEL_TITLE}} theme={
   theme: '# Cinder',
 });
 assert.equal(rendered, 'id=cinder-a1b2 title=Cinder theme=# Cinder');
+assert.equal(
+  renderAssignment('id={{LEVEL_ID}} title={{LEVEL_TITLE}} theme={{THEME}}', { levelId: 'cinder-a1b2', levelTitle: 'Cinder', theme: '# Cinder', budget: true }),
+  `id=cinder-a1b2 title=Cinder theme=# Cinder\n\n${BUDGET_ASSIGNMENT_PARAGRAPH}`,
+);
 assert.throws(() => renderAssignment('{{LEVEL_ID}} {{UNKNOWN}} {{THEME}}', { levelId: 'x', levelTitle: 'X', theme: 'T' }), /Unknown template placeholder/);
 assert.equal(
   renderAssignment('id={{LEVEL_ID}} dir=levels/{{LEVEL_ID}}/ title={{LEVEL_TITLE}} theme={{THEME}}', { levelId: 'cinder-a1b2', levelTitle: 'Cinder', theme: '# Cinder' }),
@@ -148,6 +164,15 @@ const runDefinition = {
   payload: { path: '/tmp/raild-payload-a1b2c3d4', branch: 'benchmark-payload-a1b2c3d4' },
 };
 assert.deepEqual(validateRunDefinition(runDefinition), []);
+const budgetRunDefinition = structuredClone(runDefinition);
+budgetRunDefinition.stage.budget = { usd: 20 };
+assert.deepEqual(validateRunDefinition(budgetRunDefinition), []);
+const invalidBudgetRunDefinition = structuredClone(budgetRunDefinition);
+invalidBudgetRunDefinition.stage.budget.usd = Number.POSITIVE_INFINITY;
+assert.ok(validateRunDefinition(invalidBudgetRunDefinition).some((error) => error.includes('budget.usd')));
+const unknownBudgetRunField = structuredClone(budgetRunDefinition);
+unknownBudgetRunField.stage.budget.extra = true;
+assert.ok(validateRunDefinition(unknownBudgetRunField).some((error) => error.includes('unknown field extra')));
 runDefinition.stage.effort = 'invalid';
 assert.ok(validateRunDefinition(runDefinition).some((error) => error.includes('stage.effort')));
 runDefinition.stage.effort = 'high';
@@ -269,6 +294,18 @@ const resultManifest = {
   disposition: { status: 'rehearsal' },
 };
 assert.deepEqual(manifestErrors(resultManifest), []);
+const budgetManifest = structuredClone(resultManifest);
+budgetManifest.stages[0].budget = {
+  budgetUsd: 20,
+  protocol: { noticeStepPct: 25, minimumSubmitFraction: 0.75, maxResumeRounds: 3, pollIntervalSeconds: 30, minimumResumeRemainingSeconds: 600 },
+  noticeHistory: [{ pct: 25, spentUsd: 5.1, at: '2026-01-01T00:15:00.000Z' }],
+  resumes: [],
+  finalSpendUsd: 17,
+  finalFraction: 0.85,
+};
+assert.deepEqual(manifestErrors(budgetManifest), []);
+budgetManifest.stages[0].budget.protocol.noticeStepPct = 10;
+assert.ok(manifestErrors(budgetManifest).some((error) => error.includes('budget is invalid')));
 const legacyManifest = structuredClone(resultManifest);
 delete legacyManifest.theme.id;
 delete legacyManifest.output.title;
