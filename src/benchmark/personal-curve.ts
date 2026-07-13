@@ -5,6 +5,7 @@ export interface PersonalCurveCatalogEntry {
   modelName: string;
   workflowName: string;
   generationCost: number;
+  featured?: boolean;
 }
 
 export interface PersonalHistoryEntrant {
@@ -163,8 +164,9 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   const configurationIds = new Set([...seenIds, ...catalogCosts.keys()]);
   const strengths = fitBradleyTerry(comparisons, [...seenIds]);
   const ratings = new Map([...strengths].map(([id, strength]) => [id, ratingForStrength(strength)] as const));
-  const mainComponent = mainComparisonComponent([...seenIds], comparisons);
-  const placedIds = new Set([...mainComponent].filter((id) => (rawStats.get(id)?.comparisons ?? 0) >= 2));
+  const featuredIds = new Set(catalog.filter((entry) => entry.featured).map((entry) => entry.configurationId));
+  const mainComponent = mainComparisonComponent([...seenIds], comparisons, featuredIds);
+  const placedIds = new Set([...seenIds].filter((id) => (rawStats.get(id)?.comparisons ?? 0) >= 2));
 
   const points = [...configurationIds].map((configurationId): PersonalRatingPoint => {
     const label = catalogLabels.get(configurationId) ?? labels.get(configurationId) ?? displayLabelFor({ generationCost: 0 }, configurationId);
@@ -195,6 +197,10 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
 
   for (const point of points) {
     if (!placedIds.has(point.configurationId)) continue;
+    if (!mainComponent.has(point.configurationId)) {
+      point.status = 'provisional';
+      continue;
+    }
     const blocker = cheaperHighestRatedPoint(point, placedPoints);
     if (!blocker) {
       point.status = 'stable';
@@ -254,7 +260,7 @@ function addObservedPoint(
   if (!rawStats.has(configurationId)) rawStats.set(configurationId, { wins: 0, ties: 0, losses: 0, comparisons: 0 });
 }
 
-function mainComparisonComponent(nodeIds: readonly string[], comparisons: readonly BradleyTerryComparison[]): Set<string> {
+function mainComparisonComponent(nodeIds: readonly string[], comparisons: readonly BradleyTerryComparison[], featuredIds: ReadonlySet<string> = new Set()): Set<string> {
   const adjacency = new Map(nodeIds.map((id) => [id, new Set<string>()] as const));
   const edgeCounts = new Map<string, number>();
   for (const comparison of comparisons) {
@@ -288,6 +294,7 @@ function mainComparisonComponent(nodeIds: readonly string[], comparisons: readon
     components.push({ ids, comparisons: comparisonTotal });
   }
   components.sort((left, right) => right.comparisons - left.comparisons
+    || Number(right.ids.some((id) => featuredIds.has(id))) - Number(left.ids.some((id) => featuredIds.has(id)))
     || left.ids.slice().sort((a, b) => a.localeCompare(b))[0].localeCompare(right.ids.slice().sort((a, b) => a.localeCompare(b))[0]));
   return new Set(components[0]?.ids ?? []);
 }

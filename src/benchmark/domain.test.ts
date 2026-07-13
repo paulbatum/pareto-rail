@@ -26,6 +26,10 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   assert.equal(mapVerdict('both-bad').sentiment, 'negative');
 
   testPersonalCurve();
+  testIslandPlacement();
+  testFeaturedIslandIsMain();
+  testConnectionPromotes();
+  testSelfHealingSchedule();
   testStorageVersioning();
   testSchedulerCoverage();
   testFeaturedFirstMatchup();
@@ -72,6 +76,65 @@ function testPersonalCurve(): void {
   assert.equal(withUnseen.points.find((point) => point.configurationId === 'configuration-2')?.status, 'pending');
   assert.equal(withUnseen.points.find((point) => point.configurationId === 'configuration-0')?.wins, 1);
   assert.equal(withUnseen.points.find((point) => point.configurationId === 'configuration-1')?.losses, 1);
+}
+
+function testIslandPlacement(): void {
+  const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
+  const curve = recomputePersonalCurve(coldStartHistory(), { catalog: catalog.entrants });
+  assert.equal(curve.placedCount, 4);
+  assert.equal(curve.points.filter((point) => point.status !== 'pending').length, 4, 'every twice-compared configuration is placed');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'provisional');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-3')?.status, 'provisional');
+}
+
+function testFeaturedIslandIsMain(): void {
+  // The featured island wins the tie even when the other island holds the
+  // lexicographically smallest configuration id.
+  const catalog = makeSchedulerCatalog(4, 2, false, [2, 3]);
+  const curve = recomputePersonalCurve([
+    historyEntry('theme-a-featured', 'configuration-2', 'configuration-3', 'a'),
+    historyEntry('theme-b-featured', 'configuration-2', 'configuration-3', 'a'),
+    historyEntry('theme-a-other', 'configuration-0', 'configuration-1', 'a'),
+    historyEntry('theme-b-other', 'configuration-0', 'configuration-1', 'a'),
+  ], { catalog: catalog.entrants });
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-0')?.status, 'provisional', 'the unfeatured island is capped at provisional');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-1')?.status, 'provisional', 'the unfeatured island is capped at provisional');
+}
+
+function testConnectionPromotes(): void {
+  const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
+  const curve = recomputePersonalCurve([
+    ...coldStartHistory(),
+    historyEntry('cross-island', 'configuration-1', 'configuration-2', 'a'),
+  ], { catalog: catalog.entrants });
+  assert.equal(curve.points.filter((point) => point.status !== 'pending').length, 4);
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'stable');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-3')?.status, 'stable');
+}
+
+function testSelfHealingSchedule(): void {
+  const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
+  const simulated = simulateAssignments(catalog, 4);
+  const next = scheduleOne(catalog, simulated.judged, simulated.exposures, simulated.themes);
+  assert.ok(next);
+  const configurationIds = [next!.levelIdA, next!.levelIdB].map((levelId) => catalog.entrants.find((entrant) => entrant.levelId === levelId)!.configurationId);
+  const solo = new Set(['configuration-0', 'configuration-1']);
+  const delegated = new Set(['configuration-2', 'configuration-3']);
+  assert.equal(
+    (solo.has(configurationIds[0]!) && delegated.has(configurationIds[1]!))
+      || (solo.has(configurationIds[1]!) && delegated.has(configurationIds[0]!)),
+    true,
+    'playoff reconnects the solo and delegated comparison islands',
+  );
+}
+
+function coldStartHistory(): PersonalHistoryEntry[] {
+  return [
+    historyEntry('theme-a-featured', 'configuration-0', 'configuration-1', 'a'),
+    historyEntry('theme-b-featured', 'configuration-0', 'configuration-1', 'a'),
+    historyEntry('theme-a-delegated', 'configuration-2', 'configuration-3', 'a'),
+    historyEntry('theme-b-delegated', 'configuration-2', 'configuration-3', 'a'),
+  ];
 }
 
 function testStorageVersioning(): void {
