@@ -2,9 +2,14 @@ import type { RankCatalogEntrant, RankCatalogVersion } from './catalog';
 import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve.js';
 import type { MatchupVote, RelativeOutcome } from './types';
 
+/** Locale-independent ordering for persisted ids. */
+export function compareIds(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
 /** Stable id for an unordered pair. Side assignment is deliberately separate. */
 export function pairId(themeId: string, levelA: string, levelB: string): string {
-  const [first, second] = [levelA, levelB].sort((left, right) => left.localeCompare(right));
+  const [first, second] = [levelA, levelB].sort(compareIds);
   return `${themeId}:${first}__${second}`;
 }
 
@@ -69,7 +74,7 @@ function selectCoveragePhase(
   if (!judged.some((item) => parsePairId(item.matchupId)?.themeId === themeId)) {
     const featuredPair = themeCandidates
       .filter((candidate) => candidate.a.featured === true && candidate.b.featured === true)
-      .sort((left, right) => left.id.localeCompare(right.id))[0] ?? null;
+      .sort((left, right) => compareIds(left.id, right.id))[0] ?? null;
     if (featuredPair) return featuredPair;
   }
   // Seed each theme with a placed pool before switching to anchored
@@ -81,7 +86,7 @@ function selectCoveragePhase(
     .filter((candidate) => candidate.unseenCount === 2)
     .sort((left, right) => left.configurationPairCount - right.configurationPairCount
       || left.costDifference - right.costDifference
-      || left.id.localeCompare(right.id))[0] ?? null;
+      || compareIds(left.id, right.id))[0] ?? null;
   if (coldStart && bothUnseen) return bothUnseen;
 
   const placed = new Set(curve.points.filter((point) => point.status !== 'pending').map((point) => point.configurationId));
@@ -95,7 +100,7 @@ function selectCoveragePhase(
       return Number(placed.has(rightAnchor.configurationId)) - Number(placed.has(leftAnchor.configurationId))
         || left.costDifference - right.costDifference
         || left.configurationPairCount - right.configurationPairCount
-        || left.id.localeCompare(right.id);
+        || compareIds(left.id, right.id);
     })[0] ?? null;
   // A fully unseen theme (for example a newly added one) has no seen anchors;
   // pair its levels with each other rather than stalling coverage.
@@ -127,7 +132,7 @@ function selectPlayoffPhase(
     .sort((left, right) => right.information - left.information
       || left.candidate.pairCount - right.candidate.pairCount
       || left.candidate.costDifference - right.candidate.costDifference
-      || left.candidate.id.localeCompare(right.candidate.id))[0]?.candidate ?? null;
+      || compareIds(left.candidate.id, right.candidate.id))[0]?.candidate ?? null;
 }
 
 function playoffInformation(candidate: PairCandidate, ratings: ReadonlyMap<string, number>): number {
@@ -262,11 +267,11 @@ function schedulerCurve(catalog: RankCatalogVersion, judged: readonly { matchupI
 }
 
 function configurationPairIdFor(configurationA: string, configurationB: string): string {
-  const [first, second] = [configurationA, configurationB].sort((left, right) => left.localeCompare(right));
+  const [first, second] = [configurationA, configurationB].sort(compareIds);
   return `${first}__${second}`;
 }
 
-function parsePairId(id: string): { themeId: string; levelA: string; levelB: string } | null {
+export function parsePairId(id: string): { themeId: string; levelA: string; levelB: string } | null {
   const separator = id.indexOf(':');
   const pair = separator >= 0 ? id.slice(separator + 1) : '';
   const divider = pair.indexOf('__');
@@ -275,7 +280,7 @@ function parsePairId(id: string): { themeId: string; levelA: string; levelB: str
 }
 
 function alternateLexicalTheme(themeIds: readonly string[], lastThemeId: string | undefined): string | null {
-  const ordered = [...themeIds].sort((left, right) => left.localeCompare(right));
+  const ordered = [...themeIds].sort(compareIds);
   return ordered.find((themeId) => themeId !== lastThemeId) ?? ordered[0] ?? null;
 }
 

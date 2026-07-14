@@ -4,13 +4,13 @@
 import assert from 'node:assert/strict';
 import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
 import { CatalogBenchmarkApi } from './catalog-api';
-import { nextScheduledMatchup, pairId } from './scheduler';
+import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { mapVerdict, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
-import type { RankCatalog, RankCatalogEntrant, RankCatalogVersion } from './catalog';
+import { rankCatalog, type RankCatalog, type RankCatalogEntrant, type RankCatalogVersion } from './catalog';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import { ComparisonStateMachine } from './state';
-import { BENCHMARK_STORAGE_VERSION, BenchmarkLocalStore, createMemoryStorage, type StorageEnvelope } from './storage';
+import { BENCHMARK_PARTICIPANT_ID_KEY, BENCHMARK_STORAGE_VERSION, BenchmarkLocalStore, createMemoryStorage, type StorageEnvelope } from './storage';
 import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve';
 
 declare const process: { argv: string[]; exitCode?: number } | undefined;
@@ -33,6 +33,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testConnectionPromotes();
   testSelfHealingSchedule();
   testStorageVersioning();
+  testPairIdCanonicalization();
   testStorageUndo();
   testSchedulerCoverage();
   testFeaturedFirstMatchup();
@@ -150,17 +151,49 @@ function testStorageVersioning(): void {
   const storage = createMemoryStorage();
   storage.setItem('legacy', JSON.stringify({ participantId: 'old', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] }));
   assert.notEqual(new BenchmarkLocalStore(storage, 'legacy').participantId, 'old', 'unversioned data is discarded');
+  storage.removeItem?.(BENCHMARK_PARTICIPANT_ID_KEY);
   storage.setItem('old-envelope', JSON.stringify({ version: 1, data: { participantId: 'old', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] } }));
-  assert.notEqual(new BenchmarkLocalStore(storage, 'old-envelope').participantId, 'old', 'old envelopes are discarded');
+  const salvaged = new BenchmarkLocalStore(storage, 'old-envelope');
+  assert.equal(salvaged.participantId, 'old', 'stale envelopes preserve the participant id');
+  assert.equal(storage.getItem(BENCHMARK_PARTICIPANT_ID_KEY), 'old', 'stale envelope participant id is persisted separately');
   storage.setItem('old-kind', JSON.stringify({ version: 2, data: { participantId: 'old', unfinishedMatchup: { kind: 'a-complete', assignment: assignment(), playCounts: { a: 1, b: 0 } }, completedMatchups: [], history: [], themeHistory: [], levelExposureCounts: {}, revealedEntrants: [] } }));
   assert.equal(new BenchmarkLocalStore(storage, 'old-kind').snapshot.unfinishedMatchup, undefined);
+
+  const dedicatedWinsStorage = createMemoryStorage();
+  dedicatedWinsStorage.setItem('dedicated-wins', JSON.stringify({ version: 1, data: { participantId: 'envelope-participant', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] } }));
+  dedicatedWinsStorage.setItem(BENCHMARK_PARTICIPANT_ID_KEY, 'dedicated-participant');
+  assert.equal(new BenchmarkLocalStore(dedicatedWinsStorage, 'dedicated-wins').participantId, 'dedicated-participant', 'dedicated participant id wins over the envelope');
+
+  const freshStorage = createMemoryStorage();
+  const fresh = new BenchmarkLocalStore(freshStorage, 'fresh');
+  assert.ok(fresh.participantId);
+  assert.equal(freshStorage.getItem(BENCHMARK_PARTICIPANT_ID_KEY), fresh.participantId, 'a fresh participant id is persisted separately');
+  assert.equal(new BenchmarkLocalStore(freshStorage, 'fresh').participantId, fresh.participantId);
 
   const currentStorage = createMemoryStorage();
   const current = new BenchmarkLocalStore(currentStorage, 'current');
   current.save({ participantId: 'current-participant' });
   const envelope = JSON.parse(currentStorage.getItem('current')!) as StorageEnvelope;
   assert.equal(envelope.version, 2);
+  assert.equal(currentStorage.getItem(BENCHMARK_PARTICIPANT_ID_KEY), 'current-participant');
   assert.equal(new BenchmarkLocalStore(currentStorage, 'current').participantId, 'current-participant');
+}
+
+function testPairIdCanonicalization(): void {
+  for (const version of rankCatalog.versions) {
+    for (const theme of version.themes) {
+      const entrants = version.entrants.filter((entrant) => entrant.themeId === theme.id);
+      for (let firstIndex = 0; firstIndex < entrants.length; firstIndex += 1) {
+        for (let secondIndex = firstIndex + 1; secondIndex < entrants.length; secondIndex += 1) {
+          const first = entrants[firstIndex]!.levelId;
+          const second = entrants[secondIndex]!.levelId;
+          const localeOrdered = [first, second].sort((left, right) => left.localeCompare(right));
+          assert.equal(compareIds(first, second), Math.sign(first.localeCompare(second)), `${first} and ${second} changed ordering`);
+          assert.equal(pairId(theme.id, first, second), `${theme.id}:${localeOrdered[0]}__${localeOrdered[1]}`, `${version.benchmarkVersion}/${theme.id} pair id changed`);
+        }
+      }
+    }
+  }
 }
 
 function testStorageUndo(): void {
@@ -293,7 +326,8 @@ function testThemeBalance(): void {
   const simulated = simulateAssignments(catalog, 30);
   const counts = new Map<string, number>();
   for (const item of simulated.judged) {
-    const themeId = item.matchupId.slice(0, item.matchupId.indexOf(':'));
+    const themeId = parsePairId(item.matchupId)?.themeId;
+    assert.ok(themeId);
     counts.set(themeId, (counts.get(themeId) ?? 0) + 1);
   }
   assert.ok(Math.max(...counts.values()) - Math.min(...counts.values()) <= 1, `theme counts are balanced: ${JSON.stringify(Object.fromEntries(counts))}`);
@@ -504,7 +538,7 @@ function appendJudgment(catalog: RankCatalogVersion, matchup: { themeId: string;
 function curveFromJudged(catalog: RankCatalogVersion, judged: readonly Judged[]) {
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const history = judged.flatMap((item): PersonalHistoryEntry[] => {
-    const parsed = parseMatchup(item.matchupId);
+    const parsed = parsePairId(item.matchupId);
     const a = parsed ? entrants.get(parsed.levelA) : undefined;
     const b = parsed ? entrants.get(parsed.levelB) : undefined;
     return a && b ? [historyEntry(item.matchupId, a.configurationId, b.configurationId, item.relative, a.generationCost, b.generationCost)] : [];
@@ -545,17 +579,10 @@ function makeRankCatalog(...versions: readonly RankCatalogVersion[]): RankCatalo
 }
 
 function configurationPairFromMatchup(catalog: RankCatalogVersion, matchupId: string): string {
-  const parsed = parseMatchup(matchupId)!;
+  const parsed = parsePairId(matchupId)!;
   const a = catalog.entrants.find((entrant) => entrant.levelId === parsed.levelA)!;
   const b = catalog.entrants.find((entrant) => entrant.levelId === parsed.levelB)!;
   return [a.configurationId, b.configurationId].sort().join('__');
-}
-
-function parseMatchup(matchupId: string): { themeId: string; levelA: string; levelB: string } | null {
-  const separator = matchupId.indexOf(':');
-  const pair = separator >= 0 ? matchupId.slice(separator + 1) : '';
-  const divider = pair.indexOf('__');
-  return separator > 0 && divider > 0 ? { themeId: matchupId.slice(0, separator), levelA: pair.slice(0, divider), levelB: pair.slice(divider + 2) } : null;
 }
 
 function configCost(configurationId: string): number { return Number(configurationId.split('-').at(-1)) + 1; }

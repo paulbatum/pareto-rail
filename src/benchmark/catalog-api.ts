@@ -1,7 +1,7 @@
 import { initialComparisonState, type ComparisonState } from './types';
 import { mapVerdict, type BenchmarkApi, type MatchupAssignment, type MatchupVote, type NextMatchupRequest, type PlayCounts, type RecordPlayRequest, type RevealPayload, type SubmitVoteRequest } from './types';
 import { activeCatalogVersion, allCatalogEntrants, findCatalogVersionForLevels, type RankCatalog, type RankCatalogEntrant } from './catalog';
-import { nextScheduledMatchup, pairId } from './scheduler';
+import { nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { BenchmarkLocalStore } from './storage';
 
 /** Browser-local benchmark implementation backed only by the checked-in rank catalog. */
@@ -122,7 +122,7 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
       return unfinished.assignment;
     }
     const completed = this.store.snapshot.completedMatchups.find((item) => item.matchupId === matchupId);
-    const parsed = parseMatchupId(matchupId);
+    const parsed = parsePairId(matchupId);
     const version = parsed ? findCatalogVersionForLevels(this.catalog, parsed.levelA, parsed.levelB) : undefined;
     const theme = version && parsed ? version.themes.find((candidate) => candidate.id === parsed.themeId) : undefined;
     if (!completed || !parsed || !version || !theme) throw new Error('Unknown matchup');
@@ -176,12 +176,4 @@ function revealFor(entrant: RankCatalogEntrant): RevealPayload['a'] {
     ...(entrant.thumbnailPath ? { thumbnailPath: entrant.thumbnailPath } : {}),
     dataClass: 'eligible',
   };
-}
-
-function parseMatchupId(matchupId: string): { themeId: string; levelA: string; levelB: string } | null {
-  const separator = matchupId.indexOf(':');
-  const pair = separator >= 0 ? matchupId.slice(separator + 1) : '';
-  const divider = pair.indexOf('__');
-  if (separator <= 0 || divider <= 0 || divider + 2 >= pair.length) return null;
-  return { themeId: matchupId.slice(0, separator), levelA: pair.slice(0, divider), levelB: pair.slice(divider + 2) };
 }

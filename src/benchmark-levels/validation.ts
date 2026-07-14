@@ -14,6 +14,8 @@ export interface ValidatedBenchmarkAsset {
   descriptor: BenchmarkLevelDescriptor;
 }
 
+const BENCHMARK_ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
 /** Validate the filesystem-shaped side of benchmark discovery without loading level code. */
 export function validateBenchmarkAssets(
   descriptorAssets: BenchmarkDescriptorAssets,
@@ -113,8 +115,14 @@ function parseDescriptor(value: unknown, assetPath: string): BenchmarkLevelDescr
   if (!isRecord(value) || typeof value.id !== 'string' || value.id.length === 0 || typeof value.title !== 'string' || value.title.length === 0) {
     throw new Error(`Benchmark descriptor ${assetPath} must contain non-empty string id and title fields.`);
   }
+  if (!BENCHMARK_ID_PATTERN.test(value.id)) {
+    throw new Error(`Benchmark descriptor ${assetPath} has invalid id "${value.id}"; ids must contain lowercase letters, digits, and single hyphens only.`);
+  }
   if (value.aliases !== undefined && (!Array.isArray(value.aliases) || value.aliases.some((alias) => typeof alias !== 'string' || alias.length === 0))) {
     throw new Error(`Benchmark descriptor ${assetPath} has invalid aliases; aliases must be non-empty strings.`);
+  }
+  if (value.aliases !== undefined && value.aliases.some((alias) => !BENCHMARK_ID_PATTERN.test(alias as string))) {
+    throw new Error(`Benchmark descriptor ${assetPath} has invalid aliases; aliases must contain lowercase letters, digits, and single hyphens only.`);
   }
   const contentImages = parseContentImages(value.contentImages, assetPath);
   return {

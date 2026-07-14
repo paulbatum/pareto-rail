@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { RankDataClass, RankRelative, RankSentiment, RankVerdict, type PrismaClient } from '../src/generated/prisma/client.js';
+import { compareIds } from '../src/benchmark/scheduler.js';
 import { mapVerdict, type VoteVerdict } from '../src/benchmark/types.js';
 import { RANK_VOTE_SCHEMA_VERSION, type ValidatedRankVote, resolveDataClass } from './rank-vote-validation.js';
 
@@ -47,7 +48,7 @@ const dataClassToPrisma = {
 export async function recordRankVote(input: ValidatedRankVote, prisma: PrismaClient): Promise<RankHandlerResult<RankVoteResponse>> {
   const mapping = mapVerdict(input.verdict);
   const participantHash = hashParticipant(input.participantId);
-  const [levelIdFirst, levelIdSecond] = [input.aLevelId, input.bLevelId].sort((left, right) => left.localeCompare(right));
+  const [levelIdFirst, levelIdSecond] = [input.aLevelId, input.bLevelId].sort(compareIds);
   let duplicate = false;
 
   await prisma.$transaction(async (transaction) => {

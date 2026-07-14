@@ -4,6 +4,7 @@ import {
   type PersonalHistoryEntry,
 } from '../benchmark/personal-curve';
 import { activeCatalogVersion, allCatalogEntrants, findCatalogVersionForLevels, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
+import { parsePairId } from '../benchmark/scheduler';
 import { ComparisonStateMachine } from '../benchmark/state';
 import { BenchmarkLocalStore, type CompletedMatchup } from '../benchmark/storage';
 import { RemoteVoteRecorder, type RemoteVotePayload } from '../benchmark/remote-recorder';
@@ -234,8 +235,8 @@ function remotePayload(assignment: MatchupAssignment, vote: MatchupVote, store: 
 }
 
 function assignmentFromCompleted(completed: CompletedMatchup): MatchupAssignment | null {
-  const separator = completed.matchupId.indexOf(':');
-  const themeId = separator > 0 ? completed.matchupId.slice(0, separator) : '';
+  const parsed = parsePairId(completed.matchupId);
+  const themeId = parsed?.themeId ?? '';
   const version = findCatalogVersionForLevels(rankCatalog, completed.reveal.a.levelId, completed.reveal.b.levelId);
   const theme = version?.themes.find((candidate) => candidate.id === themeId);
   if (!version || !theme) return null;

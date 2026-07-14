@@ -1,6 +1,7 @@
 import type { ComparisonState, MatchupVote, RevealPayload } from './types';
 
 export const BENCHMARK_STORAGE_KEY = 'pareto-rail-benchmark';
+export const BENCHMARK_PARTICIPANT_ID_KEY = 'pareto-rail-participant-id';
 export const BENCHMARK_STORAGE_VERSION = 2;
 
 export interface CompletedMatchup {
@@ -66,6 +67,19 @@ function isData(value: unknown): value is LocalBenchmarkData {
     && Array.isArray(data.history) && Array.isArray(data.themeHistory) && Array.isArray(data.revealedEntrants);
 }
 
+function participantIdFromEnvelope(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const data = (value as { data?: unknown }).data;
+  if (!data || typeof data !== 'object') return undefined;
+  const participantId = (data as { participantId?: unknown }).participantId;
+  return typeof participantId === 'string' && participantId.length > 0 ? participantId : undefined;
+}
+
+function parseStoredValue(raw: string | null): unknown {
+  if (!raw) return undefined;
+  try { return JSON.parse(raw) as unknown; } catch { return undefined; }
+}
+
 /** Versioned, corruption-tolerant local persistence. Storage failures (for
  * example private browsing quota errors) leave the in-memory state usable. */
 export class BenchmarkLocalStore {
@@ -81,16 +95,26 @@ export class BenchmarkLocalStore {
   private readonly key: string;
 
   private read(): LocalBenchmarkData {
-    let raw: string | null = null;
-    try { raw = this.storage.getItem(this.key); } catch { /* inaccessible storage */ }
-    if (!raw) return emptyData(randomParticipantId());
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && (parsed as StorageEnvelope).version === BENCHMARK_STORAGE_VERSION && isData((parsed as StorageEnvelope).data)) {
-        return this.normalize((parsed as StorageEnvelope).data);
-      }
-    } catch { /* recover below */ }
-    return emptyData(randomParticipantId());
+    const raw = this.readStorageValue(this.key);
+    const parsed = parseStoredValue(raw);
+    const dedicatedParticipantId = this.readStorageValue(BENCHMARK_PARTICIPANT_ID_KEY);
+    const participantId = dedicatedParticipantId && dedicatedParticipantId.length > 0
+      ? dedicatedParticipantId
+      : participantIdFromEnvelope(parsed) ?? randomParticipantId();
+    this.persistParticipantId(participantId);
+
+    if (parsed && typeof parsed === 'object' && (parsed as StorageEnvelope).version === BENCHMARK_STORAGE_VERSION && isData((parsed as StorageEnvelope).data)) {
+      return this.normalize({ ...(parsed as StorageEnvelope).data, participantId });
+    }
+    return emptyData(participantId);
+  }
+
+  private readStorageValue(key: string): string | null {
+    try { return this.storage.getItem(key); } catch { return null; }
+  }
+
+  private persistParticipantId(participantId: string): void {
+    try { this.storage.setItem(BENCHMARK_PARTICIPANT_ID_KEY, participantId); } catch { /* inaccessible storage */ }
   }
 
   private normalize(data: LocalBenchmarkData): LocalBenchmarkData {
@@ -111,6 +135,7 @@ export class BenchmarkLocalStore {
 
   save(data: Partial<LocalBenchmarkData>): LocalBenchmarkData {
     this.data = this.normalize({ ...this.data, ...data });
+    this.persistParticipantId(this.data.participantId);
     const envelope: StorageEnvelope = { version: BENCHMARK_STORAGE_VERSION, data: this.data };
     try { this.storage.setItem(this.key, JSON.stringify(envelope)); } catch { /* memory remains authoritative */ }
     return this.snapshot;
@@ -175,6 +200,7 @@ export class BenchmarkLocalStore {
 
   clear(): void {
     this.data = emptyData(randomParticipantId());
+    this.persistParticipantId(this.data.participantId);
     try { this.storage.removeItem?.(this.key); } catch { /* ignore */ }
   }
 }

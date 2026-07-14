@@ -31,6 +31,14 @@ export async function runBenchmarkLevelDomainTests(): Promise<void> {
   assert.equal(loads, 1, 'lazy loads should be cached');
 
   assert.throws(
+    () => validateBenchmarkAssets({ './wrong/level.json': { id: 'catalog_fixture', title: 'Catalog Fixture' } }, { './wrong/index.ts': async () => ({ default: catalogFixtureLevel }) }),
+    /invalid id/,
+  );
+  assert.throws(
+    () => validateBenchmarkAssets({ './catalog-fixture/level.json': { id: 'catalog-fixture', title: 'Catalog Fixture', aliases: ['catalog_fixture'] } }, fixture.modules),
+    /invalid aliases/,
+  );
+  assert.throws(
     () => validateBenchmarkAssets({ './wrong/level.json': { id: 'catalog-fixture', title: 'Catalog Fixture' } }, { './wrong/index.ts': async () => ({ default: catalogFixtureLevel }) }),
     /expected directory id "wrong"/,
   );
