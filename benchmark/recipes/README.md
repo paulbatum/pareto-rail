@@ -8,7 +8,7 @@ Recipes may change while the protocol is being designed and rehearsed. Before a 
 
 Cost is not a per-configuration frozen input. Every configuration's cost is measured after the fact by ccusage reading the run's isolated harness home; the recipe's Cost section states that method and the pinned ccusage version, not a dated rate table.
 
-`codex-terra-high.md` is the rehearsal configuration: a one-stage non-interactive `codex exec` recipe with captured JSONL usage, used to prove the controller path. It is not an eligible entrant.
+`codex-terra-high.md` is the full rehearsal configuration: a one-stage non-interactive `codex exec` recipe with captured JSONL usage, used to prove the controller path. It is not an eligible entrant. `codex-luna-low-smoke.md` is the permanently ineligible fast smoke recipe: Luna adapts Prism Bloom after running the normal benchmark scaffold so the real controller lifecycle can be checked without generating an original showcase level.
 
 `claude-fable-5-high.md` and `codex-sol-high.md` are the solo configurations, each one fresh unattended session. The Claude recipe documents a material harness difference: Claude Code CLI has no OS-level sandbox, so unattended operation relies on `--permission-mode bypassPermissions` rather than an enforced filesystem/network boundary.
 
