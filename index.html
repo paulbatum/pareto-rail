@@ -12,6 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox=%220 0 22 22%22%3E%3Crect x=%224.5%22 y=%224.5%22 width=%2213%22 height=%2213%22 transform=%22rotate(45 11 11)%22 fill=%22none%22 stroke=%22%23F2EDDF%22 stroke-width=%221.4%22%2F%3E%3Ccircle cx=%2211%22 cy=%2211%22 r=%223%22 fill=%22%23E85D93%22%2F%3E%3C%2Fsvg%3E" />
     <title>Pareto Rail</title>
+    <script>
+      try {
+        if (localStorage.getItem('pr-theme') === 'light') document.documentElement.dataset.theme = 'light';
+      } catch {}
+    </script>
     <style>
       html, body { margin: 0; min-width: 320px; min-height: 100dvh; background: #171410; color: #F2EDDF; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
       #loading { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #171410; }
@@ -20,6 +25,9 @@
       .loading-label { margin-bottom: 14px; color: #E85D93; }
       .loading-track { height: 2px; overflow: hidden; background: #332E22; }
       .loading-bar { width: 45%; height: 100%; background: #E85D93; animation: loading-sweep 1.05s ease-in-out infinite; }
+      html[data-theme='light'], html[data-theme='light'] body { background: #FAF8F3; color: #1B1813; }
+      html[data-theme='light'] #loading { background: #FAF8F3; }
+      html[data-theme='light'] .loading-track { background: #E7E1D4; }
       @keyframes loading-sweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(250%); } }
     </style>
   </head>

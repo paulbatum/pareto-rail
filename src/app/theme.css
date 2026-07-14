@@ -1,0 +1,121 @@
+/* ==========================================================================
+   PARETO RAIL — THEME
+   Warm ink tokens for the site shell. Dark is the default; light is opt-in.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* ---- Core palette ---- */
+  --pr-bg:            #171410;  /* page background (dark warm umber) */
+  --pr-surface:       #1F1B15;  /* cards, panels (was #fff) */
+  --pr-surface-2:     #26211A;  /* hover / nested surfaces */
+  --pr-ink:           #F2EDDF;  /* primary text (was #1B1813) */
+  --pr-body:          #B3AA94;  /* body copy (was #5F594C) */
+  --pr-body-2:        #A69D88;  /* secondary copy (was #6E6759) */
+  --pr-muted:         #948B75;  /* mono labels, captions (was #7A7263) */
+  --pr-border:        #332E22;  /* hairlines (was #E7E1D4) */
+  --pr-border-soft:   #2A251B;  /* sub-hairlines (was #EFEAE0) */
+
+  /* ---- Accent ---- */
+  --pr-accent:        #E85D93;  /* raspberry, brightened for dark (was #C42463) */
+  --pr-accent-ink:    #171410;  /* text on accent fills */
+  --pr-accent-soft:   #3A2230;  /* accent-tinted surface (pick highlights, was #F0DCE5) */
+
+  /* ---- Line-work / etching graphics ---- */
+  --pr-etch-faint:    #3A3425;  /* far tunnel rings (was #DCD5C4) */
+  --pr-etch-mid:      #5C543D;  /* near tunnel rings, stray marks (was #B8AF9A) */
+
+  /* ---- Placeholder stripes (thumbnails) ---- */
+  --pr-stripe-a:      #221E16;  /* was #F2EEE3 */
+  --pr-stripe-b:      #1C1811;  /* was #EDE8DB */
+
+  /* ---- Keyboard chips ---- */
+  --pr-kbd-fill-border: #5C543D;
+  --pr-kbd-fill-text: var(--pr-muted);
+
+  /* ---- Type ---- */
+  --pr-font-display:  "Archivo", system-ui, sans-serif;
+  --pr-font-mono:     "IBM Plex Mono", ui-monospace, monospace;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --pr-bg: #FAF8F3;
+  --pr-surface: #FFFFFF;
+  --pr-surface-2: #F2EEE3;
+  --pr-ink: #1B1813;
+  --pr-body: #5F594C;
+  --pr-body-2: #6E6759;
+  --pr-muted: #7A7263;
+  --pr-border: #E7E1D4;
+  --pr-border-soft: #EFEAE0;
+  --pr-accent: #C42463;
+  --pr-accent-ink: #FFFFFF;
+  --pr-accent-soft: #F0DCE5;
+  --pr-etch-faint: #DCD5C4;
+  --pr-etch-mid: #B8AF9A;
+  --pr-stripe-a: #F2EEE3;
+  --pr-stripe-b: #EDE8DB;
+  --pr-kbd-fill-border: #4A443A;
+  --pr-kbd-fill-text: #B8AF9A;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+body {
+  margin: 0;
+  background: var(--pr-bg);
+  color: var(--pr-ink);
+  font-family: var(--pr-font-display);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--pr-ink); }
+a:hover { color: var(--pr-accent); }
+
+::selection { background: var(--pr-accent); color: var(--pr-accent-ink); }
+
+input, select, textarea {
+  background: var(--pr-surface);
+  border: 1px solid var(--pr-border);
+  color: var(--pr-ink);
+  font-family: var(--pr-font-mono);
+  font-size: 12px;
+  padding: 10px 12px;
+}
+input::placeholder, textarea::placeholder { color: var(--pr-muted); }
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--pr-accent);
+}
+
+:focus-visible { outline: 2px solid var(--pr-accent); outline-offset: 2px; }
+
+/* Map the theme tokens onto the existing application class names. */
+.app-shell {
+  --paper: var(--pr-bg);
+  --card: var(--pr-surface);
+  --ink: var(--pr-ink);
+  --body-text: var(--pr-body);
+  --soft-text: var(--pr-body-2);
+  --muted: var(--pr-muted);
+  --hairline: var(--pr-border);
+  --hairline-2: var(--pr-border-soft);
+  --ghost: var(--pr-etch-mid);
+  --accent: var(--pr-accent);
+  --accent-tint: var(--pr-accent-soft);
+  --sans: var(--pr-font-display);
+  --mono: var(--pr-font-mono);
+}
+
+/* The game frame stays dark regardless of site theme. */
+.game-frame {
+  --paper: #171410; --card: #1F1B15; --ink: #F2EDDF; --body-text: #B3AA94;
+  --soft-text: #A69D88; --muted: #948B75; --hairline: #332E22; --hairline-2: #2A251B;
+  --ghost: #5C543D; --accent: #E85D93; --accent-tint: #3A2230;
+  --pr-kbd-fill-border: #5C543D; --pr-kbd-fill-text: #948B75;
+  color: var(--ink);
+}

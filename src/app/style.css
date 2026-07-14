@@ -1,38 +1,22 @@
 /* ============================================================
    PARETO RAIL application layout.
 
-   The active dark theme is loaded from pareto-rail-dark.css and maps its
-   design tokens onto these semantic application variables. These defaults
-   keep this stylesheet readable and provide a safe fallback if the theme is
-   not loaded.
+   The active theme is loaded from theme.css and maps its
+   design tokens onto these semantic application variables.
    ============================================================ */
 
-.app-shell {
-  --paper: #FAF8F3;
-  --card: #fff;
-  --ink: #1B1813;
-  --body-text: #5F594C;
-  --soft-text: #6E6759;
-  --muted: #7A7263;
-  --hairline: #E7E1D4;
-  --hairline-2: #EFEAE0;
-  --ghost: #B8AF9A;
-  --accent: #C42463;
-  --accent-tint: #F0DCE5;
-  --sans: Archivo, system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
-}
-
-body:not(.game-active) { overflow: auto; overflow-x: clip; background: #FAF8F3; }
+body:not(.game-active) { overflow: auto; overflow-x: clip; background: var(--pr-bg); }
 body:not(.game-active) #app { position: relative; min-height: 100dvh; height: auto; }
 .app-shell { width: 100%; max-width: 100%; min-height: 100dvh; overflow-x: clip; color: var(--ink); background: var(--paper); font-family: var(--sans); }
 
 /* ---------- Navigation ---------- */
-.site-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 0; padding: 20px clamp(20px, 5vw, 72px); background: rgb(250 248 243 / 92%); border-bottom: 1px solid var(--hairline); backdrop-filter: blur(10px); }
+.site-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 0; padding: 20px clamp(20px, 5vw, 72px); background: color-mix(in srgb, var(--paper) 92%, transparent); border-bottom: 1px solid var(--hairline); backdrop-filter: blur(10px); }
 .site-nav nav { display: flex; gap: clamp(12px, 3vw, 30px); min-width: 0; }
 .site-nav a { color: var(--muted); text-decoration: none; letter-spacing: .12em; text-transform: uppercase; font-size: 11px; padding-bottom: 3px; border-bottom: 1px solid transparent; }
 .site-nav a:hover { color: var(--ink); }
 .site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.theme-toggle { color: var(--muted); background: transparent; border: 0; padding: 0 0 3px; font: 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.theme-toggle:hover { color: var(--ink); }
 .wordmark { display: inline-flex; align-items: center; gap: 11px; color: var(--ink) !important; font-size: 13px !important; font-weight: 600; letter-spacing: .14em !important; border-bottom: none !important; }
 .wordmark-mark { width: 24px; height: 24px; fill: none; stroke: var(--ink); stroke-width: 1.4; filter: none; }
 .wordmark-mark .wordmark-dot, .wordmark-mark circle { fill: var(--accent); stroke: none; }
@@ -89,7 +73,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .home-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: none; margin: 68px auto 0; }
 .home-choice { display: flex; flex-direction: column; align-items: stretch; overflow: hidden; background: var(--card); border: 1px solid var(--hairline); }
 .home-choice:hover { border-color: var(--ink); }
-.home-choice.recommended { border-color: var(--accent); box-shadow: 0 8px 24px rgb(232 93 147 / 12%); }
+.home-choice.recommended { border-color: var(--accent); box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 12%, transparent); }
 .home-choice.recommended:hover { border-color: var(--accent); }
 .home-choice-media { width: 80%; margin: 20px auto; aspect-ratio: 20 / 9; overflow: hidden; background: #171b2a; }
 .home-choice-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -190,14 +174,14 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .versus-divider span { color: var(--accent); }
 .compare-card p, .reveal-card p { margin: 0; color: var(--muted); font-size: 12px; }
 .level-thumbnail, .thumbnail-fallback { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--hairline-2); border: 1px solid var(--hairline); }
-.thumbnail-fallback { display: grid; place-items: center; background: repeating-linear-gradient(-45deg, #F2EEE3 0 10px, #EDE8DB 10px 20px); }
+.thumbnail-fallback { display: grid; place-items: center; background: repeating-linear-gradient(-45deg, var(--pr-stripe-a) 0 10px, var(--pr-stripe-b) 10px 20px); }
 .thumbnail-fallback span { color: var(--muted); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
 .rank-actions, .invitation-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .vote-heading { margin: 28px 0 14px; color: var(--ink); font-size: 22px; }
 .vote-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .vote-grid .button { justify-content: space-between; min-height: 56px; font-size: 11px; padding: 0 20px; }
 kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); font: inherit; font-family: var(--mono); font-size: 9.5px; }
-.button.primary kbd { color: var(--ghost); border-color: #4A443A; }
+.button.primary kbd { color: var(--pr-kbd-fill-text); border-color: var(--pr-kbd-fill-border); }
 .compare-stats { display: flex; flex-wrap: wrap; gap: 5px 14px; align-items: baseline; }
 .run-score { color: var(--accent); }
 
@@ -380,8 +364,8 @@ html:fullscreen .site-nav,
 html:fullscreen .game-toolbar { display: none; }
 .game-frame { position: fixed; inset: 0; background: #02040a; }
 .game-toolbar { position: fixed; top: 0; left: 0; right: 0; z-index: 15; display: flex; justify-content: space-between; padding: 14px 20px; pointer-events: none; background: linear-gradient(rgb(2 4 10 / 72%), transparent); }
-.game-toolbar a, .game-toolbar span { pointer-events: auto; color: #B8AF9A; font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
-.game-toolbar a:hover { color: #FAF8F3; }
+.game-toolbar a, .game-toolbar span { pointer-events: auto; color: var(--ghost); font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
+.game-toolbar a:hover { color: var(--ink); }
 .game-mount { position: absolute; inset: 0; }
 .app-shell .game-frame { font-family: var(--mono); }
 

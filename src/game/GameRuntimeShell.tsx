@@ -58,9 +58,9 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
       >
         <div className="pause-panel">
           <h1 id="pause-title">Paused</h1>
-          <button type="button" data-pause="resume">Resume</button>
-          <button type="button" data-pause="end-run">End Run</button>
-          <button type="button" data-pause="fullscreen">Fullscreen</button>
+          <button type="button" className="button primary" data-pause="resume">Resume</button>
+          <button type="button" className="button" data-pause="end-run">End Run</button>
+          <button type="button" className="button" data-pause="fullscreen">Fullscreen</button>
           <label>
             <span>Music</span>
             <input data-pause="music" type="range" min="0" max="100" defaultValue="80" />

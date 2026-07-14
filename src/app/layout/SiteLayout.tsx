@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { routePath, type AppRoute } from '../router';
 import { RouteLink } from '../components/RouteLink';
+import { getTheme, setTheme, type Theme } from '../theme';
 
 const navigation = [
   { href: '/', label: 'Home' },
@@ -18,6 +19,16 @@ type SiteLayoutProps = {
 
 export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
   const currentPath = routePath(route);
+  const [theme, setActiveTheme] = useState<Theme>(() => getTheme());
+  const nextTheme = theme === 'dark' ? 'light' : 'dark';
+
+  useEffect(() => {
+    setTheme(theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setActiveTheme(nextTheme);
+  };
 
   return (
     <div className="app-shell" data-route={route.kind}>
@@ -34,6 +45,7 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
             const active = item.href === currentPath || (route.kind === 'play' && item.href === '/play');
             return <RouteLink key={item.href} href={item.href} onNavigate={onNavigate} aria-current={active ? 'page' : undefined}>{item.label}</RouteLink>;
           })}
+          <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Switch to ${nextTheme} theme`}>{nextTheme === 'light' ? 'Light' : 'Dark'}</button>
         </nav>
       </header>
       <main className="app-content">{isEntryPoint(route) && <WebGPUNotice />}{children}</main>

@@ -3,9 +3,9 @@
   --cyan-dim: rgb(70 232 255 / 55%);
   --magenta: #ff3dbf;
   --amber: #ffb13d;
-  --ink: #02040a;
+  --game-ink: #02040a;
   color: #e8f6ff;
-  background: var(--ink);
+  background: var(--game-ink);
   font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
 }
 
@@ -39,9 +39,9 @@ body.game-active {
 .damage-flash { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, transparent 32%, rgb(255 36 64 / 36%) 100%); mix-blend-mode: screen; }
 .damage-flash-pop { animation: damage-flash 350ms ease-out; }
 @keyframes damage-flash { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
-.death-status { margin: 0 0 8px; color: #ff4964; font-size: 13px; text-shadow: 0 0 14px rgb(255 73 100 / 70%); }
-.end-screen .end-panel.died { border-color: rgb(255 73 100 / 65%); box-shadow: 0 0 45px rgb(255 73 100 / 22%), inset 0 0 60px rgb(255 73 100 / 10%); }
-.end-screen .end-panel.died .rank { background: none; -webkit-background-clip: initial; background-clip: initial; color: #ff4964; filter: drop-shadow(0 0 18px rgb(255 73 100 / 45%)); }
+.death-status { margin: 0 0 8px; color: #E0566E; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.end-screen .end-panel.died { border-color: #E0566E; }
+.end-screen .end-panel.died .rank { color: #E0566E; }
 
 #app {
   position: fixed;
@@ -202,7 +202,7 @@ canvas {
 
 .debug-panel button {
   padding: 6px 8px;
-  color: var(--ink);
+  color: var(--game-ink);
   background: var(--cyan);
   border: 0;
   font: inherit;
@@ -288,18 +288,9 @@ canvas {
   position: relative;
   padding: 42px 64px 36px;
   min-width: min(460px, calc(100vw - 32px));
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  background: rgb(3 8 18 / 85%);
-  border: 1px solid var(--cyan-dim);
-  clip-path: polygon(
-    22px 0, calc(100% - 22px) 0, 100% 22px,
-    100% calc(100% - 22px), calc(100% - 22px) 100%,
-    22px 100%, 0 calc(100% - 22px), 0 22px
-  );
-  box-shadow:
-    0 0 45px rgb(70 232 255 / 18%),
-    inset 0 0 60px rgb(70 232 255 / 6%);
+  background: rgb(23 20 16 / 90%);
+  border: 1px solid #332E22;
+  box-shadow: 6px 6px 0 rgb(2 4 10 / 45%);
 }
 
 .end-screen .end-panel {
@@ -322,44 +313,47 @@ canvas {
 
 .label,
 .replay {
-  color: var(--cyan-dim);
-  font-size: 12px;
+  color: #948B75;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
 }
 
 .score {
   margin: 10px 0 14px;
   font-size: 64px;
   line-height: 1;
-  color: #fff;
-  text-shadow:
-    0 0 12px rgb(255 255 255 / 80%),
-    0 0 42px rgb(70 232 255 / 60%);
+  font-family: Archivo, system-ui, sans-serif;
+  font-weight: 750;
+  letter-spacing: -.03em;
+  color: #F2EDDF;
 }
 
 .end-detail {
-  font-size: 13px;
-  color: var(--cyan);
   margin-bottom: 18px;
+  color: #B3AA94;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .08em;
 }
 
 .end-extra {
   max-width: min(620px, calc(100vw - 72px));
   margin: -6px auto 14px;
-  color: var(--cyan-dim);
+  color: #948B75;
   font-size: 11px;
   line-height: 1.55;
-  letter-spacing: 0.14em;
+  letter-spacing: .06em;
 }
 
 .rank {
   font-size: 96px;
   line-height: 1;
   margin-bottom: 20px;
-  background: linear-gradient(160deg, var(--cyan), var(--magenta) 65%, var(--amber));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 18px rgb(255 61 191 / 45%));
+  font-family: Archivo, system-ui, sans-serif;
+  font-weight: 750;
+  color: #E85D93;
 }
 
 .replay {
@@ -450,7 +444,7 @@ canvas {
   z-index: 10;
   display: grid;
   place-items: center;
-  background: rgb(1 2 6 / 78%);
+  background: rgb(23 20 16 / 82%);
   cursor: auto;
 }
 
@@ -459,41 +453,33 @@ canvas {
   gap: 18px;
   width: min(420px, calc(100vw - 32px));
   padding: 28px 32px;
-  background: rgb(3 8 18 / 92%);
-  border: 1px solid var(--cyan-dim);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  box-shadow:
-    0 0 45px rgb(70 232 255 / 18%),
-    inset 0 0 60px rgb(70 232 255 / 6%);
+  background: #1F1B15;
+  border: 1px solid #332E22;
+  box-shadow: 6px 6px 0 rgb(2 4 10 / 55%);
 }
 
-.pause-panel h1 {
+.game-frame .pause-panel h1 {
   margin: 0;
-  color: #fff;
-  text-align: center;
-}
-
-.pause-panel button {
-  padding: 10px 14px;
-  color: var(--ink);
-  background: var(--cyan);
-  border: 0;
-  font: inherit;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
+  font-family: Archivo, system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+  color: #F2EDDF;
+  text-align: left;
 }
 
 .pause-panel label {
   display: grid;
   gap: 8px;
-  color: var(--cyan);
-  font-size: 13px;
+  color: #948B75;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
 }
 
 .pause-panel input {
-  accent-color: var(--magenta);
+  accent-color: #E85D93;
   cursor: pointer;
 }
 
@@ -502,7 +488,11 @@ canvas {
   display: none;
 }
 
-.unsupported-panel h1 {
+.game-frame .unsupported-panel h1 {
   margin: 0 0 12px;
-  letter-spacing: 0.1em;
+  font-family: Archivo, system-ui, sans-serif;
+  font-weight: 750;
+  color: #F2EDDF;
 }
+
+.unsupported-panel p { color: #B3AA94; }
