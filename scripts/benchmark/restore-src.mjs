@@ -126,7 +126,7 @@ async function main() {
 function entrantRelativePath(filePath, worktreePath) {
   if (typeof filePath !== 'string') return null;
   if (worktreePath && (filePath === worktreePath || filePath.startsWith(`${worktreePath}/`))) return path.relative(worktreePath, filePath);
-  const match = filePath.match(/\/tmp\/raild-run-[^/]+\/(.+)$/);
+  const match = filePath.match(/\/tmp\/(?:raild|pareto-rail)-run-[^/]+\/(.+)$/);
   return match?.[1] ?? null;
 }
 
