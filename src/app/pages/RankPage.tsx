@@ -558,7 +558,7 @@ function createRankController(): RankController {
 }
 
 function BenchmarkInvitation({ side, onNavigate }: { side: 'a' | 'b'; onNavigate: (path: string) => void }) {
-  return <section className="benchmark-invitation"><p>Level {side.toUpperCase()} recorded. Continue when you are ready.</p><div className="invitation-actions"><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Continue comparison</RouteLink><RouteLink className="button" href={`/rank?play=${side}`} onNavigate={onNavigate}>Replay Level {side.toUpperCase()}</RouteLink></div></section>;
+  return <section className="benchmark-invitation"><p>Level {side.toUpperCase()} recorded. Continue when you are ready.</p><div className="invitation-actions"><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Continue comparison</RouteLink></div></section>;
 }
 
 function revealMarker(verdict: VoteVerdict, side: MatchupSide): { className: string; label: string | null } {

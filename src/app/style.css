@@ -177,6 +177,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .thumbnail-fallback { display: grid; place-items: center; background: repeating-linear-gradient(-45deg, var(--pr-stripe-a) 0 10px, var(--pr-stripe-b) 10px 20px); }
 .thumbnail-fallback span { color: var(--muted); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
 .rank-actions, .invitation-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.benchmark-invitation .invitation-actions { justify-content: center; }
 .vote-heading { margin: 28px 0 14px; color: var(--ink); font-size: 22px; }
 .vote-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .vote-grid .button { justify-content: space-between; min-height: 56px; font-size: 11px; padding: 0 20px; }
