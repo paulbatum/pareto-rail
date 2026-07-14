@@ -14,7 +14,9 @@
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/.cache/raild.tsbuildinfo"
   },
   "include": ["src", "dev", "server", "api", "vite.config.ts"]
 }
