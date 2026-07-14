@@ -1,6 +1,6 @@
-import { rankCatalog, type RankCatalogEntrant } from '../src/benchmark/catalog';
-import { pairId } from '../src/benchmark/scheduler';
-import type { BenchmarkDataClass, VoteVerdict } from '../src/benchmark/types';
+import { rankCatalog, type RankCatalogEntrant } from '../src/benchmark/catalog.js';
+import { pairId } from '../src/benchmark/scheduler.js';
+import type { BenchmarkDataClass, VoteVerdict } from '../src/benchmark/types.js';
 
 export const RANK_BENCHMARK_VERSION = 'rank-catalog-v1';
 export const RANK_VOTE_SCHEMA_VERSION = 1;

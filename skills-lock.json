@@ -18,6 +18,12 @@
       "sourceType": "github",
       "skillPath": "prisma-postgres/SKILL.md",
       "computedHash": "d090d1206fb6a2dd9f7b9f658d851ccd653132512c53c6e0a164110d9ee80005"
+    },
+    "vercel-cli": {
+      "source": "vercel/vercel",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-cli/SKILL.md",
+      "computedHash": "28a2c25884bd7272688d48f1563f048ecb9a1b21f900aa08406f56f33240932c"
     }
   }
 }

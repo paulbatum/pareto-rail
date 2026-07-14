@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
-import { getPrismaClient } from './prisma';
-import { handleRankStatsRequest, handleRankVotesRequest } from './rank-http';
-import { MAX_RANK_VOTE_BODY_BYTES } from './rank-vote-validation';
+import { getPrismaClient } from './prisma.js';
+import { handleRankStatsRequest, handleRankVotesRequest } from './rank-http.js';
+import { MAX_RANK_VOTE_BODY_BYTES } from './rank-vote-validation.js';
 
 /** Mounts the production handlers into Vite's development server only. */
 export function rankApiDevPlugin(): Plugin {

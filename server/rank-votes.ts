@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
-import { RankDataClass, RankRelative, RankSentiment, RankVerdict, type PrismaClient } from '../src/generated/prisma/client';
-import { mapVerdict, type VoteVerdict } from '../src/benchmark/types';
-import { RANK_VOTE_SCHEMA_VERSION, type ValidatedRankVote, resolveDataClass } from './rank-vote-validation';
+import { RankDataClass, RankRelative, RankSentiment, RankVerdict, type PrismaClient } from '../src/generated/prisma/client.js';
+import { mapVerdict, type VoteVerdict } from '../src/benchmark/types.js';
+import { RANK_VOTE_SCHEMA_VERSION, type ValidatedRankVote, resolveDataClass } from './rank-vote-validation.js';
 
 export interface RankVoteResponse {
   ok: true;

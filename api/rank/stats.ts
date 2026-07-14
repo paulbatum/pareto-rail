@@ -1,5 +1,5 @@
-import { handleRankStatsRequest } from '../../server/rank-http';
-import { getPrismaClient } from '../../server/prisma';
+import { handleRankStatsRequest } from '../../server/rank-http.js';
+import { getPrismaClient } from '../../server/prisma.js';
 
 export const runtime = 'nodejs';
 

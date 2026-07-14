@@ -1,5 +1,5 @@
 import type { RankCatalog, RankCatalogEntrant } from './catalog';
-import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve';
+import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve.js';
 import type { MatchupVote, RelativeOutcome } from './types';
 
 /** Stable id for an unordered pair. Side assignment is deliberately separate. */

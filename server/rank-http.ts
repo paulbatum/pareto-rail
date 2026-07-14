@@ -1,6 +1,6 @@
-import type { PrismaClient } from '../src/generated/prisma/client';
-import { MAX_RANK_VOTE_BODY_BYTES, validateRankVoteBody } from './rank-vote-validation';
-import { readRankStats, recordRankVote } from './rank-votes';
+import type { PrismaClient } from '../src/generated/prisma/client.js';
+import { MAX_RANK_VOTE_BODY_BYTES, validateRankVoteBody } from './rank-vote-validation.js';
+import { readRankStats, recordRankVote } from './rank-votes.js';
 
 const RATE_LIMIT_WINDOW_MS = 10_000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
