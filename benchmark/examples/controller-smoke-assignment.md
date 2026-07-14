@@ -12,7 +12,7 @@ The assigned level id is `{{LEVEL_ID}}`. Start by running exactly:
 npm run scaffold -- --mode benchmark --id {{LEVEL_ID}} --title '{{LEVEL_TITLE}}'
 ```
 
-This must create `src/benchmark-levels/{{LEVEL_ID}}/` with its descriptor. Do not edit `src/levels/index.ts`, add a registry entry, or change files outside the assigned directory.
+This must create `src/benchmark-levels/{{LEVEL_ID}}/` with its descriptor. Do not edit `src/levels/index.ts` or add a registry entry. The only permitted change outside the assigned directory is the derived `docs/level-gallery.md` update produced by `npm run gallery`.
 
 ## Bounded adaptation
 
@@ -20,7 +20,7 @@ Use the built-in Prism Bloom implementation under `src/levels/prism/` as the bas
 
 Make one visible authored change: replace Prism's cool indigo, lime, violet, ice, and rose palette with the warm palette specified below. Update the assigned level id and title consistently in source, `level.json`, and `level.md`. Do not add content images, extend the duration, add mechanics, redesign models, edit Prism itself, or broaden the task into a polish pass.
 
-Do not run snapshots or a human playtest. Once the assigned directory contains the adapted level and its required metadata, finish promptly; the controller will seal it and run the complete mechanical gate suite.
+Do not run snapshots or a human playtest. Once the assigned directory contains the adapted level and its required metadata, run `npm run gallery` so the required derived gallery is current, then finish promptly; the controller will seal it and run the complete mechanical gate suite.
 
 ## Assigned variation
 
