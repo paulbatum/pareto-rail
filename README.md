@@ -2,6 +2,8 @@
 
 Pareto Rail is a procedural WebGPU rail shooter and a public benchmark experience for one-shot model-built levels. Visitors can play the polished Crystal Corridor reference, compare development entrants blind, and inspect quality-versus-cost results without launching WebGPU gameplay.
 
+The production site is [paretorail.vercel.app](https://paretorail.vercel.app/).
+
 The main routes are `/play`, `/rank`, `/leaderboard`, and `/about`. Existing links such as `?level=crystal-corridor` remain supported.
 
 ## Run it
