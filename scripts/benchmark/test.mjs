@@ -160,8 +160,8 @@ const runDefinition = {
   template: { path: 'benchmark/prompts/level-assignment.md', sha256: hash('e') },
   failureTaxonomy: { path: 'benchmark/controller/failure-taxonomy.md', sha256: hash('f') },
   stage: { adapter: 'codex-cli', model: 'gpt-5.6-terra', effort: 'high', timeoutSeconds: 10_800 },
-  worktree: { path: '/tmp/raild-run-a1b2c3d4' },
-  payload: { path: '/tmp/raild-payload-a1b2c3d4', branch: 'benchmark-payload-a1b2c3d4' },
+  worktree: { path: '/tmp/pareto-rail-run-a1b2c3d4' },
+  payload: { path: '/tmp/pareto-rail-payload-a1b2c3d4', branch: 'benchmark-payload-a1b2c3d4' },
 };
 assert.deepEqual(validateRunDefinition(runDefinition), []);
 const budgetRunDefinition = structuredClone(runDefinition);
@@ -331,8 +331,8 @@ assert.equal(recoveredResult.state, 'completed');
 assert.equal(recoveredResult.recovered, true);
 assert.equal(recoveredResult.recoveryReason, 'infrastructure-timeout');
 
-const snapshotRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-snapshot-repo-'));
-const snapshotRun = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-snapshot-run-'));
+const snapshotRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-snapshot-repo-'));
+const snapshotRun = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-snapshot-run-'));
 const snapshotWorktree = `${snapshotRepo}-worktree`;
 try {
   await exec('git', ['init', '-q'], { cwd: snapshotRepo });
@@ -357,7 +357,7 @@ try {
   await fs.rm(snapshotRun, { recursive: true, force: true });
 }
 
-const scopeRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-directory-only-scope-'));
+const scopeRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-directory-only-scope-'));
 try {
   await fs.mkdir(path.join(scopeRepo, 'src/levels'), { recursive: true });
   await fs.mkdir(path.join(scopeRepo, 'src/benchmark-levels'), { recursive: true });
@@ -382,7 +382,7 @@ try {
   await fs.rm(scopeRepo, { recursive: true, force: true });
 }
 
-const directoryOnlyRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-directory-only-baseline-'));
+const directoryOnlyRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-directory-only-baseline-'));
 try {
   await fs.mkdir(path.join(directoryOnlyRepo, 'src/levels'), { recursive: true });
   await fs.mkdir(path.join(directoryOnlyRepo, 'src/benchmark-levels/test-fixtures'), { recursive: true });

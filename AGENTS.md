@@ -2,7 +2,7 @@
 
 ## Project
 
-raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU only** (`WebGPURenderer` from `three/webgpu`; no WebGL fallback). Everything is procedural: no textures, models, fonts, or audio files.
+Pareto Rail — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU only** (`WebGPURenderer` from `three/webgpu`; no WebGL fallback). Everything is procedural: no textures, models, fonts, or audio files.
 
 ## Architecture — respect the seams
 

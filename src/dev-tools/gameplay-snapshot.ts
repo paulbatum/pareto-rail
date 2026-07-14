@@ -220,7 +220,7 @@ window.__gameplaySnapshot = {
 
 async function bootstrap() {
   selectedLevel = await getLevelById(params.get('level'));
-  document.title = `raild gameplay snapshot — ${selectedLevel.title}`;
+  document.title = `Pareto Rail gameplay snapshot — ${selectedLevel.title}`;
 
   scene = new Scene();
   camera = new PerspectiveCamera(62, width / height, 0.1, 500);

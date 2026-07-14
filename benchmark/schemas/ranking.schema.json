@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ranking.schema.json",
-  "title": "raild legacy blind pairwise ranking",
+  "title": "Pareto Rail legacy blind pairwise ranking",
   "description": "A slot-only binary judgment. Ranked-set records are preferred for new ranking snapshots; this schema remains supported for targeted and historical pairs.",
   "type": "object",
   "additionalProperties": false,

@@ -16,7 +16,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "incremental": true,
-    "tsBuildInfoFile": "./node_modules/.cache/raild.tsbuildinfo"
+    "tsBuildInfoFile": "./node_modules/.cache/pareto-rail.tsbuildinfo"
   },
   "include": ["src", "dev", "server", "api", "vite.config.ts"]
 }

@@ -14,7 +14,7 @@ The adapter receives an already-rendered private prompt and sends it to `codex e
 
 ```sh
 npm run benchmark:codex -- \
-  --worktree /tmp/raild-<opaque-run-id> \
+  --worktree /tmp/pareto-rail-<opaque-run-id> \
   --prompt benchmark/private/runs/<opaque-run-id>/rendered-assignment.md \
   --out benchmark/private/runs/<opaque-run-id>/stages/solo/codex \
   --model gpt-5.6-terra \
@@ -98,8 +98,8 @@ Its required shape is:
   "template": { "path": "benchmark/prompts/level-assignment.md", "sha256": "<sha256>" },
   "failureTaxonomy": { "path": "benchmark/controller/failure-taxonomy.md", "sha256": "<sha256>" },
   "stage": { "adapter": "codex-cli", "model": "gpt-5.6-terra", "effort": "high", "timeoutSeconds": 10800 },
-  "worktree": { "path": "/tmp/raild-<opaque-run-id>" },
-  "payload": { "path": "/tmp/raild-payload-<opaque-run-id>", "branch": "benchmark-payload-<opaque-run-id>" }
+  "worktree": { "path": "/tmp/pareto-rail-<opaque-run-id>" },
+  "payload": { "path": "/tmp/pareto-rail-payload-<opaque-run-id>", "branch": "benchmark-payload-<opaque-run-id>" }
 }
 ```
 
@@ -222,15 +222,15 @@ All worktree paths must be outside the primary working tree. Gate output must be
 npm run benchmark:admin -- worktree \
   --baseline <entrant-baseline-commit> \
   --run-id <opaque-run-id> \
-  --path /tmp/raild-<opaque-run-id>
+  --path /tmp/pareto-rail-<opaque-run-id>
 
 npm run benchmark:admin -- seal \
-  --worktree /tmp/raild-<opaque-run-id> \
+  --worktree /tmp/pareto-rail-<opaque-run-id> \
   --baseline <entrant-baseline-commit> \
   --level-id <theme-id>-<slot-id>
 
 npm run benchmark:admin -- gates \
-  --worktree /tmp/raild-<opaque-run-id> \
+  --worktree /tmp/pareto-rail-<opaque-run-id> \
   --baseline <entrant-baseline-commit> \
   --level-id <theme-id>-<slot-id> \
   --out benchmark/private/runs/<opaque-run-id>/gates
@@ -240,7 +240,7 @@ npm run benchmark:admin -- payload \
   --materials <materials-commit> \
   --evaluated <evaluated-commit> \
   --level-id <theme-id>-<slot-id> \
-  --path /tmp/raild-payload-<opaque-run-id> \
+  --path /tmp/pareto-rail-payload-<opaque-run-id> \
   --branch benchmark-payload-<opaque-run-id>
 ```
 

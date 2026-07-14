@@ -19,7 +19,7 @@ export async function createRecoverySnapshot({ repo, runDirectory, runId, worktr
   const head = (await git(worktree, ['rev-parse', 'HEAD'])).stdout.trim();
   const branch = (await git(worktree, ['symbolic-ref', '--quiet', '--short', 'HEAD'], { allowFailure: true })).stdout.trim() || null;
   const status = (await git(worktree, ['status', '--porcelain=v1', '--untracked-files=all'])).stdout;
-  const temporaryIndex = path.join(os.tmpdir(), `raild-recovery-index-${runId}-${process.pid}-${Date.now()}`);
+  const temporaryIndex = path.join(os.tmpdir(), `pareto-rail-recovery-index-${runId}-${process.pid}-${Date.now()}`);
   const env = { GIT_INDEX_FILE: temporaryIndex };
   try {
     await git(worktree, ['read-tree', 'HEAD'], { env });

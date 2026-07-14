@@ -54,7 +54,7 @@ The controller supplies the rendered benchmark assignment as the complete stdin 
 
 ```sh
 npm run benchmark:claude -- \
-  --worktree /tmp/raild-<opaque-run-id> \
+  --worktree /tmp/pareto-rail-<opaque-run-id> \
   --prompt benchmark/private/runs/<opaque-run-id>/rendered-assignment.md \
   --out benchmark/private/runs/<opaque-run-id>/stages/solo/claude \
   --model claude-fable-5 \

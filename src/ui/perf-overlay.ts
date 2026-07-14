@@ -197,14 +197,14 @@ class PerfOverlay {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `raild-perf-${safeName(this.levelId)}-${Date.now()}.json`;
+    anchor.download = `pareto-rail-perf-${safeName(this.levelId)}-${Date.now()}.json`;
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 }
 
 function logSummary(report: PerfReport) {
-  console.log(`raild perf report: ${report.levelId}, ${report.runDuration.toFixed(1)}s`);
+  console.log(`pareto-rail perf report: ${report.levelId}, ${report.runDuration.toFixed(1)}s`);
   console.table(report.buckets.map((bucket) => ({
     t: bucket.second,
     avg: bucket.avgFrameMs,
@@ -221,9 +221,9 @@ function logSummary(report: PerfReport) {
 }
 
 function installStyle() {
-  if (document.getElementById('raild-perf-overlay-style')) return;
+  if (document.getElementById('pareto-rail-perf-overlay-style')) return;
   const style = document.createElement('style');
-  style.id = 'raild-perf-overlay-style';
+  style.id = 'pareto-rail-perf-overlay-style';
   style.textContent = `
     .perf-overlay {
       position: fixed;

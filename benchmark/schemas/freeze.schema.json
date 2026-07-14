@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "freeze.schema.json",
-  "title": "raild benchmark freeze record",
+  "title": "Pareto Rail benchmark freeze record",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "run-manifest.schema.json",
-  "title": "raild benchmark run manifest",
+  "title": "Pareto Rail benchmark run manifest",
   "description": "Draft format for a complete run record. Keep records private until blind rankings are locked.",
   "type": "object",
   "additionalProperties": false,

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "run-schedule.schema.json",
-  "title": "raild private benchmark run schedule",
+  "title": "Pareto Rail private benchmark run schedule",
   "description": "Confidential append-only assignment ledger and slot-to-configuration mapping. Existing rows stay immutable when configurations are added. Keep private until the relevant blind ranking snapshot is locked.",
   "type": "object",
   "additionalProperties": false,

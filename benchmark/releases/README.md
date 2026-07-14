@@ -30,7 +30,7 @@ A later experiment edits the same canonical paths and creates a new release. Ret
 
 ```sh
 git show benchmark-v1:benchmark/prompts/level-assignment.md
-git worktree add /tmp/raild-benchmark-v1 benchmark-v1
+git worktree add /tmp/pareto-rail-benchmark-v1 benchmark-v1
 ```
 
 Schema versions are independent from benchmark versions. A compatible record-format change may increment `schemaVersion` without changing the benchmark protocol. Changing a shared prompt, theme, baseline, gate, or judgment method requires a new protocol release. Changing a recipe after that configuration has run requires a new configuration id; adding a separately pinned configuration does not.

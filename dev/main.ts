@@ -44,7 +44,7 @@ if (!app) throw new Error('Missing #dev-app');
 app.innerHTML = `
   <header class="topbar">
     <div>
-      <p class="eyebrow">raild dev tool</p>
+      <p class="eyebrow">Pareto Rail dev tool</p>
       <h1>Enemy gallery</h1>
     </div>
     <div id="save-status" class="status">Unsaved edits stay in this page until saved.</div>

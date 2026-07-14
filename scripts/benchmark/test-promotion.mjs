@@ -142,7 +142,7 @@ async function assertPromotion(fixture, promotionCommit) {
 }
 
 async function createFixture({ payloadWorktree = false, legacyManifest = false, payloadSymlink = false } = {}) {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-promotion-repo-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-promotion-repo-'));
   const externalPayloadWorktree = `${root}-payload-worktree`;
   const runDirectory = path.join(root, 'benchmark/private/runs/synthetic-run-a1b2');
   await fs.mkdir(path.join(root, 'src/levels'), { recursive: true });

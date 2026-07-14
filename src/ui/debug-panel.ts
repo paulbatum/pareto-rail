@@ -12,9 +12,9 @@ import {
 } from '../engine/player-camera';
 import type { LevelDebugSelector } from '../engine/types';
 
-const CAMERA_EDGE_LOOK_KEY = 'raild-debug-camera-edge-look-degrees';
-const CAMERA_EDGE_ROLL_KEY = 'raild-debug-camera-edge-roll-degrees';
-const CAMERA_EDGE_DEAD_ZONE_KEY = 'raild-debug-camera-edge-dead-zone';
+const CAMERA_EDGE_LOOK_KEY = 'pareto-rail-debug-camera-edge-look-degrees';
+const CAMERA_EDGE_ROLL_KEY = 'pareto-rail-debug-camera-edge-roll-degrees';
+const CAMERA_EDGE_DEAD_ZONE_KEY = 'pareto-rail-debug-camera-edge-dead-zone';
 
 const GRID_OPTIONS = [
   { label: 'Immediate', enabled: false, gridThirtyseconds: 4 },
@@ -356,7 +356,7 @@ function validOptionId(selector: LevelDebugSelector, value: string | null | unde
 }
 
 function debugStorageKey(levelId: string, selector: LevelDebugSelector) {
-  return `raild-debug-${levelId}-${selector.queryParam}`;
+  return `pareto-rail-debug-${levelId}-${selector.queryParam}`;
 }
 
 function readStoredDebugValue(levelId: string, selector: LevelDebugSelector) {

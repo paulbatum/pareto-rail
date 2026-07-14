@@ -934,7 +934,7 @@ async function main() {
     ? path.resolve(runOption)
     : path.join(root, 'benchmark/private/runs', runOption);
   const migration = options.migration === 'true';
-  const result = await promoteRun({ root, runDirectory, migration, interruptAfter: process.env.RAILD_PROMOTION_INTERRUPT_AFTER });
+  const result = await promoteRun({ root, runDirectory, migration, interruptAfter: process.env.PARETO_RAIL_PROMOTION_INTERRUPT_AFTER });
   console.log(JSON.stringify(result));
 }
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ranked-set.schema.json",
-  "title": "raild blind ranked set",
+  "title": "Pareto Rail blind ranked set",
   "description": "One theme's anonymous entrants ranked into ordered tiers. Slots in the same tier are tied.",
   "type": "object",
   "additionalProperties": false,

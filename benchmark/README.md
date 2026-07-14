@@ -1,4 +1,4 @@
-# raild level-generation benchmark
+# Pareto Rail level-generation benchmark
 
 Multiple agent configurations each build a complete, playable rail-shooter level from the same theme prompt — unattended, in one shot. Visitors to the site play pairs of these levels blind on the Rank page, vote, and see the results as a quality-versus-cost Pareto curve. This directory holds the benchmark's inputs, records, and operating procedures.
 
@@ -64,7 +64,7 @@ npm run benchmark:results -- --identity blind
 
 Use `--identity unblind` only when the relevant ranking snapshot has been locked and its mapping opened. `--format csv` is also available, and `--runs <path>` can inspect another run-artifact directory.
 
-Fresh launches verify the executing controller code against the release's frozen hashes. Once post-freeze controller development has drifted those files, launch with `RAILD_ACCEPT_CONTROLLER_DRIFT=1`; each drifted path is recorded with its frozen and executing hashes in the run's `controller-drift.json`. Entrant-facing frozen material (theme, recipe, prompt template, baseline) is always strictly verified regardless of this flag.
+Fresh launches verify the executing controller code against the release's frozen hashes. Once post-freeze controller development has drifted those files, launch with `PARETO_RAIL_ACCEPT_CONTROLLER_DRIFT=1`; each drifted path is recorded with its frozen and executing hashes in the run's `controller-drift.json`. Entrant-facing frozen material (theme, recipe, prompt template, baseline) is always strictly verified regardless of this flag.
 
 ## Resuming and managing runs
 
@@ -132,7 +132,7 @@ After mappings are opened, `npm run benchmark:export-rank-catalog` projects the 
 
 ```bash
 npm run benchmark:restore-src -- <run-directory> --out <destination>
-npm run benchmark:restore-src -- <run-directory> --worktree /tmp/raild-<run-id>
+npm run benchmark:restore-src -- <run-directory> --worktree /tmp/pareto-rail-<run-id>
 ```
 
 After reconstructing a worktree, regenerate deterministic shell-produced artifacts such as `docs/level-gallery.md`, verify the worktree mechanically, and continue with `benchmark:run -- --resume ... --accept-stage-output true`.

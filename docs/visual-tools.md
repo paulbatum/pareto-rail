@@ -123,7 +123,7 @@ Catalog projections and hard production checks are built separately:
 
 ```sh
 npm run benchmark:catalog -- build --source benchmark/public/fixtures/downpour-rehearsal.json \
-  --out /tmp/raild-catalog --mode development --fixture
+  --out /tmp/pareto-rail-catalog --mode development --fixture
 ```
 
 See `benchmark/public/README.md` for the pre-vote/reveal boundary and the

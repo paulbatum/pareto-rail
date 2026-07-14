@@ -42,7 +42,7 @@ assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 3, remainingMs: Infi
 assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 0, remainingMs: MINIMUM_RESUME_REMAINING_MS }), true);
 assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 0, remainingMs: MINIMUM_RESUME_REMAINING_MS - 1 }), false);
 
-const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-budget-test-'));
+const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-budget-test-'));
 try {
   assert.equal(await measureRunCost({ adapter: 'claude-cli', home: path.join(temporary, 'empty-home'), tolerateEmpty: true }), null);
 

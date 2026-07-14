@@ -10,7 +10,7 @@ Build the two projections with:
 ```sh
 npm run benchmark:catalog -- build \
   --source benchmark/public/fixtures/downpour-rehearsal.json \
-  --out /tmp/raild-catalog --mode development --fixture
+  --out /tmp/pareto-rail-catalog --mode development --fixture
 ```
 
 Development fixtures may mark thumbnails as `placeholder`, but the status is

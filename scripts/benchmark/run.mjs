@@ -693,7 +693,7 @@ function sameAssignment(left, right) {
 /**
  * Frozen entrant-facing material (theme, recipe, prompt template, baseline) is
  * always strictly verified. Controller-code drift may instead be accepted and
- * recorded when RAILD_ACCEPT_CONTROLLER_DRIFT=1: each drifted path is appended
+ * recorded when PARETO_RAIL_ACCEPT_CONTROLLER_DRIFT=1: each drifted path is appended
  * to controllerDrift for persistence as controller-drift.json in the run
  * directory, so later runs remain launchable from a repository whose
  * controller code has moved past the release freeze.
@@ -701,11 +701,11 @@ function sameAssignment(left, right) {
 const controllerDrift = [];
 
 function controllerDriftAccepted() {
-  return process.env.RAILD_ACCEPT_CONTROLLER_DRIFT === '1';
+  return process.env.PARETO_RAIL_ACCEPT_CONTROLLER_DRIFT === '1';
 }
 
 function handleControllerDrift(relativePath, frozenSha256, executingSha256, message) {
-  if (!controllerDriftAccepted()) fail(`${message} Set RAILD_ACCEPT_CONTROLLER_DRIFT=1 to accept and record controller-code drift.`);
+  if (!controllerDriftAccepted()) fail(`${message} Set PARETO_RAIL_ACCEPT_CONTROLLER_DRIFT=1 to accept and record controller-code drift.`);
   controllerDrift.push({ path: relativePath, frozenSha256, executingSha256 });
   console.warn(`Accepted controller drift for ${relativePath} (frozen ${frozenSha256.slice(0, 12)}, executing ${executingSha256.slice(0, 12)}).`);
 }

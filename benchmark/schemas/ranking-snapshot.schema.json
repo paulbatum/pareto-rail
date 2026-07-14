@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ranking-snapshot.schema.json",
-  "title": "raild ranking snapshot",
+  "title": "Pareto Rail ranking snapshot",
   "description": "An immutable lock record for one analysis snapshot. Later configurations create a later snapshot rather than rewriting this one.",
   "type": "object",
   "additionalProperties": false,

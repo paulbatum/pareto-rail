@@ -16,7 +16,7 @@ export default defineConfig({
 
 function crystalTemplateDevPlugin(): Plugin {
   return {
-    name: 'raild-crystal-template-dev',
+    name: 'pareto-rail-crystal-template-dev',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url?.split('?')[0] ?? '';

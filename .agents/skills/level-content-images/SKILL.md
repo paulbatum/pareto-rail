@@ -1,6 +1,6 @@
 ---
 name: level-content-images
-description: "Create or refresh a raild level's three public content images: an eight-frame review sheet, a selected full-resolution hero frame, a four-frame unlabeled overview, and a start-screen capture. Use when adding or updating level showcase images."
+description: "Create or refresh a Pareto Rail level's three public content images: an eight-frame review sheet, a selected full-resolution hero frame, a four-frame unlabeled overview, and a start-screen capture. Use when adding or updating level showcase images."
 ---
 
 # Level content images

@@ -127,11 +127,11 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
     stack.add(() => bus.clear());
     const audio = level.createAudio(bus);
     stack.add(() => audio.dispose());
-    const legacyVolume = readStoredPercent('raild-volume', 50);
-    audio.setMusicVolume(readStoredPercent('raild-music-volume', legacyVolume) / 100);
-    audio.setSfxVolume(readStoredPercent('raild-sfx-volume', legacyVolume) / 100);
-    setBloomLevel(readStoredPercent('raild-bloom', 100) / 100);
-    setMotionBlurLevel(readStoredPercent('raild-motion-blur', 100) / 100);
+    const legacyVolume = readStoredPercent('pareto-rail-volume', 50);
+    audio.setMusicVolume(readStoredPercent('pareto-rail-music-volume', legacyVolume) / 100);
+    audio.setSfxVolume(readStoredPercent('pareto-rail-sfx-volume', legacyVolume) / 100);
+    setBloomLevel(readStoredPercent('pareto-rail-bloom', 100) / 100);
+    setMotionBlurLevel(readStoredPercent('pareto-rail-motion-blur', 100) / 100);
     audio.installGestureStart();
     const post = createPost(renderer, scene, camera, level.post);
     const perfParam = urlParams.get('perf');
@@ -158,10 +158,10 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
       onResume: () => setPaused(false),
       onEndRun: () => { bus.emit('runendrequest', undefined); setPaused(false); },
       onFullscreen: toggleFullscreen,
-      onMusicVolume: (value) => { localStorage.setItem('raild-music-volume', `${value}`); audio.setMusicVolume(value / 100); },
-      onSfxVolume: (value) => { localStorage.setItem('raild-sfx-volume', `${value}`); audio.setSfxVolume(value / 100); },
-      onBloom: (value) => { localStorage.setItem('raild-bloom', `${value}`); setBloomLevel(value / 100); },
-      onMotionBlur: (value) => { localStorage.setItem('raild-motion-blur', `${value}`); setMotionBlurLevel(value / 100); },
+      onMusicVolume: (value) => { localStorage.setItem('pareto-rail-music-volume', `${value}`); audio.setMusicVolume(value / 100); },
+      onSfxVolume: (value) => { localStorage.setItem('pareto-rail-sfx-volume', `${value}`); audio.setSfxVolume(value / 100); },
+      onBloom: (value) => { localStorage.setItem('pareto-rail-bloom', `${value}`); setBloomLevel(value / 100); },
+      onMotionBlur: (value) => { localStorage.setItem('pareto-rail-motion-blur', `${value}`); setMotionBlurLevel(value / 100); },
     });
     stack.add(() => pauseMenu.dispose?.());
     setPaused = (nextPaused) => {

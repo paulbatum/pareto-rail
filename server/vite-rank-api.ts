@@ -7,7 +7,7 @@ import { MAX_RANK_VOTE_BODY_BYTES } from './rank-vote-validation.js';
 /** Mounts the production handlers into Vite's development server only. */
 export function rankApiDevPlugin(): Plugin {
   return {
-    name: 'raild-rank-api-dev',
+    name: 'pareto-rail-rank-api-dev',
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {

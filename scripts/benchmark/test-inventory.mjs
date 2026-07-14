@@ -239,7 +239,7 @@ async function testResumptionAndIdempotency() {
 }
 
 async function createFixture({ playable, rehearsal, manualPlayable, floorFailure = false, levelId = playable ? 'manual-a1b2' : 'rehearsal-c3d4' }) {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'raild-inventory-repo-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-inventory-repo-'));
   const runId = `run-${levelId}`;
   const rehearsalLevelId = 'rehearsal-c3d4';
   const rehearsalRunId = `run-${rehearsalLevelId}`;
