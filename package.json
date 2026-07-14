@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run validate:level-catalog && vite build",
+    "build": "prisma generate && npm run validate:level-catalog && vite build",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "typecheck": "tsc --noEmit",
     "check:scope": "bash scripts/check-level-scope.sh",
     "check:benchmark-scope": "node scripts/check-benchmark-scope.mjs",
@@ -42,16 +45,22 @@
     "test:benchmark-promotion": "node scripts/benchmark/test-promotion.mjs",
     "test:benchmark-inventory": "node scripts/benchmark/test-inventory.mjs",
     "test:benchmark-domain": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs src/benchmark/domain.test.ts",
+    "test:vote-api": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs scripts/benchmark/test-vote-api.ts",
     "test:benchmark-level-domain": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs src/benchmark-levels/domain.test.ts",
     "sim:crystal-debug": "node scripts/run-crystal-debug-sim.mjs",
     "sim:crystal-debug:verbose": "node scripts/run-crystal-debug-sim.mjs --verbose"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "pg": "^8.22.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "three": "latest"
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.185.0",

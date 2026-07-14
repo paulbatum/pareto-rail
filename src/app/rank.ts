@@ -5,11 +5,13 @@ import {
 import { rankCatalog } from '../benchmark/catalog';
 import { ComparisonStateMachine } from '../benchmark/state';
 import { BenchmarkLocalStore, type CompletedMatchup } from '../benchmark/storage';
+import { RemoteVoteRecorder, type RemoteVotePayload } from '../benchmark/remote-recorder';
 import type {
   BenchmarkApi,
   ComparisonState,
   MatchupAssignment,
   MatchupSide,
+  MatchupVote,
   VoteVerdict,
 } from '../benchmark/types';
 
@@ -22,15 +24,17 @@ export class RankController {
   private readonly store: BenchmarkLocalStore;
   private readonly api: BenchmarkApi | null;
   private readonly resolvePlayable: ((ref: string) => string) | null;
+  private readonly remoteRecorder: RemoteVoteRecorder;
   private readonly listeners = new Set<Listener>();
   private machine: ComparisonStateMachine | null = null;
   private busy = false;
   private undoneVerdict: VoteVerdict | null = null;
 
-  constructor(options: { api?: BenchmarkApi; store?: BenchmarkLocalStore; resolvePlayable?: (ref: string) => string } = {}) {
+  constructor(options: { api?: BenchmarkApi; store?: BenchmarkLocalStore; resolvePlayable?: (ref: string) => string; remoteRecorder?: RemoteVoteRecorder } = {}) {
     this.store = options.store ?? new BenchmarkLocalStore();
     this.api = options.api ?? null;
     this.resolvePlayable = options.resolvePlayable ?? null;
+    this.remoteRecorder = options.remoteRecorder ?? new RemoteVoteRecorder();
   }
 
   get assignment(): MatchupAssignment | null { return this.machine?.state.assignment ?? null; }
@@ -53,6 +57,7 @@ export class RankController {
   }
 
   async prepare() {
+    this.remoteRecorder.retryPending();
     if (!this.api) return;
     await this.ensureRound();
     this.emit();
@@ -104,6 +109,7 @@ export class RankController {
       const submitting = this.machine.submit(verdict);
       this.persist(submitting);
       const vote = await this.api.submitVote({ matchupId: submitting.assignment.matchupId, participantId: this.store.participantId, verdict, playCounts: submitting.playCounts });
+      this.remoteRecorder.record(remotePayload(submitting.assignment, vote, this.store));
       const reveal = await this.api.reveal(submitting.assignment.matchupId, this.store.participantId);
       const revealed = this.machine.reveal({ ...reveal, vote });
       this.store.completeMatchup({ matchupId: reveal.matchupId, vote, reveal });
@@ -195,6 +201,27 @@ export class RankController {
   }
 
   private emit() { for (const listener of this.listeners) listener(); }
+}
+
+function remotePayload(assignment: MatchupAssignment, vote: MatchupVote, store: BenchmarkLocalStore): RemoteVotePayload {
+  const snapshot = store.snapshot;
+  const scoreFor = (levelId: string): number | undefined => snapshot.levelRuns.find((run) => run.levelId === levelId)?.score;
+  const bestScoreA = scoreFor(assignment.a.playableRef);
+  const bestScoreB = scoreFor(assignment.b.playableRef);
+  return {
+    matchupId: assignment.matchupId,
+    participantId: store.participantId,
+    benchmarkVersion: assignment.benchmarkVersion,
+    themeId: assignment.theme.id,
+    aLevelId: assignment.a.playableRef,
+    bLevelId: assignment.b.playableRef,
+    verdict: vote.verdict,
+    playCounts: { ...vote.playCounts },
+    ...(bestScoreA !== undefined || bestScoreB !== undefined ? { bestScores: { ...(bestScoreA === undefined ? {} : { a: bestScoreA }), ...(bestScoreB === undefined ? {} : { b: bestScoreB }) } } : {}),
+    assignedAt: assignment.assignedAt,
+    clientSubmittedAt: vote.submittedAt,
+    idempotencyKey: `${assignment.matchupId}:${store.participantId}`,
+  };
 }
 
 function assignmentFromCompleted(completed: CompletedMatchup): MatchupAssignment | null {

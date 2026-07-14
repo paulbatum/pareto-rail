@@ -1,5 +1,5 @@
-import rawCatalog from './rank-catalog.json';
-import type { BenchmarkRunMetrics, BenchmarkTheme } from './types';
+import rawCatalog from './rank-catalog.json' with { type: 'json' };
+import type { BenchmarkDataClass, BenchmarkRunMetrics, BenchmarkTheme } from './types';
 
 export interface RankCatalogConfiguration {
   id: string;
@@ -24,6 +24,7 @@ export interface RankCatalogEntrant {
   run?: BenchmarkRunMetrics;
   thumbnailPath?: string;
   featured?: boolean;
+  dataClass?: BenchmarkDataClass;
 }
 
 export interface RankCatalog {

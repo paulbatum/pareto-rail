@@ -1,9 +1,69 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
+}
+
+enum RankVerdict {
+  A_BETTER  @map("a-better")
+  B_BETTER  @map("b-better")
+  BOTH_GOOD @map("both-good")
+  BOTH_BAD  @map("both-bad")
+}
+
+enum RankRelative {
+  A   @map("a")
+  B   @map("b")
+  TIE @map("tie")
+}
+
+enum RankSentiment {
+  POSITIVE @map("positive")
+  NEGATIVE @map("negative")
+}
+
+enum RankDataClass {
+  ELIGIBLE    @map("eligible")
+  REHEARSAL   @map("rehearsal")
+  DEVELOPMENT @map("development")
+}
+
+model RankMatchup {
+  id               String     @id
+  benchmarkVersion String
+  themeId          String
+  levelIdFirst     String
+  levelIdSecond    String
+  createdAt        DateTime   @default(now())
+  votes            RankVote[]
+
+  @@index([benchmarkVersion, themeId])
+}
+
+model RankVote {
+  id                String         @id @default(uuid())
+  matchupId         String
+  participantHash   String
+  schemaVersion     Int
+  aLevelId          String
+  bLevelId          String
+  verdict           RankVerdict
+  relative          RankRelative
+  sentiment         RankSentiment?
+  playCountA        Int
+  playCountB        Int
+  bestScoreA        Int?
+  bestScoreB        Int?
+  dataClass         RankDataClass
+  assignedAt        DateTime?
+  clientSubmittedAt DateTime?
+  createdAt         DateTime       @default(now())
+  idempotencyKey    String?
+  matchup           RankMatchup    @relation(fields: [matchupId], references: [id])
+
+  @@unique([matchupId, participantHash])
+  @@index([createdAt])
 }

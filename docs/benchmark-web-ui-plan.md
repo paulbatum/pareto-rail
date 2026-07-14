@@ -471,6 +471,8 @@ Done when every scheduled development entrant has a reproducible card and produc
 
 ### Phase 4: Anonymous backend
 
+**Status:** The anonymous PostgreSQL vote sink now has Prisma persistence, Vercel and Vite adapters, catalog validation, salted participant hashes, idempotent raw votes, and aggregate smoke-check stats. Server-issued assignment, reveal gating, leaderboard/catalog endpoints, and the rating pipeline remain deferred.
+
 - Implement matchup assignment, play completion, vote, reveal, and catalog endpoints.
 - Add relational schema and migrations.
 - Add anonymous participant pseudonyms, idempotency, rate limiting, and data-class separation.

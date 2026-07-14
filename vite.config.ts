@@ -1,12 +1,14 @@
 import fs from 'node:fs/promises';
+import type { IncomingMessage } from 'node:http';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
+import { rankApiDevPlugin } from './server/vite-rank-api';
 
 const templatePath = path.resolve(process.cwd(), 'src/levels/crystal/visuals/crystal-template.json');
 
 export default defineConfig({
-  plugins: [react(), crystalTemplateDevPlugin()],
+  plugins: [react(), crystalTemplateDevPlugin(), rankApiDevPlugin()],
   build: {
     chunkSizeWarningLimit: 1200,
   },
@@ -49,7 +51,7 @@ function crystalTemplateDevPlugin(): Plugin {
   };
 }
 
-function readBody(req: Parameters<Parameters<Plugin['configureServer']>[0]['middlewares']['use']>[0]): Promise<string> {
+function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = '';
     req.setEncoding('utf8');
