@@ -57,6 +57,7 @@
     "@types/three": "^0.185.0",
     "@vitejs/plugin-react": "^6.0.3",
     "ccusage": "20.0.17",
+    "prisma": "^7.8.0",
     "puppeteer": "^25.3.0",
     "typescript": "latest",
     "vite": "latest"
