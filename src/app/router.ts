@@ -3,7 +3,8 @@ export type AppRoute =
   | { kind: 'play'; levelId?: string }
   | { kind: 'rank'; playSide?: 'a' | 'b' }
   | { kind: 'leaderboard' }
-  | { kind: 'about' };
+  | { kind: 'about' }
+  | { kind: 'notFound' };
 
 export function parseRoute(location: Location = window.location): AppRoute {
   const path = location.pathname.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
@@ -18,12 +19,14 @@ export function parseRoute(location: Location = window.location): AppRoute {
   }
   if (path === '/leaderboard') return { kind: 'leaderboard' };
   if (path === '/about') return { kind: 'about' };
-  return { kind: 'home' };
+  if (path === '/') return { kind: 'home' };
+  return { kind: 'notFound' };
 }
 
 export function routePath(route: AppRoute): string {
   if (route.kind === 'home') return '/';
   if (route.kind === 'play') return route.levelId ? `/play/${encodeURIComponent(route.levelId)}` : '/play';
+  if (route.kind === 'notFound') return window.location.pathname;
   return `/${route.kind}`;
 }
 

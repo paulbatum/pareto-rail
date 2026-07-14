@@ -7,7 +7,8 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 ## Architecture — respect the seams
 
 - `src/main.tsx` — React entrypoint for the route-based website shell.
-- `src/app/` — React layout, pages, reusable links, benchmark controller, and route lifecycle. `GameFrame` bridges React pages to the imperative game runtime.
+- `src/app/` — React layout, pages, reusable links, benchmark controller, and route lifecycle. Routing is client-side via the History API (`src/app/router.ts`); an unrecognized path resolves to `{ kind: 'notFound' }` and renders a 404 view. `GameFrame` bridges React pages to the imperative game runtime and is loaded lazily (via `LazyGameFrame`) so the three.js/WebGPU runtime stays out of the shell bundle — content pages and the level/matchup pickers must not statically import it.
+- `vercel.json` — SPA rewrite so deep links (`/rank`, `/play/<id>`, …) serve `index.html` instead of 404ing; the `(?!api/)` exclusion keeps the `api/` functions live. Any new deploy target needs an equivalent fallback.
 - `src/game/` — WebGPU renderer, scene/camera setup, pause menu, player volume/bloom settings, level picker, resize loop, postprocessing, and game-runtime mount/disposal.
 - `src/engine/` — reusable mechanics and utilities. `lock-on-runner.ts` provides the shared lock-on rail-shooter flow; `input.ts`, `rail.ts`, `scoring.ts`, `music.ts`, and `spawn-patterns.ts` are level-agnostic helpers; `post.ts` owns shared bloom/vignette.
 - `src/events.ts` — typed event bus (`spawn`, `lock`, `fire`, `hit`, `kill`, `beat`, `runstart`, …). Gameplay, visuals, and audio coordinate through events.

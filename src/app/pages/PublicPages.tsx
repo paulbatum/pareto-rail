@@ -191,6 +191,18 @@ export function AboutPage() {
   );
 }
 
+export function NotFoundPage({ onNavigate }: { onNavigate: (path: string) => void }) {
+  return (
+    <section className="page-panel">
+      <p className="eyebrow">404</p>
+      <h1>This track doesn't exist.</h1>
+      <p className="lede">The page you asked for isn't here — it may have moved, or the link may be wrong.</p>
+      <div className="empty-state"><span className="empty-glyph">◌</span><h2>Nothing on this rail</h2><p>Head back to the start and pick a direction.</p></div>
+      <RouteLink className="button primary" href="/" onNavigate={onNavigate}>Return home</RouteLink>
+    </section>
+  );
+}
+
 function levelCardHue(id: string): number {
   let hash = 0;
   for (const character of id) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;

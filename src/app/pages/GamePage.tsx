@@ -3,7 +3,7 @@ import type { LevelDefinition } from '../../engine/types';
 import { getLevelEntryById } from '../../levels';
 import type { AppRoute } from '../router';
 import { RouteLink } from '../components/RouteLink';
-import { GameFrame } from '../components/GameFrame';
+import { GameFrame } from '../components/LazyGameFrame';
 import { PlayPage } from './PublicPages';
 
 export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { kind: 'play' }>; onNavigate: (path: string) => void }) {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SiteLayout } from './layout/SiteLayout';
 import { parseRoute, navigate, type AppRoute } from './router';
-import { AboutPage, HomePage, LeaderboardPage } from './pages/PublicPages';
+import { AboutPage, HomePage, LeaderboardPage, NotFoundPage } from './pages/PublicPages';
 import { PlayRoute } from './pages/GamePage';
 import { RankPage } from './pages/RankPage';
 
@@ -18,7 +18,9 @@ export function App() {
   useEffect(() => {
     document.title = route.kind === 'home'
       ? 'Pareto Rail'
-      : `Pareto Rail — ${route.kind[0].toUpperCase()}${route.kind.slice(1)}`;
+      : route.kind === 'notFound'
+        ? 'Pareto Rail — Not found'
+        : `Pareto Rail — ${route.kind[0].toUpperCase()}${route.kind.slice(1)}`;
   }, [route]);
 
   return <SiteLayout route={route} onNavigate={onNavigate}>{renderPage(route, onNavigate)}</SiteLayout>;
@@ -29,5 +31,6 @@ function renderPage(route: AppRoute, onNavigate: (path: string) => void) {
   if (route.kind === 'play') return <PlayRoute route={route} onNavigate={onNavigate} />;
   if (route.kind === 'rank') return <RankPage route={route} onNavigate={onNavigate} />;
   if (route.kind === 'leaderboard') return <LeaderboardPage onNavigate={onNavigate} />;
-  return <AboutPage />;
+  if (route.kind === 'about') return <AboutPage />;
+  return <NotFoundPage onNavigate={onNavigate} />;
 }

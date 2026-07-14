@@ -7,7 +7,7 @@ import { mountGame } from '../../game';
 import { GameRuntimeShell } from '../../game/GameRuntimeShell';
 import { RouteLink } from './RouteLink';
 
-type GameFrameProps = {
+export type GameFrameProps = {
   level: LevelDefinition;
   title?: string;
   backPath?: string;
