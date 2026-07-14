@@ -1,6 +1,6 @@
 # Level-author API wishlist — remainder
 
-This began as a full wishlist written by an agent before reading any level or engine code (see git history for the original). Most of it turned out to already exist, or is now planned as the numbered briefs in `docs/briefs/01…07`. What remains here is only what those briefs deliberately do not cover.
+This began as a full wishlist written by an agent before reading any level or engine code (see git history for the original). Most of it turned out to already exist or has since been built. What remains here is only what is deliberately not covered elsewhere.
 
 ## Deferred by decision
 

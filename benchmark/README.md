@@ -1,24 +1,55 @@
-# Benchmark materials
+# raild level-generation benchmark
 
-This directory holds the inputs and records for the raild level-generation benchmark. `docs/benchmark-plan.md` is the working protocol.
+Multiple agent configurations each build a complete, playable rail-shooter level from the same theme prompt — unattended, in one shot. Visitors to the site play pairs of these levels blind on the Rank page, vote, and see the results as a quality-versus-cost Pareto curve. This directory holds the benchmark's inputs, records, and operating procedures.
 
-- `controller/` contains the harness-neutral orchestration runbook.
-- `prompts/` contains the shared benchmark assignment at a stable authoring path.
-- `themes/` contains eligible assignment themes.
-- `examples/` contains ineligible prompt exemplars that may be used for rehearsal.
-- `recipes/` contains verbatim configuration recipes and their template.
-- `schemas/` defines freeze, private schedule, run-manifest, and slot-only ranking formats.
-- `releases/` documents immutable benchmark freezes without duplicating the authored tree.
-- `rankings/` contains immutable blind-ranking snapshots locked before their slot mappings are opened.
-- `manifests/` contains redacted full run records published after unblinding.
+The motivating question: **is multi-agent delegation a useful sweet spot — near frontier-solo quality at a fraction of the cost?** Each provider fields a solo configuration (one frontier model does everything) and a delegated configuration (the same model plans and reviews while a cheaper same-provider model implements). The roster is append-only: later configurations can join an existing protocol when their recipe and execution inputs are pinned before their first run. This is honest and repeatable, but it is a fun project rather than a scientific publication; preference votes cannot establish a literal quality ratio.
 
-During generation, keep the append-only randomized run schedule (which is also the slot-to-configuration key), raw logs, and complete run records under `benchmark/private/`. Retired benchmark source outputs may also be kept under `benchmark/private/outputs/`; they are ignored by Git and are not application level modules. Do not publish a full manifest until the ranking snapshot containing that slot is locked because a full manifest necessarily reveals its configuration, model, recipe, and output branch.
+## How a run works
 
-The controller follows `benchmark/controller/runbook.md`; coding agents do not receive that administrative prompt. The standing level-building brief remains `docs/level-brief.md`. `benchmark/prompts/level-assignment.md` adds benchmark-wide identity, duration, and polish expectations without duplicating the brief. At protocol freeze, the release record identifies the materials commit, entrant-baseline commit, and shared artifact hashes. Each configuration registration separately pins its orchestration runner, harness executor, recipe, execution settings, and configuration commit. Cost is measured after the run by ccusage and is not a pinned per-configuration input. Entrant worktree access follows the controller runbook.
+- Each registered configuration runs once per theme, in a private randomized order. A run executes a fixed recipe (`recipes/`) in one unattended session: no operator feedback, no mid-run repair, no prompt adjustment. Predeclared stages inside a delegation recipe are part of one run, not retries.
+- Every run starts from the same frozen entrant-baseline commit in an opaque git worktree. The controller renders the shared assignment (`prompts/level-assignment.md`) with the theme text and a preassigned level id such as `skyhook-a44f` — theme plus a random four-character slot that encodes nothing about configuration or execution order.
+- After the run, four mechanical gates run against the exact evaluated tree: `npm run typecheck`, `npm run build`, the version-selected scope check, and `npm run check:floor`. A gate failure is a DNF: its full cost and record are kept, but the level is never presented for play.
+- Failed runs may be rerun at operator discretion — infrastructure failures routinely, gate-failure DNFs occasionally. A rerun reuses the same run id and slot; the timestamped directory under `benchmark/private/archive/runs/` is the durable record of each earlier attempt and its cost, so published cost summaries should include archives.
 
-Each run receives a four-character opaque slot and a globally unique level id such as `theme-a44f`. Frozen v1 runs develop normally in an opaque worktree, including temporary registry and gallery edits; their payloads remain rooted at `src/levels/<level-id>/` until the historical promotion path relocates them. The directory-only protocol introduced after v1 instead selects `src/benchmark-levels/<level-id>/` from the recorded benchmark version. Its scaffold creates the descriptor, the entrant never edits `src/levels/index.ts`, and payload extraction preserves the assigned directory directly. It does not use v1 relocation or controller-owned descriptor creation. After rankings lock, directory-only payloads are integrated in the benchmark domain. Never infer the protocol from whichever source directory exists.
+## Cost
 
-Author benchmark materials at stable paths without `v1` or `v2` suffixes. A version exists only when `benchmark/releases/<version>/freeze.json` and its matching `benchmark-<version>` Git tag are created. For a directory-only release, the freeze records `entrantBaseline.outputRoot: "src/benchmark-levels"` and the expected built-in baseline fingerprint. See `benchmark/releases/README.md`.
+Runs use paid subscriptions rather than API billing. Cost is measured after the run by [ccusage](https://github.com/ccusage/ccusage) (pinned in `package.json`), which reads the run's isolated harness home and prices the persisted rollouts — parent and any delegated subagents — with its own maintained rate database. There is no hand-maintained pricing table to rot. Subscription fees are reported separately as actual expenditure, never allocated across runs. Two accepted gaps are documented rather than estimated: a small Claude auxiliary-model share (~0.2%, no transcript) and Codex's missing per-model cost split (its run totals stand).
+
+Some configurations use a soft USD task budget to calibrate effort (the `-b20` recipes): the entrant is told a budget exists, receives relative spend notices in 25% increments, and may be resumed when it submits with substantial budget remaining. The budget is guidance, not a cap; exceeding it never kills a run.
+
+## Blinding
+
+The private run schedule under ignored `benchmark/private/` is both the execution order and the slot-to-configuration key. Full run records, configuration identities, source branches, and logs stay unopened until the relevant ranking snapshot is locked. Contamination control is a non-adversarial policy, not technical isolation: entrant worktrees share this repository's tracked material and history, but the controller never supplies another entrant's output, an unassigned theme, a recipe, the schedule, or benchmark results — and the private records stay outside the repository entirely.
+
+## Judgment
+
+Judgment is blind pairwise play on the public site. A visitor is assigned two levels from the same theme, must play both, and votes one of four verdicts: **A is better**, **B is better**, **both are good**, or **both are bad**. The first two are decisive preferences; the ties carry positive or negative sentiment that is reported separately but never changes the relative ordering. Model, workflow, and measured cost are revealed only after the vote.
+
+Each visitor's votes fit a regularized Bradley–Terry model per configuration, plotted against mean measured generation cost as a personal Pareto curve with an explicit frontier. Votes are also recorded anonymously (salted participant hashes, idempotent, append-only) in a Postgres backend for future aggregate results.
+
+The published rank catalog (`src/benchmark/rank-catalog.json`) retains one slice per benchmark version. New matchups come only from the active version, but every retained slice stays valid: returning visitors keep their old judgments, and the personal curve pools evidence by configuration id across versions — reusing a configuration id across versions asserts "same intervention" and connects the comparison graph.
+
+## Versions and releases
+
+Benchmark materials are authored at stable paths without version suffixes; Git provides history. A version exists only when `releases/<version>/freeze.json` and its matching `benchmark-<version>` tag are created. The freeze pins the shared protocol — runbook, prompt, themes, schemas, gates, judgment semantics, entrant baseline — while each configuration registration separately pins its runner, executor, recipe, and configuration commit in the private schedule. A behavior-affecting change to shared inputs requires a new protocol version; a behavior-changing recipe edit after a configuration has run requires a new configuration id; machine record formats carry an independent `schemaVersion`.
+
+The frozen v1 contract is historical: its entrants used the normal level workflow with payloads rooted at `src/levels/<level-id>/`, later migrated into the benchmark domain. Directory-only releases (v2 onward) instead scaffold with `npm run scaffold -- --mode benchmark`, author under `src/benchmark-levels/<level-id>/`, own their descriptor, and never edit the built-in registry. Tools dispatch on the recorded benchmark version — never infer the protocol from whichever source directory happens to exist.
+
+## Directory map
+
+- `controller/` — harness-neutral orchestration runbook and failure taxonomy.
+- `prompts/` — the shared assignment and delegation addendum, with rendering rules.
+- `themes/` — eligible theme texts and authoring guidance.
+- `examples/` — ineligible prompt exemplars for calibration and rehearsal.
+- `recipes/` — verbatim configuration recipes and their template. The recipe is the intervention being measured.
+- `schemas/` — freeze, private schedule, run-manifest, and ranking record formats.
+- `releases/` — immutable freeze records and the release procedure.
+- `rankings/` — locked blind-ranking snapshots, slot ids only.
+- `manifests/` — redacted full run records published after unblinding, and the website projection boundary.
+- `public/` — reviewed input seam for generated website catalog artifacts.
+- `private/` (ignored) — the schedule/key, raw logs, complete run records, archives, and retired outputs.
+
+Each directory's README is the authoritative contract for the artifacts it holds.
 
 ## Inspecting run results
 
@@ -91,6 +122,10 @@ npm run benchmark:manage -- prune --run <run-id> --confirm <run-id>
 
 Routine benchmark management does not remove level directories or reset the registry in the primary repository. For an intentional retirement, preserve any needed source output under `benchmark/private/outputs/` first, then remove it from the application tree and regenerate the gallery.
 
+## Publishing to the website
+
+After mappings are opened, `npm run benchmark:export-rank-catalog` projects the publishable parts of every private run schedule into the checked-in `src/benchmark/rank-catalog.json`, one retained slice per schedule, with the numerically greatest `v<n>` schedule as the active matchup pool. A theme is published within a version only when every publicly labeled level for that theme has a promoted directory, and only configurations registered in the exporter's label map are published (withheld assignments are warned about, never silently dropped). When refreshing the publication, run `npm run benchmark:export-rank-catalog`, `npm run test:benchmark-domain`, `npm run test:benchmark-catalog`, `npm run typecheck`, and `npm run build`.
+
 ## Reconstructing an incorrectly cleaned worktree
 
 `benchmark:restore-src` is a last-resort recovery tool for historical runs whose worktrees were destroyed. It replays only successful `Write` and `Edit` operations, uses recorded pre-edit snapshots when shell tooling created a file, and records the rollout hash in `source-recovery.json`.
@@ -101,4 +136,3 @@ npm run benchmark:restore-src -- <run-directory> --worktree /tmp/raild-<run-id>
 ```
 
 After reconstructing a worktree, regenerate deterministic shell-produced artifacts such as `docs/level-gallery.md`, verify the worktree mechanically, and continue with `benchmark:run -- --resume ... --accept-stage-output true`.
-

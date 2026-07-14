@@ -18,6 +18,7 @@ raild — a browser rail shooter. Vite + strict TypeScript + three.js **WebGPU o
 - `src/ui/` — DOM HUD, pause menu, end panel.
 - The enemy tuning gallery lives at `/dev` during `npm run dev`; it is specifically for `crystal-corridor` and edits `src/levels/crystal/visuals/crystal-template.json`.
 - See `docs/level-authoring.md` before adding or reshaping levels; it defines the spine/leaf convention. New levels are built to the standing brief in `docs/level-brief.md`.
+- The level-generation benchmark — methodology, protocol, and operations — is documented in `benchmark/README.md`.
 
 ## Gotchas
 
