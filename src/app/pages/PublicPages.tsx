@@ -1,10 +1,16 @@
 import type { CSSProperties } from 'react';
-import { selectableLevelGroups } from '../../levels';
+import { levelMetadatas, selectableLevelGroups } from '../../levels';
 import { rankCatalog } from '../../benchmark/catalog';
 import { homeCopy } from '../content';
 import { RouteLink } from '../components/RouteLink';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
+  const rankPreviewHeroes = ['mass-driver-vyxj', 'mass-driver-wo4m'].flatMap((levelId) => {
+    const entrant = rankCatalog.entrants.find((candidate) => candidate.levelId === levelId);
+    return entrant?.thumbnailPath ? [entrant.thumbnailPath] : [];
+  });
+
   return (
     <>
       <section className="hero page-panel hero-with-graphic">
@@ -19,16 +25,22 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
       </section>
       <section className="home-choice-grid" aria-label="Choose where to start">
         <article className="home-choice">
-          <p className="choice-eyebrow">{homeCopy.reference.eyebrow}</p>
-          <h2>{homeCopy.reference.title}</h2>
-          <p>{homeCopy.reference.body}</p>
-          <RouteLink className="button primary" href="/play/crystal-corridor" onNavigate={onNavigate}>{homeCopy.reference.action}</RouteLink>
+          {crystalHero && <div className="home-choice-media" aria-hidden="true"><img src={crystalHero} alt="" /></div>}
+          <div className="home-choice-copy">
+            <p className="choice-eyebrow">{homeCopy.reference.eyebrow}</p>
+            <h2>{homeCopy.reference.title}</h2>
+            <p>{homeCopy.reference.body}</p>
+            <RouteLink className="button primary" href="/play/crystal-corridor" onNavigate={onNavigate}>{homeCopy.reference.action}</RouteLink>
+          </div>
         </article>
         <article className="home-choice">
-          <p className="choice-eyebrow">{homeCopy.benchmark.eyebrow}</p>
-          <h2>{homeCopy.benchmark.title}</h2>
-          <p>{homeCopy.benchmark.body}</p>
-          <RouteLink className="button" href="/rank" onNavigate={onNavigate}>{homeCopy.benchmark.action}</RouteLink>
+          {rankPreviewHeroes.length > 0 && <div className="home-choice-media home-choice-media-pair" aria-hidden="true">{rankPreviewHeroes.map((heroPath) => <img src={heroPath} alt="" key={heroPath} />)}</div>}
+          <div className="home-choice-copy">
+            <p className="choice-eyebrow">{homeCopy.benchmark.eyebrow}</p>
+            <h2>{homeCopy.benchmark.title}</h2>
+            <p>{homeCopy.benchmark.body}</p>
+            <RouteLink className="button" href="/rank" onNavigate={onNavigate}>{homeCopy.benchmark.action}</RouteLink>
+          </div>
         </article>
       </section>
       <section className="home-note"><strong>Keep going to build your personal curve.</strong> {homeCopy.payoff}</section>

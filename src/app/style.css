@@ -87,8 +87,12 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 
 /* ---------- Home ---------- */
 .home-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: none; margin: 68px auto 0; }
-.home-choice { display: flex; flex-direction: column; align-items: flex-start; padding: 28px; background: var(--card); border: 1px solid var(--hairline); }
+.home-choice { display: flex; flex-direction: column; align-items: stretch; overflow: hidden; background: var(--card); border: 1px solid var(--hairline); }
 .home-choice:hover { border-color: var(--ink); }
+.home-choice-media { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #171b2a; }
+.home-choice-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.home-choice-media-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+.home-choice-copy { display: flex; flex: 1; flex-direction: column; align-items: flex-start; padding: 28px; }
 .choice-eyebrow { margin: 0 0 13px; color: var(--accent); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; }
 .home-choice:last-child .choice-eyebrow { color: var(--muted); }
 .home-choice h2 { margin: 0 0 11px; color: var(--ink); font-size: 21px; }
