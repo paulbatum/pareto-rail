@@ -23,124 +23,194 @@ export type GameMountOptions = {
   launchContext?: GameLaunchContext;
   showLevelPicker?: boolean;
   onRunEnd?: (summary: RunSummary, context?: GameLaunchContext) => void;
+  signal?: AbortSignal;
 };
 
 export type GameMount = { dispose(): void };
 
+type Disposer = () => void;
+
+const inertGameMount: GameMount = { dispose() {} };
+
 // A stale async mount must not clear the class for the mount that replaced it.
 const activeGameMounts = new Set<symbol>();
 
-export async function mountGame({ host, level, launchContext, showLevelPicker, onRunEnd }: GameMountOptions): Promise<GameMount> {
-  if (import.meta.env.DEV) installDevErrorOverlay();
-  const frame = host;
-  const releaseGameActivity = acquireGameActivity();
-  const removeUiShortcut = installUiShortcut();
-
-  if (!('gpu' in navigator)) {
-    showUnsupported(frame, 'This game requires WebGPU');
-    return { dispose() { removeUiShortcut(); releaseGameActivity(); } };
-  }
-
-  const app = frame.querySelector<HTMLElement>('[data-game="app"]')!;
-  const urlParams = new URLSearchParams(window.location.search);
-  const debugValue = import.meta.env.DEV && level.debugSelector
-    ? urlParams.get(level.debugSelector.queryParam) ?? undefined
-    : undefined;
-  const renderer = new WebGPURenderer({ antialias: true, alpha: false });
-  (renderer as WebGPURenderer & { _getFallback: null })._getFallback = null;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(level.post?.clearColor ?? 0x02040a, 1);
-  try {
-    await renderer.init();
-  } catch (error) {
-    console.error(error);
-    showUnsupported(frame, 'This game requires WebGPU');
-    return { dispose() { removeUiShortcut(); renderer.dispose(); releaseGameActivity(); } };
-  }
-  if (!host.isConnected) {
-    renderer.dispose();
-    return { dispose() { removeUiShortcut(); releaseGameActivity(); } };
-  }
-  app.append(renderer.domElement);
-
-  const scene = new Scene();
-  const camera = new PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
-  const hud = createHud({ showTimer: import.meta.env.DEV });
-  const bus = createEventBus();
-  const audio = level.createAudio(bus);
-  const legacyVolume = readStoredPercent('raild-volume', 50);
-  audio.setMusicVolume(readStoredPercent('raild-music-volume', legacyVolume) / 100);
-  audio.setSfxVolume(readStoredPercent('raild-sfx-volume', legacyVolume) / 100);
-  setBloomLevel(readStoredPercent('raild-bloom', 100) / 100);
-  setMotionBlurLevel(readStoredPercent('raild-motion-blur', 100) / 100);
-  audio.installGestureStart();
-  const post = createPost(renderer, scene, camera, level.post);
-  const perfParam = urlParams.get('perf');
-  const perfEnabled = perfParam === '1' || (import.meta.env.DEV && perfParam !== '0');
-  const perfOverlay = perfEnabled
-    ? (await import('../ui/perf-overlay')).createPerfOverlay({ renderer, scene, bus, levelId: level.id })
-    : null;
-
-  let paused = false;
+function createDisposerStack() {
+  const disposers: Disposer[] = [];
   let disposed = false;
-  let last = performance.now();
-  let setPaused = (_paused: boolean) => {};
-  const fullscreenAvailable = canUseFullscreen();
-  const togglePause = () => setPaused(!paused);
-  const toggleFullscreen = () => { if (fullscreenAvailable) void setFullscreen(!document.fullscreenElement); };
-  const pauseMenu = createPauseMenu({
-    root: frame,
-    fullscreenAvailable,
-    initialMusicVolume: audio.getMusicVolume() * 100,
-    initialSfxVolume: audio.getSfxVolume() * 100,
-    initialBloom: getBloomLevel() * 100,
-    initialMotionBlur: getMotionBlurLevel() * 100,
-    onResume: () => setPaused(false),
-    onEndRun: () => { bus.emit('runendrequest', undefined); setPaused(false); },
-    onFullscreen: toggleFullscreen,
-    onMusicVolume: (value) => { localStorage.setItem('raild-music-volume', `${value}`); audio.setMusicVolume(value / 100); },
-    onSfxVolume: (value) => { localStorage.setItem('raild-sfx-volume', `${value}`); audio.setSfxVolume(value / 100); },
-    onBloom: (value) => { localStorage.setItem('raild-bloom', `${value}`); setBloomLevel(value / 100); },
-    onMotionBlur: (value) => { localStorage.setItem('raild-motion-blur', `${value}`); setMotionBlurLevel(value / 100); },
-  });
-  setPaused = (nextPaused) => {
-    paused = nextPaused;
-    pauseMenu.setPaused(paused);
-    if (paused) void audio.suspend(); else void audio.start();
-    last = performance.now();
+  return {
+    add(disposer: Disposer) {
+      if (disposed) {
+        disposer();
+        return;
+      }
+      disposers.push(disposer);
+    },
+    dispose() {
+      if (disposed) return;
+      disposed = true;
+      let firstError: unknown;
+      for (let index = disposers.length - 1; index >= 0; index -= 1) {
+        try {
+          disposers[index]();
+        } catch (error) {
+          firstError ??= error;
+        }
+      }
+      if (firstError !== undefined) throw firstError;
+    },
+  };
+}
+
+// StrictMode, route changes, and hot updates may invalidate a mount before async initialization settles; cancellation and cleanup must remain idempotent.
+export async function mountGame({ host, level, launchContext, showLevelPicker, onRunEnd, signal }: GameMountOptions): Promise<GameMount> {
+  await Promise.resolve();
+  if (signal?.aborted) return inertGameMount;
+
+  const stack = createDisposerStack();
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    stack.dispose();
+  };
+  const abort = () => {
+    try {
+      dispose();
+    } catch (error) {
+      console.error('Game cleanup failed', error);
+    }
+    return inertGameMount;
   };
 
-  const runtime = level.createRuntime({ scene, camera, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(fullscreenAvailable), debugValue });
-  const offRunEnd = bus.on('runend', (summary) => {
-    onRunEnd?.(summary, launchContext);
-  });
-  const removeLevelPicker = showLevelPicker !== false
-    ? installLevelPicker(frame, level.id, import.meta.env.DEV)
-    : undefined;
-  let debugPanel: { dispose?: () => void } | undefined;
-  if (import.meta.env.DEV) {
-    try {
-      debugPanel = await import('../ui/debug-panel').then(({ installDebugPanel }) => installDebugPanel({ id: level.id, bpm: level.bpm, debugSelector: level.debugSelector, urlParams })) as { dispose?: () => void } | undefined;
-    } catch (error) {
-      console.warn('Debug panel failed to install', error);
-    }
-  }
-  const resize = () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setSize(window.innerWidth, window.innerHeight); };
-  window.addEventListener('resize', resize);
-  renderer.setAnimationLoop(() => {
-    if (disposed) return;
-    const now = performance.now(); const dtMs = now - last; const dt = Math.min(0.05, dtMs / 1000); last = now;
-    if (!paused) runtime.update(dt, now / 1000);
-    post.render({ advanceMotionBlur: !paused }); perfOverlay?.recordFrame(dtMs, now);
-  });
+  try {
+    if (import.meta.env.DEV) installDevErrorOverlay();
+    const releaseGameActivity = acquireGameActivity();
+    stack.add(releaseGameActivity);
+    const removeUiShortcut = installUiShortcut();
+    stack.add(removeUiShortcut);
 
-  return { dispose() {
-    if (disposed) return; disposed = true;
-    removeUiShortcut(); offRunEnd(); window.removeEventListener('resize', resize); renderer.setAnimationLoop(null);
-    perfOverlay?.dispose(); debugPanel?.dispose?.(); removeLevelPicker?.(); runtime.dispose(); audio.dispose(); bus.clear(); pauseMenu.dispose?.();
-    renderer.domElement.remove(); renderer.dispose(); releaseGameActivity();
-  } };
+    if (!('gpu' in navigator)) {
+      showUnsupported(host, 'This game requires WebGPU');
+      return { dispose };
+    }
+
+    const app = host.querySelector<HTMLElement>('[data-game="app"]')!;
+    const urlParams = new URLSearchParams(window.location.search);
+    const debugValue = import.meta.env.DEV && level.debugSelector
+      ? urlParams.get(level.debugSelector.queryParam) ?? undefined
+      : undefined;
+    const renderer = new WebGPURenderer({ antialias: true, alpha: false });
+    stack.add(() => {
+      renderer.domElement.remove();
+      renderer.dispose();
+    });
+    (renderer as WebGPURenderer & { _getFallback: null })._getFallback = null;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(level.post?.clearColor ?? 0x02040a, 1);
+    try {
+      await renderer.init();
+    } catch (error) {
+      if (signal?.aborted || !host.isConnected) return abort();
+      console.error(error);
+      showUnsupported(host, 'This game requires WebGPU');
+      return { dispose };
+    }
+    if (signal?.aborted || !host.isConnected) return abort();
+    app.append(renderer.domElement);
+
+    const scene = new Scene();
+    const camera = new PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
+    const hud = createHud({ showTimer: import.meta.env.DEV });
+    const bus = createEventBus();
+    stack.add(() => bus.clear());
+    const audio = level.createAudio(bus);
+    stack.add(() => audio.dispose());
+    const legacyVolume = readStoredPercent('raild-volume', 50);
+    audio.setMusicVolume(readStoredPercent('raild-music-volume', legacyVolume) / 100);
+    audio.setSfxVolume(readStoredPercent('raild-sfx-volume', legacyVolume) / 100);
+    setBloomLevel(readStoredPercent('raild-bloom', 100) / 100);
+    setMotionBlurLevel(readStoredPercent('raild-motion-blur', 100) / 100);
+    audio.installGestureStart();
+    const post = createPost(renderer, scene, camera, level.post);
+    const perfParam = urlParams.get('perf');
+    const perfEnabled = perfParam === '1' || (import.meta.env.DEV && perfParam !== '0');
+    const perfOverlay = perfEnabled
+      ? (await import('../ui/perf-overlay')).createPerfOverlay({ renderer, scene, bus, levelId: level.id })
+      : null;
+    if (perfOverlay) stack.add(() => perfOverlay.dispose());
+    if (signal?.aborted) return abort();
+
+    let paused = false;
+    let last = performance.now();
+    let setPaused = (_paused: boolean) => {};
+    const fullscreenAvailable = canUseFullscreen();
+    const togglePause = () => setPaused(!paused);
+    const toggleFullscreen = () => { if (fullscreenAvailable) void setFullscreen(!document.fullscreenElement); };
+    const pauseMenu = createPauseMenu({
+      root: host,
+      fullscreenAvailable,
+      initialMusicVolume: audio.getMusicVolume() * 100,
+      initialSfxVolume: audio.getSfxVolume() * 100,
+      initialBloom: getBloomLevel() * 100,
+      initialMotionBlur: getMotionBlurLevel() * 100,
+      onResume: () => setPaused(false),
+      onEndRun: () => { bus.emit('runendrequest', undefined); setPaused(false); },
+      onFullscreen: toggleFullscreen,
+      onMusicVolume: (value) => { localStorage.setItem('raild-music-volume', `${value}`); audio.setMusicVolume(value / 100); },
+      onSfxVolume: (value) => { localStorage.setItem('raild-sfx-volume', `${value}`); audio.setSfxVolume(value / 100); },
+      onBloom: (value) => { localStorage.setItem('raild-bloom', `${value}`); setBloomLevel(value / 100); },
+      onMotionBlur: (value) => { localStorage.setItem('raild-motion-blur', `${value}`); setMotionBlurLevel(value / 100); },
+    });
+    stack.add(() => pauseMenu.dispose?.());
+    setPaused = (nextPaused) => {
+      paused = nextPaused;
+      pauseMenu.setPaused(paused);
+      if (paused) void audio.suspend(); else void audio.start();
+      last = performance.now();
+    };
+
+    const runtime = level.createRuntime({ scene, camera, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(fullscreenAvailable), debugValue });
+    stack.add(() => runtime.dispose());
+    const offRunEnd = bus.on('runend', (summary) => {
+      onRunEnd?.(summary, launchContext);
+    });
+    stack.add(offRunEnd);
+    const removeLevelPicker = showLevelPicker !== false
+      ? installLevelPicker(host, level.id, import.meta.env.DEV)
+      : undefined;
+    if (removeLevelPicker) stack.add(removeLevelPicker);
+    if (import.meta.env.DEV) {
+      try {
+        const installedDebugPanel = await import('../ui/debug-panel').then(({ installDebugPanel }) => installDebugPanel({ id: level.id, bpm: level.bpm, debugSelector: level.debugSelector, urlParams })) as { dispose?: () => void } | undefined;
+        if (installedDebugPanel) stack.add(() => installedDebugPanel.dispose?.());
+      } catch (error) {
+        console.warn('Debug panel failed to install', error);
+      }
+      if (signal?.aborted) return abort();
+    }
+    const resize = () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setSize(window.innerWidth, window.innerHeight); };
+    window.addEventListener('resize', resize);
+    stack.add(() => window.removeEventListener('resize', resize));
+    renderer.setAnimationLoop(() => {
+      if (disposed) return;
+      const now = performance.now(); const dtMs = now - last; const dt = Math.min(0.05, dtMs / 1000); last = now;
+      if (!paused) runtime.update(dt, now / 1000);
+      post.render({ advanceMotionBlur: !paused }); perfOverlay?.recordFrame(dtMs, now);
+    });
+    stack.add(() => renderer.setAnimationLoop(null));
+
+    return { dispose };
+  } catch (error) {
+    try {
+      dispose();
+    } catch (cleanupError) {
+      console.error('Game cleanup failed', cleanupError);
+    }
+    if (signal?.aborted) return inertGameMount;
+    throw error;
+  }
 }
 
 function acquireGameActivity() {

@@ -23,7 +23,7 @@
   --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
 }
 
-body:not(.game-active) { overflow: auto; overflow-x: clip; cursor: auto; background: #FAF8F3; }
+body:not(.game-active) { overflow: auto; overflow-x: clip; background: #FAF8F3; }
 body:not(.game-active) #app { position: relative; min-height: 100dvh; height: auto; }
 .app-shell { width: 100%; max-width: 100%; min-height: 100dvh; overflow-x: clip; color: var(--ink); background: var(--paper); font-family: var(--sans); }
 
