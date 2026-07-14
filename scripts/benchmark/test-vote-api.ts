@@ -4,12 +4,13 @@ import { randomUUID } from 'node:crypto';
 import { getPrismaClient } from '../../server/prisma.ts';
 import { handleRankStatsRequest, handleRankVotesRequest } from '../../server/rank-http.ts';
 import { hashParticipant } from '../../server/rank-votes.ts';
-import { rankCatalog } from '../../src/benchmark/catalog.ts';
+import { activeCatalogVersion, rankCatalog } from '../../src/benchmark/catalog.ts';
 import { pairId } from '../../src/benchmark/scheduler.ts';
 
 const prisma = getPrismaClient();
-const theme = rankCatalog.themes[0];
-const entrants = rankCatalog.entrants.filter((entrant) => entrant.themeId === theme.id).slice(0, 2);
+const version = activeCatalogVersion(rankCatalog);
+const theme = version?.themes[0];
+const entrants = version?.entrants.filter((entrant) => entrant.themeId === theme?.id).slice(0, 2) ?? [];
 assert.ok(theme && entrants.length === 2, 'the published catalog needs two entrants for a vote test');
 
 const [a, b] = entrants;
@@ -18,7 +19,7 @@ const matchupId = pairId(theme.id, a.levelId, b.levelId);
 const payload = {
   matchupId,
   participantId,
-  benchmarkVersion: 'rank-catalog-v1',
+  benchmarkVersion: rankCatalog.activeBenchmarkVersion,
   themeId: theme.id,
   aLevelId: a.levelId,
   bLevelId: b.levelId,
@@ -46,8 +47,8 @@ assert.equal(await prisma.rankMatchup.count({ where: { id: matchupId } }), 1, 'd
 const forged = await vote({ ...payload, matchupId: `${theme.id}:forged__pair` });
 assert.equal(forged.status, 422);
 
-const otherTheme = rankCatalog.themes.find((candidate) => candidate.id !== theme.id);
-const otherEntrant = rankCatalog.entrants.find((entrant) => entrant.themeId === otherTheme?.id);
+const otherTheme = version?.themes.find((candidate) => candidate.id !== theme?.id);
+const otherEntrant = version?.entrants.find((entrant) => entrant.themeId === otherTheme?.id);
 assert.ok(otherTheme && otherEntrant);
 const wrongTheme = await vote({ ...payload, bLevelId: otherEntrant.levelId });
 assert.equal(wrongTheme.status, 422);

@@ -28,7 +28,7 @@ The protocol measures the complete isolated harness home with ccusage, including
 
 ## Public site publication
 
-The public rank catalog is generated with `npm run benchmark:export-rank-catalog`. The exporter reads the private schedule and run pricing together with public theme and level descriptors, and publishes a theme only when every scheduled level for that theme has a promoted directory; missing promotions therefore require no site code change. The browser-local scheduler starts with coverage-first pairings, favoring two unseen levels and alternating themes on ties, then moves to least-judged pairs for refinement. Run `npm run benchmark:export-rank-catalog`, `npm run test:benchmark-domain`, `npm run test:benchmark-catalog`, `npm run typecheck`, and `npm run build` when refreshing the publication.
+The public rank catalog is generated with `npm run benchmark:export-rank-catalog`. The exporter reads every private run schedule and its run pricing together with public theme and level descriptors, and publishes one retained version slice per schedule. A theme is published within a version only when every scheduled level for that theme has a promoted directory; missing promotions therefore require no site code change. The numerically greatest `v<n>` schedule is the active matchup pool. The browser-local scheduler starts with coverage-first pairings, favoring two unseen levels and alternating themes on ties, then moves to least-judged pairs for refinement. Run `npm run benchmark:export-rank-catalog`, `npm run test:benchmark-domain`, `npm run test:benchmark-catalog`, `npm run typecheck`, and `npm run build` when refreshing the publication.
 
 ## Ranking and rolling snapshots
 

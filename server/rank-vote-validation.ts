@@ -1,8 +1,7 @@
-import { rankCatalog, type RankCatalogEntrant } from '../src/benchmark/catalog.js';
+import { catalogVersion, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../src/benchmark/catalog.js';
 import { pairId } from '../src/benchmark/scheduler.js';
 import type { BenchmarkDataClass, VoteVerdict } from '../src/benchmark/types.js';
 
-export const RANK_BENCHMARK_VERSION = 'rank-catalog-v1';
 export const RANK_VOTE_SCHEMA_VERSION = 1;
 export const MAX_RANK_VOTE_BODY_BYTES = 8 * 1024;
 
@@ -48,7 +47,7 @@ export type RankVoteValidationResult =
   | { ok: true; value: ValidatedRankVote }
   | { ok: false; status: 400 | 422; error: string };
 
-export function validateRankVoteBody(value: unknown): RankVoteValidationResult {
+export function validateRankVoteBody(value: unknown, catalog: RankCatalog = rankCatalog): RankVoteValidationResult {
   if (!isRecord(value) || !hasOnlyAllowedKeys(value, TOP_LEVEL_KEYS)) {
     return invalid(400, 'Malformed vote payload');
   }
@@ -83,14 +82,13 @@ export function validateRankVoteBody(value: unknown): RankVoteValidationResult {
   const idempotencyKey = optionalString(value.idempotencyKey);
   if (value.idempotencyKey !== undefined && !idempotencyKey) return invalid(400, 'Malformed idempotencyKey');
 
-  const theme = rankCatalog.themes.find((candidate) => candidate.id === themeId);
-  const aEntrant = rankCatalog.entrants.find((entrant) => entrant.levelId === aLevelId);
-  const bEntrant = rankCatalog.entrants.find((entrant) => entrant.levelId === bLevelId);
+  const version = catalogVersion(catalog, benchmarkVersion);
+  if (!version) return invalid(422, 'Unsupported benchmark version');
+  const theme = version.themes.find((candidate) => candidate.id === themeId);
+  const aEntrant = version.entrants.find((entrant) => entrant.levelId === aLevelId);
+  const bEntrant = version.entrants.find((entrant) => entrant.levelId === bLevelId);
   if (!theme || !aEntrant || !bEntrant || aEntrant.themeId !== themeId || bEntrant.themeId !== themeId || aLevelId === bLevelId) {
     return invalid(422, 'Matchup is not in the published catalog');
-  }
-  if (benchmarkVersion !== RANK_BENCHMARK_VERSION) {
-    return invalid(422, 'Unsupported benchmark version');
   }
   if (matchupId !== pairId(themeId, aLevelId, bLevelId)) {
     return invalid(422, 'Matchup id does not match the presented pair');

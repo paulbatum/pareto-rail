@@ -1,8 +1,9 @@
 import {
   recomputePersonalCurve,
   personalHistoryFromReveals,
+  type PersonalHistoryEntry,
 } from '../benchmark/personal-curve';
-import { rankCatalog } from '../benchmark/catalog';
+import { activeCatalogVersion, allCatalogEntrants, findCatalogVersionForLevels, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
 import { ComparisonStateMachine } from '../benchmark/state';
 import { BenchmarkLocalStore, type CompletedMatchup } from '../benchmark/storage';
 import { RemoteVoteRecorder, type RemoteVotePayload } from '../benchmark/remote-recorder';
@@ -17,6 +18,15 @@ import type {
 
 export type RankLaunch = { side: MatchupSide; levelId: string };
 type Listener = () => void;
+
+export function selectPersonalCurveCatalog(catalog: RankCatalog, history: readonly PersonalHistoryEntry[]): readonly RankCatalogEntrant[] {
+  const configurationIds = new Set(activeCatalogVersion(catalog)?.entrants.map((entrant) => entrant.configurationId));
+  for (const entry of history) {
+    if (entry.a.configurationId) configurationIds.add(entry.a.configurationId);
+    if (entry.b.configurationId) configurationIds.add(entry.b.configurationId);
+  }
+  return allCatalogEntrants(catalog).filter((entrant) => configurationIds.has(entrant.configurationId));
+}
 
 /** Participant-facing benchmark controller. It owns workflow state and API
  * calls; React owns the participant-facing rendering. */
@@ -46,9 +56,8 @@ export class RankController {
   get debugSnapshot() { return this.store.snapshot; }
   get curve() {
     const data = this.store.snapshot;
-    return recomputePersonalCurve(personalHistoryFromReveals(data.history, data.completedMatchups.map((item) => item.reveal)), {
-      catalog: rankCatalog.entrants,
-    });
+    const history = personalHistoryFromReveals(data.history, data.completedMatchups.map((item) => item.reveal));
+    return recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history) });
   }
 
   subscribe(listener: Listener) {
@@ -227,15 +236,16 @@ function remotePayload(assignment: MatchupAssignment, vote: MatchupVote, store: 
 function assignmentFromCompleted(completed: CompletedMatchup): MatchupAssignment | null {
   const separator = completed.matchupId.indexOf(':');
   const themeId = separator > 0 ? completed.matchupId.slice(0, separator) : '';
-  const theme = rankCatalog.themes.find((candidate) => candidate.id === themeId);
-  if (!theme) return null;
+  const version = findCatalogVersionForLevels(rankCatalog, completed.reveal.a.levelId, completed.reveal.b.levelId);
+  const theme = version?.themes.find((candidate) => candidate.id === themeId);
+  if (!version || !theme) return null;
   const preVote = (side: MatchupSide) => {
     const entrant = completed.reveal[side];
     return { playableRef: entrant.playableRef, ...(entrant.thumbnailPath ? { thumbnailPath: entrant.thumbnailPath } : {}) };
   };
   return {
     matchupId: completed.matchupId,
-    benchmarkVersion: 'rank-catalog-v1',
+    benchmarkVersion: version.benchmarkVersion,
     theme,
     a: preVote('a'),
     b: preVote('b'),

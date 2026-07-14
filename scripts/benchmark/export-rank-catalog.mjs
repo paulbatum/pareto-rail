@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const schedulePath = path.join(root, 'benchmark/private/run-schedule.json');
+const privateRoot = path.join(root, 'benchmark/private');
 const themesRoot = path.join(root, 'benchmark/themes');
 const levelsRoot = path.join(root, 'src/benchmark-levels');
 const outputPath = path.join(levelsRoot, '..', 'benchmark', 'rank-catalog.json');
@@ -161,22 +161,42 @@ function entrantFor(assignment, cost, manifest) {
   };
 }
 
-function main() {
-  const schedule = readJson(schedulePath);
-  if (!Array.isArray(schedule.assignments)) throw new Error('The run schedule has no assignments array.');
+function scheduleVersionNumber(benchmarkVersion) {
+  const match = /^v([1-9][0-9]*)$/.exec(benchmarkVersion);
+  if (!match) throw new Error(`Schedule benchmarkVersion must use v<number>, received ${benchmarkVersion}.`);
+  return Number(match[1]);
+}
+
+function scheduleFiles() {
+  return fs.readdirSync(privateRoot)
+    .filter((fileName) => /^run-schedule.*\.json$/.test(fileName))
+    .map((fileName) => path.join(privateRoot, fileName))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function buildVersion(schedule, generatedAt) {
+  if (!Array.isArray(schedule.assignments)) throw new Error(`Schedule ${schedule.benchmarkVersion} has no assignments array.`);
+  // The public label registry is the exporter-owned allowlist for catalog
+  // configurations. Schedules can contain later registrations before their
+  // public labels and presentation assets are ready.
+  const publicAssignments = schedule.assignments.filter((assignment) => configurationLabels[assignment.configurationId]);
+  const withheld = schedule.assignments.filter((assignment) => !configurationLabels[assignment.configurationId]);
+  for (const assignment of withheld) {
+    console.warn(`Withholding ${assignment.levelId} from ${schedule.benchmarkVersion}: configuration ${assignment.configurationId} has no public label.`);
+  }
 
   // Validate every already-promoted assignment before applying theme completeness.
   // This prevents a bad promoted entry from being silently hidden by an incomplete
   // theme while still allowing not-yet-promoted assignments to remain unpublished.
   const runData = new Map();
-  for (const assignment of schedule.assignments) {
+  for (const assignment of publicAssignments) {
     if (!promotedDirectory(assignment.levelId)) continue;
     const manifest = runManifest(assignment);
     runData.set(assignment.levelId, { manifest, cost: generationCost(assignment, manifest) });
   }
 
   const assignmentsByTheme = new Map();
-  for (const assignment of schedule.assignments) {
+  for (const assignment of publicAssignments) {
     const themeId = assignment.theme?.id;
     if (!themeId) throw new Error(`Scheduled assignment ${assignment.levelId} has no theme id.`);
     const assignments = assignmentsByTheme.get(themeId) ?? [];
@@ -196,6 +216,34 @@ function main() {
     }
   }
 
+  return {
+    benchmarkVersion: `rank-catalog-${schedule.benchmarkVersion}`,
+    generatedAt,
+    themes,
+    entrants,
+  };
+}
+
+function main() {
+  const files = scheduleFiles();
+  if (files.length === 0) throw new Error(`No benchmark schedules found in ${path.relative(root, privateRoot)} matching run-schedule*.json.`);
+
+  const schedules = files.map((filePath) => ({ filePath, schedule: readJson(filePath) }));
+  const seenVersions = new Set();
+  for (const { filePath, schedule } of schedules) {
+    if (!schedule || typeof schedule !== 'object' || typeof schedule.benchmarkVersion !== 'string' || schedule.benchmarkVersion.length === 0) {
+      throw new Error(`Schedule ${path.relative(root, filePath)} is missing benchmarkVersion.`);
+    }
+    if (seenVersions.has(schedule.benchmarkVersion)) {
+      throw new Error(`Duplicate schedule benchmarkVersion ${schedule.benchmarkVersion}.`);
+    }
+    seenVersions.add(schedule.benchmarkVersion);
+    schedule.versionNumber = scheduleVersionNumber(schedule.benchmarkVersion);
+  }
+  schedules.sort((left, right) => left.schedule.versionNumber - right.schedule.versionNumber || left.schedule.benchmarkVersion.localeCompare(right.schedule.benchmarkVersion));
+
+  const generatedAt = new Date().toISOString();
+  const versions = schedules.map(({ schedule }) => buildVersion(schedule, generatedAt));
   const configurations = Object.entries(configurationLabels).map(([id, labels]) => ({
     id,
     ...labels,
@@ -204,13 +252,15 @@ function main() {
     } : {}),
   }));
   const catalog = {
-    generatedAt: new Date().toISOString(),
+    generatedAt,
+    activeBenchmarkVersion: versions.at(-1).benchmarkVersion,
     configurations,
-    themes,
-    entrants,
+    versions,
   };
   fs.writeFileSync(outputPath, `${JSON.stringify(catalog, null, 2)}\n`);
-  console.log(`Wrote ${path.relative(root, outputPath)} with ${entrants.length} entrants across ${themes.length} themes.`);
+  const entrants = versions.reduce((total, version) => total + version.entrants.length, 0);
+  const themes = versions.reduce((total, version) => total + version.themes.length, 0);
+  console.log(`Wrote ${path.relative(root, outputPath)} with ${entrants} entrants across ${themes} themes in ${versions.length} benchmark versions.`);
 }
 
 try {

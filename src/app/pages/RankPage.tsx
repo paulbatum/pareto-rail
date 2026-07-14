@@ -4,7 +4,7 @@ import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, RevealPayload, VoteVerdict } from '../../benchmark/types';
 import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { CatalogBenchmarkApi } from '../../benchmark/catalog-api';
-import { rankCatalog, type RankCatalogConfiguration } from '../../benchmark/catalog';
+import { allCatalogEntrants, catalogLevelIds, catalogThemeIds, findCatalogTheme, rankCatalog, type RankCatalogConfiguration } from '../../benchmark/catalog';
 import { BenchmarkLocalStore, type CompletedMatchup } from '../../benchmark/storage';
 import { RankController, type RankLaunch } from '../rank';
 import { RouteLink } from '../components/RouteLink';
@@ -127,7 +127,7 @@ function RevealStage({ reveal, onNext }: { reveal: RevealPayload; onNext: () => 
 }
 
 function GenerationDetails({ entrant }: { entrant: RevealPayload['a'] }) {
-  const published = rankCatalog.entrants.find((candidate) => candidate.levelId === entrant.levelId);
+  const published = allCatalogEntrants(rankCatalog).find((candidate) => candidate.levelId === entrant.levelId);
   const run = entrant.run ?? published?.run;
   if (!run) return null;
   const configuration = configurationFor(entrant.configurationId);
@@ -358,7 +358,7 @@ function entrantIdentity(entrant: RevealPayload['a']): string {
 function themeTitleForMatchup(matchupId: string): string {
   const separator = matchupId.indexOf(':');
   const themeId = separator > 0 ? matchupId.slice(0, separator) : matchupId;
-  return rankCatalog.themes.find((theme) => theme.id === themeId)?.title ?? themeId;
+  return findCatalogTheme(rankCatalog, themeId)?.title ?? themeId;
 }
 
 function PersonalCurveTable({ points, showFrontier, onNavigate }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean; onNavigate: (path: string) => void }) {
@@ -378,11 +378,11 @@ function configurationFor(configurationId?: string): RankCatalogConfiguration | 
 }
 
 function levelsForConfiguration(configurationId: string): { levelId: string; themeTitle: string }[] {
-  return rankCatalog.entrants
+  return allCatalogEntrants(rankCatalog)
     .filter((entrant) => entrant.configurationId === configurationId)
     .map((entrant) => ({
       levelId: entrant.levelId,
-      themeTitle: rankCatalog.themes.find((theme) => theme.id === entrant.themeId)?.title ?? entrant.themeId,
+      themeTitle: findCatalogTheme(rankCatalog, entrant.themeId)?.title ?? entrant.themeId,
     }))
     .sort((left, right) => left.themeTitle.localeCompare(right.themeTitle));
 }
@@ -549,10 +549,7 @@ function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavi
 
 function createRankController(): RankController {
   const store = new BenchmarkLocalStore();
-  store.pruneToCatalog(
-    new Set(rankCatalog.entrants.map((entrant) => entrant.levelId)),
-    new Set(rankCatalog.themes.map((theme) => theme.id)),
-  );
+  store.pruneToCatalog(catalogLevelIds(rankCatalog), catalogThemeIds(rankCatalog));
   const api = new CatalogBenchmarkApi(rankCatalog, store);
   return new RankController({ api, store, resolvePlayable: (ref) => ref });
 }

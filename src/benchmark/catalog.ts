@@ -27,11 +27,57 @@ export interface RankCatalogEntrant {
   dataClass?: BenchmarkDataClass;
 }
 
-export interface RankCatalog {
+export interface RankCatalogVersion {
+  benchmarkVersion: string;
   generatedAt: string;
-  configurations?: readonly RankCatalogConfiguration[];
   themes: readonly BenchmarkTheme[];
   entrants: readonly RankCatalogEntrant[];
+}
+
+export interface RankCatalog {
+  generatedAt: string;
+  activeBenchmarkVersion: string;
+  configurations?: readonly RankCatalogConfiguration[];
+  versions: readonly RankCatalogVersion[];
+}
+
+export function activeCatalogVersion(catalog: RankCatalog): RankCatalogVersion | undefined {
+  return catalog.versions.find((version) => version.benchmarkVersion === catalog.activeBenchmarkVersion);
+}
+
+export function catalogVersion(catalog: RankCatalog, benchmarkVersion: string): RankCatalogVersion | undefined {
+  return catalog.versions.find((version) => version.benchmarkVersion === benchmarkVersion);
+}
+
+export function allCatalogEntrants(catalog: RankCatalog): readonly RankCatalogEntrant[] {
+  return catalog.versions.flatMap((version) => version.entrants);
+}
+
+export function allCatalogThemes(catalog: RankCatalog): readonly BenchmarkTheme[] {
+  return catalog.versions.flatMap((version) => version.themes);
+}
+
+export function findCatalogEntrant(catalog: RankCatalog, levelId: string): RankCatalogEntrant | undefined {
+  return allCatalogEntrants(catalog).find((entrant) => entrant.levelId === levelId);
+}
+
+export function findCatalogTheme(catalog: RankCatalog, themeId: string): BenchmarkTheme | undefined {
+  return allCatalogThemes(catalog).find((theme) => theme.id === themeId);
+}
+
+export function findCatalogVersionForLevels(catalog: RankCatalog, levelIdA: string, levelIdB: string): RankCatalogVersion | undefined {
+  return catalog.versions.find((version) => {
+    const levelIds = new Set(version.entrants.map((entrant) => entrant.levelId));
+    return levelIds.has(levelIdA) && levelIds.has(levelIdB);
+  });
+}
+
+export function catalogLevelIds(catalog: RankCatalog): ReadonlySet<string> {
+  return new Set(allCatalogEntrants(catalog).map((entrant) => entrant.levelId));
+}
+
+export function catalogThemeIds(catalog: RankCatalog): ReadonlySet<string> {
+  return new Set(allCatalogThemes(catalog).map((theme) => theme.id));
 }
 
 export const rankCatalog = rawCatalog as RankCatalog;

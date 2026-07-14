@@ -240,7 +240,7 @@ The results page should also link to:
 
 There is no account system.
 
-On first participation, generate a random browser participant id and store it locally. Browser storage holds:
+On first participation, generate a random browser participant id and store it locally. Browser storage holds cumulative data across published benchmark versions:
 
 - participant id;
 - completed matchup ids and votes;
@@ -316,7 +316,7 @@ Preserve raw append-only votes. Corrections should create explicit administrativ
 
 ## Benchmark catalog and blinding boundary
 
-Introduce a generated public catalog that joins only publishable material needed by the web experience:
+Introduce a generated public catalog that joins only publishable material needed by the web experience. The catalog has a top-level active benchmark version and retained per-version slices; configurations are keyed at the top level so the same configuration id can be compared across versions:
 
 - benchmark version;
 - public theme text;
@@ -329,7 +329,7 @@ Introduce a generated public catalog that joins only publishable material needed
 
 Generate it from redacted manifests and integrated level metadata after the relevant ranking snapshot is locked and unblinded. Never generate it from `benchmark/private/` in a production build.
 
-Keep pre-vote and reveal metadata as separate server projections even if they originate in one protected database row. This reduces accidental identity leaks in API responses and frontend bundles.
+Keep pre-vote and reveal metadata as separate server projections even if they originate in one protected database row. This reduces accidental identity leaks in API responses and frontend bundles. Matchup ids remain unnamespaced by version; the explicit benchmark version on assignments and votes identifies the retained slice. New assignments use the active slice, while retained slices remain available for unfinished rounds and old votes. The personal Pareto curve aggregates revealed evidence by configuration id across all retained slices.
 
 The existing benchmark owner's ranked-set and pairwise files remain immutable protocol artifacts. Public web votes are additional evidence and must not overwrite, masquerade as, or automatically lock those records.
 

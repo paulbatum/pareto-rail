@@ -6,7 +6,9 @@ import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
 import { CatalogBenchmarkApi } from './catalog-api';
 import { nextScheduledMatchup, pairId } from './scheduler';
 import { mapVerdict, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
-import type { RankCatalog, RankCatalogEntrant } from './catalog';
+import type { RankCatalog, RankCatalogEntrant, RankCatalogVersion } from './catalog';
+import { selectPersonalCurveCatalog } from '../app/rank';
+import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import { ComparisonStateMachine } from './state';
 import { BENCHMARK_STORAGE_VERSION, BenchmarkLocalStore, createMemoryStorage, type StorageEnvelope } from './storage';
 import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve';
@@ -41,6 +43,11 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testThemeBalance();
   testConvergenceAndStability();
   testSameConfigurationPairs();
+  testVersionedSchedulerPool();
+  testVersionedPruning();
+  testVersionedPersonalCurveCatalog();
+  await testInactiveVersionRestore();
+  testVersionedVoteValidation();
   await testApisAndStateMachine();
 }
 
@@ -321,6 +328,113 @@ function testSameConfigurationPairs(): void {
   assert.equal(nextScheduledMatchup(catalog, 'same-config', { judged: [], levelExposureCounts: {} }), null, 'same-configuration levels are never paired');
 }
 
+function testVersionedSchedulerPool(): void {
+  const inactive = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', 'v1');
+  const active = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', 'v2');
+  const next = nextScheduledMatchup(active, 'versioned-scheduler', { judged: [], levelExposureCounts: {} });
+  assert.ok(next);
+  assert.ok(active.entrants.some((entrant) => entrant.levelId === next!.levelIdA));
+  assert.ok(active.entrants.some((entrant) => entrant.levelId === next!.levelIdB));
+  assert.equal(inactive.entrants.some((entrant) => entrant.levelId === next!.levelIdA), false);
+  assert.equal(inactive.entrants.some((entrant) => entrant.levelId === next!.levelIdB), false);
+  const oldMatchup = pairId(inactive.themes[0]!.id, inactive.entrants[0]!.levelId, inactive.entrants[1]!.levelId);
+  const afterOldHistory = nextScheduledMatchup(active, 'versioned-scheduler', {
+    judged: [{ matchupId: oldMatchup, relative: 'a' }],
+    levelExposureCounts: { [inactive.entrants[0]!.levelId]: 99, [inactive.entrants[1]!.levelId]: 99 },
+  });
+  assert.ok(afterOldHistory);
+  assert.ok(active.entrants.some((entrant) => entrant.levelId === afterOldHistory!.levelIdA));
+  assert.ok(active.entrants.some((entrant) => entrant.levelId === afterOldHistory!.levelIdB));
+}
+
+function testVersionedPruning(): void {
+  const inactive = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', 'v1');
+  const active = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', 'v2');
+  const oldA = inactive.entrants[0]!;
+  const oldB = inactive.entrants[1]!;
+  const theme = inactive.themes[0]!;
+  const matchupId = pairId(theme.id, oldA.levelId, oldB.levelId);
+  const vote: MatchupVote = { matchupId, aEntrantId: oldA.levelId, bEntrantId: oldB.levelId, verdict: 'a-better', relative: 'a', playCounts: { a: 1, b: 1 }, submittedAt: 'now' };
+  const reveal = {
+    matchupId,
+    a: { entrantId: oldA.levelId, playableRef: oldA.levelId, levelId: oldA.levelId, modelName: oldA.modelName, workflowName: oldA.workflowName, generationCost: oldA.generationCost, dataClass: 'eligible' as const },
+    b: { entrantId: oldB.levelId, playableRef: oldB.levelId, levelId: oldB.levelId, modelName: oldB.modelName, workflowName: oldB.workflowName, generationCost: oldB.generationCost, dataClass: 'eligible' as const },
+    vote,
+  };
+  const store = new BenchmarkLocalStore(createMemoryStorage(), 'versioned-prune');
+  store.completeMatchup({ matchupId, vote, reveal });
+  const unfinished: MatchupAssignment = { matchupId: 'unfinished-v1', benchmarkVersion: inactive.benchmarkVersion, theme, a: { playableRef: oldA.levelId }, b: { playableRef: oldB.levelId }, assignedAt: 'now' };
+  store.setUnfinishedMatchup({ kind: 'assignment', assignment: unfinished, playCounts: { a: 0, b: 0 } });
+  store.pruneToCatalog(
+    new Set([...inactive.entrants, ...active.entrants].map((entrant) => entrant.levelId)),
+    new Set([...inactive.themes, ...active.themes].map((candidate) => candidate.id)),
+  );
+  assert.equal(store.snapshot.completedMatchups.length, 1, 'inactive-version completed matchup was pruned');
+  assert.equal(store.snapshot.history.length, 1, 'inactive-version vote history was pruned');
+  assert.equal(store.snapshot.revealedEntrants.length, 2, 'inactive-version reveal was pruned');
+  assert.equal(store.snapshot.unfinishedMatchup?.assignment.benchmarkVersion, inactive.benchmarkVersion, 'inactive-version unfinished matchup was pruned');
+}
+
+function testVersionedPersonalCurveCatalog(): void {
+  const theme = { id: 'versioned-theme', title: 'Versioned', summary: 'S', prompt: 'P' };
+  const entrant = (levelId: string, configurationId: string, generationCost: number): RankCatalogEntrant => ({ levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost });
+  const inactive: RankCatalogVersion = { benchmarkVersion: 'rank-catalog-v1', generatedAt: 'test', themes: [theme], entrants: [entrant('v1-shared', 'shared', 10), entrant('v1-played', 'inactive-played', 30), entrant('v1-never', 'inactive-never', 50)] };
+  const active: RankCatalogVersion = { benchmarkVersion: 'rank-catalog-v2', generatedAt: 'test', themes: [theme], entrants: [entrant('v2-shared', 'shared', 40), entrant('v2-active', 'active', 20), entrant('v2-unplayed', 'active-unplayed', 60)] };
+  const catalog = makeRankCatalog(inactive, active);
+  const history = [
+    historyEntry('shared-vote', 'shared', 'active', 'a', 10, 20),
+    historyEntry('inactive-vote', 'inactive-played', 'active', 'b', 30, 20),
+  ];
+  const selected = selectPersonalCurveCatalog(catalog, history);
+  assert.equal(selected.some((item) => item.configurationId === 'v1-never'), false, 'unplayed inactive configuration was included');
+  assert.equal(selected.some((item) => item.configurationId === 'inactive-played'), true, 'played inactive configuration was omitted');
+  const curve = recomputePersonalCurve(history, { catalog: selected });
+  assert.equal(curve.points.find((point) => point.configurationId === 'shared')?.meanCost, 25, 'shared configuration costs were not pooled across versions');
+  assert.equal(curve.points.find((point) => point.configurationId === 'active-unplayed')?.status, 'pending', 'unplayed active configuration was not shown as pending');
+}
+
+async function testInactiveVersionRestore(): Promise<void> {
+  const inactive = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', 'v1');
+  const active = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', 'v2');
+  const catalog = makeRankCatalog(inactive, active);
+  const oldA = inactive.entrants[0]!;
+  const oldB = inactive.entrants[1]!;
+  const theme = inactive.themes[0]!;
+  const assignment: MatchupAssignment = {
+    matchupId: pairId(theme.id, oldA.levelId, oldB.levelId),
+    benchmarkVersion: inactive.benchmarkVersion,
+    theme,
+    a: { playableRef: oldA.levelId },
+    b: { playableRef: oldB.levelId },
+    assignedAt: 'now',
+  };
+  const store = new BenchmarkLocalStore(createMemoryStorage(), 'inactive-restore');
+  store.setUnfinishedMatchup({ kind: 'assignment', assignment, playCounts: { a: 0, b: 0 } });
+  const api = new CatalogBenchmarkApi(catalog, store);
+  const participantId = store.participantId;
+  await api.recordPlay({ matchupId: assignment.matchupId, participantId, side: 'a' });
+  await api.recordPlay({ matchupId: assignment.matchupId, participantId, side: 'b' });
+  assert.equal(store.snapshot.unfinishedMatchup?.assignment.benchmarkVersion, inactive.benchmarkVersion);
+  await api.submitVote({ matchupId: assignment.matchupId, participantId, verdict: 'a-better', playCounts: { a: 1, b: 1 } });
+  const reveal = await api.reveal(assignment.matchupId, participantId);
+  assert.equal(reveal.a.levelId, oldA.levelId);
+  assert.equal(reveal.b.levelId, oldB.levelId);
+  assert.equal(store.snapshot.completedMatchups.length, 1);
+}
+
+function testVersionedVoteValidation(): void {
+  const inactive = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', 'v1');
+  const active = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', 'v2');
+  const catalog = makeRankCatalog(inactive, active);
+  const oldTheme = inactive.themes[0]!;
+  const oldA = inactive.entrants[0]!;
+  const oldB = inactive.entrants[1]!;
+  const base = { matchupId: pairId(oldTheme.id, oldA.levelId, oldB.levelId), participantId: 'participant', benchmarkVersion: inactive.benchmarkVersion, themeId: oldTheme.id, aLevelId: oldA.levelId, bLevelId: oldB.levelId, verdict: 'both-good', playCounts: { a: 1, b: 1 } };
+  assert.equal(validateRankVoteBody(base, catalog).ok, true, 'valid inactive-version vote was rejected');
+  assert.equal(validateRankVoteBody({ ...base, benchmarkVersion: 'rank-catalog-v9' }, catalog).ok, false, 'unknown benchmark version was accepted');
+  assert.equal(validateRankVoteBody({ ...base, benchmarkVersion: active.benchmarkVersion }, catalog).ok, false, 'version/entrant mismatch was accepted');
+}
+
 async function testApisAndStateMachine(): Promise<void> {
   const machine = new ComparisonStateMachine(assignment());
   machine.startA(); machine.completeRun('a'); machine.startB(); machine.completeRun('b');
@@ -339,7 +453,8 @@ async function testApisAndStateMachine(): Promise<void> {
   assert.equal((await fixture.submitVote({ matchupId: first!.matchupId, participantId: 'p1', verdict: 'a-better', playCounts: { a: 1, b: 1 } })).matchupId, vote.matchupId);
   await assert.rejects(() => fixture.submitVote({ matchupId: first!.matchupId, participantId: 'p1', verdict: 'b-better', playCounts: { a: 1, b: 1 } }), /different vote/);
 
-  const catalog = makeSchedulerCatalog(4, 2);
+  const version = makeSchedulerCatalog(4, 2);
+  const catalog = makeRankCatalog(version);
   const storage = createMemoryStorage();
   const store = new BenchmarkLocalStore(storage, 'catalog-api');
   const api = new CatalogBenchmarkApi(catalog, store);
@@ -357,7 +472,7 @@ async function testApisAndStateMachine(): Promise<void> {
   assert.deepEqual(store.snapshot.unfinishedMatchup?.playCounts, { a: 1, b: 1 });
 }
 
-function simulateAssignments(catalog: RankCatalog, count: number, participantId = 'test-participant'): { judged: Judged[]; exposures: Record<string, number>; themes: string[]; assignments: { themeId: string; levelIdA: string; levelIdB: string }[] } {
+function simulateAssignments(catalog: RankCatalogVersion, count: number, participantId = 'test-participant'): { judged: Judged[]; exposures: Record<string, number>; themes: string[]; assignments: { themeId: string; levelIdA: string; levelIdB: string }[] } {
   const judged: Judged[] = [];
   const exposures: Record<string, number> = {};
   const themes: string[] = [];
@@ -371,11 +486,11 @@ function simulateAssignments(catalog: RankCatalog, count: number, participantId 
   return { judged, exposures, themes, assignments };
 }
 
-function scheduleOne(catalog: RankCatalog, judged: readonly Judged[], exposures: Readonly<Record<string, number>>, themes: readonly string[], participantId = 'test-participant') {
+function scheduleOne(catalog: RankCatalogVersion, judged: readonly Judged[], exposures: Readonly<Record<string, number>>, themes: readonly string[], participantId = 'test-participant') {
   return nextScheduledMatchup(catalog, participantId, { judged, levelExposureCounts: exposures, themeHistory: themes });
 }
 
-function appendJudgment(catalog: RankCatalog, matchup: { themeId: string; levelIdA: string; levelIdB: string }, judged: Judged[], exposures: Record<string, number>, themes: string[]): void {
+function appendJudgment(catalog: RankCatalogVersion, matchup: { themeId: string; levelIdA: string; levelIdB: string }, judged: Judged[], exposures: Record<string, number>, themes: string[]): void {
   const a = catalog.entrants.find((entrant) => entrant.levelId === matchup.levelIdA)!;
   const b = catalog.entrants.find((entrant) => entrant.levelId === matchup.levelIdB)!;
   const aIndex = Number(a.configurationId.split('-').at(-1));
@@ -386,7 +501,7 @@ function appendJudgment(catalog: RankCatalog, matchup: { themeId: string; levelI
   themes.push(matchup.themeId);
 }
 
-function curveFromJudged(catalog: RankCatalog, judged: readonly Judged[]) {
+function curveFromJudged(catalog: RankCatalogVersion, judged: readonly Judged[]) {
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const history = judged.flatMap((item): PersonalHistoryEntry[] => {
     const parsed = parseMatchup(item.matchupId);
@@ -410,8 +525,8 @@ function historyEntry(matchupId: string, aConfigurationId: string, bConfiguratio
   return { vote, a: { configurationId: aConfigurationId, modelName: aConfigurationId, workflowName: 'solo', generationCost: aCost }, b: { configurationId: bConfigurationId, modelName: bConfigurationId, workflowName: 'solo', generationCost: bCost } };
 }
 
-function makeSchedulerCatalog(configurations: number, themeCount: number, sameConfiguration = false, featuredConfigurations: readonly number[] = []): RankCatalog {
-  const themes = Array.from({ length: themeCount }, (_, index) => ({ id: `theme-${String.fromCharCode(97 + index)}`, title: `Theme ${index}`, summary: 'S', prompt: 'P' }));
+function makeSchedulerCatalog(configurations: number, themeCount: number, sameConfiguration = false, featuredConfigurations: readonly number[] = [], benchmarkVersion = 'rank-catalog-v1', slotPrefix = ''): RankCatalogVersion {
+  const themes = Array.from({ length: themeCount }, (_, index) => ({ id: `${slotPrefix ? `${slotPrefix}-` : ''}theme-${String.fromCharCode(97 + index)}`, title: `Theme ${index}`, summary: 'S', prompt: 'P' }));
   const entrants: RankCatalogEntrant[] = themes.flatMap((theme) => Array.from({ length: configurations }, (_, index) => ({
     levelId: `${theme.id}-${index}`,
     themeId: theme.id,
@@ -421,10 +536,15 @@ function makeSchedulerCatalog(configurations: number, themeCount: number, sameCo
     generationCost: index + 1,
     ...(featuredConfigurations.includes(index) ? { featured: true } : {}),
   })));
-  return { generatedAt: 'test', themes, entrants };
+  return { benchmarkVersion, generatedAt: 'test', themes, entrants };
 }
 
-function configurationPairFromMatchup(catalog: RankCatalog, matchupId: string): string {
+function makeRankCatalog(...versions: readonly RankCatalogVersion[]): RankCatalog {
+  const selected = versions.length > 0 ? versions : [makeSchedulerCatalog(2, 1)];
+  return { generatedAt: 'test', activeBenchmarkVersion: selected.at(-1)!.benchmarkVersion, versions: selected };
+}
+
+function configurationPairFromMatchup(catalog: RankCatalogVersion, matchupId: string): string {
   const parsed = parseMatchup(matchupId)!;
   const a = catalog.entrants.find((entrant) => entrant.levelId === parsed.levelA)!;
   const b = catalog.entrants.find((entrant) => entrant.levelId === parsed.levelB)!;

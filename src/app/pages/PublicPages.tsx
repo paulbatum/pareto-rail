@@ -1,13 +1,13 @@
 import type { CSSProperties } from 'react';
 import { levelMetadatas, selectableLevelGroups } from '../../levels';
-import { rankCatalog } from '../../benchmark/catalog';
+import { allCatalogEntrants, rankCatalog } from '../../benchmark/catalog';
 import { homeCopy } from '../content';
 import { RouteLink } from '../components/RouteLink';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
   const rankPreviewHeroes = ['mass-driver-vyxj', 'mass-driver-wo4m'].flatMap((levelId) => {
-    const entrant = rankCatalog.entrants.find((candidate) => candidate.levelId === levelId);
+    const entrant = allCatalogEntrants(rankCatalog).find((candidate) => candidate.levelId === levelId);
     return entrant?.thumbnailPath ? [entrant.thumbnailPath] : [];
   });
 

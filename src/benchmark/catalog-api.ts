@@ -1,6 +1,6 @@
 import { initialComparisonState, type ComparisonState } from './types';
 import { mapVerdict, type BenchmarkApi, type MatchupAssignment, type MatchupVote, type NextMatchupRequest, type PlayCounts, type RecordPlayRequest, type RevealPayload, type SubmitVoteRequest } from './types';
-import type { RankCatalog, RankCatalogEntrant } from './catalog';
+import { activeCatalogVersion, allCatalogEntrants, findCatalogVersionForLevels, type RankCatalog, type RankCatalogEntrant } from './catalog';
 import { nextScheduledMatchup, pairId } from './scheduler';
 import { BenchmarkLocalStore } from './storage';
 
@@ -29,19 +29,21 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
   async nextMatchup(request: NextMatchupRequest): Promise<MatchupAssignment | null> {
     this.requireParticipant(request.participantId);
     const data = this.store.snapshot;
-    const scheduled = nextScheduledMatchup(this.catalog, this.store.participantId, {
+    const activeVersion = activeCatalogVersion(this.catalog);
+    if (!activeVersion) return null;
+    const scheduled = nextScheduledMatchup(activeVersion, this.store.participantId, {
       judged: data.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })),
       levelExposureCounts: data.levelExposureCounts,
       themeHistory: data.themeHistory,
     });
     if (!scheduled) return null;
-    const theme = this.catalog.themes.find((candidate) => candidate.id === scheduled.themeId);
+    const theme = activeVersion.themes.find((candidate) => candidate.id === scheduled.themeId);
     const a = this.entrant(scheduled.levelIdA);
     const b = this.entrant(scheduled.levelIdB);
     if (!theme || !a || !b) return null;
     const assignment: MatchupAssignment = {
       matchupId: pairId(theme.id, a.levelId, b.levelId),
-      benchmarkVersion: 'rank-catalog-v1',
+      benchmarkVersion: this.catalog.activeBenchmarkVersion,
       theme,
       a: { playableRef: a.levelId, ...(a.thumbnailPath ? { thumbnailPath: a.thumbnailPath } : {}) },
       b: { playableRef: b.levelId, ...(b.thumbnailPath ? { thumbnailPath: b.thumbnailPath } : {}) },
@@ -121,11 +123,12 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
     }
     const completed = this.store.snapshot.completedMatchups.find((item) => item.matchupId === matchupId);
     const parsed = parseMatchupId(matchupId);
-    const theme = parsed ? this.catalog.themes.find((candidate) => candidate.id === parsed.themeId) : undefined;
-    if (!completed || !parsed || !theme) throw new Error('Unknown matchup');
+    const version = parsed ? findCatalogVersionForLevels(this.catalog, parsed.levelA, parsed.levelB) : undefined;
+    const theme = version && parsed ? version.themes.find((candidate) => candidate.id === parsed.themeId) : undefined;
+    if (!completed || !parsed || !version || !theme) throw new Error('Unknown matchup');
     const assignment: MatchupAssignment = {
       matchupId,
-      benchmarkVersion: 'rank-catalog-v1',
+      benchmarkVersion: version.benchmarkVersion,
       theme,
       a: { playableRef: completed.reveal.a.playableRef, ...(completed.reveal.a.thumbnailPath ? { thumbnailPath: completed.reveal.a.thumbnailPath } : {}) },
       b: { playableRef: completed.reveal.b.playableRef, ...(completed.reveal.b.thumbnailPath ? { thumbnailPath: completed.reveal.b.thumbnailPath } : {}) },
@@ -144,7 +147,7 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
   }
 
   private entrant(levelId: string): RankCatalogEntrant | undefined {
-    return this.catalog.entrants.find((candidate) => candidate.levelId === levelId);
+    return allCatalogEntrants(this.catalog).find((candidate) => candidate.levelId === levelId);
   }
 
   private requireParticipant(participantId: string): void {

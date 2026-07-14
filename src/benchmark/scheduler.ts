@@ -1,4 +1,4 @@
-import type { RankCatalog, RankCatalogEntrant } from './catalog';
+import type { RankCatalogEntrant, RankCatalogVersion } from './catalog';
 import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve.js';
 import type { MatchupVote, RelativeOutcome } from './types';
 
@@ -34,7 +34,7 @@ interface PairCandidate {
 }
 
 /** Choose the next anonymous comparison without mutable or wall-clock state. */
-export function nextScheduledMatchup(catalog: RankCatalog, participantId: string, history: SchedulerHistory = {}): ScheduledMatchup | null {
+export function nextScheduledMatchup(catalog: RankCatalogVersion, participantId: string, history: SchedulerHistory = {}): ScheduledMatchup | null {
   if (!participantId || catalog.themes.length === 0) return null;
   const entrantsByTheme = new Map(catalog.themes.map((theme) => [theme.id, catalog.entrants.filter((entrant) => entrant.themeId === theme.id)]));
   const judged = history.judged ?? [];
@@ -56,7 +56,7 @@ export function nextScheduledMatchup(catalog: RankCatalog, participantId: string
 }
 
 function selectCoveragePhase(
-  catalog: RankCatalog,
+  catalog: RankCatalogVersion,
   entrantsByTheme: ReadonlyMap<string, readonly RankCatalogEntrant[]>,
   candidates: readonly PairCandidate[],
   exposureCounts: ReadonlyMap<string, number>,
@@ -103,7 +103,7 @@ function selectCoveragePhase(
 }
 
 function selectPlayoffPhase(
-  catalog: RankCatalog,
+  catalog: RankCatalogVersion,
   candidates: readonly PairCandidate[],
   judged: readonly { matchupId: string; relative: RelativeOutcome }[],
   lastThemeId: string | undefined,
@@ -188,7 +188,7 @@ function pairsForTheme(
   return candidates;
 }
 
-function countJudgedPairs(catalog: RankCatalog, judged: readonly { matchupId: string; relative: RelativeOutcome }[]): Map<string, number> {
+function countJudgedPairs(catalog: RankCatalogVersion, judged: readonly { matchupId: string; relative: RelativeOutcome }[]): Map<string, number> {
   const knownIds = new Set(catalog.entrants.map((entrant) => entrant.levelId));
   const counts = new Map<string, number>();
   for (const item of judged) {
@@ -200,7 +200,7 @@ function countJudgedPairs(catalog: RankCatalog, judged: readonly { matchupId: st
   return counts;
 }
 
-function countJudgedConfigurationPairs(catalog: RankCatalog, judged: readonly { matchupId: string; relative: RelativeOutcome }[]): Map<string, number> {
+function countJudgedConfigurationPairs(catalog: RankCatalogVersion, judged: readonly { matchupId: string; relative: RelativeOutcome }[]): Map<string, number> {
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const counts = new Map<string, number>();
   for (const item of judged) {
@@ -215,7 +215,7 @@ function countJudgedConfigurationPairs(catalog: RankCatalog, judged: readonly { 
 }
 
 function exposureMap(
-  catalog: RankCatalog,
+  catalog: RankCatalogVersion,
   history: SchedulerHistory,
   judged: readonly { matchupId: string; relative: RelativeOutcome }[],
 ): Map<string, number> {
@@ -228,14 +228,14 @@ function exposureMap(
     counts.set(parsed.levelB, (counts.get(parsed.levelB) ?? 0) + 1);
   }
   if (history.levelExposureCounts instanceof Map) {
-    for (const [levelId, count] of history.levelExposureCounts) counts.set(levelId, count);
+    for (const [levelId, count] of history.levelExposureCounts) if (knownIds.has(levelId)) counts.set(levelId, count);
   } else if (history.levelExposureCounts) {
-    for (const [levelId, count] of Object.entries(history.levelExposureCounts)) counts.set(levelId, count);
+    for (const [levelId, count] of Object.entries(history.levelExposureCounts)) if (knownIds.has(levelId)) counts.set(levelId, count);
   }
   return counts;
 }
 
-function schedulerCurve(catalog: RankCatalog, judged: readonly { matchupId: string; relative: RelativeOutcome }[]) {
+function schedulerCurve(catalog: RankCatalogVersion, judged: readonly { matchupId: string; relative: RelativeOutcome }[]) {
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const history: PersonalHistoryEntry[] = [];
   for (const item of judged) {
