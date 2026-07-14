@@ -4,9 +4,9 @@ import { RouteLink } from '../components/RouteLink';
 
 const navigation = [
   { href: '/', label: 'Home' },
-  { href: '/play', label: 'Play' },
   { href: '/rank', label: 'Rank' },
   { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/play', label: 'Levels' },
   { href: '/about', label: 'About' },
 ];
 
