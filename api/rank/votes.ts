@@ -1,9 +1,7 @@
 import { handleRankVotesRequest } from '../../server/rank-http.js';
 import { getPrismaClient } from '../../server/prisma.js';
 
-export const runtime = 'nodejs';
-
-export default async function handler(request: Request): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   try {
     return await handleRankVotesRequest(request, getPrismaClient(), requestIp(request));
   } catch (error) {

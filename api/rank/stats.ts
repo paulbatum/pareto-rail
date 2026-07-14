@@ -1,9 +1,7 @@
 import { handleRankStatsRequest } from '../../server/rank-http.js';
 import { getPrismaClient } from '../../server/prisma.js';
 
-export const runtime = 'nodejs';
-
-export default async function handler(request: Request): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   try {
     return await handleRankStatsRequest(request, getPrismaClient());
   } catch (error) {
