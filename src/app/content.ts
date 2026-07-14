@@ -15,5 +15,4 @@ export const homeCopy = {
     body: 'Play two anonymous model-built levels, then choose the one you prefer. Model names stay hidden until after you vote.',
     action: 'Start ranking',
   },
-  payoff: 'After four matchups, see which models best balance quality and cost for you.',
 } as const;

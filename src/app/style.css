@@ -56,7 +56,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
   align-items: stretch;
   width: 100vw;
   max-width: none;
-  min-height: min(554px, calc(70svh - 50px));
+  min-height: min(354px, calc(45svh - 32px));
   margin-left: calc((100% - 100vw) / 2);
   padding: 0;
   border-bottom: 1px solid var(--hairline);
@@ -65,11 +65,11 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(72px, 8vw, 148px) clamp(20px, 5vw, 87px);
+  padding: clamp(48px, 4vw, 56px) clamp(20px, 5vw, 87px);
 }
 .hero-graphic {
   position: relative;
-  min-height: 520px;
+  min-height: 333px;
   overflow: hidden;
   border-left: 1px solid var(--hairline);
 }
@@ -89,16 +89,18 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .home-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: none; margin: 68px auto 0; }
 .home-choice { display: flex; flex-direction: column; align-items: stretch; overflow: hidden; background: var(--card); border: 1px solid var(--hairline); }
 .home-choice:hover { border-color: var(--ink); }
-.home-choice-media { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #171b2a; }
+.home-choice.recommended { border-color: var(--accent); box-shadow: 0 8px 24px rgb(232 93 147 / 12%); }
+.home-choice.recommended:hover { border-color: var(--accent); }
+.home-choice-media { width: 80%; margin: 20px auto; aspect-ratio: 20 / 9; overflow: hidden; background: #171b2a; }
 .home-choice-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.home-choice-media-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+.home-choice-media-pair { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+.home-choice-vs { position: absolute; top: 50%; left: 50%; display: grid; width: 28px; height: 28px; place-items: center; color: var(--paper); background: var(--ink); border: 1px solid var(--paper); border-radius: 50%; font: 10px var(--mono); letter-spacing: .04em; transform: translate(-50%, -50%); }
 .home-choice-copy { display: flex; flex: 1; flex-direction: column; align-items: flex-start; padding: 28px; }
+.home-choice-copy .button { align-self: center; }
 .choice-eyebrow { margin: 0 0 13px; color: var(--accent); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; }
 .home-choice:last-child .choice-eyebrow { color: var(--muted); }
 .home-choice h2 { margin: 0 0 11px; color: var(--ink); font-size: 21px; }
 .home-choice p:not(.choice-eyebrow) { flex: 1; margin: 0 0 22px; color: var(--soft-text); line-height: 1.6; }
-.home-note { max-width: 680px; margin-top: 48px; padding: 18px 0 0; color: var(--soft-text); border-top: 1px solid var(--hairline); border-left: none; line-height: 1.6; }
-.home-note strong { color: var(--ink); }
 
 /* ---------- Buttons ---------- */
 .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); font: inherit; font-size: 11px; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; cursor: pointer; transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease; }
@@ -342,7 +344,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 
 /* ---------- Typography system ---------- */
 .app-shell h1, .app-shell h2, .app-shell h3 { font-family: inherit; font-weight: 700; letter-spacing: -.025em; }
-.app-shell .page-panel h1 { max-width: 900px; font-size: clamp(38px, 6vw, 60px); font-weight: 750; font-variation-settings: 'wdth' 88; line-height: .98; letter-spacing: -.035em; }
+.app-shell .page-panel h1 { font-size: clamp(38px, 6vw, 60px); font-weight: 750; font-variation-settings: 'wdth' 88; line-height: .98; letter-spacing: -.035em; }
 .app-shell .eyebrow,
 .app-shell .choice-eyebrow,
 .app-shell .step,
@@ -393,8 +395,8 @@ html:fullscreen .game-toolbar { display: none; }
   .protocol-grid, .data-dictionary, .verdict-run-grid { grid-template-columns: 1fr; }
   .run-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero-with-graphic { grid-template-columns: 1fr; min-height: 0; }
-  .hero-copy { padding-top: 72px; padding-bottom: 72px; }
-  .hero-graphic { min-height: 294px; border-top: 1px solid var(--hairline); border-left: none; }
+  .hero-copy { padding-top: 48px; padding-bottom: 48px; }
+  .hero-graphic { min-height: 188px; border-top: 1px solid var(--hairline); border-left: none; }
   .info-grid, .reveal-grid { grid-template-columns: 1fr; }
   .compare-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .versus-divider { flex-direction: row; min-height: 20px; }

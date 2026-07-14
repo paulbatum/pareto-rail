@@ -24,26 +24,25 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
         </div>
       </section>
       <section className="home-choice-grid" aria-label="Choose where to start">
-        <article className="home-choice">
-          {crystalHero && <div className="home-choice-media" aria-hidden="true"><img src={crystalHero} alt="" /></div>}
+        <article className="home-choice recommended">
           <div className="home-choice-copy">
             <p className="choice-eyebrow">{homeCopy.reference.eyebrow}</p>
             <h2>{homeCopy.reference.title}</h2>
             <p>{homeCopy.reference.body}</p>
             <RouteLink className="button primary" href="/play/crystal-corridor" onNavigate={onNavigate}>{homeCopy.reference.action}</RouteLink>
           </div>
+          {crystalHero && <div className="home-choice-media" aria-hidden="true"><img src={crystalHero} alt="" /></div>}
         </article>
         <article className="home-choice">
-          {rankPreviewHeroes.length > 0 && <div className="home-choice-media home-choice-media-pair" aria-hidden="true">{rankPreviewHeroes.map((heroPath) => <img src={heroPath} alt="" key={heroPath} />)}</div>}
           <div className="home-choice-copy">
             <p className="choice-eyebrow">{homeCopy.benchmark.eyebrow}</p>
             <h2>{homeCopy.benchmark.title}</h2>
             <p>{homeCopy.benchmark.body}</p>
             <RouteLink className="button" href="/rank" onNavigate={onNavigate}>{homeCopy.benchmark.action}</RouteLink>
           </div>
+          {rankPreviewHeroes.length > 0 && <div className="home-choice-media home-choice-media-pair" aria-hidden="true">{rankPreviewHeroes.map((heroPath) => <img src={heroPath} alt="" key={heroPath} />)}<span className="home-choice-vs">VS</span></div>}
         </article>
       </section>
-      <section className="home-note"><strong>Keep going to build your personal curve.</strong> {homeCopy.payoff}</section>
     </>
   );
 }
