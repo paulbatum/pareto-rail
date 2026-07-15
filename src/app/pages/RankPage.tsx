@@ -313,7 +313,7 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
       </div>}
     </div>
     <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; dashed points are early estimates that firm up with more matchups.</p>
-    <PersonalCurveTable points={curve.points} showFrontier onNavigate={onNavigate} />
+    <PersonalCurveTable points={placedPoints} showFrontier onNavigate={onNavigate} />
     <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} /></details>
   </section>;
 }
