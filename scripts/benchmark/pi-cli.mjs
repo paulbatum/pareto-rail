@@ -53,8 +53,12 @@ async function main() {
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
   assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'provider', 'timeout-seconds', 'budget-usd', 'pi-bin']));
-  // Task budgets need a per-tool-use spend hook and a resume loop; pi exposes no hook surface the
-  // budget poller can attach to, so a budgeted definition must not silently run unbudgeted.
+  // Task budgets are implementable here but unbuilt, so a budgeted definition must fail rather than
+  // silently run unbudgeted. Spend polling would work as-is (pi flushes its session as it goes, so
+  // ccusage prices a live run), and notices have a home: an extension on `tool_execution_end` calling
+  // `pi.sendMessage(..., { deliverAs: 'steer' })`, in place of the hooks.json command the other
+  // adapters use. The unresolved part is reconciliation across resume rounds — see benchmark/README.md
+  // on why the final round's counter is the run's counter for Codex and Claude but not for pi.
   if (options['budget-usd'] !== undefined) fail('The pi adapter does not implement task budgets; register this configuration without a stage budget.');
 
   const worktree = path.resolve(requireOption(options, 'worktree'));
