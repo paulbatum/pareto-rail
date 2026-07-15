@@ -18,7 +18,9 @@ export const CCUSAGE_CLI = path.join(ROOT, 'node_modules/ccusage/src/cli.js');
 const HARNESS = {
   'claude-cli': { view: 'claude', totalsCostKey: 'totalCost', shape: 'model-breakdowns', scope: { kind: 'env', homeEnvVar: 'CLAUDE_CONFIG_DIR' } },
   'codex-cli': { view: 'codex', totalsCostKey: 'costUSD', shape: 'models-map', scope: { kind: 'env', homeEnvVar: 'CODEX_HOME' } },
-  'pi-cli': { view: 'pi', totalsCostKey: 'totalCost', shape: 'model-breakdowns', scope: { kind: 'path-flag', flag: '--pi-path', homeRelative: 'sessions' } },
+  // ccusage labels every pi model `[pi] <id>` for display. That prefix is a ccusage artifact, not
+  // part of the model's identity, so it is stripped here rather than recorded in a run manifest.
+  'pi-cli': { view: 'pi', totalsCostKey: 'totalCost', shape: 'model-breakdowns', modelNamePrefix: '[pi] ', scope: { kind: 'path-flag', flag: '--pi-path', homeRelative: 'sessions' } },
 };
 
 export function harnessForAdapter(adapter) {
@@ -40,7 +42,8 @@ export function summarizeCost(adapter, report) {
   const totalTokens = numberOr(totals.totalTokens, 0);
 
   const models = new Map();
-  const accumulate = (name, { inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, cacheWriteTokens = 0, reasoningTokens = 0, costUsd = null }) => {
+  const accumulate = (rawName, { inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, cacheWriteTokens = 0, reasoningTokens = 0, costUsd = null }) => {
+    const name = harness.modelNamePrefix && rawName.startsWith(harness.modelNamePrefix) ? rawName.slice(harness.modelNamePrefix.length) : rawName;
     const current = models.get(name) ?? { modelName: name, costUsd: null, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, reasoningTokens: 0 };
     current.inputTokens += inputTokens;
     current.outputTokens += outputTokens;

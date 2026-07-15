@@ -21,10 +21,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 // Codex, so `ultra` is rejected here rather than silently downgraded to `max`.
 const THINKING = new Set(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
 
-// ccusage's pi view labels every model `[pi] <model-id>`. Cost rows are keyed by that label, so the
-// adapter reports its own counter and parent model under the same label the cost summary will use.
-const COST_MODEL_PREFIX = '[pi] ';
-
 // Providers that authenticate with an API key rather than pi's stored OAuth credential, and the env
 // var each reads. A project-provisioned key in the repository `.env` takes precedence over whatever
 // pi already holds; absent one, the child inherits nothing and pi falls back to its own credential.
@@ -79,7 +75,6 @@ async function main() {
     model,
     provider: provider ?? null,
     selectedThinkingLevel: effort,
-    costModelName: `${COST_MODEL_PREFIX}${model}`,
   });
 
   const credential = await resolveProviderKey(provider);
@@ -219,7 +214,7 @@ function extractUsage(eventLog, model) {
     totals.cacheWriteTokens += requireCount(usage.cacheWrite ?? 0, `message ${index + 1} cacheWrite`);
     totals.reasoningTokens += requireCount(usage.reasoning ?? 0, `message ${index + 1} reasoning`);
 
-    const name = `${COST_MODEL_PREFIX}${event.message.model ?? model}`;
+    const name = event.message.model ?? model;
     const current = perModel.get(name) ?? { outputTokens: 0, costUSD: 0 };
     current.outputTokens += output;
     current.costUSD += numberOr(usage.cost?.total, 0);
@@ -233,8 +228,8 @@ function extractUsage(eventLog, model) {
 
   return {
     sessionId: session.id,
-    // Matched against the ccusage per-model rows in the runner's stage split, which use this label.
-    initResolvedModel: `${COST_MODEL_PREFIX}${assistant.at(-1).message.model ?? model}`,
+    // Matched against the cost summary's per-model rows in the runner's stage split.
+    initResolvedModel: assistant.at(-1).message.model ?? model,
     assistantMessageCount: assistant.length,
     finalMessage,
     normalized: {
