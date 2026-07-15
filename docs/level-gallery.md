@@ -335,6 +335,31 @@ Built to the standing brief from the Mass Driver theme assignment. Verified by t
 
 ---
 
+# Prism Ember
+
+A minimal early proof-out: a short warm luminous rail with gates, comets, and echoes arranged in fan waves. It demonstrates a separate level module but is permanently ineligible benchmark smoke adaptation.
+
+## Visual language
+Glassy prism targets, bloom-oriented shapes, spiral, zipper, and bloom movement patterns, and procedural grid letters for the shared START and REPLAY flow.
+
+## Musical language
+96 BPM, compact bell and low-pulse material, shimmer delay, simple scale motion, and basic lock, fire, hit, kill, miss, and reject sounds.
+
+## Mechanical signature
+A 30-second run with three enemy kinds, fan-built waves, spiral, zipper, and bloom offsets, and simple per-kind scoring.
+
+## What to read
+- `src/levels/prism/index.ts`
+- `src/levels/prism/gameplay.ts`
+- `src/levels/prism/audio.ts`
+- `src/levels/prism/visuals.ts`
+
+## Status & notes
+Minimal early proof-out, permanently ineligible benchmark smoke adaptation.
+Inspection captures: `bloom` (bloom pattern, bar 6), `finale` (final gate wave, bar 10).
+
+---
+
 # Skyhook
 
 A sixty-second defense of Climber 07 on its full space-elevator ascent: storm-grey weather falls away into hard blue sunlight, indigo thin air, black orbit, and the open capture jaws of the station. The tether never leaves the frame; at the summit, a vast crawler uses it to climb down toward the car.
