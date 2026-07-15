@@ -79,8 +79,6 @@ function CrystalInvitation({ onNavigate }: { onNavigate: (path: string) => void 
       <p><strong>Crystal Corridor</strong> is the polished reference. Ready to see what models can build?</p>
       <div className="invitation-actions">
         <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank model levels</RouteLink>
-        <RouteLink className="button" href="/play/crystal-corridor" onNavigate={onNavigate}>Replay Crystal</RouteLink>
-        <RouteLink className="button" href="/levels" onNavigate={onNavigate}>Explore levels</RouteLink>
       </div>
     </section>
   );

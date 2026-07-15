@@ -87,8 +87,8 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
     if (import.meta.env.DEV) installDevErrorOverlay();
     const releaseGameActivity = acquireGameActivity();
     stack.add(releaseGameActivity);
-    const removeUiShortcut = installUiShortcut();
-    stack.add(removeUiShortcut);
+    const removeUiVisibilityControls = installUiVisibilityControls();
+    stack.add(removeUiVisibilityControls);
 
     if (!('gpu' in navigator)) {
       showUnsupported(host, 'This game requires WebGPU');
@@ -224,17 +224,23 @@ function acquireGameActivity() {
   };
 }
 
-function installUiShortcut() {
-  let uiHidden = false;
+function installUiVisibilityControls() {
+  let shortcutUiHidden = false;
+  const updateUiVisibility = () => {
+    document.body.classList.toggle('game-ui-hidden', shortcutUiHidden || Boolean(document.fullscreenElement));
+  };
   const onKeyDown = (event: KeyboardEvent) => {
     if (!event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.key.toLowerCase() !== 'd') return;
     event.preventDefault();
-    uiHidden = !uiHidden;
-    document.body.classList.toggle('game-ui-hidden', uiHidden);
+    shortcutUiHidden = !shortcutUiHidden;
+    updateUiVisibility();
   };
   window.addEventListener('keydown', onKeyDown);
+  document.addEventListener('fullscreenchange', updateUiVisibility);
+  updateUiVisibility();
   return () => {
     window.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('fullscreenchange', updateUiVisibility);
     document.body.classList.remove('game-ui-hidden');
   };
 }
