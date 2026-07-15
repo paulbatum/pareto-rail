@@ -4,7 +4,7 @@ Pareto Rail is a procedural WebGPU rail shooter and a public benchmark experienc
 
 The production site is [paretorail.vercel.app](https://paretorail.vercel.app/).
 
-The main routes are `/play`, `/rank`, `/leaderboard`, and `/about`. Existing links such as `?level=crystal-corridor` remain supported.
+The main routes are `/levels`, `/play/<id>`, `/rank`, `/leaderboard`, and `/about`. Older links such as `/play` and `?level=crystal-corridor` remain supported.
 
 ## Run it
 

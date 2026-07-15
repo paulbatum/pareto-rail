@@ -1,5 +1,4 @@
-import type { CSSProperties } from 'react';
-import { levelMetadatas, selectableLevelGroups } from '../../levels';
+import { levelMetadatas } from '../../levels';
 import { allCatalogEntrants, rankCatalog } from '../../benchmark/catalog';
 import { homeCopy } from '../content';
 import { RouteLink } from '../components/RouteLink';
@@ -89,54 +88,6 @@ function HeroTunnel() {
   );
 }
 
-export function PlayPage({ activeId, onNavigate }: { activeId?: string; onNavigate: (path: string) => void }) {
-  const groups = selectableLevelGroups();
-  const sections = [
-    { label: 'Built-in levels', levels: groups.builtIn, meta: (id: string) => id === 'crystal-corridor' ? 'Reference run' : 'Built-in level' },
-    { label: 'Benchmark levels', levels: groups.benchmark, meta: (id: string) => `Benchmark output · ${levelIdSuffix(id)}` },
-  ];
-
-  return (
-    <section className="page-panel">
-      <p className="eyebrow">Play</p>
-      <h1>Choose a level</h1>
-      <p className="lede">Start with Crystal Corridor, then explore the curated collection and generated benchmark outputs.</p>
-      <div className="level-groups">
-        {sections.map((section) => section.levels.length > 0 && (
-          <section className="level-group" key={section.label}>
-            <h2>{section.label}</h2>
-            <div className="level-grid">
-              {section.levels.map((level) => (
-                <RouteLink
-                  className={`level-card${level.id === activeId ? ' selected' : ''}${level.contentImages ? ' has-content' : ' text-only'}`}
-                  style={level.contentImages ? undefined : { '--card-hue': levelCardHue(level.id) } as CSSProperties}
-                  href={`/play/${encodeURIComponent(level.id)}`}
-                  onNavigate={onNavigate}
-                  key={level.id}
-                >
-                  {level.contentImages && (
-                    <span className="level-card-images" aria-label={`${level.title} visual preview`}>
-                      <img className="level-card-hero" src={level.contentImages.hero} alt={`${level.title} highlight`} loading="lazy" />
-                      <span className="level-card-supporting">
-                        <img src={level.contentImages.overview} alt={`${level.title} four-moment overview`} loading="lazy" />
-                        <img src={level.contentImages.start} alt={`${level.title} start screen`} loading="lazy" />
-                      </span>
-                    </span>
-                  )}
-                  <span className="level-card-copy">
-                    <span className="level-card-title">{level.title}</span>
-                    <span className="level-card-meta">{section.meta(level.id)}</span>
-                  </span>
-                </RouteLink>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <section className="page-panel">
@@ -201,14 +152,4 @@ export function NotFoundPage({ onNavigate }: { onNavigate: (path: string) => voi
       <RouteLink className="button primary" href="/" onNavigate={onNavigate}>Return home</RouteLink>
     </section>
   );
-}
-
-function levelCardHue(id: string): number {
-  let hash = 0;
-  for (const character of id) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  return 178 + (hash % 150);
-}
-
-function levelIdSuffix(id: string): string {
-  return id.slice(id.lastIndexOf('-') + 1);
 }

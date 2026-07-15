@@ -19,7 +19,7 @@ export type GameFrameProps = {
   runEndContent?: ReactNode;
 };
 
-export function GameFrame({ level, title = level.title, backPath = '/play', backLabel = 'Levels', launchContext, showLevelPicker, onNavigate, onRunEnd, runEndContent }: GameFrameProps) {
+export function GameFrame({ level, title = level.title, backPath = '/levels', backLabel = 'Levels', launchContext, showLevelPicker, onNavigate, onRunEnd, runEndContent }: GameFrameProps) {
   const frameRef = useRef<HTMLElement>(null);
   const runtimeRef = useRef<HTMLDivElement>(null);
   const [endPanel, setEndPanel] = useState<HTMLElement | null>(null);
@@ -80,7 +80,7 @@ function CrystalInvitation({ onNavigate }: { onNavigate: (path: string) => void 
       <div className="invitation-actions">
         <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank model levels</RouteLink>
         <RouteLink className="button" href="/play/crystal-corridor" onNavigate={onNavigate}>Replay Crystal</RouteLink>
-        <RouteLink className="button" href="/play" onNavigate={onNavigate}>Explore levels</RouteLink>
+        <RouteLink className="button" href="/levels" onNavigate={onNavigate}>Explore levels</RouteLink>
       </div>
     </section>
   );

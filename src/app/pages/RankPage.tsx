@@ -7,6 +7,7 @@ import { CatalogBenchmarkApi } from '../../benchmark/catalog-api';
 import { allCatalogEntrants, catalogLevelIds, catalogThemeIds, findCatalogTheme, rankCatalog, type RankCatalogConfiguration } from '../../benchmark/catalog';
 import { BenchmarkLocalStore, type CompletedMatchup } from '../../benchmark/storage';
 import { RankController, type RankLaunch } from '../rank';
+import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
 import type { AppRoute } from '../router';
 import { GameFrame } from '../components/LazyGameFrame';
@@ -466,24 +467,6 @@ function debugCurrentMatchup(controller: RankController): string[] {
     levelLine('b'),
     ...(state.kind === 'reveal' ? [`A_REVEAL | ${debugEntrant(state.reveal.a)}`, `B_REVEAL | ${debugEntrant(state.reveal.b)}`] : []),
   ];
-}
-
-async function copyText(text: string): Promise<void> {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      return;
-    }
-  } catch { /* fall back for browsers that deny the async clipboard API */ }
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.style.position = 'fixed';
-  textarea.style.opacity = '0';
-  document.body.append(textarea);
-  textarea.select();
-  const copied = document.execCommand('copy');
-  textarea.remove();
-  if (!copied) throw new Error('Clipboard API unavailable');
 }
 
 function ticksFromZero(maximum: number, intervals: number): number[] {

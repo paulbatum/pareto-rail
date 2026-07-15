@@ -92,32 +92,6 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .button.primary { color: var(--paper); background: var(--ink); border-color: var(--ink); }
 .button.primary:hover, .button.primary:focus-visible { box-shadow: 3px 3px 0 var(--accent-tint); }
 
-/* ---------- Play: level lists ---------- */
-.level-groups { display: grid; gap: 36px; }
-.level-group h2 { margin: 0 0 12px; color: var(--muted); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
-.level-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-.level-card { display: grid; gap: 10px; min-height: 104px; padding: 18px; color: var(--ink); background: var(--card); border: 1px solid var(--hairline); text-decoration: none; }
-.level-card.has-content { gap: 0; padding: 0; overflow: hidden; }
-.level-card:hover, .level-card.selected { border-color: var(--ink); background: var(--card); }
-.level-card.selected { border-color: var(--accent); }
-.level-card-images { display: grid; gap: 4px; background: var(--hairline-2); }
-.level-card-images img { display: block; width: 100%; object-fit: cover; }
-.level-card-hero { aspect-ratio: 16 / 9; }
-.level-card-supporting { display: grid; grid-template-columns: 1.07fr 1fr; gap: 4px; }
-.level-card-supporting img { aspect-ratio: 16 / 9; }
-.level-card-copy { display: grid; gap: 8px; padding: 16px 18px; }
-.level-card-title { color: var(--ink); font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
-.level-card-meta, .muted { color: var(--muted); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; }
-
-/* Text-only benchmark cards: quiet reticle mark replaces the neon hue system.
-   --card-hue from PublicPages.tsx is intentionally unused. */
-.level-card.text-only { position: relative; grid-template-rows: auto; min-height: 146px; padding: 18px; overflow: hidden; background: var(--card); border-color: var(--hairline); }
-.level-card.text-only::before { content: ''; display: block; width: 26px; height: 26px; border: 1.3px solid var(--ink); transform: rotate(45deg); margin: 4px 0 10px 4px; }
-.level-card.text-only::after { content: ''; position: absolute; top: 26px; left: 26px; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; transform: translate(-50%, -50%); }
-.level-card.text-only .level-card-copy { position: relative; z-index: 1; gap: 7px; padding: 0; }
-.level-card.text-only .level-card-title { font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
-.level-card.text-only .level-card-meta { color: var(--muted); }
-
 /* ---------- Info / prose / misc ---------- */
 .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 42px 0; }
 .info-grid > div { padding: 20px; border-top: 1px solid var(--ink); background: var(--card); }
@@ -335,8 +309,6 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .app-shell .step,
 .app-shell .site-nav a,
 .app-shell .button,
-.app-shell .level-card-meta,
-.app-shell .muted,
 .app-shell .identity,
 .app-shell .cost-label,
 .app-shell .curve-progress,
@@ -395,3 +367,148 @@ html:fullscreen .game-toolbar { display: none; }
   .curve-tooltip { width: 190px; }
   .curve-table { min-width: 580px; }
 }
+
+/* ============================================================
+   Levels page — gallery and data views (route /levels).
+   ============================================================ */
+
+/* ---------- Page header + view toggle ---------- */
+.levels-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-bottom: 24px; }
+.levels-header h1 { margin: 0; font-size: clamp(38px, 6vw, 60px); font-weight: 750; font-variation-settings: 'wdth' 88; line-height: .98; letter-spacing: -.035em; }
+.levels-header .eyebrow { margin-bottom: 12px; }
+.levels-header-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.levels-count { color: var(--muted); font: 8.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+
+.view-toggle { display: flex; border: 1px solid var(--hairline); }
+.view-toggle a { padding: 10px 16px; color: var(--muted); font: 9.5px var(--mono); letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
+.view-toggle a + a { border-left: 1px solid var(--hairline); }
+.view-toggle a:hover { color: var(--ink); }
+.view-toggle a[aria-current="true"] { color: var(--paper); background: var(--ink); }
+/* Persist the chosen view (localStorage) and reflect it in the URL:
+   /levels (gallery, default) and /levels/data — deep links keep working. */
+
+/* ============================================================
+   VIEW 1 — GALLERY (7a): browse by thumbnail
+   ============================================================ */
+.levels-band { padding: 16px 0 20px; border-top: 1px solid var(--hairline); }
+.levels-band-head { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 12px; }
+.levels-band-head h2 { margin: 0; color: var(--muted); font: 9.5px var(--mono); letter-spacing: .18em; text-transform: uppercase; font-weight: 500; }
+.levels-band-head a { color: var(--accent); font: 8.5px var(--mono); letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
+.levels-band-head a:hover { color: var(--ink); }
+
+.levels-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+
+/* Card: thumbnail IS the affordance — full-bleed hero, meta strip below. */
+.gallery-card { position: relative; display: block; color: inherit; background: var(--card); border: 1px solid var(--hairline); }
+.gallery-card:hover, .gallery-card:focus-within { border-color: var(--accent); box-shadow: 4px 4px 0 var(--accent-tint); }
+.gallery-open { color: inherit; text-decoration: none; }
+.gallery-open::after { content: ''; position: absolute; inset: 0; }
+.gallery-details-link, .gallery-result-tag { position: relative; }
+
+.gallery-thumb { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; }
+.gallery-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gallery-thumb .thumbnail-fallback { height: 100%; border: 0; }
+.gallery-featured { position: absolute; top: 10px; right: 10px; color: var(--accent); font-size: 9px; }
+
+/* Play reticle appears on hover/focus only. */
+.gallery-play { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--paper) 35%, transparent); opacity: 0; transition: opacity 140ms ease; }
+.gallery-card:hover .gallery-play, .gallery-card:focus-within .gallery-play { opacity: 1; }
+.gallery-play span { display: grid; place-items: center; width: 40px; height: 40px; background: color-mix(in srgb, var(--paper) 70%, transparent); border: 1.4px solid var(--ink); transform: rotate(45deg); }
+.gallery-play span::before { content: '▶'; color: var(--ink); font-size: 12px; transform: rotate(-45deg); }
+
+.gallery-copy { display: grid; gap: 5px; padding: 13px 15px; }
+.gallery-copy .name { color: var(--ink); font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+.gallery-copy .name.run-id { font: 600 11px var(--mono); }        /* benchmark ids stay mono */
+.gallery-copy .name-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.gallery-copy .meta-row { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font: 8.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.gallery-copy .meta-row .ref { color: var(--accent); }
+.gallery-details-link { color: var(--accent); font: 8px var(--mono); letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
+.gallery-details-link:hover { color: var(--ink); }
+.gallery-result-tag { padding: 2px 5px; color: var(--accent); border: 1px solid var(--accent); font: 7px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+
+.levels-footnote { display: flex; justify-content: space-between; gap: 20px; padding: 16px 0; border-top: 1px solid var(--hairline); color: var(--muted); font: 9px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+
+/* ============================================================
+   VIEW 2 — DATA (7b): tree + full record (was the 6b explorer)
+   ============================================================ */
+.levels-data-layout { display: grid; grid-template-columns: 284px minmax(0, 1fr); border-top: 1px solid var(--hairline); }
+
+/* Left rail */
+.catalog-rail { padding: 22px 0 40px; border-right: 1px solid var(--hairline); }
+.catalog-rail-section { padding: 16px 22px 4px; }
+.catalog-rail-section:first-child { padding-top: 0; }
+.catalog-rail-section h2 { margin: 0 0 6px; color: var(--muted); font: 8.5px var(--mono); letter-spacing: .16em; text-transform: uppercase; }
+.catalog-rail-group { margin: 6px 0 2px; padding: 0 10px; color: var(--ghost); font: 8px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.catalog-rail-item { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; padding: 8px 10px; color: var(--body-text); font: 10px var(--mono); text-decoration: none; overflow-wrap: anywhere; }
+.catalog-rail-item:hover { color: var(--ink); background: var(--card); }
+.catalog-rail-item span { flex: 0 0 auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.catalog-rail-item .featured-mark { color: var(--accent); font-size: 8px; }
+.catalog-rail-item .ref-tag { color: var(--accent); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+.catalog-rail-item[aria-current="true"] { color: var(--ink); background: var(--accent-tint); border-left: 2px solid var(--accent); padding-left: 8px; }
+.catalog-rail-item[aria-current="true"] span { color: var(--ink); }
+.catalog-rail-download { margin: 20px 22px 0; padding-top: 14px; border-top: 1px solid var(--hairline-2); }
+.catalog-rail-download a { color: var(--muted); font: 8.5px var(--mono); letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
+.catalog-rail-download a:hover { color: var(--accent); }
+
+/* Detail pane */
+.catalog-detail { min-width: 0; padding: 28px clamp(24px, 4vw, 44px) 44px; }
+.catalog-record-header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 0 0 8px; }
+.catalog-record-header h2 { margin: 0; font-size: clamp(24px, 3vw, 30px); font-weight: 750; font-variation-settings: 'wdth' 88; letter-spacing: -.03em; }
+.catalog-record-header .spacer { flex: 1; }
+.result-tag { padding: 4px 8px; color: var(--muted); border: 1px solid var(--hairline); font: 8.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.result-tag.timed-out { color: var(--accent); border-color: var(--accent); }
+.catalog-identity { margin: 0 0 20px; color: var(--body-text); font: 10px var(--mono); letter-spacing: .06em; }
+
+.catalog-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 20px; }
+.catalog-stats > div { padding: 13px; background: var(--card); border: 1px solid var(--hairline); }
+.catalog-stats dt { margin: 0 0 6px; color: var(--muted); font: 8px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.catalog-stats dd { margin: 0; color: var(--ink); font-size: 23px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.catalog-stats .stat-cost dd { color: var(--accent); }
+
+.catalog-record-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; }
+.catalog-thumb { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--hairline); }
+.catalog-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.catalog-thumb .thumbnail-fallback { border: 0; height: 100%; }
+.catalog-thumb .thumbnail-fallback span { display: none; }
+.catalog-thumb-play { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--paper) 35%, transparent); }
+.catalog-thumb-play span { display: grid; place-items: center; width: 40px; height: 40px; background: color-mix(in srgb, var(--paper) 70%, transparent); border: 1.4px solid var(--ink); transform: rotate(45deg); transition: border-color 120ms ease, background 120ms ease; }
+.catalog-thumb-play span::before { content: '▶'; color: var(--ink); font-size: 12px; transform: rotate(-45deg); }
+.catalog-thumb:hover .catalog-thumb-play span, .catalog-thumb:focus-visible .catalog-thumb-play span { border-color: var(--accent); background: var(--accent-tint); }
+.catalog-thumb-path { display: block; margin-top: 8px; color: var(--muted); font: 8px var(--mono); letter-spacing: .04em; overflow-wrap: anywhere; }
+
+/* Per-model usage — reuses the .model-usage component from the reveal card. */
+.catalog-usage > p, .catalog-about-label { margin: 0 0 8px; color: var(--muted); font: 8.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.catalog-usage .model-usage:first-of-type { border-top: 1px solid var(--hairline); }
+
+/* Progressive disclosures: configuration / theme prompt / raw record */
+.catalog-disclosures { margin-top: 20px; border-top: 1px solid var(--hairline); }
+.catalog-disclosures details { border-bottom: 1px solid var(--hairline); }
+.catalog-disclosures summary { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; color: var(--accent); font: 9.5px var(--mono); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
+.catalog-disclosures summary:hover, .catalog-disclosures details[open] > summary { color: var(--ink); }
+.catalog-disclosures summary > span { flex: 0 0 auto; }
+.catalog-disclosures summary small { color: var(--muted); font-size: 9.5px; letter-spacing: .04em; text-transform: none; text-align: right; }
+.catalog-disclosure-body { padding: 2px 0 20px; }
+.catalog-disclosure-body > p { max-width: 640px; margin: 0; color: var(--body-text); font-size: 12.5px; line-height: 1.6; }
+.catalog-disclosure-body .prompt-text { white-space: pre-line; }
+.catalog-disclosure-body .run-facts { margin-bottom: 14px; }
+.catalog-raw { margin: 0; padding: 14px; color: var(--body-text); background: var(--card); border: 1px solid var(--hairline); font: 10px/1.6 var(--mono); overflow-x: auto; }
+
+.catalog-disclosure-body blockquote { margin: 16px 0 0; padding: 14px; color: var(--body-text); background: var(--paper); border-left: 2px solid var(--accent); font: 11px/1.6 var(--mono); white-space: pre-line; }
+.catalog-disclosure-body blockquote span { display: block; margin-bottom: 7px; color: var(--accent); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; }
+.catalog-raw-copy { min-height: 28px; margin-bottom: 10px; padding: 5px 9px; color: var(--muted); background: transparent; border: 1px dashed var(--ghost); font: 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.catalog-raw-copy:hover, .catalog-raw-copy:focus-visible { color: var(--ink); border-color: var(--ink); }
+
+/* Built-in levels have no run data: thumbnail, play button, and blurb only. */
+.catalog-blurb { max-width: 560px; margin: 0 0 14px; color: var(--body-text); font-size: 12.5px; line-height: 1.6; }
+.catalog-note { max-width: 560px; margin: 0; color: var(--muted); font: 10px/1.6 var(--mono); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) { .levels-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .catalog-record-body { grid-template-columns: 1fr; } .catalog-thumb { max-width: 340px; } }
+@media (max-width: 720px) {
+  .levels-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .levels-data-layout { grid-template-columns: 1fr; }
+  .catalog-rail { border-right: none; border-bottom: 1px solid var(--hairline); }
+  .catalog-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) { .levels-grid { grid-template-columns: 1fr; } }

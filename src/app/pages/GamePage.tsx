@@ -4,7 +4,6 @@ import { getLevelEntryById } from '../../levels';
 import type { AppRoute } from '../router';
 import { RouteLink } from '../components/RouteLink';
 import { GameFrame } from '../components/LazyGameFrame';
-import { PlayPage } from './PublicPages';
 
 export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { kind: 'play' }>; onNavigate: (path: string) => void }) {
   const [level, setLevel] = useState<LevelDefinition | null>(null);
@@ -14,7 +13,6 @@ export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { ki
     let active = true;
     setLevel(null);
     setError(null);
-    if (!route.levelId) return () => { active = false; };
     void getLevelEntryById(route.levelId).then((entry) => entry.load()).then((loaded) => {
       if (active) setLevel(loaded);
     }).catch((reason: unknown) => {
@@ -23,8 +21,7 @@ export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { ki
     return () => { active = false; };
   }, [route.levelId]);
 
-  if (!route.levelId) return <PlayPage onNavigate={onNavigate} />;
-  if (error) return <section className="page-panel"><p className="eyebrow">Play</p><h1>Level unavailable</h1><p className="lede">{error}</p><RouteLink className="button" href="/play" onNavigate={onNavigate}>Back to levels</RouteLink></section>;
+  if (error) return <section className="page-panel"><p className="eyebrow">Play</p><h1>Level unavailable</h1><p className="lede">{error}</p><RouteLink className="button" href="/levels" onNavigate={onNavigate}>Back to levels</RouteLink></section>;
   if (!level) return <section className="page-panel"><p className="eyebrow">Loading</p><h1>Preparing level…</h1></section>;
   return <GameFrame level={level} onNavigate={onNavigate} />;
 }

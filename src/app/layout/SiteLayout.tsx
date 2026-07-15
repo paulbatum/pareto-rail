@@ -7,7 +7,7 @@ const navigation = [
   { href: '/', label: 'Home' },
   { href: '/rank', label: 'Rank' },
   { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/play', label: 'Levels' },
+  { href: '/levels', label: 'Levels' },
   { href: '/about', label: 'About' },
 ];
 
@@ -42,7 +42,7 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
         </RouteLink>
         <nav aria-label="Primary">
           {navigation.map((item) => {
-            const active = item.href === currentPath || (route.kind === 'play' && item.href === '/play');
+            const active = item.href === currentPath || ((route.kind === 'play' || route.kind === 'levels') && item.href === '/levels');
             return <RouteLink key={item.href} href={item.href} onNavigate={onNavigate} aria-current={active ? 'page' : undefined}>{item.label}</RouteLink>;
           })}
           <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Switch to ${nextTheme} theme`}>{nextTheme === 'light' ? 'Light' : 'Dark'}</button>
@@ -54,7 +54,7 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
 }
 
 function isEntryPoint(route: AppRoute): boolean {
-  return (route.kind === 'play' && !route.levelId) || (route.kind === 'rank' && !route.playSide);
+  return route.kind === 'levels' || (route.kind === 'rank' && !route.playSide);
 }
 
 function WebGPUNotice() {
