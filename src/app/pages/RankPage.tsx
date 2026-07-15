@@ -265,7 +265,7 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
 
   return <section className="curve-panel" aria-labelledby="personal-curve-title">
     <div className="curve-heading">
-      <div><p className="eyebrow">Personal results</p><h2 id="personal-curve-title">Your Pareto curve</h2></div>
+      <div><p className="eyebrow">Personal results</p><h2 id="personal-curve-title">Your Pareto Frontier</h2></div>
       <div className="curve-heading-actions">
         {import.meta.env.DEV && <button className="curve-debug-copy" type="button" onClick={() => void copyDebugData('chart', chartDebug)}>{copyStatus === 'copied' ? 'Copied debug data' : copyStatus === 'failed' ? 'Copy failed' : 'Copy debug data'}</button>}
         <span className="curve-status">{curveStatusNarrative(curve)}</span>
