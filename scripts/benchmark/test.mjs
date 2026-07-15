@@ -272,6 +272,34 @@ assert.equal(codexCost.models.every((m) => m.costUsd === null), true);
 assert.equal(codexCost.totals.reasoningTokens, 5);
 assert.throws(() => summarizeCost('claude-cli', { sessions: [], totals: {} }), /totals\.totalCost was not a number/);
 
+// ccusage pi report: Claude-shaped per-model breakdown, but every model is labelled `[pi] <id>`, and
+// the model id carries its provider prefix. Verbatim shape from a real `ccusage pi session --json`.
+const piReport = {
+  sessions: [{
+    sessionId: 's3',
+    totalCost: 0.009118,
+    modelBreakdowns: [
+      { modelName: '[pi] gpt-5.6-luna', cost: 0.009118, inputTokens: 8406, outputTokens: 76, cacheReadTokens: 2560, cacheCreationTokens: 0 },
+    ],
+    totalTokens: 11042,
+  }],
+  totals: { totalCost: 0.009118, inputTokens: 8406, outputTokens: 76, cacheReadTokens: 2560, cacheCreationTokens: 0, totalTokens: 11042 },
+};
+const piCost = summarizeCost('pi-cli', piReport);
+assert.equal(piCost.view, 'pi');
+assert.equal(piCost.perModelCostAvailable, true);
+assert.equal(piCost.totalUsd, 0.009118);
+assert.equal(piCost.models.length, 1);
+assert.equal(piCost.models[0].modelName, '[pi] gpt-5.6-luna');
+assert.equal(piCost.models[0].costUsd, 0.009118);
+assert.equal(piCost.models[0].cacheReadTokens, 2560);
+
+// The pi adapter reports its own tally in Claude's `modelUsage` shape so it reconciles unchanged.
+// The `[pi] ` label is a prefix, so the context-tier suffix strip must leave it intact.
+const piCounters = harnessCounters({ normalized: { vendorFields: { modelUsage: { '[pi] gpt-5.6-luna': { outputTokens: 76, costUSD: 0.009118 } } } } });
+assert.equal(piCounters.get('[pi] gpt-5.6-luna').outputTokens, 76);
+assert.equal(reconcileCost(piCost, piCounters).reconciliation.status, 'agreed');
+
 // Reconciling the replayed transcripts against the harness's own counter. Replay loses output when
 // an assistant message never finalized on disk, so a counter above replay wins; a counter below
 // replay cannot be explained that way, so replay stands and the run is flagged for a human.

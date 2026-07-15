@@ -10,13 +10,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 // `C:\Users\...\.claude` and silently ignores the Linux per-run home and its env vars.
 export const CCUSAGE_CLI = path.join(ROOT, 'node_modules/ccusage/src/cli.js');
 
-// ccusage reports the same run under different field names per harness. Claude exposes a per-model
-// cost breakdown (`modelBreakdowns[].cost`); Codex exposes only per-model token counts (`models`
-// keyed object, no cost) plus a single run cost. `homeEnvVar` is the variable that scopes ccusage
-// to this run's isolated rollout home.
+// ccusage reports the same run under different field names per harness. `shape` selects how per-model
+// usage is carried: `model-breakdowns` is an array with a per-model `cost` (Claude, pi), while
+// `models-map` is an object keyed by model name with token counts but no cost (Codex), leaving the
+// run cost only in the total. `scope` is how ccusage is pointed at this run's isolated rollout home:
+// Claude and Codex read an env var, while the pi view takes an explicit sessions path instead.
 const HARNESS = {
-  'claude-cli': { view: 'claude', homeEnvVar: 'CLAUDE_CONFIG_DIR', totalsCostKey: 'totalCost' },
-  'codex-cli': { view: 'codex', homeEnvVar: 'CODEX_HOME', totalsCostKey: 'costUSD' },
+  'claude-cli': { view: 'claude', totalsCostKey: 'totalCost', shape: 'model-breakdowns', scope: { kind: 'env', homeEnvVar: 'CLAUDE_CONFIG_DIR' } },
+  'codex-cli': { view: 'codex', totalsCostKey: 'costUSD', shape: 'models-map', scope: { kind: 'env', homeEnvVar: 'CODEX_HOME' } },
+  'pi-cli': { view: 'pi', totalsCostKey: 'totalCost', shape: 'model-breakdowns', scope: { kind: 'path-flag', flag: '--pi-path', homeRelative: 'sessions' } },
 };
 
 export function harnessForAdapter(adapter) {
@@ -49,7 +51,7 @@ export function summarizeCost(adapter, report) {
     models.set(name, current);
   };
 
-  if (harness.view === 'claude') {
+  if (harness.shape === 'model-breakdowns') {
     for (const session of report.sessions) {
       for (const breakdown of session.modelBreakdowns ?? []) {
         accumulate(breakdown.modelName, {
@@ -83,7 +85,7 @@ export function summarizeCost(adapter, report) {
     totalUsd,
     sessionCount: report.sessions.length,
     totalTokens,
-    perModelCostAvailable: harness.view === 'claude',
+    perModelCostAvailable: harness.shape === 'model-breakdowns',
     totals: {
       inputTokens: numberOr(totals.inputTokens, 0),
       outputTokens: numberOr(totals.outputTokens, 0),
@@ -172,8 +174,8 @@ export async function ccusageVersion(node = process.execPath) {
 export async function measureRunCost({ adapter, home, node = process.execPath, tolerateEmpty = false }) {
   try {
     const harness = harnessForAdapter(adapter);
-    const { stdout } = await run(node, [CCUSAGE_CLI, harness.view, 'session', '--json'], {
-      env: { ...process.env, [harness.homeEnvVar]: home },
+    const { stdout } = await run(node, [CCUSAGE_CLI, harness.view, 'session', '--json', ...scopeArgs(harness, home)], {
+      env: scopeEnv(harness, home),
     });
     let report;
     try {
@@ -188,6 +190,18 @@ export async function measureRunCost({ adapter, home, node = process.execPath, t
     if (tolerateEmpty) return null;
     throw error;
   }
+}
+
+// A path-flag harness is scoped by argument, so it must not also inherit an operator env var that
+// would widen the search back out to the shared home.
+function scopeArgs(harness, home) {
+  if (harness.scope.kind !== 'path-flag') return [];
+  return [harness.scope.flag, path.join(home, harness.scope.homeRelative)];
+}
+
+function scopeEnv(harness, home) {
+  if (harness.scope.kind !== 'env') return process.env;
+  return { ...process.env, [harness.scope.homeEnvVar]: home };
 }
 
 function numberOr(value, fallback) {

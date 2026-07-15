@@ -45,7 +45,7 @@ const ADAPTERS = {
     binField: 'codexBin',
     binFlag: '--codex-bin',
     harnessName: 'Codex CLI',
-    modelProvider: 'OpenAI Codex subscription',
+    modelProvider: () => 'OpenAI Codex subscription',
     // Env var scoping the harness (and ccusage) to this run's isolated rollout home, plus the
     // operator credential copied into that home so login works. `sourceRelative` is under the
     // operator home dir; `dest` is under the per-run home.
@@ -64,9 +64,24 @@ const ADAPTERS = {
     binField: 'claudeBin',
     binFlag: '--claude-bin',
     harnessName: 'Claude Code CLI',
-    modelProvider: 'Anthropic Claude Code subscription',
+    modelProvider: () => 'Anthropic Claude Code subscription',
     homeEnvVar: 'CLAUDE_CONFIG_DIR',
     credential: { sourceRelative: '.claude/.credentials.json', dest: '.credentials.json' },
+  },
+  'pi-cli': {
+    scriptPath: path.join(ROOT, 'scripts/benchmark/pi-cli.mjs'),
+    stageDir: 'stages/solo/pi',
+    binField: 'piBin',
+    binFlag: '--pi-bin',
+    harnessName: 'pi',
+    // pi reaches a model through a selectable provider, so the billing account is a property of the
+    // run rather than of the harness. The stage's provider names it in the manifest.
+    modelProvider: (definition) => `pi provider ${definition.stage.provider ?? 'default'}`,
+    homeEnvVar: 'PI_CODING_AGENT_DIR',
+    credential: { sourceRelative: '.pi/agent/auth.json', dest: 'auth.json' },
+    // pi takes the provider per invocation rather than from the home's config, and a benchmark stage
+    // must pin it rather than inherit whatever the operator last selected.
+    stageArgs: (definition) => (definition.stage.provider ? ['--provider', definition.stage.provider] : []),
   },
 };
 
@@ -171,6 +186,7 @@ async function main() {
       if (definition.stage.budget) stageArgs.push('--budget-usd', String(definition.stage.budget.usd));
       if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
       if (definition.delegation && adapter.delegationArgs) stageArgs.push(...adapter.delegationArgs);
+      if (adapter.stageArgs) stageArgs.push(...adapter.stageArgs(definition));
       const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
       await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
       if (stage.code !== 0) fail(`${adapter.harnessName} stage failed; its worktree and artifacts were preserved for resumption.`);
@@ -387,11 +403,14 @@ export function validateDefinition(value) {
   validateArtifact(value.failureTaxonomy, 'definition.failureTaxonomy', errors);
   if (!isPlainObject(value.stage)) errors.push('definition.stage must be an object.');
   else {
-    const stageKeys = new Set(['adapter', 'model', 'effort', 'timeoutSeconds', 'budget', 'codexBin', 'claudeBin']);
+    const stageKeys = new Set(['adapter', 'model', 'effort', 'timeoutSeconds', 'budget', 'codexBin', 'claudeBin', 'piBin', 'provider']);
     for (const key of Object.keys(value.stage)) if (!stageKeys.has(key)) errors.push(`definition.stage has unknown field ${key}.`);
     if (!Object.hasOwn(ADAPTERS, value.stage.adapter)) errors.push(`definition.stage.adapter must be one of: ${Object.keys(ADAPTERS).join(', ')}.`);
     if (typeof value.stage.model !== 'string' || !value.stage.model) errors.push('definition.stage.model is required.');
-    if (!['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.stage.effort)) errors.push('definition.stage.effort is invalid.');
+    if (value.stage.provider !== undefined && (typeof value.stage.provider !== 'string' || !value.stage.provider)) errors.push('definition.stage.provider must be a non-empty string.');
+    // The union of every harness's reasoning vocabulary; each adapter rejects the levels its own CLI
+    // does not offer (`ultra` is Codex-only, `minimal`/`off` are pi-only).
+    if (!['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.stage.effort)) errors.push('definition.stage.effort is invalid.');
     if (!Number.isInteger(value.stage.timeoutSeconds) || value.stage.timeoutSeconds < 1) errors.push('definition.stage.timeoutSeconds must be a positive integer.');
     if (value.stage.budget !== undefined) {
       if (!isPlainObject(value.stage.budget)) errors.push('definition.stage.budget must be an object.');
@@ -575,7 +594,7 @@ function buildStages({ definition, adapter, cost, commandRecord, usage, rendered
       return {
         id: model.modelName,
         role: delegated ? (isParent ? 'orchestrate' : 'implement') : 'solo',
-        model: { provider: adapter.modelProvider, snapshotId: model.modelName },
+        model: { provider: adapter.modelProvider(definition), snapshotId: model.modelName },
         ...(isParent ? { promptSha256, ...(delegationPromptSha256 ? { delegationPromptSha256 } : {}) } : {}),
         ...shared,
         usage: stageUsage(model),
@@ -587,7 +606,7 @@ function buildStages({ definition, adapter, cost, commandRecord, usage, rendered
   return [{
     id: 'solo',
     role: definition.delegation ? 'orchestrate' : 'solo',
-    model: { provider: adapter.modelProvider, snapshotId: definition.stage.model },
+    model: { provider: adapter.modelProvider(definition), snapshotId: definition.stage.model },
     promptSha256,
     ...(delegationPromptSha256 ? { delegationPromptSha256 } : {}),
     ...shared,
