@@ -1,11 +1,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import type { BenchmarkTheme } from '../../benchmark/types';
+import type { BenchmarkModelUsage, BenchmarkTheme } from '../../benchmark/types';
 import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog, selectableLevelGroups } from '../../levels';
 import { builtInLevelBlurbs, levelsCopy } from '../content';
 import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
-import { ModelUsage } from '../components/ModelUsage';
+import { ModelUsage, totalInputTokens } from '../components/ModelUsage';
 import { getLevelsView, setLevelsView } from '../levels-view';
 import { levelsViewPath, navigate, type AppRoute, type LevelsView } from '../router';
 
@@ -229,14 +229,13 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
         <span className="spacer" />
         <RouteLink className="button primary" href={playPath(entrant.levelId)} onNavigate={onNavigate}>▸ Play this level</RouteLink>
       </header>
-      <p className="catalog-identity">{entrant.modelName} · {entrant.workflowName} · {entrant.configurationId}</p>
+      <p className="catalog-identity">{modelLine(record)}</p>
 
       {run && (
         <dl className="catalog-stats">
           <div className="stat-cost"><dt>Generation cost</dt><dd>{formatCost(entrant.generationCost)}</dd></div>
-          <div><dt>Gen wall time</dt><dd title={`${Math.round(run.generationWallTimeSeconds).toLocaleString('en-US')} seconds`}>{formatWallTime(run.generationWallTimeSeconds)}</dd></div>
-          <div><dt>Total wall time</dt><dd title={`${Math.round(run.totalWallTimeSeconds).toLocaleString('en-US')} seconds`}>{formatWallTime(run.totalWallTimeSeconds)}</dd></div>
-          <div><dt>Orchestration</dt><dd>{formatOrchestration(run.orchestrationTreatment)}</dd></div>
+          <div><dt>Gen wall time</dt><dd title={`${count(Math.round(run.generationWallTimeSeconds))} seconds`}>{formatWallTime(run.generationWallTimeSeconds)}</dd></div>
+          <TokenTotals models={run.models} />
         </dl>
       )}
 
@@ -263,10 +262,7 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
               </dl>
               <p>{configuration.workflowSummary}</p>
               {configuration.delegationGuidance && (
-                <details>
-                  <summary><span>Delegation guidance — verbatim</span></summary>
-                  <blockquote><span>Delegation guidance</span>{configuration.delegationGuidance}</blockquote>
-                </details>
+                <blockquote><span>Delegation guidance</span>{configuration.delegationGuidance}</blockquote>
               )}
             </div>
           </details>
@@ -278,18 +274,35 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
   );
 }
 
+/** Run totals across every model. A delegated run splits its tokens over two
+ * models below; these are the figures for the run as a whole. */
+function TokenTotals({ models }: { models: readonly BenchmarkModelUsage[] }) {
+  const input = models.reduce((sum, model) => sum + totalInputTokens(model), 0);
+  const cached = models.reduce((sum, model) => sum + (model.cacheReadTokens ?? 0), 0);
+  const output = models.reduce((sum, model) => sum + model.outputTokens, 0);
+  return (
+    <>
+      <div><dt>Input tokens</dt><dd title={input === 0 ? undefined : `${count(cached)} of ${count(input)} served from cache`}>{count(input)}</dd></div>
+      <div><dt>Output tokens</dt><dd title="Includes reasoning tokens">{count(output)}</dd></div>
+    </>
+  );
+}
+
 function ThemeDisclosure({ theme, targeted }: { theme: BenchmarkTheme; targeted: boolean }) {
   const element = useRef<HTMLDetailsElement>(null);
-  const [open, setOpen] = useState(targeted);
+  const [open, setOpen] = useState(true);
 
+  // A theme link scrolls to the prompt and reopens it if it was collapsed;
+  // switching entrants remounts this section, restoring the open default.
   useEffect(() => {
-    setOpen(targeted);
-    if (targeted) element.current?.scrollIntoView({ block: 'center' });
+    if (!targeted) return;
+    setOpen(true);
+    element.current?.scrollIntoView({ block: 'center' });
   }, [targeted, theme.id]);
 
   return (
     <details ref={element} id={`theme-${theme.id}`} open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary><span>Theme — {theme.id}</span><small>{theme.summary}</small></summary>
+      <summary><span>Theme — {theme.id}</span></summary>
       <div className="catalog-disclosure-body">
         <p className="prompt-text">{theme.prompt}</p>
       </div>
@@ -322,15 +335,11 @@ function RawRecord({ entrant, index }: { entrant: RankCatalogEntrant; index: num
 }
 
 function RecordThumbnail({ record, onNavigate }: { record: LevelRecord; onNavigate: Navigate }) {
-  const path = thumbnailPathOf(record);
   return (
-    <div>
-      <RouteLink className="catalog-thumb" href={playPath(record.levelId)} onNavigate={onNavigate} aria-label={`Play ${record.levelId}`}>
-        <Thumbnail path={path} />
-        <span className="catalog-thumb-play" aria-hidden="true"><span /></span>
-      </RouteLink>
-      {path && <code className="catalog-thumb-path">{path}</code>}
-    </div>
+    <RouteLink className="catalog-thumb" href={playPath(record.levelId)} onNavigate={onNavigate} aria-label={`Play ${record.levelId}`}>
+      <Thumbnail path={thumbnailPathOf(record)} />
+      <span className="catalog-thumb-play" aria-hidden="true"><span /></span>
+    </RouteLink>
   );
 }
 
@@ -435,6 +444,21 @@ function entrantPath(levelId: string): string {
 
 /* ---------- Formatting ---------- */
 
+/** Every model that worked the run, with its reasoning effort. The workflow name
+ * and configuration id are left to the configuration section below. An entrant
+ * whose configuration is missing still names the model it ran under. */
+function modelLine(record: BenchmarkRecord): string {
+  const { configuration, entrant } = record;
+  if (!configuration) return entrant.modelName;
+  const models = [withEffort(configuration.primaryModel, configuration.effort)];
+  if (configuration.delegateModel) models.push(withEffort(configuration.delegateModel, configuration.delegateEffort));
+  return models.join(' + ');
+}
+
+function withEffort(model: string, effort?: string): string {
+  return effort ? `${model} (${effort})` : model;
+}
+
 function formatCost(value: number): string {
   return `$${value.toFixed(2)}`;
 }
@@ -454,10 +478,8 @@ function formatResult(result: string): string {
   return `${spaced[0]?.toUpperCase() ?? ''}${spaced.slice(1)}`;
 }
 
-function formatOrchestration(treatment: string): string {
-  if (treatment === 'included') return 'Incl.';
-  if (treatment === 'none') return 'None';
-  return formatResult(treatment);
+function count(value: number): string {
+  return value.toLocaleString('en-US');
 }
 
 function formatStamp(iso: string): string {
