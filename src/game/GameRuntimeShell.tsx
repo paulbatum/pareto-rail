@@ -50,7 +50,6 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
 
       <div
         id="pause"
-        data-game-ui
         className="pause-overlay hidden"
         role="dialog"
         aria-modal="true"
