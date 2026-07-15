@@ -335,6 +335,27 @@ Built to the standing brief from the Mass Driver theme assignment. Verified by t
 
 ---
 
+# Prism Ember
+
+A warm luminous prism rail cuts through deep umber space, with amber and coral targets and cream cores resolving into gold lock-count flashes.
+
+## Visual language
+Deep umber darkness, amber and coral accents, warm cream cores, and gold progression highlights preserve Prism Bloom's thin restrained bloom.
+
+## Musical language
+The inherited Prism Bloom procedural pulse and bell arrangement remain unchanged.
+
+## Mechanical signature
+The inherited Prism Bloom rail, spawn choreography, scoring, 30-second timing, controls, and enemy behavior remain unchanged.
+
+## What to read
+- `src/benchmark-levels/prism-warm-t2qx/index.ts`
+- `src/benchmark-levels/prism-warm-t2qx/gameplay.ts`
+- `src/benchmark-levels/prism-warm-t2qx/audio.ts`
+- `src/benchmark-levels/prism-warm-t2qx/visuals/index.ts`
+
+---
+
 # Skyhook
 
 A sixty-second defense of Climber 07 on its full space-elevator ascent: storm-grey weather falls away into hard blue sunlight, indigo thin air, black orbit, and the open capture jaws of the station. The tether never leaves the frame; at the summit, a vast crawler uses it to climb down toward the car.
