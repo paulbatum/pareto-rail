@@ -1,0 +1,547 @@
+{
+  "runId": "run-eztdwig5twea",
+  "levelId": "mass-driver-wo4m",
+  "annotationCount": 60,
+  "annotations": [
+    {
+      "id": "ann-01",
+      "eventId": "ev-0015",
+      "agent": "main",
+      "tSeconds": 44.1,
+      "type": "decision",
+      "title": "Helios chosen as the quality bar",
+      "body": "Before writing anything, the orchestrator reads the gallery and names Helios as the level to match. Every subagent brief will later point at Helios as the structural template, so this early call anchors the whole run's standard."
+    },
+    {
+      "id": "ann-02",
+      "eventId": "ev-0018",
+      "agent": "main",
+      "tSeconds": 46.6,
+      "type": "mistake",
+      "title": "Scaffolded at 132 BPM",
+      "body": "The scaffold command is run with 132 BPM. The final timing spine uses 128 instead, because 128 BPM times 32 bars lands on exactly 60 seconds while 132 would fall short. A small, self-corrected first guess."
+    },
+    {
+      "id": "ann-03",
+      "eventId": "ev-0108",
+      "agent": "main",
+      "tSeconds": 461.7,
+      "type": "insight",
+      "title": "Reads the gates before building",
+      "body": "The orchestrator inspects the audio-config validation and floor-gate scripts to learn exactly what the finished level will be measured against. It designs to the tests rather than discovering them at the end."
+    },
+    {
+      "id": "ann-04",
+      "eventId": "ev-0114",
+      "agent": "main",
+      "tSeconds": 512.5,
+      "type": "decision",
+      "title": "Keep the spine and contract in-house",
+      "body": "Fable assigns itself the timing spine plus a full design document, and only delegates the three heavy modules. The design doc becomes the single source of truth that lets three agents work in parallel without colliding."
+    },
+    {
+      "id": "ann-05",
+      "eventId": "ev-0129",
+      "agent": "main",
+      "tSeconds": 550.0,
+      "type": "milestone",
+      "title": "First code: the 128 BPM timing spine",
+      "body": "About nine minutes in, the orchestrator writes timing.ts, fixing 128 BPM, 32 bars, section markers and the bar-28 shot. This is the structural conceit of the whole level: one ring per beat, so speed and music are the same clock."
+    },
+    {
+      "id": "ann-06",
+      "eventId": "ev-0133",
+      "agent": "main",
+      "tSeconds": 675.0,
+      "type": "decision",
+      "title": "A 257-line binding design doc",
+      "body": "The orchestrator writes a design document that fixes every cross-module contract: enemy kinds, event names, the hum pitch curve, the palette, and each module's exact exports. Declaring it binding is what makes the three-way parallel delegation safe."
+    },
+    {
+      "id": "ann-07",
+      "eventId": "ev-0137",
+      "agent": "main",
+      "tSeconds": 730.0,
+      "type": "decision",
+      "title": "Wire index.ts before the modules exist",
+      "body": "index.ts is written to consume exports that none of the subagents have produced yet. Locking the interface from the top down forces the subagents to conform to a fixed contract rather than inventing their own."
+    },
+    {
+      "id": "ann-08",
+      "eventId": "ev-0143",
+      "agent": "main",
+      "tSeconds": 777.8,
+      "type": "delegation",
+      "title": "Delegate gameplay to Opus",
+      "body": "The gameplay brief is tightly scoped: exclusive ownership of gameplay.ts, a target of 60 to 75 enemies choreographed bar-by-bar, the interlock boss deadline, and explicit simulate/heatmap pass criteria. It even tells the agent which sibling type errors to ignore."
+    },
+    {
+      "id": "ann-09",
+      "eventId": "ev-0143",
+      "agent": "main",
+      "tSeconds": 777.8,
+      "type": "budget",
+      "title": "Three Opus agents run concurrently",
+      "body": "All three delegates are the more expensive Opus model at high effort. Running them in parallel against a fixed contract trades token cost for wall-clock time; the Opus agents together account for about 19.5 of the 54.5 dollar total."
+    },
+    {
+      "id": "ann-10",
+      "eventId": "ev-0145",
+      "agent": "main",
+      "tSeconds": 808.3,
+      "type": "delegation",
+      "title": "Delegate audio to Opus",
+      "body": "The audio brief spells out the signature climbing hum, the five-section techno arrangement, the E-major finale, and the kill-lane validation the score will fail without. It warns the agent to construct without touching the browser audio context so the headless floor gate can instantiate it."
+    },
+    {
+      "id": "ann-11",
+      "eventId": "ev-0147",
+      "agent": "main",
+      "tSeconds": 846.1,
+      "type": "delegation",
+      "title": "Delegate visuals to Opus",
+      "body": "The visuals brief orders the work leaf-first (palette, letters, enemies, then environment and index) so gameplay.ts has likely landed before the agent needs its exports, and it lists the exact snapshot commands to look at. Well-sequenced against the parallel timeline."
+    },
+    {
+      "id": "ann-12",
+      "eventId": "ev-0157",
+      "agent": "main",
+      "tSeconds": 878.8,
+      "type": "insight",
+      "title": "Fills idle time with the level card",
+      "body": "While the three agents build, the orchestrator writes level.md rather than blocking. Small sign of good use of the parallel window."
+    },
+    {
+      "id": "ann-13",
+      "eventId": "a276861b-ev-0068",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 1417.1,
+      "type": "milestone",
+      "title": "649-line gameplay spine in one pass",
+      "body": "The gameplay agent writes the full module at once: the accelerating rail, the bar-authored spawn timeline of 72 enemies, and the interlock boss. It also decides interlocks should station-keep ahead of the camera rather than sit on a fixed rail anchor, because a true anchor for a bar-20-to-28 hold would spawn them hundreds of units downbore, past the fog and unkillable."
+    },
+    {
+      "id": "ann-14",
+      "eventId": "a276861b-ev-0075",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 1434.6,
+      "type": "verification",
+      "title": "First simulation already ranks S",
+      "body": "The opening simulate run completes the perfect policy at rank S and kills the no-fire run, so the core loop and fail state work on the first try. The remaining work is choreography tuning, not fixing breakage."
+    },
+    {
+      "id": "ann-15",
+      "eventId": "a276861b-ev-0082",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 1551.1,
+      "type": "insight",
+      "title": "Kills cluster center and far",
+      "body": "Reading the heatmap, the agent sees average kill distance at 56 meters and kills bunched near screen center with poor vertical spread. It treats this as a real choreography problem rather than a passing metric."
+    },
+    {
+      "id": "ann-16",
+      "eventId": "a276861b-ev-0090",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 1602.4,
+      "type": "verification",
+      "title": "Calibrate against Helios",
+      "body": "The agent runs Helios's own heatmap to get a reference and finds Helios sits worse on both metrics and still ships. This tells it its numbers already pass, and grounds how hard to push the tuning."
+    },
+    {
+      "id": "ann-17",
+      "eventId": "a276861b-ev-0128",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 1827.7,
+      "type": "insight",
+      "title": "Diagnoses the 60-degree FOV projection",
+      "body": "The agent works out that the camera's 60-degree field of view projects its radius-6.8 rings inside the center circle at 46 meters, which is why kills read as center-clustered. The fix is to move coils out to the bore wall, which is also design-accurate."
+    },
+    {
+      "id": "ann-18",
+      "eventId": "a276861b-ev-0136",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 1848.8,
+      "type": "recovery",
+      "title": "Writes a throwaway metric script",
+      "body": "The center-concentration metric it needs is hidden because the floor gate is blocked by the still-incomplete visuals module. Rather than fly blind, the agent writes a small script that imports the simulator's own metric function to read the exact number, then deletes it when done."
+    },
+    {
+      "id": "ann-19",
+      "eventId": "a276861b-ev-0140",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 1910.6,
+      "type": "decision",
+      "title": "Coils to the bore wall",
+      "body": "Moving coils out to radius ~10 and widening the interlocks drops center concentration from 43.7 to 32.4 percent and average kill distance to 45.5 meters, comfortably better than the Helios reference."
+    },
+    {
+      "id": "ann-20",
+      "eventId": "a276861b-ev-0161",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 1997.1,
+      "type": "verification",
+      "title": "No-fire run detonates at 52.52s",
+      "body": "The agent confirms the fail path is exact: ignore the interlocks and the barrel detonates at the bar-28 shot time, producing a clean died result. The boss really is a deadline, not a health bar."
+    },
+    {
+      "id": "ann-21",
+      "eventId": "a276861b-ev-0173",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 2046.3,
+      "type": "verification",
+      "title": "All six interlock windows hold",
+      "body": "Via the engagement report the agent verifies each of the six interlocks stays lockable for a 10-to-15-second window right up to about 52 seconds, proving none is overtaken before the shot. This is the specific risk its station-keeping design created, and it checked it."
+    },
+    {
+      "id": "ann-22",
+      "eventId": "a276861b-ev-0184",
+      "agent": "a276861bda22b5c19",
+      "tSeconds": 2103.5,
+      "type": "quality-flag",
+      "title": "Honest handback to the integrator",
+      "body": "The agent's final report flags that the rank ladder sits close to the perfect score and should be retuned once scoring settles, and that both fail routes lead to the same detonation. It hands back open items rather than papering over them."
+    },
+    {
+      "id": "ann-23",
+      "eventId": "a34f666c-ev-0057",
+      "agent": "a34f666c6f3f1f377",
+      "tSeconds": 1319.2,
+      "type": "decision",
+      "title": "The hum as the level's instrument",
+      "body": "The audio agent builds installMassDriverHum: a persistent detuned-saw-plus-sub drone with a controller that glides its pitch, so a single arrangement track can drive the whole climb. Making the hum a steerable always-on voice is what lets it accelerate and then cut cleanly."
+    },
+    {
+      "id": "ann-24",
+      "eventId": "a34f666c-ev-0061",
+      "agent": "a34f666c6f3f1f377",
+      "tSeconds": 1631.1,
+      "type": "milestone",
+      "title": "768-line audio spine",
+      "body": "The main audio.ts lands: five-section locked techno in E minor, kick-duck as the techno pump, per-section kill lanes, transport-quantized player instruments, and the interlock-escalation voice."
+    },
+    {
+      "id": "ann-25",
+      "eventId": "a34f666c-ev-0076",
+      "agent": "a34f666c6f3f1f377",
+      "tSeconds": 1663.9,
+      "type": "verification",
+      "title": "Audio trace runs clean",
+      "body": "The agent verifies structure through the audio trace rather than the full simulation, since gameplay.ts is still a scaffold at this point. The trace shows sections landing at the right bars and no empty section."
+    },
+    {
+      "id": "ann-26",
+      "eventId": "a34f666c-ev-0085",
+      "agent": "a34f666c6f3f1f377",
+      "tSeconds": 1700.3,
+      "type": "verification",
+      "title": "Hum climb confirmed bar-by-bar",
+      "body": "The trace confirms the hum rises E1 to 33 by bar 12, to E2 by bar 20, then accelerates to E3 through the charge and cuts dead at bar 28 (52.56s). The signature idea is verified against data, not just written."
+    },
+    {
+      "id": "ann-27",
+      "eventId": "a34f666c-ev-0089",
+      "agent": "a34f666c6f3f1f377",
+      "tSeconds": 1732.6,
+      "type": "insight",
+      "title": "The Picardy-third release",
+      "body": "After the shot, the arrangement strips to a lone E-major pad bloom with a fading sub heartbeat over near-silence. The whole run is minor; the release into major is the light at the muzzle, a genuinely musical idea beyond the brief's letter."
+    },
+    {
+      "id": "ann-28",
+      "eventId": "a34f666c-ev-0098",
+      "agent": "a34f666c6f3f1f377",
+      "tSeconds": 1780.8,
+      "type": "quality-flag",
+      "title": "Audio never heard against real gameplay",
+      "body": "Because it ran in parallel with the gameplay agent, this agent could only verify against the audio trace, never a full simulation with real kill events. The mix balance between the hum and the kick duck is explicitly left for a human to judge."
+    },
+    {
+      "id": "ann-29",
+      "eventId": "ac06758e-ev-0113",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1368.5,
+      "type": "screenshot",
+      "title": "Snapshots every enemy mesh",
+      "body": "The visuals agent renders all five enemy factories plus a letter to PNGs to check silhouettes in isolation before wiring them into the scene. This is the first of several look-at-the-image checks."
+    },
+    {
+      "id": "ann-30",
+      "eventId": "ac06758e-ev-0116",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1395.4,
+      "type": "screenshot",
+      "title": "Coil silhouette reads",
+      "body": "Reading the coil PNG, the agent judges the hex pod with edge glow reads clearly at a glance and moves on."
+    },
+    {
+      "id": "ann-31",
+      "eventId": "ac06758e-ev-0121",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1401.3,
+      "type": "screenshot",
+      "title": "Threader foreshortened head-on",
+      "body": "The agent notices the needle-shaped threader is foreshortened when pointed at the camera and deliberately checks its side view to confirm the silhouette works from the angle players actually see it."
+    },
+    {
+      "id": "ann-32",
+      "eventId": "ac06758e-ev-0138",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1445.9,
+      "type": "decision",
+      "title": "Dim the interlock core for the reveal",
+      "body": "The agent lowers the interlock's actuator-core intensity from 2.0 to 1.35 so the armor cowl popping off reads as a genuine reveal of a hidden hot core, not a core that was already glowing. A taste call driven by looking at the render."
+    },
+    {
+      "id": "ann-33",
+      "eventId": "ac06758e-ev-0147",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1626.6,
+      "type": "milestone",
+      "title": "The 112-ring instanced tunnel",
+      "body": "The 533-line environment lands: 112 heat-colored rings placed on beat times via instancing, conductor rails, fog with a progress-keyed atmosphere ramp, camera speed streaks, and the post-shot starfield. Instancing is what keeps the ring count from blowing the perf budget."
+    },
+    {
+      "id": "ann-34",
+      "eventId": "ac06758e-ev-0176",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1875.8,
+      "type": "screenshot",
+      "title": "First full-run contact sheet",
+      "body": "The agent reads an eight-frame gameplay sheet and confirms the tunnel reads: arc-blue rings receding to violet, the charge whitening through the interlock bars, and the starfield at the exit."
+    },
+    {
+      "id": "ann-35",
+      "eventId": "ac06758e-ev-0185",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1967.9,
+      "type": "mistake",
+      "title": "Geometry leak: 892 vs 512 allowance",
+      "body": "The perf gate flags a geometry count of 892 against a 512 allowance that never drops even after enemies despawn. The agent's geometry-heavy enemy and projectile meshes leak because their disposal path never freed the geometry."
+    },
+    {
+      "id": "ann-36",
+      "eventId": "ac06758e-ev-0190",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 2005.6,
+      "type": "recovery",
+      "title": "Fix disposal to free geometry",
+      "body": "The agent reads the runner, learns that freeing geometry is the level's responsibility (the runner only removes meshes from the scene), and makes both enemy and projectile disposal free their meshes."
+    },
+    {
+      "id": "ann-37",
+      "eventId": "ac06758e-ev-0202",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 2042.5,
+      "type": "verification",
+      "title": "Perf gate green",
+      "body": "After the disposal fix the live geometry count drops to 95 and to 26 after the shot, and all perf gates pass. The leak was caught and closed before handback."
+    },
+    {
+      "id": "ann-38",
+      "eventId": "ac06758e-ev-0206",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 2052.9,
+      "type": "screenshot",
+      "title": "Verifies the shot transition",
+      "body": "A close four-frame sheet around the shot confirms the sequence: charge peak at 50s, full whiteout at 52s, then muzzle exit into star-streaked open space at 54s."
+    },
+    {
+      "id": "ann-39",
+      "eventId": "ac06758e-ev-0227",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 2172.0,
+      "type": "recovery",
+      "title": "Correctly diagnoses a scope-check false alarm",
+      "body": "A scary non-zero scope-check exit code turns out to be a benign property of the benchmark branch diffing against main. The agent reads the scope script and confirms via git status that its only changes are inside visuals/, rather than chasing a phantom."
+    },
+    {
+      "id": "ann-40",
+      "eventId": "ev-0163",
+      "agent": "main",
+      "tSeconds": 1799.0,
+      "type": "milestone",
+      "title": "Audio agent returns first",
+      "body": "The audio module lands back at the orchestrator at about 30 minutes, with its climbing hum and finale verified through the trace. Gameplay and visuals are still building."
+    },
+    {
+      "id": "ann-41",
+      "eventId": "ev-0167",
+      "agent": "main",
+      "tSeconds": 2113.8,
+      "type": "decision",
+      "title": "Reads the delivered modules itself",
+      "body": "As each agent returns, the orchestrator reads the actual gameplay, audio and audio-voices files rather than trusting the summaries. This is the active-integrator posture the assignment asked for."
+    },
+    {
+      "id": "ann-42",
+      "eventId": "ev-0180",
+      "agent": "main",
+      "tSeconds": 2189.1,
+      "type": "insight",
+      "title": "Small reconciling edits to gameplay",
+      "body": "Fable makes four small hand-edits to gameplay.ts to align it with the wiring before running the suite, taking ownership of the seams between modules."
+    },
+    {
+      "id": "ann-43",
+      "eventId": "ev-0210",
+      "agent": "main",
+      "tSeconds": 2250.2,
+      "type": "verification",
+      "title": "Runs its own simulation",
+      "body": "With all three modules assembled, the orchestrator runs the simulator and destruction heatmap itself rather than relying on the gameplay agent's numbers, re-deriving the outcome on the integrated build."
+    },
+    {
+      "id": "ann-44",
+      "eventId": "ev-0214",
+      "agent": "main",
+      "tSeconds": 2279.7,
+      "type": "decision",
+      "title": "Retune the rank ladder so imperfect reads A",
+      "body": "The gameplay agent left the S margin generous enough that an imperfect run still scored S. The orchestrator retunes the ladder off the simulation ceiling so a 66-of-72 run lands A, restoring a meaningful gap between a perfect and a good run."
+    },
+    {
+      "id": "ann-45",
+      "eventId": "ev-0226",
+      "agent": "main",
+      "tSeconds": 2322.4,
+      "type": "mistake",
+      "title": "Floor gate fails on occlusion",
+      "body": "The floor gate reports 17 occlusion warnings: geometry sits between the camera and lockable targets, meaning players would be aiming at things partly hidden behind other things. A real readability defect in the assembled level."
+    },
+    {
+      "id": "ann-46",
+      "eventId": "ev-0234",
+      "agent": "main",
+      "tSeconds": 2355.5,
+      "type": "insight",
+      "title": "Reads the occlusion checker's rules",
+      "body": "Instead of guessing at the fix, the orchestrator reads the raycast and label logic in the occlusion checker and surveys the environment geometry to find exactly which meshes are the occluders."
+    },
+    {
+      "id": "ann-47",
+      "eventId": "ev-0250",
+      "agent": "main",
+      "tSeconds": 2510.7,
+      "type": "fix",
+      "title": "Clamp threaders inside the bore",
+      "body": "The orchestrator narrows the threaders' corkscrew crossing envelope so they no longer swing out in front of the wall geometry, one half of the occlusion fix."
+    },
+    {
+      "id": "ann-48",
+      "eventId": "ev-0268",
+      "agent": "main",
+      "tSeconds": 2587.0,
+      "type": "fix",
+      "title": "Push the wall ribs outward",
+      "body": "The other half: the wall ribs are moved outside the threader envelope and named for diagnostics, so structure no longer crosses in front of targets."
+    },
+    {
+      "id": "ann-49",
+      "eventId": "ev-0272",
+      "agent": "main",
+      "tSeconds": 2593.9,
+      "type": "recovery",
+      "title": "Occlusion warnings 17 to 0",
+      "body": "The re-run confirms the occlusion count is clean. The orchestrator immediately re-checks the heatmap and engagement, aware that tightening the threader paths could have shifted kills back toward center."
+    },
+    {
+      "id": "ann-50",
+      "eventId": "ev-0286",
+      "agent": "main",
+      "tSeconds": 2682.8,
+      "type": "polish",
+      "title": "Shorten engagement leads",
+      "body": "The orchestrator trims several wave leads so targets are engaged closer to the camera and wider on screen, pulling average kill distance down from about 45.8 to 40.1 meters, then confirms the floor gate stays green."
+    },
+    {
+      "id": "ann-51",
+      "eventId": "ev-0297",
+      "agent": "main",
+      "tSeconds": 2737.4,
+      "type": "screenshot",
+      "title": "Orchestrator's own contact sheet",
+      "body": "Fable renders an eight-frame sheet across the whole run to judge feel it cannot get from the simulator: ring rhythm, heat progression, the shot, and the exit."
+    },
+    {
+      "id": "ann-52",
+      "eventId": "ev-0305",
+      "agent": "main",
+      "tSeconds": 2815.8,
+      "type": "screenshot",
+      "title": "Reads the boss frames",
+      "body": "A four-frame boss sheet (40 to 50 seconds) lets the orchestrator judge whether the amber interlocks stay legible as the charge glow brightens. It concludes they do not, and decides to fix the glow."
+    },
+    {
+      "id": "ann-53",
+      "eventId": "ev-0317",
+      "agent": "main",
+      "tSeconds": 2888.2,
+      "type": "fix",
+      "title": "Make the charge glow quadratic and distance-capped",
+      "body": "Judging that the bore charge whites out the interlocks too early, the orchestrator traces the charge and atmosphere code, then ramps the glow quadratically and caps it with distance so the boss stays readable until the final beats. A defect only visible by looking at the image."
+    },
+    {
+      "id": "ann-54",
+      "eventId": "ev-0329",
+      "agent": "main",
+      "tSeconds": 2922.0,
+      "type": "screenshot",
+      "title": "Re-snapshot the boss window",
+      "body": "After the glow change the orchestrator re-renders the 39-to-51.5-second window to confirm the interlocks now read against the charge."
+    },
+    {
+      "id": "ann-55",
+      "eventId": "ev-0337",
+      "agent": "main",
+      "tSeconds": 2983.7,
+      "type": "screenshot",
+      "title": "Raw luminance recheck near the shot",
+      "body": "The orchestrator samples luminance at 50, 51.5 and 52.3 seconds and reads the frames to confirm the crescendo brightness is controlled rather than a premature whiteout at a player's bloom setting."
+    },
+    {
+      "id": "ann-56",
+      "eventId": "ev-0345",
+      "agent": "main",
+      "tSeconds": 3036.7,
+      "type": "verification",
+      "title": "Re-run mechanics after visual edits",
+      "body": "Having changed environment and gameplay for readability, the orchestrator re-runs the floor gate and the final simulation outcomes to confirm the visual polish did not regress the choreography or fail states."
+    },
+    {
+      "id": "ann-57",
+      "eventId": "ev-0355",
+      "agent": "main",
+      "tSeconds": 3089.6,
+      "type": "screenshot",
+      "title": "Bloom-off readability proxy",
+      "body": "Because the floor requires the level to stay playable with bloom at zero, the orchestrator captures a postless snapshot as a proxy and confirms pods, threaders and the amber interlocks all read without post-processing."
+    },
+    {
+      "id": "ann-58",
+      "eventId": "ev-0361",
+      "agent": "main",
+      "tSeconds": 3117.1,
+      "type": "milestone",
+      "title": "Final gate suite, all green",
+      "body": "One last run of typecheck, build, scope against the entrant baseline, and the floor gate, all passing, after the last glow-cap edit landed post-dating the previous floor run."
+    },
+    {
+      "id": "ann-59",
+      "eventId": "ev-0368",
+      "agent": "main",
+      "tSeconds": 3159.1,
+      "type": "quality-flag",
+      "title": "Handoff separates verified from needs-eyes",
+      "body": "The final message lists exactly what a human must still judge because WSL cannot render WebGPU headlessly: rings landing on the beat by feel, the shot moment, the charge brightness at the player's own bloom setting, and the music mix balance. Honest about the tooling's blind spot."
+    },
+    {
+      "id": "ann-60",
+      "eventId": "ev-0368",
+      "agent": "main",
+      "tSeconds": 3159.1,
+      "type": "budget",
+      "title": "53 minutes, 54.54 dollars, unattended",
+      "body": "The whole level, from empty scaffold to green gates, took about 53 minutes of wall time and 54.54 dollars across 72 turns, with the orchestrator spending 35 of those dollars and the three Opus delegates 19.5."
+    }
+  ]
+}

@@ -50,6 +50,7 @@ The frozen v1 contract is historical: its entrants used the normal level workflo
 - `releases/` — immutable freeze records and the release procedure.
 - `rankings/` — locked blind-ranking snapshots, slot ids only.
 - `manifests/` — redacted full run records published after unblinding, and the website projection boundary.
+- `analysis/` — per-run rollout analysis packages (normalized traces, annotations, reconstructed screenshots) for unblinded runs.
 - `public/` — reviewed input seam for generated website catalog artifacts.
 - `private/` (ignored) — the schedule/key, raw logs, complete run records, archives, and retired outputs.
 

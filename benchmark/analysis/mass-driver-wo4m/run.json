@@ -1,0 +1,186 @@
+{
+  "runId": "run-eztdwig5twea",
+  "slotId": "wo4m",
+  "levelId": "mass-driver-wo4m",
+  "levelTitle": "Mass Driver",
+  "theme": {
+    "id": "mass-driver",
+    "path": "benchmark/themes/mass-driver.md"
+  },
+  "configurationId": "claude-fable-5-opus-delegation",
+  "blinded": false,
+  "models": {
+    "orchestrator": "claude-fable-5",
+    "orchestratorEffort": "high",
+    "delegate": "opus",
+    "delegateEffort": "high",
+    "usageKeys": [
+      "claude-haiku-4-5-20251001",
+      "claude-fable-5",
+      "claude-opus-4-8[1m]"
+    ]
+  },
+  "harness": {
+    "name": "Claude Code CLI",
+    "version": "2.1.207 (Claude Code)"
+  },
+  "timing": {
+    "startedAt": "2026-07-11T23:55:27.065Z",
+    "finishedAt": "2026-07-12T00:48:20.743Z",
+    "wallTimeSeconds": 3173.678,
+    "numTurns": 72
+  },
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 54.543150499999975,
+    "perModel": [
+      {
+        "modelName": "claude-fable-5",
+        "costUsd": 35.00677900000001,
+        "inputTokens": 174,
+        "outputTokens": 93774,
+        "cacheReadTokens": 23206399,
+        "cacheWriteTokens": 355497
+      },
+      {
+        "modelName": "claude-opus-4-8",
+        "costUsd": 19.5363715,
+        "inputTokens": 4377,
+        "outputTokens": 252399,
+        "cacheReadTokens": 16533123,
+        "cacheWriteTokens": 790072
+      }
+    ]
+  },
+  "tokenTotals": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1098,
+      "outputTokens": 13,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "costUSD": 0.001163
+    },
+    "claude-fable-5": {
+      "inputTokens": 174,
+      "outputTokens": 93774,
+      "cacheReadInputTokens": 23206399,
+      "cacheCreationInputTokens": 355497,
+      "costUSD": 35.00677900000001
+    },
+    "claude-opus-4-8[1m]": {
+      "inputTokens": 4377,
+      "outputTokens": 252399,
+      "cacheReadInputTokens": 16533123,
+      "cacheCreationInputTokens": 790072,
+      "costUSD": 19.5363715
+    }
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.8055054800000003
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.273920576
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- mass-driver-wo4m a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.1301310430000003
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-wo4m",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.321210109999999
+    }
+  ],
+  "disposition": {
+    "status": "playable"
+  },
+  "finalMessage": "**Mass Driver is complete** — a full showcase level at `src/levels/mass-driver-wo4m/`, registered in the picker, with every gate green: `typecheck`, `build`, `check:scope` (against the entrant baseline), `check:floor` (simulation, occlusion 0 warnings, perf, audio config, gallery), and `trace:audio`.\n\n## What was built\n\n**The core conceit is structural, not decorative.** 128 BPM × 32 bars = exactly 60 seconds, and the 112 accelerator rings are placed at `runProgress(beat × beatSeconds)` — so the camera crosses one ring per beat *by construction*, at any point on the strictly-accelerating speed profile. Rings space out in world units as you accelerate but never leave the grid, and each ring heat-shifts arc blue → violet → blinding white across the run.\n\n**The gun is the instrument.** A persistent tonal drone climbs from E1 bar-by-bar, accelerating (t²) through the interlock bars into the firing charge, and cuts dead on the bar-28 shot. Under it: locked four-on-floor minimal techno in E minor (acid line from stage-2, Em–F phrygian dread in the boss), with all player actions transport-quantized and pitched from the live harmony — kills walk hidden per-section melodic lanes, each of the six interlock kills plays a climbing confirmation figure, and rejects are a cold breaker-trip clunk. After the shot, everything strips to a lone **E major** bloom in silent open space — the whole run is minor; the release is the light.\n\n**The boss is a deadline, not a health bar.** Six hazard-amber safety interlocks clamp the bore in two ranks (bars 20/22), station-keeping ~1s ahead so they ring the frame. Clear all six before the charge peaks at bar 28 and the gun fires — whiteout, ~3× speed spike, star-streaked vacuum, \"PAYLOAD AWAY\". Any interlock alive at bar 28 detonates the barrel (99-damage hit, `died: true`, red containment-failure flash).\n\n**Simulation results:** perfect policy 72/72 kills → S; seeded imperfect 66/72 → A (S requires the gun fired + 95% clear); no-fire dies at exactly 52.52s (the deadline). The only dead-air gap is the intentional post-shot silence.\n\n## My refinements on the agents' output\n\nFixed an inverted arc-interception counter (it counted *every* kill), retuned the S-rank margin off the sim ceiling, made the detonation zero the hull line, clamped threader corkscrews inside the bore + moved the wall ribs out (occlusion 17 warnings → 0), shortened engagement leads (kill distance 45.8m → 40.1m, wider screen spread), pulled the interlocks from distant specks to frame-ringing clamps, and made the charge glow quadratic + distance-capped so the boss stays readable until the final beats.\n\n## Needs human eyes (WSL2 can't render WebGPU headless)\n\nVerified via snapshots: tunnel arc, bloom-off readability, interlock legibility against the charge, the whiteout, and the starfield exit. A playtester should first check **rings landing on the beat by feel**, the **bar-28 shot moment** (whiteout length, FOV kick), the **charge crescendo brightness** at their bloom setting, the six-segment reticle gauge during live play, and the music mix balance (hum vs. kick duck).",
+  "counts": {
+    "controllerEvents": 1690,
+    "mainSessionLines": 470,
+    "mainTraceEvents": 368,
+    "toolCallsMain": {
+      "Read": 47,
+      "Bash": 46,
+      "ToolSearch": 1,
+      "TaskCreate": 6,
+      "TaskUpdate": 11,
+      "Write": 4,
+      "Agent": 3,
+      "Edit": 16
+    },
+    "toolCallsAll": {
+      "Read": 112,
+      "Bash": 116,
+      "ToolSearch": 1,
+      "TaskCreate": 6,
+      "TaskUpdate": 11,
+      "Write": 14,
+      "Agent": 3,
+      "Edit": 33
+    },
+    "subagents": 3,
+    "filesTouched": 14,
+    "filesInFinalPayload": 15,
+    "snapshotMoments": 8
+  },
+  "subagents": [
+    {
+      "agentId": "a276861bda22b5c19",
+      "description": "Build Mass Driver gameplay module",
+      "model": "claude-opus-4-8[1m]",
+      "parentEventId": "ev-0143",
+      "durationSeconds": 1325.764,
+      "events": 184,
+      "usage": {
+        "inputTokens": 252,
+        "outputTokens": 69834,
+        "cacheReadInputTokens": 16050118,
+        "cacheCreationInputTokens": 636630
+      }
+    },
+    {
+      "agentId": "a34f666c6f3f1f377",
+      "description": "Build Mass Driver audio modules",
+      "model": "claude-opus-4-8[1m]",
+      "parentEventId": "ev-0145",
+      "durationSeconds": 972.5,
+      "events": 98,
+      "usage": {
+        "inputTokens": 12507,
+        "outputTokens": 72789,
+        "cacheReadInputTokens": 6355364,
+        "cacheCreationInputTokens": 1046443
+      }
+    },
+    {
+      "agentId": "ac06758e603b1c760",
+      "description": "Build Mass Driver visuals modules",
+      "model": "claude-opus-4-8[1m]",
+      "parentEventId": "ev-0147",
+      "durationSeconds": 1325.874,
+      "events": 227,
+      "usage": {
+        "inputTokens": 304,
+        "outputTokens": 75516,
+        "cacheReadInputTokens": 19728262,
+        "cacheCreationInputTokens": 666557
+      }
+    }
+  ]
+}

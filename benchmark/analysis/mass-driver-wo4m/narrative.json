@@ -1,0 +1,93 @@
+{
+  "runId": "run-eztdwig5twea",
+  "levelId": "mass-driver-wo4m",
+  "headline": "A disciplined orchestrator-and-delegates run: Claude Fable 5 wrote the contract and the seams itself, farmed the three heavy modules to parallel Opus agents against a binding design doc, and then did real integration, bug-fixing, and taste work on top of what came back.",
+  "verdict": "This is a strong, professional run with genuine orchestration discipline. Fable front-loaded the expensive decisions: it studied the codebase and named Helios as the quality bar, read the verification gates before writing anything, then authored the timing spine and a 257-line design document that fixed every cross-module contract before delegating. That contract is what let three Opus agents build gameplay, audio, and visuals in parallel without colliding, and each brief was tightly scoped with exclusive file ownership and explicit pass criteria. Verification rigor is the run's strongest trait: every subagent verified its own work (simulation heatmaps, audio traces, mesh snapshots), caught real defects (a geometry leak, foreshortened silhouettes), and handed back honest open items, and then the orchestrator re-verified the assembled build rather than trusting the summaries, re-deriving the simulation itself, retuning a too-generous rank ladder, and chasing a 17-warning occlusion failure down to its root by reading the checker's raycast rules. Taste shows up in the parts no gate measures: the minor-key run resolving to a lone E-major bloom at the muzzle, dimming the interlock core so its reveal reads, and making the charge glow quadratic so the boss stays legible until the final beats. The honest caveats: the level was never seen in motion (WSL cannot render WebGPU headlessly), the audio was never verified against real gameplay events, and both fail routes collapse to the same detonation. But the process that produced it is close to how a careful human tech-artist would work.",
+  "timeline_story": [
+    {
+      "sectionId": "sec-01",
+      "text": "The orchestrator spends its first eight minutes reading. It works through the assignment, the level brief, and the authoring docs, then reads roughly thirty files: the entire rail-shooter engine surface and every module of the Helios level, which it explicitly names as the standard to match. Crucially it also reads the verification tooling, the audio trace harness, the floor gate, the occlusion checker, so it knows what the finished level will be judged against before it writes a line."
+    },
+    {
+      "sectionId": "sec-02",
+      "text": "It then declares a plan encoded as a six-task list, and the plan is really a delegation shape: Fable will personally write the timing spine, the design contract, and the integration wiring, and hand the three heavy modules to Opus subagents while keeping verification for itself."
+    },
+    {
+      "sectionId": "sec-03",
+      "text": "About nine minutes in comes the first code. The orchestrator writes timing.ts at 128 BPM, chosen so 32 bars land on exactly 60 seconds, which is the structural heart of the level: one accelerator ring per beat, so speed and music become the same clock. It follows with a 257-line design document that nails down enemy kinds, event names, the climbing hum curve, the palette, and each module's exact exports, then writes index.ts against exports that do not exist yet, locking the interface from the top down."
+    },
+    {
+      "sectionId": "sec-04",
+      "text": "Within about seventy seconds it spawns three Opus agents in parallel, one each for gameplay, audio, and visuals. Every brief points at the same binding design doc, names Helios as the template, assigns exclusive file ownership so the agents cannot overwrite each other, and lists the exact commands and thresholds each must pass. While they run, Fable writes the level card rather than idling."
+    },
+    {
+      "sectionId": "sec-05",
+      "text": "The gameplay agent writes a 649-line module in one pass and its very first simulation already ranks S and kills the no-fire run, so the core loop works immediately. It then spends most of its time on choreography: it notices kills clustering center-screen and far away, calibrates against Helios, works out that the 60-degree camera projects its rings inside the center circle, and writes a throwaway script to read the exact metric the floor gate was hiding. Moving coils out to the bore wall fixes the spread. It makes one load-bearing design call, that the interlocks station-keep ahead of the camera rather than sit on a fixed anchor that would spawn them unreachably far downbore, and then verifies each of the six stays lockable right up to the shot."
+    },
+    {
+      "sectionId": "sec-06",
+      "text": "The audio agent realizes the theme's central idea literally. It builds the gun as an instrument: a persistent hum that climbs from a low E bar-by-bar, accelerates through the interlock bars as the firing charge, and cuts dead on the bar-28 shot, after which everything strips to a lone E-major bloom, a bright release from an otherwise minor-key run. It verifies the whole climb and the finale through the audio trace, though because gameplay.ts was still a scaffold beside it, it could never hear the score against real kill events."
+    },
+    {
+      "sectionId": "sec-07",
+      "text": "The visuals agent builds seven files leaf-first, rendering each enemy mesh to a PNG and reading it: it catches that the needle-shaped threader foreshortens head-on and checks its side view, and dims the interlock's core so the armor-cowl reveal reads. It builds the 112-ring instanced tunnel and the choreography spine, then the performance gate flags a geometry leak, 892 objects that never drop after enemies despawn. It reads the runtime, learns that freeing geometry is the level's job, fixes disposal, and watches the count fall to a fraction of the budget."
+    },
+    {
+      "sectionId": "sec-08",
+      "text": "As each agent returns, the orchestrator reads the delivered files itself rather than trusting the summaries, makes four small edits to reconcile gameplay.ts with the wiring, and typechecks the assembled level. This is where Fable stops being a dispatcher and takes ownership of the combined product."
+    },
+    {
+      "sectionId": "sec-09",
+      "text": "It runs the full gate suite and does its own tuning on top of the agents'. It retunes the rank ladder, which the gameplay agent had left generous enough that an imperfect run still scored S, so a good-but-not-perfect run now reads A. Then the floor gate fails with 17 occlusion warnings, geometry sitting between the camera and lockable targets. Instead of guessing, the orchestrator reads the occlusion checker's raycast logic, clamps the threader paths inside the bore, pushes the wall ribs outward, and drives the count to zero, then re-checks the heatmap because the tighter paths could have undone the spread work."
+    },
+    {
+      "sectionId": "sec-10",
+      "text": "With the gates green, the orchestrator does the work no gate can measure. It renders its own contact sheets and reads them, judges that the brightening charge glow whites out the interlocks too early, and makes the glow ramp quadratically and cap with distance so the boss stays legible until the final beats. It re-snapshots the boss window and samples raw luminance near the shot to confirm the crescendo is controlled rather than a premature whiteout."
+    },
+    {
+      "sectionId": "sec-11",
+      "text": "For the last pass it re-reads the visuals spine, captures a bloom-off snapshot as a proxy for the floor's zero-bloom playability requirement, and confirms everything still reads without post-processing. It runs the final gate suite green and writes a handoff that carefully separates what it verified from what a human must still judge in a real playtest, because the environment cannot render WebGPU headlessly."
+    }
+  ],
+  "delegation_analysis": "The split was three heavy leaf modules to Opus, everything structural and integrative to Fable, and it was effective. Fable kept exactly the work that must be centralized: the timing spine and the design contract (which prevent the three parallel agents from diverging), the top-level wiring, and all cross-cutting verification and taste. It delegated the three large, well-bounded modules where a fixed interface makes parallelism safe. The briefs are the best evidence the split was deliberate rather than lazy: each gave exclusive file ownership, named Helios as the structural template, told the agent which sibling type errors to ignore, sequenced the visuals work leaf-first so gameplay's exports would likely exist by the time they were needed, and listed concrete pass criteria (heatmap thresholds, audio-trace structure, per-mesh snapshots). The agents rewarded the scoping: each verified itself, caught its own defects, and returned honest open items. The orchestrator then did not merely rubber-stamp them, it read every delivered file, re-ran the simulation on the integrated build, retuned the rank ladder the gameplay agent had flagged, and fixed an occlusion failure that only emerged once the modules were combined. The one structural cost of parallelism is visible in audio: it ran alongside a still-scaffolded gameplay module and so was verified only against the audio trace, never against real kill and lock events, which is why mix balance is left for a human. By tokens, the three Opus delegates generated about 252,000 output tokens to Fable's 94,000, so the bulk of the raw authoring was pushed to the cheaper-per-token model while the orchestrator's spend went mostly to reading context and steering.",
+  "stats_callouts": [
+    {
+      "stat": "~9 minutes to first code",
+      "caption": "timing.ts was written about nine minutes into a 53-minute run, after a deliberate reading and gate-study phase."
+    },
+    {
+      "stat": "13 minutes before any delegation",
+      "caption": "Fable spent roughly the first quarter of the run on orientation, the timing spine, and the binding design doc before spawning a single agent."
+    },
+    {
+      "stat": "3 Opus agents in parallel",
+      "caption": "Gameplay and visuals each ran about 22 minutes, audio about 16, overlapping against one fixed contract."
+    },
+    {
+      "stat": "~31% of wall time was solo orchestrator work after handback",
+      "caption": "Roughly the last sixteen minutes were Fable integrating, re-verifying, bug-fixing, and doing visual polish on the assembled level."
+    },
+    {
+      "stat": "252k vs 94k output tokens",
+      "caption": "The three Opus delegates generated about 2.7 times the tokens Fable did; the orchestrator's cost was dominated by reading context, not writing."
+    },
+    {
+      "stat": "72 enemies, 112 rings, one 60-second run",
+      "caption": "29 coils, 33 threaders, 4 capacitors and 6 interlock-boss clamps, choreographed bar-by-bar to a ring-per-beat tunnel."
+    },
+    {
+      "stat": "2 real bugs caught by verification",
+      "caption": "A geometry leak (892 objects against a 512 budget) and 17 occlusion warnings were both found by gates and fixed at the root before shipping."
+    },
+    {
+      "stat": "$54.54 total, 72 turns",
+      "caption": "About $35 spent by the Fable orchestrator and $19.5 by the three Opus delegates, unattended."
+    }
+  ],
+  "open_questions": [
+    "The level was never seen in motion. WSL cannot render WebGPU headlessly, so the core conceit, rings crossing exactly on the beat, the shot moment's whiteout and FOV kick, and the charge crescendo at a real bloom setting, was only ever checked in static snapshots. A human playtest is the real acceptance test.",
+    "The audio was verified only against the audio trace, never against a live run with real kill, lock, and volley events, because it was built in parallel with a still-scaffolded gameplay module. The mix balance between the climbing hum and the kick-duck pump is unproven and worth a listen.",
+    "Both fail routes collapse to the same bar-28 detonation: ignoring the interlocks and simply running out of time produce the identical death. The gameplay agent flagged this; a reviewer may want a more differentiated mid-run failure.",
+    "Was the eight-minute, thirty-file reading phase worth its cost? It clearly produced a strong contract, but most of Fable's spend was cache reads of context; a reviewer calibrating cost-efficiency should ask whether the same design doc could have come from a leaner read."
+  ]
+}

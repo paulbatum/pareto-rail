@@ -1,0 +1,646 @@
+{
+  "runId": "run-eztdwig5twea",
+  "level": "mass-driver-wo4m",
+  "protocol": "v1",
+  "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
+  "reconstructionSummary": "The original run worktree is gone; level-file state was replayed from the Claude Code transcripts (no file-history snapshots were present). Operations comprise 14 Write + 32 Edit tool calls plus 4 Bash file-mutations (sed -i and a python heredoc, all on gameplay.ts) and the initial `npm run scaffold`. One Edit was rejected in the original run and skipped. Snapshots were re-run in the same headless SwiftShader/WebGL fallback the original agents used.",
+  "moments": [
+    {
+      "ordinal": 1,
+      "eventId": "ac06758e-ev-0113",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1368.542,
+      "command": "for f in createCoilMesh createThreaderMesh createCapacitorMesh createArcMesh createInterlockMesh; do echo \"=== $f ===\"; npm run snapshot -- --module src/levels/mass-driver-wo4m/visuals/enemies.ts --export $f 2>&1 | tail -3; done; echo \"=== letter ===\"; npm run snapshot -- --module src/levels/mass-driver-wo4m/visuals/letters.ts --export createLetterMesh --args '[\"R\"]' 2>&1 | tail -3",
+      "images": [
+        {
+          "path": "snapshots/moment-1/createArcMesh-000.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createArcMesh",
+            "yawDegrees": 0
+          },
+          "bytes": 421836
+        },
+        {
+          "path": "snapshots/moment-1/createArcMesh-090.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createArcMesh",
+            "yawDegrees": 90
+          },
+          "bytes": 479743
+        },
+        {
+          "path": "snapshots/moment-1/createArcMesh-180.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createArcMesh",
+            "yawDegrees": 180
+          },
+          "bytes": 484230
+        },
+        {
+          "path": "snapshots/moment-1/createArcMesh-270.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createArcMesh",
+            "yawDegrees": 270
+          },
+          "bytes": 479743
+        },
+        {
+          "path": "snapshots/moment-1/createCapacitorMesh-000.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createCapacitorMesh",
+            "yawDegrees": 0
+          },
+          "bytes": 226996
+        },
+        {
+          "path": "snapshots/moment-1/createCapacitorMesh-090.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createCapacitorMesh",
+            "yawDegrees": 90
+          },
+          "bytes": 385679
+        },
+        {
+          "path": "snapshots/moment-1/createCapacitorMesh-180.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createCapacitorMesh",
+            "yawDegrees": 180
+          },
+          "bytes": 302837
+        },
+        {
+          "path": "snapshots/moment-1/createCapacitorMesh-270.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createCapacitorMesh",
+            "yawDegrees": 270
+          },
+          "bytes": 386746
+        },
+        {
+          "path": "snapshots/moment-1/createCoilMesh-000.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createCoilMesh",
+            "yawDegrees": 0
+          },
+          "bytes": 332352
+        },
+        {
+          "path": "snapshots/moment-1/createCoilMesh-090.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createCoilMesh",
+            "yawDegrees": 90
+          },
+          "bytes": 284581
+        },
+        {
+          "path": "snapshots/moment-1/createCoilMesh-180.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createCoilMesh",
+            "yawDegrees": 180
+          },
+          "bytes": 289212
+        },
+        {
+          "path": "snapshots/moment-1/createCoilMesh-270.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createCoilMesh",
+            "yawDegrees": 270
+          },
+          "bytes": 292842
+        },
+        {
+          "path": "snapshots/moment-1/createInterlockMesh-000.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createInterlockMesh",
+            "yawDegrees": 0
+          },
+          "bytes": 392337
+        },
+        {
+          "path": "snapshots/moment-1/createInterlockMesh-090.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createInterlockMesh",
+            "yawDegrees": 90
+          },
+          "bytes": 343960
+        },
+        {
+          "path": "snapshots/moment-1/createInterlockMesh-180.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createInterlockMesh",
+            "yawDegrees": 180
+          },
+          "bytes": 471381
+        },
+        {
+          "path": "snapshots/moment-1/createInterlockMesh-270.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createInterlockMesh",
+            "yawDegrees": 270
+          },
+          "bytes": 344431
+        },
+        {
+          "path": "snapshots/moment-1/createLetterMesh-000.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+            "export": "createLetterMesh",
+            "yawDegrees": 0,
+            "args": "[\"R\"]"
+          },
+          "bytes": 307125
+        },
+        {
+          "path": "snapshots/moment-1/createLetterMesh-090.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+            "export": "createLetterMesh",
+            "yawDegrees": 90,
+            "args": "[\"R\"]"
+          },
+          "bytes": 169402
+        },
+        {
+          "path": "snapshots/moment-1/createLetterMesh-180.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+            "export": "createLetterMesh",
+            "yawDegrees": 180,
+            "args": "[\"R\"]"
+          },
+          "bytes": 370279
+        },
+        {
+          "path": "snapshots/moment-1/createLetterMesh-270.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+            "export": "createLetterMesh",
+            "yawDegrees": 270,
+            "args": "[\"R\"]"
+          },
+          "bytes": 168687
+        },
+        {
+          "path": "snapshots/moment-1/createThreaderMesh-000.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createThreaderMesh",
+            "yawDegrees": 0
+          },
+          "bytes": 217801
+        },
+        {
+          "path": "snapshots/moment-1/createThreaderMesh-090.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createThreaderMesh",
+            "yawDegrees": 90
+          },
+          "bytes": 364606
+        },
+        {
+          "path": "snapshots/moment-1/createThreaderMesh-180.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createThreaderMesh",
+            "yawDegrees": 180
+          },
+          "bytes": 246521
+        },
+        {
+          "path": "snapshots/moment-1/createThreaderMesh-270.png",
+          "depicts": {
+            "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+            "export": "createThreaderMesh",
+            "yawDegrees": 270
+          },
+          "bytes": 364901
+        }
+      ],
+      "filesChangedSincePreviousMoment": [
+        "src/levels/mass-driver-wo4m/timing.ts",
+        "src/levels/mass-driver-wo4m/index.ts",
+        "src/levels/mass-driver-wo4m/level.md",
+        "src/levels/mass-driver-wo4m/visuals/palette.ts",
+        "src/levels/mass-driver-wo4m/visuals/letters.ts",
+        "src/levels/mass-driver-wo4m/visuals/effects.ts",
+        "src/levels/mass-driver-wo4m/audio-voices.ts",
+        "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+        "src/levels/mass-driver-wo4m/visuals/post-fx.ts"
+      ],
+      "reconstruction": {
+        "method": "Replayed scaffold + all Write/Edit tool ops and 4 Bash file-mutations (sed/python heredoc) in timestamp order across the main session and 3 subagent transcripts; one rejected Edit (visuals/index.ts @ 00:43:35, \"File modified since read\") was skipped as a no-op.",
+        "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 10 overlapping frames compared, max abs diff 0.0.",
+        "originalLuminance": [
+          0.1033,
+          0.1084,
+          0.1047,
+          0.1235,
+          0.07,
+          0.1242,
+          0.1865,
+          0.104,
+          0.1866,
+          0.3011,
+          0.3019,
+          0.3011,
+          0.1432,
+          0.2264,
+          0.1431,
+          0.0578,
+          0.1415,
+          0.0596
+        ],
+        "replayedLuminance": [
+          0.1866,
+          0.3011,
+          0.3019,
+          0.3011,
+          0.1432,
+          0.2264,
+          0.1431,
+          0.0578,
+          0.1415,
+          0.0596
+        ],
+        "caveats": "None."
+      }
+    },
+    {
+      "ordinal": 2,
+      "eventId": "ac06758e-ev-0173",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1846.986,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --thumbnails 8 2>&1 | tail -15",
+      "images": [
+        {
+          "path": "snapshots/moment-2/gameplay__mass-driver-wo4m-thumbnails-8-3p75s-to-56p25s-full.png",
+          "depicts": {
+            "level": "mass-driver-wo4m",
+            "fidelity": "full",
+            "kind": "contact-sheet",
+            "thumbnails": 8
+          },
+          "bytes": 713615
+        }
+      ],
+      "filesChangedSincePreviousMoment": [
+        "src/levels/mass-driver-wo4m/gameplay.ts",
+        "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+        "src/levels/mass-driver-wo4m/visuals/environment.ts",
+        "src/levels/mass-driver-wo4m/audio.ts",
+        "src/levels/mass-driver-wo4m/visuals/index.ts"
+      ],
+      "reconstruction": {
+        "method": "Replayed scaffold + all Write/Edit tool ops and 4 Bash file-mutations (sed/python heredoc) in timestamp order across the main session and 3 subagent transcripts; one rejected Edit (visuals/index.ts @ 00:43:35, \"File modified since read\") was skipped as a no-op.",
+        "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 8 overlapping frames compared, max abs diff 0.0.",
+        "originalLuminance": [
+          0.2661,
+          0.2189,
+          0.2234,
+          0.2177,
+          0.29,
+          0.5115,
+          0.6252,
+          0.0627
+        ],
+        "replayedLuminance": [
+          0.2661,
+          0.2189,
+          0.2234,
+          0.2177,
+          0.29,
+          0.5115,
+          0.6252,
+          0.0627
+        ],
+        "caveats": "None."
+      }
+    },
+    {
+      "ordinal": 3,
+      "eventId": "ac06758e-ev-0181",
+      "agent": "ac06758e603b1c760",
+      "tSeconds": 1903.727,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 50,52,52.6,54 2>&1 | tail -8",
+      "images": [
+        {
+          "path": "snapshots/moment-3/gameplay__mass-driver-wo4m-thumbnails-4-50s-to-54s-full.png",
+          "depicts": {
+            "level": "mass-driver-wo4m",
+            "fidelity": "full",
+            "kind": "contact-sheet",
+            "times": [
+              50.0,
+              52.0,
+              52.6,
+              54.0
+            ]
+          },
+          "bytes": 173856
+        }
+      ],
+      "filesChangedSincePreviousMoment": [],
+      "reconstruction": {
+        "method": "Replayed scaffold + all Write/Edit tool ops and 4 Bash file-mutations (sed/python heredoc) in timestamp order across the main session and 3 subagent transcripts; one rejected Edit (visuals/index.ts @ 00:43:35, \"File modified since read\") was skipped as a no-op.",
+        "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 4 overlapping frames compared, max abs diff 0.0006.",
+        "originalLuminance": [
+          0.6952,
+          1.0,
+          0.9787,
+          0.1056
+        ],
+        "replayedLuminance": [
+          0.6958,
+          1.0,
+          0.9787,
+          0.1056
+        ],
+        "caveats": "50s frame differs by 0.0006 (SwiftShader nondeterminism); all other frames identical to 4 decimals."
+      }
+    },
+    {
+      "ordinal": 4,
+      "eventId": "ev-0297",
+      "agent": "main",
+      "tSeconds": 2737.436,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 3,10,18,26,38,48,52.8,56 2>&1 | tail -5",
+      "images": [
+        {
+          "path": "snapshots/moment-4/gameplay__mass-driver-wo4m-thumbnails-8-3s-to-56s-full.png",
+          "depicts": {
+            "level": "mass-driver-wo4m",
+            "fidelity": "full",
+            "kind": "contact-sheet",
+            "times": [
+              3.0,
+              10.0,
+              18.0,
+              26.0,
+              38.0,
+              48.0,
+              52.8,
+              56.0
+            ]
+          },
+          "bytes": 675939
+        }
+      ],
+      "filesChangedSincePreviousMoment": [
+        "src/levels/mass-driver-wo4m/gameplay.ts",
+        "src/levels/mass-driver-wo4m/visuals/index.ts",
+        "src/levels/mass-driver-wo4m/visuals/environment.ts"
+      ],
+      "reconstruction": {
+        "method": "Replayed scaffold + all Write/Edit tool ops and 4 Bash file-mutations (sed/python heredoc) in timestamp order across the main session and 3 subagent transcripts; one rejected Edit (visuals/index.ts @ 00:43:35, \"File modified since read\") was skipped as a no-op.",
+        "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 4 overlapping frames compared, max abs diff 0.0.",
+        "originalLuminance": [
+          0.3544,
+          0.5982,
+          0.7672,
+          0.0512
+        ],
+        "replayedLuminance": [
+          0.3544,
+          0.5982,
+          0.7672,
+          0.0512
+        ],
+        "caveats": "None."
+      }
+    },
+    {
+      "ordinal": 5,
+      "eventId": "ev-0303",
+      "agent": "main",
+      "tSeconds": 2794.518,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 40,43,46,50 2>&1 | tail -2",
+      "images": [
+        {
+          "path": "snapshots/moment-5/gameplay__mass-driver-wo4m-thumbnails-4-40s-to-50s-full.png",
+          "depicts": {
+            "level": "mass-driver-wo4m",
+            "fidelity": "full",
+            "kind": "contact-sheet",
+            "times": [
+              40.0,
+              43.0,
+              46.0,
+              50.0
+            ]
+          },
+          "bytes": 348467
+        }
+      ],
+      "filesChangedSincePreviousMoment": [],
+      "reconstruction": {
+        "method": "Replayed scaffold + all Write/Edit tool ops and 4 Bash file-mutations (sed/python heredoc) in timestamp order across the main session and 3 subagent transcripts; one rejected Edit (visuals/index.ts @ 00:43:35, \"File modified since read\") was skipped as a no-op.",
+        "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 1 overlapping frames compared, max abs diff 0.0.",
+        "originalLuminance": [
+          0.698
+        ],
+        "replayedLuminance": [
+          0.698
+        ],
+        "caveats": "None."
+      }
+    },
+    {
+      "ordinal": 6,
+      "eventId": "ev-0329",
+      "agent": "main",
+      "tSeconds": 2921.994,
+      "command": "npm run typecheck 2>&1 | tail -2 && npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 39,42,46,50,51.5 2>&1 | tail -2",
+      "images": [
+        {
+          "path": "snapshots/moment-6/gameplay__mass-driver-wo4m-thumbnails-5-39s-to-51p5s-full.png",
+          "depicts": {
+            "level": "mass-driver-wo4m",
+            "fidelity": "full",
+            "kind": "contact-sheet",
+            "times": [
+              39.0,
+              42.0,
+              46.0,
+              50.0,
+              51.5
+            ]
+          },
+          "bytes": 395273
+        }
+      ],
+      "filesChangedSincePreviousMoment": [
+        "src/levels/mass-driver-wo4m/visuals/environment.ts",
+        "src/levels/mass-driver-wo4m/gameplay.ts",
+        "src/levels/mass-driver-wo4m/visuals/index.ts"
+      ],
+      "reconstruction": {
+        "method": "Replayed scaffold + all Write/Edit tool ops and 4 Bash file-mutations (sed/python heredoc) in timestamp order across the main session and 3 subagent transcripts; one rejected Edit (visuals/index.ts @ 00:43:35, \"File modified since read\") was skipped as a no-op.",
+        "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 1 overlapping frames compared, max abs diff 0.0.",
+        "originalLuminance": [
+          0.8671
+        ],
+        "replayedLuminance": [
+          0.8671
+        ],
+        "caveats": "None."
+      }
+    },
+    {
+      "ordinal": 7,
+      "eventId": "ev-0337",
+      "agent": "main",
+      "tSeconds": 2983.729,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 50,51.5,52.3 2>&1 | grep luminance; ",
+      "images": [
+        {
+          "path": "snapshots/moment-7/gameplay__mass-driver-wo4m-thumbnails-3-50s-to-52p3s-full.png",
+          "depicts": {
+            "level": "mass-driver-wo4m",
+            "fidelity": "full",
+            "kind": "contact-sheet",
+            "times": [
+              50.0,
+              51.5,
+              52.3
+            ]
+          },
+          "bytes": 209992
+        }
+      ],
+      "filesChangedSincePreviousMoment": [
+        "src/levels/mass-driver-wo4m/visuals/environment.ts"
+      ],
+      "reconstruction": {
+        "method": "Replayed scaffold + all Write/Edit tool ops and 4 Bash file-mutations (sed/python heredoc) in timestamp order across the main session and 3 subagent transcripts; one rejected Edit (visuals/index.ts @ 00:43:35, \"File modified since read\") was skipped as a no-op.",
+        "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 3 overlapping frames compared, max abs diff 0.0.",
+        "originalLuminance": [
+          0.6003,
+          0.6228,
+          0.8084
+        ],
+        "replayedLuminance": [
+          0.6003,
+          0.6228,
+          0.8084
+        ],
+        "caveats": "None."
+      }
+    },
+    {
+      "ordinal": 8,
+      "eventId": "ev-0355",
+      "agent": "main",
+      "tSeconds": 3089.633,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 10,24,42 --fidelity postless 2>&1 | tail -2",
+      "images": [
+        {
+          "path": "snapshots/moment-8/gameplay__mass-driver-wo4m-thumbnails-3-10s-to-42s-postless.png",
+          "depicts": {
+            "level": "mass-driver-wo4m",
+            "fidelity": "postless",
+            "kind": "contact-sheet",
+            "times": [
+              10.0,
+              24.0,
+              42.0
+            ]
+          },
+          "bytes": 133346
+        }
+      ],
+      "filesChangedSincePreviousMoment": [],
+      "reconstruction": {
+        "method": "Replayed scaffold + all Write/Edit tool ops and 4 Bash file-mutations (sed/python heredoc) in timestamp order across the main session and 3 subagent transcripts; one rejected Edit (visuals/index.ts @ 00:43:35, \"File modified since read\") was skipped as a no-op.",
+        "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 1 overlapping frames compared, max abs diff 0.0.",
+        "originalLuminance": [
+          0.2881
+        ],
+        "replayedLuminance": [
+          0.2881
+        ],
+        "caveats": "None."
+      }
+    }
+  ],
+  "finalStateVerification": {
+    "method": "Replayed ALL operations, then compared each level file byte-for-byte against the preserved payload branch benchmark-payload-run-eztdwig5twea.",
+    "allFilesMatch": true,
+    "files": [
+      {
+        "file": "src/levels/mass-driver-wo4m/audio-voices.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/audio.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/index.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/level.md",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/timing.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/visuals/effects.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/visuals/palette.ts",
+        "match": true
+      },
+      {
+        "file": "src/levels/mass-driver-wo4m/visuals/post-fx.ts",
+        "match": true
+      }
+    ]
+  },
+  "environment": {
+    "node": "v22.19.0",
+    "renderer": "headless SwiftShader WebGL fallback owned by the snapshot tools (WebGPU is non-functional headless in WSL2); same fallback the original agents used.",
+    "threeVersion": "pinned by baseline package-lock.json (identical to original run)",
+    "fidelityNote": "Renders are pixel-comparable to the originals; confirmed via luminance-value match against transcript-recorded output."
+  }
+}

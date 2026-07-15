@@ -1,0 +1,381 @@
+{
+  "runId": "run-eztdwig5twea",
+  "count": 8,
+  "moments": [
+    {
+      "ordinal": 1,
+      "eventId": "ac06758e-ev-0113",
+      "agent": "ac06758e603b1c760",
+      "ts": "2026-07-12T00:18:15.607Z",
+      "tSeconds": 1368.542,
+      "command": "for f in createCoilMesh createThreaderMesh createCapacitorMesh createArcMesh createInterlockMesh; do echo \"=== $f ===\"; npm run snapshot -- --module src/levels/mass-driver-wo4m/visuals/enemies.ts --export $f 2>&1 | tail -3; done; echo \"=== letter ===\"; npm run snapshot -- --module src/levels/mass-driver-wo4m/visuals/letters.ts --export createLetterMesh --args '[\"R\"]' 2>&1 | tail -3",
+      "exitStatus": "completed",
+      "stderrPresent": false,
+      "filesModifiedSincePrevious": [
+        {
+          "file": "src/levels/mass-driver-wo4m/timing.ts",
+          "agent": "main",
+          "operation": "write",
+          "tSeconds": 549.96
+        },
+        {
+          "file": "/tmp/mass-driver-design.md",
+          "agent": "main",
+          "operation": "write",
+          "tSeconds": 674.975
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/index.ts",
+          "agent": "main",
+          "operation": "write",
+          "tSeconds": 729.936
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/level.md",
+          "agent": "main",
+          "operation": "write",
+          "tSeconds": 878.784
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/palette.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1130.317
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1155.433
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1164.018
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1167.022
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/effects.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1234.275
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/audio-voices.ts",
+          "agent": "a34f666c6f3f1f377",
+          "operation": "write",
+          "tSeconds": 1319.156
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1325.513
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/post-fx.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1343.271
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/post-fx.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1349.936
+        }
+      ]
+    },
+    {
+      "ordinal": 2,
+      "eventId": "ac06758e-ev-0173",
+      "agent": "ac06758e603b1c760",
+      "ts": "2026-07-12T00:26:14.051Z",
+      "tSeconds": 1846.986,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --thumbnails 8 2>&1 | tail -15",
+      "exitStatus": "completed",
+      "stderrPresent": false,
+      "filesModifiedSincePrevious": [
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "a276861bda22b5c19",
+          "operation": "write",
+          "tSeconds": 1417.129
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1445.907
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1626.64
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/audio.ts",
+          "agent": "a34f666c6f3f1f377",
+          "operation": "write",
+          "tSeconds": 1631.066
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1636.647
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1646.891
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1651.491
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1657.801
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1698.372
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1707.892
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1715.067
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/audio.ts",
+          "agent": "a34f666c6f3f1f377",
+          "operation": "edit",
+          "tSeconds": 1741.57
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1813.646
+        }
+      ]
+    },
+    {
+      "ordinal": 3,
+      "eventId": "ac06758e-ev-0181",
+      "agent": "ac06758e603b1c760",
+      "ts": "2026-07-12T00:27:10.792Z",
+      "tSeconds": 1903.727,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 50,52,52.6,54 2>&1 | tail -8",
+      "exitStatus": "completed",
+      "stderrPresent": false,
+      "filesModifiedSincePrevious": []
+    },
+    {
+      "ordinal": 4,
+      "eventId": "ev-0297",
+      "agent": "main",
+      "ts": "2026-07-12T00:41:04.501Z",
+      "tSeconds": 2737.436,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 3,10,18,26,38,48,52.8,56 2>&1 | tail -5",
+      "exitStatus": "completed",
+      "stderrPresent": false,
+      "filesModifiedSincePrevious": [
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1910.601
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 2005.552
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 2016.177
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 2020.665
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 2027.232
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2189.116
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2191.457
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2194.199
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2196.281
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2279.678
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2520.471
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2523.225
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2586.972
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2588.324
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2631.443
+        }
+      ]
+    },
+    {
+      "ordinal": 5,
+      "eventId": "ev-0303",
+      "agent": "main",
+      "ts": "2026-07-12T00:42:01.583Z",
+      "tSeconds": 2794.518,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 40,43,46,50 2>&1 | tail -2",
+      "exitStatus": "completed",
+      "stderrPresent": false,
+      "filesModifiedSincePrevious": []
+    },
+    {
+      "ordinal": 6,
+      "eventId": "ev-0329",
+      "agent": "main",
+      "ts": "2026-07-12T00:44:09.059Z",
+      "tSeconds": 2921.994,
+      "command": "npm run typecheck 2>&1 | tail -2 && npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 39,42,46,50,51.5 2>&1 | tail -2",
+      "exitStatus": "completed",
+      "stderrPresent": false,
+      "filesModifiedSincePrevious": [
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2888.161
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2890.311
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2893.293
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2898.215
+        },
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2915.337
+        }
+      ]
+    },
+    {
+      "ordinal": 7,
+      "eventId": "ev-0337",
+      "agent": "main",
+      "ts": "2026-07-12T00:45:10.794Z",
+      "tSeconds": 2983.729,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 50,51.5,52.3 2>&1 | grep luminance; ",
+      "exitStatus": "completed",
+      "stderrPresent": false,
+      "filesModifiedSincePrevious": [
+        {
+          "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2975.916
+        }
+      ]
+    },
+    {
+      "ordinal": 8,
+      "eventId": "ev-0355",
+      "agent": "main",
+      "ts": "2026-07-12T00:46:56.698Z",
+      "tSeconds": 3089.633,
+      "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 10,24,42 --fidelity postless 2>&1 | tail -2",
+      "exitStatus": "completed",
+      "stderrPresent": false,
+      "filesModifiedSincePrevious": []
+    }
+  ]
+}

@@ -1,0 +1,710 @@
+{
+  "runId": "run-eztdwig5twea",
+  "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
+  "evaluatedCommit": "ebc45c1fa16cb250282f5ef4118ae00e5a14af58",
+  "finalPayloadFiles": [
+    {
+      "status": "M",
+      "file": "docs/level-gallery.md"
+    },
+    {
+      "status": "M",
+      "file": "src/levels/index.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/audio-voices.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/audio.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/gameplay.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/index.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/level.md"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/timing.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/visuals/effects.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/visuals/enemies.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/visuals/environment.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/visuals/index.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/visuals/letters.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/visuals/palette.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/levels/mass-driver-wo4m/visuals/post-fx.ts"
+    }
+  ],
+  "files": [
+    {
+      "file": "src/levels/mass-driver-wo4m/timing.ts",
+      "inFinalPayload": true,
+      "editCount": 1,
+      "firstTouchedTSeconds": 549.96,
+      "lastTouchedTSeconds": 549.96,
+      "agents": [
+        "main"
+      ],
+      "history": [
+        {
+          "eventId": "ev-0129",
+          "agent": "main",
+          "operation": "write",
+          "tSeconds": 549.96,
+          "deltaSummary": {
+            "lines": 60,
+            "bytes": 2872
+          }
+        }
+      ]
+    },
+    {
+      "file": "/tmp/mass-driver-design.md",
+      "inFinalPayload": false,
+      "editCount": 1,
+      "firstTouchedTSeconds": 674.975,
+      "lastTouchedTSeconds": 674.975,
+      "agents": [
+        "main"
+      ],
+      "history": [
+        {
+          "eventId": "ev-0133",
+          "agent": "main",
+          "operation": "write",
+          "tSeconds": 674.975,
+          "deltaSummary": {
+            "lines": 257,
+            "bytes": 18750
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/index.ts",
+      "inFinalPayload": true,
+      "editCount": 1,
+      "firstTouchedTSeconds": 729.936,
+      "lastTouchedTSeconds": 729.936,
+      "agents": [
+        "main"
+      ],
+      "history": [
+        {
+          "eventId": "ev-0137",
+          "agent": "main",
+          "operation": "write",
+          "tSeconds": 729.936,
+          "deltaSummary": {
+            "lines": 146,
+            "bytes": 4899
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/level.md",
+      "inFinalPayload": true,
+      "editCount": 1,
+      "firstTouchedTSeconds": 878.784,
+      "lastTouchedTSeconds": 878.784,
+      "agents": [
+        "main"
+      ],
+      "history": [
+        {
+          "eventId": "ev-0157",
+          "agent": "main",
+          "operation": "write",
+          "tSeconds": 878.784,
+          "deltaSummary": {
+            "lines": 23,
+            "bytes": 2619
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/visuals/palette.ts",
+      "inFinalPayload": true,
+      "editCount": 1,
+      "firstTouchedTSeconds": 1130.317,
+      "lastTouchedTSeconds": 1130.317,
+      "agents": [
+        "ac06758e603b1c760"
+      ],
+      "history": [
+        {
+          "eventId": "ac06758e-ev-0082",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1130.317,
+          "deltaSummary": {
+            "lines": 50,
+            "bytes": 2250
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/visuals/letters.ts",
+      "inFinalPayload": true,
+      "editCount": 3,
+      "firstTouchedTSeconds": 1155.433,
+      "lastTouchedTSeconds": 1167.022,
+      "agents": [
+        "ac06758e603b1c760"
+      ],
+      "history": [
+        {
+          "eventId": "ac06758e-ev-0085",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1155.433,
+          "deltaSummary": {
+            "lines": 96,
+            "bytes": 3815
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0089",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1164.018,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0091",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1167.022,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/visuals/effects.ts",
+      "inFinalPayload": true,
+      "editCount": 1,
+      "firstTouchedTSeconds": 1234.275,
+      "lastTouchedTSeconds": 1234.275,
+      "agents": [
+        "ac06758e603b1c760"
+      ],
+      "history": [
+        {
+          "eventId": "ac06758e-ev-0095",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1234.275,
+          "deltaSummary": {
+            "lines": 416,
+            "bytes": 13267
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/audio-voices.ts",
+      "inFinalPayload": true,
+      "editCount": 1,
+      "firstTouchedTSeconds": 1319.156,
+      "lastTouchedTSeconds": 1319.156,
+      "agents": [
+        "a34f666c6f3f1f377"
+      ],
+      "history": [
+        {
+          "eventId": "a34f666c-ev-0057",
+          "agent": "a34f666c6f3f1f377",
+          "operation": "write",
+          "tSeconds": 1319.156,
+          "deltaSummary": {
+            "lines": 558,
+            "bytes": 20712
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
+      "inFinalPayload": true,
+      "editCount": 2,
+      "firstTouchedTSeconds": 1325.513,
+      "lastTouchedTSeconds": 1445.907,
+      "agents": [
+        "ac06758e603b1c760"
+      ],
+      "history": [
+        {
+          "eventId": "ac06758e-ev-0099",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1325.513,
+          "deltaSummary": {
+            "lines": 309,
+            "bytes": 12573
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0138",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1445.907,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/visuals/post-fx.ts",
+      "inFinalPayload": true,
+      "editCount": 2,
+      "firstTouchedTSeconds": 1343.271,
+      "lastTouchedTSeconds": 1349.936,
+      "agents": [
+        "ac06758e603b1c760"
+      ],
+      "history": [
+        {
+          "eventId": "ac06758e-ev-0103",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1343.271,
+          "deltaSummary": {
+            "lines": 30,
+            "bytes": 1583
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0106",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1349.936,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/gameplay.ts",
+      "inFinalPayload": true,
+      "editCount": 13,
+      "firstTouchedTSeconds": 1417.129,
+      "lastTouchedTSeconds": 2898.215,
+      "agents": [
+        "a276861bda22b5c19",
+        "main"
+      ],
+      "history": [
+        {
+          "eventId": "a276861b-ev-0068",
+          "agent": "a276861bda22b5c19",
+          "operation": "write",
+          "tSeconds": 1417.129,
+          "deltaSummary": {
+            "lines": 649,
+            "bytes": 26283
+          }
+        },
+        {
+          "eventId": "a276861b-ev-0098",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1657.801,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "a276861b-ev-0101",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1698.372,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "a276861b-ev-0104",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1707.892,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "a276861b-ev-0106",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1715.067,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "a276861b-ev-0140",
+          "agent": "a276861bda22b5c19",
+          "operation": "edit",
+          "tSeconds": 1910.601,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ev-0180",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2189.116,
+          "deltaSummary": {
+            "added": 1,
+            "removed": 1
+          }
+        },
+        {
+          "eventId": "ev-0182",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2191.457,
+          "deltaSummary": {
+            "added": 1,
+            "removed": 0
+          }
+        },
+        {
+          "eventId": "ev-0184",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2194.199,
+          "deltaSummary": {
+            "added": 2,
+            "removed": 1
+          }
+        },
+        {
+          "eventId": "ev-0186",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2196.281,
+          "deltaSummary": {
+            "added": 2,
+            "removed": 1
+          }
+        },
+        {
+          "eventId": "ev-0214",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2279.678,
+          "deltaSummary": {
+            "added": 6,
+            "removed": 6
+          }
+        },
+        {
+          "eventId": "ev-0280",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2631.443,
+          "deltaSummary": {
+            "added": 3,
+            "removed": 2
+          }
+        },
+        {
+          "eventId": "ev-0323",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2898.215,
+          "deltaSummary": {
+            "added": 8,
+            "removed": 6
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/visuals/environment.ts",
+      "inFinalPayload": true,
+      "editCount": 11,
+      "firstTouchedTSeconds": 1626.64,
+      "lastTouchedTSeconds": 2975.916,
+      "agents": [
+        "ac06758e603b1c760",
+        "main"
+      ],
+      "history": [
+        {
+          "eventId": "ac06758e-ev-0147",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1626.64,
+          "deltaSummary": {
+            "lines": 533,
+            "bytes": 20123
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0151",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1636.647,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0153",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1646.891,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0155",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 1651.491,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ev-0254",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2520.471,
+          "deltaSummary": {
+            "added": 1,
+            "removed": 0
+          }
+        },
+        {
+          "eventId": "ev-0256",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2523.225,
+          "deltaSummary": {
+            "added": 3,
+            "removed": 1
+          }
+        },
+        {
+          "eventId": "ev-0268",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2586.972,
+          "deltaSummary": {
+            "added": 6,
+            "removed": 0
+          }
+        },
+        {
+          "eventId": "ev-0270",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2588.324,
+          "deltaSummary": {
+            "added": 1,
+            "removed": 0
+          }
+        },
+        {
+          "eventId": "ev-0319",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2890.311,
+          "deltaSummary": {
+            "added": 1,
+            "removed": 1
+          }
+        },
+        {
+          "eventId": "ev-0321",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2893.293,
+          "deltaSummary": {
+            "added": 2,
+            "removed": 2
+          }
+        },
+        {
+          "eventId": "ev-0335",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2975.916,
+          "deltaSummary": {
+            "added": 5,
+            "removed": 1
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/audio.ts",
+      "inFinalPayload": true,
+      "editCount": 2,
+      "firstTouchedTSeconds": 1631.066,
+      "lastTouchedTSeconds": 1741.57,
+      "agents": [
+        "a34f666c6f3f1f377"
+      ],
+      "history": [
+        {
+          "eventId": "a34f666c-ev-0061",
+          "agent": "a34f666c6f3f1f377",
+          "operation": "write",
+          "tSeconds": 1631.066,
+          "deltaSummary": {
+            "lines": 768,
+            "bytes": 31108
+          }
+        },
+        {
+          "eventId": "a34f666c-ev-0093",
+          "agent": "a34f666c6f3f1f377",
+          "operation": "edit",
+          "tSeconds": 1741.57,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        }
+      ]
+    },
+    {
+      "file": "src/levels/mass-driver-wo4m/visuals/index.ts",
+      "inFinalPayload": true,
+      "editCount": 7,
+      "firstTouchedTSeconds": 1813.646,
+      "lastTouchedTSeconds": 2915.337,
+      "agents": [
+        "ac06758e603b1c760",
+        "main"
+      ],
+      "history": [
+        {
+          "eventId": "ac06758e-ev-0159",
+          "agent": "ac06758e603b1c760",
+          "operation": "write",
+          "tSeconds": 1813.646,
+          "deltaSummary": {
+            "lines": 666,
+            "bytes": 22462
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0190",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 2005.552,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0193",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 2016.177,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0196",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 2020.665,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ac06758e-ev-0198",
+          "agent": "ac06758e603b1c760",
+          "operation": "edit",
+          "tSeconds": 2027.232,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ev-0317",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2888.161,
+          "deltaSummary": {
+            "added": null,
+            "removed": null
+          }
+        },
+        {
+          "eventId": "ev-0327",
+          "agent": "main",
+          "operation": "edit",
+          "tSeconds": 2915.337,
+          "deltaSummary": {
+            "added": 5,
+            "removed": 2
+          }
+        }
+      ]
+    }
+  ]
+}

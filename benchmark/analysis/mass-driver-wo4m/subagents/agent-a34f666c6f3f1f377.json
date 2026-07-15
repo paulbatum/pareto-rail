@@ -1,0 +1,1462 @@
+{
+  "header": {
+    "agentId": "a34f666c6f3f1f377",
+    "agentType": "general-purpose",
+    "description": "Build Mass Driver audio modules",
+    "spawnDepth": 1,
+    "spawnToolUseId": "toolu_01JCx4NhjKejfwhNfMkMnMvy",
+    "model": "claude-opus-4-8[1m]",
+    "prompt": "You are building the procedural soundtrack + sound design for a new rail-shooter level in the repo at /tmp/raild-run-eztdwig5twea (work in that directory).\n\nFIRST read these, in order:\n1. /tmp/mass-driver-design.md — the level design document and cross-module contract. It is binding, especially the Music section.\n2. /tmp/raild-run-eztdwig5twea/AGENTS.md and docs/level-authoring.md (the \"Musical action audio\" section is your rulebook)\n3. src/engine/audio-kit.ts, src/engine/audio-voices.ts, src/engine/score.ts, src/engine/arrangement.ts, src/engine/audio-trace.ts, src/engine/music.ts\n4. src/levels/helios/audio.ts and src/levels/helios/audio-voices.ts — the reference implementation; mirror its architecture and code style exactly (createBeatLevelAudio + createScore + defineInstruments + createArrangement + the voice() spec layer). Never import from another level's directory.\n5. src/levels/mass-driver-wo4m/timing.ts (already written — import BPM/steps/sections/markers from it, do not redefine).\n\nYOUR FILES (you own them exclusively): src/levels/mass-driver-wo4m/audio.ts (replace the scaffold) and src/levels/mass-driver-wo4m/audio-voices.ts (new).\nDo not create or edit any other file. Other agents are concurrently writing gameplay.ts and visuals/* — ignore type errors originating there.\n\nBuild, per the design doc:\n- 128 BPM locked minimal-techno in E minor across the 5 score sections (use MASS_DRIVER_SCORE_SECTIONS), chords {bass,pad,arp,stab}, main loop Em–Em–C–D (2 bars/chord), boss alternate chord set Em–F–Em–F for bars 20–28, and a hard-cut section 4 at bar 28 that blooms a single E MAJOR chord into near-silence (Picardy third payoff). Provide the alternate chord set for the outro too if you keep chordAt consistent (a one-chord E-major set from bar 28 works well via alternateChordSets).\n- THE CLIMBING HUM — the level's signature. A persistent tonal drone (installMassDriverHum(context, mix) in audio-voices.ts, called from onPostBuild): detuned saw pair + sine sub through a lowpass into mix.music. Expose a small controller ({ glideTo(midi, atTime, seconds), idle(atTime), cutAt(time) } or similar). An arrangement fn() track calls it at step 0 of every bar to follow the pitch curve: MIDI 28 at bar 0 → 33 by bar 12 → 40 by bar 20 → accelerating to 52 at bar 28, where it CUTS dead on the shot. Ambient/attract mode idles at E1 with a slow LFO; re-idle in onRunEnd. The rise through bars 20–28 must be audibly the charge building.\n- Full arrangement per section (injection / stage-1 / stage-2 / interlock / muzzle) as sketched in the design doc: hits() pattern tracks for kick/hat/clap/snare-roll, 8th-note hypnotic bass, acid 16th line in stage-2, klaxon+impact at bar 20, alarm swells + per-2-bar risers + bar-27 snare roll in interlock, oneShot impact+duck+crash at bar 28 step 0, then the quiet E-major pad + sparse delay-sparkle outro with a fading sub heartbeat. The pulse is LOCKED — kicks stay on the grid, hypnotic, no syncopated fills outside the interlock escalation.\n- Player instruments per the \"Musical action audio\" doctrine, mirroring Helios's event handlers: PLAYER_VOICES table for ALL 5 sections (lock/kill/fire timbres, section 4 glassy+quiet+reverb-heavy), lock plucks from leadSetAt via quantizePlayerAction (6th lock = ignition ping + sub), kill melodies via score.nextKill() with authored 32-step kill lanes for ALL 5 sections (killLanes validation must pass — degrees within every lead set; createScore throws otherwise and check:floor fails), fire zaps with pitch fall, volley stab+run with duck for ≥4 all-kill, the breaker-trip reject, playerhit boom+alarm, miss fizzle, unlock tick, stage crack.\n- Interlock escalation: track interlock enemy ids via spawn events; each interlock kill plays a climbing confirmation (louder/brighter/higher with each of the 6) + clamp clank; on bossphase destroyed, duck and land a conclusive rising figure; on runend with died:true, cut to a low detonation rumble instead of the end choir.\n- Mix bus: compressor, delay 3×16th feedback ~0.3 damped, reverb ~2.2s, noiseSeconds 2, volumeScale ~0.8. Tune gains by perceived loudness (saw/square much louder than sine/triangle at equal gain). Kick duck like Helios but shallower (this is techno — the duck IS the pump, ~0.5 depth).\n- Export `createAudio(bus)` AND `traceMassDriverAudio = createAudioTraceHarness({ level: 'mass-driver-wo4m', ... })` exactly like Helios's traceHeliosAudio. IMPORTANT: createAudio(bus) must construct without throwing in a DOM-stubbed Node env (check:floor instantiates it headlessly) — construct-time code must not touch window/AudioContext.\n\nVERIFY before finishing:\n- `npx tsc --noEmit -p tsconfig.json 2>&1 | grep \"levels/mass-driver-wo4m/audio\"` → must be empty.\n- `npm run trace:audio -- --level mass-driver-wo4m` runs clean; read the summary and iterate until sections appear at bars 0/4/12/20/28, hum glide events land bar-by-bar, drums/bass/arp density visibly steps up per section, the bar-28 impact + outro strip-down is visible, and no section is empty. Also run with `--verbose` once to sanity-check the first bars.\n- Optional deeper check: `npm run simulate -- --level mass-driver-wo4m` (needs gameplay.ts from the other agent; if it's not ready, skip).\n\nReturn (as your final message): the section-by-section arrangement summary, the hum pitch-curve implementation approach, kill-lane design notes, gain-staging decisions, and trace:audio highlights you verified.",
+    "promptByteLength": 5492,
+    "finalResultText": "Both audio files typecheck clean; the trace runs clean with all structural expectations met. `simulate` is skipped since gameplay.ts is still a scaffold (as the task allows). \n\n## Summary\n\nI built the full procedural soundtrack + sound design for Mass Driver in two files I own exclusively:\n- `/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio.ts` (spine: score, arrangement, player instruments, event handlers)\n- `/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio-voices.ts` (leaves: the hum controller + instrument bank + player voice helpers)\n\nArchitecture mirrors Helios exactly: `createBeatLevelAudio` + `createScore` + `createArrangement` + `defineInstruments` + the `voice()` spec layer. No cross-level imports; timing constants all come from `timing.ts`.\n\n### Section-by-section arrangement\n- injection (bars 0–4): hum + sparse bar-downbeat kick, tick hats, per-beat arp blips rising in velocity, half-bar riser into stage-1.\n- stage-1 (4–12): four-on-floor kick, offbeat hats, 8th-note root bass pulse (hypnotic), sparse 16th arp, 4-bar pad swells.\n- stage-2 (12–20): + acid resonant-303 16th line, clap on 2/4, busier hat+openHat, bass octave/fifth `bassFigure`, arp up an octave, pad swells.\n- interlock (20–28): klaxon (two-tone) + impact at bar 20, hardened grid-locked double-kick, alarm swells every 2 bars, a per-bar rising noise riser building toward the peak, bar-27 accelerating snare roll. The pulse stays locked — no syncopation outside this escalation.\n- muzzle (28–32): bar-28 impact + crash + deep duck + `humCut`, then near-silence: long E-major pad bloom (Picardy third), sparse delayed sparkle arp, tiny sub heartbeat fading 0.6→0.12 on downbeats. No drums.\n\n### The climbing hum\n`installMassDriverHum(context, mix)` builds a detuned saw pair + sine (all through a lowpass into `mix.music`) with a slow always-on idle LFO. Oscillators run for the whole session; the controller only steers frequency/cutoff/level (`glideTo`, `idle`, `cutAt`), so a cut leaves it ready to re-idle. A single shared `humTrack` fn drives it at every bar downbeat via `humMidiAtBar(bar+1)`: E1→33 (linear to bar 12)→40/E2 (bar 20)→then a t² eased (accelerating) charge 40→52/E3 by bar 27, cut dead at bar 28. Level fades in over the breech and swells through the charge; cutoff tracks pitch so the climb audibly brightens. Trace verified the exact climb bar-by-bar and the cut at 52.56s. In trace mode (no live context) the track records a `hum` event instead of steering nodes. `idle` on runend re-idles; a `died` runend cuts it and drops a low detonation rumble instead of the bloom.\n\n### Kill-lane design\nFive authored 32-step lanes (degrees into the live 8-note lead set, so all validate): 0 = sparse glassy climbing arches; 1 = steady locked walk mirroring the four-on-floor; 2 = high jump-cut acid fragments leaving the bass its register; 3 = urgent ceiling-pressing climbs (countdown); 4 = glassy descents resolving onto the E-major tonic. Interlock kills bypass the lane for a bespoke climbing confirmation (root + n ascending steps, louder/brighter/higher each of the 6, + clamp clank + ignition ping); `bossphase destroyed` ducks and lands a conclusive rising figure over an impact.\n\n### Gain-staging decisions\nTuned by perceived loudness (saw ≫ sine): saws/squares kept low (reese 0.08, stab 0.045/voice, pad 0.045, arp 0.06), sines/sub high (kick 0.6, bass sub 0.26, impact 0.5). Rhythmic bass voiced at E2 (sub) so it doesn't fight the hum's E1 drone. Kick duck is the pump — `duckAt(time, 0.5, 0.18)`, grid-locked. Mix bus: compressor (−15/5), delay 3×16th feedback 0.3 damped 2.2kHz, reverb 2.2s, noiseSeconds 2, volumeScale 0.8. Section-4 player voices are glassy/quiet/reverb-heavy per the doctrine.\n\n### Verification\n- `tsc` on `levels/mass-driver-wo4m/audio*` → clean (remaining repo errors are in the other agents' `index.ts`/`visuals/environment.ts`).\n- `trace:audio` runs clean: 982 events; sections at 0/7.56/22.56/37.56/52.56s (bars 0/4/12/20/28); 28 hum-glide events climbing exactly per curve + humcut at bar 28; acid/clap/openHat first appear at bar 12, klaxon/alarm/riser/snare-roll at bar 20; bar-28 impact+crash+humcut then pad/sparkle/subPulse strip-down; no empty section.\n- `createAudio(bus)` is construct-safe headlessly — no window/AudioContext at construction (hum installs only in `onPostBuild`); `createScore` validation passed (trace would have thrown otherwise).\n- `simulate` skipped: gameplay.ts is still a scaffold, so I coded strictly to the design-doc contract (enemy kinds, `bossphase` phases, `runend.died`).",
+    "finalResultByteLength": 4616,
+    "startedAt": "2026-07-12T00:08:55.413Z",
+    "finishedAt": "2026-07-12T00:25:07.913Z",
+    "durationSeconds": 972.5,
+    "lineCount": 100,
+    "usage": {
+      "inputTokens": 12507,
+      "outputTokens": 72789,
+      "cacheReadInputTokens": 6355364,
+      "cacheCreationInputTokens": 1046443
+    },
+    "parentEventId": "ev-0145",
+    "parentTSeconds": 808.345
+  },
+  "runStart": "2026-07-11T23:55:27.065Z",
+  "eventCount": 98,
+  "events": [
+    {
+      "id": "a34f666c-ev-0001",
+      "ts": "2026-07-12T00:08:55.413Z",
+      "tSeconds": 808.348,
+      "kind": "user-message",
+      "text": "You are building the procedural soundtrack + sound design for a new rail-shooter level in the repo at /tmp/raild-run-eztdwig5twea (work in that directory).\n\nFIRST read these, in order:\n1. /tmp/mass-driver-design.md — the level design document and cross-module contract. It is binding, especially the Music section.\n2. /tmp/raild-run-eztdwig5twea/AGENTS.md and docs/level-authoring.md (the \"Musical action audio\" section is your rulebook)\n3. src/engine/audio-kit.ts, src/engine/audio-voices.ts, src/engine/score.ts, src/engine/arrangement.ts, src/engine/audio-trace.ts, src/engine/music.ts\n4. src/levels/helios/audio.ts and src/levels/helios/audio-voices.ts — the reference implementation; mirror its architecture and code style exactly (createBeatLevelAudio + createScore + defineInstruments + createArrangement + the voice() spec layer). Never import from another level's directory.\n5. src/levels/mass-driver-wo4m/timing.ts (already written — import BPM/steps/sections/markers from it, do not redefine).\n\nYOUR FILES (you own them exclusively): src/levels/mass-driver-wo4m/audio.ts (replace the scaffold) and src/levels/mass-driver-wo4m/audio-voices.ts (new).\nDo not create or edit any other file. Other agents are concurrently writing gameplay.ts and visuals/* — ignore type errors originating there.\n\nBuild, per the design doc:\n- 128 BPM locked minimal-techno in E minor across the 5 score sections (use MASS_DRIVER_SCORE_SECTIONS), chords {bass,pad,arp,stab}, main loop Em–Em–C–D (2 bars/chord), boss alternate chord set Em–F–Em–F for bars 20–28, and a hard-cut section 4 at bar 28 that blooms a single E MAJOR chord into near-silence (Picardy third payoff). Provide the alternate chord set for the outro too if you keep chordAt consistent (a one-chord E-major set from bar 28 works well via alternateChordSets).\n- THE CLIMBING HUM — the level's signature. A persistent tonal drone (installMassDriverHum(context, mix) in audio-voices.ts, called from onPostBuild): detuned saw pair + sine sub through a lowpass into mix.music. Expose a small controller ({ glideTo(midi, atTime, seconds), idle(atTime), cutAt(time) } or similar). An arrangement fn() track calls it at step 0 of every bar to follow the pitch curve: MIDI 28 at bar 0 → 33 by bar 12 → 40 by bar 20 → accelerating to 52 at bar 28, where it CUTS dead on the shot. Ambient/attract mode idles at E1 with a slow LFO; re-idle in onRunEnd. The rise through bars 20–28 must be audibly the charge building.\n- Full arrangement per section (injection / stage-1 / stage-2 / interlock / muzzle) as sketched in the design doc: hits() pattern tracks for kick/hat/clap/snare-roll, 8th-note hypnotic bass, acid 16th line in stage-2, klaxon+impact at bar 20, alarm swells + per-2-bar risers + bar-27 snare roll in interlock, oneShot impact+duck+crash at bar 28 step 0, then the quiet E-major pad + sparse delay-sparkle outro with a fading sub heartbeat. The pulse is LOCKED — kicks stay on the grid, hypnotic, no syncopated fills outside the interlock escalation.\n- Player instruments per the \"Musical action audio\" doctrine, mirroring Helios's event handlers: PLAYER_VOICES table for ALL 5 sections (lock/kill/fire timbres, section 4 glassy+quiet+reverb-heavy), lock plucks from leadSetAt via quantizePlayerAction (6th lock = ignition ping + sub), kill melodies via score.nextKill() with authored 32-step kill lanes for ALL 5 sections (killLanes validation must pass — degrees within every lead set; createScore throws otherwise and check:floor fails), fire zaps with pitch fall, volley stab+run with duck for ≥4 all-kill, the breaker-trip reject, playerhit boom+alarm, miss fizzle, unlock tick, stage crack.\n- Interlock escalation: track interlock enemy ids via spawn events; each interlock kill plays a climbing confirmation (louder/brighter/higher with each of the 6) + clamp clank; on bossphase destroyed, duck and land a conclusive rising figure; on runend with died:true, cut to a low detonation rumble instead of the end choir.\n- Mix bus: compressor, delay 3×16th feedback ~0.3 damped, reverb ~2.2s, noiseSeconds 2, volumeScale ~0.8. Tune gains by perceived loudness (saw/square much louder than sine/triangle at equal gain). Kick duck like Helios but shallower (this is techno — the duck IS the pump, ~0.5 depth).\n- Export `createAudio(bus)` AND `traceMassDriverAudio = createAudioTraceHarness({ level: 'mass-driver-wo4m', ... })` exactly like Helios's traceHeliosAudio. IMPORTANT: createAudio(bus) must construct without throwing in a DOM-stubbed Node env (check:floor instantiates it headlessly) — construct-time code must not touch window/AudioContext.\n\nVERIFY before finishing:\n- `npx tsc --noEmit -p tsconfig.json 2>&1 | grep \"levels/mass-driver-wo4m/audio\"` → must be empty.\n- `npm run trace:audio -- --level mass-driver-wo4m` runs clean; read the summary and iterate until sections appear at bars 0/4/12/20/28, hum glide events land bar-by-bar, drums/bass/arp density visibly steps up per section, the bar-28 impact + outro strip-down is visible, and no section is empty. Also run with `--verbose` once to sanity-check the first bars.\n- Optional deeper check: `npm run simulate -- --level mass-driver-wo4m` (needs gameplay.ts from the other agent; if it's not ready, skip).\n\nReturn (as your final message): the section-by-section arrangement summary, the hum pitch-curve implementation approach, kill-lane design notes, gain-staging decisions, and trace:audio highlights you verified.",
+      "truncated": false,
+      "byteLength": 5492
+    },
+    {
+      "id": "a34f666c-ev-0002",
+      "ts": "2026-07-12T00:08:57.075Z",
+      "tSeconds": 810.01,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 5,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 6497
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0003",
+      "ts": "2026-07-12T00:08:57.586Z",
+      "tSeconds": 810.521,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 5,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 6497
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "I'll start by reading the design doc and all the reference files in parallel."
+    },
+    {
+      "id": "a34f666c-ev-0004",
+      "ts": "2026-07-12T00:08:58.097Z",
+      "tSeconds": 811.032,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 5,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 6497
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01RQbWooyNLYT7CLQoJzxHUp",
+      "summary": "Read /tmp/mass-driver-design.md",
+      "inputs": {
+        "file_path": "/tmp/mass-driver-design.md"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0005",
+      "ts": "2026-07-12T00:08:58.101Z",
+      "tSeconds": 811.036,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01RQbWooyNLYT7CLQoJzxHUp",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\t# MASS DRIVER — design document and cross-module contract\n2\t\n3\tLevel id `mass-driver-wo4m`, title \"Mass Driver\", directory `src/levels/mass-driver-wo4m/`.\n4\tRepo: /tmp/raild-run-eztdwig5twea. Read `AGENTS.md`, `docs/level-brief.md`, `docs/level-authoring.md` first.\n5\tThe quality bar is `src/levels/helios/` — read its spine for calibration (gameplay.ts, audio.ts, visuals/index.ts and the leaf you're mirroring). **Never import from another level's directory** — mirror patterns, don't import. Only touch files inside `src/levels/mass-driver-wo4m/` that are assigned to you.\n6\t\n7\t## Fantasy\n8\t\n9\tYou are riding a payload down a huge orbital railgun. The barrel is a tunnel of glowing\n10\taccelerator rings and you pass through **one ring exactly on every beat** — speed and music are\n11\tthe same thing. The run accelerates the whole way: rings space out in world units but always land\n12\ton the beat. \"Hot\" is electric, not fire: arc blue → violet → blinding white. The gun itself is\n13\tthe instrument — a bass hum that climbs in pitch across the entire run, under a locked, hypnotic\n14\t128 BPM pulse. Enemies are defense drones threading between the coils. Finale: the gun's safety\n15\tinterlocks are jammed and the firing charge is already building; destroy all six interlocks before\n16\tthe charge peaks at bar 28 and the gun fires, launching you out of the muzzle into silent open\n17\tspace at insane speed. Fail and the barrel detonates with you inside it.\n18\t\n19\t## Shared timing (ALREADY WRITTEN — import, don't redefine)\n20\t\n21\t`src/levels/mass-driver-wo4m/timing.ts` exports:\n22\t- `MASS_DRIVER_BPM` (128), `MASS_DRIVER_STEPS_PER_BAR` (16), `MASS_DRIVER_TIME`, `MASS_DRIVER_BAR`, `BEAT_SECONDS`\n23\t- `MASS_DRIVER_BARS = { injection: 0, stage1: 4, stage2: 12, interlock: 20, shot: 28, end: 32 }`\n24\t- `MASS_DRIVER_MARKERS`, `MASS_DRIVER_DURATION` (= 60.0s exactly), `STAGE1_TIME`, `STAGE2_TIME`, `INTERLOCK_TIME`, `SHOT_TIME`\n25\t- `RING_BEATS` (112), `ringBeatTime(beat)` (= beat × BEAT_SECONDS",
+      "truncated": true,
+      "byteLength": 19670
+    },
+    {
+      "id": "a34f666c-ev-0006",
+      "ts": "2026-07-12T00:08:58.793Z",
+      "tSeconds": 811.728,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 185,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 6497
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01JL7g7M7PJEwN3BwtZxAve6",
+      "summary": "Read docs/level-authoring.md",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/docs/level-authoring.md"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0007",
+      "ts": "2026-07-12T00:08:58.797Z",
+      "tSeconds": 811.732,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01JL7g7M7PJEwN3BwtZxAve6",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\t# Level authoring\n2\t\n3\t`raild` treats each level as an independent module under `src/levels/<level-id>/`. For comparison tasks, a level uses the shared `createLockOnRunner` flow while owning its rail, spawns, enemy motion, visuals, environment, effects, and procedural audio.\n4\t\n5\tShared code lives in `src/engine/`:\n6\t\n7\t- `lock-on-runner.ts` contains the START/RUN/REPLAY flow, pointer input, lock-on targeting, homing shots, scoring hooks, and HUD updates;\n8\t- `rail.ts` contains rail sampling helpers, not a level rail;\n9\t- `rail-pacer.ts` contains an opt-in helper for high-speed levels that need enemies to pace the camera for an authored readable window;\n10\t- `music.ts` contains small timing helpers for beat emission, tempo, MIDI conversion, and grid quantization;\n11\t- `music-time.ts` converts authored bars, beats, steps, and named markers into the seconds consumed by gameplay systems;\n12\t- `audio-kit.ts` contains Web Audio primitives plus the shared mix bus and instrument registry;\n13\t- `audio-voices.ts` contains the declarative voice-spec layer that compiles compact timbre specs to the audio-kit primitives;\n14\t- `audio-trace.ts` contains semantic audio trace sinks and the reusable trace harness;\n15\t- `score.ts` contains the shared musical-position helper for epoch anchoring, harmony, sections, action quantization, and kill lanes;\n16\t- `arrangement.ts` contains the thin section/pattern/function/one-shot DSL for musical scheduling;\n17\t- `spawn-patterns.ts` contains small helpers for eager spawn timeline construction;\n18\t- `speed-profile.ts` contains piecewise-linear speed factors and normalized-integral run-progress easing for authored speed curves;\n19\t- `glyphs.ts` contains neutral 5×7 glyph grid data and accessors, not rendering;\n20\t- `hostile-shot.ts` contains shared homing steer, behind-camera despawn cull, and approach/impact timing for lockable enemy shots and hazards;\n21\t- `visual-kit.ts` contains lifecycle helpers for visual bookkeeping: pending mesh-to-eve",
+      "truncated": true,
+      "byteLength": 23386
+    },
+    {
+      "id": "a34f666c-ev-0008",
+      "ts": "2026-07-12T00:09:01.111Z",
+      "tSeconds": 814.046,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 12540,
+        "cacheCreationInputTokens": 18130
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Now let me read the engine audio files and the Helios reference implementation."
+    },
+    {
+      "id": "a34f666c-ev-0009",
+      "ts": "2026-07-12T00:09:02.259Z",
+      "tSeconds": 815.194,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 12540,
+        "cacheCreationInputTokens": 18130
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_0197EHhjVrYVPmn6SmVYaB4N",
+      "summary": "Read src/engine/audio-kit.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/engine/audio-kit.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0010",
+      "ts": "2026-07-12T00:09:02.328Z",
+      "tSeconds": 815.263,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 12540,
+        "cacheCreationInputTokens": 18130
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_0112Lz4WSb49PAqzFNoeJnTc",
+      "summary": "Read src/engine/audio-voices.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/engine/audio-voices.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0011",
+      "ts": "2026-07-12T00:09:02.333Z",
+      "tSeconds": 815.268,
+      "kind": "tool-result",
+      "toolUseId": "toolu_0112Lz4WSb49PAqzFNoeJnTc",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport { midiToFreq } from './music';\n2\timport { playNoiseHit, playOscillatorVoice, type AutomationStep, type BiquadFilterOptions } from './audio-kit';\n3\t\n4\texport type VoiceFrequencyInput =\n5\t  | { frequency: number; midi?: never }\n6\t  | { midi: number; frequency?: never };\n7\t\n8\texport type VoiceOscillatorSpec<Call extends object = object> = {\n9\t  type: OscillatorType | ((call: Call) => OscillatorType);\n10\t  gain?: number | ((call: Call) => number);\n11\t  octave?: number | ((call: Call) => number);\n12\t  midiOffset?: number | ((call: Call) => number);\n13\t  frequencyRatio?: number | ((call: Call) => number);\n14\t  detune?: number | ((call: Call) => number | undefined);\n15\t};\n16\t\n17\texport type VoiceFilterSpec<Call extends object = object> = Omit<BiquadFilterOptions, 'frequency' | 'Q' | 'gain' | 'detune'> & {\n18\t  type?: BiquadFilterType | ((call: Call) => BiquadFilterType | undefined);\n19\t  frequency?: number | ((call: Call) => number | undefined);\n20\t  cutoff?: number | ((call: Call) => number | undefined);\n21\t  Q?: number | ((call: Call) => number | undefined);\n22\t  gain?: number | ((call: Call) => number | undefined);\n23\t  detune?: number | ((call: Call) => number | undefined);\n24\t  frequencyAutomation?: (time: number, call: Call) => AutomationStep[] | undefined;\n25\t};\n26\t\n27\texport type VoiceEnvelopeSpec<Call extends object = object> = {\n28\t  attack?: number | ((call: Call) => number);\n29\t  decay: number | ((call: Call) => number);\n30\t  sustain?: number | ((call: Call) => number);\n31\t  release?: number | ((call: Call) => number);\n32\t  peak?: number | ((call: Call) => number);\n33\t  floor?: number | ((call: Call) => number);\n34\t  attackCurve?: 'linear' | 'exponential';\n35\t  decayCurve?: 'linear' | 'exponential';\n36\t  releaseCurve?: 'linear' | 'exponential';\n37\t};\n38\t\n39\texport type VoiceSpec<Call extends object = object> = {\n40\t  oscillators: readonly VoiceOscillatorSpec<Call>[];\n41\t  envelope?: VoiceEnvelopeSpec<Call>;\n42\t  gainAutomation?: (time: number, gain: nu",
+      "truncated": true,
+      "byteLength": 9566
+    },
+    {
+      "id": "a34f666c-ev-0012",
+      "ts": "2026-07-12T00:09:02.503Z",
+      "tSeconds": 815.438,
+      "kind": "tool-result",
+      "toolUseId": "toolu_0197EHhjVrYVPmn6SmVYaB4N",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport type { EventBus } from '../events';\n2\timport type { LevelAudio } from './types';\n3\timport type { AudioTraceSink, AudioTraceValue } from './audio-trace';\n4\timport { createBrowserAudioContext, installAudioUnlock } from './audio-unlock';\n5\timport { emitBeatAt } from './music';\n6\t\n7\texport type StepTransportStep = {\n8\t  index: number;\n9\t  time: number;\n10\t};\n11\t\n12\texport type StepTransportOptions = {\n13\t  stepSeconds: number | ((nextStepIndex: number) => number);\n14\t  scheduleAhead: number;\n15\t  startDelay?: number;\n16\t  onStep(step: StepTransportStep): void;\n17\t};\n18\t\n19\texport type StepTransport = {\n20\t  readonly stepIndex: number;\n21\t  readonly nextStepTime: number;\n22\t  start(context: Pick<AudioContext, 'currentTime'>): void;\n23\t  reset(nextStepTime?: number, stepIndex?: number): void;\n24\t  schedule(context: Pick<AudioContext, 'currentTime'>): void;\n25\t  runUntil(seconds: number): void;\n26\t};\n27\t\n28\texport type CompressorOptions = {\n29\t  threshold?: number;\n30\t  knee?: number;\n31\t  ratio?: number;\n32\t  attack?: number;\n33\t  release?: number;\n34\t};\n35\t\n36\texport type BiquadFilterOptions = {\n37\t  type?: BiquadFilterType;\n38\t  frequency?: number;\n39\t  Q?: number;\n40\t  gain?: number;\n41\t  detune?: number;\n42\t};\n43\t\n44\texport type AudioGraphBuilder = {\n45\t  gain(initialValue?: number): GainNode;\n46\t  compressor(options: CompressorOptions): DynamicsCompressorNode;\n47\t  delay(maxDelayTime: number, delayTime: number): DelayNode;\n48\t  biquadFilter(options: BiquadFilterOptions): BiquadFilterNode;\n49\t  noiseBuffer(seconds: number, channels?: number): AudioBuffer;\n50\t  connect(source: AudioNode, destination: AudioNode | AudioParam): AudioNode | AudioParam;\n51\t};\n52\t\n53\texport type MixBusDelayOptions = {\n54\t  time: number;\n55\t  feedback: number;\n56\t  dampHz: number;\n57\t  maxTime?: number;\n58\t  dampType?: BiquadFilterType;\n59\t  sendGain?: number;\n60\t  returnTo?: 'duck' | 'master';\n61\t};\n62\t\n63\texport type MixBusReverbOptions = {\n64\t  seconds: number;\n65\t  decay: number;",
+      "truncated": true,
+      "byteLength": 28599
+    },
+    {
+      "id": "a34f666c-ev-0013",
+      "ts": "2026-07-12T00:09:04.336Z",
+      "tSeconds": 817.271,
+      "usage": {
+        "inputTokens": 4127,
+        "outputTokens": 4,
+        "cacheReadInputTokens": 30670,
+        "cacheCreationInputTokens": 12602
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Now the score, arrangement, and audio-trace engine files."
+    },
+    {
+      "id": "a34f666c-ev-0014",
+      "ts": "2026-07-12T00:09:05.309Z",
+      "tSeconds": 818.244,
+      "usage": {
+        "inputTokens": 4127,
+        "outputTokens": 4,
+        "cacheReadInputTokens": 30670,
+        "cacheCreationInputTokens": 12602
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01Kzw4yACMUmsXACfhjVQSFQ",
+      "summary": "Read src/engine/score.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/engine/score.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0015",
+      "ts": "2026-07-12T00:09:05.313Z",
+      "tSeconds": 818.248,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01Kzw4yACMUmsXACfhjVQSFQ",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport { getActionSfxQuantization } from './action-sfx-quantization';\n2\t\n3\texport type ScoreSection<Section extends string | number> = {\n4\t  index: Section;\n5\t  /** Bar where this section is fully active. Crossfades, when present, lead into this bar. */\n6\t  fromBar: number;\n7\t  crossfadeBars?: number;\n8\t};\n9\t\n10\texport type ScoreChordSet<Chord> = {\n11\t  chords: readonly Chord[];\n12\t  barsPerChord?: number;\n13\t};\n14\t\n15\texport type ScoreAlternateChordSet<Chord> = ScoreChordSet<Chord> & {\n16\t  fromBar: number;\n17\t  toBar?: number;\n18\t};\n19\t\n20\texport type SectionMix<Section extends string | number> = {\n21\t  from: Section;\n22\t  to: Section;\n23\t  t: number;\n24\t};\n25\t\n26\texport type KillLaneResult = {\n27\t  step: number;\n28\t  time: number;\n29\t  midi: number;\n30\t};\n31\t\n32\texport type ScoreConfig<Chord, Section extends string | number> = {\n33\t  bpm: number;\n34\t  stepsPerBar: number;\n35\t  chords: readonly Chord[];\n36\t  barsPerChord?: number;\n37\t  alternateChordSets?: readonly ScoreAlternateChordSet<Chord>[];\n38\t  sections?: readonly ScoreSection<Section>[];\n39\t  leadSet?: (chord: Chord, position: number) => readonly number[];\n40\t  killLanes?: Partial<Record<Section, readonly number[]>>;\n41\t};\n42\t\n43\texport type Score<Chord, Section extends string | number> = ReturnType<typeof createScore<Chord, Section>>;\n44\t\n45\texport function validateScoreConfig<Chord, Section extends string | number>(config: ScoreConfig<Chord, Section>) {\n46\t  const issues: string[] = [];\n47\t  const positiveInteger = (value: number | undefined, label: string) => {\n48\t    if (value === undefined || !Number.isInteger(value) || value <= 0) issues.push(`${label} must be a positive integer`);\n49\t  };\n50\t\n51\t  if (!Number.isFinite(config.bpm) || config.bpm <= 0) issues.push('bpm must be a positive finite number');\n52\t  positiveInteger(config.stepsPerBar, 'stepsPerBar');\n53\t  if (!config.chords.length) issues.push('chords must not be empty');\n54\t  positiveInteger(config.barsPerChord ?? 1, 'barsPerChord');\n55\t\n",
+      "truncated": true,
+      "byteLength": 13644
+    },
+    {
+      "id": "a34f666c-ev-0016",
+      "ts": "2026-07-12T00:09:05.750Z",
+      "tSeconds": 818.685,
+      "usage": {
+        "inputTokens": 4127,
+        "outputTokens": 171,
+        "cacheReadInputTokens": 30670,
+        "cacheCreationInputTokens": 12602
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01AB2MVAfkt5tzhLK5eWwzpG",
+      "summary": "Read src/engine/arrangement.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/engine/arrangement.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0017",
+      "ts": "2026-07-12T00:09:05.755Z",
+      "tSeconds": 818.69,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01AB2MVAfkt5tzhLK5eWwzpG",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport type { AudioTraceSink } from './audio-trace';\n2\t\n3\texport type ArrangementSection<Chord> = {\n4\t  /** Absolute arrangement bar where the section begins. */\n5\t  fromBar: number;\n6\t  /** Optional absolute arrangement bar where the section stops. Defaults to the next section. */\n7\t  toBar?: number;\n8\t  name: string;\n9\t  tracks: Array<ArrangementTrack<Chord>>;\n10\t};\n11\t\n12\texport type ArrangementContext<Chord> = {\n13\t  /** Absolute arrangement position in configured steps. */\n14\t  position: number;\n15\t  /** Absolute arrangement bar. */\n16\t  bar: number;\n17\t  /** Bar offset from the current section start. */\n18\t  barInSection: number;\n19\t  /** Step within the current bar. */\n20\t  step: number;\n21\t  stepsPerBar: number;\n22\t  time: number;\n23\t  chord: Chord;\n24\t  section: ArrangementSection<Chord>;\n25\t};\n26\t\n27\texport type ArrangementTrack<Chord> = {\n28\t  run(context: ArrangementContext<Chord>): void;\n29\t  patternLength?: number;\n30\t};\n31\t\n32\texport type ArrangementOptions<Chord> = {\n33\t  stepsPerBar: number;\n34\t  sections: Array<ArrangementSection<Chord>>;\n35\t  chordAt(position: number): Chord;\n36\t  trace?: AudioTraceSink;\n37\t  emitSections?: boolean;\n38\t};\n39\t\n40\texport type HitVelocityMap = Record<string, number>;\n41\t\n42\t/**\n43\t * Pattern-string track. One character is one step; '.' is a rest. Pattern\n44\t * length must be a multiple of stepsPerBar, and the pattern cycles from the\n45\t * start of the current section.\n46\t */\n47\texport function hits<Chord>(\n48\t  pattern: string,\n49\t  velocities: HitVelocityMap,\n50\t  play: (context: ArrangementContext<Chord>, velocity: number, symbol: string) => void,\n51\t): ArrangementTrack<Chord> {\n52\t  return {\n53\t    patternLength: pattern.length,\n54\t    run(context) {\n55\t      const index = (context.barInSection * context.stepsPerBar + context.step) % pattern.length;\n56\t      const symbol = pattern[index];\n57\t      if (!symbol || symbol === '.') return;\n58\t      const velocity = velocities[symbol];\n59\t      if (velocity === undef",
+      "truncated": true,
+      "byteLength": 4508
+    },
+    {
+      "id": "a34f666c-ev-0018",
+      "ts": "2026-07-12T00:09:10.384Z",
+      "tSeconds": 823.319,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 4,
+        "cacheReadInputTokens": 43272,
+        "cacheCreationInputTokens": 12049
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Now the audio-trace engine, music helper, and the Helios reference implementation (both files)."
+    },
+    {
+      "id": "a34f666c-ev-0019",
+      "ts": "2026-07-12T00:09:11.533Z",
+      "tSeconds": 824.468,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 4,
+        "cacheReadInputTokens": 43272,
+        "cacheCreationInputTokens": 12049
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01SyXPsvP8wmxzH1JGvgKoyy",
+      "summary": "Read src/engine/audio-trace.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/engine/audio-trace.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0020",
+      "ts": "2026-07-12T00:09:11.540Z",
+      "tSeconds": 824.475,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01SyXPsvP8wmxzH1JGvgKoyy",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport type { EventBus } from '../events';\n2\t\n3\texport type AudioTraceValue = string | number | boolean | null | AudioTraceValue[];\n4\t\n5\texport type AudioTraceEvent = {\n6\t  time: number;\n7\t  kind: string;\n8\t  data?: Record<string, AudioTraceValue>;\n9\t};\n10\t\n11\texport type AudioTraceResult = {\n12\t  metadata: {\n13\t    level: string;\n14\t    bpm?: number;\n15\t    seconds: number;\n16\t    stepSeconds?: number;\n17\t    mode?: string;\n18\t  };\n19\t  events: AudioTraceEvent[];\n20\t};\n21\t\n22\texport type AudioTraceSink = {\n23\t  record(time: number, kind: string, data?: Record<string, AudioTraceValue>): void;\n24\t};\n25\t\n26\texport type TraceAudioFactory = (bus: EventBus, trace: AudioTraceSink) => { traceRun(seconds: number): void };\n27\t\n28\texport type AudioTraceHarnessOptions = {\n29\t  level: string;\n30\t  bpm?: number;\n31\t  stepSeconds?: number;\n32\t  defaultSeconds: number;\n33\t  mode?: string;\n34\t  createAudio: TraceAudioFactory;\n35\t};\n36\t\n37\texport function createAudioTraceSink(events: AudioTraceEvent[]): AudioTraceSink {\n38\t  return {\n39\t    record(time, kind, data) {\n40\t      events.push({ time: roundTraceTime(time), kind, data });\n41\t    },\n42\t  };\n43\t}\n44\t\n45\texport function roundTraceTime(time: number) {\n46\t  return Math.round(time * 1000) / 1000;\n47\t}\n48\t\n49\texport function createAudioTraceHarness(options: AudioTraceHarnessOptions) {\n50\t  return (traceOptions: { seconds?: number } = {}): AudioTraceResult => {\n51\t    const seconds = traceOptions.seconds ?? options.defaultSeconds;\n52\t    const events: AudioTraceResult['events'] = [];\n53\t    const trace = createAudioTraceSink(events);\n54\t    const tracedAudio = options.createAudio(createNoopTraceBus(), trace);\n55\t    tracedAudio.traceRun(seconds);\n56\t    return {\n57\t      metadata: {\n58\t        level: options.level,\n59\t        bpm: options.bpm,\n60\t        seconds,\n61\t        stepSeconds: options.stepSeconds,\n62\t        mode: options.mode ?? 'run',\n63\t      },\n64\t      events,\n65\t    };\n66\t  };\n67\t}\n68\t\n69\texport function createNo",
+      "truncated": true,
+      "byteLength": 2157
+    },
+    {
+      "id": "a34f666c-ev-0021",
+      "ts": "2026-07-12T00:09:11.821Z",
+      "tSeconds": 824.756,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 181,
+        "cacheReadInputTokens": 43272,
+        "cacheCreationInputTokens": 12049
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01QynMuCEk3p57vvnn2JfeDZ",
+      "summary": "Read src/engine/music.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/engine/music.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0022",
+      "ts": "2026-07-12T00:09:11.825Z",
+      "tSeconds": 824.76,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01QynMuCEk3p57vvnn2JfeDZ",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport type { EventBus } from '../events';\n2\t\n3\texport function midiToFreq(midi: number) {\n4\t  return 440 * 2 ** ((midi - 69) / 12);\n5\t}\n6\t\n7\texport function quantizeToGrid(time: number, step: number) {\n8\t  return Math.ceil(time / step) * step;\n9\t}\n10\t\n11\texport function secondsPerStep(bpm: number, stepsPerBeat: number) {\n12\t  return 60 / bpm / stepsPerBeat;\n13\t}\n14\t\n15\texport function tempo(bpm: number, beatsPerBar = 4) {\n16\t  const beatSeconds = 60 / bpm;\n17\t  const barSeconds = beatSeconds * beatsPerBar;\n18\t  return {\n19\t    beatSeconds,\n20\t    barSeconds,\n21\t    beat: (n: number) => n * beatSeconds,\n22\t    bar: (n: number) => n * barSeconds,\n23\t  };\n24\t}\n25\t\n26\texport function emitBeatAt(bus: EventBus, context: AudioContext, time: number, beatNumber: number, isDownbeat: boolean) {\n27\t  const delay = Math.max(0, (time - context.currentTime) * 1000);\n28\t  window.setTimeout(() => bus.emit('beat', { beatNumber, isDownbeat, audioTime: time }), delay);\n29\t}\n30\t",
+      "truncated": false,
+      "byteLength": 975
+    },
+    {
+      "id": "a34f666c-ev-0023",
+      "ts": "2026-07-12T00:09:14.245Z",
+      "tSeconds": 827.18,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 3,
+        "cacheReadInputTokens": 55321,
+        "cacheCreationInputTokens": 1680
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Now the crucial reference: Helios audio files. Let me read both."
+    },
+    {
+      "id": "a34f666c-ev-0024",
+      "ts": "2026-07-12T00:09:14.924Z",
+      "tSeconds": 827.859,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 102,
+        "cacheReadInputTokens": 55321,
+        "cacheCreationInputTokens": 1680
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01Y5citToApLLD6bDUtcSwJX",
+      "summary": "Read src/levels/helios/audio.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/levels/helios/audio.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0025",
+      "ts": "2026-07-12T00:09:15.088Z",
+      "tSeconds": 828.023,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01Y5citToApLLD6bDUtcSwJX",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport type { EventBus } from '../../events';\n2\timport {\n3\t  createBeatLevelAudio,\n4\t  playOscillatorVoice,\n5\t  type BeatLevelAudioStep,\n6\t} from '../../engine/audio-kit';\n7\timport { voice } from '../../engine/audio-voices';\n8\timport { createArrangement, fn, hits, oneShot } from '../../engine/arrangement';\n9\timport { createAudioTraceHarness, type AudioTraceSink } from '../../engine/audio-trace';\n10\timport { midiToFreq } from '../../engine/music';\n11\timport { createScore, lerp, type SectionMix } from '../../engine/score';\n12\timport { createHeliosVoices, installHeliosRumble, type HeliosTonalVoice } from './audio-voices';\n13\timport { HELIOS_BARS, HELIOS_BPM, HELIOS_DURATION, HELIOS_SCORE_SECTIONS, HELIOS_STEPS_PER_BAR, HELIOS_TIME } from './timing';\n14\t\n15\t// The Helios score: 172 BPM drum & bass in E minor, 86 bars = exactly the\n16\t// 120-second run. Sections land on the run's set pieces — drop 1 at the gate\n17\t// (bar 16), drop 2 at the corona plunge (bar 40), a breakdown while the\n18\t// serpent breaches (56–63), and the boss theme (64–79) with a phrygian F\n19\t// leaning on the tonic. The player's guns are not an effects layer: locks,\n20\t// shots, armor chips, kills, and boss damage all snap to the transport and\n21\t// read the current harmony, while kills unmute a hidden sequencer lane so\n22\t// clean volleys play melodic runs through the arrangement.\n23\t\n24\tconst SIXTEENTH = HELIOS_TIME.stepSeconds;\n25\tconst THIRTYSECOND = SIXTEENTH / 2;\n26\tconst STEPS_PER_BAR = HELIOS_STEPS_PER_BAR;\n27\tconst KILL_LANE_STEPS = 32;\n28\t\n29\ttype Chord = { bass: number; pad: number[]; arp: number[]; stab: number[] };\n30\t\n31\t// Em — C — Am — B, two bars each.\n32\tconst CHORDS: Chord[] = [\n33\t  { bass: 28, pad: [52, 55, 59, 64], arp: [64, 67, 71, 76], stab: [64, 67, 71] }, // Em\n34\t  { bass: 36, pad: [48, 55, 60, 64], arp: [60, 64, 67, 72], stab: [64, 67, 72] }, // C\n35\t  { bass: 33, pad: [45, 52, 57, 60], arp: [57, 60, 64, 69], stab: [60, 64, 69] }, // Am\n36\t  { bass: 35, pad: [47, 51, 5",
+      "truncated": true,
+      "byteLength": 37270
+    },
+    {
+      "id": "a34f666c-ev-0026",
+      "ts": "2026-07-12T00:09:17.279Z",
+      "tSeconds": 830.214,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 5,
+        "cacheReadInputTokens": 57001,
+        "cacheCreationInputTokens": 18265
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Now the Helios audio-voices.ts, and the mass-driver timing.ts and current scaffold."
+    },
+    {
+      "id": "a34f666c-ev-0027",
+      "ts": "2026-07-12T00:09:18.299Z",
+      "tSeconds": 831.234,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 5,
+        "cacheReadInputTokens": 57001,
+        "cacheCreationInputTokens": 18265
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01VrKMi7jiYxpsKSHkAMmobE",
+      "summary": "Read src/levels/helios/audio-voices.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/levels/helios/audio-voices.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0028",
+      "ts": "2026-07-12T00:09:18.303Z",
+      "tSeconds": 831.238,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01VrKMi7jiYxpsKSHkAMmobE",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport {\n2\t  defineInstruments,\n3\t  playBufferSourceVoice,\n4\t  playOscillatorVoice,\n5\t  type MixBus,\n6\t} from '../../engine/audio-kit';\n7\timport { noiseHit as noiseHitSpec, voice } from '../../engine/audio-voices';\n8\timport type { AudioTraceSink } from '../../engine/audio-trace';\n9\timport { midiToFreq } from '../../engine/music';\n10\t\n11\texport type HeliosTonalVoice = { oscillator: OscillatorType; decay: number; cutoff: number; gain: number; sparkle: number; reverb: number };\n12\t\n13\texport type HeliosVoiceEnvironment = {\n14\t  trace?: AudioTraceSink;\n15\t  context(): AudioContext | null;\n16\t  mix(): MixBus | null;\n17\t};\n18\t\n19\texport function installHeliosRumble(context: AudioContext, mix: MixBus) {\n20\t  if (!mix.noiseBuffer) return;\n21\t  const rumbleSource = context.createBufferSource();\n22\t  rumbleSource.buffer = mix.noiseBuffer;\n23\t  rumbleSource.loop = true;\n24\t  const rumbleFilter = context.createBiquadFilter();\n25\t  rumbleFilter.type = 'lowpass';\n26\t  rumbleFilter.frequency.value = 90;\n27\t  rumbleFilter.Q.value = 0.6;\n28\t  const rumbleGain = context.createGain();\n29\t  rumbleGain.gain.value = 0.16;\n30\t  const rumbleLfo = context.createOscillator();\n31\t  rumbleLfo.frequency.value = 0.11;\n32\t  const rumbleLfoGain = context.createGain();\n33\t  rumbleLfoGain.gain.value = 0.05;\n34\t  rumbleLfo.connect(rumbleLfoGain).connect(rumbleGain.gain);\n35\t  rumbleSource.connect(rumbleFilter).connect(rumbleGain).connect(mix.music);\n36\t  rumbleSource.start();\n37\t  rumbleLfo.start();\n38\t}\n39\t\n40\texport function createHeliosVoices(environment: HeliosVoiceEnvironment) {\n41\t  const musicDestination = () => environment.mix()?.music ?? environment.mix()?.master ?? null;\n42\t  const sfxDestination = () => environment.mix()?.sfx ?? environment.mix()?.master ?? null;\n43\t\n44\t  const noiseHitVoice = noiseHitSpec({ filterType: 'highpass', frequency: 1000, velocity: 1, decay: 0.05 });\n45\t\n46\t  function noiseHit(\n47\t    time: number,\n48\t    vel: number,\n49\t    decay: number,\n50\t    filterType: Bi",
+      "truncated": true,
+      "byteLength": 16898
+    },
+    {
+      "id": "a34f666c-ev-0029",
+      "ts": "2026-07-12T00:09:18.743Z",
+      "tSeconds": 831.678,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 201,
+        "cacheReadInputTokens": 57001,
+        "cacheCreationInputTokens": 18265
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_017gm57uSpDw12asFgLqqL4P",
+      "summary": "Read src/levels/mass-driver-wo4m/timing.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/timing.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0030",
+      "ts": "2026-07-12T00:09:18.748Z",
+      "tSeconds": 831.683,
+      "kind": "tool-result",
+      "toolUseId": "toolu_017gm57uSpDw12asFgLqqL4P",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport { createMusicTime } from '../../engine/music-time';\n2\t\n3\t// Mass Driver runs at 128 BPM in common time: one bar = 1.875 s, so the\n4\t// 32-bar arrangement is exactly the 60-second run. The core conceit — the\n5\t// payload crosses one accelerator ring on every beat — makes the quarter-note\n6\t// grid the level's unit of distance as well as time: 4 rings per bar,\n7\t// 112 rings from breech to muzzle, and the gun fires on the downbeat of\n8\t// bar 28 whether or not the player survives what happens next.\n9\texport const MASS_DRIVER_BPM = 128;\n10\texport const MASS_DRIVER_STEPS_PER_BAR = 16;\n11\texport const MASS_DRIVER_TIME = createMusicTime(MASS_DRIVER_BPM, { stepsPerBar: MASS_DRIVER_STEPS_PER_BAR });\n12\texport const MASS_DRIVER_BAR = MASS_DRIVER_TIME.barSeconds;\n13\texport const BEAT_SECONDS = MASS_DRIVER_TIME.beatSeconds;\n14\t\n15\texport const MASS_DRIVER_BARS = {\n16\t  /** Breech: the payload is chambered, the hum fades in, first drones. */\n17\t  injection: 0,\n18\t  /** First-stage acceleration: the pulse locks in. */\n19\t  stage1: 4,\n20\t  /** Second-stage acceleration: hum climbs, rings run violet. */\n21\t  stage2: 12,\n22\t  /** The jammed safety interlocks — clear all six before the charge peaks. */\n23\t  interlock: 20,\n24\t  /** Charge peak. The gun fires (or the barrel does not survive). */\n25\t  shot: 28,\n26\t  /** Open space, silence, done. */\n27\t  end: 32,\n28\t} as const;\n29\t\n30\texport const MASS_DRIVER_MARKERS = MASS_DRIVER_TIME.markers(MASS_DRIVER_BARS);\n31\t\n32\texport const MASS_DRIVER_DURATION = MASS_DRIVER_MARKERS.end;\n33\texport const STAGE1_TIME = MASS_DRIVER_MARKERS.stage1;\n34\texport const STAGE2_TIME = MASS_DRIVER_MARKERS.stage2;\n35\texport const INTERLOCK_TIME = MASS_DRIVER_MARKERS.interlock;\n36\texport const SHOT_TIME = MASS_DRIVER_MARKERS.shot;\n37\t\n38\t/** Accelerator rings sit on every quarter note of the barrel section. */\n39\texport const RING_BEATS = MASS_DRIVER_BARS.shot * 4;\n40\texport const ringBeatTime = (beat: number) => beat * BEAT_SECONDS;\n41\t\n42\texport c",
+      "truncated": true,
+      "byteLength": 3043
+    },
+    {
+      "id": "a34f666c-ev-0031",
+      "ts": "2026-07-12T00:09:23.927Z",
+      "tSeconds": 836.862,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 8,
+        "cacheReadInputTokens": 75266,
+        "cacheCreationInputTokens": 9419
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Now let me look at the current audio.ts scaffold, the events types, and check the trace:audio tool to understand output format. Let me also check the level registry and events."
+    },
+    {
+      "id": "a34f666c-ev-0032",
+      "ts": "2026-07-12T00:09:25.388Z",
+      "tSeconds": 838.323,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 8,
+        "cacheReadInputTokens": 75266,
+        "cacheCreationInputTokens": 9419
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01Jws29YKiqS5NWyV7XwV6Dg",
+      "summary": "Read src/levels/mass-driver-wo4m/audio.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0033",
+      "ts": "2026-07-12T00:09:25.393Z",
+      "tSeconds": 838.328,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01Jws29YKiqS5NWyV7XwV6Dg",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport type { EventBus } from '../../events';\n2\timport { createBeatLevelAudio } from '../../engine/audio-kit';\n3\timport { secondsPerStep } from '../../engine/music';\n4\timport { MASS_DRIVER_WO4M_BPM } from './gameplay';\n5\t\n6\t// Spine: keep arrangement, harmony, section structure, and timing decisions here.\n7\t// Move synth voice construction to leaf files as this level grows. This scaffold\n8\t// intentionally emits beat events while playing silence.\n9\tconst BEAT_SECONDS = secondsPerStep(MASS_DRIVER_WO4M_BPM, 1);\n10\t\n11\texport function createAudio(bus: EventBus) {\n12\t  return createBeatLevelAudio({\n13\t    bus,\n14\t    stepSeconds: BEAT_SECONDS,\n15\t    mix: {\n16\t      compressor: { threshold: -18, ratio: 5, attack: 0.005, release: 0.22 },\n17\t    },\n18\t    onStep() {\n19\t      // Silent by design. Replace with authored arrangement scheduling.\n20\t    },\n21\t  }).audio;\n22\t}\n23\t",
+      "truncated": false,
+      "byteLength": 882
+    },
+    {
+      "id": "a34f666c-ev-0034",
+      "ts": "2026-07-12T00:09:25.576Z",
+      "tSeconds": 838.511,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 207,
+        "cacheReadInputTokens": 75266,
+        "cacheCreationInputTokens": 9419
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_013pqcjVeiqqemB3ZxqyNgPT",
+      "summary": "Read src/events.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/events.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0035",
+      "ts": "2026-07-12T00:09:25.581Z",
+      "tSeconds": 838.516,
+      "kind": "tool-result",
+      "toolUseId": "toolu_013pqcjVeiqqemB3ZxqyNgPT",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\timport type { Vector3 } from 'three';\n2\t\n3\texport type EnemyKind = string;\n4\t\n5\texport type GameEvents = {\n6\t  spawn: { enemyId: number; kind: EnemyKind; worldPosition: Vector3; letter?: string };\n7\t  lock: { enemyId: number; lockCount: number; worldPosition: Vector3; letter?: string };\n8\t  unlock: { enemyId: number; lockCount: number; worldPosition: Vector3; letter?: string };\n9\t  fire: {\n10\t    projectileId: number;\n11\t    enemyId: number;\n12\t    volleySize: number;\n13\t    worldPosition: Vector3;\n14\t    targetPosition: Vector3;\n15\t    letter?: string;\n16\t    volleyId?: number;\n17\t    indexInVolley?: number;\n18\t  };\n19\t  hit: {\n20\t    enemyId: number;\n21\t    projectileId: number;\n22\t    worldPosition: Vector3;\n23\t    letter?: string;\n24\t    volleyId?: number;\n25\t    indexInVolley?: number;\n26\t    lethal: boolean;\n27\t    hitPointsRemaining: number;\n28\t    hitStageIndex: number;\n29\t    hitStageCount: number;\n30\t    stageCompleted: boolean;\n31\t    stageHitPointsRemaining: number;\n32\t  };\n33\t  stage: {\n34\t    enemyId: number;\n35\t    worldPosition: Vector3;\n36\t    previousStageIndex: number;\n37\t    stageIndex: number;\n38\t    hitStageCount: number;\n39\t    stageHitPoints: number;\n40\t    letter?: string;\n41\t  };\n42\t  kill: {\n43\t    enemyId: number;\n44\t    worldPosition: Vector3;\n45\t    scoreAwarded: number;\n46\t    letter?: string;\n47\t    volleyId?: number;\n48\t    indexInVolley?: number;\n49\t  };\n50\t  miss: { enemyId: number; worldPosition: Vector3; letter?: string };\n51\t  reject: {\n52\t    enemyIds: number[];\n53\t    size: number;\n54\t    reason?: 'incomplete-word' | 'level-rule';\n55\t    requiredEnemyIds?: number[];\n56\t    missingEnemyIds?: number[];\n57\t  };\n58\t  shielded: { shields: Array<{ enemyId: number; worldPosition: Vector3 }>; blockedEnemyIds: number[] };\n59\t  bossphase: { phase: 'summoned' | 'exposed' | 'destroyed' };\n60\t  volley: { volleyId: number; size: number; kills: number; scoreAwarded: number };\n61\t  beat: { beatNumber: number; isDownbeat: boolean; audioTime:",
+      "truncated": true,
+      "byteLength": 3343
+    },
+    {
+      "id": "a34f666c-ev-0036",
+      "ts": "2026-07-12T00:09:28.346Z",
+      "tSeconds": 841.281,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 84685,
+        "cacheCreationInputTokens": 2184
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0037",
+      "ts": "2026-07-12T00:09:29.337Z",
+      "tSeconds": 842.272,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 84685,
+        "cacheCreationInputTokens": 2184
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "The scaffold imports from gameplay, but I'll use timing.ts. Let me check the trace:audio tooling to understand how it locates the export, plus the level registry."
+    },
+    {
+      "id": "a34f666c-ev-0038",
+      "ts": "2026-07-12T00:09:30.932Z",
+      "tSeconds": 843.867,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 311,
+        "cacheReadInputTokens": 84685,
+        "cacheCreationInputTokens": 2184
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01KCcrw5T8yYG63Su2z2bk7u",
+      "summary": "Bash: cat package.json | grep -A2 -B0 '\"trace:audio\"' && echo \"---REGISTRY---\" && cat src/levels/index.ts | head -60 && echo \"---TRACE SCRIPT---\" && ls scripts/ 2>/dev/null | grep -i trace",
+      "inputs": {
+        "command": "cat package.json | grep -A2 -B0 '\"trace:audio\"' && echo \"---REGISTRY---\" && cat src/levels/index.ts | head -60 && echo \"---TRACE SCRIPT---\" && ls scripts/ 2>/dev/null | grep -i trace"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0039",
+      "ts": "2026-07-12T00:09:30.986Z",
+      "tSeconds": 843.921,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01KCcrw5T8yYG63Su2z2bk7u",
+      "isError": false,
+      "ok": true,
+      "resultText": "    \"trace:audio\": \"node scripts/audio-trace.mjs\",\n    \"trace:spawns\": \"node scripts/spawn-trace.mjs\",\n    \"simulate\": \"node scripts/simulate.mjs\",\n---REGISTRY---\nimport type { LevelDefinition } from '../engine/types';\n\nexport interface LevelMetadata {\n  id: string;\n  title: string;\n  aliases?: string[];\n  kind?: 'playable' | 'technical';\n}\n\nexport const levelMetadatas: LevelMetadata[] = [\n  { id: 'crystal-corridor', title: 'Crystal Corridor', aliases: ['crystal'] },\n  { id: 'helios', title: 'Helios' },\n  { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'] },\n  { id: 'rezdle', title: 'Rezdle' },\n  { id: 'rush', title: 'Rush', kind: 'technical' },\n  { id: 'mass-driver-wo4m', title: 'Mass Driver' },\n];\n\nexport function selectableLevels({ includeTechnical = false }: { includeTechnical?: boolean } = {}): LevelMetadata[] {\n  return includeTechnical ? levelMetadatas : levelMetadatas.filter((level) => level.kind !== 'technical');\n}\n\nexport function benchmarkReferenceLevels(): LevelMetadata[] {\n  return levelMetadatas.filter((level) => level.kind !== 'technical');\n}\n\nexport async function getLevelById(id: string | null): Promise<LevelDefinition> {\n  const matched = levelMetadatas.find((level) => level.id === id || level.aliases?.includes(id ?? '')) ?? levelMetadatas[0];\n\n  switch (matched.id) {\n    case 'crystal-corridor':\n      return (await import('./crystal')).crystalCorridorLevel;\n    case 'helios':\n      return (await import('./helios')).heliosLevel;\n    case 'prism-bloom':\n      return (await import('./prism')).prismBloomLevel;\n    case 'rezdle':\n      return (await import('./rezdle')).rezdleLevel;\n    case 'rush':\n      return (await import('./rush')).rushLevel;\n    case 'mass-driver-wo4m':\n      return (await import('./mass-driver-wo4m')).massDriverWo4mLevel;\n    default:\n      throw new Error(`Unknown level: ${matched.id}`);\n  }\n}\n---TRACE SCRIPT---\naudio-trace.mjs\nspawn-trace.mjs",
+      "truncated": false,
+      "byteLength": 1924
+    },
+    {
+      "id": "a34f666c-ev-0040",
+      "ts": "2026-07-12T00:09:33.356Z",
+      "tSeconds": 846.291,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 79,
+        "cacheReadInputTokens": 86869,
+        "cacheCreationInputTokens": 1165
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_01F9RpxUKgmoWFC4Ur8c9k1J",
+      "summary": "Read scripts/audio-trace.mjs",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/scripts/audio-trace.mjs"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0041",
+      "ts": "2026-07-12T00:09:33.361Z",
+      "tSeconds": 846.296,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01F9RpxUKgmoWFC4Ur8c9k1J",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\t#!/usr/bin/env node\n2\timport fs from 'node:fs/promises';\n3\timport { existsSync } from 'node:fs';\n4\timport path from 'node:path';\n5\timport { fileURLToPath } from 'node:url';\n6\timport { createServer } from 'vite';\n7\timport puppeteer from 'puppeteer';\n8\t\n9\tconst root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');\n10\t\n11\tasync function resolveLevelTarget(levelIdOrAlias, rootDir) {\n12\t  const registryPath = path.resolve(rootDir, 'src/levels/index.ts');\n13\t  const registrySource = await fs.readFile(registryPath, 'utf8');\n14\t\n15\t  // Find dynamic import case mappings\n16\t  // e.g. case 'crystal-corridor': return (await import('./crystal')).crystalCorridorLevel;\n17\t  const caseRegex = /case\\s+['\"]([^'\"]+)['\"]:\\s*\\r?\\n\\s*return\\s*\\(await\\s*import\\(['\"]([^'\"]+)['\"]\\)\\)\\.([A-Za-z0-9_]+);/g;\n18\t  const cases = new Map();\n19\t  let match;\n20\t  while ((match = caseRegex.exec(registrySource))) {\n21\t    const canonicalId = match[1];\n22\t    const importPath = match[2];\n23\t    const exportName = match[3];\n24\t    const folder = importPath.replace(/^\\.\\//, '');\n25\t    cases.set(canonicalId, { folder, exportName });\n26\t  }\n27\t\n28\t  // Parse levelMetadatas to get aliases/IDs\n29\t  const arrayMatch = registrySource.match(/export const levelMetadatas: LevelMetadata\\[] = \\[([\\s\\S]*?)\\n\\];/);\n30\t  if (!arrayMatch) throw new Error('Could not find levelMetadatas array in src/levels/index.ts');\n31\t  \n32\t  const entryRegex = /\\{\\s*id:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*title:\\s*['\"]([^'\"]+)['\"](?:\\s*,\\s*aliases:\\s*\\[([^\\]]*)\\])?/g;\n33\t  let canonicalId = null;\n34\t  let title = null;\n35\t  while ((match = entryRegex.exec(arrayMatch[1]))) {\n36\t    const entryId = match[1];\n37\t    const entryTitle = match[2];\n38\t    const entryAliases = match[3] \n39\t      ? match[3].split(',').map(s => s.trim().replace(/['\"]/g, '')).filter(Boolean) \n40\t      : [];\n41\t    if (entryId === levelIdOrAlias || entryAliases.includes(levelIdOrAlias)) {\n42\t      canonicalId = entryId;\n43\t      title = entryTitle;\n4",
+      "truncated": true,
+      "byteLength": 21991
+    },
+    {
+      "id": "a34f666c-ev-0042",
+      "ts": "2026-07-12T00:11:54.530Z",
+      "tSeconds": 987.465,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 88034,
+        "cacheCreationInputTokens": 9566
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0043",
+      "ts": "2026-07-12T00:11:55.498Z",
+      "tSeconds": 988.433,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 88034,
+        "cacheCreationInputTokens": 9566
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Let me verify the music-time helper shape and check the rezdle/prism audio for any additional patterns, plus confirm tsconfig path."
+    },
+    {
+      "id": "a34f666c-ev-0044",
+      "ts": "2026-07-12T00:11:57.044Z",
+      "tSeconds": 989.979,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 88034,
+        "cacheCreationInputTokens": 9566
+      },
+      "kind": "tool-call",
+      "tool": "Read",
+      "toolUseId": "toolu_013oCYAxETfHFsp59Xrvqt5D",
+      "summary": "Read src/engine/music-time.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/engine/music-time.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0045",
+      "ts": "2026-07-12T00:11:57.051Z",
+      "tSeconds": 989.986,
+      "kind": "tool-result",
+      "toolUseId": "toolu_013oCYAxETfHFsp59Xrvqt5D",
+      "isError": false,
+      "ok": true,
+      "resultText": "1\texport type MusicTimeOptions = {\n2\t  /** Beats in one bar. Defaults to 4 for common-time levels. */\n3\t  beatsPerBar?: number;\n4\t  /** Authoring grid density for helpers that address steps. Defaults to 16. */\n5\t  stepsPerBar?: number;\n6\t};\n7\t\n8\texport type MusicMarkerInput = number | readonly [bar: number, beat: number];\n9\t\n10\texport type MusicTime = ReturnType<typeof createMusicTime>;\n11\t\n12\t/**\n13\t * Converts musical positions into the seconds consumed by gameplay systems.\n14\t * Bars are zero-based arrangement bars; beats are continuous and may be fractional.\n15\t */\n16\texport function createMusicTime(bpm: number, options: MusicTimeOptions = {}) {\n17\t  const beatsPerBar = options.beatsPerBar ?? 4;\n18\t  const stepsPerBar = options.stepsPerBar ?? 16;\n19\t  const beatSeconds = 60 / bpm;\n20\t  const barSeconds = beatSeconds * beatsPerBar;\n21\t  const stepSeconds = barSeconds / stepsPerBar;\n22\t\n23\t  function beats(count: number) {\n24\t    return count * beatSeconds;\n25\t  }\n26\t\n27\t  function bar(index: number, beat = 0) {\n28\t    return (index * beatsPerBar + beat) * beatSeconds;\n29\t  }\n30\t\n31\t  function step(barIndex: number, stepInBar = 0) {\n32\t    return barIndex * barSeconds + stepInBar * stepSeconds;\n33\t  }\n34\t\n35\t  function seconds(value: number) {\n36\t    return value;\n37\t  }\n38\t\n39\t  function markers<const T extends Record<string, MusicMarkerInput>>(values: T): { [K in keyof T]: number } {\n40\t    const result = {} as { [K in keyof T]: number };\n41\t    for (const key of Object.keys(values) as Array<keyof T>) {\n42\t      const value = values[key] as MusicMarkerInput;\n43\t      result[key] = typeof value === 'number' ? bar(value) : bar(value[0], value[1]);\n44\t    }\n45\t    return result;\n46\t  }\n47\t\n48\t  return {\n49\t    bpm,\n50\t    beatsPerBar,\n51\t    stepsPerBar,\n52\t    beatSeconds,\n53\t    barSeconds,\n54\t    stepSeconds,\n55\t    beats,\n56\t    bar,\n57\t    step,\n58\t    seconds,\n59\t    markers,\n60\t  };\n61\t}\n62\t",
+      "truncated": false,
+      "byteLength": 1932
+    },
+    {
+      "id": "a34f666c-ev-0046",
+      "ts": "2026-07-12T00:11:57.760Z",
+      "tSeconds": 990.695,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 9410,
+        "cacheReadInputTokens": 88034,
+        "cacheCreationInputTokens": 9566
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01My25f4QLwCbs6WZYku2d2G",
+      "summary": "Bash: ls src/levels/mass-driver-wo4m/ && echo \"---\" && cat src/levels/mass-driver-wo4m/index.ts 2>/dev/null | head -40",
+      "inputs": {
+        "command": "ls src/levels/mass-driver-wo4m/ && echo \"---\" && cat src/levels/mass-driver-wo4m/index.ts 2>/dev/null | head -40"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0047",
+      "ts": "2026-07-12T00:11:57.806Z",
+      "tSeconds": 990.741,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01My25f4QLwCbs6WZYku2d2G",
+      "isError": false,
+      "ok": true,
+      "resultText": "audio.ts\ngameplay.ts\nindex.ts\nlevel.md\ntiming.ts\nvisuals\n---\nimport type { LevelDefinition } from '../../engine/types';\nimport { createCameraFeel } from '../../engine/camera-feel';\nimport { createLockOnRunner } from '../../engine/lock-on-runner';\nimport { createAudio } from './audio';\nimport { createMassDriverGameplay, INTERLOCK_COUNT } from './gameplay';\nimport {\n  INTERLOCK_TIME,\n  MASS_DRIVER_BPM,\n  MASS_DRIVER_MARKERS,\n  MASS_DRIVER_RUN_SECTIONS,\n  MASS_DRIVER_TIME,\n  SHOT_TIME,\n} from './timing';\nimport {\n  createEnemyMesh,\n  createEnvironment,\n  createProjectileMesh,\n  createReticle,\n  installVisualEventHandlers,\n  setEnemyDenied,\n  setEnemyLocked,\n  setReticleActive,\n  updateCameraEffects as updateMassDriverCameraEffects,\n  updateVisuals,\n} from './visuals';\nimport { composeMassDriverOutput } from './visuals/post-fx';\n\nexport const massDriverWo4mLevel: LevelDefinition = {\n  id: 'mass-driver-wo4m',\n  title: 'Mass Driver',\n  description: 'Ride the payload down an orbital railgun — one accelerator ring per beat, and the firing charge is already building.',\n  bpm: MASS_DRIVER_BPM,\n  markers: MASS_DRIVER_MARKERS,\n  sections: MASS_DRIVER_RUN_SECTIONS.map((section) => ({\n    name: section.name,\n    time: MASS_DRIVER_TIME.bar(section.fromBar),\n  })),\n  post: {\n    clearColor: 0x020308,\n    bloom: { strength: 1.1, threshold: 0.55, radius: 0.2 },",
+      "truncated": false,
+      "byteLength": 1367
+    },
+    {
+      "id": "a34f666c-ev-0048",
+      "ts": "2026-07-12T00:12:08.401Z",
+      "tSeconds": 1001.336,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 3,
+        "cacheReadInputTokens": 97600,
+        "cacheCreationInputTokens": 11005
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0049",
+      "ts": "2026-07-12T00:12:08.954Z",
+      "tSeconds": 1001.889,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 3,
+        "cacheReadInputTokens": 97600,
+        "cacheCreationInputTokens": 11005
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Let me confirm the enemy kind strings and boss events in the concurrently-written gameplay so my event handlers match the contract."
+    },
+    {
+      "id": "a34f666c-ev-0050",
+      "ts": "2026-07-12T00:12:10.509Z",
+      "tSeconds": 1003.444,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 836,
+        "cacheReadInputTokens": 97600,
+        "cacheCreationInputTokens": 11005
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01LnRreVZ9mDz4LDp1ffRnZP",
+      "summary": "Bash: grep -n \"bossphase\\|kind:\\|MassDriverEnemyKind\\|'interlock'\\|\\\"interlock\\\"\\|damagePlayer(99\\|INTERLOCK_COUNT\" src/levels/mass-driver-wo4m/gameplay.ts | head -40",
+      "inputs": {
+        "command": "grep -n \"bossphase\\|kind:\\|MassDriverEnemyKind\\|'interlock'\\|\\\"interlock\\\"\\|damagePlayer(99\\|INTERLOCK_COUNT\" src/levels/mass-driver-wo4m/gameplay.ts | head -40"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0051",
+      "ts": "2026-07-12T00:12:10.542Z",
+      "tSeconds": 1003.477,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01LnRreVZ9mDz4LDp1ffRnZP",
+      "isError": false,
+      "ok": true,
+      "resultText": "(Bash completed with no output)",
+      "truncated": false,
+      "byteLength": 31
+    },
+    {
+      "id": "a34f666c-ev-0052",
+      "ts": "2026-07-12T00:12:12.631Z",
+      "tSeconds": 1005.566,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 108605,
+        "cacheCreationInputTokens": 830
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0053",
+      "ts": "2026-07-12T00:12:13.173Z",
+      "tSeconds": 1006.108,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 127,
+        "cacheReadInputTokens": 108605,
+        "cacheCreationInputTokens": 830
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01BMv2DHSRJ74HFJfhjraFUc",
+      "summary": "Bash: wc -l src/levels/mass-driver-wo4m/gameplay.ts && head -30 src/levels/mass-driver-wo4m/gameplay.ts",
+      "inputs": {
+        "command": "wc -l src/levels/mass-driver-wo4m/gameplay.ts && head -30 src/levels/mass-driver-wo4m/gameplay.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0054",
+      "ts": "2026-07-12T00:12:13.205Z",
+      "tSeconds": 1006.14,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01BMv2DHSRJ74HFJfhjraFUc",
+      "isError": false,
+      "ok": true,
+      "resultText": "38 src/levels/mass-driver-wo4m/gameplay.ts\nimport { CatmullRomCurve3, Vector3 } from 'three';\nimport type { LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';\nimport { createMusicTime } from '../../engine/music-time';\n\nexport const MASS_DRIVER_WO4M_BPM = 132;\nexport const MASS_DRIVER_WO4M_TIME = createMusicTime(MASS_DRIVER_WO4M_BPM, { stepsPerBar: 16 });\nexport const MASS_DRIVER_WO4M_RUN_DURATION = MASS_DRIVER_WO4M_TIME.bar(16);\n\nexport type MassDriverWo4mEnemyKind = string;\nexport type MassDriverWo4mSpawnData = Record<string, never>;\n\nexport function createMassDriverWo4mRail() {\n  // TODO: replace this plain placeholder curve with the level's authored rail.\n  return new CatmullRomCurve3(\n    [\n      new Vector3(0, 0, 0),\n      new Vector3(0, 0, -40),\n      new Vector3(0, 0, -80),\n      new Vector3(0, 0, -120),\n    ],\n    false,\n    'catmullrom',\n    0.5,\n  );\n}\n\nexport const MASS_DRIVER_WO4M_SPAWN_TIMELINE: Array<LockOnSpawnEntry<MassDriverWo4mEnemyKind, MassDriverWo4mSpawnData>> = [];\n\nexport const massDriverWo4mGameplay: LockOnRunnerLevel<MassDriverWo4mEnemyKind, MassDriverWo4mSpawnData> = {\n  duration: MASS_DRIVER_WO4M_RUN_DURATION,",
+      "truncated": false,
+      "byteLength": 1177
+    },
+    {
+      "id": "a34f666c-ev-0055",
+      "ts": "2026-07-12T00:16:02.837Z",
+      "tSeconds": 1235.772,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 109435,
+        "cacheCreationInputTokens": 755
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0056",
+      "ts": "2026-07-12T00:16:03.766Z",
+      "tSeconds": 1236.701,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 109435,
+        "cacheCreationInputTokens": 755
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "gameplay.ts is still a scaffold, so I'll code strictly to the design-doc contract. I have everything I need. Let me write `audio-voices.ts` first."
+    },
+    {
+      "id": "a34f666c-ev-0057",
+      "ts": "2026-07-12T00:17:26.221Z",
+      "tSeconds": 1319.156,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 25164,
+        "cacheReadInputTokens": 109435,
+        "cacheCreationInputTokens": 755
+      },
+      "kind": "tool-call",
+      "tool": "Write",
+      "toolUseId": "toolu_01JbGjSvhMvrTCXogH1QyBB3",
+      "summary": "Write src/levels/mass-driver-wo4m/audio-voices.ts (558 lines, 20712 bytes)",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio-voices.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0058",
+      "ts": "2026-07-12T00:17:26.234Z",
+      "tSeconds": 1319.169,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01JbGjSvhMvrTCXogH1QyBB3",
+      "isError": false,
+      "ok": true,
+      "resultText": "File created successfully at: /tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio-voices.ts (file state is current in your context — no need to Read it back)",
+      "truncated": false,
+      "byteLength": 169
+    },
+    {
+      "id": "a34f666c-ev-0059",
+      "ts": "2026-07-12T00:20:20.215Z",
+      "tSeconds": 1493.15,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 3,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 129383
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0060",
+      "ts": "2026-07-12T00:20:20.216Z",
+      "tSeconds": 1493.151,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 3,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 129383
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Now the main `audio.ts`. This is the spine."
+    },
+    {
+      "id": "a34f666c-ev-0061",
+      "ts": "2026-07-12T00:22:38.131Z",
+      "tSeconds": 1631.066,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 29013,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 129383
+      },
+      "kind": "tool-call",
+      "tool": "Write",
+      "toolUseId": "toolu_01YBW9KwYnpvcMMzm3kbN4Qa",
+      "summary": "Write src/levels/mass-driver-wo4m/audio.ts (768 lines, 31108 bytes)",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0062",
+      "ts": "2026-07-12T00:22:38.162Z",
+      "tSeconds": 1631.097,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01YBW9KwYnpvcMMzm3kbN4Qa",
+      "isError": false,
+      "ok": true,
+      "resultText": "The file /tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio.ts has been updated successfully. (file state is current in your context — no need to Read it back)",
+      "truncated": false,
+      "byteLength": 172
+    },
+    {
+      "id": "a34f666c-ev-0063",
+      "ts": "2026-07-12T00:22:42.472Z",
+      "tSeconds": 1635.407,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 5,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 158468
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Now let me typecheck for errors originating in my files."
+    },
+    {
+      "id": "a34f666c-ev-0064",
+      "ts": "2026-07-12T00:22:43.410Z",
+      "tSeconds": 1636.345,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 153,
+        "cacheReadInputTokens": 6043,
+        "cacheCreationInputTokens": 158468
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01NDnQ9NphwHGvTUtZmLXonZ",
+      "summary": "Bash: npx tsc --noEmit -p tsconfig.json 2>&1 | grep \"levels/mass-driver-wo4m/audio\" || echo \"NO ERRORS IN AUDIO FILES\"",
+      "inputs": {
+        "command": "npx tsc --noEmit -p tsconfig.json 2>&1 | grep \"levels/mass-driver-wo4m/audio\" || echo \"NO ERRORS IN AUDIO FILES\""
+      }
+    },
+    {
+      "id": "a34f666c-ev-0065",
+      "ts": "2026-07-12T00:22:47.530Z",
+      "tSeconds": 1640.465,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01NDnQ9NphwHGvTUtZmLXonZ",
+      "isError": false,
+      "ok": true,
+      "resultText": "NO ERRORS IN AUDIO FILES",
+      "truncated": false,
+      "byteLength": 24
+    },
+    {
+      "id": "a34f666c-ev-0066",
+      "ts": "2026-07-12T00:22:52.076Z",
+      "tSeconds": 1645.011,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 5,
+        "cacheReadInputTokens": 164511,
+        "cacheCreationInputTokens": 154
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0067",
+      "ts": "2026-07-12T00:22:52.512Z",
+      "tSeconds": 1645.447,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 5,
+        "cacheReadInputTokens": 164511,
+        "cacheCreationInputTokens": 154
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Clean. Let me confirm the only remaining errors are from other agents' files."
+    },
+    {
+      "id": "a34f666c-ev-0068",
+      "ts": "2026-07-12T00:22:53.339Z",
+      "tSeconds": 1646.274,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 206,
+        "cacheReadInputTokens": 164511,
+        "cacheCreationInputTokens": 154
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01XDhSkf3wMfGTnFCJNXhKYo",
+      "summary": "Bash: npx tsc --noEmit -p tsconfig.json 2>&1 | grep -oE \"src/levels/mass-driver-wo4m/[a-z/.-]+\\.ts\" | sort | uniq -c",
+      "inputs": {
+        "command": "npx tsc --noEmit -p tsconfig.json 2>&1 | grep -oE \"src/levels/mass-driver-wo4m/[a-z/.-]+\\.ts\" | sort | uniq -c"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0069",
+      "ts": "2026-07-12T00:22:57.257Z",
+      "tSeconds": 1650.192,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01XDhSkf3wMfGTnFCJNXhKYo",
+      "isError": false,
+      "ok": true,
+      "resultText": "      3 src/levels/mass-driver-wo4m/index.ts\n      2 src/levels/mass-driver-wo4m/visuals/environment.ts",
+      "truncated": false,
+      "byteLength": 103
+    },
+    {
+      "id": "a34f666c-ev-0070",
+      "ts": "2026-07-12T00:23:02.948Z",
+      "tSeconds": 1655.883,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 164665,
+        "cacheCreationInputTokens": 263
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0071",
+      "ts": "2026-07-12T00:23:03.456Z",
+      "tSeconds": 1656.391,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 164665,
+        "cacheCreationInputTokens": 263
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "The errors are in other agents' files. Let me confirm none are triggered by my exports (index.ts imports `createAudio` from my file)."
+    },
+    {
+      "id": "a34f666c-ev-0072",
+      "ts": "2026-07-12T00:23:03.729Z",
+      "tSeconds": 1656.664,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 238,
+        "cacheReadInputTokens": 164665,
+        "cacheCreationInputTokens": 263
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01CQTWQ6ruqdD2U8zmwrYHM7",
+      "summary": "Bash: npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E \"index.ts|environment.ts\" | head -20",
+      "inputs": {
+        "command": "npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E \"index.ts|environment.ts\" | head -20"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0073",
+      "ts": "2026-07-12T00:23:07.541Z",
+      "tSeconds": 1660.476,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01CQTWQ6ruqdD2U8zmwrYHM7",
+      "isError": false,
+      "ok": true,
+      "resultText": "src/levels/mass-driver-wo4m/index.ts(23,3): error TS2305: Module '\"./visuals\"' has no exported member 'updateCameraEffects'.\nsrc/levels/mass-driver-wo4m/index.ts(24,3): error TS2305: Module '\"./visuals\"' has no exported member 'updateVisuals'.\nsrc/levels/mass-driver-wo4m/index.ts(48,44): error TS2554: Expected 2 arguments, but got 3.",
+      "truncated": false,
+      "byteLength": 335
+    },
+    {
+      "id": "a34f666c-ev-0074",
+      "ts": "2026-07-12T00:23:10.127Z",
+      "tSeconds": 1663.062,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 164928,
+        "cacheCreationInputTokens": 405
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0075",
+      "ts": "2026-07-12T00:23:10.619Z",
+      "tSeconds": 1663.554,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 164928,
+        "cacheCreationInputTokens": 405
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "All visuals-related, not my audio. Now let me run the audio trace."
+    },
+    {
+      "id": "a34f666c-ev-0076",
+      "ts": "2026-07-12T00:23:10.971Z",
+      "tSeconds": 1663.906,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 171,
+        "cacheReadInputTokens": 164928,
+        "cacheCreationInputTokens": 405
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01Vn1k8enYAK1dvR5GgUimWq",
+      "summary": "Bash: npm run trace:audio -- --level mass-driver-wo4m 2>&1 | tail -40",
+      "inputs": {
+        "command": "npm run trace:audio -- --level mass-driver-wo4m 2>&1 | tail -40"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0077",
+      "ts": "2026-07-12T00:23:13.260Z",
+      "tSeconds": 1666.195,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01Vn1k8enYAK1dvR5GgUimWq",
+      "isError": false,
+      "ok": true,
+      "resultText": "> raild@0.0.0 trace:audio\n> node scripts/audio-trace.mjs --level mass-driver-wo4m\n\nmass-driver-wo4m audio trace summary\nDuration: 60.0s · Tempo: 128 BPM · Grid: 0.117s\nEvents: 982 · bass=192, hat=174, beat=128, kick=118, arp=104, acid=88, openHat=64, clap=32, hum=28, snare=16, riser=9, sparkle=6, pad=5, section=5, alarm=4, subPulse=4, impact=2, crash=1, humcut=1, klaxon=1\nSections:\n- 0.0s–15.0s: section=2, kick=22, hat=30, bass=32, arp=28, pad=1, riser=1, beat=32\n- 15.0s–30.0s: section=1, kick=32, clap=8, hat=48, openHat=16, bass=64, arp=44, pad=2, beat=32\n- 30.0s–45.0s: section=1, kick=40, clap=16, hat=64, openHat=32, bass=64, arp=32, pad=1, alarm=2, riser=4, impact=1, beat=32\n- 45.0s–60.0s: section=1, kick=24, snare=16, clap=8, hat=32, openHat=16, crash=1, bass=32, pad=1, alarm=2, riser=4, impact=1, beat=32\nFirst appearances: bass@7.6s, hat@0.5s, beat@0.1s, kick@0.1s, arp@0.1s, acid@22.6s, openHat@22.9s, clap@23.0s, hum@0.1s, snare@50.7s, riser@6.6s, sparkle@53.0s, pad@7.6s, section@0.1s, alarm@37.6s, subPulse@52.6s, impact@37.6s, crash@52.6s, humcut@52.6s, klaxon@37.6s",
+      "truncated": false,
+      "byteLength": 1099
+    },
+    {
+      "id": "a34f666c-ev-0078",
+      "ts": "2026-07-12T00:23:29.655Z",
+      "tSeconds": 1682.59,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 165333,
+        "cacheCreationInputTokens": 799
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0079",
+      "ts": "2026-07-12T00:23:30.115Z",
+      "tSeconds": 1683.05,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 165333,
+        "cacheCreationInputTokens": 799
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Trace runs clean. Let me verify the section timings, hum climb, and per-bar structure via verbose."
+    },
+    {
+      "id": "a34f666c-ev-0080",
+      "ts": "2026-07-12T00:23:30.545Z",
+      "tSeconds": 1683.48,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 861,
+        "cacheReadInputTokens": 165333,
+        "cacheCreationInputTokens": 799
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01RrjFcTSMUH4dRBAkPfj7dc",
+      "summary": "Bash: npm run trace:audio -- --level mass-driver-wo4m -- --verbose 2>&1 | grep -E \" section| hum| humcut\" ",
+      "inputs": {
+        "command": "npm run trace:audio -- --level mass-driver-wo4m -- --verbose 2>&1 | grep -E \" section| hum| humcut\" "
+      }
+    },
+    {
+      "id": "a34f666c-ev-0081",
+      "ts": "2026-07-12T00:23:30.900Z",
+      "tSeconds": 1683.835,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01RrjFcTSMUH4dRBAkPfj7dc",
+      "isError": false,
+      "ok": true,
+      "resultText": "(Bash completed with no output)",
+      "truncated": false,
+      "byteLength": 31
+    },
+    {
+      "id": "a34f666c-ev-0082",
+      "ts": "2026-07-12T00:23:32.734Z",
+      "tSeconds": 1685.669,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 89,
+        "cacheReadInputTokens": 166132,
+        "cacheCreationInputTokens": 876
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01YKRRtpnCYfVcU7uXD8fctZ",
+      "summary": "Bash: npm run trace:audio -- --level mass-driver-wo4m --verbose 2>&1 | grep -E \"section|hum\" ",
+      "inputs": {
+        "command": "npm run trace:audio -- --level mass-driver-wo4m --verbose 2>&1 | grep -E \"section|hum\" "
+      }
+    },
+    {
+      "id": "a34f666c-ev-0083",
+      "ts": "2026-07-12T00:23:35.026Z",
+      "tSeconds": 1687.961,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01YKRRtpnCYfVcU7uXD8fctZ",
+      "isError": false,
+      "ok": true,
+      "resultText": "0000.060 section bar=0 section=injection\n0000.060 hum bar=0 midi=28.4\n0001.935 hum bar=1 midi=28.8\n0003.810 hum bar=2 midi=29.3\n0005.685 hum bar=3 midi=29.7\n0007.560 section bar=4 section=stage-1\n0007.560 hum bar=4 midi=30.1\n0009.435 hum bar=5 midi=30.5\n0011.310 hum bar=6 midi=30.9\n0013.185 hum bar=7 midi=31.3\n0015.060 hum bar=8 midi=31.8\n0016.935 hum bar=9 midi=32.2\n0018.810 hum bar=10 midi=32.6\n0020.685 hum bar=11 midi=33\n0022.560 section bar=12 section=stage-2\n0022.560 hum bar=12 midi=33.9\n0024.435 hum bar=13 midi=34.8\n0026.310 hum bar=14 midi=35.6\n0028.185 hum bar=15 midi=36.5\n0030.060 hum bar=16 midi=37.4\n0031.935 hum bar=17 midi=38.3\n0033.810 hum bar=18 midi=39.1\n0035.685 hum bar=19 midi=40\n0037.560 section bar=20 section=interlock\n0037.560 hum bar=20 midi=40.2\n0039.435 hum bar=21 midi=40.8\n0041.310 hum bar=22 midi=41.7\n0043.185 hum bar=23 midi=43\n0045.060 hum bar=24 midi=44.7\n0046.935 hum bar=25 midi=46.8\n0048.810 hum bar=26 midi=49.2\n0050.685 hum bar=27 midi=52\n0052.560 section bar=28 section=muzzle\n0052.560 humcut",
+      "truncated": false,
+      "byteLength": 1038
+    },
+    {
+      "id": "a34f666c-ev-0084",
+      "ts": "2026-07-12T00:23:46.333Z",
+      "tSeconds": 1699.268,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 167008,
+        "cacheCreationInputTokens": 713
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0085",
+      "ts": "2026-07-12T00:23:47.399Z",
+      "tSeconds": 1700.334,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2,
+        "cacheReadInputTokens": 167008,
+        "cacheCreationInputTokens": 713
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "The hum climb is exact: E1 (28.4) at bar 0 → 33 by bar 12 → 40 (E2) by bar 20 → accelerating 40→52 (E3) through bars 20–28, cut dead at bar 28. Sections land precisely at bars 0/4/12/20/28. Let me sanity-check the first bars and the muzzle strip-down."
+    },
+    {
+      "id": "a34f666c-ev-0086",
+      "ts": "2026-07-12T00:23:48.647Z",
+      "tSeconds": 1701.582,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 919,
+        "cacheReadInputTokens": 167008,
+        "cacheCreationInputTokens": 713
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_016ykBNL2iokF27gx9YroY8M",
+      "summary": "Bash: npm run trace:audio -- --level mass-driver-wo4m --verbose 2>&1 | sed -n '1,18p'; echo \"=== MUZZLE (>=52.5s) ===\"; npm run trace:audio -- --level mass-driver-wo4m --verbose 2>&1 | awk '$1>=52.5'",
+      "inputs": {
+        "command": "npm run trace:audio -- --level mass-driver-wo4m --verbose 2>&1 | sed -n '1,18p'; echo \"=== MUZZLE (>=52.5s) ===\"; npm run trace:audio -- --level mass-driver-wo4m --verbose 2>&1 | awk '$1>=52.5'"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0087",
+      "ts": "2026-07-12T00:23:53.202Z",
+      "tSeconds": 1706.137,
+      "kind": "tool-result",
+      "toolUseId": "toolu_016ykBNL2iokF27gx9YroY8M",
+      "isError": false,
+      "ok": true,
+      "resultText": "> raild@0.0.0 trace:audio\n> node scripts/audio-trace.mjs --level mass-driver-wo4m --verbose\n\n0000.060 section bar=0 section=injection\n0000.060 beat beatNumber=0 isDownbeat=true\n0000.060 hum bar=0 midi=28.4\n0000.060 kick vel=0.9\n0000.060 arp midi=64 vel=0.25\n0000.529 beat beatNumber=1 isDownbeat=false\n0000.529 hat decay=0.02 vel=0.04\n0000.529 arp midi=67 vel=0.25\n0000.998 beat beatNumber=2 isDownbeat=false\n0000.998 arp midi=71 vel=0.25\n0001.466 beat beatNumber=3 isDownbeat=false\n0001.466 hat decay=0.02 vel=0.04\n0001.466 arp midi=76 vel=0.25\n0001.935 beat beatNumber=4 isDownbeat=true\n=== MUZZLE (>=52.5s) ===\n> raild@0.0.0 trace:audio\n> node scripts/audio-trace.mjs --level mass-driver-wo4m --verbose\n0052.560 section bar=28 section=muzzle\n0052.560 beat beatNumber=112 isDownbeat=true\n0052.560 impact vel=1.4\n0052.560 crash vel=0.35\n0052.560 humcut\n0052.560 pad duration=6.563 midis=52,56,59,64,64 vel=0.9\n0052.560 subPulse midi=40 vel=0.6\n0053.029 beat beatNumber=113 isDownbeat=false\n0053.029 sparkle midi=76 vel=0.7\n0053.498 beat beatNumber=114 isDownbeat=false\n0053.966 beat beatNumber=115 isDownbeat=false\n0053.966 sparkle midi=83 vel=0.7\n0054.435 beat beatNumber=116 isDownbeat=true\n0054.435 subPulse midi=40 vel=0.44\n0054.904 beat beatNumber=117 isDownbeat=false\n0054.904 sparkle midi=76 vel=0.55\n0055.373 beat beatNumber=118 isDownbeat=false\n0055.841 beat beatNumber=119 isDownbeat=false\n0055.841 sparkle midi=83 vel=0.55\n0056.310 beat beatNumber=120 isDownbeat=true\n0056.310 subPulse midi=40 vel=0.28\n0056.779 beat beatNumber=121 isDownbeat=false\n0056.779 sparkle midi=76 vel=0.4\n0057.248 beat beatNumber=122 isDownbeat=false\n0057.716 beat beatNumber=123 isDownbeat=false\n0057.716 sparkle midi=83 vel=0.4\n0058.185 beat beatNumber=124 isDownbeat=true\n0058.185 subPulse midi=40 vel=0.12\n0058.654 beat beatNumber=125 isDownbeat=false\n0059.123 beat beatNumber=126 isDownbeat=false\n0059.591 beat beatNumber=127 isDownbeat=false",
+      "truncated": false,
+      "byteLength": 1936
+    },
+    {
+      "id": "a34f666c-ev-0088",
+      "ts": "2026-07-12T00:24:18.145Z",
+      "tSeconds": 1731.08,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 3,
+        "cacheReadInputTokens": 167721,
+        "cacheCreationInputTokens": 2008
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0089",
+      "ts": "2026-07-12T00:24:19.675Z",
+      "tSeconds": 1732.61,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 3,
+        "cacheReadInputTokens": 167721,
+        "cacheCreationInputTokens": 2008
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Everything lands exactly as designed — injection is sparse (kick downbeat + rising arp blips + hum), and the muzzle blooms an E-major pad (52,56,59,64) with a fading sub heartbeat (0.6→0.12) and sparse delayed sparkle over silence after the bar-28 impact/humcut. Let me tidy one unused import."
+    },
+    {
+      "id": "a34f666c-ev-0090",
+      "ts": "2026-07-12T00:24:20.135Z",
+      "tSeconds": 1733.07,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 1564,
+        "cacheReadInputTokens": 167721,
+        "cacheCreationInputTokens": 2008
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_013rdHw5NHqx6yT2bzA77RwP",
+      "summary": "Bash: grep -n \"playOscillatorVoice\" src/levels/mass-driver-wo4m/audio.ts",
+      "inputs": {
+        "command": "grep -n \"playOscillatorVoice\" src/levels/mass-driver-wo4m/audio.ts"
+      }
+    },
+    {
+      "id": "a34f666c-ev-0091",
+      "ts": "2026-07-12T00:24:20.164Z",
+      "tSeconds": 1733.099,
+      "kind": "tool-result",
+      "toolUseId": "toolu_013rdHw5NHqx6yT2bzA77RwP",
+      "isError": false,
+      "ok": true,
+      "resultText": "4:  playOscillatorVoice,",
+      "truncated": false,
+      "byteLength": 24
+    },
+    {
+      "id": "a34f666c-ev-0092",
+      "ts": "2026-07-12T00:24:26.474Z",
+      "tSeconds": 1739.409,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 1,
+        "cacheReadInputTokens": 169729,
+        "cacheCreationInputTokens": 1582
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "It's imported but unused. Let me remove it."
+    },
+    {
+      "id": "a34f666c-ev-0093",
+      "ts": "2026-07-12T00:24:28.635Z",
+      "tSeconds": 1741.57,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 250,
+        "cacheReadInputTokens": 169729,
+        "cacheCreationInputTokens": 1582
+      },
+      "kind": "tool-call",
+      "tool": "Edit",
+      "toolUseId": "toolu_01KtFbbsEvfNkWZQ42dSWbcr",
+      "summary": "Edit src/levels/mass-driver-wo4m/audio.ts",
+      "inputs": {
+        "file_path": "/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio.ts",
+        "old_string": "import {\n  createBeatLevelAudio,\n  playOscillatorVoice,\n  type BeatLevelAudioStep,\n} from '../../engine/audio-kit';",
+        "new_string": "import {\n  createBeatLevelAudio,\n  type BeatLevelAudioStep,\n} from '../../engine/audio-kit';",
+        "replace_all": false
+      }
+    },
+    {
+      "id": "a34f666c-ev-0094",
+      "ts": "2026-07-12T00:24:28.650Z",
+      "tSeconds": 1741.585,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01KtFbbsEvfNkWZQ42dSWbcr",
+      "isError": false,
+      "ok": true,
+      "resultText": "The file /tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio.ts has been updated successfully. (file state is current in your context — no need to Read it back)",
+      "truncated": false,
+      "byteLength": 172
+    },
+    {
+      "id": "a34f666c-ev-0095",
+      "ts": "2026-07-12T00:24:30.861Z",
+      "tSeconds": 1743.796,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 123,
+        "cacheReadInputTokens": 171311,
+        "cacheCreationInputTokens": 346
+      },
+      "kind": "tool-call",
+      "tool": "Bash",
+      "toolUseId": "toolu_01VcdHjoEESwq8m1DcEYJx9H",
+      "summary": "Bash: npx tsc --noEmit -p tsconfig.json 2>&1 | grep \"levels/mass-driver-wo4m/audio\" && echo \"HAS ERRORS\" || echo \"AUDIO FILES CLEAN\"",
+      "inputs": {
+        "command": "npx tsc --noEmit -p tsconfig.json 2>&1 | grep \"levels/mass-driver-wo4m/audio\" && echo \"HAS ERRORS\" || echo \"AUDIO FILES CLEAN\""
+      }
+    },
+    {
+      "id": "a34f666c-ev-0096",
+      "ts": "2026-07-12T00:24:34.827Z",
+      "tSeconds": 1747.762,
+      "kind": "tool-result",
+      "toolUseId": "toolu_01VcdHjoEESwq8m1DcEYJx9H",
+      "isError": false,
+      "ok": true,
+      "resultText": "AUDIO FILES CLEAN",
+      "truncated": false,
+      "byteLength": 17
+    },
+    {
+      "id": "a34f666c-ev-0097",
+      "ts": "2026-07-12T00:24:37.952Z",
+      "tSeconds": 1750.887,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 8,
+        "cacheReadInputTokens": 171657,
+        "cacheCreationInputTokens": 141
+      },
+      "kind": "thinking",
+      "model": "claude-opus-4-8",
+      "text": ""
+    },
+    {
+      "id": "a34f666c-ev-0098",
+      "ts": "2026-07-12T00:25:07.913Z",
+      "tSeconds": 1780.848,
+      "usage": {
+        "inputTokens": 2,
+        "outputTokens": 2088,
+        "cacheReadInputTokens": 171657,
+        "cacheCreationInputTokens": 141
+      },
+      "kind": "assistant-text",
+      "model": "claude-opus-4-8",
+      "text": "Both audio files typecheck clean; the trace runs clean with all structural expectations met. `simulate` is skipped since gameplay.ts is still a scaffold (as the task allows). \n\n## Summary\n\nI built the full procedural soundtrack + sound design for Mass Driver in two files I own exclusively:\n- `/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio.ts` (spine: score, arrangement, player instruments, event handlers)\n- `/tmp/raild-run-eztdwig5twea/src/levels/mass-driver-wo4m/audio-voices.ts` (leaves: the hum controller + instrument bank + player voice helpers)\n\nArchitecture mirrors Helios exactly: `createBeatLevelAudio` + `createScore` + `createArrangement` + `defineInstruments` + the `voice()` spec layer. No cross-level imports; timing constants all come from `timing.ts`.\n\n### Section-by-section arrangement\n- injection (bars 0–4): hum + sparse bar-downbeat kick, tick hats, per-beat arp blips rising in velocity, half-bar riser into stage-1.\n- stage-1 (4–12): four-on-floor kick, offbeat hats, 8th-note root bass pulse (hypnotic), sparse 16th arp, 4-bar pad swells.\n- stage-2 (12–20): + acid resonant-303 16th line, clap on 2/4, busier hat+openHat, bass octave/fifth `bassFigure`, arp up an octave, pad swells.\n- interlock (20–28): klaxon (two-tone) + impact at bar 20, hardened grid-locked double-kick, alarm swells every 2 bars, a per-bar rising noise riser building toward the peak, bar-27 accelerating snare roll. The pulse stays locked — no syncopation outside this escalation.\n- muzzle (28–32): bar-28 impact + crash + deep duck + `humCut`, then near-silence: long E-major pad bloom (Picardy third), sparse delayed sparkle arp, tiny sub heartbeat fading 0.6→0.12 on downbeats. No drums.\n\n### The climbing hum\n`installMassDriverHum(context, mix)` builds a detuned saw pair + sine (all through a lowpass into `mix.music`) with a slow always-on idle LFO. Oscillators run for the whole session; the controller only steers frequency/cutoff/level (`glideTo`, `idle`, `cutAt`), so a cut leaves it ready to re-idle. A single shared `humTrack` fn drives it at every bar downbeat via `humMidiAtBar(bar+1)`: E1→33 (linear to bar 12)→40/E2 (bar 20)→then a t² eased (accelerating) charge 40→52/E3 by bar 27, cut dead at bar 28. Level fades in over the breech and swells through the charge; cutoff tracks pitch so the climb audibly brightens. Trace verified the exact climb bar-by-bar and the cut at 52.56s. In trace mode (no live context) the track records a `hum` event instead of steering nodes. `idle` on runend re-idles; a `died` runend cuts it and drops a low detonation rumble instead of the bloom.\n\n### Kill-lane design\nFive authored 32-step lanes (degrees into the live 8-note lead set, so all validate): 0 = sparse glassy climbing arches; 1 = steady locked walk mirroring the four-on-floor; 2 = high jump-cut acid fragments leaving the bass its register; 3 = urgent ceiling-pressing climbs (countdown); 4 = glassy descents resolving onto the E-major tonic. Interlock kills bypass the lane for a bespoke climbing confirmation (root + n ascending steps, louder/brighter/higher each of the 6, + clamp clank + ignition ping); `bossphase destroyed` ducks and lands a conclusive rising figure over an impact.\n\n### Gain-staging decisions\nTuned by perceived loudness (saw ≫ sine): saws/squares kept low (reese 0.08, stab 0.045/voice, pad 0.045, arp 0.06), sines/sub high (kick 0.6, bass sub 0.26, impact 0.5). Rhythmic bass voiced at E2 (sub) so it doesn't fight the hum's E1 drone. Kick duck is the pump — `duckAt(time, 0.5, 0.18)`, grid-locked. Mix bus: compressor (−15/5), delay 3×16th feedback 0.3 damped 2.2kHz, reverb 2.2s, noiseSeconds 2, volumeScale 0.8. Section-4 player voices are glassy/quiet/reverb-heavy per the doctrine.\n\n### Verification\n- `tsc` on `levels/mass-driver-wo4m/audio*` → clean (remaining repo errors are in the other agents' `index.ts`/`visuals/environment.ts`).\n- `trace:audio` runs clean: 982 events; sections at 0/7.56/22.56/37.56/52.56s (bars 0/4/12/20/28); 28 hum-glide events climbing exactly per curve + humcut at bar 28; acid/clap/openHat first appear at bar 12, klaxon/alarm/riser/snare-roll at bar 20; bar-28 impact+crash+humcut then pad/sparkle/subPulse strip-down; no empty section.\n- `createAudio(bus)` is construct-safe headlessly — no window/AudioContext at construction (hum installs only in `onPostBuild`); `createScore` validation passed (trace would have thrown otherwise).\n- `simulate` skipped: gameplay.ts is still a scaffold, so I coded strictly to the design-doc contract (enemy kinds, `bossphase` phases, `runend.died`)."
+    }
+  ]
+}
