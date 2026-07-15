@@ -131,12 +131,16 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .catalog-stamp { color: var(--muted) !important; font: 9px var(--mono); letter-spacing: .08em; }
 
 /* ---------- Rank: assignment + compare ---------- */
-.rank-panel { max-width: 900px; }
+/* Matchup thumbnails and the curve chart both read better big, so the rank
+   route claims more of the viewport than the editorial pages do. */
+[data-route="rank"] .app-content { width: min(1280px, calc(100% - 64px)); }
+.rank-panel { max-width: 1180px; }
+.rank-panel > .lede { max-width: none; }
 .rank-note { max-width: 700px; padding: 13px 0; color: var(--soft-text); border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); border-left: none; line-height: 1.55; font-size: 14px; }
 .prompt-details { margin: 22px 0; color: var(--body-text); border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
 .prompt-details summary { padding: 14px 0; color: var(--accent); cursor: pointer; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
 .prompt-details summary:hover { color: var(--ink); }
-.prompt-details p { max-width: 760px; padding: 0 0 14px; color: var(--soft-text); line-height: 1.65; white-space: pre-line; }
+.prompt-details p { max-width: 900px; margin-inline: auto; padding: 0 0 14px; color: var(--soft-text); line-height: 1.65; white-space: pre-line; }
 .assignment-card { margin: 28px 0; padding: 24px; background: var(--card); border: 1px solid var(--hairline); }
 .assignment-card h2 { margin-top: 0; color: var(--ink); }
 .compare-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(28px, 5vw, 56px) minmax(0, 1fr); gap: 16px; align-items: stretch; margin: 28px 0 18px; }
@@ -205,9 +209,9 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 
 /* ---------- Verdict log ---------- */
 .verdict-log { display: grid; gap: 0; margin: 24px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--hairline); }
-.verdict-log li { padding: 11px 0; color: var(--body-text); border-bottom: 1px solid var(--hairline-2); font-size: 12px; line-height: 1.5; }
+.verdict-log li { padding: 12px 0; color: var(--body-text); border-bottom: 1px solid var(--hairline-2); font-size: 13px; line-height: 1.5; }
 .verdict-headline { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-.verdict-theme { color: var(--ink); font-size: 13px; font-weight: 600; }
+.verdict-theme { color: var(--ink); font-size: 14.5px; font-weight: 600; }
 .verdict-separator { color: var(--ghost); }
 .verdict-identity { color: var(--ink); font-family: var(--mono); }
 .verdict-costs { color: var(--muted); font-family: var(--mono); white-space: nowrap; }
@@ -232,10 +236,10 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-debug-copy:hover, .curve-debug-copy:focus-visible { color: var(--ink); border-color: var(--ink); }
 .curve-debug-copy[data-status="copied"] { color: var(--accent); border-color: var(--accent); }
 .copy-mark { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.curve-status { flex: 0 0 auto; max-width: min(420px, 100%); padding: 6px 8px; color: var(--muted); background: var(--card); border: 1px solid var(--hairline); font: 10px var(--mono); letter-spacing: .04em; line-height: 1.35; text-align: right; }
-.curve-intro { max-width: 620px; margin: 18px 0; color: var(--soft-text); font-size: 13.5px; line-height: 1.6; }
+.curve-status { flex: 0 0 auto; max-width: min(420px, 100%); padding: 7px 10px; color: var(--muted); background: var(--card); border: 1px solid var(--hairline); font: 11px var(--mono); letter-spacing: .04em; line-height: 1.35; text-align: right; }
+.curve-intro { max-width: none; margin: 20px 0; color: var(--soft-text); font-size: 15px; line-height: 1.6; }
 .curve-intro strong { color: var(--ink); }
-.curve-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; padding: 10px 0; color: var(--muted); background: transparent; font: 9.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.curve-legend { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding: 10px 0; color: var(--muted); background: transparent; font: 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 .curve-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend-point { display: inline-block; width: 9px; height: 9px; background: var(--ink); border: none; border-radius: 50%; box-shadow: none; }
 .legend-point.frontier { width: 9px; height: 9px; background: var(--accent); box-shadow: none; }
@@ -273,25 +277,25 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-tooltip-levels ul { display: grid; gap: 5px; margin: 8px 0 0; padding: 0; list-style: none; }
 .curve-tooltip-levels li { display: flex; justify-content: space-between; gap: 10px; color: var(--body-text); font-size: 10px; }
 .curve-tooltip-levels code { color: var(--muted); font: 9px var(--mono); }
-.curve-help { margin: 4px 0 20px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.curve-help { margin: 4px 0 20px; color: var(--muted); font-size: 12.5px; line-height: 1.55; }
 
 /* ---------- Curve table ---------- */
 .curve-table-wrap { overflow-x: auto; border-top: 1px solid var(--hairline); }
-.curve-table { width: 100%; border-collapse: collapse; font: 11px var(--mono); font-variant-numeric: tabular-nums; }
-.curve-table caption { padding: 17px 0 8px; color: var(--muted); text-align: left; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; }
-.curve-table th, .curve-table td { padding: 11px 12px; text-align: right; border-bottom: 1px solid var(--hairline-2); white-space: nowrap; }
-.curve-table thead th { color: var(--muted); font-size: 9px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
+.curve-table { width: 100%; border-collapse: collapse; font: 12.5px var(--mono); font-variant-numeric: tabular-nums; }
+.curve-table caption { padding: 17px 0 8px; color: var(--muted); text-align: left; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; }
+.curve-table th, .curve-table td { padding: 13px 14px; text-align: right; border-bottom: 1px solid var(--hairline-2); white-space: nowrap; }
+.curve-table thead th { color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
 .curve-table th:first-child { padding-left: 0; text-align: left; }
 .curve-table td:last-child, .curve-table th:last-child { padding-right: 0; }
 .curve-table tbody th strong, .curve-table tbody th span { display: block; }
-.curve-table tbody th strong { color: var(--ink); font-family: var(--sans); font-size: 13px; font-weight: 600; }
-.curve-table tbody th span { margin-top: 2px; color: var(--muted); font-size: 9px; text-transform: uppercase; }
+.curve-table tbody th strong { color: var(--ink); font-family: var(--sans); font-size: 14.5px; font-weight: 600; }
+.curve-table tbody th span { margin-top: 3px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
 .curve-table tbody td { color: var(--body-text); }
 .curve-levels > a { display: block; text-align: left; text-decoration: none; }
 .curve-levels > a + a { margin-top: 5px; }
 .curve-levels strong, .curve-levels code { display: block; }
-.curve-levels strong { color: var(--body-text); font-family: var(--sans); font-size: 10px; }
-.curve-levels code { margin-top: 1px; color: var(--muted); font: 8px var(--mono); }
+.curve-levels strong { color: var(--body-text); font-family: var(--sans); font-size: 11.5px; }
+.curve-levels code { margin-top: 1px; color: var(--muted); font: 9.5px var(--mono); }
 .curve-levels a:hover strong, .curve-levels a:focus-visible strong { color: var(--accent); }
 .curve-table .frontier-status { color: var(--accent); }
 
