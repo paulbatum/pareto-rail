@@ -21,6 +21,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 // Codex, so `ultra` is rejected here rather than silently downgraded to `max`.
 const THINKING = new Set(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
 
+// Every `message_update` repeats the whole message built so far rather than just the new delta, so
+// the streamed log grows with the square of a message's length: a five-minute stage emitted 251MB of
+// them against a 172KB session file. They are superseded by the `message_end` that closes each
+// message and carries its final content and usage, so they are dropped as they stream — a real run
+// would otherwise buffer gigabytes here and again in the runner that reads this log back.
+const STREAMED_DELTA_EVENT = '"type":"message_update"';
+
 // Providers that authenticate with an API key rather than pi's stored OAuth credential, and the env
 // var each reads. A project-provisioned key in the repository `.env` takes precedence over whatever
 // pi already holds; absent one, the child inherits nothing and pi falls back to its own credential.
@@ -106,6 +113,7 @@ async function main() {
     timeoutSeconds,
     allowFailure: true,
     env: credential.env,
+    dropLine: (line) => line.startsWith(`{${STREAMED_DELTA_EVENT}`),
   });
   const finishedAt = new Date().toISOString();
 
@@ -138,6 +146,9 @@ async function main() {
     usageSha256: sha256(JSON.stringify(usage)),
     eventLogSha256: sha256(result.stdout),
     stderrSha256: sha256(result.stderr),
+    // `events.jsonl` is the retained stream, not a verbatim copy of stdout. The full transcript
+    // stays available in `rollout.jsonl`, which pi persists and ccusage replays.
+    eventLog: { retained: 'all events except message_update', droppedLines: result.droppedLines },
     rollout,
   });
 
@@ -335,7 +346,9 @@ async function assertAbsent(target, label) {
   fail(`${label} already exists: ${target}`);
 }
 
-function runCommand(executable, args, { cwd, input, timeoutSeconds, allowFailure = false, env } = {}) {
+// `dropLine` is applied per line as stdout arrives so a dropped line is never accumulated. The
+// returned `stdout` is the retained lines only, and `droppedLines` counts what was discarded.
+function runCommand(executable, args, { cwd, input, timeoutSeconds, allowFailure = false, env, dropLine } = {}) {
   return new Promise((resolve, reject) => {
     const startedAt = performance.now();
     const child = spawn(executable, args, {
@@ -347,7 +360,22 @@ function runCommand(executable, args, { cwd, input, timeoutSeconds, allowFailure
     let stderr = '';
     let timedOut = false;
     let killTimer;
-    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    let droppedLines = 0;
+    let pending = '';
+    const keep = (line) => {
+      if (dropLine(line)) { droppedLines += 1; return; }
+      stdout += `${line}\n`;
+    };
+    child.stdout.on('data', (chunk) => {
+      if (!dropLine) { stdout += chunk; return; }
+      pending += chunk;
+      let newline = pending.indexOf('\n');
+      while (newline !== -1) {
+        keep(pending.slice(0, newline));
+        pending = pending.slice(newline + 1);
+        newline = pending.indexOf('\n');
+      }
+    });
     child.stderr.on('data', (chunk) => { stderr += chunk; });
     child.on('error', reject);
     child.on('spawn', () => {
@@ -362,7 +390,8 @@ function runCommand(executable, args, { cwd, input, timeoutSeconds, allowFailure
     });
     child.on('close', (code) => {
       if (killTimer) clearTimeout(killTimer);
-      const result = { code: code ?? 1, stdout, stderr, timedOut, wallTimeSeconds: (performance.now() - startedAt) / 1_000 };
+      if (dropLine && pending) keep(pending);
+      const result = { code: code ?? 1, stdout, stderr, timedOut, droppedLines, wallTimeSeconds: (performance.now() - startedAt) / 1_000 };
       if (result.code !== 0 && !allowFailure) reject(new Error(`${[executable, ...args].join(' ')} failed:\n${stderr || stdout}`));
       else resolve(result);
     });
