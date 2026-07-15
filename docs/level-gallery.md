@@ -335,6 +335,32 @@ Built to the standing brief from the Mass Driver theme assignment. Verified by t
 
 ---
 
+# Prism Ember
+
+A warm luminous variant of Prism Bloom. Deep burgundy skies, amber and coral targets, warm cream cores, and gold progression set this level apart from its cool-toned original while preserving every rail, fan wave, and melody.
+
+## Visual language
+Burgundy-amber environment ribs, warm cream star field, amber-and-coral prism targets, gold lock-count progression, and warm cream grid letters for the shared START and REPLAY flow.
+
+## Musical language
+96 BPM, compact bell and low-pulse material, shimmer delay, simple scale motion, and basic lock, fire, hit, kill, miss, and reject sounds.
+
+## Mechanical signature
+A 30-second run with three enemy kinds (gate, comet, echo), fan-built waves, spiral, zipper, and bloom offsets, and simple per-kind scoring.
+
+## What to read
+- `src/benchmark-levels/prism-warm-m7dz/index.ts`
+- `src/benchmark-levels/prism-warm-m7dz/gameplay.ts`
+- `src/benchmark-levels/prism-warm-m7dz/audio.ts`
+- `src/benchmark-levels/prism-warm-m7dz/visuals/index.ts`
+- `src/benchmark-levels/prism-warm-m7dz/timing.ts`
+
+## Status & notes
+Benchmark-generated warm variant. Identical rail, timing, scoring, and audio to Prism Bloom; only the palette and identity have changed.
+Inspection captures: `bloom` (bloom pattern, bar 6), `finale` (final gate wave, bar 10).
+
+---
+
 # Skyhook
 
 A sixty-second defense of Climber 07 on its full space-elevator ascent: storm-grey weather falls away into hard blue sunlight, indigo thin air, black orbit, and the open capture jaws of the station. The tether never leaves the frame; at the summit, a vast crawler uses it to climb down toward the car.
