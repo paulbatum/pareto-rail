@@ -144,7 +144,7 @@ function GenerationDetails({ entrant }: { entrant: RevealPayload['a'] }) {
       </dl>
       <div className="model-usage-list" aria-label="Token usage by model">
         <p>Token usage by model</p>
-        {run.models.map((model) => <ModelUsage key={`${model.modelName}-${model.role}`} model={model} />)}
+        {run.models.map((model) => <ModelUsage key={`${model.modelName}-${model.role}`} model={model} showRole={run.models.length > 1} />)}
       </div>
       {configuration && <WorkflowDetails configuration={configuration} />}
       <p className="run-data-note">Generation time covers the model session. Full run time also includes deterministic setup, sealing, and verification. Total input counts every token the model read, cached or not, since each harness bills first-sight tokens differently. Output includes reasoning tokens.</p>

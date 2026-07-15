@@ -8,13 +8,15 @@ export function totalInputTokens(model: BenchmarkModelUsage): number {
   return model.inputTokens + (model.cacheReadTokens ?? 0) + (model.cacheWriteTokens ?? 0);
 }
 
-export function ModelUsage({ model }: { model: BenchmarkModelUsage }) {
+/** `showRole` is the caller's model count: a role tells the reader which model did
+ * what, so it says nothing when there is only one model to attribute work to. */
+export function ModelUsage({ model, showRole }: { model: BenchmarkModelUsage; showRole: boolean }) {
   const total = totalInputTokens(model);
   const cacheRead = model.cacheReadTokens ?? 0;
   return (
     <div className="model-usage">
       <header>
-        <span><strong>{model.modelName}</strong><small>{model.role}</small></span>
+        <span><strong>{model.modelName}</strong>{showRole && <small>{model.role}</small>}</span>
         <span>{model.costUsd === undefined ? 'Per-model cost unavailable' : `$${model.costUsd.toFixed(2)}`}</span>
       </header>
       <dl>

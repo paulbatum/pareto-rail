@@ -2,14 +2,14 @@ import type { LevelsView } from './router';
 
 const LEVELS_VIEW_KEY = 'pr-levels-view';
 
-/** The gallery is the default; a stored preference only ever moves a bare
- * /levels visit to the data view. Deep links to /levels/data always win. */
+/** The data view is the default; only a visitor who has chosen the gallery gets
+ * it back on a bare /levels visit. Deep links to either view always win. */
 export function getLevelsView(): LevelsView {
-  if (typeof window === 'undefined') return 'gallery';
+  if (typeof window === 'undefined') return 'data';
   try {
-    return window.localStorage.getItem(LEVELS_VIEW_KEY) === 'data' ? 'data' : 'gallery';
+    return window.localStorage.getItem(LEVELS_VIEW_KEY) === 'gallery' ? 'gallery' : 'data';
   } catch {
-    return 'gallery';
+    return 'data';
   }
 }
 

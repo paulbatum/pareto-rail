@@ -437,7 +437,7 @@ html:fullscreen .game-toolbar { display: none; }
 /* ============================================================
    VIEW 2 — DATA (7b): tree + full record (was the 6b explorer)
    ============================================================ */
-.levels-data-layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); border-top: 1px solid var(--hairline); }
+.levels-data-layout { display: grid; grid-template-columns: 460px minmax(0, 1fr); border-top: 1px solid var(--hairline); }
 
 /* Left rail */
 .catalog-rail { padding: 26px 0 44px; border-right: 1px solid var(--hairline); }
@@ -445,13 +445,22 @@ html:fullscreen .game-toolbar { display: none; }
 .catalog-rail-section:first-child { padding-top: 0; }
 .catalog-rail-section h2 { margin: 0 0 8px; color: var(--muted); font: 10px var(--mono); letter-spacing: .16em; text-transform: uppercase; }
 .catalog-rail-group { margin: 8px 0 3px; padding: 0 12px; color: var(--ghost); font: 9.5px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
-.catalog-rail-item { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; padding: 10px 12px; color: var(--body-text); font: 12px var(--mono); text-decoration: none; overflow-wrap: anywhere; }
+.catalog-rail-item { display: flex; gap: 12px; align-items: center; padding: 7px 12px; color: var(--body-text); font: 12px var(--mono); text-decoration: none; }
 .catalog-rail-item:hover { color: var(--ink); background: var(--card); }
-.catalog-rail-item span { flex: 0 0 auto; color: var(--muted); font-variant-numeric: tabular-nums; }
-.catalog-rail-item .featured-mark { color: var(--accent); font-size: 9.5px; }
-.catalog-rail-item .ref-tag { color: var(--accent); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; }
+/* The rail reads as a filmstrip: the thumbnail identifies a run faster than its
+   id does. Levels without one keep the striped placeholder, unlabelled at this
+   size, so every row still lands on the same grid. */
+.catalog-rail-thumb { flex: 0 0 auto; display: block; width: 96px; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--hairline); }
+.catalog-rail-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.catalog-rail-thumb .thumbnail-fallback { height: 100%; border: 0; }
+.catalog-rail-thumb .thumbnail-fallback span { display: none; }
+.catalog-rail-id { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.catalog-rail-cost { flex: 0 0 auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.catalog-rail-item .featured-mark { flex: 0 0 auto; color: var(--accent); font-size: 9.5px; }
+.catalog-rail-item .ref-tag { flex: 0 0 auto; color: var(--accent); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; }
 .catalog-rail-item[aria-current="true"] { color: var(--ink); background: var(--accent-tint); border-left: 2px solid var(--accent); padding-left: 10px; }
-.catalog-rail-item[aria-current="true"] span { color: var(--ink); }
+.catalog-rail-item[aria-current="true"] .catalog-rail-cost { color: var(--ink); }
+.catalog-rail-item[aria-current="true"] .catalog-rail-thumb { border-color: var(--accent); }
 .catalog-rail-download { margin: 22px 26px 0; padding-top: 16px; border-top: 1px solid var(--hairline-2); }
 .catalog-rail-download a { color: var(--muted); font: 10px var(--mono); letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
 .catalog-rail-download a:hover { color: var(--accent); }
@@ -504,7 +513,9 @@ html:fullscreen .game-toolbar { display: none; }
 .catalog-disclosures summary > span { flex: 0 0 auto; }
 .catalog-disclosures summary small { color: var(--muted); font-size: 10.5px; letter-spacing: .04em; text-transform: none; text-align: right; }
 .catalog-disclosure-body { padding: 3px 0 22px; }
-.catalog-disclosure-body > p { max-width: 720px; margin: 0; color: var(--body-text); font-size: 13.5px; line-height: 1.6; }
+/* Capped for line length, not for lack of room: prose set the full width of the
+   detail pane is hard to track back from one line to the next. */
+.catalog-disclosure-body > p { max-width: 900px; margin: 0; color: var(--body-text); font-size: 13.5px; line-height: 1.6; }
 .catalog-disclosure-body .prompt-text { white-space: pre-line; }
 .catalog-disclosure-body .run-facts { margin-bottom: 16px; }
 .catalog-raw { margin: 0; padding: 16px; color: var(--body-text); background: var(--card); border: 1px solid var(--hairline); font: 11px/1.6 var(--mono); overflow-x: auto; }
@@ -519,7 +530,10 @@ html:fullscreen .game-toolbar { display: none; }
 .catalog-note { max-width: 620px; margin: 0; color: var(--muted); font: 11px/1.6 var(--mono); }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 1080px) { .levels-data-layout { grid-template-columns: 284px minmax(0, 1fr); } }
+@media (max-width: 1080px) {
+  .levels-data-layout { grid-template-columns: 340px minmax(0, 1fr); }
+  .catalog-rail-thumb { width: 72px; }   /* a narrow rail buys the id its line back */
+}
 @media (max-width: 1000px) { .levels-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .catalog-record-body { grid-template-columns: 1fr; } .catalog-thumb { max-width: 340px; } }
 @media (max-width: 720px) {

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BenchmarkModelUsage, BenchmarkTheme } from '../../benchmark/types';
 import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog, selectableLevelGroups } from '../../levels';
@@ -39,8 +39,10 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
   const benchmarkCount = bands.reduce((total, band) => total + band.records.length, 0);
 
   // The toggle writes the preference before navigating, so a bare /levels visit
-  // resumes the last-used view without trapping anyone in it.
-  useEffect(() => {
+  // resumes the last-used view without trapping anyone in it. This redirects
+  // before paint: /levels is the data view for most visitors, and an effect
+  // would show them a frame of gallery on the way there.
+  useLayoutEffect(() => {
     if (route.view === 'gallery' && getLevelsView() === 'data') navigate(levelsViewPath.data, true);
   }, [route.view]);
 
@@ -171,7 +173,7 @@ function DataView({ builtIn, bands, benchmarkCount, onNavigate }: { builtIn: Bui
               {band.records.map((record) => (
                 <RailItem key={record.levelId} record={record} selected={record.levelId === selected.levelId}>
                   {record.entrant.featured === true && <b className="featured-mark" title="Featured">◆</b>}
-                  <span>{formatCost(record.entrant.generationCost)}</span>
+                  <span className="catalog-rail-cost">{formatCost(record.entrant.generationCost)}</span>
                 </RailItem>
               ))}
             </Fragment>
@@ -191,7 +193,9 @@ function DataView({ builtIn, bands, benchmarkCount, onNavigate }: { builtIn: Bui
 function RailItem({ record, selected, children }: { record: LevelRecord; selected: boolean; children?: React.ReactNode }) {
   return (
     <a className="catalog-rail-item" href={`#entrant-${record.levelId}`} aria-current={selected ? 'true' : undefined}>
-      {record.levelId}{children}
+      <span className="catalog-rail-thumb"><Thumbnail path={thumbnailPathOf(record)} /></span>
+      <span className="catalog-rail-id">{record.levelId}</span>
+      {children}
     </a>
   );
 }
@@ -244,7 +248,7 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
         {run && (
           <div className="catalog-usage">
             <p>Model usage — {run.models.length} model{run.models.length === 1 ? '' : 's'}{run.harness && ` · ${run.harness.name} ${run.harness.version}`}</p>
-            {run.models.map((model) => <ModelUsage key={`${model.modelName}-${model.role}`} model={model} />)}
+            {run.models.map((model) => <ModelUsage key={`${model.modelName}-${model.role}`} model={model} showRole={run.models.length > 1} />)}
           </div>
         )}
       </div>
