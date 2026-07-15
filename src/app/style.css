@@ -272,7 +272,6 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-tooltip-levels li { display: flex; justify-content: space-between; gap: 10px; color: var(--body-text); font-size: 10px; }
 .curve-tooltip-levels code { color: var(--muted); font: 9px var(--mono); }
 .curve-help { margin: 4px 0 20px; color: var(--muted); font-size: 11px; line-height: 1.55; }
-.curve-unplotted { margin: -8px 0 18px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 
 /* ---------- Curve table ---------- */
 .curve-table-wrap { overflow-x: auto; border-top: 1px solid var(--hairline); }

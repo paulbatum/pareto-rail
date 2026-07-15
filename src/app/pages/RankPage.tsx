@@ -196,7 +196,6 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
   const [activeId, setActiveId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const curve = controller.curve;
-  const pendingPoints = curve.points.filter((point) => point.status === 'pending');
   const placedPoints = curve.points.filter((point): point is typeof point & { rating: number } => point.status !== 'pending' && point.rating !== undefined);
   const copyDebugData = async (stage: CurveDebugStage, chart?: CurveDebugChart) => {
     const judgments = controller.judgedMatchups;
@@ -290,7 +289,7 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
           <line x1={CURVE_CHART.left} y1={CURVE_CHART.top + plotHeight} x2={CURVE_CHART.left + plotWidth} y2={CURVE_CHART.top + plotHeight} />
           <line x1={CURVE_CHART.left} y1={CURVE_CHART.top} x2={CURVE_CHART.left} y2={CURVE_CHART.top + plotHeight} />
           <text className="axis-title" x={CURVE_CHART.left + plotWidth / 2} y={CURVE_CHART.height - 10} textAnchor="middle">Measured generation cost (USD) · lower is better ←</text>
-          <text className="axis-title" x="17" y={CURVE_CHART.top + plotHeight / 2} textAnchor="middle" transform={`rotate(-90 17 ${CURVE_CHART.top + plotHeight / 2})`}>Your preference rating · higher is better ↑</text>
+          <text className="axis-title" x="17" y={CURVE_CHART.top + plotHeight / 2} textAnchor="middle" transform={`rotate(-90 17 ${CURVE_CHART.top + plotHeight / 2})`}>Your preference rating · higher is better →</text>
         </g>
         {frontierPath && <path className="frontier-line" d={frontierPath} />}
         <g className="curve-points">
@@ -313,8 +312,7 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
         <div className="curve-tooltip-levels"><span>Levels behind this point</span><ul>{levelsForConfiguration(active.configurationId).map((level) => <li key={level.levelId}><strong>{level.themeTitle}</strong><code>{level.levelId}</code></li>)}</ul></div>
       </div>}
     </div>
-    <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; dashed points are early estimates that firm up with more matchups. They are personal estimates, not public benchmark scores.</p>
-    {pendingPoints.length > 0 && <p className="curve-unplotted">Not yet ranked: {pendingPoints.map((point) => point.label).join(', ')}</p>}
+    <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; dashed points are early estimates that firm up with more matchups.</p>
     <PersonalCurveTable points={curve.points} showFrontier onNavigate={onNavigate} />
     <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} /></details>
   </section>;
