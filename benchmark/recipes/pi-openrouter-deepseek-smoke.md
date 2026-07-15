@@ -35,6 +35,8 @@ npm run benchmark:pi -- \
   --timeout-seconds 900
 ```
 
+The adapter's isolation, capture, and failure handling match `pi-luna-low-smoke.md`, including the same absence of an OS-level sandbox and the same `--offline --no-extensions` stage settings.
+
 ## Credential
 
 The `openrouter` provider reads `OPENROUTER_API_KEY`. The adapter resolves it from the process environment first, then from the repository's ignored `.env`, and passes the resolved key to pi for this invocation only; the resolved source is recorded in the stage's `credential-source.json` and the key itself never reaches a run artifact. With no key on either path the adapter falls back to pi's own stored credential, which changes which account is billed — so a run whose `credential-source.json` reports `pi-stored-credential` for this configuration did not use the project key and its cost is attributed elsewhere.

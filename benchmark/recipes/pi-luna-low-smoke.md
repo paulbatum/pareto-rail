@@ -35,6 +35,8 @@ npm run benchmark:pi -- \
 
 The adapter uses its normal isolated `PI_CODING_AGENT_DIR`, credential copy, model-catalog validation, JSON event capture, native session capture, and ccusage cost measurement. A nonzero exit, timeout, malformed usage, or harness setup failure follows the normal rehearsal failure taxonomy.
 
+This recipe documents a material harness difference, of a kind with the Claude recipes: pi has no OS-level sandbox, so unattended operation relies on `--approve` trusting the entrant worktree rather than on an enforced filesystem or network boundary. Codex's `workspace-write` sandbox has no pi equivalent. The stage also runs `--offline --no-extensions` so startup version checks and operator-installed extensions cannot vary between runs; neither affects the model's own API calls.
+
 Because this provider authenticates with pi's stored credential rather than an API key, the run bills the operator's existing subscription and the adapter records its credential source as `pi-stored-credential`.
 
 ## Completion
