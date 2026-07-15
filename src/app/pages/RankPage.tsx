@@ -79,7 +79,6 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
       <h1>{assignment.theme.title}</h1>
       <p className="lede">“{assignment.theme.summary}”</p>
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
-      <p className="rank-note">Two levels were generated independently from this assignment. Model and workflow identities stay hidden until you vote.</p>
       <RankStage controller={controller} state={state} lastUndoneVerdict={controller.lastUndoneVerdict} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
       {controller.curve.comparisonCount > 0 && <PersonalCurve controller={controller} onNavigate={onNavigate} />}
     </section>
