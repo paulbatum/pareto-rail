@@ -98,7 +98,6 @@ function GalleryView({ builtIn, bands, onNavigate }: { builtIn: BuiltInRecord[];
         </section>
       ))}
       <footer className="levels-footnote">
-        <span>{levelsCopy.galleryHint}</span>
         <CatalogStamp />
       </footer>
     </>

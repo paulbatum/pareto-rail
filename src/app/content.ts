@@ -6,7 +6,7 @@ export const homeCopy = {
   reference: {
     eyebrow: 'Recommended first',
     title: 'Play the reference level',
-    body: 'Crystal Corridor is the polished run models use when building their own levels. Learn the lock-on rhythm and see what the benchmark is aiming for.',
+    body: 'Crystal Corridor is a vibe coded level that models reference when building their own levels. It was built over several iterations with human feedback - play it to see what the benchmark is aiming for.',
     action: 'Play Crystal Corridor',
   },
   benchmark: {
@@ -20,7 +20,6 @@ export const homeCopy = {
 export const levelsCopy = {
   eyebrow: 'Browse & play',
   title: 'Levels',
-  galleryHint: 'Hover a card to play · Details opens the full run record',
   dataHint: 'Every published run record · Built-in levels carry no generation data',
 } as const;
 

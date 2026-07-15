@@ -45,11 +45,29 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
             const active = item.href === currentPath || ((route.kind === 'play' || route.kind === 'levels') && item.href === '/levels');
             return <RouteLink key={item.href} href={item.href} onNavigate={onNavigate} aria-current={active ? 'page' : undefined}>{item.label}</RouteLink>;
           })}
-          <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Switch to ${nextTheme} theme`}>{nextTheme === 'light' ? 'Light' : 'Dark'}</button>
+          <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Switch to ${nextTheme} theme`}>
+            <ThemeMark theme={nextTheme} />
+          </button>
         </nav>
       </header>
       <main className="app-content">{isEntryPoint(route) && <WebGPUNotice />}{children}</main>
     </div>
+  );
+}
+
+/** Shows the theme you would switch to: a sun for light, a moon for dark. */
+function ThemeMark({ theme }: { theme: Theme }) {
+  return (
+    <svg className="theme-mark" viewBox="0 0 24 24" aria-hidden="true">
+      {theme === 'light' ? (
+        <>
+          <circle cx="12" cy="12" r="4.6" />
+          <path d="M12 1.6v2.6M12 19.8v2.6M4.65 4.65l1.85 1.85M17.5 17.5l1.85 1.85M1.6 12h2.6M19.8 12h2.6M4.65 19.35l1.85-1.85M17.5 6.5l1.85-1.85" />
+        </>
+      ) : (
+        <path d="M20.5 14.3A9 9 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z" />
+      )}
+    </svg>
   );
 }
 
@@ -60,5 +78,5 @@ function isEntryPoint(route: AppRoute): boolean {
 function WebGPUNotice() {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed || typeof navigator === 'undefined' || 'gpu' in navigator) return null;
-  return <aside className="webgpu-notice" role="status"><span>This game needs WebGPU — recent Chrome or Edge.</span><button type="button" aria-label="Dismiss WebGPU notice" onClick={() => setDismissed(true)}>Dismiss</button></aside>;
+  return <aside className="webgpu-notice" role="status"><span>This game needs WebGPU - recent Chrome or Edge.</span><button type="button" aria-label="Dismiss WebGPU notice" onClick={() => setDismissed(true)}>Dismiss</button></aside>;
 }

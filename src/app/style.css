@@ -15,8 +15,9 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .site-nav a { color: var(--muted); text-decoration: none; letter-spacing: .12em; text-transform: uppercase; font-size: 11px; padding-bottom: 3px; border-bottom: 1px solid transparent; }
 .site-nav a:hover { color: var(--ink); }
 .site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
-.theme-toggle { color: var(--muted); background: transparent; border: 0; padding: 0 0 3px; font: 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.theme-toggle { display: inline-flex; align-items: center; color: var(--muted); background: transparent; border: 0; padding: 0 0 3px; cursor: pointer; }
 .theme-toggle:hover { color: var(--ink); }
+.theme-mark { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
 .wordmark { display: inline-flex; align-items: center; gap: 11px; color: var(--ink) !important; font-size: 13px !important; font-weight: 600; letter-spacing: .14em !important; border-bottom: none !important; }
 .wordmark-mark { width: 24px; height: 24px; fill: none; stroke: var(--ink); stroke-width: 1.4; filter: none; }
 .wordmark-mark .wordmark-dot, .wordmark-mark circle { fill: var(--accent); stroke: none; }
@@ -205,6 +206,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 /* ---------- Verdict log ---------- */
 .verdict-log { display: grid; gap: 0; margin: 24px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--hairline); }
 .verdict-log li { padding: 11px 0; color: var(--body-text); border-bottom: 1px solid var(--hairline-2); font-size: 12px; line-height: 1.5; }
+.verdict-headline { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
 .verdict-theme { color: var(--ink); font-size: 13px; font-weight: 600; }
 .verdict-separator { color: var(--ghost); }
 .verdict-identity { color: var(--ink); font-family: var(--mono); }
@@ -433,6 +435,7 @@ html:fullscreen .game-toolbar { display: none; }
 .gallery-result-tag { padding: 2px 5px; color: var(--accent); border: 1px solid var(--accent); font: 8px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 
 .levels-footnote { display: flex; justify-content: space-between; gap: 20px; padding: 16px 0; border-top: 1px solid var(--hairline); color: var(--muted); font: 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.levels-footnote .catalog-stamp { margin-left: auto; }
 
 /* ============================================================
    VIEW 2 — DATA (7b): tree + full record (was the 6b explorer)

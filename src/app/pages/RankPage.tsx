@@ -240,7 +240,6 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
       <div><p className="eyebrow">Your verdicts</p><h2 id="personal-curve-title">How you rank the models</h2></div>
       {import.meta.env.DEV && <button className="curve-debug-copy" type="button" onClick={() => void copyDebugData('verdicts')}>{copyStatus === 'copied' ? 'Copied debug data' : copyStatus === 'failed' ? 'Copy failed' : 'Copy debug data'}</button>}
     </div>
-    <p className="curve-intro">Every verdict ranks the model and workflow behind each level — your run scores don't affect this.</p>
     <p className="curve-progress">Your Pareto chart unlocks as verdicts accumulate.</p>
     <VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} />
   </section>;
@@ -323,9 +322,11 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
 
 function VerdictLog({ matchups, onUndo }: { matchups: readonly CompletedMatchup[]; onUndo?: () => void }) {
   return <ol className="verdict-log" aria-label="Your verdicts">{[...matchups].reverse().map((matchup, index) => <li key={matchup.matchupId}>
-    <div><strong className="verdict-theme">{themeTitleForMatchup(matchup.matchupId)}</strong><span className="verdict-separator"> — </span><span className={`verdict-outcome verdict-${matchup.vote.verdict}`}>{verdictOutcome(matchup.vote.verdict, matchup.reveal)}</span></div>
+    <div className="verdict-headline">
+      <div><strong className="verdict-theme">{themeTitleForMatchup(matchup.matchupId)}</strong><span className="verdict-separator"> — </span><span className={`verdict-outcome verdict-${matchup.vote.verdict}`}>{verdictOutcome(matchup.vote.verdict, matchup.reveal)}</span></div>
+      {import.meta.env.DEV && index === 0 && onUndo && <button className="verdict-undo" type="button" onClick={onUndo}>Undo</button>}
+    </div>
     <details className="verdict-data"><summary>Inspect level generation records</summary><div className="verdict-run-grid"><article><h4>Level A</h4><GenerationDetails entrant={matchup.reveal.a} /></article><article><h4>Level B</h4><GenerationDetails entrant={matchup.reveal.b} /></article></div></details>
-    {import.meta.env.DEV && index === 0 && onUndo && <button className="verdict-undo" type="button" onClick={onUndo}>Undo</button>}
   </li>)}</ol>;
 }
 
