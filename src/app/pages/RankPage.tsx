@@ -237,7 +237,7 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
   if (!curve.frontierReady) return <section className="curve-panel" aria-labelledby="personal-curve-title">
     <div className="curve-heading">
       <div><p className="eyebrow">Your verdicts</p><h2 id="personal-curve-title">How you rank the models</h2></div>
-      {import.meta.env.DEV && <button className="curve-debug-copy" type="button" onClick={() => void copyDebugData('verdicts')}>{copyStatus === 'copied' ? 'Copied debug data' : copyStatus === 'failed' ? 'Copy failed' : 'Copy debug data'}</button>}
+      <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('verdicts')} />
     </div>
     <p className="curve-progress">Your Pareto chart unlocks as verdicts accumulate.</p>
     <VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} />
@@ -267,8 +267,8 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
     <div className="curve-heading">
       <div><p className="eyebrow">Personal results</p><h2 id="personal-curve-title">Your Pareto Frontier</h2></div>
       <div className="curve-heading-actions">
-        {import.meta.env.DEV && <button className="curve-debug-copy" type="button" onClick={() => void copyDebugData('chart', chartDebug)}>{copyStatus === 'copied' ? 'Copied debug data' : copyStatus === 'failed' ? 'Copy failed' : 'Copy debug data'}</button>}
         <span className="curve-status">{curveStatusNarrative(curve)}</span>
+        <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('chart', chartDebug)} />
       </div>
     </div>
     <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels. The best trade-offs move toward the <strong>upper left</strong>: higher personal preference at lower generation cost.</p>
@@ -347,6 +347,17 @@ function themeTitleForMatchup(matchupId: string): string {
   const separator = matchupId.indexOf(':');
   const themeId = separator > 0 ? matchupId.slice(0, separator) : matchupId;
   return findCatalogTheme(rankCatalog, themeId)?.title ?? themeId;
+}
+
+function CopyDebugButton({ status, onCopy }: { status: 'idle' | 'copied' | 'failed'; onCopy: () => void }) {
+  const label = status === 'copied' ? 'Debug data copied' : status === 'failed' ? 'Copy failed, try again' : 'Copy debug data';
+  return <button className="curve-debug-copy" type="button" data-status={status} onClick={onCopy} aria-label={label} title={label}>
+    <svg className="copy-mark" viewBox="0 0 24 24" aria-hidden="true">
+      {status === 'copied'
+        ? <path d="M4.8 12.6l4.8 4.8L19.2 6.8" />
+        : <><rect x="9" y="9" width="11.2" height="12.2" rx="1.6" /><path d="M15.4 5.8H5.4a1.6 1.6 0 0 0-1.6 1.6v10" /></>}
+    </svg>
+  </button>;
 }
 
 function PersonalCurveTable({ points, showFrontier, onNavigate }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean; onNavigate: (path: string) => void }) {
