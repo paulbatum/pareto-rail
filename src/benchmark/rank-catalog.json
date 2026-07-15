@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T04:30:03.271Z",
+  "generatedAt": "2026-07-15T05:04:15.872Z",
   "activeBenchmarkVersion": "rank-catalog-v1",
   "configurations": [
     {
@@ -46,7 +46,7 @@
   "versions": [
     {
       "benchmarkVersion": "rank-catalog-v1",
-      "generatedAt": "2026-07-15T04:30:03.271Z",
+      "generatedAt": "2026-07-15T05:04:15.872Z",
       "themes": [
         {
           "id": "mass-driver",
@@ -169,7 +169,7 @@
           "configurationId": "claude-fable-5-opus-delegation",
           "modelName": "Claude Fable 5",
           "workflowName": "delegated",
-          "generationCost": 53.6681755,
+          "generationCost": 54.5431505,
           "run": {
             "generationWallTimeSeconds": 3106.863,
             "totalWallTimeSeconds": 3173.678,
@@ -187,16 +187,18 @@
                 "outputTokens": 93774,
                 "cacheReadTokens": 23206399,
                 "cacheWriteTokens": 355497,
+                "usageSource": "agreed",
                 "costUsd": 35.006779
               },
               {
                 "modelName": "claude-opus-4-8",
                 "role": "implement",
                 "inputTokens": 4377,
-                "outputTokens": 217400,
+                "outputTokens": 252399,
                 "cacheReadTokens": 16533123,
                 "cacheWriteTokens": 790072,
-                "costUsd": 18.6613965
+                "usageSource": "harness-counter",
+                "costUsd": 19.5363715
               }
             ]
           },
@@ -278,7 +280,7 @@
           "configurationId": "claude-fable-5-opus-delegation",
           "modelName": "Claude Fable 5",
           "workflowName": "delegated",
-          "generationCost": 83.0224675,
+          "generationCost": 84.0147425,
           "run": {
             "generationWallTimeSeconds": 4465.95,
             "totalWallTimeSeconds": 4826.032,
@@ -293,19 +295,21 @@
                 "modelName": "claude-fable-5",
                 "role": "orchestrate",
                 "inputTokens": 351,
-                "outputTokens": 170496,
+                "outputTokens": 172383,
                 "cacheReadTokens": 34141181,
                 "cacheWriteTokens": 1096012,
-                "costUsd": 58.820116
+                "usageSource": "harness-counter",
+                "costUsd": 58.914466
               },
               {
                 "modelName": "claude-opus-4-8",
                 "role": "implement",
                 "inputTokens": 1290,
-                "outputTokens": 283249,
+                "outputTokens": 319166,
                 "cacheReadTokens": 21573278,
                 "cacheWriteTokens": 1012486,
-                "costUsd": 24.2023515
+                "usageSource": "harness-counter",
+                "costUsd": 25.1002765
               }
             ]
           },
@@ -335,6 +339,7 @@
                 "outputTokens": 255277,
                 "cacheReadTokens": 48741206,
                 "cacheWriteTokens": 492912,
+                "usageSource": "agreed",
                 "costUsd": 71.365946
               }
             ]

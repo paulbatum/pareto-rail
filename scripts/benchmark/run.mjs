@@ -16,7 +16,7 @@ import {
   sha256,
 } from './common.mjs';
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
-import { ccusageVersion, measureRunCost } from './ccusage-cost.mjs';
+import { ccusageVersion, harnessCounters, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { assertBaselineLevelAllowlist, levelIdsFromRegistry, validateBaselineLevelAllowlist } from './entrant-baseline.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
@@ -489,9 +489,14 @@ async function createManifest({ definition, materialsCommit, configurationCommit
     optionalJson(path.join(outputDirectory, adapter.stageDir, 'budget.json')),
   ]);
   if (Boolean(definition.stage.budget) !== Boolean(budget)) fail('Stage budget summary presence does not match the run definition.');
-  // Cost comes entirely from ccusage reading this run's isolated home: it parses the persisted
-  // rollouts (parent + any delegated subagent threads) and prices with its own maintained rate DB.
-  const cost = await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome });
+  // Cost starts from ccusage reading this run's isolated home: it parses the persisted rollouts
+  // (parent + any delegated subagent threads) and prices with its own maintained rate DB. Replay
+  // can under-report output, so it is cross-checked against the harness's own counter.
+  const cost = reconcileCost(
+    await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome }),
+    harnessCounters(await loadFinalRoundUsage(outputDirectory, adapter, budget)),
+  );
+  for (const warning of reconciliationWarnings(cost.reconciliation)) console.warn(warning);
   const ccusage = await ccusageVersion();
   const finishedAt = new Date().toISOString();
   const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
@@ -525,8 +530,10 @@ async function createManifest({ definition, materialsCommit, configurationCommit
       totalUsd: cost.totalUsd,
       orchestrationTreatment: definition.delegation ? 'included' : 'none',
       costSource: { tool: 'ccusage', version: ccusage, view: cost.view, command: `ccusage ${cost.view} session --json` },
+      reconciliation: cost.reconciliation,
       models: cost.models.map((model) => ({
         modelName: model.modelName,
+        ...(model.usageSource ? { usageSource: model.usageSource } : {}),
         ...(model.costUsd !== null ? { costUsd: model.costUsd } : {}),
         inputTokens: model.inputTokens,
         outputTokens: model.outputTokens,
@@ -572,7 +579,7 @@ function buildStages({ definition, adapter, cost, commandRecord, usage, rendered
         ...(isParent ? { promptSha256, ...(delegationPromptSha256 ? { delegationPromptSha256 } : {}) } : {}),
         ...shared,
         usage: stageUsage(model),
-        pricing: { status: 'measured', costUsd: model.costUsd ?? 0, source: 'ccusage' },
+        pricing: { status: 'measured', costUsd: model.costUsd ?? 0, source: model.usageSource === 'harness-counter' ? 'harness-counter' : 'ccusage' },
       };
     });
   }
@@ -597,6 +604,17 @@ function stageUsage({ inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, ca
     ...(cacheWriteTokens ? { cacheWriteInputTokens: cacheWriteTokens } : {}),
     ...(reasoningTokens ? { reasoningTokens } : {}),
   };
+}
+
+// The harness counter restates the whole session on every resumed round rather than reporting that
+// round's share, so the final round's file is the run's counter and summing rounds would multiply
+// it. Falls back down the rounds because a round is only recorded once its usage file is written.
+async function loadFinalRoundUsage(outputDirectory, adapter, budget) {
+  for (let round = budget?.resumes?.length ?? 0; round > 0; round -= 1) {
+    const resumed = await optionalJson(path.join(outputDirectory, adapter.stageDir, `raw-usage-resume-${round}.json`));
+    if (resumed) return resumed;
+  }
+  return await optionalJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json'));
 }
 
 async function loadStageUsage(outputDirectory, adapter, definition) {

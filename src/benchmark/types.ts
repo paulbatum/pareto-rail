@@ -29,6 +29,9 @@ export interface BenchmarkModelUsage {
   cacheWriteTokens?: number;
   reasoningTokens?: number;
   costUsd?: number;
+  /** Which source these figures came from, when the run cross-checked two.  `agreed` means both
+   * matched; `harness-counter` means the persisted transcripts under-reported and were corrected. */
+  usageSource?: 'ccusage' | 'harness-counter' | 'agreed';
 }
 
 /** The CLI that drove the run.  Token fields are only comparable within a

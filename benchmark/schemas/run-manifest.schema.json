@@ -130,12 +130,38 @@
               "outputTokens": { "type": "integer", "minimum": 0 },
               "cacheReadTokens": { "type": "integer", "minimum": 0 },
               "cacheWriteTokens": { "type": "integer", "minimum": 0 },
-              "reasoningTokens": { "type": "integer", "minimum": 0 }
+              "reasoningTokens": { "type": "integer", "minimum": 0 },
+              "usageSource": { "description": "Which source this row's tokens and cost came from; `agreed` means both matched.", "enum": ["ccusage", "harness-counter", "agreed"] }
             }
           }
         },
-        "dashboardReconciled": { "type": "boolean" },
-        "reconciliationNotes": { "type": "string" }
+        "reconciliation": {
+          "description": "Cross-check of the cost source against the harness's own per-model counter. Transcript replay can under-report output when an assistant message never finalized on disk; the counter tallies API responses as they arrive. The direction of a gap decides which source is wrong: a counter above replay is replay having lost a message, while a counter below replay means it did not cover the whole session and replay stands.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "status": { "description": "`agreed`: sources match. `adjusted`: counter preferred where it exceeded replay. `suspect`: a counter came in below replay and was not used. `unavailable`: the harness reports no counter.", "enum": ["agreed", "adjusted", "suspect", "unavailable"] },
+            "source": { "type": "string", "minLength": 1 },
+            "reason": { "type": "string", "minLength": 1 },
+            "adjustments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["modelName", "replayOutputTokens", "counterOutputTokens", "resolution"],
+                "properties": {
+                  "modelName": { "type": "string", "minLength": 1 },
+                  "replayOutputTokens": { "type": "integer", "minimum": 0 },
+                  "counterOutputTokens": { "type": "integer", "minimum": 0 },
+                  "replayCostUsd": { "type": "number", "minimum": 0 },
+                  "counterCostUsd": { "type": "number", "minimum": 0 },
+                  "resolution": { "enum": ["took-counter", "kept-replay"] }
+                }
+              }
+            }
+          }
+        }
       },
       "allOf": [
         { "if": { "properties": { "status": { "const": "measured" } } }, "then": { "required": ["totalUsd"] } },

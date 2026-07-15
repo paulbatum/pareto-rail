@@ -120,6 +120,7 @@ function runMetrics(assignment, manifest, labels) {
     ...(model.cacheReadTokens !== undefined ? { cacheReadTokens: model.cacheReadTokens } : {}),
     ...(model.cacheWriteTokens !== undefined ? { cacheWriteTokens: model.cacheWriteTokens } : {}),
     ...(model.reasoningTokens !== undefined ? { reasoningTokens: model.reasoningTokens } : {}),
+    ...(model.usageSource !== undefined ? { usageSource: model.usageSource } : {}),
     ...(model.costUsd !== undefined ? { costUsd: Number(model.costUsd.toFixed(8)) } : {}),
   }));
   const incomplete = manifest.stages.find((stage) => stage.result !== 'completed');

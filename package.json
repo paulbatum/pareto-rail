@@ -39,6 +39,7 @@
     "benchmark:catalog": "node scripts/benchmark/catalog.mjs",
     "benchmark:thumbnails": "node scripts/benchmark/generate-thumbnails.mjs",
     "benchmark:export-rank-catalog": "node scripts/benchmark/export-rank-catalog.mjs",
+    "benchmark:reconcile-cost": "node scripts/benchmark/reconcile-cost.mjs",
     "test:benchmark-catalog": "node scripts/benchmark/test-catalog.mjs",
     "test:benchmark-controller": "node scripts/benchmark/test.mjs",
     "test:benchmark-budget": "node scripts/benchmark/test-budget.mjs",

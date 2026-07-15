@@ -132,6 +132,7 @@ export function AboutPage() {
           <div><dt>Generation time</dt><dd>Wall time from model process launch to exit. Delegated models overlap inside one parent session and are not double-counted.</dd></div>
           <div><dt>Full run time</dt><dd>Generation plus deterministic setup, sealing, and mechanical verification.</dd></div>
           <div><dt>Measured cost</dt><dd>USD reconstructed by the pinned ccusage tool from persisted model sessions. Delegated work is included. Claude records per-model cost; Codex currently exposes one run-level cost alongside per-model tokens.</dd></div>
+          <div><dt>Usage source</dt><dd>A session transcript can under-record a model's output, so each run is cross-checked against the harness's own token counter and the higher, verified figure is published. Rows marked <code>harness-counter</code> were corrected this way and will read low if you price the transcript alone; <code>agreed</code> means both sources matched.</dd></div>
           <div><dt>Chart point</dt><dd>One model and workflow configuration. Cost is averaged across its published levels; preference comes from your blind verdicts.</dd></div>
         </dl>
         <p className="catalog-stamp">Public catalog generated <time dateTime={rankCatalog.generatedAt}>{new Date(rankCatalog.generatedAt).toLocaleString('en-US')}</time>.</p>

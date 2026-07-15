@@ -95,6 +95,65 @@ export function summarizeCost(adapter, report) {
   };
 }
 
+// Claude's terminal result event carries `modelUsage`: the CLI's own per-model tally, counted from
+// the API responses as they arrived. ccusage instead replays the persisted transcripts — and an
+// assistant message whose usage never finalized on disk keeps the tiny snapshot written at message
+// start, so replay can under-report output. Returns null for a harness that reports no such counter
+// (Codex), whose token totals come from authoritative running counts in its own event log.
+export function harnessCounters(usage) {
+  const modelUsage = usage?.normalized?.vendorFields?.modelUsage;
+  if (!modelUsage || typeof modelUsage !== 'object') return null;
+  const counters = new Map();
+  for (const [key, value] of Object.entries(modelUsage)) {
+    // `claude-opus-4-8[1m]` and `claude-opus-4-8` are one model billed at two context tiers.
+    const modelName = key.replace(/\[[^\]]*\]$/, '');
+    const current = counters.get(modelName) ?? { modelName, outputTokens: 0, costUsd: null };
+    current.outputTokens += numberOr(value?.outputTokens, 0);
+    const costUsd = numberOr(value?.costUSD, null);
+    if (costUsd !== null) current.costUsd = (current.costUsd ?? 0) + costUsd;
+    counters.set(modelName, current);
+  }
+  return counters.size > 0 ? counters : null;
+}
+
+// Cross-check the replayed transcripts against the harness's own counter and prefer whichever saw
+// the billing. The two disagree in opposite directions for opposite reasons, so the direction of the
+// gap identifies the faulty source: a counter above replay is replay having lost an unfinalized
+// message, while a counter far below replay would mean it covers only part of the session, and the
+// replay stands. Counters naming a model the run does not attribute (Claude Code's auxiliary
+// summarizer, which leaves no rollout) are ignored here and declared in benchmark/README.md.
+export function reconcileCost(summary, counters) {
+  if (!counters) return { ...summary, reconciliation: { status: 'unavailable', reason: 'The harness reports no per-model counter to cross-check.' } };
+  const adjustments = [];
+  let totalUsd = summary.totalUsd;
+  const models = summary.models.map((model) => {
+    const counter = counters.get(model.modelName);
+    if (!counter) return { ...model, usageSource: 'ccusage' };
+    const outputDelta = counter.outputTokens - model.outputTokens;
+    if (outputDelta === 0) return { ...model, usageSource: 'agreed' };
+    const shared = { modelName: model.modelName, replayOutputTokens: model.outputTokens, counterOutputTokens: counter.outputTokens };
+    if (outputDelta < 0) {
+      adjustments.push({ ...shared, resolution: 'kept-replay' });
+      return { ...model, usageSource: 'ccusage' };
+    }
+    adjustments.push({ ...shared, resolution: 'took-counter', ...(counter.costUsd !== null && model.costUsd !== null ? { replayCostUsd: model.costUsd, counterCostUsd: counter.costUsd } : {}) });
+    // Fold only the delta into the total: it may carry residue the per-model rows do not explain.
+    if (counter.costUsd !== null && typeof model.costUsd === 'number') totalUsd += counter.costUsd - model.costUsd;
+    return { ...model, outputTokens: counter.outputTokens, ...(counter.costUsd !== null ? { costUsd: counter.costUsd } : {}), usageSource: 'harness-counter' };
+  });
+  const suspect = adjustments.some((entry) => entry.resolution === 'kept-replay');
+  const status = suspect ? 'suspect' : adjustments.length > 0 ? 'adjusted' : 'agreed';
+  return { ...summary, models, totalUsd, reconciliation: { status, source: 'harness result event modelUsage', ...(adjustments.length > 0 ? { adjustments } : {}) } };
+}
+
+// Human-readable lines for whatever the reconciliation found; the runner prints these so a
+// discrepancy is visible when it happens rather than only in the manifest.
+export function reconciliationWarnings(reconciliation) {
+  return (reconciliation?.adjustments ?? []).map((entry) => entry.resolution === 'took-counter'
+    ? `Cost reconciliation: ${entry.modelName} replayed ${entry.replayOutputTokens.toLocaleString('en-US')} output tokens but the harness counted ${entry.counterOutputTokens.toLocaleString('en-US')}; took the counter (transcript replay lost an unfinalized message).`
+    : `Cost reconciliation: ${entry.modelName} replayed ${entry.replayOutputTokens.toLocaleString('en-US')} output tokens but the harness counted only ${entry.counterOutputTokens.toLocaleString('en-US')}; kept the replay. The counter may not cover the whole session — investigate before trusting either number.`);
+}
+
 // The single sanity guard the brief mandates: an empty or costless home means the isolated rollout
 // home was misconfigured (wrong env var, wrong Node), which is a controller failure — not a $0 run.
 export function assertMeasurable(summary) {

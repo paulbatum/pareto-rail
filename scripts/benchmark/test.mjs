@@ -10,7 +10,7 @@ import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePair
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { validateDefinition as validateRunDefinition } from './run.mjs';
 import { createSchedule, extendSchedule, validateSchedule } from './schedule.mjs';
-import { summarizeCost } from './ccusage-cost.mjs';
+import { harnessCounters, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
@@ -271,6 +271,78 @@ assert.equal(codexCost.models.length, 2);
 assert.equal(codexCost.models.every((m) => m.costUsd === null), true);
 assert.equal(codexCost.totals.reasoningTokens, 5);
 assert.throws(() => summarizeCost('claude-cli', { sessions: [], totals: {} }), /totals\.totalCost was not a number/);
+
+// Reconciling the replayed transcripts against the harness's own counter. Replay loses output when
+// an assistant message never finalized on disk, so a counter above replay wins; a counter below
+// replay cannot be explained that way, so replay stands and the run is flagged for a human.
+const counterUsage = (modelUsage) => ({ normalized: { vendorFields: { modelUsage } } });
+assert.equal(harnessCounters(counterUsage(undefined)), null);
+assert.equal(harnessCounters({}), null);
+
+// A model billed at two context tiers reports under two keys and is one model to the run.
+const tiered = harnessCounters(counterUsage({
+  'claude-opus-4-8[1m]': { outputTokens: 200, costUSD: 2 },
+  'claude-opus-4-8': { outputTokens: 50, costUSD: 0.5 },
+}));
+assert.equal(tiered.get('claude-opus-4-8').outputTokens, 250);
+assert.equal(tiered.get('claude-opus-4-8').costUsd, 2.5);
+
+const replay = () => ({ totalUsd: 1, models: [{ modelName: 'claude-fable-5', outputTokens: 100, costUsd: 0.4 }, { modelName: 'claude-opus-4-8', outputTokens: 200, costUsd: 0.6 }] });
+
+// Codex reports no counter: nothing to cross-check, figures untouched.
+const unavailable = reconcileCost(replay(), harnessCounters(counterUsage(undefined)));
+assert.equal(unavailable.reconciliation.status, 'unavailable');
+assert.deepEqual(unavailable.models, replay().models);
+
+// Both sources agree.
+const agreed = reconcileCost(replay(), harnessCounters(counterUsage({
+  'claude-fable-5': { outputTokens: 100, costUSD: 0.4 },
+  'claude-opus-4-8': { outputTokens: 200, costUSD: 0.6 },
+})));
+assert.equal(agreed.reconciliation.status, 'agreed');
+assert.equal(agreed.reconciliation.adjustments, undefined);
+assert.equal(agreed.totalUsd, 1);
+assert.equal(agreed.models.every((model) => model.usageSource === 'agreed'), true);
+
+// Counter above replay: take the counter, and fold only its delta into the run total.
+const adjusted = reconcileCost(replay(), harnessCounters(counterUsage({
+  'claude-fable-5': { outputTokens: 100, costUSD: 0.4 },
+  'claude-opus-4-8': { outputTokens: 250, costUSD: 0.85 },
+})));
+assert.equal(adjusted.reconciliation.status, 'adjusted');
+assert.equal(adjusted.reconciliation.adjustments.length, 1);
+assert.deepEqual(adjusted.reconciliation.adjustments[0], {
+  modelName: 'claude-opus-4-8', replayOutputTokens: 200, counterOutputTokens: 250, resolution: 'took-counter', replayCostUsd: 0.6, counterCostUsd: 0.85,
+});
+const takenModel = adjusted.models.find((model) => model.modelName === 'claude-opus-4-8');
+assert.equal(takenModel.outputTokens, 250);
+assert.equal(takenModel.costUsd, 0.85);
+assert.equal(takenModel.usageSource, 'harness-counter');
+assert.equal(adjusted.models.find((model) => model.modelName === 'claude-fable-5').usageSource, 'agreed');
+assert.equal(Number(adjusted.totalUsd.toFixed(4)), 1.25);
+assert.match(reconciliationWarnings(adjusted.reconciliation)[0], /took the counter/);
+
+// Counter below replay: the counter did not cover the whole session, so replay stands and it is flagged.
+const suspect = reconcileCost(replay(), harnessCounters(counterUsage({
+  'claude-fable-5': { outputTokens: 100, costUSD: 0.4 },
+  'claude-opus-4-8': { outputTokens: 10, costUSD: 0.05 },
+})));
+assert.equal(suspect.reconciliation.status, 'suspect');
+assert.equal(suspect.reconciliation.adjustments[0].resolution, 'kept-replay');
+assert.equal(suspect.totalUsd, 1);
+assert.equal(suspect.models.find((model) => model.modelName === 'claude-opus-4-8').outputTokens, 200);
+assert.match(reconciliationWarnings(suspect.reconciliation)[0], /investigate before trusting/);
+
+// A counter naming a model the run does not attribute (the harness's auxiliary summarizer, which
+// leaves no rollout to replay) is ignored rather than added; see benchmark/README.md.
+const auxiliary = reconcileCost(replay(), harnessCounters(counterUsage({
+  'claude-fable-5': { outputTokens: 100, costUSD: 0.4 },
+  'claude-opus-4-8': { outputTokens: 200, costUSD: 0.6 },
+  'claude-haiku-4-5-20251001': { outputTokens: 13, costUSD: 0.001 },
+})));
+assert.equal(auxiliary.reconciliation.status, 'agreed');
+assert.equal(auxiliary.models.length, 2);
+assert.equal(auxiliary.totalUsd, 1);
 
 assert.equal(shouldUnblind('rehearsal'), true);
 assert.equal(shouldUnblind('v1'), false);
