@@ -9,6 +9,7 @@ import { BenchmarkLocalStore, type CompletedMatchup } from '../../benchmark/stor
 import { RankController, type RankLaunch } from '../rank';
 import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
+import { ModelUsage } from '../components/ModelUsage';
 import type { AppRoute } from '../router';
 import { GameFrame } from '../components/LazyGameFrame';
 import { loadRankLevel } from '../rank-level';
@@ -140,28 +141,16 @@ function GenerationDetails({ entrant }: { entrant: RevealPayload['a'] }) {
         <div><dt>Generation</dt><dd title={`${run.generationWallTimeSeconds.toLocaleString('en-US')} seconds`}>{formatDuration(run.generationWallTimeSeconds)}</dd></div>
         <div><dt>Full run</dt><dd title={`${run.totalWallTimeSeconds.toLocaleString('en-US')} seconds`}>{formatDuration(run.totalWallTimeSeconds)}</dd></div>
         <div><dt>Result</dt><dd>{formatRunResult(run.result)}</dd></div>
+        {run.harness && <div><dt>Harness</dt><dd>{run.harness.name} {run.harness.version}</dd></div>}
       </dl>
       <div className="model-usage-list" aria-label="Token usage by model">
         <p>Token usage by model</p>
-        {run.models.map((model) => <section className="model-usage" key={`${model.modelName}-${model.role}`}>
-          <header><span><strong>{model.modelName}</strong><small>{model.role}</small></span><span>{model.costUsd === undefined ? 'Per-model cost unavailable' : `$${model.costUsd.toFixed(2)}`}</span></header>
-          <dl>
-            <TokenMetric label="Input" value={model.inputTokens} />
-            <TokenMetric label="Cache read" value={model.cacheReadTokens} />
-            <TokenMetric label="Cache write" value={model.cacheWriteTokens} />
-            <TokenMetric label="Output" value={model.outputTokens} />
-            <TokenMetric label="Reasoning" value={model.reasoningTokens} />
-          </dl>
-        </section>)}
+        {run.models.map((model) => <ModelUsage key={`${model.modelName}-${model.role}`} model={model} />)}
       </div>
       {configuration && <WorkflowDetails configuration={configuration} />}
-      <p className="run-data-note">Generation time covers the model session. Full run time also includes deterministic setup, sealing, and verification. Cache and reasoning fields are shown separately rather than folded into input or output.</p>
+      <p className="run-data-note">Generation time covers the model session. Full run time also includes deterministic setup, sealing, and verification. Total input counts every token the model read, cached or not, since each harness bills first-sight tokens differently. Output includes reasoning tokens.</p>
     </div>
   </details>;
-}
-
-function TokenMetric({ label, value }: { label: string; value?: number }) {
-  return <div><dt>{label}</dt><dd title={value === undefined ? undefined : value.toLocaleString('en-US')}>{value === undefined ? '—' : formatTokenCount(value)}</dd></div>;
 }
 
 function WorkflowDetails({ configuration }: { configuration: RankCatalogConfiguration }) {
@@ -396,10 +385,6 @@ function formatDuration(seconds: number): string {
   if (hours > 0) return `${hours}h ${minutes}m`;
   if (minutes > 0) return `${minutes}m ${remainingSeconds}s`;
   return `${remainingSeconds}s`;
-}
-
-function formatTokenCount(value: number): string {
-  return value.toLocaleString('en-US');
 }
 
 function formatRunResult(result: string): string {

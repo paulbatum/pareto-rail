@@ -128,8 +128,33 @@ function runMetrics(assignment, manifest, labels) {
     totalWallTimeSeconds: Number(totalWallTimeSeconds.toFixed(3)),
     result: incomplete?.result ?? 'completed',
     orchestrationTreatment: manifest.cost.orchestrationTreatment,
+    harness: runHarness(assignment, manifest),
     models,
   };
+}
+
+// A run is driven by exactly one CLI, so every stage must agree on it. Each CLI reports its
+// version in its own shape (`2.1.207 (Claude Code)`, `codex-cli 0.144.1`); strip the harness
+// restatement so the published field is a bare version.
+function runHarness(assignment, manifest) {
+  const harnesses = manifest.stages.map((stage, index) => {
+    const name = stage?.harness?.name;
+    const version = stage?.harness?.version;
+    if (typeof name !== 'string' || typeof version !== 'string') {
+      throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} is missing stages[${index}].harness.`);
+    }
+    return { name, version: bareVersion(version) };
+  });
+  const [first] = harnesses;
+  const disagreeing = harnesses.find((harness) => harness.name !== first.name || harness.version !== first.version);
+  if (disagreeing) {
+    throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} reports more than one harness: ${first.name} ${first.version} and ${disagreeing.name} ${disagreeing.version}.`);
+  }
+  return first;
+}
+
+function bareVersion(version) {
+  return version.replace(/\s*\(.*\)\s*$/, '').replace(/^\S+\s+(?=\d)/, '').trim();
 }
 
 function entrantFor(assignment, cost, manifest) {

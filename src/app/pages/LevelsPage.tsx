@@ -1,10 +1,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import type { BenchmarkModelUsage, BenchmarkTheme } from '../../benchmark/types';
+import type { BenchmarkTheme } from '../../benchmark/types';
 import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog, selectableLevelGroups } from '../../levels';
 import { builtInLevelBlurbs, levelsCopy } from '../content';
 import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
+import { ModelUsage } from '../components/ModelUsage';
 import { getLevelsView, setLevelsView } from '../levels-view';
 import { levelsViewPath, navigate, type AppRoute, type LevelsView } from '../router';
 
@@ -243,7 +244,7 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
         <RecordThumbnail record={record} onNavigate={onNavigate} />
         {run && (
           <div className="catalog-usage">
-            <p>Model usage — {run.models.length} model{run.models.length === 1 ? '' : 's'}</p>
+            <p>Model usage — {run.models.length} model{run.models.length === 1 ? '' : 's'}{run.harness && ` · ${run.harness.name} ${run.harness.version}`}</p>
             {run.models.map((model) => <ModelUsage key={`${model.modelName}-${model.role}`} model={model} />)}
           </div>
         )}
@@ -275,28 +276,6 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
       </div>
     </>
   );
-}
-
-function ModelUsage({ model }: { model: BenchmarkModelUsage }) {
-  return (
-    <div className="model-usage">
-      <header>
-        <span><strong>{model.modelName}</strong><small>{model.role}</small></span>
-        {model.costUsd !== undefined && <span>{formatCost(model.costUsd)}</span>}
-      </header>
-      <dl>
-        <UsageCell label="Input" value={model.inputTokens} />
-        <UsageCell label="Output" value={model.outputTokens} />
-        <UsageCell label="Cache read" value={model.cacheReadTokens} />
-        <UsageCell label="Cache write" value={model.cacheWriteTokens} />
-        {model.reasoningTokens !== undefined && <UsageCell label="Reasoning" value={model.reasoningTokens} />}
-      </dl>
-    </div>
-  );
-}
-
-function UsageCell({ label, value }: { label: string; value?: number }) {
-  return <div><dt>{label}</dt><dd>{value === undefined ? '—' : value.toLocaleString('en-US')}</dd></div>;
 }
 
 function ThemeDisclosure({ theme, targeted }: { theme: BenchmarkTheme; targeted: boolean }) {

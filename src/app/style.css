@@ -177,7 +177,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .run-details > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 0 0; color: var(--accent); font: 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
 .run-details > summary span:last-child { color: var(--muted); letter-spacing: .04em; text-align: right; text-transform: none; }
 .run-details-body { padding-top: 14px; }
-.run-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 14px; }
+.run-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin: 0 0 14px; }
 .run-facts div { min-width: 0; }
 .run-facts dt { color: var(--muted); font: 8px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 .run-facts dd { margin: 4px 0 0; color: var(--ink); font: 10px/1.35 var(--mono); overflow-wrap: anywhere; }
@@ -189,7 +189,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .model-usage header strong { color: var(--ink); font-size: 10px; }
 .model-usage header small { color: var(--muted); font: 8px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .model-usage header > span:last-child { text-align: right; }
-.model-usage dl { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; margin: 10px 0 0; font-variant-numeric: tabular-nums; }
+.model-usage dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 10px 0 0; font-variant-numeric: tabular-nums; }
 .model-usage dt { color: var(--muted); font: 7px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .model-usage dd { margin: 3px 0 0; color: var(--body-text); font: 9px var(--mono); }
 .workflow-details { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--hairline-2); }

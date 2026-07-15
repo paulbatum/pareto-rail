@@ -31,11 +31,19 @@ export interface BenchmarkModelUsage {
   costUsd?: number;
 }
 
+/** The CLI that drove the run.  Token fields are only comparable within a
+ * harness, so the harness is part of the record rather than a detail of it. */
+export interface BenchmarkHarness {
+  name: string;
+  version: string;
+}
+
 export interface BenchmarkRunMetrics {
   generationWallTimeSeconds: number;
   totalWallTimeSeconds: number;
   result: string;
   orchestrationTreatment: string;
+  harness?: BenchmarkHarness;
   models: readonly BenchmarkModelUsage[];
 }
 

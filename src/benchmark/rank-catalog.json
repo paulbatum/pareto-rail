@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-14T20:11:15.724Z",
+  "generatedAt": "2026-07-15T04:30:03.271Z",
   "activeBenchmarkVersion": "rank-catalog-v1",
   "configurations": [
     {
@@ -46,7 +46,7 @@
   "versions": [
     {
       "benchmarkVersion": "rank-catalog-v1",
-      "generatedAt": "2026-07-14T20:11:15.724Z",
+      "generatedAt": "2026-07-15T04:30:03.271Z",
       "themes": [
         {
           "id": "mass-driver",
@@ -74,6 +74,10 @@
             "totalWallTimeSeconds": 655.293,
             "result": "completed",
             "orchestrationTreatment": "none",
+            "harness": {
+              "name": "Codex CLI",
+              "version": "0.144.1"
+            },
             "models": [
               {
                 "modelName": "gpt-5.6-sol",
@@ -101,6 +105,10 @@
             "totalWallTimeSeconds": 1214.899,
             "result": "completed",
             "orchestrationTreatment": "included",
+            "harness": {
+              "name": "Codex CLI",
+              "version": "0.144.1"
+            },
             "models": [
               {
                 "modelName": "gpt-5.6-sol",
@@ -136,6 +144,10 @@
             "totalWallTimeSeconds": 14063.214,
             "result": "timed-out",
             "orchestrationTreatment": "none",
+            "harness": {
+              "name": "Claude Code CLI",
+              "version": "2.1.207"
+            },
             "models": [
               {
                 "modelName": "claude-fable-5",
@@ -163,6 +175,10 @@
             "totalWallTimeSeconds": 3173.678,
             "result": "completed",
             "orchestrationTreatment": "included",
+            "harness": {
+              "name": "Claude Code CLI",
+              "version": "2.1.207"
+            },
             "models": [
               {
                 "modelName": "claude-fable-5",
@@ -198,6 +214,10 @@
             "totalWallTimeSeconds": 975.275,
             "result": "completed",
             "orchestrationTreatment": "included",
+            "harness": {
+              "name": "Codex CLI",
+              "version": "0.144.1"
+            },
             "models": [
               {
                 "modelName": "gpt-5.6-sol",
@@ -233,6 +253,10 @@
             "totalWallTimeSeconds": 584.191,
             "result": "completed",
             "orchestrationTreatment": "none",
+            "harness": {
+              "name": "Codex CLI",
+              "version": "0.144.1"
+            },
             "models": [
               {
                 "modelName": "gpt-5.6-sol",
@@ -260,6 +284,10 @@
             "totalWallTimeSeconds": 4826.032,
             "result": "completed",
             "orchestrationTreatment": "included",
+            "harness": {
+              "name": "Claude Code CLI",
+              "version": "2.1.207"
+            },
             "models": [
               {
                 "modelName": "claude-fable-5",
@@ -295,6 +323,10 @@
             "totalWallTimeSeconds": 4238.032,
             "result": "completed",
             "orchestrationTreatment": "none",
+            "harness": {
+              "name": "Claude Code CLI",
+              "version": "2.1.207"
+            },
             "models": [
               {
                 "modelName": "claude-fable-5",
