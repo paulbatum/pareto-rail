@@ -74,3 +74,23 @@ export async function initializeBudgetDirectory(directory, budgetUsd) {
     writeJsonAtomic(path.join(directory, 'announced.json'), initialAnnounced()),
   ]);
 }
+
+// Claim the highest newly crossed notice threshold and persist it before returning the text to
+// inject. Harness hooks and pi extensions share this state transition but wrap the result in their
+// own delivery format. Advisory callers should catch errors so corrupt state never stops a run.
+export async function claimBudgetNotice(directory) {
+  const spendPath = path.join(directory, 'spend.json');
+  const announcedPath = path.join(directory, 'announced.json');
+  const [spend, announced] = await Promise.all([readJsonFile(spendPath), readJsonFile(announcedPath)]);
+  if (!Number.isFinite(spend?.spentUsd) || !Number.isFinite(spend?.fraction)) return null;
+  if (!Number.isFinite(announced?.announcedPct) || !Array.isArray(announced?.history)) return null;
+  const pct = crossedThreshold(spend.fraction, announced.announcedPct);
+  if (pct === null) return null;
+
+  const at = new Date().toISOString();
+  await writeJsonAtomic(announcedPath, {
+    announcedPct: pct,
+    history: [...announced.history, { pct, spentUsd: spend.spentUsd, at }],
+  });
+  return { pct, text: noticeText(pct) };
+}

@@ -10,7 +10,7 @@ import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePair
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { validateDefinition as validateRunDefinition } from './run.mjs';
 import { createSchedule, extendSchedule, validateSchedule } from './schedule.mjs';
-import { harnessCounters, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
+import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
@@ -307,6 +307,15 @@ assert.equal(claudeCost.models.some((m) => m.modelName.startsWith('[')), false);
 const piCounters = harnessCounters({ normalized: { vendorFields: { modelUsage: { 'gpt-5.6-luna': { outputTokens: 76, costUSD: 0.009118 } } } } });
 assert.equal(piCounters.get('gpt-5.6-luna').outputTokens, 76);
 assert.equal(reconcileCost(piCost, piCounters).reconciliation.status, 'agreed');
+
+// Resumed pi invocations report only their own API calls, unlike Claude/Codex's cumulative result
+// counters. The round-aware helper sums pi but preserves the final-round rule for other harnesses.
+const roundOne = { normalized: { vendorFields: { modelUsage: { 'gpt-5.6-luna': { outputTokens: 40, costUSD: 0.004 } } } } };
+const roundTwo = { normalized: { vendorFields: { modelUsage: { 'gpt-5.6-luna': { outputTokens: 36, costUSD: 0.005118 } } } } };
+const resumedPiCounters = harnessCountersForRounds('pi-cli', [roundOne, roundTwo]);
+assert.equal(resumedPiCounters.get('gpt-5.6-luna').outputTokens, 76);
+assert.equal(Number(resumedPiCounters.get('gpt-5.6-luna').costUsd.toFixed(6)), 0.009118);
+assert.equal(harnessCountersForRounds('claude-cli', [roundOne, roundTwo]).get('gpt-5.6-luna').outputTokens, 36);
 
 // Reconciling the replayed transcripts against the harness's own counter. Replay loses output when
 // an assistant message never finalized on disk, so a counter above replay wins; a counter below

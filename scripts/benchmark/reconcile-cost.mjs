@@ -8,12 +8,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { harnessCounters, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
+import { harnessCountersForRounds, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { assertOnlyOptions, parseArgs, writeJson } from './common.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const RUNS = path.join(ROOT, 'benchmark/private/runs');
-const STAGE_DIRS = ['stages/solo/claude', 'stages/solo/codex'];
+const STAGES = [
+  { directory: 'stages/solo/claude', adapter: 'claude-cli' },
+  { directory: 'stages/solo/codex', adapter: 'codex-cli' },
+  { directory: 'stages/solo/pi', adapter: 'pi-cli' },
+];
 
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
@@ -57,11 +61,11 @@ async function reconcileRun(runId, write) {
   if (!manifest?.cost || !Array.isArray(manifest.cost.models) || typeof manifest.cost.totalUsd !== 'number') return null;
   if (manifest.cost.reconciliation) return { summary: `already reconciled (${manifest.cost.reconciliation.status})`, warnings: [], costDelta: 0 };
 
-  const stageDir = await stageDirectoryFor(runId);
-  if (!stageDir) return { summary: 'no stage directory retained; left as measured', warnings: [], costDelta: 0 };
-  const usage = await finalRoundUsage(path.join(RUNS, runId, stageDir));
+  const stage = await stageFor(runId);
+  if (!stage) return { summary: 'no stage directory retained; left as measured', warnings: [], costDelta: 0 };
+  const usages = await roundUsages(path.join(RUNS, runId, stage.directory));
   const before = manifest.cost.totalUsd;
-  const reconciled = reconcileCost({ totalUsd: before, models: manifest.cost.models }, harnessCounters(usage));
+  const reconciled = reconcileCost({ totalUsd: before, models: manifest.cost.models }, harnessCountersForRounds(stage.adapter, usages));
   const costDelta = reconciled.totalUsd - before;
 
   manifest.cost.models = reconciled.models;
@@ -80,21 +84,20 @@ async function reconcileRun(runId, write) {
   return { summary: `${status}${money}${write ? '' : ' [dry run]'}`, warnings: reconciliationWarnings(reconciled.reconciliation), costDelta };
 }
 
-async function stageDirectoryFor(runId) {
-  for (const stageDir of STAGE_DIRS) {
-    if (await exists(path.join(RUNS, runId, stageDir))) return stageDir;
+async function stageFor(runId) {
+  for (const stage of STAGES) {
+    if (await exists(path.join(RUNS, runId, stage.directory))) return stage;
   }
   return null;
 }
 
-// Mirrors the runner: the counter restates the whole session each round, so the last round wins.
-async function finalRoundUsage(stagePath) {
+async function roundUsages(stagePath) {
   const budget = await optionalJson(path.join(stagePath, 'budget.json'));
-  for (let round = budget?.resumes?.length ?? 0; round > 0; round -= 1) {
-    const resumed = await optionalJson(path.join(stagePath, `raw-usage-resume-${round}.json`));
-    if (resumed) return resumed;
+  const usages = [await optionalJson(path.join(stagePath, 'raw-usage.json'))];
+  for (let round = 1; round <= (budget?.resumes?.length ?? 0); round += 1) {
+    usages.push(await optionalJson(path.join(stagePath, `raw-usage-resume-${round}.json`)));
   }
-  return await optionalJson(path.join(stagePath, 'raw-usage.json'));
+  return usages;
 }
 
 async function optionalJson(target) {

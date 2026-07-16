@@ -79,6 +79,29 @@ try {
   await writeJsonAtomic(path.join(corruptDirectory, 'announced.json'), initialAnnounced());
   const corrupt = await exec(process.execPath, [HOOK, corruptDirectory]);
   assert.equal(corrupt.stdout, '');
+
+  const piDirectory = path.join(temporary, 'pi-extension');
+  await fs.mkdir(piDirectory);
+  await writeJsonAtomic(path.join(piDirectory, 'spend.json'), { budgetUsd: 20, spentUsd: 10.2, fraction: 0.51, measuredAt: new Date().toISOString() });
+  await writeJsonAtomic(path.join(piDirectory, 'announced.json'), initialAnnounced());
+  process.env.PARETO_RAIL_BUDGET_DIRECTORY = piDirectory;
+  const { default: loadPiBudgetExtension } = await import('./pi-budget-extension.js');
+  let toolExecutionEnd;
+  const sent = [];
+  loadPiBudgetExtension({
+    on(event, handler) {
+      if (event === 'tool_execution_end') toolExecutionEnd = handler;
+    },
+    sendMessage(message, options) {
+      sent.push({ message, options });
+    },
+  });
+  await Promise.all([toolExecutionEnd(), toolExecutionEnd()]);
+  assert.equal(sent.length, 1, 'parallel pi tool completions claim a threshold once');
+  assert.equal(sent[0].message.content, noticeText(50));
+  assert.deepEqual(sent[0].options, { deliverAs: 'steer' });
+  assert.equal((await readJsonFile(path.join(piDirectory, 'announced.json'))).announcedPct, 50);
+  delete process.env.PARETO_RAIL_BUDGET_DIRECTORY;
 } finally {
   await fs.rm(temporary, { recursive: true, force: true });
 }

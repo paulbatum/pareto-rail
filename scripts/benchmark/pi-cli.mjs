@@ -4,6 +4,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { initializeBudgetDirectory, POLL_INTERVAL_MS, resumeMessage, shouldResume } from './budget.mjs';
+import { parseBudgetUsd, startBudgetPoller, writeBudgetSummary } from './budget-runtime.mjs';
 import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
@@ -48,18 +50,12 @@ async function main() {
     --effort <off|minimal|low|medium|high|xhigh|max> \\
     [--provider <pi-provider>] \\
     [--timeout-seconds <positive-integer>] \\
+    [--budget-usd <positive-number>] \\
     [--pi-bin <path-or-command>]`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
   assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'provider', 'timeout-seconds', 'budget-usd', 'pi-bin']));
-  // Task budgets are implementable here but unbuilt, so a budgeted definition must fail rather than
-  // silently run unbudgeted. Spend polling would work as-is (pi flushes its session as it goes, so
-  // ccusage prices a live run), and notices have a home: an extension on `tool_execution_end` calling
-  // `pi.sendMessage(..., { deliverAs: 'steer' })`, in place of the hooks.json command the other
-  // adapters use. The unresolved part is reconciliation across resume rounds — see benchmark/README.md
-  // on why the final round's counter is the run's counter for Codex and Claude but not for pi.
-  if (options['budget-usd'] !== undefined) fail('The pi adapter does not implement task budgets; register this configuration without a stage budget.');
 
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const promptPath = path.resolve(requireOption(options, 'prompt'));
@@ -68,6 +64,7 @@ async function main() {
   if (!THINKING.has(effort)) fail(`Unsupported --effort: ${effort}. pi thinking levels are: ${[...THINKING].join(', ')}.`);
   const provider = options.provider;
   const timeoutSeconds = parseTimeout(options['timeout-seconds']);
+  const budgetUsd = parseBudgetUsd(options['budget-usd']);
   const piBin = options['pi-bin'] ?? 'pi';
   const repositoryRoot = await primaryRepository(worktree);
   const outputDirectory = assertPrivateOrExternalPath(requireOption(options, 'out'), repositoryRoot);
@@ -95,14 +92,15 @@ async function main() {
     source: credential.source,
   });
 
-  const args = [
+  const sharedArgs = [
     '--print',
     '--mode', 'json',
     // Trust the entrant worktree's own AGENTS.md/CLAUDE.md without a prompt, matching the Codex
     // adapter's non-interactive approval policy. The repository contracts are part of the task.
     '--approve',
     // Startup network calls (version check, extension discovery) are not part of the measured run
-    // and add nondeterminism to a timed stage.
+    // and add nondeterminism to a timed stage. Explicit `--extension` paths remain active under
+    // `--no-extensions`, which lets a budgeted run load only its controller-owned notice extension.
     '--offline',
     '--no-extensions',
     '--thinking', effort,
@@ -110,25 +108,124 @@ async function main() {
     ...(provider ? ['--provider', provider] : []),
   ];
 
-  const startedAt = new Date().toISOString();
-  const result = await runCommand(piBin, args, {
+  let budgetDirectory;
+  let poller;
+  let deadline = Infinity;
+  const childEnv = { ...(credential.env ?? {}) };
+  if (budgetUsd !== undefined) {
+    budgetDirectory = path.join(outputDirectory, 'budget');
+    await initializeBudgetDirectory(budgetDirectory, budgetUsd);
+    childEnv.PARETO_RAIL_BUDGET_DIRECTORY = budgetDirectory;
+    const extensionPath = fileURLToPath(new URL('./pi-budget-extension.js', import.meta.url));
+    sharedArgs.push('--extension', extensionPath);
+    poller = startBudgetPoller({ adapter: 'pi-cli', home: piHome(), budgetDirectory, budgetUsd, intervalMs: POLL_INTERVAL_MS });
+  }
+
+  if (timeoutSeconds !== undefined) deadline = Date.now() + timeoutSeconds * 1_000;
+  let turn = await runTurn({
+    executable: piBin,
+    args: sharedArgs,
     cwd: worktree,
     input: prompt,
     timeoutSeconds,
+    outputDirectory,
+    cliVersion,
+    model,
+    expectedSessionId: undefined,
+    round: 0,
+    env: childEnv,
+  });
+  const sessionId = turn.usage.sessionId;
+  const finalMessage = path.join(outputDirectory, 'final-message.md');
+  await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
+  const eventLogs = [{ path: 'events.jsonl', droppedLines: turn.result.droppedLines }];
+
+  const resumes = [];
+  let finalSpend;
+  if (budgetUsd !== undefined && turn.result.code === 0) {
+    finalSpend = await poller.refresh();
+    while (shouldResume({ finalFraction: finalSpend.fraction, roundsUsed: resumes.length, remainingMs: remainingTime(deadline) })) {
+      const round = resumes.length + 1;
+      const resumeStartedAt = new Date().toISOString();
+      turn = await runTurn({
+        executable: piBin,
+        args: [...sharedArgs, '--session', sessionId],
+        cwd: worktree,
+        input: resumeMessage(finalSpend.fraction),
+        timeoutSeconds: remainingTimeoutSeconds(deadline),
+        outputDirectory,
+        cliVersion,
+        model,
+        expectedSessionId: sessionId,
+        round,
+        env: childEnv,
+      });
+      await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
+      eventLogs.push({ path: `events-resume-${round}.jsonl`, droppedLines: turn.result.droppedLines });
+      resumes.push({
+        round,
+        spentUsd: finalSpend.spentUsd,
+        fraction: finalSpend.fraction,
+        startedAt: resumeStartedAt,
+        finishedAt: turn.finishedAt,
+        exitCode: turn.result.code,
+      });
+      if (turn.result.code !== 0) break;
+      finalSpend = await poller.refresh();
+    }
+  }
+
+  let budgetSummary;
+  if (budgetUsd !== undefined) {
+    finalSpend = await poller.refresh();
+    poller.stop();
+    budgetSummary = await writeBudgetSummary({ outputDirectory, budgetDirectory, budgetUsd, resumes, finalSpend });
+  }
+
+  const rollout = await captureRollout(sessionId, outputDirectory);
+  await writeJson(path.join(outputDirectory, 'result.json'), {
+    result: turn.result.code === 0 ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
+    exitCode: turn.result.code,
+    timedOut: turn.result.timedOut,
+    sessionId: turn.usage.sessionId,
+    usageSha256: sha256(JSON.stringify(turn.usage)),
+    eventLogSha256: sha256(turn.result.stdout),
+    stderrSha256: sha256(turn.result.stderr),
+    // These are retained streams, not verbatim stdout. The complete appended transcript stays in
+    // `rollout.jsonl`, which pi persists and ccusage replays.
+    eventLog: {
+      retained: 'all events except message_update',
+      droppedLines: eventLogs.reduce((total, event) => total + event.droppedLines, 0),
+      files: eventLogs,
+    },
+    rollout,
+    ...(budgetSummary ? { budget: { path: 'budget.json' } } : {}),
+  });
+
+  if (turn.result.code !== 0) process.exitCode = turn.result.code || 1;
+  else console.log(JSON.stringify({ sessionId: turn.usage.sessionId, usage: turn.usage.normalized, wallTimeSeconds: turn.result.wallTimeSeconds }));
+}
+
+async function runTurn({ executable, args, cwd, input, timeoutSeconds, outputDirectory, cliVersion, model, expectedSessionId, round, env }) {
+  const suffix = round === 0 ? '' : `-resume-${round}`;
+  const startedAt = new Date().toISOString();
+  const result = await runCommand(executable, args, {
+    cwd,
+    input,
+    timeoutSeconds,
     allowFailure: true,
-    env: credential.env,
+    env,
     dropLine: (line) => line.startsWith(`{${STREAMED_DELTA_EVENT}`),
   });
   const finishedAt = new Date().toISOString();
-
-  await fs.writeFile(path.join(outputDirectory, 'events.jsonl'), result.stdout, 'utf8');
-  await fs.writeFile(path.join(outputDirectory, 'stderr.log'), result.stderr, 'utf8');
-  await writeJson(path.join(outputDirectory, 'command.json'), {
-    executable: piBin,
+  await fs.writeFile(path.join(outputDirectory, `events${suffix}.jsonl`), result.stdout, 'utf8');
+  await fs.writeFile(path.join(outputDirectory, `stderr${suffix}.log`), result.stderr, 'utf8');
+  await writeJson(path.join(outputDirectory, `command${suffix}.json`), {
+    executable,
     arguments: args,
     cliVersion: cliVersion.stdout.trim(),
     cliVersionStderr: cliVersion.stderr,
-    workingDirectory: worktree,
+    workingDirectory: cwd,
     startedAt,
     finishedAt,
     wallTimeSeconds: result.wallTimeSeconds,
@@ -136,28 +233,19 @@ async function main() {
     exitCode: result.code,
     timedOut: result.timedOut,
   });
+  const usage = extractUsage(result.stdout, model, expectedSessionId);
+  await writeJson(path.join(outputDirectory, `raw-usage${suffix}.json`), usage);
+  if (round > 0) await fs.writeFile(path.join(outputDirectory, `final-message${suffix}.md`), usage.finalMessage, 'utf8');
+  return { result, usage, startedAt, finishedAt };
+}
 
-  const usage = extractUsage(result.stdout, model);
-  await writeJson(path.join(outputDirectory, 'raw-usage.json'), usage);
-  await fs.writeFile(path.join(outputDirectory, 'final-message.md'), usage.finalMessage, 'utf8');
+function remainingTime(deadline) {
+  return deadline === Infinity ? Infinity : Math.max(0, deadline - Date.now());
+}
 
-  const rollout = await captureRollout(usage.sessionId, outputDirectory);
-  await writeJson(path.join(outputDirectory, 'result.json'), {
-    result: result.code === 0 ? 'completed' : result.timedOut ? 'timed-out' : 'failed',
-    exitCode: result.code,
-    timedOut: result.timedOut,
-    sessionId: usage.sessionId,
-    usageSha256: sha256(JSON.stringify(usage)),
-    eventLogSha256: sha256(result.stdout),
-    stderrSha256: sha256(result.stderr),
-    // `events.jsonl` is the retained stream, not a verbatim copy of stdout. The full transcript
-    // stays available in `rollout.jsonl`, which pi persists and ccusage replays.
-    eventLog: { retained: 'all events except message_update', droppedLines: result.droppedLines },
-    rollout,
-  });
-
-  if (result.code !== 0) process.exitCode = result.code || 1;
-  else console.log(JSON.stringify({ sessionId: usage.sessionId, usage: usage.normalized, wallTimeSeconds: result.wallTimeSeconds }));
+function remainingTimeoutSeconds(deadline) {
+  if (deadline === Infinity) return undefined;
+  return Math.max(1, Math.floor(remainingTime(deadline) / 1_000));
 }
 
 // A project-provisioned key in the repository `.env` wins over pi's stored credential so a benchmark
@@ -202,7 +290,7 @@ function assertModelAvailable(catalog, model, provider) {
 // pi streams one JSON event per line. Unlike the Claude and Codex counters, which restate the whole
 // session on every turn, each pi `message_end` carries only that one API call's usage — so the run's
 // usage is the sum across assistant messages, never the last one.
-function extractUsage(eventLog, model) {
+function extractUsage(eventLog, model, expectedSessionId) {
   const events = eventLog.split('\n').filter(Boolean).map((line, index) => {
     try {
       return JSON.parse(line);
@@ -212,6 +300,9 @@ function extractUsage(eventLog, model) {
   });
   const session = events.find(({ type }) => type === 'session');
   if (!session?.id) fail('pi JSON did not report a session identifier.');
+  if (expectedSessionId !== undefined && session.id !== expectedSessionId) {
+    fail(`pi reported session id ${session.id}, expected the original ${expectedSessionId}.`);
+  }
 
   const assistant = events.filter((event) => event.type === 'message_end' && event.message?.role === 'assistant');
   if (assistant.length === 0) fail('pi JSON reported no assistant message_end events to measure.');

@@ -85,7 +85,7 @@ The gates run against the exact evaluated working tree, including the agent's no
 
 ## Cost
 
-Cost is measured by ccusage (pinned in the repository's `package.json`; the controller records the exact version in the manifest), invoked with the repository's own Node against this run's isolated harness home (`ccusage <claude|codex> session --json`). State that here. Do not include a dated rate table: ccusage prices the persisted rollouts (parent plus any delegated subagents) with its own maintained rate database, and the manifest records ccusage's computed USD as `cost.totalUsd`, per-model detail in `cost.models`, and the tool/version provenance in `cost.costSource`. Note whether per-model cost is available (Claude) or only per-model tokens (Codex), and that subscription expenditure is reported separately.
+Cost is measured by ccusage (pinned in the repository's `package.json`; the controller records the exact version in the manifest), invoked with the repository's own Node against this run's isolated harness home (`ccusage <claude|codex|pi> session --json`; pi also receives its isolated sessions path through `--pi-path`). State that here. Do not include a dated rate table: ccusage prices the persisted rollouts (parent plus any delegated subagents) with its own maintained rate database, and the manifest records ccusage's computed USD as `cost.totalUsd`, per-model detail in `cost.models`, and the tool/version provenance in `cost.costSource`. Note whether per-model cost is available (Claude and pi) or only per-model tokens (Codex), and that subscription expenditure is reported separately.
 
 ## Known harness defaults
 

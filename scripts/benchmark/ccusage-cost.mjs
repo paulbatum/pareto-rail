@@ -121,6 +121,27 @@ export function harnessCounters(usage) {
   return counters.size > 0 ? counters : null;
 }
 
+// Claude and Codex restate whole-session usage on every resumed invocation, so their final round is
+// authoritative. pi emits usage only for API calls made by that invocation; sum its round counters
+// before comparing them with ccusage's replay of the one appended session transcript.
+export function harnessCountersForRounds(adapter, usages) {
+  const present = usages.filter(Boolean);
+  if (present.length === 0) return null;
+  if (adapter !== 'pi-cli') return harnessCounters(present.at(-1));
+
+  const combined = new Map();
+  for (const usage of present) {
+    const counters = harnessCounters(usage);
+    for (const counter of counters?.values() ?? []) {
+      const current = combined.get(counter.modelName) ?? { modelName: counter.modelName, outputTokens: 0, costUsd: null };
+      current.outputTokens += counter.outputTokens;
+      if (counter.costUsd !== null) current.costUsd = (current.costUsd ?? 0) + counter.costUsd;
+      combined.set(counter.modelName, current);
+    }
+  }
+  return combined.size > 0 ? combined : null;
+}
+
 // Cross-check the replayed transcripts against the harness's own counter and prefer whichever saw
 // the billing. The two disagree in opposite directions for opposite reasons, so the direction of the
 // gap identifies the faulty source: a counter above replay is replay having lost an unfinalized

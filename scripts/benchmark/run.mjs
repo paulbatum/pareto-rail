@@ -16,7 +16,7 @@ import {
   sha256,
 } from './common.mjs';
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
-import { ccusageVersion, harnessCounters, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
+import { ccusageVersion, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { assertBaselineLevelAllowlist, levelIdsFromRegistry, validateBaselineLevelAllowlist } from './entrant-baseline.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
@@ -513,7 +513,7 @@ async function createManifest({ definition, materialsCommit, configurationCommit
   // can under-report output, so it is cross-checked against the harness's own counter.
   const cost = reconcileCost(
     await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome }),
-    harnessCounters(await loadFinalRoundUsage(outputDirectory, adapter, budget)),
+    harnessCountersForRounds(definition.stage.adapter, await loadRoundUsages(outputDirectory, adapter, budget)),
   );
   for (const warning of reconciliationWarnings(cost.reconciliation)) console.warn(warning);
   const ccusage = await ccusageVersion();
@@ -625,15 +625,14 @@ function stageUsage({ inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, ca
   };
 }
 
-// The harness counter restates the whole session on every resumed round rather than reporting that
-// round's share, so the final round's file is the run's counter and summing rounds would multiply
-// it. Falls back down the rounds because a round is only recorded once its usage file is written.
-async function loadFinalRoundUsage(outputDirectory, adapter, budget) {
-  for (let round = budget?.resumes?.length ?? 0; round > 0; round -= 1) {
-    const resumed = await optionalJson(path.join(outputDirectory, adapter.stageDir, `raw-usage-resume-${round}.json`));
-    if (resumed) return resumed;
+// Load every completed invocation. The cost module selects only the final cumulative counter for
+// Claude/Codex and sums pi's invocation-local counters across the appended session.
+async function loadRoundUsages(outputDirectory, adapter, budget) {
+  const usages = [await optionalJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json'))];
+  for (let round = 1; round <= (budget?.resumes?.length ?? 0); round += 1) {
+    usages.push(await optionalJson(path.join(outputDirectory, adapter.stageDir, `raw-usage-resume-${round}.json`)));
   }
-  return await optionalJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json'));
+  return usages;
 }
 
 async function loadStageUsage(outputDirectory, adapter, definition) {
