@@ -23,6 +23,7 @@ This is a showcase piece, not a prototype or a proof of concept. Polish is the p
 - Use `createLockOnRunner`. Do not build a bespoke runtime or modify the engine.
 - A built-in level touches only `src/levels/<id>/` plus one registry line. A benchmark entrant touches only `src/benchmark-levels/<id>/` and explicitly permitted derived gallery output; `npm run check:benchmark-scope -- --version v2 --level <id> --base <entrant-baseline-ref>` must pass.
 - No imports from other levels' directories.
+- Do not turn an existing level into a parameterized template for new levels; each level stays independent.
 - `npm run typecheck`, `npm run build`, and `npm run check:floor -- --level <id>` must pass.
 
 ## The floor

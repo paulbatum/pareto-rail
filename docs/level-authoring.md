@@ -33,6 +33,8 @@ This is a default, not a law. Rezdle legitimately decomposes differently, and `c
 
 ## Adding a level
 
+Start from `npm run scaffold -- --id <id> [--title <Title>] [--bpm <n>]` for a blank built-in level, then fill in:
+
 1. Create `src/levels/<id>/index.ts` that exports a `LevelDefinition`.
 2. Declare one authoritative BPM constant for the level. Reference it from both the `LevelDefinition` and the runner config; audio should import the same constant instead of repeating the number.
 3. Implement `createAudio(bus)` in that level. The pause menu calls the returned volume, start, suspend, and dispose methods. For beat-driven levels, the expected audio spine uses `createBeatLevelAudio` to compose the mix bus, score epoch, transport, beat emission, and trace run; levels still supply `createScore`, `defineInstruments`, `createArrangement`, and all musical data. Raw `audio-kit` primitives remain available when a level needs custom synthesis or routing.
@@ -139,6 +141,8 @@ Every level must render legible procedural glyphs for at least the characters in
 
 Every level must also express rejected releases in its own visual and audio language. The runner emits `reject` when a release fails, including incomplete START/REPLAY words and any level-specific `validateRelease` rule. Visuals receive `setEnemyDenied` for released targets and any required targets that were missing. Levels that need additional context, such as a boss shield plate blocking a shot, may emit and handle their own richer event as well.
 
+Any axis passed to `setFromAxisAngle` must be unit length; a non-unit axis compounds into exploding instance matrices. Hand-authored axes and the `randomUnit`/`randomDirection` helpers are safe by construction — renormalize any axis you compute or interpolate.
+
 ## Post-processing
 
 `LevelDefinition.post` is optional. Most levels only tune the shared bloom and vignette:
@@ -153,6 +157,8 @@ post?: {
 ```
 
 Omitting it preserves the shared default frame. The engine always multiplies the level bloom strength by the player's bloom slider, so levels cannot bypass the pause-menu bloom setting.
+
+Hot/bright elements use HDR colors (values > 1) so bloom picks them up, but large bright screen areas white out the frame. Keep glow on thin lines and small cores, and dim hot elements with camera distance where appropriate.
 
 The pause menu also exposes a player motion-blur slider. Motion blur is engine-owned in `src/engine/post.ts`: the shared pass uses depth reprojection against the previous camera matrix, applies the same shutter model to every level, and scales it by the player's setting. Levels should create speed through rail motion, nearby geometry, moving objects, FOV, shake, and authored set pieces; do not add level-specific motion blur or speed-blur strength knobs.
 
@@ -197,6 +203,8 @@ npm run simulate -- --level <level-id>
 The default simulation runs no-fire, perfect, and seeded imperfect player policies. It summarizes outcome, spawned enemy kinds, pressure, dead-air gaps, player hull events, and unexercised gameplay events. Pass `--heatmap` to print an ASCII screen heatmap of enemy destructions relative to the player camera, along with destruction distance statistics and distribution histograms. Broad screen-space sweeping makes for a significantly better player experience, so the floor check requires enemies to be distributed throughout the viewport rather than clustering in the center or being destroyed too far away.
 
 The output opens with an "Engine defaults" section (also printed by `check:floor`) listing which engine-default timing fields, lock radius, and optional runner hooks the level inherits versus declares. It is informational, never a gate: inheriting a default is a valid choice, but it should be a considered one — the section exists so the author sees the inherited list instead of never knowing it was there.
+
+To inspect the expanded spawn timeline directly, use `npm run trace:spawns -- --level <level-id>`. Pass `--write` and `--compare` to diff the timeline across a refactor, the same way `trace:audio --compare` characterizes an audio refactor.
 
 ## Audio and visual inspection tools
 
