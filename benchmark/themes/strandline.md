@@ -1,0 +1,7 @@
+# Strandline
+
+Build a level where you're freeing a jellyfish the size of a weather system from an infestation. The rail winds through its trailing tentacles and you're in the strands the whole run - banking around them, threading between them - and the turns are the drama: most of the time the world is a forest of glowing strands in sunlit water, then a curve swings you wide and for a few seconds you can see the whole animal, the bell filling the view like a green moon, before the rail dives back in. The water is clear green shading into deep blue with distance, lit through from somewhere above, and the jelly's own bioluminescence layers green-gold on top of it; the only sour note is the sickly violet of the parasites clamped onto it. Strands you clear re-light behind you, so your progress is written on the animal itself. The music is its pulse - slow and warm from the start, wounded but never grim, gaining brightness and layers as more of it comes back to life.
+
+Enemies are the parasites, latched onto the strands ahead and detaching to defend the colony as you close in.
+
+Boss: the parent organism, dug in at the crown where the strands root into the bell. It hides behind a lattice of its own webbing and pumps out fresh broods; kill each brood and the webbing it fed dies back, until the parent is bare and you can tear it loose. When it dies the camera pulls back, and back, and back - the whole animal in frame for the first time, every strand glowing clean - the pulse resolves into something serene, the jellyfish drifts on, level ends.
