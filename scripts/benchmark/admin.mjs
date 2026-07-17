@@ -15,7 +15,7 @@ import {
   writeJson,
 } from './common.mjs';
 import { checkoutLayout } from './checkout-layout.mjs';
-import { levelFootprint, protocolForVersion } from './protocol.mjs';
+import { benchmarkLevelFootprint } from './protocol.mjs';
 
 const CONTROLLER_SCOPE_SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'check-benchmark-scope.mjs');
 
@@ -24,12 +24,12 @@ async function main() {
   if (options.help || rest.length === 0) {
     console.log(`Usage:
   npm run benchmark:admin -- worktree --baseline <commit> --run-id <opaque-id> --path <path> [--branch <opaque-branch>] [--repo <path>]
-  npm run benchmark:admin -- seal --worktree <path> --baseline <commit> --level-id <id> [--repo <path>] [--version v2] [--message <message>]
-  npm run benchmark:admin -- gates --worktree <path> --baseline <commit> --level-id <id> --out <private-or-external-path> [--version v2]
-  npm run benchmark:admin -- payload --repo <path> --materials <commit> --evaluated <commit> --level-id <id> --path <path> --branch <opaque-branch> [--version v2]`);
+  npm run benchmark:admin -- seal --worktree <path> --baseline <commit> --level-id <id> [--repo <path>] [--message <message>]
+  npm run benchmark:admin -- gates --worktree <path> --baseline <commit> --level-id <id> --out <private-or-external-path>
+  npm run benchmark:admin -- payload --repo <path> --materials <commit> --evaluated <commit> --level-id <id> --path <path> --branch <opaque-branch>`);
     return;
   }
-  assertOnlyOptions(options, new Set(['help', 'repo', 'baseline', 'run-id', 'path', 'branch', 'worktree', 'level-id', 'level-title', 'message', 'out', 'materials', 'evaluated', 'version', 'benchmark-version']));
+  assertOnlyOptions(options, new Set(['help', 'repo', 'baseline', 'run-id', 'path', 'branch', 'worktree', 'level-id', 'level-title', 'message', 'out', 'materials', 'evaluated']));
   if (rest.length !== 1) fail(`Unknown controller command: ${rest.join(' ')}.`);
   const command = rest[0];
   if (command === 'worktree') return createWorktree(options);
@@ -78,8 +78,8 @@ export async function sealEvaluatedCommit(options) {
   const levelId = requireOption(options, 'level-id');
   await assertGitWorktree(worktree);
   await git(worktree, ['rev-parse', '--verify', `${baseline}^{commit}`]);
-  await runScopeCheck(worktree, { levelId, baseline, benchmarkVersion: options.version ?? options['benchmark-version'] ?? 'v1' });
-  await validateAssignedDescriptor(worktree, levelId, options['level-title'], options.version ?? options['benchmark-version'] ?? 'v1');
+  await runScopeCheck(worktree, { levelId, baseline });
+  await validateAssignedDescriptor(worktree, levelId, options['level-title']);
 
   const statusBefore = (await git(worktree, ['status', '--porcelain'])).output;
   if (statusBefore.trim()) {
@@ -104,7 +104,6 @@ async function runGates(options) {
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const baseline = requireOption(options, 'baseline');
   const levelId = requireOption(options, 'level-id');
-  const benchmarkVersion = options.version ?? options['benchmark-version'] ?? 'v1';
   const requestedOutputDirectory = requireOption(options, 'out');
   await assertGitWorktree(worktree);
   const commonGitDirectory = (await git(worktree, ['rev-parse', '--git-common-dir'])).output.trim();
@@ -116,13 +115,10 @@ async function runGates(options) {
   if (cleanBefore.trim()) fail('Refusing to run gates against an unsealed worktree.');
   await fs.mkdir(outputDirectory, { recursive: true });
 
-  const scopeCommand = protocolForVersion(benchmarkVersion).directoryOnly
-    ? [process.execPath, CONTROLLER_SCOPE_SCRIPT, '--version', benchmarkVersion, '--level', levelId, '--base', baseline]
-    : ['npm', 'run', 'check:scope', '--', levelId, baseline];
   const commands = [
     ['typecheck', 'npm', ['run', 'typecheck']],
     ['build', 'npm', ['run', 'build']],
-    ['scope', scopeCommand[0], scopeCommand.slice(1)],
+    ['scope', process.execPath, [CONTROLLER_SCOPE_SCRIPT, '--level', levelId, '--base', baseline]],
     ['floor', 'npm', ['run', 'check:floor', '--', '--level', levelId]],
   ];
   const gates = [];
@@ -152,15 +148,13 @@ export async function derivePayload(options) {
   const materials = requireOption(options, 'materials');
   const evaluated = requireOption(options, 'evaluated');
   const levelId = requireOption(options, 'level-id');
-  const benchmarkVersion = options.version ?? options['benchmark-version'] ?? 'v1';
   const levelTitle = options['level-title'];
   const payloadPath = path.resolve(requireOption(options, 'path'));
   const branch = requireOption(options, 'branch');
   if (pathInside(payloadPath, repo)) fail('Payload worktree must be outside the primary repository working tree.');
   await assertAbsent(payloadPath, 'payload worktree path');
 
-  const protocol = protocolForVersion(benchmarkVersion);
-  const footprint = levelFootprint(levelId, benchmarkVersion);
+  const footprint = benchmarkLevelFootprint(levelId);
   const sourceRoot = footprint.roots.find((rootEntry) => rootEntry.required);
   if (!sourceRoot) fail('Level footprint has no required source root.');
   const materialsCommit = (await git(repo, ['rev-parse', '--verify', `${materials}^{commit}`])).output.trim();
@@ -181,15 +175,14 @@ export async function derivePayload(options) {
   }
   await git(payloadPath, ['commit', '-m', `Extract benchmark payload ${levelId}`]);
   const payloadCommit = (await git(payloadPath, ['rev-parse', 'HEAD'])).output.trim();
-  await verifyPayload(repo, materialsCommit, payloadCommit, levelId, benchmarkVersion, levelTitle);
+  await verifyPayload(repo, materialsCommit, payloadCommit, levelId, levelTitle);
   const result = { payloadCommit, branch, worktree: payloadPath };
   console.log(JSON.stringify(result));
   return result;
 }
 
-export async function verifyPayload(repo, materialsCommit, payloadCommit, levelId, benchmarkVersion = 'v1', levelTitle) {
-  const protocol = protocolForVersion(benchmarkVersion);
-  const footprint = levelFootprint(levelId, benchmarkVersion);
+export async function verifyPayload(repo, materialsCommit, payloadCommit, levelId, levelTitle) {
+  const footprint = benchmarkLevelFootprint(levelId);
   const sourceRoot = footprint.roots.find((rootEntry) => rootEntry.required);
   if (!sourceRoot) fail('Level footprint has no required source root.');
   const names = (await git(repo, ['diff', '--name-only', `${materialsCommit}..${payloadCommit}`])).output.trim().split('\n').filter(Boolean);
@@ -200,27 +193,18 @@ export async function verifyPayload(repo, materialsCommit, payloadCommit, levelI
   const statuses = (await git(repo, ['diff', '--name-status', `${materialsCommit}..${payloadCommit}`])).output.trim().split('\n').filter(Boolean);
   if (statuses.some((line) => /^(D|R)/.test(line))) fail('Payload diff deletes or renames a path.');
   const descriptorPath = `${sourceRoot.path}/level.json`;
-  const descriptorPresent = names.includes(descriptorPath);
-  if (protocol.directoryOnly && !descriptorPresent) fail('Directory-only benchmark payload must contain level.json.');
-  if (!protocol.directoryOnly && descriptorPresent) fail('Legacy benchmark payload may not contain level.json.');
-  if (protocol.directoryOnly) {
-    const descriptorSource = (await git(repo, ['show', `${payloadCommit}:${descriptorPath}`])).output;
-    const descriptor = parseDescriptor(descriptorSource, descriptorPath);
-    if (descriptor.id !== levelId) fail('Benchmark descriptor id does not match the assigned directory.');
-    if (levelTitle !== undefined && descriptor.title !== levelTitle) fail('Benchmark descriptor title does not match the assigned title.');
-  }
+  if (!names.includes(descriptorPath)) fail('Benchmark payload must contain level.json.');
+  const descriptorSource = (await git(repo, ['show', `${payloadCommit}:${descriptorPath}`])).output;
+  const descriptor = parseDescriptor(descriptorSource, descriptorPath);
+  if (descriptor.id !== levelId) fail('Benchmark descriptor id does not match the assigned directory.');
+  if (levelTitle !== undefined && descriptor.title !== levelTitle) fail('Benchmark descriptor title does not match the assigned title.');
 }
 
-async function runScopeCheck(worktree, { levelId, baseline, benchmarkVersion }) {
-  if (protocolForVersion(benchmarkVersion).directoryOnly) {
-    await runCommand(worktree, process.execPath, [CONTROLLER_SCOPE_SCRIPT, '--version', benchmarkVersion, '--level', levelId, '--base', baseline]);
-  } else {
-    await runCommand(worktree, 'npm', ['run', 'check:scope', '--', levelId, baseline]);
-  }
+async function runScopeCheck(worktree, { levelId, baseline }) {
+  await runCommand(worktree, process.execPath, [CONTROLLER_SCOPE_SCRIPT, '--level', levelId, '--base', baseline]);
 }
 
-async function validateAssignedDescriptor(worktree, levelId, levelTitle, benchmarkVersion) {
-  if (!protocolForVersion(benchmarkVersion).directoryOnly) return;
+async function validateAssignedDescriptor(worktree, levelId, levelTitle) {
   const descriptorPath = path.join(worktree, 'src', 'benchmark-levels', levelId, 'level.json');
   let descriptor;
   try { descriptor = JSON.parse(await fs.readFile(descriptorPath, 'utf8')); }

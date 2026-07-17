@@ -9,7 +9,7 @@ import { promoteRun, PromotionInterrupted } from './promote.mjs';
 
 const execFileAsync = promisify(execFile);
 const HERE = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
-const CHECKPOINTS = ['validation', 'extraction', 'descriptor', 'application', 'catalog', 'commit'];
+const CHECKPOINTS = ['validation', 'extraction', 'application', 'catalog', 'commit'];
 
 async function main() {
   for (const checkpoint of CHECKPOINTS) {
@@ -64,12 +64,11 @@ async function main() {
   }
 
   {
-    const fixture = await createFixture({ legacyManifest: true });
+    const fixture = await createFixture({ rehearsal: true });
     try {
-      const manifestBefore = await fs.readFile(path.join(fixture.runDirectory, 'manifest.json'));
-      const result = await promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory });
-      await assertPromotion(fixture, result.promotionCommit);
-      assert.deepEqual(await fs.readFile(path.join(fixture.runDirectory, 'manifest.json')), manifestBefore, 'legacy manifest remains byte-for-byte unchanged');
+      await assert.rejects(() => promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory }), /rehearsals are not publishable/);
+      assert.equal(await exists(path.join(fixture.root, 'src/benchmark-levels/synthetic-a1b2')), false, 'a rehearsal run is not promoted');
+      assert.equal((await git(fixture.root, ['rev-list', '--count', `${fixture.base}..HEAD`])).trim(), '0', 'a rehearsal run creates no application commit');
     } finally {
       await fixture.cleanup();
     }
@@ -126,7 +125,7 @@ async function main() {
     await writeJson(path.join(fixture.runDirectory, 'payload.json'), payload);
   });
   await assertTamper('payload contents', async (fixture) => {
-    await fs.writeFile(path.join(fixture.payloadWorktree, 'src/levels/synthetic-a1b2/index.ts'), 'tampered payload bytes\n');
+    await fs.writeFile(path.join(fixture.payloadWorktree, 'src/benchmark-levels/synthetic-a1b2/index.ts'), 'tampered payload bytes\n');
   }, { payloadWorktree: true });
   await assertTamper('descriptor destination', async (fixture) => {
     await fs.writeFile(path.join(fixture.root, 'src/benchmark-levels/synthetic-a1b2/level.json'), '{"id":"synthetic-a1b2","title":"Tampered"}\n');
@@ -171,7 +170,7 @@ async function assertPromotion(fixture, promotionCommit) {
   if (fixture.content) assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.png'), 'utf8'), 'synthetic hero\n');
 }
 
-async function createFixture({ payloadWorktree = false, legacyManifest = false, payloadSymlink = false, content = false, outsidePayload = false } = {}) {
+async function createFixture({ payloadWorktree = false, rehearsal = false, payloadSymlink = false, content = false, outsidePayload = false } = {}) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-promotion-repo-'));
   const externalPayloadWorktree = `${root}-payload-worktree`;
   const runDirectory = path.join(root, 'benchmark/private/runs/synthetic-run-a1b2');
@@ -194,11 +193,12 @@ async function createFixture({ payloadWorktree = false, legacyManifest = false, 
   const base = (await git(root, ['rev-parse', 'HEAD'])).trim();
 
   const sourceFiles = {
-    'src/levels/synthetic-a1b2/index.ts': "export const syntheticLevel = { id: 'synthetic-a1b2', title: 'Synthetic Promotion' };\n",
-    'src/levels/synthetic-a1b2/level.md': '# Synthetic Promotion\n\nSynthetic test payload.\n',
+    'src/benchmark-levels/synthetic-a1b2/index.ts': "export const syntheticLevel = { id: 'synthetic-a1b2', title: 'Synthetic Promotion' };\n",
+    'src/benchmark-levels/synthetic-a1b2/level.md': '# Synthetic Promotion\n\nSynthetic test payload.\n',
+    'src/benchmark-levels/synthetic-a1b2/level.json': `${JSON.stringify({ id: 'synthetic-a1b2', title: 'Synthetic Promotion' }, null, 2)}\n`,
   };
   if (content) sourceFiles['public/level-content/synthetic-a1b2/hero.png'] = 'synthetic hero\n';
-  const payloadPaths = ['src/levels/synthetic-a1b2', ...(content ? ['public/level-content/synthetic-a1b2'] : [])];
+  const payloadPaths = ['src/benchmark-levels/synthetic-a1b2', ...(content ? ['public/level-content/synthetic-a1b2'] : [])];
   await git(root, ['switch', '-c', 'evaluated-run']);
   for (const [file, contents] of Object.entries(sourceFiles)) await writePayloadFile(path.join(root, file), contents, payloadSymlink);
   await git(root, ['add', ...payloadPaths]);
@@ -216,45 +216,41 @@ async function createFixture({ payloadWorktree = false, legacyManifest = false, 
   await git(root, ['switch', '-q', 'main']);
   if (payloadWorktree) await git(root, ['worktree', 'add', '-q', externalPayloadWorktree, 'payload-run']);
 
-  const assignment = {
-    runId: 'synthetic-run-a1b2',
-    slotId: 'a1b2',
-    configurationId: 'synthetic-configuration',
-    levelId: 'synthetic-a1b2',
-    levelTitle: 'Synthetic Promotion',
-    recipe: { path: 'synthetic/recipe.md', sha256: 'a'.repeat(64) },
-    theme: { id: 'synthetic-theme', path: 'synthetic/theme.md', sha256: 'b'.repeat(64) },
-  };
   const definition = {
     schemaVersion: 1,
-    benchmarkVersion: 'v1',
-    mode: 'eligible',
-    assignment,
-    baseline: { materialsCommit: base, entrantBaseline: base },
+    benchmarkVersion: 'v2',
+    runId: 'synthetic-run-a1b2',
+    slotId: 'a1b2',
+    levelId: 'synthetic-a1b2',
+    levelTitle: 'Synthetic Promotion',
+    themeId: 'synthetic-theme',
+    themePath: 'synthetic/theme.md',
+    configurationId: 'synthetic-configuration',
+    recipePath: 'synthetic/recipe.md',
+    materialsCommit: base,
+    entrantBaseline: base,
+    kind: rehearsal ? 'rehearsal' : 'benchmark',
+    stage: { adapter: 'codex-cli', model: 'synthetic', effort: 'high', timeoutSeconds: 60 },
   };
   const gates = ['typecheck', 'build', 'scope', 'floor'].map((id) => ({ id, status: 'passed', command: id, wallTimeSeconds: 0 }));
   const manifest = {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
-    runId: assignment.runId,
-    slotId: assignment.slotId,
-    configuration: { id: assignment.configurationId },
-    theme: { ...assignment.theme },
+    runId: definition.runId,
+    slotId: definition.slotId,
+    configuration: { id: definition.configurationId },
+    theme: { id: definition.themeId, path: definition.themePath, sha256: 'b'.repeat(64) },
     baseline: { materialsCommit: base, entrantBaseline: { kind: 'git-commit', identifier: base } },
-    recipe: assignment.recipe,
-    controller: { path: 'synthetic/controller.md', sha256: 'c'.repeat(64) },
+    recipe: { path: definition.recipePath, sha256: 'a'.repeat(64) },
+    controller: { commit: 'c'.repeat(40) },
     timing: { startedAt: '2026-01-01T00:00:00.000Z', finishedAt: '2026-01-01T00:01:00.000Z', wallTimeSeconds: 60 },
     stages: [{ id: 'synthetic', role: 'solo', model: { provider: 'synthetic', snapshotId: 'synthetic' }, harness: { name: 'synthetic', version: '1' }, sessionId: 'synthetic', startedAt: '2026-01-01T00:00:00.000Z', finishedAt: '2026-01-01T00:01:00.000Z', wallTimeSeconds: 60, usage: { inputTokens: 0, outputTokens: 0 }, pricing: { status: 'measured', costUsd: 0 }, result: 'completed' }],
     cost: { currency: 'USD', status: 'measured', totalUsd: 0, orchestrationTreatment: 'none' },
     gates,
-    output: { levelId: assignment.levelId, title: assignment.levelTitle, evaluated: { commit: evaluatedCommit, branch: 'evaluated-run' }, payload: { commit: payloadCommit, branch: 'payload-run' } },
-    disposition: { status: 'playable' },
+    output: { levelId: definition.levelId, title: definition.levelTitle, evaluated: { commit: evaluatedCommit, branch: 'evaluated-run' }, payload: { commit: payloadCommit, branch: 'payload-run' } },
+    disposition: { status: rehearsal ? 'rehearsal' : 'playable' },
   };
   const payload = { payloadCommit, branch: 'payload-run', ...(payloadWorktree ? { worktree: externalPayloadWorktree } : {}) };
-  if (legacyManifest) {
-    delete manifest.theme.id;
-    delete manifest.output.title;
-  }
   await writeJson(path.join(runDirectory, 'run-definition.json'), definition);
   await writeJson(path.join(runDirectory, 'manifest.json'), manifest);
   await writeJson(path.join(runDirectory, 'evaluated.json'), { evaluatedCommit });

@@ -204,7 +204,7 @@ async function main() {
         await validateEvaluated(existing, worktree);
         return existing;
       }
-      const sealed = await command(process.execPath, [ADMIN, 'seal', '--repo', ROOT, '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.levelId, '--version', definition.benchmarkVersion, '--level-title', definition.levelTitle], ROOT);
+      const sealed = await command(process.execPath, [ADMIN, 'seal', '--repo', ROOT, '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.levelId, '--level-title', definition.levelTitle], ROOT);
       const value = JSON.parse(sealed.stdout);
       await writeJson(path.join(outputDirectory, 'evaluated.json'), value);
       return value;
@@ -214,7 +214,7 @@ async function main() {
       const existing = await reusableGateRecord(outputDirectory, evaluated.evaluatedCommit);
       if (existing) return existing;
       const gateDirectory = path.join(outputDirectory, 'gates');
-      await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.levelId, '--out', gateDirectory, '--version', definition.benchmarkVersion], ROOT);
+      await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.levelId, '--out', gateDirectory], ROOT);
       return readJson(path.join(gateDirectory, 'gates.json'));
     });
     const passing = gateRecord.gates.every(({ status }) => status === 'passed');
@@ -226,7 +226,7 @@ async function main() {
         await validatePayload(existing, materialsCommit, definition.levelId);
         return existing;
       }
-      const result = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.levelId, '--level-title', definition.levelTitle, '--path', paths.payload, '--branch', paths.payloadBranch, '--version', definition.benchmarkVersion], ROOT);
+      const result = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.levelId, '--level-title', definition.levelTitle, '--path', paths.payload, '--branch', paths.payloadBranch], ROOT);
       const value = JSON.parse(result.stdout);
       await writeJson(path.join(outputDirectory, 'payload.json'), value);
       return value;

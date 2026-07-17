@@ -42,9 +42,9 @@ Fairness across entrants rests on replay, not on freezing tooling: every gate ru
 
 ## Source-root protocol dispatch
 
-The recorded `benchmarkVersion` selects the source-root contract. Historical v1 (and rehearsal) uses `src/levels/<level-id>/` and its legacy registry-aware scope and payload rules. The directory-only protocol uses `src/benchmark-levels/<level-id>/`; its entrant starts with benchmark-mode scaffolding, includes `level.json`, does not edit `src/levels/index.ts`, and is checked with `scripts/check-benchmark-scope.mjs --version <version>`. Payload extraction uses the same selected root. Never choose a root by probing which directory exists.
+The recorded `benchmarkVersion` selects the source-root contract. Historical v1 (and rehearsal) uses `src/levels/<level-id>/` and its legacy registry-aware scope and payload rules. The directory-only protocol uses `src/benchmark-levels/<level-id>/`; its entrant starts with benchmark-mode scaffolding, includes `level.json`, does not edit `src/levels/index.ts`, and is checked with `scripts/check-benchmark-scope.mjs --level <id> --base <ref>`. Payload extraction uses the same selected root. Never choose a root by probing which directory exists.
 
-For directory-only releases, run `npm run check:benchmark-baseline` against the recorded entrant baseline before launching a model. It verifies the expected built-in tree and rejects promoted benchmark output from the baseline. The descriptor is authored input, but the application catalog must validate its id and title against the loaded definition before the output is considered discoverable.
+For directory-only releases, the recorded entrant baseline must contain the expected built-in tree and no promoted benchmark output. The descriptor is authored input, but the application catalog must validate its id and title against the loaded definition before the output is considered discoverable.
 
 ## Required inputs
 
@@ -86,7 +86,7 @@ Private paths are controller storage. Do not expose or mount the parent `benchma
 Follow `benchmark/releases/README.md` in order:
 
 1. Commit final canonical materials and record the materials commit.
-2. Cut, record, and verify the frozen entrant-baseline commit used for all opaque worktrees. For v1, record every permitted registry id in `entrantBaseline.allowedLevelIds`; for the directory-only protocol, record the output root and expected built-in baseline fingerprint, then run the baseline check to reject promoted output. See `benchmark/releases/README.md` for the clean-baseline procedure.
+2. Cut, record, and verify the frozen entrant-baseline commit used for all opaque worktrees. For v1, record every permitted registry id in `entrantBaseline.allowedLevelIds`; for the directory-only protocol, record the output root and expected built-in baseline fingerprint, and confirm the baseline contains no promoted output. See `benchmark/releases/README.md` for the clean-baseline procedure.
 3. Create and validate the protocol freeze record, commit it, and create the annotated release tag.
 4. Generate the initial private randomized schedule against `benchmark/schemas/run-schedule.schema.json`.
 5. Mechanically verify complete registered-configuration × theme coverage, contiguous schedule positions, unique run/slot/level ids, fixed-length opaque slots, and exact `<theme-id>-<slot-id>` construction. Hash the schedule without printing its contents.

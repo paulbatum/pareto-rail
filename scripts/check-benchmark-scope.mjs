@@ -3,23 +3,19 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { levelFootprint } from './benchmark/protocol.mjs';
+import { benchmarkLevelFootprint, builtInLevelFootprint } from './benchmark/protocol.mjs';
 
 const execFileAsync = promisify(execFile);
 
-// This checker and scripts/benchmark/protocol.mjs travel together in synthetic
-// repositories and frozen benchmark controllers. The recorded version, not
-// filesystem probing, selects the contract.
-export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD', benchmarkVersion = 'v2', migration = false } = {}) {
+// The invocation form selects the footprint: the positional form checks a built-in
+// level (src/levels/<id> plus the registry index), the flag form checks a benchmark
+// entrant (src/benchmark-levels/<id>). This checker and protocol.mjs travel together
+// in the isolated entrant checkout.
+export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD', builtIn = false } = {}) {
   if (!levelId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(levelId)) throw new Error('A safe benchmark level id is required.');
-  const footprint = levelFootprint(levelId, benchmarkVersion);
+  const footprint = builtIn ? builtInLevelFootprint(levelId) : benchmarkLevelFootprint(levelId);
   const allowedRoots = [...footprint.roots];
   const allowedShared = new Set(footprint.sharedDerived);
-  if (migration) {
-    const legacy = levelFootprint(levelId, 'v1');
-    allowedRoots.push(...legacy.roots.filter((rootEntry) => rootEntry.id === 'source'));
-    for (const sharedPath of legacy.sharedDerived) allowedShared.add(sharedPath);
-  }
 
   const changed = new Set();
   const tracked = await git(root, ['diff', '--name-only', base]);
@@ -44,7 +40,7 @@ async function git(cwd, args) {
 function parseCli(args) {
   if (args[0] && !args[0].startsWith('-')) {
     if (args.length > 2) throw new Error('Usage: npm run check:scope -- <level-id> [base-ref]');
-    return { levelId: args[0], base: args[1] ?? 'main', benchmarkVersion: 'v1', migration: false, root: process.cwd() };
+    return { levelId: args[0], base: args[1] ?? 'main', builtIn: true, root: process.cwd() };
   }
   const get = (name) => {
     const index = args.indexOf(name);
@@ -53,8 +49,7 @@ function parseCli(args) {
   return {
     levelId: get('--level'),
     base: get('--base') ?? 'HEAD',
-    benchmarkVersion: get('--version') ?? get('--benchmark-version') ?? 'v2',
-    migration: args.includes('--migration'),
+    builtIn: false,
     root: path.resolve(get('--root') ?? process.cwd()),
   };
 }

@@ -54,7 +54,7 @@ npm run scaffold -- --mode benchmark --id <id> --title '<Title>'
 This creates `src/benchmark-levels/<id>/`, including `index.ts`, `gameplay.ts`, `audio.ts`, `visuals/index.ts`, `level.json`, and `level.md`. The descriptor is controller-free authored input, but discovery validates its id and title against the loaded `LevelDefinition`; do not treat it as a second gameplay identity or edit shared registry code. The benchmark scope gate permits the assigned directory, the level's own gallery content directory `public/level-content/<id>/` (for self-produced hero/overview/start images referenced by `level.json`), and explicitly permitted derived gallery output:
 
 ```sh
-npm run check:benchmark-scope -- --version v2 --level <id> --base <entrant-baseline-ref>
+npm run check:benchmark-scope -- --level <id> --base <entrant-baseline-ref>
 ```
 
 Benchmark levels are discovered automatically by the permanent catalog and appear in the normal development picker, simulation, floor checks, and gameplay snapshots. Do not add them to `src/levels/index.ts`.

@@ -1,47 +1,28 @@
 #!/usr/bin/env node
 
 /**
- * Source-root contracts are selected by the recorded benchmark version. Do not
- * infer a contract from whichever directory happens to exist in a worktree.
+ * The two level footprints the repository recognizes. A footprint is the set of
+ * per-id roots and controller-mediated shared files owned by one level. Per-id
+ * roots are disjoint across level ids, so independently generated outputs
+ * integrate without touching shared engine code.
  */
-export const LEGACY_SOURCE_ROOT = 'src/levels';
-export const DIRECTORY_SOURCE_ROOT = 'src/benchmark-levels';
+export const BUILT_IN_SOURCE_ROOT = 'src/levels';
+export const BENCHMARK_SOURCE_ROOT = 'src/benchmark-levels';
 export const LEVEL_GALLERY_PATH = 'docs/level-gallery.md';
-export const LEGACY_LEVEL_REGISTRY_PATH = 'src/levels/index.ts';
-
-export function protocolForVersion(version) {
-  if (version === 'v1' || version === 'rehearsal') {
-    return {
-      benchmarkVersion: version,
-      sourceRoot: LEGACY_SOURCE_ROOT,
-      directoryOnly: false,
-      promotionRequired: true,
-    };
-  }
-  if (/^v[2-9][0-9]*$/.test(version ?? '')) {
-    return {
-      benchmarkVersion: version,
-      sourceRoot: DIRECTORY_SOURCE_ROOT,
-      directoryOnly: true,
-      promotionRequired: false,
-    };
-  }
-  throw new Error(`Unsupported benchmark protocol version: ${version}`);
-}
+export const BUILT_IN_LEVEL_REGISTRY_PATH = 'src/levels/index.ts';
 
 /**
- * The per-id roots and controller-mediated shared files owned by one level.
- * Per-id roots are disjoint across level ids, allowing independently generated
- * outputs to integrate without touching shared engine code.
+ * Benchmark levels: entrant-authored directories under src/benchmark-levels/<id>,
+ * auto-discovered by Vite, each carrying its own level.json descriptor. This is the
+ * only footprint the controller pipeline (seal/gates/payload/promotion) uses.
  */
-export function levelFootprint(levelId, version) {
-  const protocol = protocolForVersion(version);
+export function benchmarkLevelFootprint(levelId) {
   return {
     roots: [
       {
         id: 'source',
-        path: `${protocol.sourceRoot}/${levelId}`,
-        promotedPath: `${DIRECTORY_SOURCE_ROOT}/${levelId}`,
+        path: `${BENCHMARK_SOURCE_ROOT}/${levelId}`,
+        promotedPath: `${BENCHMARK_SOURCE_ROOT}/${levelId}`,
         required: true,
       },
       {
@@ -51,17 +32,30 @@ export function levelFootprint(levelId, version) {
         required: false,
       },
     ],
-    sharedDerived: [
-      LEVEL_GALLERY_PATH,
-      ...(protocol.directoryOnly ? [] : [LEGACY_LEVEL_REGISTRY_PATH]),
-    ],
+    sharedDerived: [LEVEL_GALLERY_PATH],
   };
 }
 
-export function sourceRootForVersion(version) {
-  return protocolForVersion(version).sourceRoot;
-}
-
-export function isDirectoryOnlyVersion(version) {
-  return protocolForVersion(version).directoryOnly;
+/**
+ * Built-in levels: hand-registered directories under src/levels/<id>, with the
+ * registry index as shared-derived. Used only by the level-authoring scope check.
+ */
+export function builtInLevelFootprint(levelId) {
+  return {
+    roots: [
+      {
+        id: 'source',
+        path: `${BUILT_IN_SOURCE_ROOT}/${levelId}`,
+        promotedPath: `${BUILT_IN_SOURCE_ROOT}/${levelId}`,
+        required: true,
+      },
+      {
+        id: 'content',
+        path: `public/level-content/${levelId}`,
+        promotedPath: `public/level-content/${levelId}`,
+        required: false,
+      },
+    ],
+    sharedDerived: [LEVEL_GALLERY_PATH, BUILT_IN_LEVEL_REGISTRY_PATH],
+  };
 }
