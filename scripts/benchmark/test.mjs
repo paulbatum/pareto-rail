@@ -8,8 +8,7 @@ import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
-import { dispositionFor, manifestNeedsRefresh, reusableGateRecord, validateDefinition as validateRunDefinition, validateEligibleControls, validateRuntimeSchedule } from './run.mjs';
-import { createSchedule, extendSchedule, validateSchedule } from './schedule.mjs';
+import { assertSiblingBaseRendering, dispositionFor, firstLevelOneHeading, manifestNeedsRefresh, reusableGateRecord, validatePlan, validateRunDefinition } from './run.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
@@ -22,71 +21,6 @@ import { sha256 } from './common.mjs';
 const exec = promisify(execFile);
 
 const hash = (character) => character.repeat(64);
-const configuration = (id, character, model = `model-${id}`) => ({
-  id,
-  configurationCommit: character.repeat(40),
-  recipe: { id, path: `benchmark/recipes/${id}.md`, sha256: hash(character) },
-  stage: { adapter: 'codex-cli', model, effort: 'high', timeoutSeconds: 10_800 },
-});
-
-function definition() {
-  return {
-    benchmarkVersion: 'v1',
-    configurations: [
-      configuration('solo-a', 'a'),
-      configuration('solo-b', 'b'),
-      configuration('delegation', 'c'),
-    ],
-    themes: [
-      { id: 'cinder', path: 'benchmark/themes/cinder.md', sha256: hash('d'), levelTitle: 'Cinder' },
-      { id: 'tide', path: 'benchmark/themes/tide.md', sha256: hash('e'), levelTitle: 'Tide' },
-      { id: 'vault', path: 'benchmark/themes/vault.md', sha256: hash('f'), levelTitle: 'Vault' },
-    ],
-  };
-}
-
-const schedule = createSchedule(definition());
-assert.equal(schedule.assignments.length, 9);
-assert.deepEqual(validateSchedule(schedule, definition()), []);
-assert.equal(new Set(schedule.assignments.map((assignment) => assignment.slotId)).size, 9);
-for (const assignment of schedule.assignments) {
-  assert.equal(assignment.levelId, `${assignment.theme.id}-${assignment.slotId}`);
-  assert.equal(Object.hasOwn(assignment, 'runner'), false);
-  assert.equal(Object.hasOwn(assignment, 'executor'), false);
-}
-const legacySchedule = structuredClone(schedule);
-legacySchedule.assignments[0].runner = { path: 'scripts/benchmark/run.mjs', sha256: hash('a') };
-legacySchedule.assignments[0].executor = { path: 'scripts/benchmark/codex-cli.mjs', sha256: hash('a') };
-assert.deepEqual(validateSchedule(legacySchedule, definition()), []);
-
-const budgetDefinition = definition();
-budgetDefinition.configurations[0].stage.budget = { usd: 20 };
-const budgetSchedule = createSchedule(budgetDefinition);
-assert.equal(budgetSchedule.assignments.find(({ configurationId }) => configurationId === 'solo-a').stage.budget.usd, 20);
-assert.deepEqual(validateSchedule(budgetSchedule, budgetDefinition), []);
-const invalidBudgetDefinition = structuredClone(budgetDefinition);
-invalidBudgetDefinition.configurations[0].stage.budget.usd = 0;
-assert.ok(validateSchedule(budgetSchedule, invalidBudgetDefinition).some((error) => error.includes('budget.usd')));
-const unknownBudgetField = structuredClone(budgetDefinition);
-unknownBudgetField.configurations[0].stage.budget.extra = true;
-assert.ok(validateSchedule(budgetSchedule, unknownBudgetField).some((error) => error.includes('unknown field extra')));
-
-const brokenSchedule = structuredClone(schedule);
-brokenSchedule.assignments[0].levelId = 'wrong';
-assert.ok(validateSchedule(brokenSchedule, definition()).some((error) => error.includes('levelId')));
-
-const extendedDefinition = definition();
-extendedDefinition.configurations.push(configuration('solo-c', '1'));
-const extendedSchedule = extendSchedule(schedule, extendedDefinition);
-assert.equal(extendedSchedule.assignments.length, 12);
-assert.deepEqual(extendedSchedule.assignments.slice(0, 9), schedule.assignments);
-assert.deepEqual(validateSchedule(extendedSchedule, extendedDefinition), []);
-const changedDefinition = structuredClone(extendedDefinition);
-changedDefinition.configurations[0].recipe.sha256 = hash('2');
-assert.throws(() => extendSchedule(schedule, changedDefinition), /changed its registered recipe/);
-const changedStageDefinition = structuredClone(extendedDefinition);
-changedStageDefinition.configurations[0].stage.model = 'changed-model';
-assert.throws(() => extendSchedule(schedule, changedStageDefinition), /changed its registered execution inputs/);
 
 const projection = {
   benchmarkVersion: 'v1',
@@ -156,84 +90,53 @@ assert.equal(
 );
 assert.throws(() => renderAssignment('{{LEVEL_ID}} {{LEVEL_TITLE}} {{LEVEL_TITLE}} {{THEME}}', { levelId: 'x', levelTitle: 'X', theme: 'T' }), /Expected exactly one \{\{LEVEL_TITLE\}\}/);
 
-const runDefinition = {
-  schemaVersion: 1,
-  benchmarkVersion: 'rehearsal',
-  mode: 'rehearsal',
-  assignment: {
-    runId: 'run-a1b2c3d4', slotId: 'a1b2', configurationId: 'codex-terra-high', levelId: 'cinder-a1b2', levelTitle: 'Cinder',
-    recipe: { path: 'benchmark/recipes/codex-terra-high.md', sha256: hash('a') },
-    theme: { id: 'cinder', path: 'benchmark/examples/cinder.md', sha256: hash('b') },
-  },
-  baseline: { materialsCommit: 'c'.repeat(40), entrantBaseline: 'd'.repeat(40) },
-  template: { path: 'benchmark/prompts/level-assignment.md', sha256: hash('e') },
-  failureTaxonomy: { path: 'benchmark/controller/failure-taxonomy.md', sha256: hash('f') },
-  stage: { adapter: 'codex-cli', model: 'gpt-5.6-terra', effort: 'high', timeoutSeconds: 10_800 },
-  worktree: { path: '/tmp/pareto-rail-run-a1b2c3d4' },
-  payload: { path: '/tmp/pareto-rail-payload-a1b2c3d4', branch: 'benchmark-payload-a1b2c3d4' },
+const plan = {
+  benchmarkVersion: 'v2',
+  materialsCommit: 'c'.repeat(40),
+  entrantBaseline: 'd'.repeat(40),
+  runs: [{
+    runId: 'run-a1b2c3d4', slotId: 'a1b2', levelId: 'cinder-a1b2', themeId: 'cinder', themePath: 'benchmark/themes/cinder.md',
+    configurationId: 'codex-terra-high', recipePath: 'benchmark/recipes/codex-terra-high.md',
+    stage: { adapter: 'codex-cli', model: 'gpt-5.6-terra', effort: 'high', timeoutSeconds: 10_800 },
+  }],
 };
-assert.deepEqual(validateRunDefinition(runDefinition), []);
-assert.deepEqual(dispositionFor({ mode: 'eligible', passing: false, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'dnf', reasonCode: 'required-gate-failed' });
-const budgetRunDefinition = structuredClone(runDefinition);
-budgetRunDefinition.stage.budget = { usd: 20 };
-assert.deepEqual(validateRunDefinition(budgetRunDefinition), []);
-const invalidBudgetRunDefinition = structuredClone(budgetRunDefinition);
-invalidBudgetRunDefinition.stage.budget.usd = Number.POSITIVE_INFINITY;
-assert.ok(validateRunDefinition(invalidBudgetRunDefinition).some((error) => error.includes('budget.usd')));
-const unknownBudgetRunField = structuredClone(budgetRunDefinition);
-unknownBudgetRunField.stage.budget.extra = true;
-assert.ok(validateRunDefinition(unknownBudgetRunField).some((error) => error.includes('unknown field extra')));
-runDefinition.stage.effort = 'invalid';
-assert.ok(validateRunDefinition(runDefinition).some((error) => error.includes('stage.effort')));
-runDefinition.stage.effort = 'high';
-
-const delegationRunDefinition = {
-  ...structuredClone(runDefinition),
-  delegation: {
-    prompt: { path: 'benchmark/prompts/flexible-delegation.md', sha256: hash('a') },
-    delegateModel: 'gpt-5.6-terra',
-    delegateEffort: 'low',
-  },
-};
-assert.deepEqual(validateRunDefinition(delegationRunDefinition), []);
-const badDelegation = structuredClone(delegationRunDefinition);
-badDelegation.delegation.delegateEffort = 'invalid';
-assert.ok(validateRunDefinition(badDelegation).some((error) => error.includes('delegation.delegateEffort')));
-const missingDelegateModel = structuredClone(delegationRunDefinition);
-delete missingDelegateModel.delegation.delegateModel;
-assert.ok(validateRunDefinition(missingDelegateModel).some((error) => error.includes('delegation.delegateModel')));
-const legacyPricing = { ...structuredClone(runDefinition), pricing: { path: 'benchmark/pricing/x.json', sha256: hash('a') } };
-assert.ok(validateRunDefinition(legacyPricing).some((error) => error.includes('unknown field pricing')));
-
-const claudeRunDefinition = {
-  ...structuredClone(runDefinition),
-  stage: { adapter: 'claude-cli', model: 'claude-fable-5', effort: 'high', timeoutSeconds: 10_800 },
-};
-assert.deepEqual(validateRunDefinition(claudeRunDefinition), []);
-const directoryOnlyRunDefinition = { ...structuredClone(runDefinition), benchmarkVersion: 'v2', mode: 'rehearsal' };
-assert.deepEqual(validateRunDefinition(directoryOnlyRunDefinition), []);
-const unknownProtocol = { ...structuredClone(runDefinition), benchmarkVersion: 'v0' };
-assert.ok(validateRunDefinition(unknownProtocol).some((error) => error.includes('Unsupported benchmark protocol version')));
-const unknownAdapter = { ...structuredClone(claudeRunDefinition), stage: { ...claudeRunDefinition.stage, adapter: 'unknown-cli' } };
-assert.ok(validateRunDefinition(unknownAdapter).some((error) => error.includes('stage.adapter')));
-
-const eligibleRunDefinition = {
-  ...structuredClone(runDefinition),
-  benchmarkVersion: 'v1',
-  mode: 'eligible',
-  baseline: { ...runDefinition.baseline, configurationCommit: 'e'.repeat(40) },
-  release: { path: 'benchmark/releases/v1/freeze.json', sha256: hash('1') },
-  schedule: { path: 'benchmark/private/run-schedule.json', sha256: hash('2') },
-  runner: { path: 'scripts/benchmark/run.mjs', sha256: hash('3') },
-  executor: { path: 'scripts/benchmark/codex-cli.mjs', sha256: hash('4') },
-  stage: { ...runDefinition.stage, effort: 'high' },
-};
-assert.deepEqual(validateRunDefinition(eligibleRunDefinition), []);
-delete eligibleRunDefinition.schedule;
-assert.ok(validateRunDefinition(eligibleRunDefinition).some((error) => error.includes('definition.schedule')));
-eligibleRunDefinition.schedule = { path: 'benchmark/private/run-schedule.json', sha256: hash('2') };
-delete eligibleRunDefinition.runner;
-assert.deepEqual(validateRunDefinition(eligibleRunDefinition), []);
+assert.deepEqual(validatePlan(plan), []);
+assert.deepEqual(validateRunDefinition({ ...plan, ...plan.runs[0], levelTitle: 'Cinder' }), []);
+assert.deepEqual(dispositionFor({ kind: 'benchmark', passing: false, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'dnf', reasonCode: 'required-gate-failed' });
+assert.deepEqual(dispositionFor({ kind: 'rehearsal', passing: true, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'rehearsal' });
+const duplicateSlotPlan = structuredClone(plan);
+duplicateSlotPlan.runs.push({ ...plan.runs[0], runId: 'run-b2c3d4e5' });
+assert.ok(validatePlan(duplicateSlotPlan).some((error) => error.includes('slotId duplicates')));
+const badLevelPlan = structuredClone(plan);
+badLevelPlan.runs[0].levelId = 'wrong-level';
+assert.ok(validatePlan(badLevelPlan).some((error) => error.includes('levelId must equal')));
+const invalidBudgetPlan = structuredClone(plan);
+invalidBudgetPlan.runs[0].stage.budget = { usd: Number.POSITIVE_INFINITY };
+assert.ok(validatePlan(invalidBudgetPlan).some((error) => error.includes('budget.usd')));
+const delegationPlan = structuredClone(plan);
+delegationPlan.runs[0].delegation = { promptPath: 'benchmark/prompts/flexible-delegation.md', delegateModel: 'gpt-5.6-terra', delegateEffort: 'low' };
+assert.deepEqual(validatePlan(delegationPlan), []);
+const badDelegation = structuredClone(delegationPlan);
+badDelegation.runs[0].delegation.delegateEffort = 'invalid';
+assert.ok(validatePlan(badDelegation).some((error) => error.includes('delegation.delegateEffort')));
+assert.equal(firstLevelOneHeading('before\n# Derived Title  \n## detail'), 'Derived Title');
+assert.equal(firstLevelOneHeading('no heading here'), undefined);
+const renderingRuns = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-rendering-runs-'));
+try {
+  const sibling = path.join(renderingRuns, 'run-sibling');
+  await fs.mkdir(sibling, { recursive: true });
+  await fs.writeFile(path.join(sibling, 'run-definition.json'), JSON.stringify({ benchmarkVersion: 'v2', themeId: 'cinder', runId: 'run-sibling' }));
+  await fs.writeFile(path.join(sibling, 'rendered-assignment.md'), 'shared base');
+  await fs.writeFile(path.join(sibling, 'rendered-assignment.json'), JSON.stringify({ baseRendering: { sha256: sha256('different base') } }));
+  await assert.rejects(
+    () => assertSiblingBaseRendering({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sha256('shared base')),
+    /base differs from sibling/,
+  );
+  await fs.writeFile(path.join(sibling, 'rendered-assignment.json'), JSON.stringify({ baseRendering: { sha256: sha256('shared base') } }));
+  await assert.doesNotReject(() => assertSiblingBaseRendering({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sha256('shared base')));
+} finally {
+  await fs.rm(renderingRuns, { recursive: true, force: true });
+}
 
 const delegationAddendum = renderDelegation('Delegate to `{{DELEGATE_MODEL}}` at `{{DELEGATE_EFFORT}}`; report to {{DELEGATE_MODEL}}.', {
   delegateModel: 'opus',
@@ -733,109 +636,10 @@ try {
   await fs.rm(directoryOnlyRepo, { recursive: true, force: true });
 }
 
-const controlsFixture = await createControlsFixture();
-try {
-  const { definition: controlsDefinition, scheduleValue, materials, configurationCommit, entrantBaseline, root: controlsRoot } = controlsFixture;
-  assert.deepEqual(
-    Object.keys((await validateEligibleControls(controlsDefinition, materials, configurationCommit, entrantBaseline, { root: controlsRoot })).schedule.assignments[0]).sort(),
-    ['configurationCommit', 'configurationId', 'levelId', 'levelTitle', 'recipe', 'runId', 'scheduleIndex', 'slotId', 'stage', 'theme'].sort(),
-  );
-  const tamperedTheme = structuredClone(controlsDefinition);
-  tamperedTheme.assignment.theme.sha256 = sha256('tampered theme');
-  await assert.rejects(() => validateEligibleControls(tamperedTheme, materials, configurationCommit, entrantBaseline, { root: controlsRoot }), /not frozen by the release/);
-  const wrongScheduleHash = structuredClone(controlsDefinition);
-  wrongScheduleHash.schedule.sha256 = sha256('wrong schedule');
-  await assert.rejects(() => validateEligibleControls(wrongScheduleHash, materials, configurationCommit, entrantBaseline, { root: controlsRoot }), /schedule hash/);
-  const mismatchedAssignment = structuredClone(controlsDefinition);
-  mismatchedAssignment.assignment.levelTitle = 'Different title';
-  await assert.rejects(() => validateEligibleControls(mismatchedAssignment, materials, configurationCommit, entrantBaseline, { root: controlsRoot }), /absent from or differs/);
-  const missingReleaseArtifact = structuredClone(controlsDefinition);
-  missingReleaseArtifact.template.sha256 = sha256('missing release artifact');
-  await assert.rejects(() => validateEligibleControls(missingReleaseArtifact, materials, configurationCommit, entrantBaseline, { root: controlsRoot }), /not frozen by the release/);
-  assert.equal(validateRuntimeSchedule(scheduleValue, 'v1'), undefined);
-  assert.equal(validateRuntimeSchedule({ ...scheduleValue, assignments: scheduleValue.assignments.map((assignment) => ({ ...assignment, runner: { path: 'legacy-runner', sha256: hash('a') }, executor: { path: 'legacy-executor', sha256: hash('a') } })) }, 'v1'), undefined);
-} finally {
-  await controlsFixture.cleanup();
-}
-
 const adminSource = await fs.readFile(path.join(process.cwd(), 'scripts/benchmark/admin.mjs'), 'utf8');
 assert.match(adminSource, /CONTROLLER_SCOPE_SCRIPT/);
 assert.doesNotMatch(adminSource, /path\.resolve\(worktree, 'scripts\/check-benchmark-scope\.mjs'\)/);
 await assertMissingGatesResumeFixture();
-
-async function createControlsFixture() {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-controls-'));
-  const schedulePath = `${root}-schedule.json`;
-  const files = {
-    'benchmark/prompts/level-assignment.md': '# Assignment\n{{LEVEL_ID}} {{LEVEL_TITLE}} {{THEME}}\n',
-    'benchmark/themes/cinder.md': '# Cinder\nA frozen cinder theme.\n',
-    'benchmark/controller/failure-taxonomy.md': '# Failures\n',
-    'benchmark/recipes/solo.md': '# Recipe\n',
-    'src/levels/index.ts': "export const levelMetadatas: LevelMetadata[] = [\n  { id: 'anchor', title: 'Anchor' },\n];\n",
-  };
-  for (const [file, source] of Object.entries(files)) {
-    await fs.mkdir(path.dirname(path.join(root, file)), { recursive: true });
-    await fs.writeFile(path.join(root, file), source);
-  }
-  await exec('git', ['init', '-q'], { cwd: root });
-  await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: root });
-  await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: root });
-  await exec('git', ['add', '.'], { cwd: root });
-  await exec('git', ['commit', '-qm', 'materials'], { cwd: root });
-  const materials = (await exec('git', ['rev-parse', 'HEAD'], { cwd: root })).stdout.trim();
-  const entrantBaseline = materials;
-  const recipe = { id: 'solo', path: 'benchmark/recipes/solo.md', sha256: sha256(files['benchmark/recipes/solo.md']) };
-  const theme = { id: 'cinder', path: 'benchmark/themes/cinder.md', sha256: sha256(files['benchmark/themes/cinder.md']) };
-  const template = { path: 'benchmark/prompts/level-assignment.md', sha256: sha256(files['benchmark/prompts/level-assignment.md']) };
-  const failureTaxonomy = { path: 'benchmark/controller/failure-taxonomy.md', sha256: sha256(files['benchmark/controller/failure-taxonomy.md']) };
-  const assignment = {
-    runId: 'run-a1b2c3d4',
-    slotId: 'a1b2',
-    configurationId: 'solo',
-    configurationCommit: materials,
-    recipe,
-    stage: { adapter: 'codex-cli', model: 'model-solo', effort: 'high', timeoutSeconds: 60 },
-    theme,
-    levelId: 'cinder-a1b2',
-    levelTitle: 'Cinder',
-  };
-  const scheduleValue = {
-    schemaVersion: 1,
-    benchmarkVersion: 'v1',
-    generatedAt: new Date().toISOString(),
-    randomization: { method: 'cryptographic-shuffle' },
-    assignments: [{ scheduleIndex: 1, ...assignment }],
-  };
-  await fs.writeFile(schedulePath, `${JSON.stringify(scheduleValue, null, 2)}\n`);
-  const release = {
-    schemaVersion: 1,
-    benchmarkVersion: 'v1',
-    frozenAt: new Date().toISOString(),
-    materialsCommit: materials,
-    entrantBaseline: { kind: 'git-commit', identifier: entrantBaseline, allowedLevelIds: ['anchor'] },
-    artifacts: [template, theme, failureTaxonomy],
-  };
-  await fs.mkdir(path.join(root, 'benchmark/releases/v1'), { recursive: true });
-  await fs.writeFile(path.join(root, 'benchmark/releases/v1/freeze.json'), `${JSON.stringify(release, null, 2)}\n`);
-  await exec('git', ['add', '.'], { cwd: root });
-  await exec('git', ['commit', '-qm', 'release'], { cwd: root });
-  await exec('git', ['tag', 'benchmark-v1'], { cwd: root });
-  const definition = {
-    schemaVersion: 1,
-    benchmarkVersion: 'v1',
-    mode: 'eligible',
-    assignment,
-    baseline: { materialsCommit: materials, entrantBaseline, configurationCommit: materials },
-    release: { path: 'benchmark/releases/v1/freeze.json', sha256: sha256(`${JSON.stringify(release, null, 2)}\n`) },
-    schedule: { path: schedulePath, sha256: sha256(`${JSON.stringify(scheduleValue, null, 2)}\n`) },
-    template,
-    failureTaxonomy,
-    stage: assignment.stage,
-    worktree: { path: path.join(root, 'entrant-worktree') },
-    payload: { path: path.join(root, 'payload-worktree'), branch: 'benchmark-payload-a1b2' },
-  };
-  return { root, schedulePath, definition, scheduleValue, materials, configurationCommit: materials, entrantBaseline, cleanup: async () => { await fs.rm(root, { recursive: true, force: true }); await fs.rm(schedulePath, { force: true }); } };
-}
 
 async function assertMissingGatesResumeFixture() {
   const runDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-missing-gates-'));
@@ -846,7 +650,7 @@ async function assertMissingGatesResumeFixture() {
     const oldManifest = { output: { evaluated: { commit: evaluatedCommit } }, gates: [{ id: 'typecheck', status: 'failed' }], disposition: { status: 'dnf' } };
     const newGateRecord = { evaluatedCommit, gates: ['typecheck', 'build', 'scope', 'floor'].map((id) => ({ id, status: 'passed' })) };
     assert.equal(manifestNeedsRefresh(oldManifest, { evaluatedCommit }, null, newGateRecord), true, 'changed gate results must refresh the manifest on resume');
-    assert.deepEqual(dispositionFor({ mode: 'eligible', passing: true, payload: null }), { status: 'dnf', reasonCode: 'payload-pending' });
+    assert.deepEqual(dispositionFor({ kind: 'benchmark', passing: true, payload: null }), { status: 'dnf', reasonCode: 'payload-pending' });
     await fs.mkdir(path.join(runDirectory, 'gates'), { recursive: true });
     await fs.writeFile(path.join(runDirectory, 'gates/gates.json'), `${JSON.stringify(newGateRecord)}\n`);
     assert.deepEqual(await reusableGateRecord(runDirectory, evaluatedCommit), newGateRecord);

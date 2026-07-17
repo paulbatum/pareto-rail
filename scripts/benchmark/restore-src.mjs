@@ -22,7 +22,9 @@ async function main() {
 
   const runDirectory = path.resolve(rest[0]);
   const definition = await readJson(path.join(runDirectory, 'run-definition.json'));
-  const baseline = definition.baseline.entrantBaseline;
+  const baseline = definition.entrantBaseline;
+  const runId = definition.runId;
+  const worktreePath = path.join('/tmp', `pareto-rail-${runId}`);
   const rolloutPath = await findRolloutJsonl(runDirectory);
   const rolloutSource = await fs.readFile(rolloutPath, 'utf8');
   const rows = rolloutSource.split('\n').filter(Boolean).map((line) => JSON.parse(line));
@@ -31,7 +33,7 @@ async function main() {
   let createdWorktree = false;
   if (options.worktree) {
     if (!existsSync(target)) {
-      const branch = options.branch ?? `benchmark-run-${definition.assignment.runId}`;
+      const branch = options.branch ?? `benchmark-run-${runId}`;
       await run('git', ['worktree', 'add', '-b', branch, target, baseline], ROOT);
       createdWorktree = true;
     }
@@ -79,7 +81,7 @@ async function main() {
       if (content.type !== 'tool_use' || !successfulToolIds.has(content.id)) continue;
       if (!['Write', 'Edit'].includes(content.name)) continue;
       const input = content.input ?? {};
-      const relativePath = entrantRelativePath(input.file_path, definition.worktree.path);
+      const relativePath = entrantRelativePath(input.file_path, worktreePath);
       if (!relativePath || relativePath.startsWith('..') || path.isAbsolute(relativePath)) continue;
       const snapshot = resultSnapshots.get(content.id);
       if (content.name === 'Write') {
@@ -111,7 +113,7 @@ async function main() {
   const record = {
     schemaVersion: 1,
     recoveredAt: new Date().toISOString(),
-    runId: definition.assignment.runId,
+    runId,
     entrantBaseline: baseline,
     rolloutPath: path.relative(runDirectory, rolloutPath),
     rolloutSha256: sha256(rolloutSource),

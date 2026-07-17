@@ -10,22 +10,21 @@ import {
   fail,
   isPlainObject,
   parseArgs,
-  pathInside,
   readJson,
   requireOption,
   sha256,
 } from './common.mjs';
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
-import { assertBaselineLevelAllowlist, levelIdsFromRegistry, validateBaselineLevelAllowlist } from './entrant-baseline.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
-import { promoteRun } from './promote.mjs';
-import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
-import { protocolForVersion } from './protocol.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
+const RUNS_DIRECTORY = path.join(ROOT, 'benchmark/private/runs');
+const SOURCE_ROOT = 'src/benchmark-levels';
+const ASSIGNMENT_TEMPLATE_PATH = 'benchmark/prompts/level-assignment.md';
+const EFFORTS = new Set(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra']);
 
 async function writeJson(filePath, value) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -89,39 +88,51 @@ async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
   if (options.help) {
     console.log(`Usage:
-  npm run benchmark:run -- --definition <definition.json> --out <run-directory>
+  npm run benchmark:run -- --plan <plan.json> --run <runId>
   npm run benchmark:run -- --resume <run-directory> [--accept-stage-output true]`);
     return;
   }
   if (rest.length) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'definition', 'out', 'resume', 'accept-stage-output']));
+  assertOnlyOptions(options, new Set(['help', 'plan', 'run', 'resume', 'accept-stage-output']));
   const resuming = Boolean(options.resume);
-  if (resuming && (options.definition || options.out)) fail('--resume cannot be combined with --definition or --out.');
-  const outputDirectory = assertPrivateOrExternalPath(resuming ? options.resume : requireOption(options, 'out'), ROOT);
-  const definitionPath = resuming
-    ? path.join(outputDirectory, 'run-definition.json')
-    : assertPrivateOrExternalPath(requireOption(options, 'definition'), ROOT);
-  if (!resuming) await assertAbsent(outputDirectory, 'run output directory');
-  const definition = await readJson(definitionPath);
-  const errors = validateDefinition(definition);
-  if (errors.length) fail(`Invalid run definition:\n${errors.map((error) => `- ${error}`).join('\n')}`);
-  if (path.basename(outputDirectory) !== definition.assignment.runId) fail('Run directory must end with the assignment runId.');
-  if (!resuming) {
+  if (resuming && (options.plan || options.run)) fail('--resume cannot be combined with --plan or --run.');
+  if (!resuming && (!options.plan || !options.run)) fail('A new run requires --plan and --run.');
+
+  let definition;
+  let outputDirectory;
+  if (resuming) {
+    outputDirectory = assertPrivateOrExternalPath(options.resume, ROOT);
+    definition = await readJson(path.join(outputDirectory, 'run-definition.json'));
+    const errors = validateRunDefinition(definition);
+    if (errors.length) fail(`Invalid run definition:\n${errors.map((error) => `- ${error}`).join('\n')}`);
+  } else {
+    const planPath = path.resolve(options.plan);
+    const plan = await readJson(planPath);
+    const planErrors = validatePlan(plan);
+    if (planErrors.length) fail(`Invalid plan:\n${planErrors.map((error) => `- ${error}`).join('\n')}`);
+    const row = plan.runs.find((candidate) => candidate.runId === options.run);
+    if (!row) fail(`Plan has no run with runId ${options.run}.`);
+    if (options.run !== path.basename(options.run)) fail('runId must not contain path separators.');
+    outputDirectory = assertPrivateOrExternalPath(path.join(RUNS_DIRECTORY, options.run), ROOT);
+    await assertAbsent(outputDirectory, 'run output directory');
     await assertCleanRepository();
+    const materialsCommit = await gitCommit(plan.materialsCommit);
+    const entrantBaseline = await gitCommit(plan.entrantBaseline);
+    definition = await synthesizeDefinition(plan, row, materialsCommit, entrantBaseline);
+    const errors = validateRunDefinition(definition);
+    if (errors.length) fail(`Invalid run definition:\n${errors.map((error) => `- ${error}`).join('\n')}`);
     await fs.mkdir(outputDirectory, { recursive: true });
     await writeJson(path.join(outputDirectory, 'run-definition.json'), definition);
   }
 
+  if (path.basename(outputDirectory) !== definition.runId) fail('Run directory must end with the runId.');
+  const paths = conventionalRunPaths(definition.runId);
   const statePath = path.join(outputDirectory, 'controller-state.json');
-  const state = await loadControllerState(statePath, definition.assignment.runId, outputDirectory);
+  const state = await loadControllerState(statePath, definition.runId, outputDirectory);
   let worktree;
   try {
-    const materialsCommit = await gitCommit(definition.baseline.materialsCommit);
-    const entrantBaseline = await gitCommit(definition.baseline.entrantBaseline);
-    const configurationCommit = await gitCommit(definition.baseline.configurationCommit ?? materialsCommit);
-    const eligibleControls = definition.mode === 'eligible'
-      ? await validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline)
-      : undefined;
+    const materialsCommit = await gitCommit(definition.materialsCommit);
+    const entrantBaseline = await gitCommit(definition.entrantBaseline);
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
@@ -131,7 +142,7 @@ async function main() {
         if (sha256(rendered) !== existing.rendering?.sha256) fail('Recorded rendered assignment hash does not match its file.');
         return { renderedPath };
       }
-      return prepareInputs(definition, materialsCommit, configurationCommit, outputDirectory);
+      return prepareInputs(definition, materialsCommit, outputDirectory);
     });
 
     worktree = await checkpoint(state, statePath, 'worktree', async () => {
@@ -144,7 +155,7 @@ async function main() {
         await validateWorktree(existing, entrantBaseline);
         return existing;
       }
-      const result = await command(process.execPath, [ADMIN, 'worktree', '--baseline', entrantBaseline, '--run-id', definition.assignment.runId, '--path', definition.worktree.path], ROOT);
+      const result = await command(process.execPath, [ADMIN, 'worktree', '--baseline', entrantBaseline, '--run-id', definition.runId, '--path', paths.worktree], ROOT);
       const created = JSON.parse(result.stdout);
       await writeJson(path.join(outputDirectory, 'worktree.json'), created);
       return created;
@@ -172,7 +183,7 @@ async function main() {
           await recordRecovery(outputDirectory, definition, worktree, launch);
           return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
         }
-        fail(`The recorded stage failed. Resume with --accept-stage-output true only after verifying that the entrant completed its worktree.`);
+        fail('The recorded stage failed. Resume with --accept-stage-output true only after verifying that the entrant completed its worktree.');
       }
       await prepareHarnessHome(adapter, outputDirectory);
       const stageDirectory = path.join(outputDirectory, adapter.stageDir);
@@ -193,7 +204,7 @@ async function main() {
         await validateEvaluated(existing, worktree);
         return existing;
       }
-      const sealed = await command(process.execPath, [ADMIN, 'seal', '--repo', ROOT, '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--version', definition.benchmarkVersion, '--level-title', definition.assignment.levelTitle], ROOT);
+      const sealed = await command(process.execPath, [ADMIN, 'seal', '--repo', ROOT, '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.levelId, '--version', definition.benchmarkVersion, '--level-title', definition.levelTitle], ROOT);
       const value = JSON.parse(sealed.stdout);
       await writeJson(path.join(outputDirectory, 'evaluated.json'), value);
       return value;
@@ -203,7 +214,7 @@ async function main() {
       const existing = await reusableGateRecord(outputDirectory, evaluated.evaluatedCommit);
       if (existing) return existing;
       const gateDirectory = path.join(outputDirectory, 'gates');
-      await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--out', gateDirectory, '--version', definition.benchmarkVersion], ROOT);
+      await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.levelId, '--out', gateDirectory, '--version', definition.benchmarkVersion], ROOT);
       return readJson(path.join(gateDirectory, 'gates.json'));
     });
     const passing = gateRecord.gates.every(({ status }) => status === 'passed');
@@ -212,10 +223,10 @@ async function main() {
       if (!passing) return null;
       const existing = await optionalJson(path.join(outputDirectory, 'payload.json'));
       if (existing) {
-        await validatePayload(existing, materialsCommit, definition.assignment.levelId, definition.benchmarkVersion);
+        await validatePayload(existing, materialsCommit, definition.levelId);
         return existing;
       }
-      const result = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.assignment.levelId, '--level-title', definition.assignment.levelTitle, '--path', definition.payload.path, '--branch', definition.payload.branch, '--version', definition.benchmarkVersion], ROOT);
+      const result = await command(process.execPath, [ADMIN, 'payload', '--repo', ROOT, '--materials', materialsCommit, '--evaluated', evaluated.evaluatedCommit, '--level-id', definition.levelId, '--level-title', definition.levelTitle, '--path', paths.payload, '--branch', paths.payloadBranch, '--version', definition.benchmarkVersion], ROOT);
       const value = JSON.parse(result.stdout);
       await writeJson(path.join(outputDirectory, 'payload.json'), value);
       return value;
@@ -227,22 +238,11 @@ async function main() {
         validateManifest(existing, definition, evaluated, payload, gateRecord);
         return existing;
       }
-      const value = await createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt: state.startedAt });
+      const value = await createManifest({ definition, materialsCommit, entrantBaseline, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt: state.startedAt });
       await writeJson(path.join(outputDirectory, 'manifest.json'), value);
       return value;
     });
-    let promotionStatus = 'not-applicable';
-    if (manifest.disposition.status === 'playable' && protocolForVersion(definition.benchmarkVersion).promotionRequired) {
-      try {
-        promotionStatus = (await promoteRun({ root: ROOT, runDirectory: outputDirectory })).status;
-      } catch (promotionError) {
-        promotionStatus = 'failed';
-        console.error(`Automatic promotion failed; the playable run is unchanged. Resume with: npm run benchmark:promote -- --run ${definition.assignment.runId}`);
-      }
-    } else if (manifest.disposition.status === 'playable') {
-      promotionStatus = 'not-required';
-    }
-    console.log(JSON.stringify({ runId: definition.assignment.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null, promotionStatus, resumed: resuming }));
+    console.log(JSON.stringify({ runId: definition.runId, status: manifest.disposition.status, evaluatedCommit: evaluated.evaluatedCommit, payloadCommit: payload?.payloadCommit ?? null, resumed: resuming }));
     if (!passing) process.exitCode = 2;
   } catch (error) {
     let snapshotError;
@@ -250,7 +250,7 @@ async function main() {
       await createRecoverySnapshot({
         repo: ROOT,
         runDirectory: outputDirectory,
-        runId: definition.assignment.runId,
+        runId: definition.runId,
         worktree: worktree?.worktree,
         checkpoint: state.currentCheckpoint,
         reason: error instanceof Error ? error.message : String(error),
@@ -327,9 +327,9 @@ async function validateEvaluated(evaluated, worktree) {
   if (status) fail('Recorded evaluated worktree is not clean.');
 }
 
-async function validatePayload(payload, materialsCommit, levelId, benchmarkVersion = 'v1') {
+async function validatePayload(payload, materialsCommit, levelId) {
   const payloadCommit = await gitCommit(payload?.payloadCommit);
-  const levelDirectory = `${protocolForVersion(benchmarkVersion).sourceRoot}/${levelId}/`;
+  const levelDirectory = `${SOURCE_ROOT}/${levelId}/`;
   const names = (await command('git', ['diff', '--name-only', `${materialsCommit}..${payloadCommit}`], ROOT)).stdout.trim().split('\n').filter(Boolean);
   if (!names.length || names.some((name) => !name.startsWith(levelDirectory))) fail('Recorded payload does not contain exactly the assigned level directory.');
 }
@@ -346,8 +346,8 @@ export function manifestNeedsRefresh(manifest, evaluated, payload, gateRecord) {
   return gateRecord.gates.some((gate) => recordedGates.get(gate.id) !== gate.status);
 }
 
-export function dispositionFor({ mode, passing, payload }) {
-  if (mode === 'rehearsal') return { status: 'rehearsal' };
+export function dispositionFor({ kind = 'benchmark', passing, payload }) {
+  if (kind === 'rehearsal') return { status: 'rehearsal' };
   if (!passing) return { status: 'dnf', reasonCode: 'required-gate-failed' };
   if (payload) return { status: 'playable' };
   return { status: 'dnf', reasonCode: 'payload-pending' };
@@ -356,7 +356,7 @@ export function dispositionFor({ mode, passing, payload }) {
 function validateManifest(manifest, definition, evaluated, payload, gateRecord) {
   const errors = manifestErrors(manifest);
   if (errors.length) fail(`Recorded manifest is invalid: ${errors.join('; ')}`);
-  if (manifest.runId !== definition.assignment.runId || manifest.output?.levelId !== definition.assignment.levelId) fail('Recorded manifest identity does not match the run definition.');
+  if (manifest.runId !== definition.runId || manifest.output?.levelId !== definition.levelId) fail('Recorded manifest identity does not match the run definition.');
   if (manifest.output?.evaluated?.commit !== evaluated.evaluatedCommit) fail('Recorded manifest evaluated commit does not match evaluated.json.');
   if (payload && manifest.output?.payload?.commit !== payload.payloadCommit) fail('Recorded manifest payload commit does not match payload.json.');
   const gates = new Map(gateRecord.gates.map((gate) => [gate.id, gate.status]));
@@ -374,7 +374,7 @@ async function recordRecovery(outputDirectory, definition, worktree, launch) {
     reason: 'infrastructure-timeout-after-completed-worktree',
     policy: 'completed entrant work accepted; normal sealing and gates resumed',
     originalStageExitCode: launch.exitCode,
-    entrantBaseline: definition.baseline.entrantBaseline,
+    entrantBaseline: definition.entrantBaseline,
     worktree: worktree.worktree,
     reconstructedTreeStatusSha256: sha256(status),
   };
@@ -397,95 +397,160 @@ async function appendControllerFailure(outputDirectory, error, worktree, checkpo
   await writeJson(path.join(outputDirectory, 'controller-failure.json'), failure);
 }
 
-export function validateDefinition(value) {
+export function validatePlan(value) {
   const errors = [];
-  if (!isPlainObject(value)) return ['definition must be an object.'];
-  const keys = new Set(['schemaVersion', 'benchmarkVersion', 'mode', 'assignment', 'baseline', 'release', 'schedule', 'runner', 'executor', 'template', 'failureTaxonomy', 'stage', 'worktree', 'payload', 'delegation']);
-  for (const key of Object.keys(value)) if (!keys.has(key)) errors.push(`definition has unknown field ${key}.`);
-  if (value.schemaVersion !== 1) errors.push('definition.schemaVersion must equal 1.');
-  if (typeof value.benchmarkVersion !== 'string' || !value.benchmarkVersion) errors.push('definition.benchmarkVersion is required.');
-  else {
-    try { protocolForVersion(value.benchmarkVersion); } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
+  if (!isPlainObject(value)) return ['plan must be an object.'];
+  validateString(value.benchmarkVersion, 'plan.benchmarkVersion', errors);
+  if (value.benchmarkVersion !== undefined && value.benchmarkVersion !== 'v2') errors.push('plan.benchmarkVersion must equal v2.');
+  validateString(value.materialsCommit, 'plan.materialsCommit', errors);
+  validateString(value.entrantBaseline, 'plan.entrantBaseline', errors);
+  if (!Array.isArray(value.runs) || value.runs.length === 0) {
+    errors.push('plan.runs must be a non-empty array.');
+    return errors;
   }
-  if (!['rehearsal', 'eligible'].includes(value.mode)) errors.push('definition.mode must be rehearsal or eligible.');
-  validateAssignment(value.assignment, errors);
-  validateCommit(value.baseline?.materialsCommit, 'definition.baseline.materialsCommit', errors);
-  validateCommit(value.baseline?.entrantBaseline, 'definition.baseline.entrantBaseline', errors);
-  if (value.baseline?.configurationCommit !== undefined) validateCommit(value.baseline.configurationCommit, 'definition.baseline.configurationCommit', errors);
-  validateArtifact(value.template, 'definition.template', errors);
-  validateArtifact(value.failureTaxonomy, 'definition.failureTaxonomy', errors);
-  if (value.runner !== undefined) validateArtifact(value.runner, 'definition.runner', errors);
-  if (value.executor !== undefined) validateArtifact(value.executor, 'definition.executor', errors);
-  if (!isPlainObject(value.stage)) errors.push('definition.stage must be an object.');
-  else {
-    const stageKeys = new Set(['adapter', 'model', 'effort', 'timeoutSeconds', 'budget', 'codexBin', 'claudeBin', 'piBin', 'provider']);
-    for (const key of Object.keys(value.stage)) if (!stageKeys.has(key)) errors.push(`definition.stage has unknown field ${key}.`);
-    if (!Object.hasOwn(ADAPTERS, value.stage.adapter)) errors.push(`definition.stage.adapter must be one of: ${Object.keys(ADAPTERS).join(', ')}.`);
-    if (typeof value.stage.model !== 'string' || !value.stage.model) errors.push('definition.stage.model is required.');
-    if (value.stage.provider !== undefined && (typeof value.stage.provider !== 'string' || !value.stage.provider)) errors.push('definition.stage.provider must be a non-empty string.');
-    // The union of every harness's reasoning vocabulary; each adapter rejects the levels its own CLI
-    // does not offer (`ultra` is Codex-only, `minimal`/`off` are pi-only).
-    if (!['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.stage.effort)) errors.push('definition.stage.effort is invalid.');
-    if (!Number.isInteger(value.stage.timeoutSeconds) || value.stage.timeoutSeconds < 1) errors.push('definition.stage.timeoutSeconds must be a positive integer.');
-    if (value.stage.budget !== undefined) {
-      if (!isPlainObject(value.stage.budget)) errors.push('definition.stage.budget must be an object.');
-      else {
-        for (const key of Object.keys(value.stage.budget)) if (key !== 'usd') errors.push(`definition.stage.budget has unknown field ${key}.`);
-        if (!(typeof value.stage.budget.usd === 'number' && Number.isFinite(value.stage.budget.usd) && value.stage.budget.usd > 0)) errors.push('definition.stage.budget.usd must be a positive finite number.');
-      }
+
+  const runIds = new Set();
+  const slotIds = new Set();
+  const levelIds = new Set();
+  for (const [index, row] of value.runs.entries()) {
+    const label = `plan.runs[${index}]`;
+    validateRunRow(row, label, errors, { requireTitle: false });
+    if (!isPlainObject(row)) continue;
+    for (const [field, set] of [['runId', runIds], ['slotId', slotIds], ['levelId', levelIds]]) {
+      if (typeof row[field] !== 'string' || !row[field]) continue;
+      if (set.has(row[field])) errors.push(`${label}.${field} duplicates ${row[field]}.`);
+      set.add(row[field]);
     }
-  }
-  for (const [key, item] of [['worktree', value.worktree], ['payload', value.payload]]) {
-    if (!isPlainObject(item) || typeof item.path !== 'string' || !item.path) errors.push(`definition.${key}.path is required.`);
-    if (key === 'payload' && (!isPlainObject(item) || typeof item.branch !== 'string' || !item.branch)) errors.push('definition.payload.branch is required.');
-  }
-  if (value.delegation !== undefined) validateDelegation(value.delegation, errors);
-  if (value.mode === 'eligible') {
-    validateArtifact(value.release, 'definition.release', errors);
-    validateArtifact(value.schedule, 'definition.schedule', errors);
-    if (value.baseline?.configurationCommit === undefined) errors.push('definition.baseline.configurationCommit is required for an eligible run.');
-    if (!/^v[1-9][0-9]*$/.test(value.benchmarkVersion ?? '')) errors.push('An eligible definition benchmarkVersion must be v<number>.');
   }
   return errors;
 }
 
-async function prepareInputs(definition, materialsCommit, configurationCommit, outputDirectory) {
-  const template = await artifactFromCommit(materialsCommit, definition.template);
-  const theme = await artifactFromCommit(materialsCommit, definition.assignment.theme);
-  await artifactFromCommit(configurationCommit, definition.assignment.recipe);
-  await artifactFromCommit(materialsCommit, definition.failureTaxonomy);
+export function validateRunDefinition(value) {
+  const errors = [];
+  if (!isPlainObject(value)) return ['run definition must be an object.'];
+  validateString(value.benchmarkVersion, 'run definition.benchmarkVersion', errors);
+  if (value.benchmarkVersion !== undefined && value.benchmarkVersion !== 'v2') errors.push('run definition.benchmarkVersion must equal v2.');
+  validateString(value.materialsCommit, 'run definition.materialsCommit', errors);
+  validateString(value.entrantBaseline, 'run definition.entrantBaseline', errors);
+  validateRunRow(value, 'run definition', errors, { requireTitle: true });
+  return errors;
+}
+
+function validateRunRow(row, label, errors, { requireTitle }) {
+  if (!isPlainObject(row)) { errors.push(`${label} must be an object.`); return; }
+  for (const field of ['runId', 'slotId', 'levelId', 'themeId', 'themePath', 'configurationId', 'recipePath']) validateString(row[field], `${label}.${field}`, errors);
+  if (requireTitle) validateString(row.levelTitle, `${label}.levelTitle`, errors);
+  if (row.kind !== undefined && !['rehearsal', 'benchmark'].includes(row.kind)) errors.push(`${label}.kind must be rehearsal or benchmark.`);
+  if (row.levelId && row.themeId && row.slotId && row.levelId !== `${row.themeId}-${row.slotId}`) errors.push(`${label}.levelId must equal ${row.themeId}-${row.slotId}.`);
+  validateStage(row.stage, `${label}.stage`, errors);
+  if (row.delegation !== undefined) validateDelegation(row.delegation, `${label}.delegation`, errors);
+}
+
+function validateStage(value, label, errors) {
+  if (!isPlainObject(value)) { errors.push(`${label} must be an object.`); return; }
+  if (!Object.hasOwn(ADAPTERS, value.adapter)) errors.push(`${label}.adapter must be one of: ${Object.keys(ADAPTERS).join(', ')}.`);
+  validateString(value.model, `${label}.model`, errors);
+  if (!EFFORTS.has(value.effort)) errors.push(`${label}.effort is invalid.`);
+  if (!Number.isInteger(value.timeoutSeconds) || value.timeoutSeconds < 1) errors.push(`${label}.timeoutSeconds must be a positive integer.`);
+  if (value.provider !== undefined) validateString(value.provider, `${label}.provider`, errors);
+  if (value.budget !== undefined) {
+    if (!isPlainObject(value.budget)) errors.push(`${label}.budget must be an object.`);
+    else if (!(typeof value.budget.usd === 'number' && Number.isFinite(value.budget.usd) && value.budget.usd > 0)) errors.push(`${label}.budget.usd must be a positive finite number.`);
+  }
+}
+
+function validateDelegation(value, label, errors) {
+  if (!isPlainObject(value)) { errors.push(`${label} must be an object.`); return; }
+  validateString(value.promptPath, `${label}.promptPath`, errors);
+  validateString(value.delegateModel, `${label}.delegateModel`, errors);
+  if (!['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.delegateEffort)) errors.push(`${label}.delegateEffort is invalid.`);
+}
+
+function validateString(value, label, errors) {
+  if (typeof value !== 'string' || !value) errors.push(`${label} is required.`);
+}
+
+export function firstLevelOneHeading(source) {
+  return source.match(/^#\s+(.+?)\s*$/m)?.[1] ?? undefined;
+}
+
+async function synthesizeDefinition(plan, row, materialsCommit, entrantBaseline) {
+  const theme = await gitShow(materialsCommit, row.themePath);
+  const levelTitle = firstLevelOneHeading(theme);
+  if (!levelTitle) fail(`Theme ${row.themePath} must contain a level-one heading.`);
+  await gitShow(materialsCommit, ASSIGNMENT_TEMPLATE_PATH);
+  await gitShow(materialsCommit, row.recipePath);
+  if (row.delegation) await gitShow(materialsCommit, row.delegation.promptPath);
+  return {
+    ...structuredClone(row),
+    benchmarkVersion: plan.benchmarkVersion,
+    materialsCommit,
+    entrantBaseline,
+    kind: row.kind ?? 'benchmark',
+    levelTitle,
+  };
+}
+
+async function prepareInputs(definition, materialsCommit, outputDirectory) {
+  const template = await gitShow(materialsCommit, ASSIGNMENT_TEMPLATE_PATH);
+  const theme = await gitShow(materialsCommit, definition.themePath);
+  const recipe = await gitShow(materialsCommit, definition.recipePath);
   const inputDirectory = path.join(outputDirectory, 'inputs');
   await fs.mkdir(inputDirectory, { recursive: true });
   const templatePath = path.join(inputDirectory, 'assignment-template.md');
   const themePath = path.join(inputDirectory, 'theme.md');
   const renderedPath = path.join(outputDirectory, 'rendered-assignment.md');
   const baseRendering = renderAssignment(template, {
-    levelId: definition.assignment.levelId,
-    levelTitle: definition.assignment.levelTitle,
+    levelId: definition.levelId,
+    levelTitle: definition.levelTitle,
     theme,
     budget: Boolean(definition.stage.budget),
   });
 
-  // Delegation configurations append the rendered flexible-delegation addendum after the shared
-  // assignment body; the bytes sent to the primary agent as stdin are base + addendum. Solo
-  // configurations send the base rendering unchanged.
   let rendered = baseRendering;
   let delegationMeta;
   if (definition.delegation) {
-    const delegationTemplate = await artifactFromCommit(materialsCommit, definition.delegation.prompt);
+    const delegationTemplate = await gitShow(materialsCommit, definition.delegation.promptPath);
     const addendum = renderDelegation(delegationTemplate, { delegateModel: definition.delegation.delegateModel, delegateEffort: definition.delegation.delegateEffort });
     rendered = `${baseRendering}\n\n${addendum}`;
-    delegationMeta = { path: definition.delegation.prompt.path, delegateModel: definition.delegation.delegateModel, delegateEffort: definition.delegation.delegateEffort, sha256: sha256(addendum) };
+    delegationMeta = { path: definition.delegation.promptPath, delegateModel: definition.delegation.delegateModel, delegateEffort: definition.delegation.delegateEffort, sha256: sha256(addendum), promptSha256: sha256(delegationTemplate) };
   }
 
   await Promise.all([fs.writeFile(templatePath, template), fs.writeFile(themePath, theme), fs.writeFile(renderedPath, rendered)]);
+  const baseRenderingSha256 = sha256(baseRendering);
   await writeJson(path.join(outputDirectory, 'rendered-assignment.json'), {
-    template: { path: definition.template.path, sha256: sha256(template) },
-    theme: { path: definition.assignment.theme.path, sha256: sha256(theme) },
+    template: { path: ASSIGNMENT_TEMPLATE_PATH, sha256: sha256(template) },
+    theme: { path: definition.themePath, sha256: sha256(theme) },
+    recipe: { path: definition.recipePath, sha256: sha256(recipe) },
     rendering: { path: renderedPath, sha256: sha256(rendered) },
+    baseRendering: { sha256: baseRenderingSha256 },
     ...(delegationMeta ? { delegation: delegationMeta } : {}),
   });
+  await assertSiblingBaseRendering(definition, outputDirectory, baseRenderingSha256);
   return { renderedPath };
+}
+
+function conventionalRunPaths(runId) {
+  return {
+    worktree: path.join('/tmp', `pareto-rail-${runId}`),
+    payload: path.join('/tmp', `pareto-rail-payload-${runId}`),
+    payloadBranch: `benchmark-payload-${runId}`,
+  };
+}
+
+export async function assertSiblingBaseRendering(definition, outputDirectory, baseRenderingSha256) {
+  let entries;
+  try { entries = await fs.readdir(path.dirname(outputDirectory), { withFileTypes: true }); } catch (error) { if (error?.code === 'ENOENT') return; throw error; }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name === path.basename(outputDirectory)) continue;
+    const siblingDirectory = path.join(path.dirname(outputDirectory), entry.name);
+    const sibling = await optionalJson(path.join(siblingDirectory, 'run-definition.json'));
+    if (sibling?.benchmarkVersion !== definition.benchmarkVersion || sibling?.themeId !== definition.themeId) continue;
+    if (!await pathExists(path.join(siblingDirectory, 'rendered-assignment.md'))) continue;
+    const metadata = await optionalJson(path.join(siblingDirectory, 'rendered-assignment.json'));
+    if (!metadata?.baseRendering?.sha256) continue;
+    if (metadata.baseRendering.sha256 !== baseRenderingSha256) fail(`Rendered assignment base differs from sibling run ${sibling.runId ?? entry.name}.`);
+  }
 }
 
 // Each run gets an isolated harness home under its private output dir, with the operator credential
@@ -507,14 +572,14 @@ async function prepareHarnessHome(adapter, outputDirectory) {
   return home;
 }
 
-async function createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
+async function createManifest({ definition, materialsCommit, entrantBaseline, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
   const adapter = ADAPTERS[definition.stage.adapter];
   const [usage, commandRecord, stageLaunch, recipe, theme, renderedMeta, eventLog, budget] = await Promise.all([
     loadStageUsage(outputDirectory, adapter, definition),
     readJson(path.join(outputDirectory, adapter.stageDir, 'command.json')),
     readJson(path.join(outputDirectory, 'stage-launch.json')),
-    artifactFromCommit(configurationCommit, definition.assignment.recipe),
-    artifactFromCommit(materialsCommit, definition.assignment.theme),
+    gitShow(materialsCommit, definition.recipePath),
+    gitShow(materialsCommit, definition.themePath),
     readJson(path.join(outputDirectory, 'rendered-assignment.json')),
     fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8'),
     optionalJson(path.join(outputDirectory, adapter.stageDir, 'budget.json')),
@@ -536,18 +601,15 @@ async function createManifest({ definition, materialsCommit, configurationCommit
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
-    runId: definition.assignment.runId,
-    slotId: definition.assignment.slotId,
-    configuration: { id: definition.assignment.configurationId },
-    theme: { id: definition.assignment.theme.id, path: definition.assignment.theme.path, sha256: sha256(theme) },
+    runId: definition.runId,
+    slotId: definition.slotId,
+    configuration: { id: definition.configurationId },
+    theme: { id: definition.themeId, path: definition.themePath, sha256: sha256(theme) },
     baseline: {
       materialsCommit,
-      configurationCommit,
-      ...(eligibleControls ? { releaseRecord: definition.release } : {}),
       entrantBaseline: { kind: 'git-commit', identifier: entrantBaseline },
     },
-    ...(eligibleControls ? { schedule: definition.schedule } : {}),
-    recipe: definition.assignment.recipe,
+    recipe: { path: definition.recipePath, sha256: sha256(recipe) },
     controller: { commit: await gitCommit('HEAD') },
     timing: { startedAt, finishedAt, wallTimeSeconds: (Date.parse(finishedAt) - Date.parse(startedAt)) / 1_000 },
     stages,
@@ -570,8 +632,8 @@ async function createManifest({ definition, materialsCommit, configurationCommit
       })),
     },
     gates: gateRecord.gates.map(({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason }) => ({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason })),
-    output: { sourceRoot: protocolForVersion(definition.benchmarkVersion).sourceRoot, levelId: definition.assignment.levelId, title: definition.assignment.levelTitle, evaluated: { commit: evaluated.evaluatedCommit, branch: worktree.branch }, ...(payload ? { payload: { commit: payload.payloadCommit, branch: payload.branch } } : {}) },
-    disposition: dispositionFor({ mode: definition.mode, passing: gateRecord.gates.every(({ status }) => status === 'passed'), payload }),
+    output: { sourceRoot: SOURCE_ROOT, levelId: definition.levelId, title: definition.levelTitle, evaluated: { commit: evaluated.evaluatedCommit, branch: worktree.branch }, ...(payload ? { payload: { commit: payload.payloadCommit, branch: payload.branch } } : {}) },
+    disposition: dispositionFor({ kind: definition.kind, passing: gateRecord.gates.every(({ status }) => status === 'passed'), payload }),
   };
 }
 
@@ -658,109 +720,6 @@ async function loadStageUsage(outputDirectory, adapter, definition) {
   fail('Could not recover the stage session identity from its event log.');
 }
 
-async function artifactFromCommit(commit, artifact, root = ROOT) {
-  const source = await gitShow(commit, artifact.path, root);
-  if (sha256(source) !== artifact.sha256) fail(`Artifact hash mismatch for ${artifact.path} at declared commit.`);
-  return source;
-}
-
-export async function validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline, { root = ROOT } = {}) {
-  const releasePath = definition.release.path;
-  const releaseSource = await gitShow(`benchmark-${definition.benchmarkVersion}`, releasePath, root);
-  if (sha256(releaseSource) !== definition.release.sha256) fail('Eligible release record does not match its benchmark tag.');
-  let release;
-  try { release = JSON.parse(releaseSource); } catch (error) { fail(`Release record is not valid JSON: ${error.message}`); }
-  if (release.benchmarkVersion !== definition.benchmarkVersion) fail('Eligible release benchmarkVersion does not match the run definition.');
-  if (release.materialsCommit !== materialsCommit) fail('Eligible materialsCommit does not match the tagged release.');
-  if (release.entrantBaseline?.identifier !== entrantBaseline) fail('Eligible entrantBaseline does not match the tagged release.');
-  const protocol = protocolForVersion(definition.benchmarkVersion);
-  if (protocol.directoryOnly) {
-    if (release.entrantBaseline?.outputRoot !== protocol.sourceRoot) fail(`Eligible release must declare outputRoot ${protocol.sourceRoot} for ${definition.benchmarkVersion}.`);
-    const expectedBuiltInLevelIds = release.entrantBaseline?.expectedBuiltInLevelIds;
-    if (!Array.isArray(expectedBuiltInLevelIds) || !release.entrantBaseline?.builtInTreeSha256) fail('Directory-only release must declare expectedBuiltInLevelIds and builtInTreeSha256 for the entrant baseline.');
-    const baselineResult = await assertBenchmarkBaseline({
-      root,
-      ref: entrantBaseline,
-      benchmarkVersion: definition.benchmarkVersion,
-      expectedBuiltInLevelIds,
-      expectedBuiltInTreeSha256: release.entrantBaseline?.builtInTreeSha256,
-    });
-    if (!baselineResult) fail('Could not validate the directory-only entrant baseline.');
-  } else {
-    const allowlistErrors = validateBaselineLevelAllowlist(release.entrantBaseline?.allowedLevelIds);
-    if (allowlistErrors.length) fail(`Eligible release record has an invalid entrant baseline allowlist:\n${allowlistErrors.map((error) => `- ${error}`).join('\n')}`);
-    const baselineRegistry = await gitShow(entrantBaseline, 'src/levels/index.ts', root);
-    assertBaselineLevelAllowlist({
-      actualLevelIds: levelIdsFromRegistry(baselineRegistry),
-      allowedLevelIds: release.entrantBaseline.allowedLevelIds,
-    });
-  }
-  if (!Array.isArray(release.artifacts)) fail('Eligible release record has no artifact list.');
-  for (const artifact of [definition.template, definition.assignment.theme, definition.failureTaxonomy]) {
-    if (!release.artifacts.some((entry) => entry.path === artifact.path && entry.sha256 === artifact.sha256)) fail(`Eligible artifact ${artifact.path} is not frozen by the release.`);
-  }
-  const schedulePath = assertPrivateOrExternalPath(definition.schedule.path, root);
-  const scheduleSource = await fs.readFile(schedulePath, 'utf8');
-  if (sha256(scheduleSource) !== definition.schedule.sha256) fail('Private schedule hash does not match the run definition.');
-  let schedule;
-  try { schedule = JSON.parse(scheduleSource); } catch (error) { fail(`Private schedule is not valid JSON: ${error.message}`); }
-  const scheduleError = validateRuntimeSchedule(schedule, definition.benchmarkVersion);
-  if (scheduleError) fail(`Private schedule is invalid: ${scheduleError}`);
-  const assignment = schedule.assignments.find((candidate) => candidate.runId === definition.assignment.runId);
-  if (!assignment || !sameAssignment(assignment, definition.assignment)) fail('Eligible assignment is absent from or differs from the private schedule.');
-  if (assignment.configurationCommit !== configurationCommit) fail('Eligible configurationCommit differs from the private schedule.');
-  if (!sameStage(assignment.stage, definition.stage)) fail('Eligible stage settings differ from the private schedule.');
-  return { release, schedule };
-}
-
-function sameAssignment(left, right) {
-  return left.runId === right.runId
-    && left.slotId === right.slotId
-    && left.configurationId === right.configurationId
-    && left.levelId === right.levelId
-    && left.levelTitle === right.levelTitle
-    && sameArtifact(left.recipe, right.recipe)
-    && left.theme?.id === right.theme?.id
-    && sameArtifact(left.theme, right.theme);
-}
-
-
-function sameArtifact(left, right) {
-  return left?.path === right?.path && left?.sha256 === right?.sha256;
-}
-
-function sameStage(left, right) {
-  return left?.adapter === right?.adapter
-    && left?.model === right?.model
-    && left?.effort === right?.effort
-    && left?.timeoutSeconds === right?.timeoutSeconds
-    && left?.budget?.usd === right?.budget?.usd;
-}
-
-export function validateRuntimeSchedule(schedule, benchmarkVersion) {
-  if (!isPlainObject(schedule) || schedule.schemaVersion !== 1 || schedule.benchmarkVersion !== benchmarkVersion || !Array.isArray(schedule.assignments)) return 'header or assignments do not match the eligible protocol.';
-  const runIds = new Set(); const slotIds = new Set(); const levelIds = new Set(); const cells = new Set(); const indices = new Set();
-  for (const assignment of schedule.assignments) {
-    if (!isPlainObject(assignment) || !Number.isInteger(assignment.scheduleIndex) || assignment.scheduleIndex < 1) return 'an assignment has an invalid scheduleIndex.';
-    if (!/^[a-z0-9][a-z0-9-]{3,63}$/.test(assignment.runId ?? '') || !/^[a-z0-9]{4}$/.test(assignment.slotId ?? '') || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(assignment.configurationId ?? '') || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(assignment.theme?.id ?? '')) return 'an assignment has an invalid opaque or semantic id.';
-    if (runIds.has(assignment.runId) || slotIds.has(assignment.slotId) || levelIds.has(assignment.levelId)) return 'run, slot, and level ids must be unique.';
-    runIds.add(assignment.runId); slotIds.add(assignment.slotId); levelIds.add(assignment.levelId); indices.add(assignment.scheduleIndex);
-    if (assignment.levelId !== `${assignment.theme?.id}-${assignment.slotId}`) return 'an assignment has an invalid level id.';
-    const cell = `${assignment.configurationId}\u0000${assignment.theme?.id}`;
-    if (cells.has(cell)) return 'a configuration/theme cell is duplicated.';
-    cells.add(cell);
-    if (!/^[a-f0-9]{40,64}$/.test(assignment.configurationCommit ?? '') || !validArtifact(assignment.recipe) || !isPlainObject(assignment.stage)) return 'an assignment has incomplete configuration inputs.';
-    if (assignment.runner !== undefined && !validArtifact(assignment.runner)) return 'an assignment has an invalid legacy runner artifact.';
-    if (assignment.executor !== undefined && !validArtifact(assignment.executor)) return 'an assignment has an invalid legacy executor artifact.';
-  }
-  for (let index = 1; index <= schedule.assignments.length; index += 1) if (!indices.has(index)) return `scheduleIndex ${index} is missing.`;
-  return undefined;
-}
-
-function validArtifact(value) {
-  return isPlainObject(value) && typeof value.path === 'string' && value.path.length > 0 && /^[a-f0-9]{64}$/.test(value.sha256 ?? '');
-}
-
 async function hashIfPresent(filePath) {
   try { return sha256(await fs.readFile(filePath, 'utf8')); } catch (error) { if (error?.code === 'ENOENT') return undefined; throw error; }
 }
@@ -774,25 +733,6 @@ async function assertCleanRepository() {
   if (status.trim()) fail('The controller repository must be clean before a run; commit the frozen materials first.');
 }
 
-function validateAssignment(value, errors) {
-  if (!isPlainObject(value)) { errors.push('definition.assignment must be an object.'); return; }
-  for (const key of ['runId', 'slotId', 'configurationId', 'levelId', 'levelTitle']) if (typeof value[key] !== 'string' || !value[key]) errors.push(`definition.assignment.${key} is required.`);
-  validateArtifact(value.recipe, 'definition.assignment.recipe', errors);
-  if (!isPlainObject(value.theme) || typeof value.theme.id !== 'string') errors.push('definition.assignment.theme.id is required.');
-  validateArtifact(value.theme, 'definition.assignment.theme', errors);
-}
-function validateArtifact(value, label, errors) {
-  if (!isPlainObject(value) || typeof value.path !== 'string' || !value.path || !/^[a-f0-9]{64}$/.test(value.sha256 ?? '')) errors.push(`${label} must contain a path and SHA-256.`);
-}
-function validateDelegation(value, errors) {
-  if (!isPlainObject(value)) { errors.push('definition.delegation must be an object.'); return; }
-  const keys = new Set(['prompt', 'delegateModel', 'delegateEffort']);
-  for (const key of Object.keys(value)) if (!keys.has(key)) errors.push(`definition.delegation has unknown field ${key}.`);
-  validateArtifact(value.prompt, 'definition.delegation.prompt', errors);
-  if (typeof value.delegateModel !== 'string' || !value.delegateModel) errors.push('definition.delegation.delegateModel is required.');
-  if (!['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(value.delegateEffort)) errors.push('definition.delegation.delegateEffort is invalid.');
-}
-function validateCommit(value, label, errors) { if (typeof value !== 'string' || !/^[a-f0-9]{40,64}$/.test(value)) errors.push(`${label} must be a Git commit id.`); }
 async function assertAbsent(target, label) { try { await fs.lstat(target); } catch (error) { if (error?.code === 'ENOENT') return; throw error; } fail(`${label} already exists: ${target}`); }
 async function writeCommandRecord(target, args, result) { await writeJson(target, { command: args, exitCode: result.code, startedAt: result.startedAt, finishedAt: result.finishedAt, wallTimeSeconds: result.wallTimeSeconds, stdoutSha256: sha256(result.stdout), stderrSha256: sha256(result.stderr), stdout: result.stdout, stderr: result.stderr }); }
 function command(executable, args, cwd, { allowFailure = false, env } = {}) {

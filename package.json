@@ -25,7 +25,6 @@
     "gallery": "node scripts/collect-gallery.mjs",
     "validate:level-catalog": "node scripts/validate-level-catalog.mjs",
     "benchmark:render": "node scripts/benchmark/render-assignment.mjs",
-    "benchmark:schedule": "node scripts/benchmark/schedule.mjs",
     "benchmark:ranking": "node scripts/benchmark/ranking.mjs",
     "benchmark:admin": "node scripts/benchmark/admin.mjs",
     "benchmark:codex": "node scripts/benchmark/codex-cli.mjs",
