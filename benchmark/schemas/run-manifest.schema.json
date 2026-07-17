@@ -68,13 +68,19 @@
       "$ref": "#/$defs/hashedArtifact"
     },
     "recipe": { "$ref": "#/$defs/hashedArtifact" },
-    "controller": { "$ref": "#/$defs/hashedArtifact" },
+    "controller": {
+      "description": "Executing controller checkout provenance. Historical manifests may retain the legacy runbook artifact shape.",
+      "oneOf": [
+        { "$ref": "#/$defs/controllerProvenance" },
+        { "$ref": "#/$defs/hashedArtifact" }
+      ]
+    },
     "runner": {
-      "description": "Configuration-scoped orchestration runner used for this run.",
+      "description": "Legacy v1 provenance field tolerated for historical manifests.",
       "$ref": "#/$defs/hashedArtifact"
     },
     "executor": {
-      "description": "Configuration-scoped harness executor used for this run.",
+      "description": "Legacy v1 provenance field tolerated for historical manifests.",
       "$ref": "#/$defs/hashedArtifact"
     },
     "timing": {
@@ -216,6 +222,14 @@
     "gitObject": {
       "type": "string",
       "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+    },
+    "controllerProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit"],
+      "properties": {
+        "commit": { "$ref": "#/$defs/gitObject" }
+      }
     },
     "hashedArtifact": {
       "type": "object",

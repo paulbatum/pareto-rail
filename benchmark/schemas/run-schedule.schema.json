@@ -63,8 +63,6 @@
         "slotId",
         "configurationId",
         "configurationCommit",
-        "runner",
-        "executor",
         "recipe",
         "stage",
         "theme",
@@ -86,11 +84,11 @@
         "configurationId": { "type": "string", "minLength": 1 },
         "configurationCommit": { "$ref": "#/$defs/gitObject" },
         "runner": {
-          "description": "Configuration-scoped orchestration runner, typically scripts/benchmark/run.mjs.",
+          "description": "Legacy v1 field tolerated when reading historical schedules; new schedules omit it.",
           "$ref": "#/$defs/hashedArtifact"
         },
         "executor": {
-          "description": "Configuration-scoped harness executor implementing the runner's stage contract.",
+          "description": "Legacy v1 field tolerated when reading historical schedules; new schedules omit it.",
           "$ref": "#/$defs/hashedArtifact"
         },
         "recipe": { "$ref": "#/$defs/hashedArtifact" },

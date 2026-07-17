@@ -26,8 +26,6 @@ import { protocolForVersion } from './protocol.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
-const RUNBOOK = 'benchmark/controller/runbook.md';
-const SHARED_CONTROLLER_PATHS = ['scripts/benchmark/admin.mjs', 'scripts/benchmark/common.mjs', 'scripts/benchmark/render-assignment.mjs'];
 
 async function writeJson(filePath, value) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -122,11 +120,8 @@ async function main() {
     const entrantBaseline = await gitCommit(definition.baseline.entrantBaseline);
     const configurationCommit = await gitCommit(definition.baseline.configurationCommit ?? materialsCommit);
     const eligibleControls = definition.mode === 'eligible'
-      ? await validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline, { historicalRunner: resuming })
+      ? await validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline)
       : undefined;
-    if (controllerDrift.length) {
-      await fs.writeFile(path.join(outputDirectory, 'controller-drift.json'), `${JSON.stringify({ acceptedAt: new Date().toISOString(), drift: controllerDrift }, null, 2)}\n`, 'utf8');
-    }
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
@@ -180,9 +175,8 @@ async function main() {
         fail(`The recorded stage failed. Resume with --accept-stage-output true only after verifying that the entrant completed its worktree.`);
       }
       await prepareHarnessHome(adapter, outputDirectory);
-      const executorPath = definition.mode === 'eligible' ? repositoryArtifactPath(definition.executor.path) : adapter.scriptPath;
       const stageDirectory = path.join(outputDirectory, adapter.stageDir);
-      const stageArgs = [executorPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
+      const stageArgs = [adapter.scriptPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
       if (definition.stage.budget) stageArgs.push('--budget-usd', String(definition.stage.budget.usd));
       if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
       if (definition.delegation && adapter.delegationArgs) stageArgs.push(...adapter.delegationArgs);
@@ -206,8 +200,8 @@ async function main() {
     });
 
     const gateRecord = await checkpoint(state, statePath, 'gates', async () => {
-      const existing = await optionalJson(path.join(outputDirectory, 'gates', 'gates.json'));
-      if (existing?.evaluatedCommit === evaluated.evaluatedCommit && existing.gates?.length === 4) return existing;
+      const existing = await reusableGateRecord(outputDirectory, evaluated.evaluatedCommit);
+      if (existing) return existing;
       const gateDirectory = path.join(outputDirectory, 'gates');
       await command(process.execPath, [ADMIN, 'gates', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--out', gateDirectory, '--version', definition.benchmarkVersion], ROOT);
       return readJson(path.join(gateDirectory, 'gates.json'));
@@ -229,7 +223,7 @@ async function main() {
 
     const manifest = await checkpoint(state, statePath, 'manifest', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'manifest.json'));
-      if (existing) {
+      if (existing && !manifestNeedsRefresh(existing, evaluated, payload, gateRecord)) {
         validateManifest(existing, definition, evaluated, payload, gateRecord);
         return existing;
       }
@@ -340,6 +334,25 @@ async function validatePayload(payload, materialsCommit, levelId, benchmarkVersi
   if (!names.length || names.some((name) => !name.startsWith(levelDirectory))) fail('Recorded payload does not contain exactly the assigned level directory.');
 }
 
+export async function reusableGateRecord(outputDirectory, evaluatedCommit) {
+  const existing = await optionalJson(path.join(outputDirectory, 'gates', 'gates.json'));
+  return existing?.evaluatedCommit === evaluatedCommit && Array.isArray(existing.gates) && existing.gates.length === 4 ? existing : null;
+}
+
+export function manifestNeedsRefresh(manifest, evaluated, payload, gateRecord) {
+  if (manifest.output?.evaluated?.commit !== evaluated.evaluatedCommit) return true;
+  if ((manifest.output?.payload?.commit ?? null) !== (payload?.payloadCommit ?? null)) return true;
+  const recordedGates = new Map((manifest.gates ?? []).map((gate) => [gate.id, gate.status]));
+  return gateRecord.gates.some((gate) => recordedGates.get(gate.id) !== gate.status);
+}
+
+export function dispositionFor({ mode, passing, payload }) {
+  if (mode === 'rehearsal') return { status: 'rehearsal' };
+  if (!passing) return { status: 'dnf', reasonCode: 'required-gate-failed' };
+  if (payload) return { status: 'playable' };
+  return { status: 'dnf', reasonCode: 'payload-pending' };
+}
+
 function validateManifest(manifest, definition, evaluated, payload, gateRecord) {
   const errors = manifestErrors(manifest);
   if (errors.length) fail(`Recorded manifest is invalid: ${errors.join('; ')}`);
@@ -401,6 +414,8 @@ export function validateDefinition(value) {
   if (value.baseline?.configurationCommit !== undefined) validateCommit(value.baseline.configurationCommit, 'definition.baseline.configurationCommit', errors);
   validateArtifact(value.template, 'definition.template', errors);
   validateArtifact(value.failureTaxonomy, 'definition.failureTaxonomy', errors);
+  if (value.runner !== undefined) validateArtifact(value.runner, 'definition.runner', errors);
+  if (value.executor !== undefined) validateArtifact(value.executor, 'definition.executor', errors);
   if (!isPlainObject(value.stage)) errors.push('definition.stage must be an object.');
   else {
     const stageKeys = new Set(['adapter', 'model', 'effort', 'timeoutSeconds', 'budget', 'codexBin', 'claudeBin', 'piBin', 'provider']);
@@ -428,8 +443,6 @@ export function validateDefinition(value) {
   if (value.mode === 'eligible') {
     validateArtifact(value.release, 'definition.release', errors);
     validateArtifact(value.schedule, 'definition.schedule', errors);
-    validateArtifact(value.runner, 'definition.runner', errors);
-    validateArtifact(value.executor, 'definition.executor', errors);
     if (value.baseline?.configurationCommit === undefined) errors.push('definition.baseline.configurationCommit is required for an eligible run.');
     if (!/^v[1-9][0-9]*$/.test(value.benchmarkVersion ?? '')) errors.push('An eligible definition benchmarkVersion must be v<number>.');
   }
@@ -496,11 +509,10 @@ async function prepareHarnessHome(adapter, outputDirectory) {
 
 async function createManifest({ definition, materialsCommit, configurationCommit, entrantBaseline, eligibleControls, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
   const adapter = ADAPTERS[definition.stage.adapter];
-  const [usage, commandRecord, stageLaunch, controller, recipe, theme, renderedMeta, eventLog, budget] = await Promise.all([
+  const [usage, commandRecord, stageLaunch, recipe, theme, renderedMeta, eventLog, budget] = await Promise.all([
     loadStageUsage(outputDirectory, adapter, definition),
     readJson(path.join(outputDirectory, adapter.stageDir, 'command.json')),
     readJson(path.join(outputDirectory, 'stage-launch.json')),
-    artifactFromCommit(materialsCommit, { path: RUNBOOK, sha256: await hashFromCommit(materialsCommit, RUNBOOK) }),
     artifactFromCommit(configurationCommit, definition.assignment.recipe),
     artifactFromCommit(materialsCommit, definition.assignment.theme),
     readJson(path.join(outputDirectory, 'rendered-assignment.json')),
@@ -519,8 +531,6 @@ async function createManifest({ definition, materialsCommit, configurationCommit
   const ccusage = await ccusageVersion();
   const finishedAt = new Date().toISOString();
   const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
-  const runnerArtifact = definition.mode === 'eligible' ? definition.runner : await currentArtifact('scripts/benchmark/run.mjs');
-  const executorArtifact = definition.mode === 'eligible' ? definition.executor : await currentArtifact(path.relative(ROOT, adapter.scriptPath));
   const stageResult = stageLaunch.exitCode === 0 ? 'completed' : (commandRecord.timedOut ? 'timed-out' : 'failed');
   const stages = buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget });
   return {
@@ -538,9 +548,7 @@ async function createManifest({ definition, materialsCommit, configurationCommit
     },
     ...(eligibleControls ? { schedule: definition.schedule } : {}),
     recipe: definition.assignment.recipe,
-    controller: { path: RUNBOOK, sha256: sha256(controller) },
-    runner: runnerArtifact,
-    executor: executorArtifact,
+    controller: { commit: await gitCommit('HEAD') },
     timing: { startedAt, finishedAt, wallTimeSeconds: (Date.parse(finishedAt) - Date.parse(startedAt)) / 1_000 },
     stages,
     cost: {
@@ -563,7 +571,7 @@ async function createManifest({ definition, materialsCommit, configurationCommit
     },
     gates: gateRecord.gates.map(({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason }) => ({ id, command: gateCommand, status, exitCode, wallTimeSeconds, outputSha256, reason })),
     output: { sourceRoot: protocolForVersion(definition.benchmarkVersion).sourceRoot, levelId: definition.assignment.levelId, title: definition.assignment.levelTitle, evaluated: { commit: evaluated.evaluatedCommit, branch: worktree.branch }, ...(payload ? { payload: { commit: payload.payloadCommit, branch: payload.branch } } : {}) },
-    disposition: { status: definition.mode === 'rehearsal' ? 'rehearsal' : payload ? 'playable' : 'dnf', ...(payload ? {} : { reasonCode: 'required-gate-failed' }) },
+    disposition: dispositionFor({ mode: definition.mode, passing: gateRecord.gates.every(({ status }) => status === 'passed'), payload }),
   };
 }
 
@@ -650,15 +658,15 @@ async function loadStageUsage(outputDirectory, adapter, definition) {
   fail('Could not recover the stage session identity from its event log.');
 }
 
-async function artifactFromCommit(commit, artifact) {
-  const source = await gitShow(commit, artifact.path);
+async function artifactFromCommit(commit, artifact, root = ROOT) {
+  const source = await gitShow(commit, artifact.path, root);
   if (sha256(source) !== artifact.sha256) fail(`Artifact hash mismatch for ${artifact.path} at declared commit.`);
   return source;
 }
 
-async function validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline, { historicalRunner = false } = {}) {
+export async function validateEligibleControls(definition, materialsCommit, configurationCommit, entrantBaseline, { root = ROOT } = {}) {
   const releasePath = definition.release.path;
-  const releaseSource = await gitShow(`benchmark-${definition.benchmarkVersion}`, releasePath);
+  const releaseSource = await gitShow(`benchmark-${definition.benchmarkVersion}`, releasePath, root);
   if (sha256(releaseSource) !== definition.release.sha256) fail('Eligible release record does not match its benchmark tag.');
   let release;
   try { release = JSON.parse(releaseSource); } catch (error) { fail(`Release record is not valid JSON: ${error.message}`); }
@@ -671,7 +679,7 @@ async function validateEligibleControls(definition, materialsCommit, configurati
     const expectedBuiltInLevelIds = release.entrantBaseline?.expectedBuiltInLevelIds;
     if (!Array.isArray(expectedBuiltInLevelIds) || !release.entrantBaseline?.builtInTreeSha256) fail('Directory-only release must declare expectedBuiltInLevelIds and builtInTreeSha256 for the entrant baseline.');
     const baselineResult = await assertBenchmarkBaseline({
-      root: ROOT,
+      root,
       ref: entrantBaseline,
       benchmarkVersion: definition.benchmarkVersion,
       expectedBuiltInLevelIds,
@@ -681,7 +689,7 @@ async function validateEligibleControls(definition, materialsCommit, configurati
   } else {
     const allowlistErrors = validateBaselineLevelAllowlist(release.entrantBaseline?.allowedLevelIds);
     if (allowlistErrors.length) fail(`Eligible release record has an invalid entrant baseline allowlist:\n${allowlistErrors.map((error) => `- ${error}`).join('\n')}`);
-    const baselineRegistry = await gitShow(entrantBaseline, 'src/levels/index.ts');
+    const baselineRegistry = await gitShow(entrantBaseline, 'src/levels/index.ts', root);
     assertBaselineLevelAllowlist({
       actualLevelIds: levelIdsFromRegistry(baselineRegistry),
       allowedLevelIds: release.entrantBaseline.allowedLevelIds,
@@ -691,15 +699,7 @@ async function validateEligibleControls(definition, materialsCommit, configurati
   for (const artifact of [definition.template, definition.assignment.theme, definition.failureTaxonomy]) {
     if (!release.artifacts.some((entry) => entry.path === artifact.path && entry.sha256 === artifact.sha256)) fail(`Eligible artifact ${artifact.path} is not frozen by the release.`);
   }
-  const protocolPaths = protocol.directoryOnly
-    ? [...SHARED_CONTROLLER_PATHS, 'scripts/check-benchmark-baseline.mjs', 'scripts/check-benchmark-scope.mjs', 'scripts/benchmark/protocol.mjs']
-    : SHARED_CONTROLLER_PATHS;
-  for (const sharedPath of protocolPaths) await verifyProtocolCode(release, materialsCommit, sharedPath, { historicalRunner });
-  if (definition.runner.path !== 'scripts/benchmark/run.mjs') fail('Eligible runner path must be scripts/benchmark/run.mjs.');
-  await verifyConfigurationCode(configurationCommit, definition.runner, 'runner', fileURLToPath(import.meta.url), { historicalRunner });
-  await verifyConfigurationCode(configurationCommit, definition.executor, 'executor', undefined, { historicalRunner });
-
-  const schedulePath = assertPrivateOrExternalPath(definition.schedule.path, ROOT);
+  const schedulePath = assertPrivateOrExternalPath(definition.schedule.path, root);
   const scheduleSource = await fs.readFile(schedulePath, 'utf8');
   if (sha256(scheduleSource) !== definition.schedule.sha256) fail('Private schedule hash does not match the run definition.');
   let schedule;
@@ -709,8 +709,6 @@ async function validateEligibleControls(definition, materialsCommit, configurati
   const assignment = schedule.assignments.find((candidate) => candidate.runId === definition.assignment.runId);
   if (!assignment || !sameAssignment(assignment, definition.assignment)) fail('Eligible assignment is absent from or differs from the private schedule.');
   if (assignment.configurationCommit !== configurationCommit) fail('Eligible configurationCommit differs from the private schedule.');
-  if (!sameArtifact(assignment.runner, definition.runner)) fail('Eligible runner differs from the private schedule.');
-  if (!sameArtifact(assignment.executor, definition.executor)) fail('Eligible executor differs from the private schedule.');
   if (!sameStage(assignment.stage, definition.stage)) fail('Eligible stage settings differ from the private schedule.');
   return { release, schedule };
 }
@@ -726,54 +724,6 @@ function sameAssignment(left, right) {
     && sameArtifact(left.theme, right.theme);
 }
 
-/**
- * Frozen entrant-facing material (theme, recipe, prompt template, baseline) is
- * always strictly verified. Controller-code drift may instead be accepted and
- * recorded when PARETO_RAIL_ACCEPT_CONTROLLER_DRIFT=1: each drifted path is appended
- * to controllerDrift for persistence as controller-drift.json in the run
- * directory, so later runs remain launchable from a repository whose
- * controller code has moved past the release freeze.
- */
-const controllerDrift = [];
-
-function controllerDriftAccepted() {
-  return process.env.PARETO_RAIL_ACCEPT_CONTROLLER_DRIFT === '1';
-}
-
-function handleControllerDrift(relativePath, frozenSha256, executingSha256, message) {
-  if (!controllerDriftAccepted()) fail(`${message} Set PARETO_RAIL_ACCEPT_CONTROLLER_DRIFT=1 to accept and record controller-code drift.`);
-  controllerDrift.push({ path: relativePath, frozenSha256, executingSha256 });
-  console.warn(`Accepted controller drift for ${relativePath} (frozen ${frozenSha256.slice(0, 12)}, executing ${executingSha256.slice(0, 12)}).`);
-}
-
-async function verifyConfigurationCode(configurationCommit, artifact, label, executingPath = repositoryArtifactPath(artifact.path), { historicalRunner = false } = {}) {
-  const frozenSource = await gitShow(configurationCommit, artifact.path);
-  if (sha256(frozenSource) !== artifact.sha256) fail(`Eligible ${label} does not match the configuration commit.`);
-  if (!historicalRunner) {
-    const currentHash = sha256(await fs.readFile(executingPath, 'utf8'));
-    if (currentHash !== artifact.sha256) handleControllerDrift(artifact.path, artifact.sha256, currentHash, `The executing configuration ${label} differs from its registered artifact.`);
-  }
-}
-
-async function verifyProtocolCode(release, materialsCommit, relativePath, { historicalRunner = false } = {}) {
-  const frozenSource = await gitShow(materialsCommit, relativePath);
-  const frozenHash = sha256(frozenSource);
-  const artifact = release.artifacts.find((entry) => entry.kind === 'controller-admin' && entry.path === relativePath);
-  if (!artifact || artifact.sha256 !== frozenHash) fail(`The tagged release does not freeze shared controller component ${relativePath}.`);
-  if (!historicalRunner) {
-    const currentHash = sha256(await fs.readFile(repositoryArtifactPath(relativePath), 'utf8'));
-    if (currentHash !== frozenHash) handleControllerDrift(relativePath, frozenHash, currentHash, `Shared controller component ${relativePath} differs from the protocol release.`);
-  }
-}
-
-function repositoryArtifactPath(relativePath) {
-  if (typeof relativePath !== 'string' || path.isAbsolute(relativePath) || relativePath.split('/').includes('..')) fail(`Configuration code path must be repository-relative: ${relativePath}`);
-  return path.join(ROOT, relativePath);
-}
-
-async function currentArtifact(relativePath) {
-  return { path: relativePath, sha256: sha256(await fs.readFile(repositoryArtifactPath(relativePath), 'utf8')) };
-}
 
 function sameArtifact(left, right) {
   return left?.path === right?.path && left?.sha256 === right?.sha256;
@@ -787,7 +737,7 @@ function sameStage(left, right) {
     && left?.budget?.usd === right?.budget?.usd;
 }
 
-function validateRuntimeSchedule(schedule, benchmarkVersion) {
+export function validateRuntimeSchedule(schedule, benchmarkVersion) {
   if (!isPlainObject(schedule) || schedule.schemaVersion !== 1 || schedule.benchmarkVersion !== benchmarkVersion || !Array.isArray(schedule.assignments)) return 'header or assignments do not match the eligible protocol.';
   const runIds = new Set(); const slotIds = new Set(); const levelIds = new Set(); const cells = new Set(); const indices = new Set();
   for (const assignment of schedule.assignments) {
@@ -799,7 +749,9 @@ function validateRuntimeSchedule(schedule, benchmarkVersion) {
     const cell = `${assignment.configurationId}\u0000${assignment.theme?.id}`;
     if (cells.has(cell)) return 'a configuration/theme cell is duplicated.';
     cells.add(cell);
-    if (!/^[a-f0-9]{40,64}$/.test(assignment.configurationCommit ?? '') || !validArtifact(assignment.runner) || !validArtifact(assignment.executor) || !validArtifact(assignment.recipe) || !isPlainObject(assignment.stage)) return 'an assignment has incomplete configuration inputs.';
+    if (!/^[a-f0-9]{40,64}$/.test(assignment.configurationCommit ?? '') || !validArtifact(assignment.recipe) || !isPlainObject(assignment.stage)) return 'an assignment has incomplete configuration inputs.';
+    if (assignment.runner !== undefined && !validArtifact(assignment.runner)) return 'an assignment has an invalid legacy runner artifact.';
+    if (assignment.executor !== undefined && !validArtifact(assignment.executor)) return 'an assignment has an invalid legacy executor artifact.';
   }
   for (let index = 1; index <= schedule.assignments.length; index += 1) if (!indices.has(index)) return `scheduleIndex ${index} is missing.`;
   return undefined;
@@ -809,13 +761,12 @@ function validArtifact(value) {
   return isPlainObject(value) && typeof value.path === 'string' && value.path.length > 0 && /^[a-f0-9]{64}$/.test(value.sha256 ?? '');
 }
 
-async function hashFromCommit(commit, relativePath) { return sha256(await gitShow(commit, relativePath)); }
 async function hashIfPresent(filePath) {
   try { return sha256(await fs.readFile(filePath, 'utf8')); } catch (error) { if (error?.code === 'ENOENT') return undefined; throw error; }
 }
-async function gitShow(commit, relativePath) {
+async function gitShow(commit, relativePath, root = ROOT) {
   if (path.isAbsolute(relativePath) || relativePath.split('/').includes('..')) fail(`Artifact path must be repository-relative: ${relativePath}`);
-  return (await command('git', ['show', `${commit}:${relativePath}`], ROOT)).stdout;
+  return (await command('git', ['show', `${commit}:${relativePath}`], root)).stdout;
 }
 async function gitCommit(ref) { return (await command('git', ['rev-parse', '--verify', `${ref}^{commit}`], ROOT)).stdout.trim(); }
 async function assertCleanRepository() {

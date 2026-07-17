@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
-import { validateDefinition as validateRunDefinition } from './run.mjs';
+import { dispositionFor, manifestNeedsRefresh, reusableGateRecord, validateDefinition as validateRunDefinition, validateEligibleControls, validateRuntimeSchedule } from './run.mjs';
 import { createSchedule, extendSchedule, validateSchedule } from './schedule.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
@@ -16,6 +16,7 @@ import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import { protocolForVersion } from './protocol.mjs';
 import { derivePayload } from './admin.mjs';
+import { sha256 } from './common.mjs';
 
 const exec = promisify(execFile);
 
@@ -23,8 +24,6 @@ const hash = (character) => character.repeat(64);
 const configuration = (id, character, model = `model-${id}`) => ({
   id,
   configurationCommit: character.repeat(40),
-  runner: { path: 'scripts/benchmark/run.mjs', sha256: hash(character) },
-  executor: { path: `scripts/benchmark/${id}.mjs`, sha256: hash(character) },
   recipe: { id, path: `benchmark/recipes/${id}.md`, sha256: hash(character) },
   stage: { adapter: 'codex-cli', model, effort: 'high', timeoutSeconds: 10_800 },
 });
@@ -49,7 +48,15 @@ const schedule = createSchedule(definition());
 assert.equal(schedule.assignments.length, 9);
 assert.deepEqual(validateSchedule(schedule, definition()), []);
 assert.equal(new Set(schedule.assignments.map((assignment) => assignment.slotId)).size, 9);
-for (const assignment of schedule.assignments) assert.equal(assignment.levelId, `${assignment.theme.id}-${assignment.slotId}`);
+for (const assignment of schedule.assignments) {
+  assert.equal(assignment.levelId, `${assignment.theme.id}-${assignment.slotId}`);
+  assert.equal(Object.hasOwn(assignment, 'runner'), false);
+  assert.equal(Object.hasOwn(assignment, 'executor'), false);
+}
+const legacySchedule = structuredClone(schedule);
+legacySchedule.assignments[0].runner = { path: 'scripts/benchmark/run.mjs', sha256: hash('a') };
+legacySchedule.assignments[0].executor = { path: 'scripts/benchmark/codex-cli.mjs', sha256: hash('a') };
+assert.deepEqual(validateSchedule(legacySchedule, definition()), []);
 
 const budgetDefinition = definition();
 budgetDefinition.configurations[0].stage.budget = { usd: 20 };
@@ -76,9 +83,9 @@ assert.deepEqual(validateSchedule(extendedSchedule, extendedDefinition), []);
 const changedDefinition = structuredClone(extendedDefinition);
 changedDefinition.configurations[0].recipe.sha256 = hash('2');
 assert.throws(() => extendSchedule(schedule, changedDefinition), /changed its registered recipe/);
-const changedRunnerDefinition = structuredClone(extendedDefinition);
-changedRunnerDefinition.configurations[0].runner.sha256 = hash('2');
-assert.throws(() => extendSchedule(schedule, changedRunnerDefinition), /changed its registered execution inputs/);
+const changedStageDefinition = structuredClone(extendedDefinition);
+changedStageDefinition.configurations[0].stage.model = 'changed-model';
+assert.throws(() => extendSchedule(schedule, changedStageDefinition), /changed its registered execution inputs/);
 
 const projection = {
   benchmarkVersion: 'v1',
@@ -165,6 +172,7 @@ const runDefinition = {
   payload: { path: '/tmp/pareto-rail-payload-a1b2c3d4', branch: 'benchmark-payload-a1b2c3d4' },
 };
 assert.deepEqual(validateRunDefinition(runDefinition), []);
+assert.deepEqual(dispositionFor({ mode: 'eligible', passing: false, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'dnf', reasonCode: 'required-gate-failed' });
 const budgetRunDefinition = structuredClone(runDefinition);
 budgetRunDefinition.stage.budget = { usd: 20 };
 assert.deepEqual(validateRunDefinition(budgetRunDefinition), []);
@@ -224,7 +232,7 @@ delete eligibleRunDefinition.schedule;
 assert.ok(validateRunDefinition(eligibleRunDefinition).some((error) => error.includes('definition.schedule')));
 eligibleRunDefinition.schedule = { path: 'benchmark/private/run-schedule.json', sha256: hash('2') };
 delete eligibleRunDefinition.runner;
-assert.ok(validateRunDefinition(eligibleRunDefinition).some((error) => error.includes('definition.runner')));
+assert.deepEqual(validateRunDefinition(eligibleRunDefinition), []);
 
 const delegationAddendum = renderDelegation('Delegate to `{{DELEGATE_MODEL}}` at `{{DELEGATE_EFFORT}}`; report to {{DELEGATE_MODEL}}.', {
   delegateModel: 'opus',
@@ -600,6 +608,128 @@ try {
   );
 } finally {
   await fs.rm(directoryOnlyRepo, { recursive: true, force: true });
+}
+
+const controlsFixture = await createControlsFixture();
+try {
+  const { definition: controlsDefinition, scheduleValue, materials, configurationCommit, entrantBaseline, root: controlsRoot } = controlsFixture;
+  assert.deepEqual(
+    Object.keys((await validateEligibleControls(controlsDefinition, materials, configurationCommit, entrantBaseline, { root: controlsRoot })).schedule.assignments[0]).sort(),
+    ['configurationCommit', 'configurationId', 'levelId', 'levelTitle', 'recipe', 'runId', 'scheduleIndex', 'slotId', 'stage', 'theme'].sort(),
+  );
+  const tamperedTheme = structuredClone(controlsDefinition);
+  tamperedTheme.assignment.theme.sha256 = sha256('tampered theme');
+  await assert.rejects(() => validateEligibleControls(tamperedTheme, materials, configurationCommit, entrantBaseline, { root: controlsRoot }), /not frozen by the release/);
+  const wrongScheduleHash = structuredClone(controlsDefinition);
+  wrongScheduleHash.schedule.sha256 = sha256('wrong schedule');
+  await assert.rejects(() => validateEligibleControls(wrongScheduleHash, materials, configurationCommit, entrantBaseline, { root: controlsRoot }), /schedule hash/);
+  const mismatchedAssignment = structuredClone(controlsDefinition);
+  mismatchedAssignment.assignment.levelTitle = 'Different title';
+  await assert.rejects(() => validateEligibleControls(mismatchedAssignment, materials, configurationCommit, entrantBaseline, { root: controlsRoot }), /absent from or differs/);
+  const missingReleaseArtifact = structuredClone(controlsDefinition);
+  missingReleaseArtifact.template.sha256 = sha256('missing release artifact');
+  await assert.rejects(() => validateEligibleControls(missingReleaseArtifact, materials, configurationCommit, entrantBaseline, { root: controlsRoot }), /not frozen by the release/);
+  assert.equal(validateRuntimeSchedule(scheduleValue, 'v1'), undefined);
+  assert.equal(validateRuntimeSchedule({ ...scheduleValue, assignments: scheduleValue.assignments.map((assignment) => ({ ...assignment, runner: { path: 'legacy-runner', sha256: hash('a') }, executor: { path: 'legacy-executor', sha256: hash('a') } })) }, 'v1'), undefined);
+} finally {
+  await controlsFixture.cleanup();
+}
+
+const adminSource = await fs.readFile(path.join(process.cwd(), 'scripts/benchmark/admin.mjs'), 'utf8');
+assert.match(adminSource, /CONTROLLER_SCOPE_SCRIPT/);
+assert.doesNotMatch(adminSource, /path\.resolve\(worktree, 'scripts\/check-benchmark-scope\.mjs'\)/);
+await assertMissingGatesResumeFixture();
+
+async function createControlsFixture() {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-controls-'));
+  const schedulePath = `${root}-schedule.json`;
+  const files = {
+    'benchmark/prompts/level-assignment.md': '# Assignment\n{{LEVEL_ID}} {{LEVEL_TITLE}} {{THEME}}\n',
+    'benchmark/themes/cinder.md': '# Cinder\nA frozen cinder theme.\n',
+    'benchmark/controller/failure-taxonomy.md': '# Failures\n',
+    'benchmark/recipes/solo.md': '# Recipe\n',
+    'src/levels/index.ts': "export const levelMetadatas: LevelMetadata[] = [\n  { id: 'anchor', title: 'Anchor' },\n];\n",
+  };
+  for (const [file, source] of Object.entries(files)) {
+    await fs.mkdir(path.dirname(path.join(root, file)), { recursive: true });
+    await fs.writeFile(path.join(root, file), source);
+  }
+  await exec('git', ['init', '-q'], { cwd: root });
+  await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: root });
+  await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: root });
+  await exec('git', ['add', '.'], { cwd: root });
+  await exec('git', ['commit', '-qm', 'materials'], { cwd: root });
+  const materials = (await exec('git', ['rev-parse', 'HEAD'], { cwd: root })).stdout.trim();
+  const entrantBaseline = materials;
+  const recipe = { id: 'solo', path: 'benchmark/recipes/solo.md', sha256: sha256(files['benchmark/recipes/solo.md']) };
+  const theme = { id: 'cinder', path: 'benchmark/themes/cinder.md', sha256: sha256(files['benchmark/themes/cinder.md']) };
+  const template = { path: 'benchmark/prompts/level-assignment.md', sha256: sha256(files['benchmark/prompts/level-assignment.md']) };
+  const failureTaxonomy = { path: 'benchmark/controller/failure-taxonomy.md', sha256: sha256(files['benchmark/controller/failure-taxonomy.md']) };
+  const assignment = {
+    runId: 'run-a1b2c3d4',
+    slotId: 'a1b2',
+    configurationId: 'solo',
+    configurationCommit: materials,
+    recipe,
+    stage: { adapter: 'codex-cli', model: 'model-solo', effort: 'high', timeoutSeconds: 60 },
+    theme,
+    levelId: 'cinder-a1b2',
+    levelTitle: 'Cinder',
+  };
+  const scheduleValue = {
+    schemaVersion: 1,
+    benchmarkVersion: 'v1',
+    generatedAt: new Date().toISOString(),
+    randomization: { method: 'cryptographic-shuffle' },
+    assignments: [{ scheduleIndex: 1, ...assignment }],
+  };
+  await fs.writeFile(schedulePath, `${JSON.stringify(scheduleValue, null, 2)}\n`);
+  const release = {
+    schemaVersion: 1,
+    benchmarkVersion: 'v1',
+    frozenAt: new Date().toISOString(),
+    materialsCommit: materials,
+    entrantBaseline: { kind: 'git-commit', identifier: entrantBaseline, allowedLevelIds: ['anchor'] },
+    artifacts: [template, theme, failureTaxonomy],
+  };
+  await fs.mkdir(path.join(root, 'benchmark/releases/v1'), { recursive: true });
+  await fs.writeFile(path.join(root, 'benchmark/releases/v1/freeze.json'), `${JSON.stringify(release, null, 2)}\n`);
+  await exec('git', ['add', '.'], { cwd: root });
+  await exec('git', ['commit', '-qm', 'release'], { cwd: root });
+  await exec('git', ['tag', 'benchmark-v1'], { cwd: root });
+  const definition = {
+    schemaVersion: 1,
+    benchmarkVersion: 'v1',
+    mode: 'eligible',
+    assignment,
+    baseline: { materialsCommit: materials, entrantBaseline, configurationCommit: materials },
+    release: { path: 'benchmark/releases/v1/freeze.json', sha256: sha256(`${JSON.stringify(release, null, 2)}\n`) },
+    schedule: { path: schedulePath, sha256: sha256(`${JSON.stringify(scheduleValue, null, 2)}\n`) },
+    template,
+    failureTaxonomy,
+    stage: assignment.stage,
+    worktree: { path: path.join(root, 'entrant-worktree') },
+    payload: { path: path.join(root, 'payload-worktree'), branch: 'benchmark-payload-a1b2' },
+  };
+  return { root, schedulePath, definition, scheduleValue, materials, configurationCommit: materials, entrantBaseline, cleanup: async () => { await fs.rm(root, { recursive: true, force: true }); await fs.rm(schedulePath, { force: true }); } };
+}
+
+async function assertMissingGatesResumeFixture() {
+  const runDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-missing-gates-'));
+  const evaluatedCommit = 'a'.repeat(40);
+  try {
+    await fs.writeFile(path.join(runDirectory, 'controller-state.json'), `${JSON.stringify({ checkpoints: { gates: { status: 'completed' } } }, null, 2)}\n`);
+    assert.equal(await reusableGateRecord(runDirectory, evaluatedCommit), null, 'a completed gates checkpoint with no gates.json must not be reusable');
+    const oldManifest = { output: { evaluated: { commit: evaluatedCommit } }, gates: [{ id: 'typecheck', status: 'failed' }], disposition: { status: 'dnf' } };
+    const newGateRecord = { evaluatedCommit, gates: ['typecheck', 'build', 'scope', 'floor'].map((id) => ({ id, status: 'passed' })) };
+    assert.equal(manifestNeedsRefresh(oldManifest, { evaluatedCommit }, null, newGateRecord), true, 'changed gate results must refresh the manifest on resume');
+    assert.deepEqual(dispositionFor({ mode: 'eligible', passing: true, payload: null }), { status: 'dnf', reasonCode: 'payload-pending' });
+    await fs.mkdir(path.join(runDirectory, 'gates'), { recursive: true });
+    await fs.writeFile(path.join(runDirectory, 'gates/gates.json'), `${JSON.stringify(newGateRecord)}\n`);
+    assert.deepEqual(await reusableGateRecord(runDirectory, evaluatedCommit), newGateRecord);
+  } finally {
+    await fs.rm(runDirectory, { recursive: true, force: true });
+  }
 }
 
 console.log('Benchmark controller tests passed.');

@@ -16,6 +16,8 @@ import {
 } from './common.mjs';
 import { levelFootprint, protocolForVersion } from './protocol.mjs';
 
+const CONTROLLER_SCOPE_SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'check-benchmark-scope.mjs');
+
 async function main() {
   const { rest, options } = parseArgs(process.argv.slice(2), { positional: true });
   if (options.help || rest.length === 0) {
@@ -89,7 +91,7 @@ async function runGates(options) {
   await fs.mkdir(outputDirectory, { recursive: true });
 
   const scopeCommand = protocolForVersion(benchmarkVersion).directoryOnly
-    ? [process.execPath, path.resolve(worktree, 'scripts/check-benchmark-scope.mjs'), '--version', benchmarkVersion, '--level', levelId, '--base', baseline]
+    ? [process.execPath, CONTROLLER_SCOPE_SCRIPT, '--version', benchmarkVersion, '--level', levelId, '--base', baseline]
     : ['npm', 'run', 'check:scope', '--', levelId, baseline];
   const commands = [
     ['typecheck', 'npm', ['run', 'typecheck']],
@@ -185,7 +187,7 @@ export async function verifyPayload(repo, materialsCommit, payloadCommit, levelI
 
 async function runScopeCheck(worktree, { levelId, baseline, benchmarkVersion }) {
   if (protocolForVersion(benchmarkVersion).directoryOnly) {
-    await runCommand(worktree, process.execPath, [path.resolve(worktree, 'scripts/check-benchmark-scope.mjs'), '--version', benchmarkVersion, '--level', levelId, '--base', baseline]);
+    await runCommand(worktree, process.execPath, [CONTROLLER_SCOPE_SCRIPT, '--version', benchmarkVersion, '--level', levelId, '--base', baseline]);
   } else {
     await runCommand(worktree, 'npm', ['run', 'check:scope', '--', levelId, baseline]);
   }
