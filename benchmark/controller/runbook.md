@@ -1,6 +1,6 @@
 # Benchmark controller runbook
 
-This runbook is for an agent that orchestrates other agents and harnesses. It is deliberately vendor-neutral. Follow the frozen release, private run schedule, selected recipe, and schemas exactly; do not improve the experiment while executing it.
+This runbook is for an agent that orchestrates other agents and harnesses. It is deliberately vendor-neutral. Follow the frozen release, private run schedule, and selected recipe exactly; do not improve the experiment while executing it.
 
 ## Role
 
@@ -32,6 +32,14 @@ Run preparation, eligible generation, blind ranking, and post-unblinding integra
 - Nothing is merged into `main` before rankings are locked and the schedule is opened.
 - Secrets, credentials, and private session URLs never enter commits, public logs, or player-facing deployments. Before unblinding, configuration mappings do not enter them either.
 
+## Frozen material versus recorded tooling
+
+Generation is expensive and unrepeatable; administration is deterministic and replayable. The protocol therefore freezes only what an entrant can see or be judged by: the entrant baseline, the rendered-assignment inputs (template, theme, delegation addendum), each configuration's recipe and stage parameters, and the failure taxonomy. These are hash-verified before launch with no override.
+
+Controller tooling — the runner, harness adapters, seal/gate/scope/payload implementations, schemas, and this runbook — is recorded, not frozen. A fresh launch requires a clean controller repository and records the executing controller commit in the run record. Tooling may improve between runs of one release.
+
+Fairness across entrants rests on replay, not on freezing tooling: every gate runs against a sealed evaluated commit and can be re-executed at any time. When a gate failure is caused by a tooling defect — a controller failure under the taxonomy — fix the tooling and re-run gates against the unchanged sealed commit with `npm run benchmark:manage -- regate`; never re-run generation. When a tooling fix changes what a gate accepts, re-run gates for every sealed run of the release at the same tooling commit before comparing results. Each regate records the controller commit that produced it, and earlier gate records are archived, never overwritten.
+
 ## Source-root protocol dispatch
 
 The recorded `benchmarkVersion` selects the source-root contract. Historical v1 (and rehearsal) uses `src/levels/<level-id>/` and its legacy registry-aware scope and payload rules. The directory-only protocol uses `src/benchmark-levels/<level-id>/`; its entrant starts with benchmark-mode scaffolding, includes `level.json`, does not edit `src/levels/index.ts`, and is checked with `scripts/check-benchmark-scope.mjs --version <version>`. Payload extraction uses the same selected root. Never choose a root by probing which directory exists.
@@ -46,8 +54,9 @@ Do not start an eligible run until all of these exist and agree:
 - the materials commit and entrant-baseline commit named by that record, plus its v1 registry allowlist or directory-only baseline contract;
 - a private append-only schedule revision containing the assignment, with its hash pinned by the run definition;
 - exactly one assignment selected from that schedule without exposing the other assignments;
-- the assignment's recipe and theme with matching paths and hashes, plus the immutable configuration commit containing its runner, executor, and recipe;
-- the frozen shared assignment template and controller runbook;
+- the assignment's recipe and theme with matching paths and hashes, plus the configuration commit containing its recipe;
+- the frozen shared assignment template;
+- a clean controller checkout, whose commit is recorded in the run record;
 - deterministic adapters or documented harness procedures for launching every recipe stage and capturing usage;
 - a predeclared failure taxonomy; and
 - private storage outside the entrant checkout.
@@ -81,7 +90,7 @@ Follow `benchmark/releases/README.md` in order:
 3. Create and validate the protocol freeze record, commit it, and create the annotated release tag.
 4. Generate the initial private randomized schedule against `benchmark/schemas/run-schedule.schema.json`.
 5. Mechanically verify complete registered-configuration × theme coverage, contiguous schedule positions, unique run/slot/level ids, fixed-length opaque slots, and exact `<theme-id>-<slot-id>` construction. Hash the schedule without printing its contents.
-6. For a later configuration, pin its runner, executor, and recipe at a configuration commit and extend the schedule. Preserve every earlier assignment and add only missing cells. New configuration code may implement delegation or different accounting, but it may not silently change shared task, baseline, gate, or judgment semantics.
+6. For a later configuration, pin its recipe and stage parameters at a configuration commit and extend the schedule. Preserve every earlier assignment and add only missing cells. New configuration code may implement delegation or different accounting, but it may not silently change shared task, baseline, or judgment semantics.
 7. Re-open a fresh entrant worktree and verify that it is at the declared baseline commit. Verify that private schedule data, raw records, credentials, and session URLs are absent; do not claim that tracked repository material or Git history is hidden.
 
 Do not hand-author or inspect the live slot mapping. If schedule generation or validation is not yet automated, the release is not ready to freeze.
@@ -161,7 +170,9 @@ npm run check:floor -- --level <level-id>
 
 Use the local Git ref corresponding to the entrant baseline for the scope command. Do not rely on a moving `main` default. Hash gate logs and keep them private. Verify that gates did not change tracked files; a changed evaluated tree is a controller failure, not an opportunity to amend the commit.
 
-Any failed required gate makes the entrant a DNF unless the frozen failure taxonomy identifies a controller failure. Record all gate outcomes even when an earlier gate fails, except where a failed prerequisite makes a later command impossible; record that later gate as not run with the reason.
+`typecheck`, `build`, and `floor` execute the entrant baseline's own tooling inside the worktree — frozen with the baseline, identical for every entrant. For the directory-only protocol, the scope check (at seal and as a gate) instead executes the controller checkout's `scripts/check-benchmark-scope.mjs` against the sealed worktree, so a footprint-tooling fix applies to every run without touching the frozen baseline.
+
+Any failed required gate makes the entrant a DNF unless the frozen failure taxonomy identifies a controller failure. A gate failure caused by a tooling defect is a controller failure remedied by regate, never a DNF. Record all gate outcomes even when an earlier gate fails, except where a failed prerequisite makes a later command impossible; record that later gate as not run with the reason.
 
 ### 7. Derive the payload
 
@@ -182,7 +193,7 @@ For a DNF, preserve the evaluated commit and do not create a mergeable passing p
 
 Validate the full record against `benchmark/schemas/run-manifest.schema.json` and enforce cross-field rules not expressible in JSON Schema:
 
-- assignment, runner, executor, recipe, theme, release, and schedule identities agree;
+- assignment, recipe, theme, release, and schedule identities agree;
 - stage order and count match the recipe;
 - usage and stage costs reconcile to totals under the registered configuration cost rule;
 - all four gate ids are accounted for;
@@ -238,7 +249,7 @@ A DNF does not enter playable `main` as-is. Any later repair is a post-benchmark
 
 Stop without improvising when:
 
-- release, schedule, runner, executor, recipe, theme, or prompt hashes disagree;
+- release, schedule, recipe, theme, or prompt hashes disagree;
 - the entrant checkout is not the frozen baseline;
 - private schedule data, raw records, credentials, or session URLs are visible inside the entrant session;
 - a requested model snapshot or session boundary cannot be honored;

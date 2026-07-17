@@ -118,7 +118,7 @@ A delegation configuration adds a `delegation` block and (for the rehearsal) set
 
 ## Generic controller tools
 
-The shared `admin.mjs`, `common.mjs`, and `render-assignment.mjs` components implement deterministic administration and are frozen as `controller-admin` protocol artifacts. A directory-only release also freezes the version-dispatch, scope, and baseline-check components. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. `benchmark:run` is the separate configuration-scoped runner above. Pin the runner and executor hashes in every configuration registration; those two are not protocol-wide frozen artifacts.
+The shared `admin.mjs`, `common.mjs`, and `render-assignment.mjs` components implement deterministic administration. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. `benchmark:run` is the separate configuration-scoped runner above. None of this tooling is frozen: each run records the executing controller commit, and gate results can be reproduced or re-run (regate) against the sealed evaluated commit at any tooling version.
 
 ### Render the shared assignment
 
@@ -144,9 +144,7 @@ Create a private definition file containing the benchmark version, configuration
   "configurations": [
     {
       "id": "<configuration-id>",
-      "configurationCommit": "<commit-containing-runner-executor-and-recipe>",
-      "runner": { "path": "scripts/benchmark/run.mjs", "sha256": "<sha256>" },
-      "executor": { "path": "scripts/benchmark/<executor>.mjs", "sha256": "<sha256>" },
+      "configurationCommit": "<commit-containing-recipe>",
       "recipe": { "id": "<configuration-id>", "path": "benchmark/recipes/<recipe>.md", "sha256": "<sha256>" },
       "stage": { "adapter": "<adapter-id>", "model": "<exact-model>", "effort": "high", "timeoutSeconds": 10800 }
     }
@@ -173,7 +171,7 @@ npm run benchmark:schedule -- validate \
 
 A configuration may add `"budget": { "usd": 20 }` to its `stage`. The amount must be positive and finite; omitting it preserves the single-turn adapter path and artifacts.
 
-Generation uses cryptographic randomness, assigns opaque run and slot ids, shuffles execution order, and does not print assignments. Validation reads each configuration artifact from its own `configurationCommit`, then enforces complete registered-configuration × theme coverage, unique ids, contiguous schedule indexes, execution/recipe/theme hash agreement, H1-derived titles, and `<theme-id>-<slot-id>` level ids.
+Generation uses cryptographic randomness, assigns opaque run and slot ids, shuffles execution order, and does not print assignments. Validation reads each configuration artifact from its own `configurationCommit`, then enforces complete registered-configuration × theme coverage, unique ids, contiguous schedule indexes, recipe/theme hash agreement, H1-derived titles, and `<theme-id>-<slot-id>` level ids.
 
 To register another configuration later, commit its recipe, append it to the definition without changing existing entries, and extend the schedule in place (or through a temporary output followed by an atomic replacement):
 
@@ -184,7 +182,7 @@ npm run benchmark:schedule -- extend \
   --out benchmark/private/run-schedule.next.json
 ```
 
-Extension rejects changed or removed configurations/themes, preserves every old assignment and index, and appends only the newly required cells. Pin the new schedule hash, configuration commit, runner, and executor in each eligible run definition.
+Extension rejects changed or removed configurations/themes, preserves every old assignment and index, and appends only the newly required cells. Pin the new schedule hash and configuration commit in each eligible run definition.
 
 ### Create and validate blind ranked sets
 
