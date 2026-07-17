@@ -245,7 +245,7 @@ Stop without improvising when:
 - the harness cannot provide the usage evidence required by the registered cost rule;
 - the controller observes cross-run contamination;
 - scope contains undeclared files;
-- payload diff contains anything outside the assigned level directory;
+- payload diff contains anything outside the assigned level footprint;
 - rankings are incomplete or unlocked at an unblinding request; or
 - an uncategorized failure would require judgment about whether to retry.
 

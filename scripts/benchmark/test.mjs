@@ -15,6 +15,7 @@ import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snap
 import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import { protocolForVersion } from './protocol.mjs';
+import { derivePayload } from './admin.mjs';
 
 const exec = promisify(execFile);
 
@@ -477,6 +478,43 @@ try {
   await fs.rm(snapshotRun, { recursive: true, force: true });
 }
 
+for (const withContent of [false, true]) await assertDerivedPayload(withContent);
+
+async function assertDerivedPayload(withContent) {
+  const repo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-payload-derivation-'));
+  const payloadWorktree = `${repo}-payload`;
+  try {
+    await exec('git', ['init', '-q'], { cwd: repo });
+    await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: repo });
+    await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: repo });
+    await fs.writeFile(path.join(repo, 'materials.txt'), 'materials\n');
+    await exec('git', ['add', '.'], { cwd: repo });
+    await exec('git', ['commit', '-qm', 'materials'], { cwd: repo });
+    const materials = (await exec('git', ['rev-parse', 'HEAD'], { cwd: repo })).stdout.trim();
+    await exec('git', ['switch', '-qc', 'evaluated'], { cwd: repo });
+    await fs.mkdir(path.join(repo, 'src/levels/synthetic-a1b2'), { recursive: true });
+    await fs.writeFile(path.join(repo, 'src/levels/synthetic-a1b2/index.ts'), 'synthetic\n');
+    if (withContent) {
+      await fs.mkdir(path.join(repo, 'public/level-content/synthetic-a1b2'), { recursive: true });
+      await fs.writeFile(path.join(repo, 'public/level-content/synthetic-a1b2/hero.png'), 'hero\n');
+    }
+    await exec('git', ['add', '.'], { cwd: repo });
+    await exec('git', ['commit', '-qm', 'evaluated'], { cwd: repo });
+    const evaluated = (await exec('git', ['rev-parse', 'HEAD'], { cwd: repo })).stdout.trim();
+    await exec('git', ['switch', '-q', 'main'], { cwd: repo });
+    const result = await derivePayload({ repo, materials, evaluated, 'level-id': 'synthetic-a1b2', path: payloadWorktree, branch: `payload-${withContent ? 'content' : 'source'}`, version: 'v1' });
+    const names = (await exec('git', ['diff', '--name-only', `${materials}..${result.payloadCommit}`], { cwd: repo })).stdout.trim().split('\n').filter(Boolean).sort();
+    assert.deepEqual(names, [
+      ...(withContent ? ['public/level-content/synthetic-a1b2/hero.png'] : []),
+      'src/levels/synthetic-a1b2/index.ts',
+    ]);
+  } finally {
+    await exec('git', ['worktree', 'remove', '--force', payloadWorktree], { cwd: repo }).catch(() => {});
+    await fs.rm(repo, { recursive: true, force: true });
+    await fs.rm(payloadWorktree, { recursive: true, force: true });
+  }
+}
+
 const scopeRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-directory-only-scope-'));
 try {
   await fs.mkdir(path.join(scopeRepo, 'src/levels'), { recursive: true });
@@ -512,6 +550,25 @@ try {
   await assert.rejects(
     () => checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', benchmarkVersion: 'v2' }),
     /Out-of-scope files/,
+  );
+
+  await exec('git', ['checkout', '--', 'src/levels/index.ts'], { cwd: scopeRepo });
+  await fs.rm(path.join(scopeRepo, 'src/benchmark-levels/synthetic-a1b2'), { recursive: true, force: true });
+  await fs.rm(path.join(scopeRepo, 'public/level-content/synthetic-a1b2'), { recursive: true, force: true });
+  await fs.mkdir(path.join(scopeRepo, 'src/levels/synthetic-a1b2'), { recursive: true });
+  await fs.writeFile(path.join(scopeRepo, 'src/levels/synthetic-a1b2/index.ts'), 'synthetic legacy\n');
+  await fs.writeFile(path.join(scopeRepo, 'src/levels/index.ts'), 'derived registry\n');
+  await fs.mkdir(path.join(scopeRepo, 'public/level-content/synthetic-a1b2'), { recursive: true });
+  await fs.writeFile(path.join(scopeRepo, 'public/level-content/synthetic-a1b2/hero.png'), 'legacy hero\n');
+  assert.deepEqual(
+    await checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', benchmarkVersion: 'v1' }),
+    ['public/level-content/synthetic-a1b2/hero.png', 'src/levels/index.ts', 'src/levels/synthetic-a1b2/index.ts'],
+  );
+  await fs.mkdir(path.join(scopeRepo, 'public/level-content/other-z9z9'), { recursive: true });
+  await fs.writeFile(path.join(scopeRepo, 'public/level-content/other-z9z9/hero.png'), 'other\n');
+  await assert.rejects(
+    () => checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', benchmarkVersion: 'v1' }),
+    /public\/level-content\/other-z9z9\/hero\.png/,
   );
 } finally {
   await fs.rm(scopeRepo, { recursive: true, force: true });

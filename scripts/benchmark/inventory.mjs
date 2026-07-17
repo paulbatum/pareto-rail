@@ -5,10 +5,9 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { manifestErrors } from './results.mjs';
 import { sha256 } from './common.mjs';
+import { levelFootprint } from './protocol.mjs';
 
 const execFileAsync = promisify(execFile);
-const SOURCE_ROOT = 'src/levels';
-const DESTINATION_ROOT = 'src/benchmark-levels';
 const REQUIRED_GATES = ['typecheck', 'build', 'scope', 'floor'];
 const MANIFEST_KEYS = new Set(['schemaVersion', 'benchmarkVersion', 'runId', 'slotId', 'configuration', 'theme', 'baseline', 'recipe', 'controller', 'timing', 'stages', 'cost', 'gates', 'output', 'disposition']);
 
@@ -92,6 +91,9 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
   const cleanupRecord = privateRun ? await optionalJson(path.join(privateRun, 'source-cleanup.json')) : null;
   const promotionRecord = privateRun ? await optionalJson(path.join(privateRun, 'promotion.json')) : null;
   const levelId = manifest.output?.levelId ?? definition?.assignment?.levelId ?? null;
+  const benchmarkVersion = manifest.benchmarkVersion ?? definition?.benchmarkVersion ?? null;
+  const footprint = levelId && benchmarkVersion ? levelFootprint(levelId, benchmarkVersion) : null;
+  const sourceRoot = footprint?.roots.find((rootEntry) => rootEntry.required) ?? null;
   const resolvedPublicManifestPaths = publicManifestPaths.length > 0
     ? publicManifestPaths
     : (publishedDirectories.includes(file.root) || publishedDirectories.some((directory) => isInside(file.path, directory))
@@ -110,7 +112,7 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
     manifestSha256: sha256(await fs.readFile(file.path)),
     manifestCopies: manifestCopies.map((copy) => ({ path: relative(repositoryRoot, copy.path), kind: copy.kind })).sort((left, right) => left.path.localeCompare(right.path)),
     recordKind: file.kind,
-    benchmarkVersion: manifest.benchmarkVersion ?? definition?.benchmarkVersion ?? null,
+    benchmarkVersion,
     runId,
     slotId: manifest.slotId ?? definition?.assignment?.slotId ?? null,
     themeId: manifest.theme?.id ?? definition?.assignment?.theme?.id ?? themeIdFromPath(manifest.theme?.path ?? definition?.assignment?.theme?.path),
@@ -123,10 +125,11 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
     payloadCommit: manifest.output?.payload?.commit ?? payloadRecord?.payloadCommit ?? null,
     payloadBranch: manifest.output?.payload?.branch ?? payloadRecord?.branch ?? null,
     source: {
-      path: levelId ? `${SOURCE_ROOT}/${levelId}/` : null,
-      presentInPrimaryWorktree: Boolean(levelId && await exists(path.join(repositoryRoot, SOURCE_ROOT, levelId))),
+      path: sourceRoot ? `${sourceRoot.path}/` : null,
+      presentInPrimaryWorktree: Boolean(sourceRoot && await exists(path.join(repositoryRoot, sourceRoot.path))),
       bytesAgreeWithPayload: null,
       files: [],
+      roots: [],
       payloadTreeSha256: null,
       treeSha256: null,
       applicationCommit: null,
@@ -183,27 +186,66 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
     record.payloadCommit = payloadCommit;
     await assertBranch(repositoryRoot, manifest.output.evaluated.branch, evaluatedCommit, 'evaluated');
     await assertBranch(repositoryRoot, payloadRecord.branch, payloadCommit, 'payload');
-    const evaluatedEntries = await treeEntries(repositoryRoot, evaluatedCommit, `${SOURCE_ROOT}/${levelId}`);
-    const payloadEntries = await treeEntries(repositoryRoot, payloadCommit, `${SOURCE_ROOT}/${levelId}`);
-    if (!evaluatedEntries.length || !payloadEntries.length) throw new Error('evaluated and payload commits must contain a non-empty assigned level directory.');
-    assertNoSymlinks(evaluatedEntries, 'evaluated');
-    assertNoSymlinks(payloadEntries, 'payload');
-    assertSameTree(evaluatedEntries, payloadEntries, 'evaluated and payload source trees');
+    const rootRecords = [];
+    for (const rootEntry of footprint.roots) {
+      const evaluatedEntries = await treeEntries(repositoryRoot, evaluatedCommit, rootEntry.path);
+      const payloadEntries = await treeEntries(repositoryRoot, payloadCommit, rootEntry.path);
+      if (rootEntry.required && (!evaluatedEntries.length || !payloadEntries.length)) throw new Error(`evaluated and payload commits must contain the required root ${rootEntry.path}.`);
+      if (evaluatedEntries.length !== payloadEntries.length) throw new Error(`evaluated and payload commits disagree about footprint root ${rootEntry.path}.`);
+      if (evaluatedEntries.length) {
+        assertNoSymlinks(evaluatedEntries, `evaluated ${rootEntry.id}`);
+        assertNoSymlinks(payloadEntries, `payload ${rootEntry.id}`);
+        assertSameTree(evaluatedEntries, payloadEntries, `evaluated and payload ${rootEntry.id} trees`);
+      }
+      rootRecords.push({ ...rootEntry, present: payloadEntries.length > 0, payloadEntries });
+    }
+    const sourceRootRecord = rootRecords.find((rootEntry) => rootEntry.required);
+    const payloadEntries = sourceRootRecord?.payloadEntries ?? [];
     if (payloadEntries.some((entry) => entry.relativePath === 'level.json')) throw new Error('payload contains a benchmark descriptor; the controller must own level.json.');
     const changed = await payloadDiff(repositoryRoot, materialsCommit, payloadCommit);
     if (!changed.length) throw new Error('payload diff is empty.');
-    if (changed.some((entry) => !entry.path.startsWith(`${SOURCE_ROOT}/${levelId}/`))) throw new Error('payload diff contains a path outside the assigned level directory.');
+    if (changed.some((entry) => !footprint.roots.some((rootEntry) => entry.path.startsWith(`${rootEntry.path}/`)))) throw new Error('payload diff contains a path outside the assigned level footprint.');
+    if (!changed.some((entry) => entry.path.startsWith(`${sourceRoot.path}/`))) throw new Error('payload diff contains no file in the required source root.');
     if (changed.some((entry) => /^[DRC]/.test(entry.status))) throw new Error('payload diff deletes, renames, or copies a path.');
-    const sourcePath = path.join(repositoryRoot, SOURCE_ROOT, levelId);
+    const applicationCommit = record.source.presentInPrimaryWorktree ? await currentHead(repositoryRoot) : null;
+    for (const rootEntry of rootRecords.filter((candidate) => candidate.present)) {
+      const rootPath = path.join(repositoryRoot, rootEntry.path);
+      const presentInPrimaryWorktree = await exists(rootPath);
+      const rootRecord = {
+        id: rootEntry.id,
+        path: `${rootEntry.path}/`,
+        promotedPath: `${rootEntry.promotedPath}/`,
+        required: rootEntry.required,
+        files: rootEntry.payloadEntries.map((entry) => entry.relativePath),
+        payloadTreeSha256: treeEntriesSha256(rootEntry.payloadEntries),
+        presentInPrimaryWorktree,
+        treeSha256: null,
+        applicationTreeSha256: null,
+      };
+      if (presentInPrimaryWorktree && applicationCommit) {
+        const applicationEntries = await treeEntries(repositoryRoot, applicationCommit, rootEntry.path);
+        rootRecord.applicationTreeSha256 = treeEntriesSha256(applicationEntries);
+        try {
+          const verification = await verifyFilesystemTree(rootPath, rootEntry.payloadEntries, repositoryRoot);
+          rootRecord.treeSha256 = verification.treeSha256;
+          if (rootEntry.id !== 'source' && verification.divergingPaths.length > 0) record.errors.push(`primary ${rootEntry.id} root differs from payload at ${verification.divergingPaths.join(', ')}.`);
+        } catch (error) {
+          record.errors.push(error instanceof Error ? error.message : String(error));
+        }
+      } else if (rootEntry.id !== 'source' && record.source.presentInPrimaryWorktree) {
+        record.errors.push(`primary source copy is missing payload root ${rootEntry.path}.`);
+      }
+      record.source.roots.push(rootRecord);
+    }
+    const sourcePath = path.join(repositoryRoot, sourceRoot.path);
     record.source.files = payloadEntries.map((entry) => entry.relativePath);
     record.source.payloadTreeSha256 = treeEntriesSha256(payloadEntries);
     if (record.source.presentInPrimaryWorktree) {
-      const applicationCommit = await currentHead(repositoryRoot);
-      const applicationEntries = await treeEntries(repositoryRoot, applicationCommit, `${SOURCE_ROOT}/${levelId}`);
-      if (!applicationEntries.length) record.errors.push('primary source directory is not tracked at the current application commit.');
+      const sourceRecord = record.source.roots.find((rootEntry) => rootEntry.id === 'source');
+      if (!sourceRecord?.applicationTreeSha256) record.errors.push('primary source directory is not tracked at the current application commit.');
       else {
         record.source.applicationCommit = applicationCommit;
-        record.source.applicationTreeSha256 = treeEntriesSha256(applicationEntries);
+        record.source.applicationTreeSha256 = sourceRecord.applicationTreeSha256;
         if (record.source.applicationTreeSha256 !== record.source.payloadTreeSha256 && !acceptedDivergedLevels.has(levelId)) record.errors.push('primary source differs from the current application commit.');
       }
       try {
@@ -212,10 +254,7 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
         if (verification.divergingPaths.length > 0) {
           if (acceptedDivergedLevels.has(levelId)) {
             record.source.bytesAgreeWithPayload = false;
-            record.source.derivative = {
-              payloadCommit,
-              divergingPaths: verification.divergingPaths,
-            };
+            record.source.derivative = { payloadCommit, divergingPaths: verification.divergingPaths };
           } else {
             record.errors.push(`primary source differs from payload at ${verification.divergingPaths.join(', ')}.`);
           }
@@ -226,9 +265,9 @@ async function makeRecord({ repositoryRoot, privateDirectory, publishedDirectori
         record.errors.push(error instanceof Error ? error.message : String(error));
       }
     }
-    const destinationPath = path.join(repositoryRoot, DESTINATION_ROOT, levelId);
+    const destinationPath = path.join(repositoryRoot, sourceRoot.promotedPath);
     record.destination = {
-      path: `${DESTINATION_ROOT}/${levelId}/`,
+      path: `${sourceRoot.promotedPath}/`,
       presentInPrimaryWorktree: await exists(destinationPath),
     };
     record.status = record.disposition === 'playable'

@@ -16,6 +16,7 @@ import {
 } from './common.mjs';
 import { manifestErrors } from './results.mjs';
 import { buildMigrationInventory } from './inventory.mjs';
+import { LEGACY_LEVEL_REGISTRY_PATH, LEVEL_GALLERY_PATH, levelFootprint } from './protocol.mjs';
 
 const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -23,9 +24,8 @@ const REQUIRED_GATES = ['typecheck', 'build', 'scope', 'floor'];
 const CHECKPOINTS = ['validation', 'extraction', 'descriptor', 'application', 'catalog', 'commit'];
 const PROMOTION_SCHEMA_VERSION = 1;
 const PROMOTION_LOCK_NAME = 'raild-benchmark-promotion.lock';
-const SOURCE_ROOT = 'src/levels';
-const DESTINATION_ROOT = 'src/benchmark-levels';
-const GALLERY_PATH = 'docs/level-gallery.md';
+const GALLERY_PATH = LEVEL_GALLERY_PATH;
+const REGISTRY_PATH = LEGACY_LEVEL_REGISTRY_PATH;
 
 export class PromotionInterrupted extends Error {
   constructor(checkpoint) {
@@ -162,44 +162,60 @@ async function validatePreflight(context) {
   await validateOptionalWorktree(worktreeRecord?.worktree, evaluatedCommit, 'evaluated');
   if (worktreeRecord?.branch && worktreeRecord.branch !== manifest.output.evaluated.branch) throw new Error('Evaluated worktree metadata does not match the manifest ref.');
 
-  const materialEntries = await treeEntries(root, materialsCommit, `${SOURCE_ROOT}/${levelId}`);
-  if (materialEntries.length) throw new Error(`The materials commit already contains ${SOURCE_ROOT}/${levelId}; refusing a collision.`);
-  const evaluatedEntries = await treeEntries(root, evaluatedCommit, `${SOURCE_ROOT}/${levelId}`);
-  const payloadEntries = await treeEntries(root, payloadCommit, `${SOURCE_ROOT}/${levelId}`);
-  if (!evaluatedEntries.length || !payloadEntries.length) throw new Error('Evaluated and payload commits must contain a non-empty assigned level directory.');
-  assertNoSymlinks(evaluatedEntries, 'evaluated');
-  assertNoSymlinks(payloadEntries, 'payload');
-  assertSameTree(evaluatedEntries, payloadEntries, 'evaluated and payload source trees');
+  const footprint = levelFootprint(levelId, definition.benchmarkVersion);
+  const roots = [];
+  for (const rootEntry of footprint.roots) {
+    const materialEntries = await treeEntries(root, materialsCommit, rootEntry.path);
+    if (materialEntries.length) throw new Error(`The materials commit already contains ${rootEntry.path}; refusing a collision.`);
+    const evaluatedEntries = await treeEntries(root, evaluatedCommit, rootEntry.path);
+    const payloadEntries = await treeEntries(root, payloadCommit, rootEntry.path);
+    if (rootEntry.required && (!evaluatedEntries.length || !payloadEntries.length)) throw new Error(`Evaluated and payload commits must contain the required root ${rootEntry.path}.`);
+    if (evaluatedEntries.length !== payloadEntries.length) throw new Error(`Evaluated and payload commits disagree about footprint root ${rootEntry.path}.`);
+    if (evaluatedEntries.length) {
+      assertNoSymlinks(evaluatedEntries, `evaluated ${rootEntry.id}`);
+      assertNoSymlinks(payloadEntries, `payload ${rootEntry.id}`);
+      assertSameTree(evaluatedEntries, payloadEntries, `evaluated and payload ${rootEntry.id} trees`);
+    }
+    roots.push({ ...rootEntry, present: payloadEntries.length > 0, evaluatedEntries, payloadEntries, destination: path.join(root, rootEntry.promotedPath) });
+  }
+  const sourceRoot = roots.find((rootEntry) => rootEntry.required);
+  if (!sourceRoot) throw new Error('Level footprint has no required source root.');
 
-  const changed = await payloadDiff(root, materialsCommit, payloadCommit, `${SOURCE_ROOT}/${levelId}`);
+  const changed = await payloadDiff(root, materialsCommit, payloadCommit);
   if (!changed.length) throw new Error('Payload diff is empty.');
-  if (changed.some((entry) => !entry.path.startsWith(`${SOURCE_ROOT}/${levelId}/`))) throw new Error('Payload diff contains a path outside the assigned level directory.');
+  if (changed.some((entry) => !roots.some((rootEntry) => entry.path.startsWith(`${rootEntry.path}/`)))) throw new Error('Payload diff contains a path outside the assigned level footprint.');
+  if (!changed.some((entry) => entry.path.startsWith(`${sourceRoot.path}/`))) throw new Error('Payload diff contains no file in the required source root.');
   if (changed.some((entry) => /^[DRC]/.test(entry.status))) throw new Error('Payload diff deletes, renames, or copies a path.');
-  if (payloadEntries.some((entry) => entry.relativePath === 'level.json')) throw new Error('Payload may not contain level.json; the controller owns the benchmark descriptor.');
+  if (sourceRoot.payloadEntries.some((entry) => entry.relativePath === 'level.json')) throw new Error('Payload may not contain level.json; the controller owns the benchmark descriptor.');
 
   const builtInIdentities = await readBuiltInIdentities(root);
-  const legacySourcePath = path.join(root, SOURCE_ROOT, levelId);
+  const legacySourcePath = path.join(root, sourceRoot.path);
   const legacySourcePresent = await pathExists(legacySourcePath);
   const legacySourceWasPresent = legacySourcePresent || state.source?.legacySourcePresent === true;
-  if (legacySourcePresent && !context.migration) throw new Error(`Assigned source directory already exists: ${SOURCE_ROOT}/${levelId}`);
-  if (legacySourcePresent && !builtInIdentities.has(levelId)) throw new Error(`Existing assigned source directory is not registered as a built-in level: ${SOURCE_ROOT}/${levelId}`);
+  if (legacySourcePresent && !context.migration) throw new Error(`Assigned source directory already exists: ${sourceRoot.path}`);
+  if (legacySourcePresent && !builtInIdentities.has(levelId)) throw new Error(`Existing assigned source directory is not registered as a built-in level: ${sourceRoot.path}`);
   if (context.migration && !legacySourcePresent && builtInIdentities.has(levelId) && !state.source?.levelId) throw new Error(`Migration expected a built-in source directory for ${levelId}.`);
-  const benchmarkIdentities = await readPromotedIdentities(root);
-  const destination = path.join(root, DESTINATION_ROOT, levelId);
+  const benchmarkIdentities = await readPromotedIdentities(root, path.posix.dirname(sourceRoot.promotedPath));
   if (benchmarkIdentities.has(levelId) && !state.source?.levelId) throw new Error(`Assigned level id is already a promoted benchmark level: ${levelId}`);
   if (benchmarkIdentities.has(levelId) && state.source?.levelId !== levelId) throw new Error(`Assigned level id collides with another promoted benchmark level: ${levelId}`);
 
+  const presentRoots = roots.filter((rootEntry) => rootEntry.present);
   const status = await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
   const existingPromotion = Boolean(state.source?.levelId);
   const galleryMayBePromotionChange = existingPromotion && (state.currentCheckpoint === 'catalog' || state.checkpoints.catalog?.status === 'completed' || state.checkpoints.commit?.status === 'completed');
-  assertOnlyPromotionChanges(status, root, destination, existingPromotion || (context.migration && context.migrationLevelIds.length > 0), galleryMayBePromotionChange, context.migration ? legacySourcePath : null, context.migration ? path.join(root, 'src/levels/index.ts') : null, context.migrationLevelIds);
+  assertOnlyPromotionChanges(status, root, presentRoots.map((rootEntry) => rootEntry.destination), existingPromotion || (context.migration && context.migrationLevelIds.length > 0), galleryMayBePromotionChange, context.migration ? legacySourcePath : null, context.migration ? path.join(root, REGISTRY_PATH) : null, context.migrationLevelIds);
   if (context.migration && legacySourcePresent) {
-    const divergence = await verifyPayloadTree(legacySourcePath, payloadEntries, root, context.acceptDiverged?.divergingPaths ?? []);
+    const divergence = await verifyPayloadTree(legacySourcePath, sourceRoot.payloadEntries, root, context.acceptDiverged?.divergingPaths ?? []);
     if (context.acceptDiverged && !samePathSet(divergence, context.acceptDiverged.divergingPaths)) throw new Error('Accepted divergence paths do not match the current source.');
   }
-  if (await pathExists(destination)) {
-    if (!existingPromotion) throw new Error(`Promotion destination already exists: ${destination}`);
-    await verifyDestination(destination, payloadEntries, descriptorBytes(levelId, title), { allowDescriptor: true, descriptorOptional: true, allowedDivergencePaths: context.acceptDiverged?.divergingPaths ?? [] }, root);
+  for (const rootEntry of presentRoots) {
+    if (!await pathExists(rootEntry.destination)) continue;
+    if (!existingPromotion && !(context.migration && rootEntry.id !== 'source')) throw new Error(`Promotion destination already exists: ${rootEntry.destination}`);
+    if (rootEntry.id === 'source') {
+      await verifyDestination(rootEntry.destination, rootEntry.payloadEntries, descriptorBytes(levelId, title), { allowDescriptor: true, descriptorOptional: true, allowedDivergencePaths: context.acceptDiverged?.divergingPaths ?? [] }, root);
+    } else {
+      await verifyPayloadTree(rootEntry.destination, rootEntry.payloadEntries, root);
+    }
   }
 
   const sourceSnapshot = {
@@ -216,8 +232,9 @@ async function validatePreflight(context) {
     evaluatedSha256: sha256(evaluatedSource),
     payloadSha256: sha256(payloadSource),
     payloadDiffSha256: sha256(JSON.stringify(changed)),
-    sourcePath: `${SOURCE_ROOT}/${levelId}/`,
-    destinationPath: `${DESTINATION_ROOT}/${levelId}/`,
+    sourcePath: `${sourceRoot.path}/`,
+    destinationPath: `${sourceRoot.promotedPath}/`,
+    roots: roots.map(({ id, path: rootPath, promotedPath, required, present }) => ({ id, path: rootPath, promotedPath, required, present })),
     legacySourcePresent: legacySourceWasPresent,
     derivative: context.acceptDiverged,
     descriptor: {
@@ -233,7 +250,7 @@ async function validatePreflight(context) {
   if (state.source?.baseCommit) await resolveCommit(root, state.source.baseCommit, 'promotion base commit');
   const promotionCommit = state.promotionCommit ?? state.checkpoints.commit?.promotionCommit;
   if (promotionCommit) await resolveCommit(root, promotionCommit, 'recorded promotion commit');
-  return { source: { ...sourceSnapshot, baseCommit }, definition, manifest, evaluated, payload, payloadEntries, changed, destination, legacySourcePath };
+  return { source: { ...sourceSnapshot, baseCommit }, definition, manifest, evaluated, payload, roots, presentRoots, sourceRoot, payloadEntries: sourceRoot.payloadEntries, changed, destination: sourceRoot.destination, legacySourcePath };
 }
 
 function samePathSet(left, right) {
@@ -244,36 +261,47 @@ function samePathSet(left, right) {
 
 async function extractPayload(context) {
   const { root, runId } = context;
-  const { source, payloadEntries, destination } = context.preflight;
-  const legacySourcePath = context.preflight.legacySourcePath;
+  const { source, presentRoots, sourceRoot, legacySourcePath } = context.preflight;
   const gitDirectory = path.resolve(root, (await gitText(root, ['rev-parse', '--git-dir'])).trim());
-  const stage = path.join(gitDirectory, 'raild-promotion-staging', `${source.levelId}-${runId}`);
-  await fs.mkdir(path.dirname(destination), { recursive: true });
-  if (await pathExists(destination)) {
-    await verifyDestination(destination, payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true, descriptorOptional: true, allowedDivergencePaths: source.derivative?.divergingPaths ?? [] }, root);
+  const results = [];
+
+  for (const rootEntry of presentRoots) {
+    const destination = rootEntry.destination;
+    const stage = path.join(gitDirectory, 'raild-promotion-staging', `${source.levelId}-${runId}-${rootEntry.id}`);
+    await fs.mkdir(path.dirname(destination), { recursive: true });
+    if (await pathExists(destination)) {
+      if (rootEntry.id === 'source') {
+        await verifyDestination(destination, rootEntry.payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true, descriptorOptional: true, allowedDivergencePaths: source.derivative?.divergingPaths ?? [] }, root);
+      } else {
+        await verifyPayloadTree(destination, rootEntry.payloadEntries, root);
+      }
+      if (await pathExists(stage)) await fs.rm(stage, { recursive: true, force: true });
+      results.push({ id: rootEntry.id, destination: `${rootEntry.promotedPath}/`, files: rootEntry.payloadEntries.length, reused: true });
+      continue;
+    }
+    if (rootEntry.id === 'source' && context.migration && source.legacySourcePresent && await pathExists(legacySourcePath)) {
+      await fs.rename(legacySourcePath, destination);
+      const divergence = await verifyPayloadTree(destination, rootEntry.payloadEntries, root, source.derivative?.divergingPaths ?? []);
+      if (source.derivative && !samePathSet(divergence, source.derivative.divergingPaths)) throw new Error('Relocated source divergence does not match its acceptance record.');
+      results.push({ id: rootEntry.id, destination: `${rootEntry.promotedPath}/`, files: rootEntry.payloadEntries.length, reused: false, relocated: true });
+      continue;
+    }
     if (await pathExists(stage)) await fs.rm(stage, { recursive: true, force: true });
-    if (context.migration) await removeBuiltInRegistryEntry(root, source.levelId, { allowMissing: true });
-    return { destination: source.destinationPath, files: payloadEntries.length, reused: true };
-  }
-  if (context.migration && source.legacySourcePresent && await pathExists(legacySourcePath)) {
-    await fs.rename(legacySourcePath, destination);
-    const divergence = await verifyPayloadTree(destination, payloadEntries, root, source.derivative?.divergingPaths ?? []);
-    if (source.derivative && !samePathSet(divergence, source.derivative.divergingPaths)) throw new Error('Relocated source divergence does not match its acceptance record.');
-    await removeBuiltInRegistryEntry(root, source.levelId, { allowMissing: false });
-    return { destination: source.destinationPath, files: payloadEntries.length, reused: false, relocated: true };
-  }
-  if (await pathExists(stage)) await fs.rm(stage, { recursive: true, force: true });
-  await materializeTree(root, source.payloadCommit, `${SOURCE_ROOT}/${source.levelId}`, stage, payloadEntries);
-  await verifyPayloadTree(stage, payloadEntries, root);
-  try {
-    await fs.rename(stage, destination);
-  } catch (error) {
-    if (error?.code !== 'EEXIST') throw error;
-    await verifyPayloadTree(destination, payloadEntries, root, source.derivative?.divergingPaths ?? []);
+    await materializeTree(root, source.payloadCommit, rootEntry.path, stage, rootEntry.payloadEntries);
+    await verifyPayloadTree(stage, rootEntry.payloadEntries, root);
+    try {
+      await fs.rename(stage, destination);
+    } catch (error) {
+      if (error?.code !== 'EEXIST') throw error;
+      await verifyPayloadTree(destination, rootEntry.payloadEntries, root, rootEntry.id === 'source' ? source.derivative?.divergingPaths ?? [] : []);
+      await fs.rm(stage, { recursive: true, force: true });
+    }
     await fs.rm(stage, { recursive: true, force: true });
+    results.push({ id: rootEntry.id, destination: `${rootEntry.promotedPath}/`, files: rootEntry.payloadEntries.length, reused: false });
   }
-  await fs.rm(stage, { recursive: true, force: true });
-  return { destination: source.destinationPath, files: payloadEntries.length, reused: false };
+
+  if (context.migration && sourceRoot.present) await removeBuiltInRegistryEntry(root, source.levelId, { allowMissing: true });
+  return { roots: results };
 }
 
 async function createDescriptor(context) {
@@ -293,8 +321,14 @@ async function createDescriptor(context) {
 }
 
 async function verifyApplication(context) {
-  const { destination, payloadEntries, source } = context.preflight;
-  await verifyDestination(destination, payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true, allowedDivergencePaths: source.derivative?.divergingPaths ?? [] }, context.root);
+  const { destination, payloadEntries, source, presentRoots } = context.preflight;
+  for (const rootEntry of presentRoots) {
+    if (rootEntry.id === 'source') {
+      await verifyDestination(rootEntry.destination, rootEntry.payloadEntries, descriptorBytes(source.levelId, source.title), { allowDescriptor: true, allowedDivergencePaths: source.derivative?.divergingPaths ?? [] }, context.root);
+    } else {
+      await verifyPayloadTree(rootEntry.destination, rootEntry.payloadEntries, context.root);
+    }
+  }
   const module = payloadEntries.find((entry) => entry.relativePath === 'index.ts');
   const card = payloadEntries.find((entry) => entry.relativePath === 'level.md');
   if (!module || !card) throw new Error('Promoted payload must contain index.ts and level.md.');
@@ -302,7 +336,7 @@ async function verifyApplication(context) {
   if (!source.derivative?.divergingPaths.includes('level.md') && cardText.split(/\r?\n/, 1)[0] !== `# ${source.title}`) throw new Error('Benchmark level.md title does not match controller-owned assignment data.');
   const galleryWasGenerated = context.state.currentCheckpoint === 'catalog' || context.state.checkpoints.catalog?.status === 'completed' || context.state.checkpoints.commit?.status === 'completed';
   await assertNoUnexpectedApplicationChanges(context, { allowGallery: galleryWasGenerated });
-  return { destination: source.destinationPath, verifiedFiles: payloadEntries.length + 1 };
+  return { destination: source.destinationPath, verifiedFiles: presentRoots.reduce((count, rootEntry) => count + rootEntry.payloadEntries.length, 1) };
 }
 
 async function updateCatalogAndRunChecks(context, { completed = false, data: previousData } = {}) {
@@ -323,7 +357,7 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
       const record = await optionalJson(path.join(runDirectory, 'promotion-checks', `${check.id}.json`));
       if (!record || record.exitCode !== check.exitCode || record.stdoutSha256 !== check.stdoutSha256 || record.stderrSha256 !== check.stderrSha256) throw new Error(`Promotion check record ${check.id} is missing or tampered.`);
     }
-    await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, true, ...promotionPathArgs(context), context.migrationLevelIds);
+    await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, context.preflight.presentRoots.map((rootEntry) => rootEntry.destination), true, true, ...promotionPathArgs(context), context.migrationLevelIds);
     return previousData;
   }
   const gallery = await runCommand(root, 'npm', ['run', 'gallery']);
@@ -355,7 +389,7 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
     });
     if (result.code !== 0 && !historicalFloorFailure) throw new Error(`Promotion ${id} check failed: ${result.stderr || result.stdout}`);
   }
-  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, true, ...promotionPathArgs(context), context.migrationLevelIds);
+  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, context.preflight.presentRoots.map((rootEntry) => rootEntry.destination), true, true, ...promotionPathArgs(context), context.migrationLevelIds);
   return { gallerySha256: sha256(gallerySource), checks };
 }
 
@@ -391,16 +425,17 @@ async function recoverCompletedChecks(runDirectory, levelId) {
 
 async function commitPromotion(context) {
   const { root } = context;
-  const { source, destination } = context.preflight;
-  const expectedPrefix = `${DESTINATION_ROOT}/${source.levelId}/`;
+  const { source, presentRoots, sourceRoot } = context.preflight;
   const expected = new Set([GALLERY_PATH]);
-  for (const entry of await listFiles(destination)) expected.add(`${expectedPrefix}${entry}`);
+  for (const rootEntry of presentRoots) {
+    for (const entry of await listFiles(rootEntry.destination)) expected.add(`${rootEntry.promotedPath}/${entry}`);
+  }
   if (context.migration && source.legacySourcePresent) {
-    expected.add('src/levels/index.ts');
-    for (const entry of context.preflight.payloadEntries) expected.add(`${SOURCE_ROOT}/${source.levelId}/${entry.relativePath}`);
+    expected.add(REGISTRY_PATH);
+    for (const entry of sourceRoot.payloadEntries) expected.add(`${sourceRoot.path}/${entry.relativePath}`);
   }
   const status = await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
-  assertOnlyPromotionChanges(status, root, destination, true, true, ...promotionPathArgs(context), context.migrationLevelIds);
+  assertOnlyPromotionChanges(status, root, presentRoots.map((rootEntry) => rootEntry.destination), true, true, ...promotionPathArgs(context), context.migrationLevelIds);
   const head = await currentHead(root);
   const baseCommit = source.baseCommit;
   if (context.state.promotionCommit || context.state.checkpoints.commit?.promotionCommit) {
@@ -412,8 +447,8 @@ async function commitPromotion(context) {
     await verifyPromotionCommit(root, head, baseCommit, expected, source, context);
     return { promotionCommit: head, reused: true };
   }
-  const addPaths = [DESTINATION_ROOT + '/' + source.levelId, GALLERY_PATH];
-  if (context.migration && source.legacySourcePresent) addPaths.push(SOURCE_ROOT + '/' + source.levelId, 'src/levels/index.ts');
+  const addPaths = [...presentRoots.map((rootEntry) => rootEntry.promotedPath), GALLERY_PATH];
+  if (context.migration && source.legacySourcePresent) addPaths.push(sourceRoot.path, REGISTRY_PATH);
   await git(root, ['add', '--', ...addPaths]);
   const staged = await gitText(root, ['diff', '--cached', '--name-only']);
   const stagedNames = staged.split('\n').map((line) => line.trim()).filter(Boolean);
@@ -432,7 +467,7 @@ async function verifyPromotionCommit(root, commit, baseCommit, expected, source,
   const names = (await gitText(root, ['diff', '--name-only', `${baseCommit}..${resolved}`])).split('\n').map((line) => line.trim()).filter(Boolean);
   const unexpected = names.filter((name) => !expected.has(name) && !(context?.migration && isMigrationToolingPath(name)));
   if (!names.length || unexpected.length) throw new Error('Promotion commit contains an unexpected application path.');
-  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, path.join(root, DESTINATION_ROOT, source.levelId), false, false);
+  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, [], false, false);
 }
 
 async function migrationScopeBase(context, baseCommit) {
@@ -481,30 +516,35 @@ async function checkpoint(context, id, action) {
 
 async function verifyApplicationChanges(context, allowGallery) {
   const { root } = context;
-  const destination = path.join(root, context.preflight.source.destinationPath);
-  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destination, true, allowGallery, ...promotionPathArgs(context), context.migrationLevelIds);
+  const destinations = context.preflight.presentRoots.map((rootEntry) => rootEntry.destination);
+  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destinations, true, allowGallery, ...promotionPathArgs(context), context.migrationLevelIds);
 }
 
 async function assertNoUnexpectedApplicationChanges(context, { allowGallery }) {
   await verifyApplicationChanges(context, allowGallery);
 }
 
-function assertOnlyPromotionChanges(status, root, destination, allowPromotionChanges, allowGallery, legacySource = null, registryPath = null, migrationLevelIds = []) {
+function assertOnlyPromotionChanges(status, root, destinations, allowPromotionChanges, allowGallery, legacySource = null, registryPath = null, migrationLevelIds = []) {
   const paths = parsePorcelain(status);
   if (!paths.length) return;
   if (!allowPromotionChanges) throw new Error(`Refusing to overwrite unrelated local changes: ${paths.join(', ')}`);
-  const destinationRelative = path.relative(root, destination).replaceAll(path.sep, '/');
-  const destinationRoot = `${destinationRelative}/`;
+  const destinationRoots = (Array.isArray(destinations) ? destinations : [destinations]).filter(Boolean).map((destination) => {
+    const relative = path.relative(root, destination).replaceAll(path.sep, '/');
+    return { relative, prefix: `${relative}/` };
+  });
   const legacyRelative = legacySource ? path.relative(root, legacySource).replaceAll(path.sep, '/') : null;
   const registryRelative = registryPath ? path.relative(root, registryPath).replaceAll(path.sep, '/') : null;
-  const migrationPaths = new Set(migrationLevelIds.length > 0 ? [GALLERY_PATH, 'src/levels/index.ts'] : []);
+  const migrationPaths = new Set(migrationLevelIds.length > 0 ? [GALLERY_PATH, REGISTRY_PATH] : []);
   for (const levelId of migrationLevelIds) {
-    migrationPaths.add(`${SOURCE_ROOT}/${levelId}`);
-    migrationPaths.add(`${DESTINATION_ROOT}/${levelId}`);
+    for (const rootEntry of levelFootprint(levelId, 'v1').roots) {
+      migrationPaths.add(rootEntry.path);
+      migrationPaths.add(rootEntry.promotedPath);
+    }
   }
   for (const item of paths) {
     const normalized = item.replaceAll(path.sep, '/');
-    if ((allowGallery && normalized === GALLERY_PATH) || normalized.startsWith(destinationRoot) || (legacyRelative && (normalized === legacyRelative || normalized.startsWith(`${legacyRelative}/`))) || (registryRelative && normalized === registryRelative) || [...migrationPaths].some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`))) continue;
+    const inDestination = destinationRoots.some(({ relative, prefix }) => normalized === relative || normalized.startsWith(prefix));
+    if ((allowGallery && normalized === GALLERY_PATH) || inDestination || (legacyRelative && (normalized === legacyRelative || normalized.startsWith(`${legacyRelative}/`))) || (registryRelative && normalized === registryRelative) || [...migrationPaths].some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`))) continue;
     throw new Error(`Refusing to overwrite unrelated local changes: ${item}`);
   }
 }
@@ -512,7 +552,7 @@ function assertOnlyPromotionChanges(status, root, destination, allowPromotionCha
 function promotionPathArgs(context) {
   const source = context.preflight?.source;
   if (!context.migration || !source?.legacySourcePresent) return [null, null];
-  return [path.join(context.root, SOURCE_ROOT, source.levelId), path.join(context.root, 'src/levels/index.ts')];
+  return [path.join(context.root, context.preflight.sourceRoot.path), path.join(context.root, REGISTRY_PATH)];
 }
 
 async function validateOptionalWorktree(worktree, expectedCommit, label) {
@@ -570,7 +610,7 @@ function validateRequiredGates(gates) {
 }
 
 export async function removeBuiltInRegistryEntry(root, levelId, { allowMissing }) {
-  const registryPath = path.join(root, 'src', 'levels', 'index.ts');
+  const registryPath = path.join(root, REGISTRY_PATH);
   const source = await readText(registryPath);
   const escapedId = levelId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const metadataStart = source.indexOf('export const levelMetadatas');
@@ -598,7 +638,7 @@ export async function builtInRegistryHasEntry(root, levelId) {
 }
 
 async function readBuiltInIdentities(root) {
-  const source = await readText(path.join(root, 'src', 'levels', 'index.ts'));
+  const source = await readText(path.join(root, REGISTRY_PATH));
   const identities = new Set();
   const entryPattern = /\{\s*id:\s*'([^']+)'\s*,([^}]*)\}/g;
   let match;
@@ -611,9 +651,9 @@ async function readBuiltInIdentities(root) {
   return identities;
 }
 
-async function readPromotedIdentities(root) {
+async function readPromotedIdentities(root, promotedRoot) {
   const identities = new Set();
-  const directory = path.join(root, DESTINATION_ROOT);
+  const directory = path.join(root, promotedRoot);
   let entries;
   try { entries = await fs.readdir(directory, { withFileTypes: true }); }
   catch (error) { if (error?.code === 'ENOENT') return identities; throw error; }
@@ -648,7 +688,7 @@ async function treeEntries(root, commit, prefix) {
   return entries;
 }
 
-async function payloadDiff(root, materialsCommit, payloadCommit, prefix) {
+async function payloadDiff(root, materialsCommit, payloadCommit) {
   const output = await gitBuffer(root, ['diff', '--name-status', '-z', `${materialsCommit}..${payloadCommit}`]);
   const tokens = output.toString('utf8').split('\0').filter(Boolean);
   const entries = [];
@@ -817,6 +857,12 @@ function assertSnapshot(previous, next) {
   for (const field of fields) if (previous[field] !== next[field]) throw new Error(`Promotion provenance changed for ${field}.`);
   if (previous.descriptor?.sha256 !== next.descriptor.sha256 || previous.descriptor?.id !== next.descriptor.id || previous.descriptor?.title !== next.descriptor.title) throw new Error('Promotion descriptor provenance changed.');
   if (JSON.stringify(previous.derivative ?? null) !== JSON.stringify(next.derivative ?? null)) throw new Error('Promotion derivative provenance changed.');
+  if (previous.roots) {
+    if (JSON.stringify(previous.roots) !== JSON.stringify(next.roots)) throw new Error('Promotion footprint provenance changed.');
+  } else {
+    const present = next.roots.filter((rootEntry) => rootEntry.present);
+    if (present.length !== 1 || present[0].id !== 'source') throw new Error('Legacy promotion provenance cannot gain an additional footprint root.');
+  }
 }
 
 export async function acquirePromotionLock(root) {

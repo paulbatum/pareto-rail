@@ -7,11 +7,12 @@ import { promisify } from 'node:util';
 import { buildMigrationInventory } from './inventory.mjs';
 import { acquirePromotionLock, builtInRegistryHasEntry, promoteRun, removeBuiltInRegistryEntry } from './promote.mjs';
 import { sha256 } from './common.mjs';
+import { LEGACY_LEVEL_REGISTRY_PATH, LEVEL_GALLERY_PATH, levelFootprint } from './protocol.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const execFileAsync = promisify(execFile);
-const SOURCE_ROOT = 'src/levels';
-const GALLERY_PATH = 'docs/level-gallery.md';
+const GALLERY_PATH = LEVEL_GALLERY_PATH;
+const REGISTRY_PATH = LEGACY_LEVEL_REGISTRY_PATH;
 
 export class CleanupInterrupted extends Error {
   constructor(checkpoint) {
@@ -138,12 +139,13 @@ async function cleanupVerifiedSourceCopyUnlocked({ repositoryRoot, runDirectory,
   const resolvedRunDirectory = path.resolve(runDirectory);
   const statePath = path.join(resolvedRunDirectory, 'source-cleanup.json');
   const state = await loadCleanupState(statePath, record.runId);
-  const cleanupPaths = { source: path.join(repositoryRoot, record.source.path), registry: path.join(repositoryRoot, 'src/levels/index.ts') };
 
   if (state.status === 'completed') {
     await verifyCleanupCommit(repositoryRoot, state.cleanupCommit, state.source);
     assertCleanupWorkingTree(await gitStatus(repositoryRoot), repositoryRoot, state.source.levelId, false);
-    if (await exists(cleanupPaths.source)) throw new Error(`Completed source cleanup still has ${record.source.path}.`);
+    for (const rootEntry of cleanupRoots(state.source)) {
+      if (await exists(path.join(repositoryRoot, rootEntry.path))) throw new Error(`Completed source cleanup still has ${rootEntry.path}.`);
+    }
     return { statePath: path.relative(repositoryRoot, statePath).replaceAll(path.sep, '/'), cleanupCommit: state.cleanupCommit };
   }
 
@@ -161,6 +163,7 @@ async function cleanupVerifiedSourceCopyUnlocked({ repositoryRoot, runDirectory,
     state.source = {
       runId: verified.runId,
       levelId: verified.levelId,
+      benchmarkVersion: verified.benchmarkVersion,
       manifestSha256: verified.manifestSha256,
       evaluatedCommit: verified.evaluatedCommit,
       evaluatedBranch: verified.evaluatedBranch,
@@ -168,6 +171,7 @@ async function cleanupVerifiedSourceCopyUnlocked({ repositoryRoot, runDirectory,
       payloadBranch: verified.payloadBranch,
       sourcePath: verified.source.path,
       sourceFiles: [...verified.source.files],
+      roots: verified.source.roots.map((rootEntry) => ({ ...rootEntry, files: [...rootEntry.files] })),
       sourceTreeSha256: verified.source.treeSha256,
       payloadTreeSha256: verified.source.payloadTreeSha256,
       applicationCommit: verified.source.applicationCommit,
@@ -193,12 +197,24 @@ async function cleanupVerifiedSourceCopyUnlocked({ repositoryRoot, runDirectory,
   }
   if (state.checkpoints.source?.status !== 'completed') {
     assertCleanupWorkingTree(await gitStatus(repositoryRoot), repositoryRoot, state.source.levelId, true);
-    const sourcePath = path.join(repositoryRoot, state.source.sourcePath);
-    if (await exists(sourcePath)) {
+    const roots = cleanupRoots(state.source);
+    let anyRootPresent = false;
+    for (const rootEntry of roots) {
+      if (rootEntry.presentInPrimaryWorktree && await exists(path.join(repositoryRoot, rootEntry.path))) anyRootPresent = true;
+    }
+    if (anyRootPresent) {
       const fresh = await buildMigrationInventory({ root: repositoryRoot });
       const verified = fresh.records.find((candidate) => candidate.runId === record.runId);
       if (!verified || verified.source.bytesAgreeWithPayload !== true || verified.source.treeSha256 !== state.source.sourceTreeSha256) throw new Error(`Source cleanup for ${record.runId} changed after validation; refusing deletion.`);
-      await fs.rm(sourcePath, { recursive: true, force: false });
+      for (const rootEntry of roots) {
+        if (!rootEntry.presentInPrimaryWorktree) continue;
+        const freshRoot = verified.source.roots.find((candidate) => candidate.id === rootEntry.id);
+        if (!freshRoot || freshRoot.treeSha256 !== rootEntry.treeSha256) throw new Error(`Footprint root ${rootEntry.path} changed after validation; refusing deletion.`);
+      }
+    }
+    for (const rootEntry of roots) {
+      const rootPath = path.join(repositoryRoot, rootEntry.path);
+      if (rootEntry.presentInPrimaryWorktree && await exists(rootPath)) await fs.rm(rootPath, { recursive: true, force: false });
     }
     state.checkpoints.source = { status: 'completed', finishedAt: new Date().toISOString() };
     await writeJson(statePath, state);
@@ -243,8 +259,25 @@ async function cleanupVerifiedSourceCopyUnlocked({ repositoryRoot, runDirectory,
   return { statePath: path.relative(repositoryRoot, statePath).replaceAll(path.sep, '/'), cleanupCommit: state.cleanupCommit };
 }
 
+function cleanupRoots(source) {
+  if (Array.isArray(source.roots) && source.roots.length) return source.roots;
+  const sourceRoot = levelFootprint(source.levelId, source.benchmarkVersion ?? 'v1').roots.find((rootEntry) => rootEntry.required);
+  return [{
+    id: 'source',
+    path: sourceRoot.path,
+    promotedPath: sourceRoot.promotedPath,
+    required: true,
+    presentInPrimaryWorktree: true,
+    files: source.sourceFiles,
+    treeSha256: source.sourceTreeSha256,
+    payloadTreeSha256: source.payloadTreeSha256,
+    applicationTreeSha256: source.applicationTreeSha256,
+  }];
+}
+
 function cleanupExpectedPaths(source) {
-  return new Set([...(source.galleryChanged ? [GALLERY_PATH] : []), 'src/levels/index.ts', ...source.sourceFiles.map((file) => `${SOURCE_ROOT}/${source.levelId}/${file}`)]);
+  const rootFiles = cleanupRoots(source).filter((rootEntry) => rootEntry.presentInPrimaryWorktree).flatMap((rootEntry) => rootEntry.files.map((file) => `${rootEntry.path.replace(/\/$/, '')}/${file}`));
+  return new Set([...(source.galleryChanged ? [GALLERY_PATH] : []), REGISTRY_PATH, ...rootFiles]);
 }
 
 async function verifyCleanupCommit(root, commit, source) {
@@ -256,12 +289,14 @@ async function verifyCleanupCommit(root, commit, source) {
   const expected = cleanupExpectedPaths(source);
   const names = (await gitText(root, ['diff', '--name-only', `${source.baseCommit}..${resolved}`])).split('\n').map((item) => item.trim()).filter(Boolean).sort();
   if (JSON.stringify(names) !== JSON.stringify([...expected].sort())) throw new Error('Cleanup commit contains paths outside the verified source copy and built-in registry.');
-  const sourceEntries = await gitText(root, ['ls-tree', '-r', '--name-only', resolved, '--', `${SOURCE_ROOT}/${source.levelId}`]);
-  if (sourceEntries.trim()) throw new Error('Cleanup commit still contains the removed source copy.');
-  const registry = await gitText(root, ['show', `${resolved}:src/levels/index.ts`]);
+  for (const rootEntry of cleanupRoots(source).filter((candidate) => candidate.presentInPrimaryWorktree)) {
+    const remainingEntries = await gitText(root, ['ls-tree', '-r', '--name-only', resolved, '--', rootEntry.path]);
+    if (remainingEntries.trim()) throw new Error(`Cleanup commit still contains removed footprint root ${rootEntry.path}.`);
+    const baseEntries = await treeEntries(root, source.baseCommit, rootEntry.path.replace(/\/$/, ''));
+    if (treeEntriesSha256(baseEntries) !== rootEntry.applicationTreeSha256 || rootEntry.applicationTreeSha256 !== rootEntry.payloadTreeSha256) throw new Error(`Cleanup commit parent does not preserve provenance for footprint root ${rootEntry.path}.`);
+  }
+  const registry = await gitText(root, ['show', `${resolved}:${REGISTRY_PATH}`]);
   if (registryHasId(registry, source.levelId)) throw new Error('Cleanup commit still registers the removed built-in level.');
-  const baseEntries = await treeEntries(root, source.baseCommit, `${SOURCE_ROOT}/${source.levelId}`);
-  if (treeEntriesSha256(baseEntries) !== source.applicationTreeSha256 || source.applicationTreeSha256 !== source.payloadTreeSha256) throw new Error('Cleanup commit parent does not preserve the recorded current-source and payload tree provenance.');
   await resolveCommit(root, source.payloadCommit, 'source payload commit');
   await resolveCommit(root, source.evaluatedCommit, 'source evaluated commit');
   if (await resolveCommit(root, `refs/heads/${source.payloadBranch}`, 'source payload branch') !== source.payloadCommit) throw new Error('Cleanup provenance payload branch does not match its payload commit.');
@@ -308,10 +343,11 @@ function assertCleanupWorkingTree(status, root, levelId, allowExpected) {
   const paths = parseStatus(status);
   if (!paths.length) return;
   if (!allowExpected) throw new Error(`Refusing unrelated dirty worktree before cleanup: ${paths.join(', ')}`);
-  const sourcePrefix = `${SOURCE_ROOT}/${levelId}/`;
+  const ownedRoots = levelFootprint(levelId, 'v1').roots;
   for (const item of paths) {
     const normalized = item.replaceAll(path.sep, '/');
-    if (normalized !== GALLERY_PATH && normalized !== 'src/levels/index.ts' && !normalized.startsWith(sourcePrefix)) throw new Error(`Refusing unrelated dirty worktree during cleanup: ${item}`);
+    const inOwnedRoot = ownedRoots.some((rootEntry) => normalized.startsWith(`${rootEntry.path}/`));
+    if (normalized !== GALLERY_PATH && normalized !== REGISTRY_PATH && !inOwnedRoot) throw new Error(`Refusing unrelated dirty worktree during cleanup: ${item}`);
   }
 }
 
@@ -373,7 +409,8 @@ async function runFinalCatalogCheck(root, promotedRecords, cleanupRecords) {
     if (current.source.presentInPrimaryWorktree || await builtInRegistryHasEntry(root, record.levelId)) throw new Error('Final membership still exposes a promoted level in the built-in domain.');
   }
   for (const record of cleanupRecords) {
-    if (await exists(path.join(root, SOURCE_ROOT, record.levelId)) || await exists(path.join(root, 'src/benchmark-levels', record.levelId))) throw new Error('Final membership still contains a cleaned source copy.');
+    const ownedPaths = new Set(levelFootprint(record.levelId, 'v1').roots.flatMap((rootEntry) => [rootEntry.path, rootEntry.promotedPath]));
+    for (const ownedPath of ownedPaths) if (await exists(path.join(root, ownedPath))) throw new Error('Final membership still contains a cleaned level footprint.');
     if (await builtInRegistryHasEntry(root, record.levelId)) throw new Error('Final membership still exposes a cleaned source in the built-in domain.');
   }
   return { checks, membership: { promoted: promotedRecords.length, cleaned: cleanupRecords.length } };

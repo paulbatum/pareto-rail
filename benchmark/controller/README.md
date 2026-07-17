@@ -244,7 +244,7 @@ npm run benchmark:admin -- payload \
   --branch benchmark-payload-<opaque-run-id>
 ```
 
-`worktree` does not install dependencies; the registered recipe or controller procedure must declare any dependency provisioning before the first model stage. `seal` runs the baseline-aware scope gate, commits only the already-permitted working-tree changes, and requires a clean result. `gates` runs all four required gates independently, writes complete logs and their hashes, and rejects a gate that changes the sealed tree. `payload` creates a worktree at the materials commit, copies only the assigned level directory from the evaluated commit, and rejects empty, deleting, renaming, or out-of-directory diffs.
+`worktree` does not install dependencies; the registered recipe or controller procedure must declare any dependency provisioning before the first model stage. `seal` runs the baseline-aware scope gate, commits only the already-permitted working-tree changes, and requires a clean result. `gates` runs all four required gates independently, writes complete logs and their hashes, and rejects a gate that changes the sealed tree. `payload` creates a worktree at the materials commit, copies the present roots from the assigned level footprint in the evaluated commit, and rejects empty, deleting, renaming, or out-of-footprint diffs.
 
 Run the synthetic controller checks with:
 

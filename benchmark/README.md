@@ -43,6 +43,8 @@ Benchmark materials are authored at stable paths without version suffixes; Git p
 
 The frozen v1 contract is historical: its entrants used the normal level workflow with payloads rooted at `src/levels/<level-id>/`, later migrated into the benchmark domain. Directory-only releases (v2 onward) instead scaffold with `npm run scaffold -- --mode benchmark`, author under `src/benchmark-levels/<level-id>/`, own their descriptor, and never edit the built-in registry. Tools dispatch on the recorded benchmark version — never infer the protocol from whichever source directory happens to exist.
 
+A level's versioned footprint consists of disjoint per-id roots plus explicitly listed shared derived files. Scope, payload extraction, promotion, inventory, and migration all consume the canonical model in `scripts/benchmark/protocol.mjs`; adding another owned root is a protocol change there rather than a new path exception in each tool.
+
 ## Directory map
 
 - `controller/` — harness-neutral orchestration runbook and failure taxonomy.

@@ -10,7 +10,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "typecheck": "tsc --noEmit",
-    "check:scope": "bash scripts/check-level-scope.sh",
+    "check:scope": "node scripts/check-benchmark-scope.mjs",
     "check:benchmark-scope": "node scripts/check-benchmark-scope.mjs",
     "check:benchmark-baseline": "node scripts/check-benchmark-baseline.mjs",
     "snapshot": "node scripts/snapshot.mjs",

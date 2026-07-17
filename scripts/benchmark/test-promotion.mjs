@@ -86,6 +86,35 @@ async function main() {
     }
   }
 
+  {
+    const fixture = await createFixture({ content: true });
+    try {
+      const result = await promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory });
+      await assertPromotion(fixture, result.promotionCommit);
+      assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.png'), 'utf8'), 'synthetic hero\n');
+      const names = (await git(fixture.root, ['diff', '--name-only', `${fixture.base}..${result.promotionCommit}`])).trim().split('\n').filter(Boolean).sort();
+      assert.deepEqual(names, [
+        'docs/level-gallery.md',
+        'public/level-content/synthetic-a1b2/hero.png',
+        'src/benchmark-levels/synthetic-a1b2/index.ts',
+        'src/benchmark-levels/synthetic-a1b2/level.json',
+        'src/benchmark-levels/synthetic-a1b2/level.md',
+      ]);
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+
+  {
+    const fixture = await createFixture({ outsidePayload: true });
+    try {
+      await assert.rejects(() => promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory }), /outside the assigned level footprint/);
+      assert.equal((await git(fixture.root, ['rev-list', '--count', `${fixture.base}..HEAD`])).trim(), '0');
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+
   await assertTamper('manifest', async (fixture) => {
     const manifest = JSON.parse(await fs.readFile(path.join(fixture.runDirectory, 'manifest.json'), 'utf8'));
     manifest.output.title = 'Tampered title';
@@ -139,22 +168,24 @@ async function assertPromotion(fixture, promotionCommit) {
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(destination, 'level.json'), 'utf8')), { id: 'synthetic-a1b2', title: 'Synthetic Promotion' });
   assert.match(await fs.readFile(path.join(fixture.root, 'docs/level-gallery.md'), 'utf8'), /## Benchmark levels/);
   assert.equal((await git(fixture.root, ['show', '--format=%P', '--no-patch', promotionCommit])).trim(), fixture.base);
+  if (fixture.content) assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.png'), 'utf8'), 'synthetic hero\n');
 }
 
-async function createFixture({ payloadWorktree = false, legacyManifest = false, payloadSymlink = false } = {}) {
+async function createFixture({ payloadWorktree = false, legacyManifest = false, payloadSymlink = false, content = false, outsidePayload = false } = {}) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-promotion-repo-'));
   const externalPayloadWorktree = `${root}-payload-worktree`;
   const runDirectory = path.join(root, 'benchmark/private/runs/synthetic-run-a1b2');
   await fs.mkdir(path.join(root, 'src/levels'), { recursive: true });
   await fs.mkdir(path.join(root, 'src/benchmark-levels'), { recursive: true });
   await fs.mkdir(path.join(root, 'docs'), { recursive: true });
-  await fs.mkdir(path.join(root, 'scripts'), { recursive: true });
+  await fs.mkdir(path.join(root, 'scripts/benchmark'), { recursive: true });
   await writeText(path.join(root, '.gitignore'), 'benchmark/private/\n');
   await writeText(path.join(root, 'package.json'), JSON.stringify({ name: 'synthetic-promotion', scripts: { gallery: 'node gallery.mjs', typecheck: 'node -e ""', build: 'node -e ""', 'check:floor': 'node -e "process.exit(0)" --' } }, null, 2) + '\n');
   await writeText(path.join(root, 'gallery.mjs'), "import fs from 'node:fs/promises';\nawait fs.writeFile('docs/level-gallery.md', '# Level gallery\\n\\n## Benchmark levels\\n\\n# Synthetic Promotion\\n');\n");
   await writeText(path.join(root, 'src/levels/index.ts'), "export const levelMetadatas = [{ id: 'built-in-level', title: 'Built-in Level', aliases: ['built-in'], kind: 'playable' }];\n");
   await writeText(path.join(root, 'docs/level-gallery.md'), '# Level gallery\n\n## Built-in levels\n');
   await fs.copyFile(path.join(HERE, 'scripts/check-benchmark-scope.mjs'), path.join(root, 'scripts/check-benchmark-scope.mjs'));
+  await fs.copyFile(path.join(HERE, 'scripts/benchmark/protocol.mjs'), path.join(root, 'scripts/benchmark/protocol.mjs'));
   await git(root, ['init', '-q']);
   await git(root, ['config', 'user.name', 'Synthetic Promotion Test']);
   await git(root, ['config', 'user.email', 'synthetic@example.test']);
@@ -166,14 +197,20 @@ async function createFixture({ payloadWorktree = false, legacyManifest = false, 
     'src/levels/synthetic-a1b2/index.ts': "export const syntheticLevel = { id: 'synthetic-a1b2', title: 'Synthetic Promotion' };\n",
     'src/levels/synthetic-a1b2/level.md': '# Synthetic Promotion\n\nSynthetic test payload.\n',
   };
+  if (content) sourceFiles['public/level-content/synthetic-a1b2/hero.png'] = 'synthetic hero\n';
+  const payloadPaths = ['src/levels/synthetic-a1b2', ...(content ? ['public/level-content/synthetic-a1b2'] : [])];
   await git(root, ['switch', '-c', 'evaluated-run']);
   for (const [file, contents] of Object.entries(sourceFiles)) await writePayloadFile(path.join(root, file), contents, payloadSymlink);
-  await git(root, ['add', 'src/levels/synthetic-a1b2']);
+  await git(root, ['add', ...payloadPaths]);
   await git(root, ['commit', '-qm', 'synthetic evaluated level']);
   const evaluatedCommit = (await git(root, ['rev-parse', 'HEAD'])).trim();
   await git(root, ['switch', '-q', '-c', 'payload-run', base]);
   for (const [file, contents] of Object.entries(sourceFiles)) await writePayloadFile(path.join(root, file), contents, payloadSymlink);
-  await git(root, ['add', 'src/levels/synthetic-a1b2']);
+  if (outsidePayload) {
+    await writeText(path.join(root, 'outside.txt'), 'outside footprint\n');
+    payloadPaths.push('outside.txt');
+  }
+  await git(root, ['add', ...payloadPaths]);
   await git(root, ['commit', '-qm', 'synthetic payload']);
   const payloadCommit = (await git(root, ['rev-parse', 'HEAD'])).trim();
   await git(root, ['switch', '-q', 'main']);
@@ -190,7 +227,7 @@ async function createFixture({ payloadWorktree = false, legacyManifest = false, 
   };
   const definition = {
     schemaVersion: 1,
-    benchmarkVersion: 'v-synthetic',
+    benchmarkVersion: 'v1',
     mode: 'eligible',
     assignment,
     baseline: { materialsCommit: base, entrantBaseline: base },
@@ -228,6 +265,7 @@ async function createFixture({ payloadWorktree = false, legacyManifest = false, 
     base,
     runDirectory,
     payloadWorktree: externalPayloadWorktree,
+    content,
     cleanup: async () => {
       if (payloadWorktree) await git(root, ['worktree', 'remove', '--force', externalPayloadWorktree]).catch(() => {});
       await fs.rm(root, { recursive: true, force: true });

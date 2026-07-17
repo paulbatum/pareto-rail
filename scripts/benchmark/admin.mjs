@@ -14,7 +14,7 @@ import {
   sha256,
   writeJson,
 } from './common.mjs';
-import { protocolForVersion } from './protocol.mjs';
+import { levelFootprint, protocolForVersion } from './protocol.mjs';
 
 async function main() {
   const { rest, options } = parseArgs(process.argv.slice(2), { positional: true });
@@ -119,7 +119,7 @@ async function runGates(options) {
   console.log(JSON.stringify({ evaluatedCommit: record.evaluatedCommit, gates: gates.map(({ id, status }) => ({ id, status })) }));
 }
 
-async function derivePayload(options) {
+export async function derivePayload(options) {
   const repo = path.resolve(requireOption(options, 'repo'));
   const materials = requireOption(options, 'materials');
   const evaluated = requireOption(options, 'evaluated');
@@ -130,52 +130,55 @@ async function derivePayload(options) {
   const branch = requireOption(options, 'branch');
   if (pathInside(payloadPath, repo)) fail('Payload worktree must be outside the primary repository working tree.');
   await assertAbsent(payloadPath, 'payload worktree path');
+
   const protocol = protocolForVersion(benchmarkVersion);
-  const levelDirectory = `${protocol.sourceRoot}/${levelId}`;
-  // A level also owns its gallery content directory. When the entrant produced
-  // level-content images, they are part of the payload; every scope, payload, and
-  // promotion check treats this directory as co-owned with the source directory.
-  const contentDirectory = `public/level-content/${levelId}`;
+  const footprint = levelFootprint(levelId, benchmarkVersion);
+  const sourceRoot = footprint.roots.find((rootEntry) => rootEntry.required);
+  if (!sourceRoot) fail('Level footprint has no required source root.');
   const materialsCommit = (await git(repo, ['rev-parse', '--verify', `${materials}^{commit}`])).output.trim();
   const evaluatedCommit = (await git(repo, ['rev-parse', '--verify', `${evaluated}^{commit}`])).output.trim();
-  const materialTree = await git(repo, ['cat-file', '-e', `${materialsCommit}:${levelDirectory}`], { allowFailure: true });
-  if (materialTree.code === 0) fail(`Payload directory already exists at the materials commit: ${levelDirectory}.`);
-  const materialContentTree = await git(repo, ['cat-file', '-e', `${materialsCommit}:${contentDirectory}`], { allowFailure: true });
-  if (materialContentTree.code === 0) fail(`Payload content directory already exists at the materials commit: ${contentDirectory}.`);
-  await git(repo, ['cat-file', '-e', `${evaluatedCommit}:${levelDirectory}`]);
-  const evaluatedContentTree = await git(repo, ['cat-file', '-e', `${evaluatedCommit}:${contentDirectory}`], { allowFailure: true });
-  const payloadDirectories = [levelDirectory, ...(evaluatedContentTree.code === 0 ? [contentDirectory] : [])];
-  await git(repo, ['worktree', 'add', '-b', branch, payloadPath, materialsCommit]);
-  try {
-    for (const directory of payloadDirectories) {
-      await git(payloadPath, ['checkout', evaluatedCommit, '--', directory]);
-      await git(payloadPath, ['add', '--', directory]);
-    }
-    await git(payloadPath, ['commit', '-m', `Extract benchmark payload ${levelId}`]);
-    const payloadCommit = (await git(payloadPath, ['rev-parse', 'HEAD'])).output.trim();
-    await verifyPayload(repo, materialsCommit, payloadCommit, levelDirectory, protocol, levelTitle, contentDirectory);
-    console.log(JSON.stringify({ payloadCommit, branch, worktree: payloadPath }));
-  } catch (error) {
-    throw error;
+  const presentRoots = [];
+  for (const rootEntry of footprint.roots) {
+    const materialTree = await git(repo, ['cat-file', '-e', `${materialsCommit}:${rootEntry.path}`], { allowFailure: true });
+    if (materialTree.code === 0) fail(`Payload root already exists at the materials commit: ${rootEntry.path}.`);
+    const evaluatedTree = await git(repo, ['cat-file', '-e', `${evaluatedCommit}:${rootEntry.path}`], { allowFailure: true });
+    if (evaluatedTree.code === 0) presentRoots.push(rootEntry);
+    else if (rootEntry.required) fail(`Required payload root is missing from the evaluated commit: ${rootEntry.path}.`);
   }
+
+  await git(repo, ['worktree', 'add', '-b', branch, payloadPath, materialsCommit]);
+  for (const rootEntry of presentRoots) {
+    await git(payloadPath, ['checkout', evaluatedCommit, '--', rootEntry.path]);
+    await git(payloadPath, ['add', '--', rootEntry.path]);
+  }
+  await git(payloadPath, ['commit', '-m', `Extract benchmark payload ${levelId}`]);
+  const payloadCommit = (await git(payloadPath, ['rev-parse', 'HEAD'])).output.trim();
+  await verifyPayload(repo, materialsCommit, payloadCommit, levelId, benchmarkVersion, levelTitle);
+  const result = { payloadCommit, branch, worktree: payloadPath };
+  console.log(JSON.stringify(result));
+  return result;
 }
 
-async function verifyPayload(repo, materialsCommit, payloadCommit, levelDirectory, protocol = protocolForVersion('v1'), levelTitle, contentDirectory) {
+export async function verifyPayload(repo, materialsCommit, payloadCommit, levelId, benchmarkVersion = 'v1', levelTitle) {
+  const protocol = protocolForVersion(benchmarkVersion);
+  const footprint = levelFootprint(levelId, benchmarkVersion);
+  const sourceRoot = footprint.roots.find((rootEntry) => rootEntry.required);
+  if (!sourceRoot) fail('Level footprint has no required source root.');
   const names = (await git(repo, ['diff', '--name-only', `${materialsCommit}..${payloadCommit}`])).output.trim().split('\n').filter(Boolean);
   if (names.length === 0) fail('Payload diff is empty.');
-  const ownsPath = (name) => name.startsWith(`${levelDirectory}/`) || (contentDirectory !== undefined && name.startsWith(`${contentDirectory}/`));
-  if (names.some((name) => !ownsPath(name))) fail('Payload diff contains a path outside the assigned level and content directories.');
-  if (!names.some((name) => name.startsWith(`${levelDirectory}/`))) fail('Payload diff contains no file in the assigned level directory.');
+  const ownsPath = (name) => footprint.roots.some((rootEntry) => name.startsWith(`${rootEntry.path}/`));
+  if (names.some((name) => !ownsPath(name))) fail('Payload diff contains a path outside the assigned level footprint.');
+  if (!names.some((name) => name.startsWith(`${sourceRoot.path}/`))) fail('Payload diff contains no file in the required source root.');
   const statuses = (await git(repo, ['diff', '--name-status', `${materialsCommit}..${payloadCommit}`])).output.trim().split('\n').filter(Boolean);
   if (statuses.some((line) => /^(D|R)/.test(line))) fail('Payload diff deletes or renames a path.');
-  const descriptorPath = `${levelDirectory}/level.json`;
+  const descriptorPath = `${sourceRoot.path}/level.json`;
   const descriptorPresent = names.includes(descriptorPath);
   if (protocol.directoryOnly && !descriptorPresent) fail('Directory-only benchmark payload must contain level.json.');
   if (!protocol.directoryOnly && descriptorPresent) fail('Legacy benchmark payload may not contain level.json.');
   if (protocol.directoryOnly) {
     const descriptorSource = (await git(repo, ['show', `${payloadCommit}:${descriptorPath}`])).output;
     const descriptor = parseDescriptor(descriptorSource, descriptorPath);
-    if (descriptor.id !== path.basename(levelDirectory)) fail('Benchmark descriptor id does not match the assigned directory.');
+    if (descriptor.id !== levelId) fail('Benchmark descriptor id does not match the assigned directory.');
     if (levelTitle !== undefined && descriptor.title !== levelTitle) fail('Benchmark descriptor title does not match the assigned title.');
   }
 }
