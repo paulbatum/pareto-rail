@@ -64,16 +64,16 @@ Each directory's README is the authoritative contract for the artifacts it holds
 
 ## Inspecting run results
 
-Use `npm run benchmark:results` to summarize records under `benchmark/private/runs`. The table reports lifecycle state, gates, stage and controller elapsed time, cost, and manifest completeness without parsing entrant prose or raw logs. Rehearsal identities are visible by default; eligible benchmark identities remain blind by default.
+Use `npm run benchmark:results` to summarize records under `benchmark/private/runs`. The table reports lifecycle state, gates, stage and controller elapsed time, cost, and manifest completeness without parsing entrant prose or raw logs. All identities are blind by default: the table shows run ids and dispositions only, with no configuration or model columns.
 
 ```bash
 npm run benchmark:results
 npm run benchmark:results -- --version rehearsal
 npm run benchmark:results -- --theme downpour --format json
-npm run benchmark:results -- --identity blind
+npm run benchmark:results -- --unblind
 ```
 
-Use `--identity unblind` only when the relevant ranking snapshot has been locked and its mapping opened. `--format csv` is also available, and `--runs <path>` can inspect another run-artifact directory.
+Pass `--unblind` only after you have voted, to reveal configuration and model identities. `--format csv` is also available, and `--runs <path>` can inspect another run-artifact directory.
 
 A fresh launch requires a clean controller repository and records the executing controller commit in the run record. Controller tooling is provenance, not a frozen input, so it may differ between runs of one release; entrant-facing frozen material (theme, recipe, prompt template, baseline) is always strictly verified with no override.
 

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCatalog, projectPreVote, DOWNPOUR_REHEARSAL_IDS } from './catalog.mjs';
 import { generateThumbnail } from './generate-thumbnails.mjs';
+import { buildVersion, planAssignments, selectConfigurations } from './export-rank-catalog.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const rankCatalog = JSON.parse(await fs.readFile(path.join(root, 'src/benchmark/rank-catalog.json'), 'utf8'));
@@ -37,6 +38,32 @@ const dryRun = await generateThumbnail({ level: 'downpour-hlht', entrant: 'opaqu
 for (const expected of ['--thumbnails 4', '--seed 424242', '--immortal true', '--projectiles false', '--fidelity auto', '--width 1280', '--height 720']) assert.ok(dryRun.command.includes(expected), `missing ${expected}`);
 assert.equal(dryRun.metadata.immortal, true);
 assert.equal(dryRun.metadata.projectiles, false);
+// Rank-catalog exporter reads a v2 plan: rehearsals are dropped, unlisted configuration ids are
+// withheld with a warning, and listed rows survive into the version entry. Promotion/manifest
+// reading is exercised elsewhere; a synthetic plan naming unpromoted levels yields an empty entry.
+const v2Plan = {
+  benchmarkVersion: 'v2',
+  materialsCommit: 'a'.repeat(40),
+  entrantBaseline: 'b'.repeat(40),
+  runs: [
+    { runId: 'r-listed', slotId: 'aa11', levelId: 'ember-aa11', themeId: 'ember', themePath: 'benchmark/themes/ember.md', configurationId: 'claude-fable-5-high', recipePath: 'benchmark/recipes/x.md', stage: {} },
+    { runId: 'r-unlisted', slotId: 'bb22', levelId: 'ember-bb22', themeId: 'ember', themePath: 'benchmark/themes/ember.md', configurationId: 'mystery-config', recipePath: 'benchmark/recipes/x.md', stage: {} },
+    { runId: 'r-rehearsal', slotId: 'cc33', levelId: 'ember-cc33', themeId: 'ember', themePath: 'benchmark/themes/ember.md', configurationId: 'claude-fable-5-high', recipePath: 'benchmark/recipes/x.md', stage: {}, kind: 'rehearsal' },
+  ],
+};
+const planned = planAssignments(v2Plan);
+assert.deepEqual(planned.map((assignment) => assignment.runId), ['r-listed', 'r-unlisted'], 'rehearsal rows are dropped from the plan');
+const warnings = [];
+const originalWarn = console.warn;
+console.warn = (message) => warnings.push(message);
+let selected;
+try { selected = selectConfigurations(planned, 'v2'); } finally { console.warn = originalWarn; }
+assert.deepEqual(selected.map((assignment) => assignment.runId), ['r-listed'], 'unlisted configuration ids are withheld');
+assert.ok(warnings.some((message) => message.includes('mystery-config')), 'withheld configuration id is warned');
+const v2Version = buildVersion('v2', selected, new Date().toISOString());
+assert.equal(v2Version.benchmarkVersion, 'rank-catalog-v2');
+assert.ok(Array.isArray(v2Version.entrants));
+
 console.log('Benchmark catalog tests passed.');
 
 function validateRankCatalogIds(catalog) {

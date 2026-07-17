@@ -200,16 +200,28 @@ function scheduleFiles() {
     .sort((left, right) => left.localeCompare(right));
 }
 
-function buildVersion(schedule, generatedAt) {
-  if (!Array.isArray(schedule.assignments)) throw new Error(`Schedule ${schedule.benchmarkVersion} has no assignments array.`);
-  // The public label registry is the exporter-owned allowlist for catalog
-  // configurations. Schedules can contain later registrations before their
-  // public labels and presentation assets are ready.
-  const publicAssignments = schedule.assignments.filter((assignment) => configurationLabels[assignment.configurationId]);
-  const withheld = schedule.assignments.filter((assignment) => !configurationLabels[assignment.configurationId]);
-  for (const assignment of withheld) {
-    console.warn(`Withholding ${assignment.levelId} from ${schedule.benchmarkVersion}: configuration ${assignment.configurationId} has no public label.`);
+// The public label registry is the exporter-owned allowlist for catalog
+// configurations. Inputs can contain later registrations before their public
+// labels and presentation assets are ready; those are warned and withheld.
+export function selectConfigurations(assignments, benchmarkVersion) {
+  const publicAssignments = assignments.filter((assignment) => configurationLabels[assignment.configurationId]);
+  for (const assignment of assignments.filter((assignment) => !configurationLabels[assignment.configurationId])) {
+    console.warn(`Withholding ${assignment.levelId} from ${benchmarkVersion}: configuration ${assignment.configurationId} has no public label.`);
   }
+  return publicAssignments;
+}
+
+// Normalize a v2 plan's flat run rows onto the per-assignment shape buildVersion
+// consumes, dropping rehearsals so they never reach the results pool or the site.
+export function planAssignments(plan) {
+  if (!Array.isArray(plan.runs)) throw new Error(`Plan ${plan.benchmarkVersion} has no runs array.`);
+  return plan.runs
+    .filter((row) => row.kind !== 'rehearsal')
+    .map((row) => ({ ...row, theme: { id: row.themeId } }));
+}
+
+export function buildVersion(benchmarkVersion, assignments, generatedAt) {
+  const publicAssignments = selectConfigurations(assignments, benchmarkVersion);
 
   // Validate every already-promoted assignment before applying theme completeness.
   // This prevents a bad promoted entry from being silently hidden by an incomplete
@@ -243,7 +255,7 @@ function buildVersion(schedule, generatedAt) {
   }
 
   return {
-    benchmarkVersion: `rank-catalog-${schedule.benchmarkVersion}`,
+    benchmarkVersion: `rank-catalog-${benchmarkVersion}`,
     generatedAt,
     themes,
     entrants,
@@ -269,7 +281,19 @@ function main() {
   schedules.sort((left, right) => left.schedule.versionNumber - right.schedule.versionNumber || left.schedule.benchmarkVersion.localeCompare(right.schedule.benchmarkVersion));
 
   const generatedAt = new Date().toISOString();
-  const versions = schedules.map(({ schedule }) => buildVersion(schedule, generatedAt));
+  const versions = schedules.map(({ schedule }) => {
+    if (!Array.isArray(schedule.assignments)) throw new Error(`Schedule ${schedule.benchmarkVersion} has no assignments array.`);
+    return buildVersion(schedule.benchmarkVersion, schedule.assignments, generatedAt);
+  });
+
+  // The v2 slice comes from a single hand-editable plan instead of a private
+  // schedule. Its absence is not an error: without it the catalog is v1-only.
+  const planPath = path.join(privateRoot, 'v2-plan.json');
+  if (fs.existsSync(planPath)) {
+    const plan = readJson(planPath);
+    versions.push(buildVersion(plan.benchmarkVersion, planAssignments(plan), generatedAt));
+  }
+
   const configurations = Object.entries(configurationLabels).map(([id, labels]) => ({
     id,
     ...labels,
@@ -289,9 +313,11 @@ function main() {
   console.log(`Wrote ${path.relative(root, outputPath)} with ${entrants} entrants across ${themes} themes in ${versions.length} benchmark versions.`);
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(`Rank catalog export failed: ${error instanceof Error ? error.message : String(error)}`);
-  process.exitCode = 1;
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    main();
+  } catch (error) {
+    console.error(`Rank catalog export failed: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  }
 }

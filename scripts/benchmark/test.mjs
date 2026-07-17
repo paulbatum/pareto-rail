@@ -301,10 +301,9 @@ assert.equal(auxiliary.reconciliation.status, 'agreed');
 assert.equal(auxiliary.models.length, 2);
 assert.equal(auxiliary.totalUsd, 1);
 
-assert.equal(shouldUnblind('rehearsal'), true);
-assert.equal(shouldUnblind('v1'), false);
-assert.equal(shouldUnblind('rehearsal', 'blind'), false);
-assert.equal(shouldUnblind('v1', 'unblind'), true);
+assert.equal(shouldUnblind(), false);
+assert.equal(shouldUnblind(false), false);
+assert.equal(shouldUnblind(true), true);
 const resultManifest = {
   schemaVersion: 2,
   benchmarkVersion: 'rehearsal',
@@ -345,7 +344,14 @@ assert.deepEqual(manifestErrors(legacyManifest), [], 'schema-v2 legacy manifests
 const mixedManifest = structuredClone(resultManifest);
 delete mixedManifest.output.title;
 assert.ok(manifestErrors(mixedManifest).some((error) => error.includes('present together')), 'mixed legacy/current metadata is rejected');
-const rehearsalResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest });
+// Blind by default, even for a rehearsal: no configuration or models on the result.
+const blindRehearsal = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest });
+assert.equal(blindRehearsal.identity, 'blinded');
+assert.equal(blindRehearsal.configuration, undefined);
+assert.equal(blindRehearsal.models, undefined);
+// The explicit unblind flag reveals identity.
+const rehearsalResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest }, { unblind: true });
+assert.equal(rehearsalResult.identity, 'unblinded');
 assert.equal(rehearsalResult.configuration, 'solo-a');
 assert.deepEqual(rehearsalResult.models, ['model-a']);
 assert.equal(rehearsalResult.stageWallTimeSeconds, 600);
@@ -353,8 +359,8 @@ assert.equal(rehearsalResult.controllerWallTimeSeconds, 3600);
 const eligibleManifest = { ...resultManifest, benchmarkVersion: 'v1', disposition: { status: 'playable' } };
 const eligibleResult = resultFromArtifacts({ directoryName: 'run-a1b2', manifest: eligibleManifest });
 assert.equal(eligibleResult.identity, 'blinded');
-assert.equal(eligibleResult.configuration, null);
-assert.deepEqual(eligibleResult.models, []);
+assert.equal(eligibleResult.configuration, undefined);
+assert.equal(eligibleResult.models, undefined);
 assert.equal(eligibleResult.promotionStatus, 'pending');
 assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: { ...resultManifest, benchmarkVersion: 'v1' }, promotion: { status: 'completed', promotionCommit: 'c'.repeat(40) } }).promotionStatus, 'not-applicable');
 assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: eligibleManifest, promotion: { status: 'completed', promotionCommit: 'c'.repeat(40) } }).promotionStatus, 'completed');

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "run-manifest.schema.json",
   "title": "Pareto Rail benchmark run manifest",
-  "description": "Draft format for a complete run record. Keep records private until blind rankings are locked.",
+  "description": "Documentary contract for a complete v2 run record as written by run.mjs createManifest. Keep records private until blind rankings are locked.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -32,56 +32,31 @@
       "additionalProperties": false,
       "required": ["id"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "label": { "type": "string" }
+        "id": { "type": "string", "minLength": 1 }
       }
     },
-    "theme": {
-      "description": "The current shape records the controller-assigned theme id. The legacy shape is retained for completed schema-v2 manifests written before that field was added.",
-      "oneOf": [
-        { "$ref": "#/$defs/legacyThemeArtifact" },
-        { "$ref": "#/$defs/themeArtifact" }
-      ]
-    },
+    "theme": { "$ref": "#/$defs/themeArtifact" },
     "baseline": {
       "type": "object",
       "additionalProperties": false,
       "required": ["materialsCommit", "entrantBaseline"],
       "properties": {
         "materialsCommit": { "$ref": "#/$defs/gitObject" },
-        "configurationCommit": { "$ref": "#/$defs/gitObject" },
-        "releaseRecord": { "$ref": "#/$defs/hashedArtifact" },
         "entrantBaseline": {
           "type": "object",
           "additionalProperties": false,
           "required": ["kind", "identifier"],
           "properties": {
             "kind": { "const": "git-commit" },
-            "identifier": { "$ref": "#/$defs/gitObject" },
-            "sha256": { "$ref": "#/$defs/sha256" }
+            "identifier": { "$ref": "#/$defs/gitObject" }
           }
         }
       }
     },
-    "schedule": {
-      "description": "Private append-only schedule revision that authorized this eligible assignment.",
-      "$ref": "#/$defs/hashedArtifact"
-    },
     "recipe": { "$ref": "#/$defs/hashedArtifact" },
     "controller": {
-      "description": "Executing controller checkout provenance. Historical manifests may retain the legacy runbook artifact shape.",
-      "oneOf": [
-        { "$ref": "#/$defs/controllerProvenance" },
-        { "$ref": "#/$defs/hashedArtifact" }
-      ]
-    },
-    "runner": {
-      "description": "Legacy v1 provenance field tolerated for historical manifests.",
-      "$ref": "#/$defs/hashedArtifact"
-    },
-    "executor": {
-      "description": "Legacy v1 provenance field tolerated for historical manifests.",
-      "$ref": "#/$defs/hashedArtifact"
+      "description": "Executing controller checkout provenance.",
+      "$ref": "#/$defs/controllerProvenance"
     },
     "timing": {
       "type": "object",
@@ -178,13 +153,7 @@
       "type": "array",
       "items": { "$ref": "#/$defs/gate" }
     },
-    "output": {
-      "description": "The current shape records the controller-assigned level title. The legacy shape is retained for completed schema-v2 manifests written before that field was added.",
-      "oneOf": [
-        { "$ref": "#/$defs/legacyOutput" },
-        { "$ref": "#/$defs/outputWithTitle" }
-      ]
-    },
+    "output": { "$ref": "#/$defs/output" },
     "disposition": {
       "type": "object",
       "additionalProperties": false,
@@ -196,24 +165,6 @@
       }
     }
   },
-  "allOf": [
-    {
-      "oneOf": [
-        {
-          "properties": {
-            "theme": { "$ref": "#/$defs/legacyThemeArtifact" },
-            "output": { "$ref": "#/$defs/legacyOutput" }
-          }
-        },
-        {
-          "properties": {
-            "theme": { "$ref": "#/$defs/themeArtifact" },
-            "output": { "$ref": "#/$defs/outputWithTitle" }
-          }
-        }
-      ]
-    }
-  ],
   "$defs": {
     "sha256": {
       "type": "string",
@@ -241,15 +192,6 @@
         "sha256": { "$ref": "#/$defs/sha256" }
       }
     },
-    "legacyThemeArtifact": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["path", "sha256"],
-      "properties": {
-        "path": { "type": "string", "minLength": 1 },
-        "sha256": { "$ref": "#/$defs/sha256" }
-      }
-    },
     "themeArtifact": {
       "type": "object",
       "additionalProperties": false,
@@ -260,28 +202,7 @@
         "sha256": { "$ref": "#/$defs/sha256" }
       }
     },
-    "legacyOutput": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["levelId", "evaluated"],
-      "properties": {
-        "sourceRoot": { "enum": ["src/levels", "src/benchmark-levels"] },
-        "levelId": { "type": "string", "minLength": 1 },
-        "evaluated": {
-          "description": "Exact registered working tree used for mechanical gates and blind play.",
-          "$ref": "#/$defs/outputCommit"
-        },
-        "payload": {
-          "description": "Derived commit based on the frozen materials commit that contains only the assigned level directory under the source root selected by benchmarkVersion.",
-          "$ref": "#/$defs/outputCommit"
-        },
-        "integrationCommit": {
-          "description": "Post-unblinding main-branch commit that registers the merged payloads.",
-          "$ref": "#/$defs/gitObject"
-        }
-      }
-    },
-    "outputWithTitle": {
+    "output": {
       "type": "object",
       "additionalProperties": false,
       "required": ["levelId", "title", "evaluated"],
@@ -294,12 +215,8 @@
           "$ref": "#/$defs/outputCommit"
         },
         "payload": {
-          "description": "Derived commit based on the frozen materials commit that contains only the assigned level directory under the source root selected by benchmarkVersion.",
+          "description": "Derived commit based on the materials commit that contains only the assigned level directory under the source root.",
           "$ref": "#/$defs/outputCommit"
-        },
-        "integrationCommit": {
-          "description": "Post-unblinding main-branch commit that registers the merged payloads.",
-          "$ref": "#/$defs/gitObject"
         }
       }
     },
@@ -372,7 +289,7 @@
       "required": ["id", "role", "model", "harness", "sessionId", "startedAt", "finishedAt", "wallTimeSeconds", "usage", "pricing", "result"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "role": { "enum": ["orchestrate", "plan", "implement", "review", "revise", "solo"] },
+        "role": { "enum": ["orchestrate", "implement", "solo"] },
         "model": { "$ref": "#/$defs/model" },
         "harness": { "$ref": "#/$defs/harness" },
         "sessionId": { "type": "string", "minLength": 1 },

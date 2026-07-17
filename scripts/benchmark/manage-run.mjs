@@ -13,10 +13,10 @@ const ARCHIVE_DIR = path.join(ROOT, 'benchmark/private/archive/runs');
 const FAILED_STATES = new Set(['gate-failed', 'dnf', 'controller-failure', 'incomplete']);
 
 async function main() {
-  const { rest, options } = parseArgs(process.argv.slice(2), { positional: true });
+  const { rest, options } = parseArgs(process.argv.slice(2), { positional: true, booleans: ['unblind'] });
   if (options.help || rest.length === 0) {
     console.log(`Usage:
-  npm run benchmark:manage -- status
+  npm run benchmark:manage -- status [--unblind]
   npm run benchmark:manage -- archive-dnf [--dry-run true]
   npm run benchmark:manage -- unarchive --run <run-id-or-archived-directory>
   npm run benchmark:manage -- prune --run <run-id> --confirm <run-id>`);
@@ -24,30 +24,36 @@ async function main() {
   }
   const command = rest[0];
   if (rest.length !== 1) fail(`Unexpected argument: ${rest.slice(1).join(' ')}`);
-  if (command === 'status') { assertOnlyOptions(options, new Set()); return showStatus(); }
+  if (command === 'status') { assertOnlyOptions(options, new Set(['unblind'])); return showStatus({ unblind: options.unblind === true }); }
   if (command === 'archive-dnf') { assertOnlyOptions(options, new Set(['dry-run'])); return archiveDnf(options); }
   if (command === 'unarchive') { assertOnlyOptions(options, new Set(['run'])); return unarchive(options.run); }
   if (command === 'prune') { assertOnlyOptions(options, new Set(['run', 'confirm'])); return pruneRun({ runId: options.run, confirmation: options.confirm }); }
   fail(`Unknown command: ${command}`);
 }
 
-async function showStatus() {
-  const results = await loadResults(RUNS_DIR, { identity: 'blind' });
+async function showStatus({ unblind = false } = {}) {
+  const results = await loadResults(RUNS_DIR, { unblind });
   const successful = results.filter((result) => result.state === 'completed');
   const failed = results.filter((result) => FAILED_STATES.has(result.state));
   console.log('=== Benchmark Run Status ===');
   console.log(`Successful/Completed: ${successful.length}`);
   for (const result of successful) {
     const promotion = result.promotionStatus === 'not-applicable' ? '' : `, promotion ${result.promotionStatus}`;
-    console.log(`  - ${result.runId} (${result.levelId}) [run completed${promotion}${result.recovered ? ', recovered' : ''}]`);
+    console.log(`  - ${result.runId} (${result.levelId}) [run completed${promotion}${result.recovered ? ', recovered' : ''}]${identitySuffix(result, unblind)}`);
     if (result.promotionStatus === 'pending' || result.promotionStatus === 'failed') console.log(`    Resume: npm run benchmark:promote -- --run ${result.runId}`);
   }
   console.log(`Failed/DNF/Incomplete: ${failed.length}`);
   for (const result of failed) {
     const spend = result.state === 'incomplete' ? await activeBudgetSpend(result.runId) : null;
     const budgetStatus = spend ? `, task budget ${Math.round(spend.fraction * 100)}%` : '';
-    console.log(`  - ${result.runId} (${result.levelId}) [${result.state}${budgetStatus}]`);
+    console.log(`  - ${result.runId} (${result.levelId}) [${result.state}${budgetStatus}]${identitySuffix(result, unblind)}`);
   }
+}
+
+function identitySuffix(result, unblind) {
+  if (!unblind) return '';
+  const models = result.models?.length ? ` ${result.models.join(',')}` : '';
+  return ` {${result.configuration ?? '—'}${models}}`;
 }
 
 async function activeBudgetSpend(runId) {
@@ -61,7 +67,7 @@ async function activeBudgetSpend(runId) {
 
 async function archiveDnf(options) {
   const dryRun = options['dry-run'] === 'true';
-  const results = await loadResults(RUNS_DIR, { identity: 'blind' });
+  const results = await loadResults(RUNS_DIR, {});
   const failed = results.filter((result) => FAILED_STATES.has(result.state));
   if (!failed.length) { console.log('No failed or DNF runs to archive.'); return; }
   await fs.mkdir(ARCHIVE_DIR, { recursive: true });
@@ -86,11 +92,12 @@ async function unarchive(identifier) {
   if (matches.length !== 1) fail(`Expected one archived run matching ${identifier}, found ${matches.length}.`);
   const source = path.join(ARCHIVE_DIR, matches[0].name);
   const definition = await readJson(path.join(source, 'run-definition.json'));
-  const destination = path.join(RUNS_DIR, definition.assignment.runId);
+  const runId = definition.runId ?? definition.assignment?.runId;
+  const destination = path.join(RUNS_DIR, runId);
   try { await fs.lstat(destination); fail(`Active run already exists: ${destination}`); } catch (error) { if (error?.code !== 'ENOENT') throw error; }
   await fs.rename(source, destination);
   await writeJson(path.join(destination, 'unarchive.json'), { schemaVersion: 1, unarchivedAt: new Date().toISOString(), archivedDirectory: matches[0].name });
-  console.log(`Restored ${definition.assignment.runId} to ${path.relative(ROOT, destination)}.`);
+  console.log(`Restored ${runId} to ${path.relative(ROOT, destination)}.`);
 }
 
 export async function pruneRun({ runId, confirmation, root = ROOT, runDirectory = path.join(root, 'benchmark/private/runs', runId ?? '') }) {

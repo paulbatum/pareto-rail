@@ -6,7 +6,6 @@ import { assertOnlyOptions, fail, parseArgs } from './common.mjs';
 
 const REQUIRED_MANIFEST_KEYS = ['schemaVersion', 'benchmarkVersion', 'runId', 'slotId', 'configuration', 'theme', 'baseline', 'recipe', 'controller', 'timing', 'stages', 'cost', 'gates', 'output', 'disposition'];
 const FORMATS = new Set(['table', 'json', 'csv']);
-const IDENTITIES = new Set(['auto', 'blind', 'unblind']);
 
 export function manifestErrors(manifest) {
   const errors = [];
@@ -51,15 +50,13 @@ function validBudgetSummary(value) {
     && [3, 20].includes(value.protocol?.maxResumeRounds);
 }
 
-export function shouldUnblind(benchmarkVersion, identity = 'auto') {
-  if (identity === 'unblind') return true;
-  if (identity === 'blind') return false;
-  return benchmarkVersion === 'rehearsal';
+export function shouldUnblind(unblind = false) {
+  return unblind === true;
 }
 
-export function resultFromArtifacts({ directoryName, manifest, definition, gates, failure, recovery, promotion }, identity = 'auto') {
+export function resultFromArtifacts({ directoryName, manifest, definition, gates, failure, recovery, promotion }, { unblind = false } = {}) {
   const benchmarkVersion = manifest?.benchmarkVersion ?? definition?.benchmarkVersion ?? null;
-  const unblinded = shouldUnblind(benchmarkVersion, identity);
+  const unblinded = shouldUnblind(unblind);
   const gateRecords = manifest?.gates ?? gates?.gates ?? [];
   const failedGates = gateRecords.filter((gate) => gate.status === 'failed').map((gate) => gate.id);
   const notRunGates = gateRecords.filter((gate) => gate.status === 'not-run').map((gate) => gate.id);
@@ -68,7 +65,7 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
   const stageModels = [...new Set(stages.map((stage) => stage?.model?.snapshotId).filter(Boolean))];
   const definitionModel = definition?.stage?.model;
   const models = stageModels.length ? stageModels : (definitionModel ? [definitionModel] : []);
-  const configuration = manifest?.configuration?.id ?? definition?.assignment?.configurationId ?? null;
+  const configuration = manifest?.configuration?.id ?? definition?.configurationId ?? definition?.assignment?.configurationId ?? null;
 
   let state = 'incomplete';
   if (failedGates.length) state = 'gate-failed';
@@ -78,14 +75,13 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
   else if (failure) state = 'controller-failure';
 
   return {
-    runId: manifest?.runId ?? definition?.assignment?.runId ?? directoryName,
-    slotId: manifest?.slotId ?? definition?.assignment?.slotId ?? null,
+    runId: manifest?.runId ?? definition?.runId ?? definition?.assignment?.runId ?? directoryName,
+    slotId: manifest?.slotId ?? definition?.slotId ?? definition?.assignment?.slotId ?? null,
     benchmarkVersion,
-    themeId: manifest?.theme?.id ?? definition?.assignment?.theme?.id ?? themeIdFromPath(manifest?.theme?.path ?? definition?.assignment?.theme?.path),
-    levelId: manifest?.output?.levelId ?? definition?.assignment?.levelId ?? null,
+    themeId: manifest?.theme?.id ?? definition?.themeId ?? definition?.assignment?.theme?.id ?? themeIdFromPath(manifest?.theme?.path ?? definition?.themePath ?? definition?.assignment?.theme?.path),
+    levelId: manifest?.output?.levelId ?? definition?.levelId ?? definition?.assignment?.levelId ?? null,
     identity: unblinded ? 'unblinded' : 'blinded',
-    configuration: unblinded ? configuration : null,
-    models: unblinded ? models : [],
+    ...(unblinded ? { configuration, models } : {}),
     state,
     gates: gateSummary(gateRecords),
     failedGates,
@@ -109,7 +105,7 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
   };
 }
 
-export async function loadResults(runsDirectory, { version, theme, identity = 'auto' } = {}) {
+export async function loadResults(runsDirectory, { version, theme, unblind = false } = {}) {
   let entries;
   try {
     entries = await fs.readdir(runsDirectory, { withFileTypes: true });
@@ -130,7 +126,7 @@ export async function loadResults(runsDirectory, { version, theme, identity = 'a
       promotion: await optionalJson(path.join(runDirectory, 'promotion.json')),
     };
     if (!artifacts.manifest && !artifacts.definition) continue;
-    const result = resultFromArtifacts(artifacts, identity);
+    const result = resultFromArtifacts(artifacts, { unblind });
     if (version && result.benchmarkVersion !== version) continue;
     if (theme && result.themeId !== theme) continue;
     results.push(result);
@@ -140,13 +136,13 @@ export async function loadResults(runsDirectory, { version, theme, identity = 'a
 
 export function formatTable(results) {
   if (!results.length) return 'No benchmark runs found.';
-  const headers = ['RUN', 'SLOT', 'VERSION', 'CONFIGURATION', 'MODEL(S)', 'LEVEL', 'STATE', 'GATES', 'STAGE', 'TOTAL', 'COST', 'MANIFEST'];
+  const unblinded = results.some((result) => result.identity === 'unblinded');
+  const headers = ['RUN', 'SLOT', 'VERSION', ...(unblinded ? ['CONFIGURATION', 'MODEL(S)'] : []), 'LEVEL', 'STATE', 'GATES', 'STAGE', 'TOTAL', 'COST', 'MANIFEST'];
   const rows = results.map((result) => [
     result.runId,
     result.slotId ?? '—',
     result.benchmarkVersion ?? '—',
-    result.identity === 'blinded' ? '<blind>' : (result.configuration ?? '—'),
-    result.identity === 'blinded' ? '<blind>' : (result.models.join(',') || '—'),
+    ...(unblinded ? [result.configuration ?? '—', result.models.join(',') || '—'] : []),
     result.levelId ?? '—',
     result.state,
     result.gates,
@@ -161,7 +157,8 @@ export function formatTable(results) {
 }
 
 export function formatCsv(results) {
-  const keys = ['runId', 'slotId', 'benchmarkVersion', 'themeId', 'levelId', 'identity', 'configuration', 'models', 'state', 'gates', 'stageWallTimeSeconds', 'controllerWallTimeSeconds', 'costUsd', 'costStatus', 'evaluatedCommit', 'payloadCommit', 'recovered', 'manifestState'];
+  const unblinded = results.some((result) => result.identity === 'unblinded');
+  const keys = ['runId', 'slotId', 'benchmarkVersion', 'themeId', 'levelId', 'identity', ...(unblinded ? ['configuration', 'models'] : []), 'state', 'gates', 'stageWallTimeSeconds', 'controllerWallTimeSeconds', 'costUsd', 'costStatus', 'evaluatedCommit', 'payloadCommit', 'recovered', 'manifestState'];
   const rows = results.map((result) => keys.map((key) => csvCell(Array.isArray(result[key]) ? result[key].join('|') : result[key])).join(','));
   return [keys.join(','), ...rows].join('\n');
 }
@@ -219,18 +216,17 @@ async function optionalJson(filePath) {
 }
 
 async function main() {
-  const { options } = parseArgs(process.argv.slice(2));
-  assertOnlyOptions(options, new Set(['help', 'runs', 'version', 'theme', 'format', 'identity']));
+  const { options } = parseArgs(process.argv.slice(2), { booleans: ['unblind'] });
+  assertOnlyOptions(options, new Set(['help', 'runs', 'version', 'theme', 'format', 'unblind']));
   if (options.help) {
-    console.log(`Usage: npm run benchmark:results -- [options]\n\nOptions:\n  --runs <path>       Run artifact directory (default: benchmark/private/runs)\n  --version <id>      Filter by benchmark version, including rehearsal\n  --theme <id>        Filter by theme id\n  --format <format>   table, json, or csv (default: table)\n  --identity <mode>   auto, blind, or unblind (default: auto)\n\nAuto identity reveals rehearsal configurations and models, but keeps all other benchmark versions blind.`);
+    console.log(`Usage: npm run benchmark:results -- [options]\n\nOptions:\n  --runs <path>       Run artifact directory (default: benchmark/private/runs)\n  --version <id>      Filter by benchmark version, including rehearsal\n  --theme <id>        Filter by theme id\n  --format <format>   table, json, or csv (default: table)\n  --unblind           Reveal configuration and model identities (default: blind)\n\nBlind by default: run ids and dispositions only. Pass --unblind after voting to reveal configurations and models.`);
     return;
   }
   const format = options.format ?? 'table';
-  const identity = options.identity ?? 'auto';
+  const unblind = options.unblind === true;
   if (!FORMATS.has(format)) fail('--format must be table, json, or csv.');
-  if (!IDENTITIES.has(identity)) fail('--identity must be auto, blind, or unblind.');
   const runsDirectory = path.resolve(options.runs ?? 'benchmark/private/runs');
-  const results = await loadResults(runsDirectory, { version: options.version, theme: options.theme, identity });
+  const results = await loadResults(runsDirectory, { version: options.version, theme: options.theme, unblind });
   if (format === 'json') console.log(JSON.stringify(results, null, 2));
   else if (format === 'csv') console.log(formatCsv(results));
   else console.log(formatTable(results));

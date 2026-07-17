@@ -11,7 +11,8 @@ export function fail(message) {
   throw new Error(message);
 }
 
-export function parseArgs(argv, { positional = false } = {}) {
+export function parseArgs(argv, { positional = false, booleans = [] } = {}) {
+  const booleanFlags = new Set(['help', ...booleans]);
   const options = {};
   const rest = [];
   for (let index = 0; index < argv.length; index += 1) {
@@ -23,7 +24,7 @@ export function parseArgs(argv, { positional = false } = {}) {
     }
     const key = argument.slice(2);
     if (!key) fail('Empty option name.');
-    if (key === 'help') options.help = true;
+    if (booleanFlags.has(key)) options[key] = true;
     else {
       const value = argv[index + 1];
       if (value === undefined || value.startsWith('--')) fail(`Missing value for --${key}`);
