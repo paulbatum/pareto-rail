@@ -8,7 +8,7 @@ Every level is the same game at its core: the player flies forward automatically
 
 For a built-in level, build a complete level under `src/levels/<id>/` and register it in `src/levels/index.ts`. A benchmark entrant uses the same mechanics and quality bar but the directory-only output contract: build under `src/benchmark-levels/<id>/`, include the scaffolded `level.json` descriptor, and do not edit `src/levels/index.ts`. Within the shared lock-on mechanics you own everything: the rail, the spawn choreography, the enemy kinds and their motion, scoring, the entire visual language (environment, enemies, letter glyphs, effects), and the entire soundtrack and sound design. All of it is procedural.
 
-Start from `npm run scaffold -- --id <id>`. Then read `docs/level-authoring.md`, `src/engine/lock-on-runner-types.ts`, and `docs/level-gallery.md`. For quality calibration, read the spine of the level the gallery identifies as the current bar. Full-source reading of other levels is optional depth, not a requirement.
+Start from `npm run scaffold -- --id <id>`. Then read `docs/level-authoring.md`, `src/engine/lock-on-runner-types.ts`, and the whole of `docs/level-gallery.md`. A strong level excels across every dimension, so don't stop at the level summaries: follow the pointers to the code and learn how to make great levels.
 
 ## Theme
 

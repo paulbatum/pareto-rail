@@ -18,5 +18,8 @@ A 30-second speed-feel testbed with a long rail, authored speed surges, simple p
 - `src/levels/rush/post-fx.ts`
 - `src/levels/rush/audio.ts`
 
+## What to study here
+Rush is a technical showcase of the engine tools that keep enemies readable when player speed is high — `createRailPacer` (`src/engine/rail-pacer.ts`) and `createSpeedProfile` (`src/engine/speed-profile.ts`), exercised in `gameplay.ts`. Read it only if your level runs fast enough that fixed rail anchors fall outside the fog at spawn. It is not a reference for visuals, music, or overall level design.
+
 ## Status & notes
-Technical test fixture demonstrating high-speed engine features (e.g., rail pacing); however, as a stripped-down, limited testbed, it is excluded from the level picker and must not be used as a reference for level design quality or distinctiveness.
+Technical test fixture; excluded from the level picker.

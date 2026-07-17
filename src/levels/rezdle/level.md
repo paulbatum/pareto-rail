@@ -18,6 +18,9 @@ A 60-second run where vowels, consonants, and rare-letter bonuses must be releas
 - `src/levels/rezdle/glyphs.ts`
 - `src/levels/rezdle/words.ts`
 
+## What to study here
+Rezdle is the example of a highly novel mechanic built entirely on the shared runner. The whole word game — loose type that must be released as valid words — is level-local: the dictionary and matching logic live in `words.ts` and `word-data.ts`, and validation rides the runner's `validateRelease` hook rather than any engine change. It also opts into `allowLockUndo` for right-click un-locking and supplies its own `scoreForVolley`, `rankForRun`, and `detailsForRun`. Read Rezdle to see how far a mechanic can depart from "sweep and fire a volley" without a bespoke runtime or touching the engine.
+
 ## Status & notes
-Word-game-shaped and legitimately deviates from the standard spine/leaf decomposition.
+Rezdle legitimately deviates from the standard spine/leaf decomposition.
 Inspection captures: `carriage-8` (word combos, bar 8), `carriage-16` (midnight finale, bar 16).

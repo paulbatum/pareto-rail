@@ -17,6 +17,8 @@ A 30-second run with three enemy kinds, fan-built waves, spiral, zipper, and blo
 - `src/levels/prism/audio.ts`
 - `src/levels/prism/visuals.ts`
 
+## What to study here
+Prism is deliberately small and unremarkable. It is not a quality reference and not a showcase; it exists as a tiny, bare-bones level — the minimal shape of a working entry — and as a smoke-test fixture. Read it when you want the smallest complete example of the module layout, not when calibrating polish, musicality, or distinctiveness.
+
 ## Status & notes
-Minimal early proof-out, not a showcase.
 Inspection captures: `bloom` (bloom pattern, bar 6), `finale` (final gate wave, bar 10).

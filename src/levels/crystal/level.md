@@ -19,6 +19,14 @@ A 45-second run with a 3-point hull, node, drifter, orbiter, and lancer waves, i
 - `src/levels/crystal/visuals/index.ts`
 - `src/levels/crystal/warden.ts`
 
+## What to study here
+Crystal is the strongest built-in for musical experience: melodic kill lines that play per enemy hit, so a chained volley performs a real run. Read its `audio.ts` and `audio-voices.ts`. It also has the richest ordinary enemies — a procedural multi-component system that assembles each target from shared hex rings, spokes, and shards with per-kind and random variation, in `visuals/crystal.ts` (driven by `visuals/crystal-template.json`).
+
+The Crystal Warden boss carries a strong mechanical idea: one phase requires all three targets locked in a single volley.
+
+Crystal is not a one-shot build. It reached this polish through many rounds of human-guided iteration, so treat it as the ceiling for musicality and enemy detail rather than a one-shot baseline.
+
+Weaker ground: the Warden's visual design is overly simple, and the level is thin on storytelling. Don't calibrate boss visuals or narrative arc against Crystal.
+
 ## Status & notes
-Flagship landing level and the most polished level through human playtests.
 Inspection captures: `bossEntrance` (warden entrance, bar 16:2.36), `drive` (densest act-2, bar 8).

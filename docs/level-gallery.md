@@ -25,8 +25,16 @@ A 45-second run with a 3-point hull, node, drifter, orbiter, and lancer waves, i
 - `src/levels/crystal/visuals/index.ts`
 - `src/levels/crystal/warden.ts`
 
+## What to study here
+Crystal is the strongest built-in for musical experience: melodic kill lines that play per enemy hit, so a chained volley performs a real run. Read its `audio.ts` and `audio-voices.ts`. It also has the richest ordinary enemies — a procedural multi-component system that assembles each target from shared hex rings, spokes, and shards with per-kind and random variation, in `visuals/crystal.ts` (driven by `visuals/crystal-template.json`).
+
+The Crystal Warden boss carries a strong mechanical idea: one phase requires all three targets locked in a single volley.
+
+Crystal is not a one-shot build. It reached this polish through many rounds of human-guided iteration, so treat it as the ceiling for musicality and enemy detail rather than a one-shot baseline.
+
+Weaker ground: the Warden's visual design is overly simple, and the level is thin on storytelling. Don't calibrate boss visuals or narrative arc against Crystal.
+
 ## Status & notes
-Flagship landing level and the most polished level through human playtests.
 Inspection captures: `bossEntrance` (warden entrance, bar 16:2.36), `drive` (densest act-2, bar 8).
 
 ---
@@ -52,8 +60,12 @@ Variable rail speed, 4-point hull, cinders, motes, scorchers, pyres, flares, hos
 - `src/levels/helios/visuals/index.ts`
 - `src/levels/helios/suneater.ts`
 
+## What to study here
+Helios is the proof that a one-shot result can be large, detailed, and highly playable. It runs long, tells a real story across distinct sections, and demonstrates how far a single build can reach: an elaborate boss with genuine visual design (`suneater.ts`), interesting postprocessing effects (`visuals/post-fx.ts`), a strong sense of speed in places, and background music that varies to match the pace of each section. It also shows sophisticated, dynamic camera control instead of a plain flight down a fixed path — read `index.ts` and `gameplay.ts` for the camera work.
+
+Weaker ground: the melodic kill line is not especially compelling (Crystal is the reference for that). Some sections lose visual clarity — bright white projectiles over the bright yellow sun read poorly — and the boss's ambitious design leaves parts of its body awkwardly arranged. Study Helios for scope, story, and camera; go elsewhere for musical action and for boss-body legibility.
+
 ## Status & notes
-Current quality bar for one-shot builds.
 Inspection captures: `gate` (drop 1 gate entrance, bar 16), `corona` (drop 2 corona plunge, bar 40), `bossEntrance` (Suneater reveal, bar 60).
 
 ---
@@ -77,8 +89,10 @@ A 30-second run with three enemy kinds, fan-built waves, spiral, zipper, and blo
 - `src/levels/prism/audio.ts`
 - `src/levels/prism/visuals.ts`
 
+## What to study here
+Prism is deliberately small and unremarkable. It is not a quality reference and not a showcase; it exists as a tiny, bare-bones level — the minimal shape of a working entry — and as a smoke-test fixture. Read it when you want the smallest complete example of the module layout, not when calibrating polish, musicality, or distinctiveness.
+
 ## Status & notes
-Minimal early proof-out, not a showcase.
 Inspection captures: `bloom` (bloom pattern, bar 6), `finale` (final gate wave, bar 10).
 
 ---
@@ -103,8 +117,11 @@ A 60-second run where vowels, consonants, and rare-letter bonuses must be releas
 - `src/levels/rezdle/glyphs.ts`
 - `src/levels/rezdle/words.ts`
 
+## What to study here
+Rezdle is the example of a highly novel mechanic built entirely on the shared runner. The whole word game — loose type that must be released as valid words — is level-local: the dictionary and matching logic live in `words.ts` and `word-data.ts`, and validation rides the runner's `validateRelease` hook rather than any engine change. It also opts into `allowLockUndo` for right-click un-locking and supplies its own `scoreForVolley`, `rankForRun`, and `detailsForRun`. Read Rezdle to see how far a mechanic can depart from "sweep and fire a volley" without a bespoke runtime or touching the engine.
+
 ## Status & notes
-Word-game-shaped and legitimately deviates from the standard spine/leaf decomposition.
+Rezdle legitimately deviates from the standard spine/leaf decomposition.
 Inspection captures: `carriage-8` (word combos, bar 8), `carriage-16` (midnight finale, bar 16).
 
 ---
@@ -129,8 +146,11 @@ A 30-second speed-feel testbed with a long rail, authored speed surges, simple p
 - `src/levels/rush/post-fx.ts`
 - `src/levels/rush/audio.ts`
 
+## What to study here
+Rush is a technical showcase of the engine tools that keep enemies readable when player speed is high — `createRailPacer` (`src/engine/rail-pacer.ts`) and `createSpeedProfile` (`src/engine/speed-profile.ts`), exercised in `gameplay.ts`. Read it only if your level runs fast enough that fixed rail anchors fall outside the fog at spawn. It is not a reference for visuals, music, or overall level design.
+
 ## Status & notes
-Technical test fixture demonstrating high-speed engine features (e.g., rail pacing); however, as a stripped-down, limited testbed, it is excluded from the level picker and must not be used as a reference for level design quality or distinctiveness.
+Technical test fixture; excluded from the level picker.
 
 ## Benchmark levels
 
