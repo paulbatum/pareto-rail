@@ -414,13 +414,16 @@ assert.deepEqual(manifestErrors(resultManifest), []);
 const budgetManifest = structuredClone(resultManifest);
 budgetManifest.stages[0].budget = {
   budgetUsd: 20,
-  protocol: { noticeStepPct: 25, minimumSubmitFraction: 0.75, maxResumeRounds: 3, pollIntervalSeconds: 30, minimumResumeRemainingSeconds: 600 },
+  protocol: { noticeStepPct: 25, minimumSubmitFraction: 0.75, maxResumeRounds: 20, pollIntervalSeconds: 30, minimumResumeRemainingSeconds: 600 },
   noticeHistory: [{ pct: 25, spentUsd: 5.1, at: '2026-01-01T00:15:00.000Z' }],
   resumes: [],
   finalSpendUsd: 17,
   finalFraction: 0.85,
 };
 assert.deepEqual(manifestErrors(budgetManifest), []);
+budgetManifest.stages[0].budget.protocol.maxResumeRounds = 3;
+assert.deepEqual(manifestErrors(budgetManifest), [], 'manifests recorded under the 3-round protocol remain valid');
+budgetManifest.stages[0].budget.protocol.maxResumeRounds = 20;
 budgetManifest.stages[0].budget.protocol.noticeStepPct = 10;
 assert.ok(manifestErrors(budgetManifest).some((error) => error.includes('budget is invalid')));
 const legacyManifest = structuredClone(resultManifest);

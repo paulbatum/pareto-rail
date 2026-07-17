@@ -389,7 +389,7 @@
           "properties": {
             "noticeStepPct": { "const": 25 },
             "minimumSubmitFraction": { "const": 0.75 },
-            "maxResumeRounds": { "const": 3 },
+            "maxResumeRounds": { "enum": [3, 20] },
             "pollIntervalSeconds": { "const": 30 },
             "minimumResumeRemainingSeconds": { "const": 600 }
           }

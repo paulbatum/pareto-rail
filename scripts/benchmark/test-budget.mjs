@@ -32,13 +32,13 @@ assert.equal(crossedThreshold(10.12, 250), 1000, 'the threshold schedule has no 
 
 assert.equal(noticeText(75), 'Task budget status: approximately 75% of the task budget has been used.');
 assert.equal(noticeText(100), 'Task budget status: approximately 100% of the task budget has been used. The budget is a guide rather than a hard cap, but you should now be working toward finalizing your submission.');
-assert.equal(noticeText(125), 'Task budget status: approximately 125% of the task budget has been used. You are over budget — bring the work to a close and finalize your submission.');
-assert.equal(resumeMessage(0.324), 'Budget check: you have used approximately 32% of the task budget, so meaningful budget remains. This is an opportunity to keep improving your level: raise the polish, depth, and quality wherever it falls short of your own standards. Continue working now; you will keep receiving task budget updates as you go.');
+assert.equal(noticeText(125), 'Task budget status: approximately 125% of the task budget has been used. You are over budget — bring the work to a close and finalize your submission. If the working tree currently fails any required check, revert to the last commit where everything passed before finalizing.');
+assert.equal(resumeMessage(0.324), 'Budget check: you have used approximately 32% of the task budget. The benchmark expects the task budget to be spent on the level\'s quality, and a submission that leaves most of the budget unused will keep being resumed like this one. Continue now and raise the polish, depth, and quality of your level; you will keep receiving task budget updates as you go.');
 
 assert.equal(shouldResume({ finalFraction: 0.749, roundsUsed: 0, remainingMs: Infinity }), true);
 assert.equal(shouldResume({ finalFraction: 0.75, roundsUsed: 0, remainingMs: Infinity }), false);
-assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 2, remainingMs: Infinity }), true);
-assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 3, remainingMs: Infinity }), false);
+assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 19, remainingMs: Infinity }), true, 'resumes continue up to the runaway backstop');
+assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 20, remainingMs: Infinity }), false, 'the runaway backstop stops resuming');
 assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 0, remainingMs: MINIMUM_RESUME_REMAINING_MS }), true);
 assert.equal(shouldResume({ finalFraction: 0.1, roundsUsed: 0, remainingMs: MINIMUM_RESUME_REMAINING_MS - 1 }), false);
 

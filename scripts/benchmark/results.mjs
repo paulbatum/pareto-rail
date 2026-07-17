@@ -48,7 +48,7 @@ function validBudgetSummary(value) {
     && Number.isFinite(value.finalFraction)
     && value.protocol?.noticeStepPct === 25
     && value.protocol?.minimumSubmitFraction === 0.75
-    && value.protocol?.maxResumeRounds === 3;
+    && [3, 20].includes(value.protocol?.maxResumeRounds);
 }
 
 export function shouldUnblind(benchmarkVersion, identity = 'auto') {

@@ -7,7 +7,7 @@ import { assertOnlyOptions, assertPrivateOrExternalPath, fail, parseArgs, requir
 const PLACEHOLDERS = ['LEVEL_ID', 'LEVEL_TITLE', 'THEME'];
 const REPEATABLE_PLACEHOLDERS = new Set(['LEVEL_ID']);
 const DELEGATION_PLACEHOLDERS = ['DELEGATE_MODEL', 'DELEGATE_EFFORT'];
-export const BUDGET_ASSIGNMENT_PARAGRAPH = 'There is a cost budget for this task. You will receive task budget status updates as you work.';
+export const BUDGET_ASSIGNMENT_PARAGRAPH = 'There is a cost budget for this task, and the benchmark expects it to be used. A submission that leaves most of the budget unspent will be resumed and asked to keep improving the level, so plan to invest the budget in quality rather than finishing early. You will receive task budget status updates as you work.';
 
 export function renderAssignment(template, { levelId, levelTitle, theme, budget = false }) {
   if (!levelId || /\r|\n/.test(levelId)) fail('levelId must be a non-empty single-line value.');

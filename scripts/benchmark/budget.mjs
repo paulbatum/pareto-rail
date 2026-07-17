@@ -3,7 +3,9 @@ import path from 'node:path';
 
 export const NOTICE_STEP_PCT = 25;
 export const MINIMUM_SUBMIT_FRACTION = 0.75;
-export const MAX_RESUME_ROUNDS = 3;
+// Runaway protection, not an expected retry budget: the submit fraction is the stopping condition,
+// and no honest run should approach this many rounds before reaching it or running out of time.
+export const MAX_RESUME_ROUNDS = 20;
 export const POLL_INTERVAL_MS = 30_000;
 export const MINIMUM_RESUME_REMAINING_MS = 10 * 60 * 1_000;
 
@@ -15,7 +17,7 @@ export const BUDGET_PROTOCOL = Object.freeze({
   minimumResumeRemainingSeconds: MINIMUM_RESUME_REMAINING_MS / 1_000,
 });
 
-export const RESUME_MESSAGE_TEMPLATE = 'Budget check: you have used approximately {pct}% of the task budget, so meaningful budget remains. This is an opportunity to keep improving your level: raise the polish, depth, and quality wherever it falls short of your own standards. Continue working now; you will keep receiving task budget updates as you go.';
+export const RESUME_MESSAGE_TEMPLATE = 'Budget check: you have used approximately {pct}% of the task budget. The benchmark expects the task budget to be spent on the level\'s quality, and a submission that leaves most of the budget unused will keep being resumed like this one. Continue now and raise the polish, depth, and quality of your level; you will keep receiving task budget updates as you go.';
 
 export function crossedThreshold(fraction, announcedPct = 0) {
   if (!Number.isFinite(fraction) || fraction < 0) return null;
@@ -26,7 +28,7 @@ export function crossedThreshold(fraction, announcedPct = 0) {
 export function noticeText(pct) {
   if (pct < 100) return `Task budget status: approximately ${pct}% of the task budget has been used.`;
   if (pct === 100) return 'Task budget status: approximately 100% of the task budget has been used. The budget is a guide rather than a hard cap, but you should now be working toward finalizing your submission.';
-  return `Task budget status: approximately ${pct}% of the task budget has been used. You are over budget — bring the work to a close and finalize your submission.`;
+  return `Task budget status: approximately ${pct}% of the task budget has been used. You are over budget — bring the work to a close and finalize your submission. If the working tree currently fails any required check, revert to the last commit where everything passed before finalizing.`;
 }
 
 export function approximatePct(fraction) {
