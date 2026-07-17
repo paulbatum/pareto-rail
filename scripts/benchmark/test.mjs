@@ -87,7 +87,10 @@ assert.equal(
   renderAssignment('id={{LEVEL_ID}} dir=levels/{{LEVEL_ID}}/ title={{LEVEL_TITLE}} theme={{THEME}}', { levelId: 'cinder-a1b2', levelTitle: 'Cinder', theme: '# Cinder' }),
   'id=cinder-a1b2 dir=levels/cinder-a1b2/ title=Cinder theme=# Cinder',
 );
-assert.throws(() => renderAssignment('{{LEVEL_ID}} {{LEVEL_TITLE}} {{LEVEL_TITLE}} {{THEME}}', { levelId: 'x', levelTitle: 'X', theme: 'T' }), /Expected exactly one \{\{LEVEL_TITLE\}\}/);
+assert.equal(
+  renderAssignment('id={{LEVEL_ID}} title={{LEVEL_TITLE}} scaffold --title {{LEVEL_TITLE}} theme={{THEME}}', { levelId: 'cinder-a1b2', levelTitle: 'Cinder', theme: '# Cinder' }),
+  'id=cinder-a1b2 title=Cinder scaffold --title Cinder theme=# Cinder',
+);
 
 const plan = {
   benchmarkVersion: 'v2',

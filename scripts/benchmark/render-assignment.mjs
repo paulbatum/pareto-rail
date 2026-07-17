@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { assertOnlyOptions, assertPrivateOrExternalPath, fail, parseArgs, requireOption, sha256, writeJson } from './common.mjs';
 
 const PLACEHOLDERS = ['LEVEL_ID', 'LEVEL_TITLE', 'THEME'];
-const REPEATABLE_PLACEHOLDERS = new Set(['LEVEL_ID']);
+const REPEATABLE_PLACEHOLDERS = new Set(['LEVEL_ID', 'LEVEL_TITLE']);
 const DELEGATION_PLACEHOLDERS = ['DELEGATE_MODEL', 'DELEGATE_EFFORT'];
 export const BUDGET_ASSIGNMENT_PARAGRAPH = 'There is a cost budget for this task, and the benchmark expects it to be used. A submission that leaves most of the budget unspent will be resumed and asked to keep improving the level, so plan to invest the budget in quality rather than finishing early. You will receive task budget status updates as you work. Checkpoint your work as you go: get to a complete level that passes the required checks early, commit it, and keep committing at every passing milestone so that if the budget runs out while the tree is failing you can reset to the last passing commit instead of submitting broken work.';
 
@@ -25,7 +25,7 @@ export function renderAssignment(template, { levelId, levelTitle, theme, budget 
 
   const rendered = template
     .replaceAll('{{LEVEL_ID}}', levelId)
-    .replace('{{LEVEL_TITLE}}', levelTitle)
+    .replaceAll('{{LEVEL_TITLE}}', levelTitle)
     .replace('{{THEME}}', theme);
   return budget ? `${rendered}\n\n${BUDGET_ASSIGNMENT_PARAGRAPH}` : rendered;
 }
