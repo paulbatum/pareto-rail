@@ -193,7 +193,7 @@ async function main() {
         await validateEvaluated(existing, worktree);
         return existing;
       }
-      const sealed = await command(process.execPath, [ADMIN, 'seal', '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--version', definition.benchmarkVersion, '--level-title', definition.assignment.levelTitle], ROOT);
+      const sealed = await command(process.execPath, [ADMIN, 'seal', '--repo', ROOT, '--worktree', worktree.worktree, '--baseline', entrantBaseline, '--level-id', definition.assignment.levelId, '--version', definition.benchmarkVersion, '--level-title', definition.assignment.levelTitle], ROOT);
       const value = JSON.parse(sealed.stdout);
       await writeJson(path.join(outputDirectory, 'evaluated.json'), value);
       return value;

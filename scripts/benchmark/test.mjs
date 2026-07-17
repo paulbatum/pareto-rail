@@ -15,7 +15,8 @@ import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snap
 import { assertBenchmarkBaseline } from '../check-benchmark-baseline.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import { protocolForVersion } from './protocol.mjs';
-import { derivePayload } from './admin.mjs';
+import { createWorktree, derivePayload, sealEvaluatedCommit } from './admin.mjs';
+import { pruneRun } from './manage-run.mjs';
 import { sha256 } from './common.mjs';
 
 const exec = promisify(execFile);
@@ -486,7 +487,129 @@ try {
   await fs.rm(snapshotRun, { recursive: true, force: true });
 }
 
+await assertIsolatedEntrantRoundTrips();
+await assertPruneLayouts();
+
 for (const withContent of [false, true]) await assertDerivedPayload(withContent);
+
+async function assertIsolatedEntrantRoundTrips() {
+  const repo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-isolated-main-'));
+  const entrant = `${repo}-entrant`;
+  const payloadWorktree = `${repo}-payload`;
+  const runDirectory = `${repo}-run`;
+  const branch = 'benchmark-run-isolation';
+  const levelId = 'synthetic-a1b2';
+  try {
+    await exec('git', ['init', '-q', '-b', 'main'], { cwd: repo });
+    await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: repo });
+    await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: repo });
+    await fs.writeFile(path.join(repo, 'baseline.txt'), 'entrant baseline\n');
+    await exec('git', ['add', '.'], { cwd: repo });
+    await exec('git', ['commit', '-qm', 'entrant baseline'], { cwd: repo });
+    const baseline = (await exec('git', ['rev-parse', 'HEAD'], { cwd: repo })).stdout.trim();
+
+    await exec('git', ['switch', '-qc', 'hidden-materials'], { cwd: repo });
+    await fs.writeFile(path.join(repo, 'sealed-marker.txt'), 'must not enter entrant repository\n');
+    await exec('git', ['add', '.'], { cwd: repo });
+    await exec('git', ['commit', '-qm', 'hidden marker'], { cwd: repo });
+    const hiddenCommit = (await exec('git', ['rev-parse', 'HEAD'], { cwd: repo })).stdout.trim();
+    const hiddenTree = (await exec('git', ['rev-parse', 'HEAD^{tree}'], { cwd: repo })).stdout.trim();
+    await exec('git', ['update-ref', 'refs/private/hidden-marker', hiddenCommit], { cwd: repo });
+    await exec('git', ['switch', '-q', 'main'], { cwd: repo });
+
+    const worktree = await createWorktree({ repo, baseline, 'run-id': 'run-isolation', path: entrant, branch });
+    assert.equal(worktree.layout, 'standalone');
+    assert.equal((await fs.lstat(path.join(entrant, '.git'))).isDirectory(), true);
+    assert.equal((await exec('git', ['symbolic-ref', '--short', 'HEAD'], { cwd: entrant })).stdout.trim(), branch);
+    assert.equal((await exec('git', ['rev-parse', 'HEAD'], { cwd: entrant })).stdout.trim(), baseline);
+    assert.deepEqual((await exec('git', ['rev-list', '--all'], { cwd: entrant })).stdout.trim().split('\n').filter(Boolean), [baseline]);
+    assert.deepEqual((await exec('git', ['for-each-ref', '--format=%(refname)'], { cwd: entrant })).stdout.trim().split('\n').filter(Boolean), [`refs/heads/${branch}`]);
+    await assert.rejects(() => exec('git', ['cat-file', '-e', `${hiddenCommit}^{commit}`], { cwd: entrant }));
+    await assert.rejects(() => exec('git', ['cat-file', '-e', `${hiddenTree}^{tree}`], { cwd: entrant }));
+    await assert.rejects(() => fs.readFile(path.join(entrant, 'sealed-marker.txt'), 'utf8'));
+    assert.equal((await exec('git', ['for-each-ref', '--format=%(refname)', 'refs/benchmark-baselines'], { cwd: repo })).stdout.trim(), '');
+
+    const levelDirectory = path.join(entrant, 'src/benchmark-levels', levelId);
+    await fs.mkdir(levelDirectory, { recursive: true });
+    await fs.writeFile(path.join(levelDirectory, 'index.ts'), 'export const synthetic = true;\n');
+    await fs.writeFile(path.join(levelDirectory, 'level.json'), `${JSON.stringify({ id: levelId, title: 'Synthetic' }, null, 2)}\n`);
+    await exec('git', ['add', '.'], { cwd: entrant });
+    await exec('git', ['commit', '-qm', 'entrant implementation'], { cwd: entrant });
+    const entrantCommit = (await exec('git', ['rev-parse', 'HEAD'], { cwd: entrant })).stdout.trim();
+    assert.notEqual(entrantCommit, baseline);
+    await exec('git', ['merge-base', '--is-ancestor', baseline, 'HEAD'], { cwd: entrant });
+
+    const sealed = await sealEvaluatedCommit({ repo, worktree: entrant, baseline, 'level-id': levelId, 'level-title': 'Synthetic', version: 'v2' });
+    assert.equal(sealed.evaluatedCommit, entrantCommit);
+    assert.equal((await exec('git', ['rev-parse', `refs/heads/${branch}`], { cwd: repo })).stdout.trim(), entrantCommit);
+    const payload = await derivePayload({ repo, materials: baseline, evaluated: entrantCommit, 'level-id': levelId, 'level-title': 'Synthetic', path: payloadWorktree, branch: 'benchmark-payload-isolation', version: 'v2' });
+    assert.equal((await exec('git', ['cat-file', '-t', `${payload.payloadCommit}:${`src/benchmark-levels/${levelId}`}`], { cwd: repo })).stdout.trim(), 'tree');
+
+    await fs.mkdir(runDirectory, { recursive: true });
+    await fs.writeFile(path.join(levelDirectory, 'index.ts'), 'export const synthetic = "recovered";\n');
+    await fs.writeFile(path.join(levelDirectory, 'recovery.txt'), 'uncommitted recovery data\n');
+    const snapshot = await createRecoverySnapshot({ repo, runDirectory, runId: 'run-isolation', worktree: entrant, checkpoint: 'stage', reason: 'synthetic isolated failure' });
+    assert.deepEqual(snapshot.changedPaths.sort(), [`src/benchmark-levels/${levelId}/index.ts`, `src/benchmark-levels/${levelId}/recovery.txt`]);
+    assert.equal((await exec('git', ['rev-parse', snapshot.ref], { cwd: repo })).stdout.trim(), snapshot.snapshotCommit);
+
+    await fs.rm(entrant, { recursive: true });
+    await restoreRecoverySnapshot({ repo, runDirectory, worktreeRecord: worktree });
+    assert.equal((await fs.lstat(path.join(entrant, '.git'))).isDirectory(), true);
+    assert.equal((await exec('git', ['write-tree'], { cwd: entrant })).stdout.trim(), snapshot.snapshotTree);
+    assert.equal(await fs.readFile(path.join(levelDirectory, 'index.ts'), 'utf8'), 'export const synthetic = "recovered";\n');
+    assert.equal(await fs.readFile(path.join(levelDirectory, 'recovery.txt'), 'utf8'), 'uncommitted recovery data\n');
+    assert.deepEqual((await exec('git', ['for-each-ref', '--format=%(refname)'], { cwd: entrant })).stdout.trim().split('\n').filter(Boolean), [`refs/heads/${branch}`]);
+    assert.equal((await exec('git', ['rev-list', '--all'], { cwd: entrant })).stdout.includes(hiddenCommit), false);
+    await assert.rejects(() => exec('git', ['cat-file', '-e', `${hiddenCommit}^{commit}`], { cwd: entrant }));
+  } finally {
+    await exec('git', ['worktree', 'remove', '--force', payloadWorktree], { cwd: repo }).catch(() => {});
+    await fs.rm(repo, { recursive: true, force: true });
+    await fs.rm(entrant, { recursive: true, force: true });
+    await fs.rm(payloadWorktree, { recursive: true, force: true });
+    await fs.rm(runDirectory, { recursive: true, force: true });
+  }
+}
+
+async function assertPruneLayouts() {
+  for (const layout of ['linked', 'standalone']) {
+    const repo = await fs.mkdtemp(path.join(os.tmpdir(), `pareto-rail-prune-${layout}-`));
+    const checkout = `${repo}-checkout`;
+    const runDirectory = `${repo}-run`;
+    const runId = `run-prune-${layout}`;
+    const branch = `benchmark-${layout}`;
+    try {
+      await exec('git', ['init', '-q', '-b', 'main'], { cwd: repo });
+      await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: repo });
+      await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: repo });
+      await fs.writeFile(path.join(repo, 'base.txt'), 'base\n');
+      await exec('git', ['add', '.'], { cwd: repo });
+      await exec('git', ['commit', '-qm', 'base'], { cwd: repo });
+      const commit = (await exec('git', ['rev-parse', 'HEAD'], { cwd: repo })).stdout.trim();
+      let worktreeRecord;
+      if (layout === 'linked') {
+        await exec('git', ['worktree', 'add', '-qb', branch, checkout, commit], { cwd: repo });
+        worktreeRecord = { worktree: checkout, branch, baselineCommit: commit };
+      } else {
+        worktreeRecord = await createWorktree({ repo, baseline: commit, 'run-id': runId, path: checkout, branch });
+        await exec('git', ['branch', branch, commit], { cwd: repo });
+      }
+      await fs.mkdir(runDirectory, { recursive: true });
+      await fs.writeFile(path.join(runDirectory, 'run-definition.json'), `${JSON.stringify({ worktree: { path: checkout }, payload: { path: `${checkout}-payload`, branch: `${branch}-payload` } })}\n`);
+      await fs.writeFile(path.join(runDirectory, 'worktree.json'), `${JSON.stringify(worktreeRecord)}\n`);
+      await fs.writeFile(path.join(runDirectory, 'evaluated.json'), `${JSON.stringify({ evaluatedCommit: commit })}\n`);
+
+      await pruneRun({ runId, confirmation: runId, root: repo, runDirectory });
+      await assert.rejects(() => fs.lstat(checkout));
+      assert.equal((await exec('git', ['rev-parse', `refs/heads/${branch}`], { cwd: repo })).stdout.trim(), commit);
+      assert.equal((await exec('git', ['cat-file', '-t', commit], { cwd: repo })).stdout.trim(), 'commit');
+    } finally {
+      await exec('git', ['worktree', 'remove', '--force', checkout], { cwd: repo }).catch(() => {});
+      await fs.rm(repo, { recursive: true, force: true });
+      await fs.rm(checkout, { recursive: true, force: true });
+      await fs.rm(runDirectory, { recursive: true, force: true });
+    }
+  }
+}
 
 async function assertDerivedPayload(withContent) {
   const repo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-payload-derivation-'));

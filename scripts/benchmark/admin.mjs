@@ -14,6 +14,7 @@ import {
   sha256,
   writeJson,
 } from './common.mjs';
+import { checkoutLayout } from './checkout-layout.mjs';
 import { levelFootprint, protocolForVersion } from './protocol.mjs';
 
 const CONTROLLER_SCOPE_SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'check-benchmark-scope.mjs');
@@ -23,7 +24,7 @@ async function main() {
   if (options.help || rest.length === 0) {
     console.log(`Usage:
   npm run benchmark:admin -- worktree --baseline <commit> --run-id <opaque-id> --path <path> [--branch <opaque-branch>] [--repo <path>]
-  npm run benchmark:admin -- seal --worktree <path> --baseline <commit> --level-id <id> [--version v2] [--message <message>]
+  npm run benchmark:admin -- seal --worktree <path> --baseline <commit> --level-id <id> [--repo <path>] [--version v2] [--message <message>]
   npm run benchmark:admin -- gates --worktree <path> --baseline <commit> --level-id <id> --out <private-or-external-path> [--version v2]
   npm run benchmark:admin -- payload --repo <path> --materials <commit> --evaluated <commit> --level-id <id> --path <path> --branch <opaque-branch> [--version v2]`);
     return;
@@ -38,7 +39,7 @@ async function main() {
   fail(`Unknown controller command: ${command}.`);
 }
 
-async function createWorktree(options) {
+export async function createWorktree(options) {
   const repo = path.resolve(options.repo ?? process.cwd());
   const baseline = requireOption(options, 'baseline');
   const runId = requireOption(options, 'run-id');
@@ -48,13 +49,30 @@ async function createWorktree(options) {
   if (pathInside(worktreePath, repo)) fail('A controller worktree must be outside the primary repository working tree.');
   await assertAbsent(worktreePath, 'worktree path');
   const baselineCommit = (await git(repo, ['rev-parse', '--verify', `${baseline}^{commit}`])).output.trim();
-  await git(repo, ['worktree', 'add', '-b', branch, worktreePath, baselineCommit]);
+  const branchCheck = await git(repo, ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`], { allowFailure: true });
+  if (branchCheck.code === 0) fail(`Entrant branch already exists: ${branch}`);
+
+  const baselineRef = `refs/benchmark-baselines/${runId}`;
+  await git(repo, ['update-ref', baselineRef, baselineCommit, '']);
+  try {
+    await fs.mkdir(worktreePath, { recursive: true });
+    await git(worktreePath, ['init', '-q']);
+    await copyGitIdentity(repo, worktreePath);
+    await git(worktreePath, ['fetch', '--depth=1', '--no-tags', repo, baselineRef]);
+    await git(worktreePath, ['checkout', '-q', '-b', branch, 'FETCH_HEAD']);
+  } finally {
+    await git(repo, ['update-ref', '-d', baselineRef], { allowFailure: true });
+  }
+
   const actualCommit = (await git(worktreePath, ['rev-parse', 'HEAD'])).output.trim();
   if (actualCommit !== baselineCommit) fail('Created worktree does not match the requested baseline commit.');
-  console.log(JSON.stringify({ worktree: worktreePath, branch, baselineCommit }));
+  const result = { worktree: worktreePath, branch, baselineCommit, layout: 'standalone' };
+  console.log(JSON.stringify(result));
+  return result;
 }
 
-async function sealEvaluatedCommit(options) {
+export async function sealEvaluatedCommit(options) {
+  const repo = path.resolve(options.repo ?? process.cwd());
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const baseline = requireOption(options, 'baseline');
   const levelId = requireOption(options, 'level-id');
@@ -71,7 +89,15 @@ async function sealEvaluatedCommit(options) {
   const statusAfter = (await git(worktree, ['status', '--porcelain'])).output;
   if (statusAfter.trim()) fail('Evaluated worktree is not clean after sealing.');
   const commit = (await git(worktree, ['rev-parse', 'HEAD'])).output.trim();
-  console.log(JSON.stringify({ evaluatedCommit: commit }));
+  const branch = (await git(worktree, ['symbolic-ref', '--quiet', '--short', 'HEAD'])).output.trim();
+  if (await checkoutLayout(worktree) === 'standalone') {
+    await git(repo, ['fetch', '--no-tags', worktree, `refs/heads/${branch}:refs/heads/${branch}`]);
+  }
+  const recordedCommit = (await git(repo, ['rev-parse', '--verify', `refs/heads/${branch}^{commit}`])).output.trim();
+  if (recordedCommit !== commit) fail('Primary repository entrant branch does not match the sealed commit.');
+  const result = { evaluatedCommit: commit };
+  console.log(JSON.stringify(result));
+  return result;
 }
 
 async function runGates(options) {
@@ -212,6 +238,13 @@ function parseDescriptor(source, label) {
 
 async function assertGitWorktree(directory) {
   await git(directory, ['rev-parse', '--is-inside-work-tree']);
+}
+
+async function copyGitIdentity(sourceRepository, destinationRepository) {
+  for (const key of ['user.name', 'user.email']) {
+    const value = await git(sourceRepository, ['config', '--get', key], { allowFailure: true });
+    if (value.code === 0 && value.output.trim()) await git(destinationRepository, ['config', key, value.output.trim()]);
+  }
 }
 
 async function assertAbsent(targetPath, label) {

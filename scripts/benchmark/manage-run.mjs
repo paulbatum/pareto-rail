@@ -3,7 +3,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { assertOnlyOptions, fail, parseArgs, readJson, writeJson } from './common.mjs';
+import { checkoutLayout } from './checkout-layout.mjs';
+import { assertOnlyOptions, fail, parseArgs, pathInside, readJson, writeJson } from './common.mjs';
 import { loadResults } from './results.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -26,7 +27,7 @@ async function main() {
   if (command === 'status') { assertOnlyOptions(options, new Set()); return showStatus(); }
   if (command === 'archive-dnf') { assertOnlyOptions(options, new Set(['dry-run'])); return archiveDnf(options); }
   if (command === 'unarchive') { assertOnlyOptions(options, new Set(['run'])); return unarchive(options.run); }
-  if (command === 'prune') { assertOnlyOptions(options, new Set(['run', 'confirm'])); return prune(options.run, options.confirm); }
+  if (command === 'prune') { assertOnlyOptions(options, new Set(['run', 'confirm'])); return pruneRun({ runId: options.run, confirmation: options.confirm }); }
   fail(`Unknown command: ${command}`);
 }
 
@@ -92,9 +93,8 @@ async function unarchive(identifier) {
   console.log(`Restored ${definition.assignment.runId} to ${path.relative(ROOT, destination)}.`);
 }
 
-async function prune(runId, confirmation) {
+export async function pruneRun({ runId, confirmation, root = ROOT, runDirectory = path.join(root, 'benchmark/private/runs', runId ?? '') }) {
   if (!runId || confirmation !== runId) fail('Destructive pruning requires --run <run-id> --confirm <same-run-id>.');
-  const runDirectory = path.join(RUNS_DIR, runId);
   const definition = await readJson(path.join(runDirectory, 'run-definition.json'));
   const evaluated = await readJson(path.join(runDirectory, 'evaluated.json'));
   const worktree = await optionalJson(path.join(runDirectory, 'worktree.json'));
@@ -109,26 +109,34 @@ async function prune(runId, confirmation) {
     ...(payload ? [{ kind: 'payload', path: payload.worktree ?? definition.payload.path, branch: payload.branch ?? definition.payload.branch, commit: payload.payloadCommit }] : []),
   ];
 
-  for (const target of targets) await assertSafeToPrune(target);
+  for (const target of targets) await assertSafeToPrune(target, root);
   for (const target of targets) {
     if (await pathExists(target.path)) {
       console.log(`Pruning verified ${target.kind} worktree ${target.path}.`);
-      await git(['worktree', 'remove', target.path]);
+      const layout = await checkoutLayout(target.path);
+      if (layout === 'linked') await git(root, ['worktree', 'remove', target.path]);
+      else if (layout === 'standalone') await fs.rm(target.path, { recursive: true });
+      else fail(`Refusing to prune ${target.kind}: ${target.path} is not a recognized Git checkout.`);
     }
-    const branchCommit = (await git(['rev-parse', '--verify', `refs/heads/${target.branch}`])).output.trim();
+    const branchCommit = (await git(root, ['rev-parse', '--verify', `refs/heads/${target.branch}`])).output.trim();
     if (branchCommit !== target.commit) fail(`Preserved branch ${target.branch} changed during pruning.`);
-    await git(['cat-file', '-e', `${target.commit}^{commit}`]);
+    await git(root, ['cat-file', '-e', `${target.commit}^{commit}`]);
     console.log(`  Preserved branch ${target.branch} at ${target.commit}.`);
   }
   await writeJson(path.join(runDirectory, 'prune.json'), { schemaVersion: 1, prunedAt: new Date().toISOString(), evaluatedCommit: evaluated.evaluatedCommit, targets });
   console.log('Verified temporary worktrees pruned. Primary-repository source and all Git refs were preserved.');
 }
 
-async function assertSafeToPrune(target) {
-  await git(['cat-file', '-e', `${target.commit}^{commit}`]);
-  const branchCommit = (await git(['rev-parse', '--verify', `refs/heads/${target.branch}`])).output.trim();
+async function assertSafeToPrune(target, root) {
+  await git(root, ['cat-file', '-e', `${target.commit}^{commit}`]);
+  const branchCommit = (await git(root, ['rev-parse', '--verify', `refs/heads/${target.branch}`])).output.trim();
   if (branchCommit !== target.commit) fail(`Refusing to prune ${target.kind}: branch ${target.branch} does not point to recorded commit ${target.commit}.`);
   if (!await pathExists(target.path)) return;
+  const layout = await checkoutLayout(target.path);
+  if (!layout) fail(`Refusing to prune ${target.kind}: ${target.path} is not a recognized Git checkout.`);
+  if (layout === 'standalone' && (pathInside(target.path, root) || pathInside(root, target.path))) {
+    fail(`Refusing to prune ${target.kind}: standalone checkout overlaps the primary repository.`);
+  }
   const head = (await run('git', ['rev-parse', 'HEAD'], target.path)).output.trim();
   if (head !== target.commit) fail(`Refusing to prune ${target.kind}: worktree HEAD ${head} does not match recorded commit ${target.commit}.`);
   const status = (await run('git', ['status', '--porcelain=v1', '--untracked-files=all'], target.path)).output.trim();
@@ -145,7 +153,7 @@ async function pathExists(filePath) {
   catch (error) { if (error?.code === 'ENOENT') return false; throw error; }
 }
 
-function git(args, options) { return run('git', args, ROOT, options); }
+function git(cwd, args, options) { return run('git', args, cwd, options); }
 function run(executable, args, cwd, { allowFailure = false } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -160,4 +168,6 @@ function run(executable, args, cwd, { allowFailure = false } = {}) {
   });
 }
 
-main().catch((error) => { console.error(error instanceof Error ? error.message : error); process.exitCode = 1; });
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => { console.error(error instanceof Error ? error.message : error); process.exitCode = 1; });
+}

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { checkoutLayout } from './checkout-layout.mjs';
 import { sha256 } from './common.mjs';
 
 async function writeJson(filePath, value) {
@@ -28,8 +29,13 @@ export async function createRecoverySnapshot({ repo, runDirectory, runId, worktr
     const commit = (await git(worktree, ['commit-tree', tree, '-p', head, '-m', `Preserve benchmark recovery snapshot ${runId}`])).stdout.trim();
     const attempt = `${new Date().toISOString().replace(/[:.]/g, '-')}-${commit.slice(0, 8)}`;
     const ref = `refs/benchmark-recovery/${runId}/${attempt}`;
-    await git(repo, ['update-ref', ref, commit]);
-    const changedPaths = (await git(repo, ['diff-tree', '--no-commit-id', '--name-only', '-r', `${head}..${commit}`])).stdout.trim().split('\n').filter(Boolean);
+    await git(worktree, ['update-ref', ref, commit, '']);
+    if (await checkoutLayout(worktree) === 'standalone') {
+      await git(repo, ['fetch', '--no-tags', worktree, `${ref}:${ref}`]);
+    }
+    const fetchedCommit = (await git(repo, ['rev-parse', '--verify', `${ref}^{commit}`])).stdout.trim();
+    if (fetchedCommit !== commit) throw new Error('Recovery snapshot did not reach the primary repository intact.');
+    const changedPaths = (await git(worktree, ['diff-tree', '--no-commit-id', '--name-only', '-r', `${head}..${commit}`])).stdout.trim().split('\n').filter(Boolean);
     const record = {
       schemaVersion: 1,
       createdAt: new Date().toISOString(),
@@ -63,11 +69,20 @@ export async function restoreRecoverySnapshot({ repo, runDirectory, worktreeReco
   if (refCommit !== snapshot.snapshotCommit) throw new Error('Recovery snapshot ref no longer points to its recorded commit.');
   if (await pathExists(worktreeRecord.worktree)) throw new Error(`Refusing to restore over an existing path: ${worktreeRecord.worktree}`);
 
-  await git(repo, ['worktree', 'prune']);
   const branch = worktreeRecord.branch ?? snapshot.branch;
-  const branchCheck = await git(repo, ['rev-parse', '--verify', `refs/heads/${branch}`], { allowFailure: true });
-  if (branchCheck.code === 0) await git(repo, ['worktree', 'add', worktreeRecord.worktree, branch]);
-  else await git(repo, ['worktree', 'add', '-b', branch, worktreeRecord.worktree, snapshot.baseHead]);
+  if (!branch) throw new Error('Recovery snapshot has no entrant branch to restore.');
+  if (worktreeRecord.layout === 'standalone') {
+    await fs.mkdir(worktreeRecord.worktree, { recursive: true });
+    await git(worktreeRecord.worktree, ['init', '-q']);
+    await copyGitIdentity(repo, worktreeRecord.worktree);
+    await git(worktreeRecord.worktree, ['fetch', '--no-tags', repo, snapshot.ref]);
+    await git(worktreeRecord.worktree, ['checkout', '-q', '-b', branch, snapshot.baseHead]);
+  } else {
+    await git(repo, ['worktree', 'prune']);
+    const branchCheck = await git(repo, ['rev-parse', '--verify', `refs/heads/${branch}`], { allowFailure: true });
+    if (branchCheck.code === 0) await git(repo, ['worktree', 'add', worktreeRecord.worktree, branch]);
+    else await git(repo, ['worktree', 'add', '-b', branch, worktreeRecord.worktree, snapshot.baseHead]);
+  }
   await git(worktreeRecord.worktree, ['read-tree', '--reset', '-u', snapshot.snapshotCommit]);
 
   const tree = (await git(worktreeRecord.worktree, ['write-tree'])).stdout.trim();
@@ -91,6 +106,13 @@ async function readOptionalJson(filePath) {
 async function pathExists(filePath) {
   try { await fs.lstat(filePath); return true; }
   catch (error) { if (error?.code === 'ENOENT') return false; throw error; }
+}
+
+async function copyGitIdentity(sourceRepository, destinationRepository) {
+  for (const key of ['user.name', 'user.email']) {
+    const value = await git(sourceRepository, ['config', '--get', key], { allowFailure: true });
+    if (value.code === 0 && value.stdout.trim()) await git(destinationRepository, ['config', key, value.stdout.trim()]);
+  }
 }
 
 function git(cwd, args, options) {
