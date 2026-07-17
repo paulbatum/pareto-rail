@@ -62,8 +62,10 @@ const resultRecord = (() => {
   try { return readJson(path.join(runDir, 'stages/solo/claude/result.json')); } catch { return {}; }
 })();
 
-const worktreePath = (runDefinition.worktree && runDefinition.worktree.path) || '/tmp/raild-run';
-const payloadPath = (runDefinition.payload && runDefinition.payload.path) || null;
+const worktreeRecord = (() => { try { return readJson(path.join(runDir, 'worktree.json')); } catch { return {}; } })();
+const payloadRecord = (() => { try { return readJson(path.join(runDir, 'payload.json')); } catch { return {}; } })();
+const worktreePath = worktreeRecord.worktree || (runDefinition.worktree && runDefinition.worktree.path) || '/tmp/raild-run';
+const payloadPath = payloadRecord.worktree || (runDefinition.payload && runDefinition.payload.path) || null;
 
 // Normalize an absolute worktree path to a repo-relative path.
 function relPath(p) {
@@ -572,11 +574,11 @@ try {
 const runJson = {
   runId: manifest.runId,
   slotId: manifest.slotId,
-  levelId: (manifest.output && manifest.output.levelId) || runDefinition.assignment.levelId,
-  levelTitle: runDefinition.assignment.levelTitle,
+  levelId: (manifest.output && manifest.output.levelId) || runDefinition.levelId || runDefinition.assignment?.levelId,
+  levelTitle: runDefinition.levelTitle ?? runDefinition.assignment?.levelTitle,
   theme: {
-    id: runDefinition.assignment.theme.id,
-    path: runDefinition.assignment.theme.path,
+    id: runDefinition.themeId ?? runDefinition.assignment?.theme?.id,
+    path: runDefinition.themePath ?? runDefinition.assignment?.theme?.path,
   },
   configurationId: manifest.configuration.id,
   blinded: false,
