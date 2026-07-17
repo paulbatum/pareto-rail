@@ -42,9 +42,11 @@ export const levelMetadatas: LevelMetadata[] = [
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'], kind: 'playable' },
   { id: 'rezdle', title: 'Rezdle', kind: 'playable' },
   { id: 'rush', title: 'Rush', kind: 'technical' },
+  { id: 'mass-driver-detailed-4m9v', title: 'Mass Driver', kind: 'playable' },
 ];
 
 const builtInLoaders: Record<string, () => Promise<LevelDefinition>> = {
+  'mass-driver-detailed-4m9v': async () => (await import('./mass-driver-detailed-4m9v')).massDriverDetailed4m9vLevel,
   'crystal-corridor': async () => (await import('./crystal')).crystalCorridorLevel,
   helios: async () => (await import('./helios')).heliosLevel,
   'prism-bloom': async () => (await import('./prism')).prismBloomLevel,
