@@ -313,7 +313,7 @@ const resultManifest = {
   theme: { id: 'cinder', path: 'benchmark/examples/cinder.md', sha256: hash('a') },
   baseline: { materialsCommit: 'a'.repeat(40), entrantBaseline: { kind: 'git-commit', identifier: 'a'.repeat(40) } },
   recipe: { path: 'benchmark/recipes/solo-a.md', sha256: hash('b') },
-  controller: { path: 'benchmark/controller/runbook.md', sha256: hash('c') },
+  controller: { commit: 'c'.repeat(40) },
   timing: { startedAt: '2026-01-01T00:00:00.000Z', finishedAt: '2026-01-01T01:00:00.000Z', wallTimeSeconds: 3600 },
   stages: [{ model: { snapshotId: 'model-a' }, startedAt: '2026-01-01T00:10:00.000Z', finishedAt: '2026-01-01T00:20:00.000Z', wallTimeSeconds: 600 }],
   cost: { status: 'measured', totalUsd: 1.25 },

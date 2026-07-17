@@ -1,253 +1,93 @@
-# Benchmark controller
+# Benchmark controller operations
 
-`runbook.md` is the stable, harness-neutral instruction set for an agent that coordinates benchmark stages and other agents. It is not a prompt for a level author.
+`scripts/benchmark/run.mjs` is the benchmark pipeline. This page tells an operator which command to run and what to do when one fails. For the wider picture of what the benchmark is, see `benchmark/README.md`.
 
-A controller may use any orchestration harness capable of launching the models and sessions declared by a recipe. Harness-specific commands, model selectors, continuation mechanics, and usage extraction belong in recipes or deterministic adapters, not in the shared runbook.
-
-Use a fresh controller context for every eligible run. A dispatcher may launch those isolated contexts in the private schedule order, but it must not pass source, logs, stage artifacts, judgments, or conversational history from one entrant to another.
-
-## Codex CLI adapter
-
-`scripts/benchmark/codex-cli.mjs` is the deterministic adapter for a non-interactive Codex stage. It runs `codex exec`, not the interactive TUI. The draft `benchmark/recipes/codex-terra-high.md` is its first consumer and is rehearsal-only while the broader release protocol remains unresolved.
-
-The adapter receives an already-rendered private prompt and sends it to `codex exec -` on stdin. It fixes the declared model and runtime settings, captures stage output and usage without mixing them into the controller's output, and validates the installed bundled model catalog before launch. See the selected recipe for the complete session policy, invocation, and artifact contract.
+## Running a run
 
 ```sh
-npm run benchmark:codex -- \
-  --worktree /tmp/pareto-rail-<opaque-run-id> \
-  --prompt benchmark/private/runs/<opaque-run-id>/rendered-assignment.md \
-  --out benchmark/private/runs/<opaque-run-id>/stages/solo/codex \
-  --model gpt-5.6-terra \
-  --effort high \
-  --timeout-seconds 10800
+npm run benchmark:run -- --plan benchmark/private/v2-plan.json --run <runId>
 ```
 
-The output directory must be private or external to the repository and outside the entrant worktree. It contains the stage records declared by the selected recipe. The controller copies their hashes and fields into the private manifest; it must not inspect the level source or use the final message as feedback.
+This executes one plan row end to end: it creates an isolated entrant checkout containing exactly the baseline commit, renders the assignment prompt from the theme text and the level id, launches the recipe's stage in an isolated per-run harness home, seals the entrant's work as one evaluated commit, runs the four gates against that commit (`npm run typecheck`, `npm run build`, the benchmark scope check, and `npm run check:floor`), derives the mergeable payload for a passing entrant, measures cost with ccusage, and writes a manifest. Every step is checkpointed under `benchmark/private/runs/<runId>/`, so an interrupted run resumes without repeating completed work. The controller repository must be clean before a new run starts.
 
-## Single-run rehearsal controller
+## The plan file
 
-`npm run benchmark:run` executes one private run definition as a resumable sequence. The definition pins commits, assignment artifacts, worktree and payload locations, the stage settings, and — for a delegation configuration — the `delegation` block (addendum artifact, delegate model, delegate effort). The controller verifies every supplied artifact against the materials commit, requires a clean controller repository for a new run, renders the prompt privately, runs `npm ci`, launches the declared stage in an isolated per-run harness home, seals, gates, extracts a passing payload, measures cost with ccusage, and writes a private manifest. Each operation is checkpointed; failures preserve all prior artifacts and the entrant worktree. The recorded benchmark version selects the source root: v1/rehearsal uses the historical `src/levels/<level-id>/` payload contract, while the directory-only protocol uses `src/benchmark-levels/<level-id>/` and does not run relocation promotion.
-
-```sh
-npm run benchmark:run -- \
-  --definition benchmark/private/rehearsal-definition.json \
-  --out benchmark/private/runs/<opaque-run-id>
-```
-
-The definition is deliberately private because it combines opaque assignment data with temporary worktree and branch identities. It must use an ineligible theme and set `mode` to `rehearsal`. An eligible definition additionally requires `release`, `schedule`, `runner`, and `executor` hashed artifacts plus `baseline.configurationCommit`. Before launching a model, the runner verifies the release against its `benchmark-<version>` tag, shared inputs against that release, the exact assignment against the private schedule revision, the selected source-root baseline contract, and runner/executor/recipe inputs against the configuration commit and current checkout.
-
-### Preflight and launch
-
-Start only from a clean, committed repository. The `materialsCommit` and `entrantBaseline` should both be the current commit for this first rehearsal. Generate hashes from that committed content rather than typing them:
-
-```sh
-git status --short
-git rev-parse HEAD
-sha256sum \
-  benchmark/prompts/level-assignment.md \
-  benchmark/examples/downpour.md \
-  benchmark/recipes/codex-terra-high.md \
-  benchmark/controller/failure-taxonomy.md
-```
-
-For a delegation configuration, also hash `benchmark/prompts/flexible-delegation.md` and add it as the definition's `delegation.prompt` artifact.
-
-Create `benchmark/private/rehearsal-definition.json` from the shape below, replacing every placeholder with the commit and matching hash above. Predeclare a fresh opaque `runId` and four-character `slotId`; the level id must be `downpour-<slotId>`. Then launch exactly once:
-
-```sh
-npm run benchmark:run -- \
-  --definition benchmark/private/rehearsal-definition.json \
-  --out benchmark/private/runs/<opaque-run-id>
-```
-
-Do not inspect entrant source or logs while it runs. When it finishes, inspect only its controller result and private manifest, then follow the rehearsal checklist in `benchmark/controller/runbook.md` for playable deployment, ranking-record validation, and cost reconciliation.
-
-Resume an interrupted controller without repeating completed work:
-
-```sh
-npm run benchmark:run -- --resume benchmark/private/runs/<opaque-run-id>
-```
-
-If a harness process timed out after leaving completed work, operator classification may explicitly accept that worktree and resume sealing. The resulting recovery record is audit provenance and does not demote a gate-passing playable result:
-
-```sh
-npm run benchmark:run -- \
-  --resume benchmark/private/runs/<opaque-run-id> \
-  --accept-stage-output true
-```
-
-Never delete an entrant worktree merely because the controller or harness failed. Failures are snapshotted to durable `refs/benchmark-recovery/<run-id>/...` refs, including untracked files, without changing the entrant index. Resume reconstructs a missing temporary worktree from that snapshot. See `benchmark/README.md` for non-destructive archive, unarchive, and strictly verified prune commands.
-
-Its required shape is:
+A plan is a hand-edited JSON file — private, because its rows carry the level-to-configuration mapping. `run.mjs` validates this shape:
 
 ```json
 {
-  "schemaVersion": 1,
-  "benchmarkVersion": "rehearsal",
-  "mode": "rehearsal",
-  "assignment": {
-    "runId": "<opaque-run-id>",
-    "slotId": "<opaque-slot>",
-    "configurationId": "codex-terra-high",
-    "recipe": { "path": "benchmark/recipes/codex-terra-high.md", "sha256": "<sha256>" },
-    "theme": { "id": "<ineligible-theme-id>", "path": "benchmark/examples/<theme>.md", "sha256": "<sha256>" },
-    "levelId": "<theme-id>-<opaque-slot>",
-    "levelTitle": "<theme H1>"
-  },
-  "baseline": { "materialsCommit": "<commit>", "entrantBaseline": "<commit>" },
-  "template": { "path": "benchmark/prompts/level-assignment.md", "sha256": "<sha256>" },
-  "failureTaxonomy": { "path": "benchmark/controller/failure-taxonomy.md", "sha256": "<sha256>" },
-  "stage": { "adapter": "codex-cli", "model": "gpt-5.6-terra", "effort": "high", "timeoutSeconds": 10800 },
-  "worktree": { "path": "/tmp/pareto-rail-<opaque-run-id>" },
-  "payload": { "path": "/tmp/pareto-rail-payload-<opaque-run-id>", "branch": "benchmark-payload-<opaque-run-id>" }
-}
-```
-
-A delegation configuration adds a `delegation` block and (for the rehearsal) sets both efforts to `low`:
-
-```json
-{
-  "stage": { "adapter": "codex-cli", "model": "gpt-5.6-sol", "effort": "low", "timeoutSeconds": 10800 },
-  "delegation": {
-    "prompt": { "path": "benchmark/prompts/flexible-delegation.md", "sha256": "<sha256>" },
-    "delegateModel": "gpt-5.6-terra",
-    "delegateEffort": "low"
-  }
-}
-```
-
-## Generic controller tools
-
-The shared `admin.mjs`, `common.mjs`, and `render-assignment.mjs` components implement deterministic administration. They do not launch a model, choose a configuration, calculate cost, classify failures, or make quality judgments. `benchmark:run` is the separate configuration-scoped runner above. None of this tooling is frozen: each run records the executing controller commit, and gate results can be reproduced or re-run (regate) against the sealed evaluated commit at any tooling version.
-
-### Render the shared assignment
-
-```sh
-npm run benchmark:render -- \
-  --template benchmark/prompts/level-assignment.md \
-  --theme benchmark/themes/<theme-id>.md \
-  --level-id <theme-id>-<slot-id> \
-  --level-title '<theme H1>' \
-  --out benchmark/private/runs/<run-id>/rendered-assignment.md \
-  --metadata benchmark/private/runs/<run-id>/rendered-assignment.json
-```
-
-The renderer requires exactly one each of `{{LEVEL_TITLE}}` and `{{THEME}}`, and at least one `{{LEVEL_ID}}` (the template may repeat it for emphasis, e.g. in a directory-path sentence); it rejects any other placeholder. The metadata records SHA-256 hashes for the template, theme, and rendering.
-
-### Generate and validate the private run schedule
-
-Create a private definition file containing the benchmark version, configuration ids with hashed recipe artifacts, and theme ids with hashed theme artifacts and H1-derived titles:
-
-```json
-{
-  "benchmarkVersion": "v<release>",
-  "configurations": [
+  "benchmarkVersion": "v2",
+  "materialsCommit": "<commit>",
+  "entrantBaseline": "<commit>",
+  "runs": [
     {
-      "id": "<configuration-id>",
-      "configurationCommit": "<commit-containing-recipe>",
-      "recipe": { "id": "<configuration-id>", "path": "benchmark/recipes/<recipe>.md", "sha256": "<sha256>" },
-      "stage": { "adapter": "<adapter-id>", "model": "<exact-model>", "effort": "high", "timeoutSeconds": 10800 }
-    }
-  ],
-  "themes": [
-    {
-      "id": "<theme-id>",
-      "path": "benchmark/themes/<theme-id>.md",
-      "sha256": "<sha256>",
-      "levelTitle": "<theme H1>"
+      "runId": "<opaque-id>",
+      "slotId": "<opaque-slot>",
+      "levelId": "<themeId>-<slotId>",
+      "themeId": "<theme-id>",
+      "themePath": "benchmark/themes/<theme-id>.md",
+      "configurationId": "<configuration-id>",
+      "recipePath": "benchmark/recipes/<recipe>.md",
+      "kind": "benchmark",
+      "stage": {
+        "adapter": "codex-cli",
+        "model": "<exact-model>",
+        "effort": "high",
+        "timeoutSeconds": 10800,
+        "provider": "<pi provider, optional>",
+        "budget": { "usd": 20 }
+      },
+      "delegation": {
+        "promptPath": "benchmark/prompts/flexible-delegation.md",
+        "delegateModel": "<model>",
+        "delegateEffort": "high"
+      }
     }
   ]
 }
 ```
 
-```sh
-npm run benchmark:schedule -- create \
-  --definition benchmark/private/schedule-definition.json \
-  --out benchmark/private/run-schedule.json
-npm run benchmark:schedule -- validate \
-  --definition benchmark/private/schedule-definition.json \
-  --schedule benchmark/private/run-schedule.json
-```
+`materialsCommit` and `entrantBaseline` pin the run: inputs are read from the materials commit and their hashes recorded in the manifest, and the entrant checkout is that baseline. Per row, `levelId` must equal `<themeId>-<slotId>`; the level title comes from the theme file's level-one heading, not the plan. `stage.adapter` is `codex-cli`, `claude-cli`, or `pi-cli`; `provider` and `budget` are optional and `budget` calibrates effort through the harness's spend notices. `delegation` is optional and turns the stage into a planner/reviewer over a cheaper implementer. `kind` defaults to `benchmark`; a `rehearsal` row runs the identical pipeline but never enters the results pool, the catalog, or promotion.
 
-A configuration may add `"budget": { "usd": 20 }` to its `stage`. The amount must be positive and finite; omitting it preserves the single-turn adapter path and artifacts.
+Blindness is a discipline, not a lock. Slot ids are assigned randomly when the plan is expanded, so authoring the plan does not reveal the level-to-configuration mapping; the owner does not open the plan file before voting through the site; and the operator surfaces below stay blind by default.
 
-Generation uses cryptographic randomness, assigns opaque run and slot ids, shuffles execution order, and does not print assignments. Validation reads each configuration artifact from its own `configurationCommit`, then enforces complete registered-configuration × theme coverage, unique ids, contiguous schedule indexes, recipe/theme hash agreement, H1-derived titles, and `<theme-id>-<slot-id>` level ids.
-
-To register another configuration later, commit its recipe, append it to the definition without changing existing entries, and extend the schedule in place (or through a temporary output followed by an atomic replacement):
+## Resume and recovery
 
 ```sh
-npm run benchmark:schedule -- extend \
-  --definition benchmark/private/schedule-definition.json \
-  --schedule benchmark/private/run-schedule.json \
-  --out benchmark/private/run-schedule.next.json
+npm run benchmark:run -- --resume benchmark/private/runs/<runId>
 ```
 
-Extension rejects changed or removed configurations/themes, preserves every old assignment and index, and appends only the newly required cells. Pin the new schedule hash and configuration commit in each eligible run definition.
+Resume validates existing artifacts and continues at the first unfinished step. A stage that exited non-zero is not accepted on its own; if the harness timed out after the entrant had finished its worktree, verify that condition and then resume with `--accept-stage-output true` to accept the worktree and proceed to sealing and gates. Whenever a step fails after the worktree exists, the runner snapshots tracked and untracked source to a durable `refs/benchmark-recovery/<run-id>/...` ref; if the temporary worktree later disappears, resume reconstructs it from that ref before continuing. Sibling runs of one theme are pre-checked to have byte-identical rendered base prompts, so a divergence is caught before an expensive stage launches rather than after.
 
-### Create and validate blind ranked sets
+## Failure policy
 
-The input projection contains only `benchmarkVersion` and each theme's playable slot ids—never configurations or models. Keep it private until rankings are locked.
+Infrastructure failure: fix it, rerun, and keep and report the cost of every attempt. Model failure — a gate fails on the sealed output — is a DNF, shown as such. The operator classifies which one it was and records the decision as a free-text note in the run record.
+
+## Regate
+
+Gates are deterministic against the sealed commit, so a gate-tooling fix never re-runs generation. Move the run's `gates/` directory aside and resume; the disposition is recomputed from the refreshed gate records at the current controller commit.
+
+## Inspecting and managing runs
 
 ```sh
-npm run benchmark:ranking -- sets \
-  --projection benchmark/private/playable-projection.json \
-  --out benchmark/private/ranking-sets.json
-npm run benchmark:ranking -- validate-sets \
-  --projection benchmark/private/playable-projection.json \
-  --sets benchmark/private/ranking-sets.json \
-  --rankings benchmark/rankings
+npm run benchmark:results
+npm run benchmark:manage -- status
 ```
 
-Set generation creates one randomized presentation per theme for every snapshot with at least two passing entrants. Validation checks exact slot coverage, play counts, presentation order, and best-to-worst tiers. A later configuration produces a new set schedule and locked snapshot; it does not rewrite the old one.
+`benchmark:results` summarizes every run — lifecycle state, gates, timing, cost, manifest completeness — with run ids and dispositions only. Both commands take `--unblind` to reveal configuration and model identities; use it only after you have voted. `benchmark:manage` also offers `archive-dnf`, `unarchive`, and `prune` (a strictly verified, doubly confirmed removal of a run's temporary worktrees that preserves every branch and commit).
 
-The legacy `pairs` and `validate` commands remain available for targeted binary judgments. `extend-pairs` preserves existing pair ids and presentation orders while adding only newly possible pairs; exhaustive pair coverage is optional policy rather than the primary workflow.
-
-### Promote a finalized playable run
-
-Promotion is separate post-run administration for historical v1 outputs. It validates the private manifest, gate record, evaluated and payload refs, and assignment metadata before relocating a v1 payload byte-for-byte under `src/benchmark-levels/<level-id>/`, creating its controller-owned `level.json`, regenerating the derived gallery, running typecheck, build, benchmark scope, and floor checks, and recording a separate administrative commit. Directory-only protocol outputs already live under the discovered benchmark root and do not use this relocation step. The private `promotion.json` record is checkpointed atomically and includes the payload and promotion commit provenance; it never changes `manifest.json` or its playable disposition.
+## Promotion
 
 ```sh
-npm run benchmark:promote -- --run <opaque-run-id>
+npm run benchmark:promote -- --run <run-id>
 ```
 
-The controller automatically invokes the same command path after finalizing a playable v1 manifest. If that invocation fails, `benchmark:manage status` reports `run completed, promotion pending` or `run completed, promotion failed` and prints the resume command. Directory-only manifests report promotion as not required. Promotion operations use a Git lock and refuse unrelated local changes. Repeating the command validates completed checkpoints and reuses the existing source and administrative commit.
+Promotion takes a playable benchmark run, validates its manifest, gates, and refs, materializes the payload under `src/benchmark-levels/<id>/`, regenerates the gallery, runs the four checks, and records a separate commit. It holds a lock, checkpoints its progress in `promotion.json`, and never edits the run manifest or its disposition. `benchmark:manage -- status` reports a playable run that has not been promoted as pending — or a failed attempt as failed — and prints this command.
 
-### Administer worktrees, gates, and payloads
-
-All worktree paths must be outside the primary working tree. Gate output must be in `benchmark/private/` or outside the repository. These commands emit only opaque identifiers and commit ids; store the full records privately.
+## Publishing the catalog
 
 ```sh
-npm run benchmark:admin -- worktree \
-  --baseline <entrant-baseline-commit> \
-  --run-id <opaque-run-id> \
-  --path /tmp/pareto-rail-<opaque-run-id>
-
-npm run benchmark:admin -- seal \
-  --worktree /tmp/pareto-rail-<opaque-run-id> \
-  --baseline <entrant-baseline-commit> \
-  --level-id <theme-id>-<slot-id>
-
-npm run benchmark:admin -- gates \
-  --worktree /tmp/pareto-rail-<opaque-run-id> \
-  --baseline <entrant-baseline-commit> \
-  --level-id <theme-id>-<slot-id> \
-  --out benchmark/private/runs/<opaque-run-id>/gates
-
-npm run benchmark:admin -- payload \
-  --repo . \
-  --materials <materials-commit> \
-  --evaluated <evaluated-commit> \
-  --level-id <theme-id>-<slot-id> \
-  --path /tmp/pareto-rail-payload-<opaque-run-id> \
-  --branch benchmark-payload-<opaque-run-id>
+npm run benchmark:export-rank-catalog
 ```
 
-`worktree` does not install dependencies; the registered recipe or controller procedure must declare any dependency provisioning before the first model stage. `seal` runs the baseline-aware scope gate, commits only the already-permitted working-tree changes, and requires a clean result. `gates` runs all four required gates independently, writes complete logs and their hashes, and rejects a gate that changes the sealed tree. `payload` creates a worktree at the materials commit, copies the present roots from the assigned level footprint in the evaluated commit, and rejects empty, deleting, renaming, or out-of-footprint diffs.
-
-Run the synthetic controller checks with:
-
-```sh
-npm run test:benchmark-controller
-```
-
-The controller runbook remains editable until a benchmark release is frozen. At freeze, record its path and SHA-256 hash as a `controller-runbook` artifact.
+This reads the v2 plan and the historical v1 schedule into the checked-in `src/benchmark/rank-catalog.json`, one retained slice per version, with the latest as the active matchup pool. After refreshing it, run `npm run test:benchmark-domain`, `npm run test:benchmark-catalog`, `npm run typecheck`, and `npm run build`.
