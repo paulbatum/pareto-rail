@@ -31,7 +31,7 @@ This configuration is one unattended `claude --print` stage in which the primary
 - Overall timeout: 43,200 seconds, measured from process launch to exit.
 - Operator interaction after launch: none.
 - Network access: unrestricted, matching the operator's own network access. Claude Code CLI has no OS-level sandbox equivalent to Codex's `workspace-write`.
-- Working tree access: **weaker isolation than the Codex configuration.** Unattended operation requires `--permission-mode bypassPermissions`, which skips every permission prompt. Confinement to the worktree is a non-adversarial convention identical in kind to the general worktree-access policy in `benchmark/controller/runbook.md`, not a technically enforced boundary, and must not be described as one.
+- Working tree access: **weaker isolation than the Codex configuration.** Unattended operation requires `--permission-mode bypassPermissions`, which skips every permission prompt. Confinement to the worktree is a non-adversarial convention identical in kind to the general worktree-access policy in `benchmark/controller/README.md`, not a technically enforced boundary, and must not be described as one.
 - Isolated per-run home: the controller sets `CLAUDE_CONFIG_DIR` to a fresh per-run home and copies the operator's `~/.claude/.credentials.json` into it so login works. The credential copy is a declared operator convenience, of a kind with the worktree-access convention — not a security boundary. The home is retained as the run's rollout audit artifact and is the exact scope ccusage reads for cost.
 - Harness continuation behavior: none. One fresh local `claude --print` process per run; never `--resume`, `--continue`, `--fork-session`, or any other continuation flag.
 - Failure behavior: a nonzero exit, timeout, missing terminal `result` event, a `result.session_id` that does not match the pre-assigned `--session-id`, or missing/malformed `usage.input_tokens`/`usage.output_tokens` stops the run for controller-failure classification. A misconfigured per-run home (ccusage returns no session or zero tokens/cost) is likewise a controller failure rather than a recorded $0.
@@ -80,7 +80,7 @@ The primary owns planning and review of the delegated implementation within the 
 
 ## Mechanical gates
 
-The controller runs only the four standard gates specified in `benchmark/controller/runbook.md` after sealing. No additional eligibility gate is declared by this recipe.
+The controller runs only the four standard gates specified in `benchmark/controller/README.md` after sealing. No additional eligibility gate is declared by this recipe.
 
 ## Cost
 

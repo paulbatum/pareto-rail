@@ -2,7 +2,7 @@
 
 Store one verbatim recipe per benchmark configuration at a stable path, such as `fable-solo.md` or `delegation.md`. Start from `template.md`.
 
-A recipe states the exact model snapshot, harness and version, prompts and supplied files, session boundaries, allowed stages, time limits, review and revision rules, hidden harness defaults, controller-usage treatment, and token and wall-time capture. `benchmark/controller/runbook.md` executes these declarations without adding workflow decisions. The recipe is the intervention being measured.
+A recipe states the exact model snapshot, harness and version, prompts and supplied files, session boundaries, allowed stages, time limits, review and revision rules, hidden harness defaults, controller-usage treatment, and token and wall-time capture. The controller (`scripts/benchmark/run.mjs`, documented in `benchmark/controller/README.md`) executes these declarations without adding workflow decisions. The recipe is the intervention being measured.
 
 Recipes may change while the protocol is being designed and rehearsed. Before a configuration's first eligible run, commit its runner, executor, and recipe and register their hashes in the private schedule. After that configuration runs, a behavior-changing edit is a new configuration identity; do not silently pool it with the earlier execution. New configurations may join an existing protocol when the shared prompt, themes, baseline, gates, failure semantics, and judgment method remain unchanged.
 

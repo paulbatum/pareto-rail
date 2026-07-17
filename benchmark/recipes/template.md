@@ -19,7 +19,7 @@ List every file or generated artifact available to this configuration. At freeze
 - Standing brief: `docs/level-brief.md`
 - Assigned theme: `<theme path injected into the rendered assignment>`
 - Other supplied files: `<paths or none>`
-- Files not deliberately supplied: other themes, other recipes, the private run schedule and configuration mapping, private benchmark records, and other entrants. Worktree access follows `benchmark/controller/runbook.md`.
+- Files not deliberately supplied: other themes, other recipes, the private run schedule and configuration mapping, private benchmark records, and other entrants. Worktree access follows `benchmark/controller/README.md`.
 
 ## Runtime policy
 

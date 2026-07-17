@@ -24,7 +24,7 @@ This is the first Claude Code configuration trial. It is one unattended solo sta
 - Overall timeout: 43,200 seconds, measured from process launch to exit.
 - Operator interaction after launch: none.
 - Network access: unrestricted, matching the operator's own network access. Claude Code CLI has no OS-level sandbox equivalent to Codex's `workspace-write`, so there is no network toggle to declare.
-- Working tree access: **weaker isolation than the Codex configuration.** Unattended operation requires `--permission-mode bypassPermissions`, which skips every permission prompt, including ones for filesystem writes or shell commands outside the worktree. Codex's `workspace-write` sandbox enforces filesystem confinement at the OS level; Claude Code CLI has no equivalent enforcement mechanism at any permission mode. Confinement to the worktree here is a non-adversarial convention identical in kind to the general worktree-access policy in `benchmark/controller/runbook.md`, not a technically enforced boundary, and it must not be described as one.
+- Working tree access: **weaker isolation than the Codex configuration.** Unattended operation requires `--permission-mode bypassPermissions`, which skips every permission prompt, including ones for filesystem writes or shell commands outside the worktree. Codex's `workspace-write` sandbox enforces filesystem confinement at the OS level; Claude Code CLI has no equivalent enforcement mechanism at any permission mode. Confinement to the worktree here is a non-adversarial convention identical in kind to the general worktree-access policy in `benchmark/controller/README.md`, not a technically enforced boundary, and it must not be described as one.
 - Harness continuation behavior: none. The controller starts one fresh local `claude --print` process per stage and never issues `claude --resume`, `--continue`, `--fork-session`, or any other continuation flag.
 - Failure behavior: a nonzero exit, timeout, missing terminal `result` event, a `result.session_id` that does not match the pre-assigned `--session-id`, or missing/malformed `usage.input_tokens`/`usage.output_tokens` stops the run for controller-failure classification. At an eligible freeze, the controller must additionally compare the captured CLI version to its frozen identity before classifying the run. Entrant and infrastructure classifications remain subject to the frozen taxonomy.
 - Dependency provisioning: before this stage, the controller runs `npm ci` in the fresh worktree and records its command, version, exit code, timing, and complete log as unmeasured deterministic setup. This is not a model stage.
@@ -98,7 +98,7 @@ This is a solo configuration. There are no plan, review, revision, continuation,
 
 ## Mechanical gates
 
-The controller runs only the four standard gates specified in `benchmark/controller/runbook.md` after sealing. No additional eligibility gate is declared by this recipe.
+The controller runs only the four standard gates specified in `benchmark/controller/README.md` after sealing. No additional eligibility gate is declared by this recipe.
 
 ## Cost
 

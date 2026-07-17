@@ -113,7 +113,7 @@ This is a solo configuration. There are no separate plan, review, or operator-fe
 
 ## Mechanical gates
 
-The controller runs only the four standard gates specified in `benchmark/controller/runbook.md` after sealing. No additional eligibility gate is declared by this recipe.
+The controller runs only the four standard gates specified in `benchmark/controller/README.md` after sealing. No additional eligibility gate is declared by this recipe.
 
 ## Cost
 
