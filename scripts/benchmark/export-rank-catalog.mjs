@@ -291,7 +291,11 @@ function main() {
   const planPath = path.join(privateRoot, 'v2-plan.json');
   if (fs.existsSync(planPath)) {
     const plan = readJson(planPath);
-    versions.push(buildVersion(plan.benchmarkVersion, planAssignments(plan), generatedAt));
+    const planVersion = buildVersion(plan.benchmarkVersion, planAssignments(plan), generatedAt);
+    // A plan with no promoted public entrants yet (rehearsals only, or runs not
+    // yet promoted) must not publish an empty slice or claim the active pool.
+    if (planVersion.entrants.length > 0) versions.push(planVersion);
+    else console.warn(`Plan ${plan.benchmarkVersion} has no promoted public entrants yet; keeping the catalog on the previous version.`);
   }
 
   const configurations = Object.entries(configurationLabels).map(([id, labels]) => ({
