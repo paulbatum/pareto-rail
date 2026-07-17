@@ -132,28 +132,40 @@ async function derivePayload(options) {
   await assertAbsent(payloadPath, 'payload worktree path');
   const protocol = protocolForVersion(benchmarkVersion);
   const levelDirectory = `${protocol.sourceRoot}/${levelId}`;
+  // A level also owns its gallery content directory. When the entrant produced
+  // level-content images, they are part of the payload; every scope, payload, and
+  // promotion check treats this directory as co-owned with the source directory.
+  const contentDirectory = `public/level-content/${levelId}`;
   const materialsCommit = (await git(repo, ['rev-parse', '--verify', `${materials}^{commit}`])).output.trim();
   const evaluatedCommit = (await git(repo, ['rev-parse', '--verify', `${evaluated}^{commit}`])).output.trim();
   const materialTree = await git(repo, ['cat-file', '-e', `${materialsCommit}:${levelDirectory}`], { allowFailure: true });
   if (materialTree.code === 0) fail(`Payload directory already exists at the materials commit: ${levelDirectory}.`);
+  const materialContentTree = await git(repo, ['cat-file', '-e', `${materialsCommit}:${contentDirectory}`], { allowFailure: true });
+  if (materialContentTree.code === 0) fail(`Payload content directory already exists at the materials commit: ${contentDirectory}.`);
   await git(repo, ['cat-file', '-e', `${evaluatedCommit}:${levelDirectory}`]);
+  const evaluatedContentTree = await git(repo, ['cat-file', '-e', `${evaluatedCommit}:${contentDirectory}`], { allowFailure: true });
+  const payloadDirectories = [levelDirectory, ...(evaluatedContentTree.code === 0 ? [contentDirectory] : [])];
   await git(repo, ['worktree', 'add', '-b', branch, payloadPath, materialsCommit]);
   try {
-    await git(payloadPath, ['checkout', evaluatedCommit, '--', levelDirectory]);
-    await git(payloadPath, ['add', '--', levelDirectory]);
+    for (const directory of payloadDirectories) {
+      await git(payloadPath, ['checkout', evaluatedCommit, '--', directory]);
+      await git(payloadPath, ['add', '--', directory]);
+    }
     await git(payloadPath, ['commit', '-m', `Extract benchmark payload ${levelId}`]);
     const payloadCommit = (await git(payloadPath, ['rev-parse', 'HEAD'])).output.trim();
-    await verifyPayload(repo, materialsCommit, payloadCommit, levelDirectory, protocol, levelTitle);
+    await verifyPayload(repo, materialsCommit, payloadCommit, levelDirectory, protocol, levelTitle, contentDirectory);
     console.log(JSON.stringify({ payloadCommit, branch, worktree: payloadPath }));
   } catch (error) {
     throw error;
   }
 }
 
-async function verifyPayload(repo, materialsCommit, payloadCommit, levelDirectory, protocol = protocolForVersion('v1'), levelTitle) {
+async function verifyPayload(repo, materialsCommit, payloadCommit, levelDirectory, protocol = protocolForVersion('v1'), levelTitle, contentDirectory) {
   const names = (await git(repo, ['diff', '--name-only', `${materialsCommit}..${payloadCommit}`])).output.trim().split('\n').filter(Boolean);
   if (names.length === 0) fail('Payload diff is empty.');
-  if (names.some((name) => !name.startsWith(`${levelDirectory}/`))) fail('Payload diff contains a path outside the assigned level directory.');
+  const ownsPath = (name) => name.startsWith(`${levelDirectory}/`) || (contentDirectory !== undefined && name.startsWith(`${contentDirectory}/`));
+  if (names.some((name) => !ownsPath(name))) fail('Payload diff contains a path outside the assigned level and content directories.');
+  if (!names.some((name) => name.startsWith(`${levelDirectory}/`))) fail('Payload diff contains no file in the assigned level directory.');
   const statuses = (await git(repo, ['diff', '--name-status', `${materialsCommit}..${payloadCommit}`])).output.trim().split('\n').filter(Boolean);
   if (statuses.some((line) => /^(D|R)/.test(line))) fail('Payload diff deletes or renames a path.');
   const descriptorPath = `${levelDirectory}/level.json`;

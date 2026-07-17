@@ -19,13 +19,14 @@ export async function checkBenchmarkScope({ root = process.cwd(), levelId, base 
   if (!levelId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(levelId)) throw new Error('A safe benchmark level id is required.');
   const protocol = protocolForVersion(benchmarkVersion);
   const allowedPrefix = `${protocol.sourceRoot}/${levelId}/`;
+  const contentPrefix = `public/level-content/${levelId}/`;
   const legacyPrefix = 'src/levels/';
   const changed = new Set();
   const tracked = await git(root, ['diff', '--name-only', base]);
   const untracked = await git(root, ['ls-files', '--others', '--exclude-standard']);
   for (const name of `${tracked}\n${untracked}`.split('\n').map((value) => value.trim()).filter(Boolean)) changed.add(name);
   const outOfScope = [...changed].filter((name) => {
-    if (name === 'docs/level-gallery.md' || name.startsWith(allowedPrefix)) return false;
+    if (name === 'docs/level-gallery.md' || name.startsWith(allowedPrefix) || name.startsWith(contentPrefix)) return false;
     if (migration && (name === 'src/levels/index.ts' || name.startsWith(`${legacyPrefix}${levelId}/`))) return false;
     return true;
   });
