@@ -5,6 +5,7 @@ import { AboutPage, HomePage, LeaderboardPage, NotFoundPage } from './pages/Publ
 import { LevelsPage } from './pages/LevelsPage';
 import { PlayRoute } from './pages/GamePage';
 import { RankPage } from './pages/RankPage';
+import { AnalysisRoute } from './analysis/AnalysisRoute';
 
 export function App() {
   const [route, setRoute] = useState<AppRoute>(() => parseRoute());
@@ -39,6 +40,7 @@ function renderPage(route: AppRoute, onNavigate: (path: string) => void) {
   if (route.kind === 'play') return <PlayRoute route={route} onNavigate={onNavigate} />;
   if (route.kind === 'levels') return <LevelsPage route={route} onNavigate={onNavigate} />;
   if (route.kind === 'rank') return <RankPage route={route} onNavigate={onNavigate} />;
+  if (route.kind === 'analysis') return <AnalysisRoute route={route} onNavigate={onNavigate} />;
   if (route.kind === 'leaderboard') return <LeaderboardPage onNavigate={onNavigate} />;
   if (route.kind === 'about') return <AboutPage />;
   return <NotFoundPage onNavigate={onNavigate} />;
