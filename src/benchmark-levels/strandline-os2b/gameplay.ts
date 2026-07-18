@@ -151,7 +151,7 @@ function createStrandlineTimeline(parent: StrandlineParentRig): StrandlineSpawnE
     // --- Drift. The forest closes over you; wide, slow, readable.
     ...section(STRANDLINE_MARKERS.drift,
       clings(time.beats(2), 3.6, [[-11, 2], [-4.5, 8], [5, 7], [12, 1]]),
-      swarm(time.beats(6), 3.4, [[-15, -4], [-15, -1], [-15, 2], [-15, 5]], 9.5),
+      swarm(time.beats(6), 3.4, [[-16, -7], [-16, -2], [-16, 4], [-16, 9]], 10),
       clings(time.beats(10), 3.5, [[-13, -4], [-6, 6], [6, -6], [13, 3]]),
       clings(time.beats(13.5), 3.4, [[-10, 9], [-3, -7], [10, 9]]),
     ),
@@ -159,10 +159,10 @@ function createStrandlineTimeline(parent: StrandlineParentRig): StrandlineSpawnE
     // --- Bloom. Layers arrive in the music and in the water together.
     ...section(STRANDLINE_MARKERS.bloom,
       clings(time.beats(0), 3.5, [[-15, 0], [-9, 7], [-2, 11], [7, 7], [14, 0]]),
-      swarm(time.beats(3), 3.3, [[14, 5], [14, 2], [14, -1], [14, -4], [14, -7]], -10),
+      swarm(time.beats(3), 3.3, [[16, 10], [16, 5], [16, 0], [16, -5], [16, -10]], -10.5),
       borers(time.beats(6), 3.8, [[-3, 11]]),
       clings(time.beats(6.5), 3.5, [[-14, -3], [14, -3], [-7, -8]]),
-      swarm(time.beats(9.5), 3.3, [[-16, 6], [-16, 3], [-16, 0], [-16, -3], [-16, -6]], 10.5),
+      swarm(time.beats(9.5), 3.3, [[-17, 11], [-17, 6], [-17, 0], [-17, -5], [-17, -10]], 11),
       clings(time.beats(12), 3.4, [[-14, 5], [-8, -7], [4, 10], [11, -4], [16, 5]]),
       clings(time.beats(14.5), 3.2, [[-11, -8], [11, -8]]),
     ),
@@ -176,20 +176,20 @@ function createStrandlineTimeline(parent: StrandlineParentRig): StrandlineSpawnE
 
     // --- Deep. Back into the strands, and now they shoot back.
     ...section(STRANDLINE_MARKERS.deep,
-      swarm(time.beats(0), 3.2, [[-16, 4], [-16, 1], [-16, -2], [-16, -5], [-16, 7], [-16, -8]], 11),
+      swarm(time.beats(0), 3.2, [[-18, 6], [-18, 1], [-18, -4], [-18, -9], [-18, 12], [-18, -13]], 11.5),
       borers(time.beats(3), 3.6, [[-11, 4], [11, 4]]),
       clings(time.beats(5), 3.3, [[-16, -4], [-9, 7], [-1, -9], [9, 7], [16, -4]]),
-      swarm(time.beats(7), 3.1, [[15, -6], [15, -3], [15, 0], [15, 3]], -11.5),
+      swarm(time.beats(7), 3.1, [[17, -11], [17, -5], [17, 2], [17, 9]], -12),
     ),
 
     // --- Braid. The densest water in the level, straight into the crown.
     ...section(STRANDLINE_MARKERS.braid,
       clings(time.beats(0), 3.3, [[-17, 1], [-11, 9], [-4, -7], [5, 12], [12, -3], [18, 6]]),
-      swarm(time.beats(2), 3.0, [[-17, 8], [-17, 4], [-17, 0], [-17, -4], [-17, -8]], 12),
+      swarm(time.beats(2), 3.0, [[-19, 13], [-19, 6], [-19, -1], [-19, -8], [-19, -14]], 12.5),
       borers(time.beats(4), 3.4, [[-12, 9], [12, 9]], 3),
-      swarm(time.beats(6), 3.0, [[16, -8], [16, -4], [16, 0], [16, 4], [16, 8], [16, 11]], -12),
+      swarm(time.beats(6), 3.0, [[18, -13], [18, -7], [18, -1], [18, 5], [18, 11], [18, 15]], -12.5),
       clings(time.beats(8), 3.2, [[-17, -6], [-11, 4], [-3, 12], [5, 4], [13, -7], [18, 3]]),
-      swarm(time.beats(10), 2.9, [[-15, -7], [-15, -2], [-15, 3], [-15, 8]], 12.5),
+      swarm(time.beats(10), 2.9, [[-17, -12], [-17, -4], [-17, 5], [-17, 13]], 13),
       borers(time.beats(10.5), 3.2, [[4, 12]], 3),
     ),
 

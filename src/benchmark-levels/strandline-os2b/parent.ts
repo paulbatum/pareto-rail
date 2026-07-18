@@ -29,7 +29,7 @@ const time = STRANDLINE_TIME;
 const PARENT_STANDOFF = { shielded: 52, exposed: 38, final: 29 } as const;
 
 const BROOD_EMERGE_SECONDS = 1.05;
-const BROOD_SPREAD = 17;
+const BROOD_SPREAD = 22;
 const BROOD_CONTACT_DISTANCE = 3.4;
 const BROOD_MAX_AGE = 13;
 
