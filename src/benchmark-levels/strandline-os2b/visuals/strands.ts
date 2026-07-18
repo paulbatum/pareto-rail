@@ -5,10 +5,10 @@ import {
   Group,
   Matrix4,
   Mesh,
-  MeshBasicMaterial,
   OctahedronGeometry,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import type { MeshBasicMaterial } from 'three';
 import type { Rng } from '../../../engine/rng';
 import { createAdditiveBasicMaterial } from '../../../engine/visual-kit';
 import { BIO_DIM, BIO_GOLD, BIO_GREEN, hdr } from './palette';
@@ -61,7 +61,10 @@ export function createStrand(rng: Rng): StrandBuild {
   const amplitude = 6 + rng() * 14;
   const topRadius = 0.75 + rng() * 0.7;
 
-  const core = new MeshBasicMaterial({ color: hdr(BIO_GREEN, 0.5), transparent: true, opacity: 0.94 });
+  // The core is additive rather than solid: a tentacle is translucent tissue
+  // full of light, so the water and anything behind it shows through. It also
+  // means the forest never hides a target you are trying to sweep across.
+  const core = createAdditiveBasicMaterial({ color: hdr(BIO_GREEN, 0.55), opacity: 0.78 });
   const coreGeometry = bendGeometry(
     new CylinderGeometry(topRadius, topRadius * 0.16, HEIGHT, 5, 18, true),
     phase,

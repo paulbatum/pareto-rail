@@ -150,47 +150,47 @@ function createStrandlineTimeline(parent: StrandlineParentRig): StrandlineSpawnE
   return [
     // --- Drift. The forest closes over you; wide, slow, readable.
     ...section(STRANDLINE_MARKERS.drift,
-      clings(time.beats(2), 3.6, [[-8, 3], [-2.5, 6.5], [4, 5], [9, 1]]),
+      clings(time.beats(2), 3.6, [[-11, 2], [-4.5, 8], [5, 7], [12, 1]]),
       swarm(time.beats(6), 3.4, [[-15, -4], [-15, -1], [-15, 2], [-15, 5]], 9.5),
-      clings(time.beats(10), 3.5, [[-10, -3], [-4, 4], [3, -4], [10, 2]]),
-      clings(time.beats(13.5), 3.4, [[-6, 7], [0, 2], [6, 7]]),
+      clings(time.beats(10), 3.5, [[-13, -4], [-6, 6], [6, -6], [13, 3]]),
+      clings(time.beats(13.5), 3.4, [[-10, 9], [-3, -7], [10, 9]]),
     ),
 
     // --- Bloom. Layers arrive in the music and in the water together.
     ...section(STRANDLINE_MARKERS.bloom,
-      clings(time.beats(0), 3.5, [[-12, 1], [-7, 6], [-1, 8], [5, 6], [11, 1]]),
+      clings(time.beats(0), 3.5, [[-15, 0], [-9, 7], [-2, 11], [7, 7], [14, 0]]),
       swarm(time.beats(3), 3.3, [[14, 5], [14, 2], [14, -1], [14, -4], [14, -7]], -10),
-      borers(time.beats(6), 3.8, [[0, 9]]),
-      clings(time.beats(6.5), 3.5, [[-11, -2], [11, -2], [-5, -6]]),
+      borers(time.beats(6), 3.8, [[-3, 11]]),
+      clings(time.beats(6.5), 3.5, [[-14, -3], [14, -3], [-7, -8]]),
       swarm(time.beats(9.5), 3.3, [[-16, 6], [-16, 3], [-16, 0], [-16, -3], [-16, -6]], 10.5),
-      clings(time.beats(12), 3.4, [[-9, 5], [-3, -5], [3, 8], [9, -2], [13, 4]]),
-      clings(time.beats(14.5), 3.2, [[-7, -6], [7, -6]]),
+      clings(time.beats(12), 3.4, [[-14, 5], [-8, -7], [4, 10], [11, -4], [16, 5]]),
+      clings(time.beats(14.5), 3.2, [[-11, -8], [11, -8]]),
     ),
 
     // --- Open water. The rail banks wide, the murk clears, and the animal is
     // there. Two sparse high formations keep the eye up on the bell.
     ...section(STRANDLINE_MARKERS.openWater,
       clings(time.beats(1), 3.9, [[-13, 8], [-5, 11], [5, 11], [13, 8]], 0.68),
-      clings(time.beats(5), 3.8, [[-9, 6], [0, 12], [9, 6]], 0.68),
+      clings(time.beats(5), 3.8, [[-12, 6], [-2, 14], [12, 6]], 0.68),
     ),
 
     // --- Deep. Back into the strands, and now they shoot back.
     ...section(STRANDLINE_MARKERS.deep,
       swarm(time.beats(0), 3.2, [[-16, 4], [-16, 1], [-16, -2], [-16, -5], [-16, 7], [-16, -8]], 11),
       borers(time.beats(3), 3.6, [[-11, 4], [11, 4]]),
-      clings(time.beats(5), 3.3, [[-12, -3], [-6, 5], [0, -6], [6, 5], [12, -3]]),
+      clings(time.beats(5), 3.3, [[-16, -4], [-9, 7], [-1, -9], [9, 7], [16, -4]]),
       swarm(time.beats(7), 3.1, [[15, -6], [15, -3], [15, 0], [15, 3]], -11.5),
     ),
 
     // --- Braid. The densest water in the level, straight into the crown.
     ...section(STRANDLINE_MARKERS.braid,
-      clings(time.beats(0), 3.3, [[-14, 2], [-9, 7], [-3, -4], [3, 9], [9, -1], [14, 5]]),
+      clings(time.beats(0), 3.3, [[-17, 1], [-11, 9], [-4, -7], [5, 12], [12, -3], [18, 6]]),
       swarm(time.beats(2), 3.0, [[-17, 8], [-17, 4], [-17, 0], [-17, -4], [-17, -8]], 12),
-      borers(time.beats(4), 3.4, [[-8, 8], [8, 8]], 3),
+      borers(time.beats(4), 3.4, [[-12, 9], [12, 9]], 3),
       swarm(time.beats(6), 3.0, [[16, -8], [16, -4], [16, 0], [16, 4], [16, 8], [16, 11]], -12),
-      clings(time.beats(8), 3.2, [[-13, -5], [-8, 3], [-2, 9], [4, 3], [10, -5], [15, 2]]),
+      clings(time.beats(8), 3.2, [[-17, -6], [-11, 4], [-3, 12], [5, 4], [13, -7], [18, 3]]),
       swarm(time.beats(10), 2.9, [[-15, -7], [-15, -2], [-15, 3], [-15, 8]], 12.5),
-      borers(time.beats(10.5), 3.2, [[0, 10]], 3),
+      borers(time.beats(10.5), 3.2, [[4, 12]], 3),
     ),
 
     // --- The crown. The parent, its webbing, and its broods.
@@ -198,9 +198,10 @@ function createStrandlineTimeline(parent: StrandlineParentRig): StrandlineSpawnE
 
     // --- Purge. Parasites still gripping the crown roots while you work.
     ...section(STRANDLINE_MARKERS.purge,
-      clings(time.beats(1), 3.0, [[-13, 4], [13, 4], [-7, -5]], 0.45),
-      clings(time.beats(6), 2.9, [[9, -5], [-11, 8], [12, 9]], 0.45),
-      clings(time.beats(11), 2.8, [[-6, 10], [6, 10], [0, -6]], 0.45),
+      clings(time.beats(1), 3.0, [[-15, 4], [15, 4], [-9, -7]], 0.45),
+      clings(time.beats(6), 2.9, [[11, -7], [-14, 9], [15, 10]], 0.45),
+      clings(time.beats(11), 2.8, [[-9, 12], [9, 12], [-2, -9]], 0.45)
+      ,clings(time.beats(15), 2.6, [[-13, 2], [13, 2], [-4, 13], [5, -8]], 0.4),
     ),
   ];
 }
