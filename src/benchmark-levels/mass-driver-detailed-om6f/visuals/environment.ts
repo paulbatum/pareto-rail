@@ -33,6 +33,7 @@ import { sampleRailFrame } from '../../../engine/rail';
 import { mulberry32 } from '../../../engine/rng';
 import { additiveMaterialParameters, createAdditiveBasicMaterial, disposeObject3D } from '../../../engine/visual-kit';
 import {
+  MD_BEAT_SECONDS,
   MD_BORE_RADIUS,
   MD_MUZZLE_U,
   MD_RAIL_LENGTH,
@@ -77,6 +78,8 @@ export type EnvironmentFrame = {
   dt: number;
   runProgress: number;
   runTime: number;
+  /** Run time shifted onto the audible transport, so ring flashes land on the beat. */
+  beatTime: number;
   charge: number;
   speedFactor: number;
   running: boolean;
@@ -153,7 +156,7 @@ export function createEnvironment(scene: Scene, curve: CatmullRomCurve3): Enviro
   );
   const ringRims = new InstancedMesh(
     new TorusGeometry(1, RING_TUBE * 2.6, 4, 40),
-    createAdditiveBasicMaterial({ color: 0xffffff, opacity: 0.5 }),
+    createAdditiveBasicMaterial({ color: 0xffffff, opacity: 0.26 }),
     RING_MAX_VISIBLE,
   );
   const ringLugs = new InstancedMesh(
@@ -363,9 +366,9 @@ export function createEnvironment(scene: Scene, curve: CatmullRomCurve3): Enviro
   }
 
   function updateRings(frame: EnvironmentFrame) {
-    const { runProgress, runTime, charge, strobe, elapsed, running } = frame;
+    const { runProgress, beatTime, charge, strobe, elapsed, running } = frame;
     // Idle shimmer in attract mode; a real crossing cadence during a run.
-    const beat = running ? runTime / (60 / 128) : 0;
+    const beat = running ? Math.max(0, beatTime) / MD_BEAT_SECONDS : 0;
     const passedIndex = Math.floor(beat + 1e-6);
     const beatFraction = beat - passedIndex;
 
@@ -388,23 +391,27 @@ export function createEnvironment(scene: Scene, curve: CatmullRomCurve3): Enviro
       let heat = (index / (MD_RING_COUNT - 1)) * 0.72;
       if (charge > 0 && index > passedIndex) heat = MathUtils.lerp(heat, 1, charge * 0.85);
       heat = Math.min(1, heat + strobe);
+      // The nearest rings fill the frame, so hold their energy back: a ring
+      // two metres from the lens must not white out the clamps behind it.
+      const nearness = MathUtils.clamp(1 - (u - runProgress) * MD_RAIL_LENGTH / 140, 0, 1);
+      const nearDamp = 1 - nearness * nearness * 0.78;
 
       // The just-passed ring flashes; the next one pre-glows into its crossing.
-      let intensity = downbeat ? 1.5 : 1.05;
+      let intensity = downbeat ? 1.02 : 0.7;
       if (running) {
-        if (index === passedIndex) intensity += (1 - beatFraction) ** 2 * (downbeat ? 3.4 : 2.0);
-        else if (index === passedIndex + 1) intensity += beatFraction ** 3 * 1.6;
+        if (index === passedIndex) intensity += (1 - beatFraction) ** 2 * (downbeat ? 2.6 : 1.5);
+        else if (index === passedIndex + 1) intensity += beatFraction ** 3 * 1.2;
       } else {
-        intensity += 0.35 + 0.35 * Math.sin(elapsed * 1.9 - index * 0.42);
+        intensity += 0.22 + 0.22 * Math.sin(elapsed * 1.9 - index * 0.42);
       }
 
-      heatRamp(heat, scratchColor).multiplyScalar(intensity);
+      heatRamp(heat, scratchColor).multiplyScalar(intensity * nearDamp);
       scratchScale.setScalar(radius);
       scratchMatrix.compose(ringPositions[index], ringQuaternions[index], scratchScale);
       ringBodies.setMatrixAt(count, scratchMatrix);
       ringBodies.setColorAt(count, scratchColor);
       ringRims.setMatrixAt(count, scratchMatrix);
-      ringRims.setColorAt(count, scratchColor.multiplyScalar(0.55));
+      ringRims.setColorAt(count, scratchColor.multiplyScalar(0.32));
 
       if (downbeat) {
         // Four coil-housing lugs bolted at the diagonals.
@@ -436,7 +443,7 @@ export function createEnvironment(scene: Scene, curve: CatmullRomCurve3): Enviro
   }
 
   function updateRails(frame: EnvironmentFrame) {
-    const pulse = 0.55 + frame.beatEnergy * 0.6 + frame.charge * 0.9 + frame.strobe * 1.5;
+    const pulse = 0.4 + frame.beatEnergy * 0.45 + frame.charge * 0.8 + frame.strobe * 1.3;
     const fade = frame.runProgress > MD_MUZZLE_U ? 0 : 1;
     for (const material of railMaterials) material.color.setScalar(pulse * fade);
     railGroup.visible = fade > 0;
@@ -479,7 +486,7 @@ export function createEnvironment(scene: Scene, curve: CatmullRomCurve3): Enviro
     // Cap the apparent size so the last interlocks stay legible against it; the
     // true whiteout belongs to the shot, not the buildup.
     const wanted = 14 + charge * 46;
-    chargeGlow.scale.setScalar(Math.min(wanted, distance * 0.42));
+    chargeGlow.scale.setScalar(Math.min(wanted, distance * 0.30));
     chargeMaterial.color.copy(heatRamp(0.55 + charge * 0.45, scratchColor)).multiplyScalar(0.35 + charge * 1.5);
   }
 

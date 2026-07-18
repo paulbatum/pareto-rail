@@ -87,6 +87,10 @@ let elapsedNow = 0;
 let beatEnergy = 0;
 let strobe = 0;
 let lastRingCrossed = -1;
+// Seconds the audible transport runs behind nominal run time. The ring lattice
+// is authored on run time, but what the player hears is the transport, so the
+// crossings are nudged onto the beat that is actually sounding.
+let beatOffset = 0;
 let pendingShake = 0;
 
 const scratchColor = new Color();
@@ -372,8 +376,13 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     pendingShake = Math.max(pendingShake, 0.5);
   });
 
-  bus.on('beat', ({ isDownbeat }) => {
+  bus.on('beat', ({ beatNumber, isDownbeat }) => {
     beatEnergy = Math.max(beatEnergy, isDownbeat ? 1 : 0.5);
+    if (!mdRun.running) return;
+    const drift = mdRun.runTime - beatNumber * MD_BEAT_SECONDS;
+    // Ignore wild readings (a paused tab, a beat from the previous run) and
+    // ease onto the rest, so the correction never jumps a ring.
+    if (Math.abs(drift) < MD_BEAT_SECONDS * 0.75) beatOffset += (drift - beatOffset) * 0.3;
   });
 
   bus.on('volley', ({ size, kills }) => {
@@ -388,6 +397,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
     projectileRecords.clear({ pending: true });
     beatEnergy = 0;
     strobe = 0;
+    beatOffset = 0;
     lastRingCrossed = -1;
     pendingShake = 0;
   });
@@ -441,9 +451,10 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
   strobe = Math.max(0, strobe - dt * 2.6);
   decayPostFx(dt);
 
-  // The charge overlay is deliberately held back: cubed, it stays out of the
-  // way until the last bar and a half, so the clamps remain legible.
-  setChargeOverlay(mdRun.charge ** 3 * 0.85 + strobe * 0.3);
+  // The charge overlay is deliberately held back: raised to a high power it
+  // stays out of the way until the last bar and a half, so the clamps remain
+  // legible. The shot ends it outright — the whiteout belongs to the flash.
+  setChargeOverlay(mdRun.gunFired ? 0 : mdRun.charge ** 4 * 0.78 + strobe * 0.25);
 
   // Airspeed breathes the field of view; the beat kicks it a hair.
   ctx.feel.setFovOffset((mdRun.speedFactor - 0.5) * 2.1 + beatEnergy * 0.9, { response: 6 });
@@ -503,6 +514,7 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
     dt,
     runProgress: mdRun.runProgress,
     runTime: mdRun.runTime,
+    beatTime: mdRun.runTime - beatOffset,
     charge: mdRun.charge,
     speedFactor: mdRun.speedFactor,
     running: mdRun.running,
@@ -522,7 +534,7 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
  */
 function updateRingCrossings(ctx: VisualContext) {
   if (!environment || !mdRun.running) return;
-  const index = Math.floor(mdRun.runTime / MD_BEAT_SECONDS);
+  const index = Math.floor((mdRun.runTime - beatOffset) / MD_BEAT_SECONDS);
   if (index <= lastRingCrossed || index >= MD_RING_COUNT || mdRun.runTime > MD_SHOT_TIME) {
     lastRingCrossed = Math.max(lastRingCrossed, Math.min(index, MD_RING_COUNT));
     return;
