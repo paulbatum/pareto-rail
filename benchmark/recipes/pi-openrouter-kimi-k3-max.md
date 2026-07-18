@@ -1,6 +1,8 @@
 # Recipe: pi-openrouter-kimi-k3-max
 
-Status: draft; pending rehearsal. Every pi recipe committed so far (`pi-luna-low-smoke`, `pi-openrouter-deepseek-smoke`) is permanently ineligible; this and `pi-openrouter-inkling-high` are the first eligible-track pi/OpenRouter configurations. Do not treat any field below as frozen until a rehearsal run has confirmed pi's actual event shape, session mechanics, and effort mapping for this model.
+Status: draft; pending rehearsal. Every pi recipe committed so far (`pi-luna-low-smoke`, `pi-openrouter-deepseek-smoke`) is permanently ineligible; this and `pi-openrouter-inkling-high` are the first eligible-track pi/OpenRouter configurations. Do not treat any field below as frozen until a rehearsal run has confirmed pi's actual event shape and session mechanics for this model.
+
+Availability note: this model has been reported flaky on OpenRouter. A manual check of 5 back-to-back trivial calls at `--thinking max` all succeeded in 4-6 seconds each with no errors, but that is a weak signal — a single-turn, no-tools prompt doesn't exercise the sustained tool-calling load a real level-generation stage produces. Treat the smoke rehearsal as the real test of how often this model fails or stalls under realistic load, and record the failure rate observed.
 
 This configuration is one unattended solo stage, not a controller-agent conversation. The deterministic controller starts a fresh pi CLI process against an OpenRouter-hosted `moonshotai/kimi-k3`, in the opaque entrant worktree, captures its JSON event stream, then runs the normal administrative seal and gates.
 
@@ -10,8 +12,8 @@ This configuration is one unattended solo stage, not a controller-agent conversa
 - Stages: `solo`
 - Provider: `openrouter`
 - Model: `moonshotai/kimi-k3`
-- Thinking level: `max`. Kimi K3 exposes a single reasoning tier upstream rather than pi's `low`/`medium`/`high`/`xhigh` ladder; `max` is the only supported value and is used here in place of the `high` tier the other solo configurations use, not as an intensified variant of it. Whether pi's own effort vocabulary (which per `benchmark/recipes/README.md` includes `minimal`/`off` but not `ultra`) accepts `max` directly, or whether the adapter must special-case this model, is unconfirmed and must be resolved at rehearsal.
-- pi CLI: version to be pinned at rehearsal (the existing smoke recipes pin `0.80.6`; carry that forward unless a newer version is required for this model).
+- Thinking level: `max`. Kimi K3 exposes a single reasoning tier upstream rather than pi's `low`/`medium`/`high`/`xhigh` ladder; `max` is the only supported value and is used here in place of the `high` tier the other solo configurations use, not as an intensified variant of it. `max` is a plain member of pi's own effort vocabulary (`off`/`minimal`/`low`/`medium`/`high`/`xhigh`/`max`, confirmed in `scripts/benchmark/pi-cli.mjs`'s `THINKING` set), so `--effort max` is accepted directly with no adapter special-casing; manually confirmed against a live call to produce nonzero reasoning tokens.
+- pi CLI: `0.80.10` or later. `moonshotai/kimi-k3` is absent from pi's bundled catalog at `0.80.6` (the version the earlier smoke recipes pin) and first appears at `0.80.10`, the version this recipe was manually verified against. The adapter's model-catalog check is audit-only and does not gate on catalog presence regardless, but pin the newer version anyway since it's confirmed to include this model.
 - Stage timeout: 43,200 seconds, matching the other solo configurations.
 - Task budget: none (see `pi-openrouter-kimi-k3-max-b20` for the budgeted variant).
 - Continuations: none.
@@ -41,7 +43,7 @@ This configuration is one unattended solo stage, not a controller-agent conversa
 - Role: `solo`
 - Model provider: OpenRouter (`moonshotai/kimi-k3`), metered API billing — not a subscription.
 - Exact model selection: `moonshotai/kimi-k3` at `max` reasoning effort (see Identity above).
-- Harness and version: pi CLI, version pinned at rehearsal (see Identity).
+- Harness and version: pi CLI `0.80.10` or later (see Identity).
 - Session: fresh process; the adapter's normal isolated `PI_CODING_AGENT_DIR` and native session capture apply, matching `pi-luna-low-smoke.md` and `pi-openrouter-deepseek-smoke.md`.
 - Working tree access: no OS sandbox (see Runtime policy above).
 - Input artifacts from earlier stages: none.
@@ -78,7 +80,7 @@ Cost for this configuration is real metered API spend rather than subscription u
 
 ### Usage and timing capture
 
-- Usage source: pi's JSON event stream. Per `benchmark/README.md`'s Cost section, each `message_end` event carries only that one API call's usage; the adapter sums assistant messages within the invocation. `message_update` events are dropped as they stream (each is superseded by the `message_end` that closes the same message) and the dropped count is recorded alongside the retained log.
+- Usage source: pi's JSON event stream. Per `benchmark/README.md`'s Cost section, each `message_end` event carries only that one API call's usage; the adapter sums assistant messages within the invocation. `message_update` events are dropped as they stream (each is superseded by the `message_end` that closes the same message) and the dropped count is recorded alongside the retained log. A manual `--mode json` call confirmed the shape: `message_end.message.usage` carries `input`, `output`, `cacheRead`, `cacheWrite`, `reasoning`, and `totalTokens`, plus a `cost` object with `input`/`output`/`cacheRead`/`cacheWrite`/`total` in USD.
 - Session identifier source: pi's own session id, as captured by the adapter's existing smoke-recipe mechanism. Exact field name to be confirmed at rehearsal.
 - Wall-time boundaries: immediately before process spawn and after process exit, stored in `command.json`.
 - Raw record path: `benchmark/private/runs/<opaque-run-id>/stages/solo/pi/`, matching the layout established by the smoke recipes plus `rollout.jsonl`/session-file capture when available.

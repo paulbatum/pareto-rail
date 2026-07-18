@@ -76,7 +76,6 @@ async function main() {
 
   const cliVersion = await runCommand(piBin, ['--version'], { cwd: worktree });
   const catalog = await runCommand(piBin, ['--list-models'], { cwd: worktree });
-  assertModelAvailable(catalog.stdout, model, provider);
   await fs.writeFile(path.join(outputDirectory, 'model-catalog.txt'), catalog.stdout, 'utf8');
   await fs.writeFile(path.join(outputDirectory, 'model-catalog.stderr.log'), catalog.stderr, 'utf8');
   await writeJson(path.join(outputDirectory, 'selected-model.json'), {
@@ -275,16 +274,6 @@ async function readDotenv(dotenvPath, key) {
     return match[2].trim().replace(/^(['"])(.*)\1$/, '$2');
   }
   return undefined;
-}
-
-// `pi --list-models` prints one whitespace-separated `<provider> <model-id> ...` row per model.
-function assertModelAvailable(catalog, model, provider) {
-  const rows = catalog.split('\n').map((line) => line.trim().split(/\s+/)).filter((columns) => columns.length >= 2);
-  const matches = rows.filter(([, id]) => id === model || id === `~${model}`);
-  if (matches.length === 0) fail(`Model ${model} is not present in this pi model catalog.`);
-  if (provider && !matches.some(([name]) => name === provider)) {
-    fail(`Model ${model} is not offered by provider ${provider}; pi lists it under: ${[...new Set(matches.map(([name]) => name))].join(', ')}.`);
-  }
 }
 
 // pi streams one JSON event per line. Unlike the Claude and Codex counters, which restate the whole

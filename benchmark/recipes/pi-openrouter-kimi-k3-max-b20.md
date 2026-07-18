@@ -1,6 +1,6 @@
 # Recipe: pi-openrouter-kimi-k3-max-b20
 
-Status: draft; pending rehearsal. This is the soft-budget variant of `pi-openrouter-kimi-k3-max`, matching the $20 task-budget protocol used by `claude-fable-5-high-b20` and `codex-sol-high-b20`. It carries the same open items as the solo recipe (the `max`-only reasoning tier, pi CLI version pin, and session/usage field names) plus the pi-specific budget mechanics below, none of which have been exercised by a real pi assignment yet. Do not treat any field as frozen until rehearsed.
+Status: draft; pending rehearsal. This is the soft-budget variant of `pi-openrouter-kimi-k3-max`, matching the $20 task-budget protocol used by `claude-fable-5-high-b20` and `codex-sol-high-b20`. It carries the same open item as the solo recipe (confirming behavior under a real assignment, including the availability rate noted there) plus the pi-specific budget mechanics below, none of which have been exercised by a real pi assignment yet. Do not treat any field as frozen until rehearsed.
 
 This configuration is one unattended solo stage, not a controller-agent conversation. The deterministic controller starts a fresh pi CLI process against an OpenRouter-hosted `moonshotai/kimi-k3`, applies the declared budget protocol and any resulting continuation turns, captures every event stream, then runs the normal administrative seal and gates.
 
@@ -12,7 +12,7 @@ This configuration is one unattended solo stage, not a controller-agent conversa
 - Provider: `openrouter`
 - Model: `moonshotai/kimi-k3`
 - Thinking level: `max`, the model's only supported reasoning tier — see `pi-openrouter-kimi-k3-max.md`.
-- pi CLI: version to be pinned at rehearsal, matching the solo recipe's pin.
+- pi CLI: `0.80.10` or later, matching the solo recipe's pin.
 - Stage timeout: 43,200 seconds.
 
 ## Shared inputs
@@ -34,7 +34,7 @@ Identical to `pi-openrouter-kimi-k3-max`: the rendered assignment on stdin, the 
 - Role: `solo`
 - Model provider: OpenRouter (`moonshotai/kimi-k3`), metered API billing.
 - Exact model selection: `moonshotai/kimi-k3` at `max` reasoning effort (see Identity above).
-- Harness and version: pi CLI, version pinned at rehearsal.
+- Harness and version: pi CLI `0.80.10` or later.
 - Session: one pi session across the fresh turn and any budget continuation turns, mirroring the Claude/Codex same-session continuation discipline. Exact resume mechanism (session id flag, if any) to be confirmed at rehearsal.
 - Working tree access: no OS sandbox.
 - Input artifacts from earlier stages: none.

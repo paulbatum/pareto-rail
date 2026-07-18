@@ -1,6 +1,8 @@
 # Recipe: pi-openrouter-inkling-high-b20
 
-Status: draft; pending rehearsal. This is the soft-budget variant of `pi-openrouter-inkling-high`, matching the $20 task-budget protocol used by `claude-fable-5-high-b20` and `codex-sol-high-b20`. It carries the same open items as the solo recipe (effort-mapping, pi CLI version pin, and session/usage field names) plus the pi-specific budget mechanics below, none of which have been exercised by a real pi assignment yet. Do not treat any field as frozen until rehearsed.
+Status: draft; pending rehearsal. This is the soft-budget variant of `pi-openrouter-inkling-high`, matching the $20 task-budget protocol used by `claude-fable-5-high-b20` and `codex-sol-high-b20`. It carries the same open item as the solo recipe (confirming the effort mapping and session/usage field names under a real assignment) plus the pi-specific budget mechanics below, none of which have been exercised by a real pi assignment yet. Do not treat any field as frozen until rehearsed.
+
+`thinkingmachines/inkling` is not listed in pi's bundled `--list-models` catalog (checked at pi `0.80.10`), but pi resolves it directly as a "custom model id" with only a warning. The adapter's model-catalog check no longer gates on catalog presence, so this does not block the run — see `pi-openrouter-inkling-high.md` for detail.
 
 This configuration is one unattended solo stage, not a controller-agent conversation. The deterministic controller starts a fresh pi CLI process against an OpenRouter-hosted `thinkingmachines/inkling`, applies the declared budget protocol and any resulting continuation turns, captures every event stream, then runs the normal administrative seal and gates.
 
@@ -11,8 +13,8 @@ This configuration is one unattended solo stage, not a controller-agent conversa
 - Stage budget: `budget.usd: 20`
 - Provider: `openrouter`
 - Model: `thinkingmachines/inkling`
-- Thinking level: same open item as `pi-openrouter-inkling-high` — intended effort tier `high`, concrete numeric encoding to be confirmed at rehearsal.
-- pi CLI: version to be pinned at rehearsal, matching the solo recipe's pin.
+- Thinking level: `high`, passed as pi's ordinary named tier — manually confirmed to produce nonzero reasoning tokens against a live call (see `pi-openrouter-inkling-high.md`); still needs confirmation under a real assignment's sustained tool use.
+- pi CLI: `0.80.10` or later, matching the solo recipe's pin.
 - Stage timeout: 43,200 seconds.
 
 ## Shared inputs
@@ -34,7 +36,7 @@ Identical to `pi-openrouter-inkling-high`: the rendered assignment on stdin, the
 - Role: `solo`
 - Model provider: OpenRouter (`thinkingmachines/inkling`), metered API billing.
 - Exact model selection: `thinkingmachines/inkling` at the effort described under Identity above.
-- Harness and version: pi CLI, version pinned at rehearsal.
+- Harness and version: pi CLI `0.80.10` or later.
 - Session: one pi session across the fresh turn and any budget continuation turns, mirroring the Claude/Codex same-session continuation discipline. Exact resume mechanism (session id flag, if any) to be confirmed at rehearsal.
 - Working tree access: no OS sandbox.
 - Input artifacts from earlier stages: none.
