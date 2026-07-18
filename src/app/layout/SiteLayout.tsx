@@ -8,6 +8,7 @@ const navigation = [
   { href: '/rank', label: 'Rank' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/levels', label: 'Levels' },
+  { href: '/analysis', label: 'Analysis' },
   { href: '/about', label: 'About' },
 ];
 
@@ -42,7 +43,9 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
         </RouteLink>
         <nav aria-label="Primary">
           {navigation.map((item) => {
-            const active = item.href === currentPath || ((route.kind === 'play' || route.kind === 'levels') && item.href === '/levels');
+            const active = item.href === currentPath
+              || ((route.kind === 'play' || route.kind === 'levels') && item.href === '/levels')
+              || (route.kind === 'analysis' && item.href === '/analysis');
             return <RouteLink key={item.href} href={item.href} onNavigate={onNavigate} aria-current={active ? 'page' : undefined}>{item.label}</RouteLink>;
           })}
           <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Switch to ${nextTheme} theme`}>

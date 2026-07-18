@@ -2,6 +2,8 @@
 
 Each `benchmark/analysis/<level-id>/` directory is a self-contained analysis of one benchmark run: the full agent rollout normalized into structured data, an editorial layer of sections and annotations, and reconstructed screenshots of what the agent saw while building. The packages are designed to drive a rich interactive "watch the agent build the level" view on the website.
 
+The website renders committed packages at `/analysis` (see `docs/ui-architecture.md`); packages are auto-discovered from this directory, so extracting and committing one is all it takes to publish it there.
+
 Packages are derived from the private run artifacts under `benchmark/private/runs/<run-id>/` — the mechanical layers by `scripts/analysis/extract-trace.mjs`, the editorial layers by model analysis of the transcripts. Package directories are keyed by opaque level id and reveal identity only inside their file contents, so the blindness rule is one of timing: build and read a level's package only after you have finished voting on pairs involving that level. On the site, analysis is shown only behind the post-vote reveal.
 
 ## Package contents

@@ -5,6 +5,7 @@ export type AppRoute =
   | { kind: 'play'; levelId: string }
   | { kind: 'levels'; view: LevelsView }
   | { kind: 'rank'; playSide?: 'a' | 'b' }
+  | { kind: 'analysis'; levelId?: string }
   | { kind: 'leaderboard' }
   | { kind: 'about' }
   | { kind: 'notFound' };
@@ -24,6 +25,8 @@ export function parseRoute(location: Location = window.location): AppRoute {
     const play = new URLSearchParams(location.search).get('play');
     return { kind: 'rank', playSide: play === 'a' || play === 'b' ? play : undefined };
   }
+  if (path === '/analysis') return { kind: 'analysis' };
+  if (path.startsWith('/analysis/')) return { kind: 'analysis', levelId: decodeURIComponent(path.slice('/analysis/'.length)) };
   if (path === '/leaderboard') return { kind: 'leaderboard' };
   if (path === '/about') return { kind: 'about' };
   if (path === '/') return { kind: 'home' };
@@ -34,6 +37,7 @@ export function routePath(route: AppRoute): string {
   if (route.kind === 'home') return '/';
   if (route.kind === 'play') return `/play/${encodeURIComponent(route.levelId)}`;
   if (route.kind === 'levels') return levelsViewPath[route.view];
+  if (route.kind === 'analysis') return route.levelId ? `/analysis/${encodeURIComponent(route.levelId)}` : '/analysis';
   if (route.kind === 'notFound') return window.location.pathname;
   return `/${route.kind}`;
 }
