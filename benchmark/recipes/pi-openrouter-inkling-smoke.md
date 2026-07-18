@@ -20,7 +20,7 @@ It exists to rehearse `pi-openrouter-inkling-high` before that recipe is frozen:
 
 ## Inputs and execution
 
-The controller supplies `benchmark/examples/controller-smoke-assignment.md`, rendered with the assigned identity and `benchmark/examples/prism-warm-palette.md`, as the complete stdin prompt. The entrant receives the normal isolated worktree and repository instructions. The controller adds no feedback, repair prompt, or continuation.
+Correction from the pattern documented in `pi-openrouter-deepseek-smoke.md`: `scripts/benchmark/run.mjs` always renders the real `benchmark/prompts/level-assignment.md` template (it has no branch for an alternate smoke template), so this recipe runs the genuine standing-brief assignment against whichever theme the plan row assigns — not a bounded Prism Bloom adaptation. What keeps this cheap is the 900-second stage timeout, which simply cuts the process off; a run that hits it is expected to be an incomplete/interrupted stage, not a clean submission, and its cost is bounded by wall-clock rather than by task scope. The entrant receives the normal isolated worktree and repository instructions. The controller adds no feedback, repair prompt, or continuation.
 
 The harness invocation is equivalent to:
 
