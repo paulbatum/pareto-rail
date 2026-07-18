@@ -26,7 +26,7 @@ import {
 } from '../../../engine/visual-kit';
 import type { EventBus } from '../../../events';
 import { STRANDLINE_PLAYER_HEALTH, STRANDLINE_TIMELINE, strandlineRunProgress, strandlineSpeedAt } from '../gameplay';
-import { DEEP_TIME, OPEN_WATER_TIME, SERENE_TIME } from '../timing';
+import { DEEP_TIME, OPEN_WATER_TIME, SERENE_TIME, STRANDLINE_TIME } from '../timing';
 import { BELL_CENTER } from '../world';
 import {
   burstMotes,
@@ -297,7 +297,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, feel: Ca
       bloomFlashUniform.value = Math.max(bloomFlashUniform.value, 0.3);
       spawnRing(worldPosition, hdr(PARASITE_VIOLET, 1.4), 26, 0.95);
       spawnRing(worldPosition, hdr(WEBBING, 1.0), 15, 0.7);
-      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 0.9), 22, 11, { life: 1.6, size: 0.5 });
+      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 0.9), 13, 11, { life: 1.6, size: 0.64 });
     } else if (kind === 'brood') {
       spawnRing(worldPosition, hdr(PARASITE_HOT, 1.2), 5.5, 0.55);
     } else if (kind === 'spore') {
@@ -332,12 +332,12 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, feel: Ca
   bus.on('hit', ({ enemyId, projectileId, worldPosition, lethal }) => {
     projectileRecords.delete(projectileId);
     // Impacts in water disperse rather than spark.
-    burstMotes(worldPosition, hdr(LUMEN, 0.9), 5, 7, { life: 0.5, size: 0.2, buoyancy: 0.4 });
+    burstMotes(worldPosition, hdr(LUMEN, 0.9), 3, 7, { life: 0.5, size: 0.26, buoyancy: 0.4 });
     const record = enemyRecords.get(enemyId);
     if (record && !lethal) {
       record.mesh.userData.damageFlashUntil = elapsedNow + 0.26;
       spawnGlint(worldPosition, hdr(LUMEN, 1.6), 1.1, 0.14);
-      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 0.8), 6, 9, { life: 0.8, size: 0.24 });
+      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 0.8), 4, 9, { life: 0.8, size: 0.3 });
     }
   });
 
@@ -352,10 +352,10 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, feel: Ca
       feel.shake(1.1, STRANDLINE_SHAKE);
       bloomFlashUniform.value = Math.max(bloomFlashUniform.value, 0.34);
       spawnRing(worldPosition, hdr(PARASITE_HOT, 1.5), 22, 0.8);
-      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 1.0), 24, 15, { life: 1.4, size: 0.44 });
+      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 1.0), 14, 15, { life: 1.4, size: 0.56 });
     } else {
       spawnRing(worldPosition, hdr(PARASITE_HOT, 1.1), 4.4, 0.4);
-      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 0.8), 8, 10, { life: 0.9, size: 0.28 });
+      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 0.8), 5, 10, { life: 0.9, size: 0.34 });
     }
   });
 
@@ -365,7 +365,7 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, feel: Ca
     for (const shield of shields) {
       spawnRing(shield.worldPosition, hdr(WEBBING, 1.6), 11, 0.42);
       spawnRing(shield.worldPosition, hdr(PARASITE_VIOLET, 1.2), 6.5, 0.3);
-      burstMotes(shield.worldPosition, hdr(WEBBING, 1.1), 12, 9, { life: 0.7, size: 0.3, buoyancy: 0.2 });
+      burstMotes(shield.worldPosition, hdr(WEBBING, 1.1), 7, 9, { life: 0.7, size: 0.38, buoyancy: 0.2 });
     }
     feel.shake(0.32, STRANDLINE_SHAKE);
   });
@@ -381,8 +381,8 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, feel: Ca
       parentDown = true;
       revival = 1;
       if (specs) burstShards(worldPosition, specs, 17);
-      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 1.1), 46, 22, { life: 2.4, size: 0.62 });
-      burstMotes(worldPosition, hdr(BIO_GOLD, 1.3), 40, 17, { life: 3.0, size: 0.5, buoyancy: 2.4 });
+      burstMotes(worldPosition, hdr(PARASITE_VIOLET, 1.1), 26, 22, { life: 2.4, size: 0.8 });
+      burstMotes(worldPosition, hdr(BIO_GOLD, 1.3), 22, 17, { life: 3.0, size: 0.66, buoyancy: 2.4 });
       spawnRing(worldPosition, hdr(LUMEN, 1.6), 70, 1.5);
       spawnRing(worldPosition, hdr(BIO_GREEN, 1.3), 44, 1.1);
       spawnRing(worldPosition, hdr(BIO_GOLD, 1.1), 26, 0.85);
@@ -391,14 +391,14 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, feel: Ca
       feel.shake(1.6, STRANDLINE_SHAKE);
     } else if (record.kind === 'letter') {
       if (specs) burstShards(worldPosition, specs, 7);
-      burstMotes(worldPosition, hdr(BIO_GOLD, 1.0), 8, 7, { life: 0.9, size: 0.24 });
+      burstMotes(worldPosition, hdr(BIO_GOLD, 1.0), 5, 7, { life: 0.9, size: 0.3 });
       spawnRing(worldPosition, hdr(BIO_GREEN, 0.9), 3.2, 0.36);
     } else {
       killCount += 1;
       if (specs) burstShards(worldPosition, specs, record.kind === 'brood' ? 12 : 9);
       // Parasite matter disperses violet; the strand it held lights back up.
-      burstMotes(worldPosition, hdr(accent, 0.95), record.kind === 'brood' ? 20 : 10, 11, { life: 1.2, size: 0.3 });
-      burstMotes(worldPosition, hdr(BIO_GOLD, 1.0), 6, 6, { life: 1.5, size: 0.22, buoyancy: 2.0 });
+      burstMotes(worldPosition, hdr(accent, 0.95), record.kind === 'brood' ? 12 : 6, 11, { life: 1.2, size: 0.38 });
+      burstMotes(worldPosition, hdr(BIO_GOLD, 1.0), 4, 6, { life: 1.5, size: 0.28, buoyancy: 2.0 });
       spawnRing(worldPosition, hdr(BIO_GREEN, 0.9), record.kind === 'brood' ? 8 : 4.6, 0.45);
       spawnGlint(worldPosition, hdr(LUMEN, 1.3), 1.3, 0.16);
       environment?.flareNear(worldPosition, record.kind === 'brood' ? 1.2 : 0.55);
@@ -498,7 +498,7 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
   // and the final shot — and violet closes in with hull damage.
   causticTimeUniform.value = ctx.elapsed * 0.85;
   const clarity = ctx.running ? Math.max(bump(runTime, OPEN_WATER_TIME, DEEP_TIME), finale) : 0.4;
-  causticUniform.value = 0.22 + clarity * 0.48 + beatEnergy * 0.05;
+  causticUniform.value = 0.1 + clarity * 0.22 + beatEnergy * 0.03;
   revivalUniform.value = revival;
   infestUniform.value = Math.max(
     infestUniform.value - dt * 1.9,
@@ -554,10 +554,16 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
 
 // ---- camera ----------------------------------------------------------------
 
-const lookDummy = new Object3D();
+// A camera, not a plain Object3D: three's lookAt points +Z at the target for
+// ordinary objects and -Z for cameras, and we want the camera convention.
+const lookDummy = new PerspectiveCamera();
 const bellLookPoint = BELL_CENTER.clone().setY(BELL_CENTER.y - 46);
 // A three-quarter vantage on the whole animal, for the final pull-back.
-const codaVantage = BELL_CENTER.clone().add(new Vector3(0.62, -0.31, 0.72).normalize().multiplyScalar(332));
+const codaVantage = BELL_CENTER.clone().add(new Vector3(0.62, -0.34, 0.7).normalize().multiplyScalar(300));
+// The reveal owns a hole punched in the spawn timeline: three seconds where
+// nothing is shootable, so the camera can hand the frame to the animal.
+const REVEAL_FROM = OPEN_WATER_TIME + STRANDLINE_TIME.beats(1.6);
+const REVEAL_TO = OPEN_WATER_TIME + STRANDLINE_TIME.beats(6.6);
 
 export function updateCameraEffects(dt: number, ctx: CameraEffectsContext) {
   const camera = ctx.camera;
@@ -566,12 +572,12 @@ export function updateCameraEffects(dt: number, ctx: CameraEffectsContext) {
   // Open water: the forest falls away and the level shows you the animal. The
   // look bias is gentle and eases out at both ends, so aiming stays the
   // player's — it biases the frame rather than taking it.
-  const reveal = bump(ctx.runTime, OPEN_WATER_TIME, DEEP_TIME);
+  const reveal = bump(ctx.runTime, REVEAL_FROM, REVEAL_TO);
   if (reveal > 0.001 && finale <= 0.001) {
     lookDummy.position.copy(camera.position);
     lookDummy.up.set(0, 1, 0);
     lookDummy.lookAt(bellLookPoint);
-    camera.quaternion.slerp(lookDummy.quaternion, reveal * 0.46);
+    camera.quaternion.slerp(lookDummy.quaternion, reveal * 0.9);
   }
 
   // A slow lean, the way a swimmer holds a turn.

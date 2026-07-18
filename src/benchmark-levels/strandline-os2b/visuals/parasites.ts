@@ -97,7 +97,7 @@ export function createClingMesh() {
   group.userData.core = core;
 
   group.userData.lockRingScale = 1.05;
-  return finish(group, parts, radialShards(7, PARASITE_VIOLET, 0.34, 0.6), PARASITE_VIOLET);
+  return finish(group, parts, radialShards(5, PARASITE_VIOLET, 0.4, 0.6), PARASITE_VIOLET);
 }
 
 /** Swarmer: a spined burr trailing a whip. It reads as motion at any distance. */
@@ -142,7 +142,7 @@ export function createSwarmerMesh() {
   for (const geometry of tail) geometry.dispose();
 
   group.userData.lockRingScale = 0.95;
-  return finish(group, parts, radialShards(6, PARASITE_HOT, 0.28), PARASITE_HOT);
+  return finish(group, parts, radialShards(4, PARASITE_HOT, 0.34), PARASITE_HOT);
 }
 
 /** Borer: a barbed drill screwed into a strand behind a flared collar. */
@@ -191,7 +191,7 @@ export function createBorerMesh() {
   group.userData.muzzle = muzzle;
 
   group.userData.lockRingScale = 1.5;
-  return finish(group, parts, radialShards(9, PARASITE_VIOLET, 0.4), PARASITE_VIOLET);
+  return finish(group, parts, radialShards(6, PARASITE_VIOLET, 0.48), PARASITE_VIOLET);
 }
 
 /** Spore: the borer's homing shot — a spiked seed with a violet wake. */
@@ -249,7 +249,7 @@ export function createBroodMesh() {
   for (const geometry of filaments) geometry.dispose();
 
   group.userData.lockRingScale = 1.4;
-  return finish(group, parts, radialShards(10, PARASITE_HOT, 0.42), PARASITE_HOT);
+  return finish(group, parts, radialShards(7, PARASITE_HOT, 0.5), PARASITE_HOT);
 }
 
 /**
@@ -310,8 +310,8 @@ export function createParentMesh() {
   group.userData.lockRingScale = 3.4;
 
   const shards = [
-    ...radialShards(12, PARASITE_VIOLET, 0.9),
-    ...radialShards(8, PARASITE_HOT, 0.6, 0.4),
+    ...radialShards(9, PARASITE_VIOLET, 1.05),
+    ...radialShards(6, PARASITE_HOT, 0.7, 0.4),
   ];
   return finish(group, parts, shards, PARASITE_HOT);
 }

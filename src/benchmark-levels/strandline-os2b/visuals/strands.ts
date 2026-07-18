@@ -64,7 +64,7 @@ export function createStrand(rng: Rng): StrandBuild {
   // The core is additive rather than solid: a tentacle is translucent tissue
   // full of light, so the water and anything behind it shows through. It also
   // means the forest never hides a target you are trying to sweep across.
-  const core = createAdditiveBasicMaterial({ color: hdr(BIO_GREEN, 0.55), opacity: 0.78 });
+  const core = createAdditiveBasicMaterial({ color: hdr(BIO_GREEN, 0.5), opacity: 0.62 });
   const coreGeometry = bendGeometry(
     new CylinderGeometry(topRadius, topRadius * 0.16, HEIGHT, 5, 18, true),
     phase,
@@ -73,7 +73,7 @@ export function createStrand(rng: Rng): StrandBuild {
   group.add(new Mesh(coreGeometry, core));
 
   // A wider additive sleeve is the bioluminescence bleeding into the water.
-  const sleeve = createAdditiveBasicMaterial({ color: hdr(BIO_GREEN, 0.34), opacity: 0.4 });
+  const sleeve = createAdditiveBasicMaterial({ color: hdr(BIO_GREEN, 0.3), opacity: 0.28 });
   const sleeveGeometry = bendGeometry(
     new CylinderGeometry(topRadius * 2.6, topRadius * 0.5, HEIGHT, 5, 18, true),
     phase,

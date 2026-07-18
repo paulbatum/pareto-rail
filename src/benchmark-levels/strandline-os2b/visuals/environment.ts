@@ -73,8 +73,8 @@ export type Environment = {
   dispose(): void;
 };
 
-const STRAND_COUNT = 30;
-const SHAFT_COUNT = 12;
+const STRAND_COUNT = 22;
+const SHAFT_COUNT = 7;
 const SNOW_COUNT = 620;
 const SNOW_BOX = 46;
 
@@ -129,7 +129,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
       strandEntries.push({ materials: build.materials, litBase: build.litBase, flare: 0, group: build.group });
       return build.group;
     },
-    window: { behind: 90, ahead: 320 },
+    window: { behind: 110, ahead: 300 },
     onUpdate: (item, dt) => {
       const group = item.object as Group;
       const sway = (group.userData.sway as number) ?? 0;
@@ -233,7 +233,7 @@ function createWaterDome() {
   const geometry = new SphereGeometry(430, 28, 20);
   const colors = new Float32Array(geometry.attributes.position.count * 3);
   const position = geometry.attributes.position;
-  const top = SUNLIT_WATER.clone().multiplyScalar(1.5);
+  const top = SUNLIT_WATER.clone().multiplyScalar(1.05);
   const middle = MID_WATER.clone();
   const bottom = ABYSS.clone();
   const scratch = new Color();
@@ -269,11 +269,11 @@ function createMarineSnow() {
   }
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
   const material = new PointsMaterial({
-    color: hdr(SUNSHAFT, 0.62),
-    size: 0.36,
+    color: hdr(SUNSHAFT, 0.5),
+    size: 0.3,
     sizeAttenuation: true,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.3,
     blending: AdditiveBlending,
     depthWrite: false,
     fog: true,
@@ -295,7 +295,7 @@ function createMarineSnow() {
       }
     }
     geometry.attributes.position.needsUpdate = true;
-    material.opacity = 0.4 + beatEnergy * 0.16;
+    material.opacity = 0.26 + beatEnergy * 0.1;
   }
 
   return { points, update };
@@ -308,12 +308,14 @@ function createAnimal() {
 
   // The bell: a translucent dome graded from a lit crest to a dark margin,
   // wrapped in the radial canal structure that makes it read as an animal.
-  const domeGeometry = new SphereGeometry(BELL_RADIUS, 44, 26, 0, Math.PI * 2, 0, Math.PI * 0.56);
+  const domeGeometry = new SphereGeometry(BELL_RADIUS, 44, 26, 0, Math.PI * 2, 0, Math.PI * 0.52);
   const domeColors = new Float32Array(domeGeometry.attributes.position.count * 3);
   const domePosition = domeGeometry.attributes.position;
-  const crest = BELL_RIM.clone().multiplyScalar(0.72);
-  const flank = BELL_JADE.clone();
-  const margin = BELL_JADE.clone().multiplyScalar(0.22);
+  // The rail is always under the animal, so the margin is the lit edge and the
+  // crest is the dark mass of the bell above it.
+  const crest = BELL_JADE.clone().multiplyScalar(0.26);
+  const flank = BELL_JADE.clone().multiplyScalar(1.05);
+  const margin = BELL_RIM.clone().multiplyScalar(1.0);
   const scratch = new Color();
   for (let i = 0; i < domePosition.count; i += 1) {
     const t = MathUtils.clamp(domePosition.getY(i) / BELL_RADIUS, 0, 1);
@@ -327,7 +329,7 @@ function createAnimal() {
   const domeMaterial = new MeshBasicMaterial({
     vertexColors: true,
     transparent: true,
-    opacity: 0.86,
+    opacity: 0.9,
     side: DoubleSide,
     fog: false,
   });
@@ -340,7 +342,7 @@ function createAnimal() {
   canalMaterial.wireframe = true;
   canalMaterial.fog = false;
   const canals = new Mesh(
-    new SphereGeometry(BELL_RADIUS * 1.006, 22, 11, 0, Math.PI * 2, 0, Math.PI * 0.56),
+    new SphereGeometry(BELL_RADIUS * 1.006, 22, 11, 0, Math.PI * 2, 0, Math.PI * 0.52),
     canalMaterial,
   );
   canals.position.copy(BELL_CENTER);
@@ -350,7 +352,7 @@ function createAnimal() {
   const rimMaterial = createAdditiveBasicMaterial({ color: hdr(BELL_RIM, 0.85), opacity: 0.7, side: DoubleSide });
   rimMaterial.fog = false;
   const rim = new Mesh(new CylinderGeometry(BELL_RADIUS * 0.93, BELL_RADIUS * 0.97, 5.5, 60, 1, true), rimMaterial);
-  rim.position.copy(BELL_CENTER).y += BELL_RADIUS * Math.cos(Math.PI * 0.56);
+  rim.position.copy(BELL_CENTER).y += BELL_RADIUS * Math.cos(Math.PI * 0.52);
   group.add(rim);
 
   // Halo: the glow the bell pushes into the water around it.
@@ -379,16 +381,18 @@ function createAnimal() {
   for (const geometry of arms) geometry.dispose();
 
   // The crown: the thick knot of roots where every strand enters the bell.
-  const crownMaterial = createAdditiveBasicMaterial({ color: hdr(BIO_GOLD, 0.55), opacity: 0.75 });
+  const crownMaterial = createAdditiveBasicMaterial({ color: hdr(BIO_GOLD, 0.3), opacity: 0.3 });
   const roots: BufferGeometry[] = [];
-  for (let i = 0; i < 16; i += 1) {
-    const angle = (i / 16) * Math.PI * 2;
-    const spread = 16 + (i % 3) * 9;
-    roots.push(new CylinderGeometry(1.6, 5.2, 74, 4, 1, true).applyMatrix4(
+  // The roots run the whole way down from the bell's margin past the swim
+  // lane, so the parent fight happens inside the bundle rather than under it.
+  for (let i = 0; i < 18; i += 1) {
+    const angle = (i / 18) * Math.PI * 2;
+    const spread = 20 + (i % 3) * 11;
+    roots.push(new CylinderGeometry(3.4, 0.9, 300, 4, 1, true).applyMatrix4(
       new Matrix4()
-        .makeTranslation(Math.cos(angle) * spread, 34, Math.sin(angle) * spread)
-        .multiply(new Matrix4().makeRotationZ(Math.cos(angle) * 0.32))
-        .multiply(new Matrix4().makeRotationX(-Math.sin(angle) * 0.32)),
+        .makeTranslation(Math.cos(angle) * spread, 60, Math.sin(angle) * spread)
+        .multiply(new Matrix4().makeRotationZ(Math.cos(angle) * 0.16))
+        .multiply(new Matrix4().makeRotationX(-Math.sin(angle) * 0.16)),
     ));
   }
   const crown = new Mesh(mergeGeometries(roots), crownMaterial);
@@ -420,16 +424,16 @@ function createAnimal() {
     halo.lookAt(cameraPosition);
 
     const life = 0.42 + context.revival * 0.72;
-    domeMaterial.opacity = 0.86 * visibility;
-    canalMaterial.opacity = (0.18 + 0.3 * life + pulse * 0.08) * visibility;
+    domeMaterial.opacity = 0.9 * visibility;
+    canalMaterial.opacity = (0.3 + 0.34 * life + pulse * 0.1) * visibility;
     canalMaterial.color.copy(hdr(BIO_GREEN, 0.32 + life * 0.55));
-    rimMaterial.opacity = (0.4 + 0.42 * life) * visibility;
-    rimMaterial.color.copy(hdr(BELL_RIM, 0.5 + life * 0.7 + pulse * 0.12));
-    haloMaterial.opacity = (0.16 + 0.22 * life) * visibility;
+    rimMaterial.opacity = (0.34 + 0.3 * life) * visibility;
+    rimMaterial.color.copy(hdr(BELL_RIM, 0.4 + life * 0.5 + pulse * 0.1));
+    haloMaterial.opacity = (0.14 + 0.16 * life) * visibility;
     haloMaterial.color.copy(hdr(BELL_JADE, 0.35 + life * 0.4));
     armMaterial.opacity = (0.16 + 0.26 * life) * visibility;
-    crownMaterial.opacity = (0.35 + 0.5 * life) * visibility;
-    crownMaterial.color.copy(hdr(BIO_GOLD, 0.3 + life * 0.75));
+    crownMaterial.opacity = (0.14 + 0.2 * life) * visibility;
+    crownMaterial.color.copy(hdr(BIO_GOLD, 0.22 + life * 0.4));
   }
 
   return { group, update };
@@ -443,7 +447,7 @@ function createSunShaft(width: number, height: number) {
   const geometry = new PlaneGeometry(width, height, 4, 4);
   const position = geometry.attributes.position;
   const colors = new Float32Array(position.count * 3);
-  const tint = hdr(SUNSHAFT, 0.34);
+  const tint = hdr(SUNSHAFT, 0.15);
   for (let i = 0; i < position.count; i += 1) {
     const u = MathUtils.clamp(Math.abs(position.getX(i)) / (width * 0.5), 0, 1);
     const v = MathUtils.clamp(position.getY(i) / (height * 0.5) * 0.5 + 0.5, 0, 1);
@@ -453,7 +457,7 @@ function createSunShaft(width: number, height: number) {
     colors[i * 3 + 2] = tint.b * strength;
   }
   geometry.setAttribute('color', new BufferAttribute(colors, 3));
-  const material = createAdditiveBasicMaterial({ color: new Color(1, 1, 1), opacity: 0.5, side: DoubleSide });
+  const material = createAdditiveBasicMaterial({ color: new Color(1, 1, 1), opacity: 0.34, side: DoubleSide });
   material.vertexColors = true;
   const mesh = new Mesh(geometry, material);
   mesh.rotation.z = 0.06;

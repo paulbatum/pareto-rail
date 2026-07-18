@@ -170,8 +170,10 @@ function createStrandlineTimeline(parent: StrandlineParentRig): StrandlineSpawnE
     // --- Open water. The rail banks wide, the murk clears, and the animal is
     // there. Two sparse high formations keep the eye up on the bell.
     ...section(STRANDLINE_MARKERS.openWater,
-      clings(time.beats(1), 3.9, [[-13, 8], [-5, 11], [5, 11], [13, 8]], 0.68),
-      clings(time.beats(5), 3.8, [[-12, 6], [-2, 14], [12, 6]], 0.68),
+      // Cleared deliberately between beats 4 and 9.5: for three seconds there
+      // is nothing to shoot and the camera gives the frame to the animal.
+      clings(time.beats(-3), 2.9, [[-14, 7], [-5, 12], [6, 12], [14, 7]], 0.62),
+      clings(time.beats(6), 3.4, [[-13, 5], [-3, 15], [13, 5]], 0.68),
     ),
 
     // --- Deep. Back into the strands, and now they shoot back.

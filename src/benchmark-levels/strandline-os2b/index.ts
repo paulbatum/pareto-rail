@@ -44,7 +44,7 @@ export const strandlineOs2bLevel: LevelDefinition = {
     // and `radius` into the luminance threshold slot. The water sits well under
     // 0.4 luminance, so the effective threshold keeps bloom on the animal's
     // own light and off the fog.
-    bloom: { strength: 1.0, threshold: 0.42, radius: 0.5 },
+    bloom: { strength: 0.72, threshold: 0.4, radius: 0.55 },
     vignette: { inner: 0.3, outer: 1.08, strength: 0.7 },
     composeOutput: composeStrandlineOutput,
   },
