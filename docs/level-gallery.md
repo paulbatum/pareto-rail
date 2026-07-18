@@ -261,6 +261,33 @@ Built to the standing brief from the Broadside theme assignment. Verified headle
 
 ---
 
+# Broadside
+
+Sixty seconds across the middle of a fleet engagement. You are thrown off your own flagship's catapult into a battle already in progress — kilometre-long cruisers on both sides slugging it out in no formation, swarms knotted through the gaps between them, the whole thing backlit by a magenta-and-gold nebula so every hull in the frame is a silhouette rimmed in colored light. You fly the gaps: hard banks through the crossfire, a high-speed run down a friendly cruiser's flank as her broadside lights off overhead, then into the shadow under an enemy warship's belly where the battle goes quiet and you rake her turrets as you pass. The run carries you all the way across to the enemy flagship on the far side, and ends inside her.
+
+## Visual language
+The nebula is the only light source, so the two fleets read by color alone: yours ice-white with cyan engines and cyan gunfire, theirs obsidian streaked with molten orange, firing crimson. Hostiles are near-black bodies with thin molten rim strips along their leading edges and one small heat core — cut out of the background, with the light on the cut. Three silhouette families carry the whole vocabulary: swept darts, ring-winged corkscrews, and blocky hardware bolted to a hull. Every capital ship is a ribbon lofted along the flight path itself, so a hull is exactly as close as it was authored to be and the flagship's dorsal trench is guaranteed to contain the rail; a corridor table — the negative of those hulls — keeps every target out of the plating and in clear sky. The crossfire is hundreds of tracer rounds crossing the gaps at 400 units a second. Letters are your own fleet's signal boards: cyan light-cells on a dark plate with gold deck rails.
+
+## Musical language
+112 BPM, 28 bars, exactly 60.000 seconds, scored as space opera for a synthetic orchestra — timpani, contrabasses, four brass colors (horn, trombone, trumpet, tuba), strings bowed and spiccato, celesta and choir. D minor i–VI–III–VII throughout; the harmony leaves the minor mode exactly once, when the flagship breaks. The music plays the battle: the catapult is a trombone rip, the friendly cruiser's guns land on the downbeat of every bar of the flank run underneath the main theme, and her belly takes the whole arrangement away and leaves strings and a heartbeat. The player is the soloist — every kill plays the note the section's hidden melody lane holds at that grid step, tuned from the live chord, in that section's brass voice, in the register the arrangement deliberately leaves empty for it. Locks are a celesta figure climbing the pentatonic; the gun retunes with the progression; rounds into capital armour ring an anvil that grows with the damage already dealt.
+
+## Mechanical signature
+A four-point hull and a variable-speed rail running 30–45 units a second. Interceptor darts slash the full width of the frame, corsairs screw down the flight path, gunships and hull turrets telegraph interceptable crimson rounds that close at better than 40 u/s, and escort wings rush head-on and break hard. The level rule is its name: capital armour shrugs off anything under three locks, so generators and power cores need a real broadside — small targets in the same release still fire, so intercepting a round never costs you the shot. The flagship is two phases: five shield generators down her flank, each an armoured cowl over a coil, then a dive into her dorsal trench for three power cores. Cutting all five drops her shield on the spot; leave any standing and it falls anyway at bar 21, but the top two ranks are gated on the flagship actually breaking. Kill the last core and the camera swings back off the trench across the whole engagement as the score lands in D major.
+
+## What to read
+- `src/benchmark-levels/broadside-ob3c/timing.ts`
+- `src/benchmark-levels/broadside-ob3c/gameplay.ts`
+- `src/benchmark-levels/broadside-ob3c/audio.ts`
+- `src/benchmark-levels/broadside-ob3c/audio-voices.ts`
+- `src/benchmark-levels/broadside-ob3c/visuals/index.ts`
+- `src/benchmark-levels/broadside-ob3c/visuals/warships.ts`
+- `src/benchmark-levels/broadside-ob3c/visuals/environment.ts`
+
+## Status & notes
+Built to the standing brief from the Broadside theme assignment. Verified headless: typecheck, build, benchmark scope, and the full floor gate (simulation across all four policies, target occlusion, performance, audio configuration). Inspection markers: `gauntlet` (bar 3), `flank` (bar 8), `belly` (bar 12), `flagship` (bar 16), `fighters` (bar 21), `trench` (bar 24), `victory` (bar 27). WSL2 cannot render WebGPU, so the frame and the mix still need a human playtest. First things to check by eye and ear: whether the capital hulls read as vast and slow while the swarm reads as quick and small; whether the nebula backlight keeps every hull a legible silhouette with the bloom slider at zero; the drop into near-silence under the enemy warship's belly at bar 12 and the way it comes back; and whether the pull-out at bar 27 — camera swinging back past the breaking flagship as the harmony turns major — lands as the payoff it is written to be.
+
+---
+
 # Hull Run
 
 An exactly sixty-second strike along the skin of a capital ship: the horizon holds still while seams, ridges, hatches, and antenna masts tear past underneath. The vessel begins almost black, then alert lamps and defense batteries wake in a red-and-amber chain all the way to its bow.
