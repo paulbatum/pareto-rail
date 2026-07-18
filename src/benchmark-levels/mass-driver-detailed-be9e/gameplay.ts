@@ -34,6 +34,6 @@ export const massDriverDetailedBe9eGameplay: LockOnRunnerLevel<MassDriverDetaile
  scoreForKill:(_volley,enemy)=>enemy.kind==='interlock'?500:enemy.kind==='capacitor'?280:enemy.kind==='threader'?140:90,
  rankForRun:(score,kills,total)=>kills===total&&score>1800?'S':kills>=total*.8?'A':kills>=total*.55?'B':'C',
  detailsForRun:()=>['PAYLOAD SYSTEM: 3-HULL ORBITAL CHAMBER','ACCELERATOR GRID: 128 BPM / 32 BARS','INTERLOCK DEADLINE: BAR 28 — MUZZLE EXIT'],
- updateCameraEffects:({camera,runProgress,dt})=>{camera.fov=60+runProgress*8;camera.updateProjectionMatrix();}
+ updateCameraEffects:({camera,runProgress,dt})=>{camera.fov=60+runProgress*10;camera.rotation.z=Math.sin(runProgress*34)*.012*(1+runProgress*2);camera.position.x=Math.sin(runProgress*90)*.025*(1+runProgress*3);camera.updateProjectionMatrix();}
 
 };

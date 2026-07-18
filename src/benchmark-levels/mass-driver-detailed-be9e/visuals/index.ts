@@ -9,6 +9,7 @@ export function createEnvironment(scene:Scene){
  for(let i=0;i<64;i++){const z=-i*11-8;const ring=new Mesh(new TorusGeometry(11+(i%4===0?1:0),.045,6,48),mat(i<40?BLUE:i<112?VIOLET:WHITE));ring.position.z=z;ring.rotation.x=Math.PI/2;scene.add(ring);}
  const charge=new Mesh(new SphereGeometry(4,24,12),new MeshBasicMaterial({color:0x8f6cff,transparent:true,opacity:.08,depthWrite:false}));charge.position.z=-620;scene.add(charge);const beacon=new Mesh(new SphereGeometry(.5,12,8),mat(WHITE));beacon.position.set(0,3,-680);scene.add(beacon);
  for(const [x,y] of [[8,8],[-8,8],[8,-8],[-8,-8]]){const rail=new Mesh(new CylinderGeometry(.07,.07,620,6),mat(BLUE));rail.position.set(x,y,-300);rail.rotation.x=Math.PI/2;scene.add(rail);}
+ for(let i=0;i<32;i++){const rib=new Mesh(new BoxGeometry(.16,3.5,1.8),mat(GUN));rib.position.set(Math.cos(i*1.91)*10.8,Math.sin(i*1.91)*10.8,-i*18-20);rib.lookAt(0,0,rib.position.z-1);scene.add(rib);}
  for(let i=0;i<90;i++){const s=new Mesh(new BoxGeometry(.025,.025,MathUtils(i)*2+1),mat(i%3?BLUE:VIOLET));s.position.set(((i*37)%30)-15,((i*19)%18)-9,-i*8-15);scene.add(s);}
 }
 function MathUtils(i:number){return (i*13%17)/17;}
