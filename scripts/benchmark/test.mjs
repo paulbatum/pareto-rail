@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
-import { assertSiblingBaseRendering, dispositionFor, firstLevelOneHeading, manifestNeedsRefresh, reusableGateRecord, validatePlan, validateRunDefinition } from './run.mjs';
+import { assertSiblingSharedInputs, dispositionFor, firstLevelOneHeading, manifestNeedsRefresh, reusableGateRecord, validatePlan, validateRunDefinition } from './run.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
@@ -129,13 +129,22 @@ try {
   await fs.mkdir(sibling, { recursive: true });
   await fs.writeFile(path.join(sibling, 'run-definition.json'), JSON.stringify({ benchmarkVersion: 'v2', themeId: 'cinder', runId: 'run-sibling' }));
   await fs.writeFile(path.join(sibling, 'rendered-assignment.md'), 'shared base');
-  await fs.writeFile(path.join(sibling, 'rendered-assignment.json'), JSON.stringify({ baseRendering: { sha256: sha256('different base') } }));
+  const sharedInputs = { templateSha256: sha256('template'), themeSha256: sha256('theme') };
+  // Divergent theme text is a misrendered assignment and must be caught before an expensive launch.
+  await fs.writeFile(path.join(sibling, 'rendered-assignment.json'), JSON.stringify({ template: { sha256: sha256('template') }, theme: { sha256: sha256('other theme') } }));
   await assert.rejects(
-    () => assertSiblingBaseRendering({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sha256('shared base')),
-    /base differs from sibling/,
+    () => assertSiblingSharedInputs({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sharedInputs),
+    /Theme text differs from sibling/,
   );
-  await fs.writeFile(path.join(sibling, 'rendered-assignment.json'), JSON.stringify({ baseRendering: { sha256: sha256('shared base') } }));
-  await assert.doesNotReject(() => assertSiblingBaseRendering({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sha256('shared base')));
+  // A divergent template is likewise a setup error worth catching cheaply.
+  await fs.writeFile(path.join(sibling, 'rendered-assignment.json'), JSON.stringify({ template: { sha256: sha256('other template') }, theme: { sha256: sha256('theme') } }));
+  await assert.rejects(
+    () => assertSiblingSharedInputs({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sharedInputs),
+    /Assignment template differs from sibling/,
+  );
+  // Matching shared inputs pass even though the level id and budget flag (folded into no comparison here) differ per entrant.
+  await fs.writeFile(path.join(sibling, 'rendered-assignment.json'), JSON.stringify({ template: { sha256: sha256('template') }, theme: { sha256: sha256('theme') } }));
+  await assert.doesNotReject(() => assertSiblingSharedInputs({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sharedInputs));
 } finally {
   await fs.rm(renderingRuns, { recursive: true, force: true });
 }

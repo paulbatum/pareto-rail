@@ -517,16 +517,17 @@ async function prepareInputs(definition, materialsCommit, outputDirectory) {
   }
 
   await Promise.all([fs.writeFile(templatePath, template), fs.writeFile(themePath, theme), fs.writeFile(renderedPath, rendered)]);
-  const baseRenderingSha256 = sha256(baseRendering);
+  const templateSha256 = sha256(template);
+  const themeSha256 = sha256(theme);
   await writeJson(path.join(outputDirectory, 'rendered-assignment.json'), {
-    template: { path: ASSIGNMENT_TEMPLATE_PATH, sha256: sha256(template) },
-    theme: { path: definition.themePath, sha256: sha256(theme) },
+    template: { path: ASSIGNMENT_TEMPLATE_PATH, sha256: templateSha256 },
+    theme: { path: definition.themePath, sha256: themeSha256 },
     recipe: { path: definition.recipePath, sha256: sha256(recipe) },
     rendering: { path: renderedPath, sha256: sha256(rendered) },
-    baseRendering: { sha256: baseRenderingSha256 },
+    baseRendering: { sha256: sha256(baseRendering) },
     ...(delegationMeta ? { delegation: delegationMeta } : {}),
   });
-  await assertSiblingBaseRendering(definition, outputDirectory, baseRenderingSha256);
+  await assertSiblingSharedInputs(definition, outputDirectory, { templateSha256, themeSha256 });
   return { renderedPath };
 }
 
@@ -538,7 +539,12 @@ function conventionalRunPaths(runId) {
   };
 }
 
-export async function assertSiblingBaseRendering(definition, outputDirectory, baseRenderingSha256) {
+// Cheap pre-launch waste-guard: entrants on one theme must share the same theme text and assignment
+// template, so a misrendered prompt (wrong path, stale materialsCommit) is caught before an expensive
+// stage launches. Only the genuinely-shared inputs are compared — the per-run level id and the budget
+// flag legitimately differ between siblings (unique opaque id; -high vs -b20 interventions), so folding
+// them into the check would falsely block the roster it is meant to protect.
+export async function assertSiblingSharedInputs(definition, outputDirectory, { templateSha256, themeSha256 }) {
   let entries;
   try { entries = await fs.readdir(path.dirname(outputDirectory), { withFileTypes: true }); } catch (error) { if (error?.code === 'ENOENT') return; throw error; }
   for (const entry of entries) {
@@ -548,8 +554,9 @@ export async function assertSiblingBaseRendering(definition, outputDirectory, ba
     if (sibling?.benchmarkVersion !== definition.benchmarkVersion || sibling?.themeId !== definition.themeId) continue;
     if (!await pathExists(path.join(siblingDirectory, 'rendered-assignment.md'))) continue;
     const metadata = await optionalJson(path.join(siblingDirectory, 'rendered-assignment.json'));
-    if (!metadata?.baseRendering?.sha256) continue;
-    if (metadata.baseRendering.sha256 !== baseRenderingSha256) fail(`Rendered assignment base differs from sibling run ${sibling.runId ?? entry.name}.`);
+    if (!metadata?.theme?.sha256 || !metadata?.template?.sha256) continue;
+    if (metadata.theme.sha256 !== themeSha256) fail(`Theme text differs from sibling run ${sibling.runId ?? entry.name} on the same theme; entrants on one theme must share identical theme inputs.`);
+    if (metadata.template.sha256 !== templateSha256) fail(`Assignment template differs from sibling run ${sibling.runId ?? entry.name} on the same theme; entrants on one theme must share the same template.`);
   }
 }
 
