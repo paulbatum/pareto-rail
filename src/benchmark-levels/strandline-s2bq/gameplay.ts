@@ -72,7 +72,7 @@ export function createStrandlineRail() {
 
 // The bell: one world-space anchor shared by gameplay, visuals, and the
 // finale camera. The crown (where the Matriarch grips) sits on its underside.
-export const BELL_CENTER = new Vector3(-6, 96, -470);
+export const BELL_CENTER = new Vector3(-6, 42, -462);
 export const BELL_RADIUS = 85;
 
 // ---- speed profile → rail easing -------------------------------------------

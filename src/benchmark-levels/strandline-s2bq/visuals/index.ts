@@ -607,7 +607,7 @@ const BELL_FOCUS = new Vector3();
 function bellFocus() {
   // Aim between the bell and its crown so the dome and the strand roots both
   // sit in frame during the pull-away.
-  return BELL_FOCUS.copy(BELL_CENTER).add(new Vector3(0, -46, 0));
+  return BELL_FOCUS.copy(BELL_CENTER).add(new Vector3(0, -14, 0));
 }
 
 function updateEnemyTint(record: EnemyRecord, ctx: VisualContext) {
