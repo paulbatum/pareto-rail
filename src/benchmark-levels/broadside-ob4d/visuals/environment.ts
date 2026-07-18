@@ -177,6 +177,14 @@ function framesBetween(fromTime: number, toTime: number, count: number): HullFra
   return frames;
 }
 
+/** Names every mesh in a set piece so occlusion reports identify it by name. */
+function label(object: Group, name: string) {
+  object.traverse((child) => {
+    child.name = name;
+  });
+  return object;
+}
+
 function seatAt(time: number, right: number, up: number, forward = 0) {
   const frame = sampleRailFrame(RAIL, MathUtils.clamp(railU(time), 0, 1));
   return {
@@ -223,9 +231,9 @@ export function createEnvironmentInternal(scene: Scene): Environment {
   for (let i = 0; i < 22; i += 1) {
     const ally = i % 2 === 0;
     const time = (i / 21) * bar(31);
-    const side = (ally ? -1 : 1) * (240 + distantRng() * 420);
-    const up = (distantRng() - 0.5) * 300;
-    const forward = (distantRng() - 0.5) * 700;
+    const side = (ally ? -1 : 1) * (420 + distantRng() * 520);
+    const up = (distantRng() - 0.5) * 340;
+    const forward = (distantRng() - 0.5) * 380;
     const { position, frame } = seatAt(time, side, up, forward);
     const scale = 0.7 + distantRng() * 1.1;
     const ship = createCapitalShip({
@@ -263,7 +271,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
       });
     }
   }
-  root.add(distantFleet);
+  root.add(label(distantFleet, 'distant-fleet'));
 
   // 4: the ships you fly against.
   const heroes = new Group();
@@ -288,7 +296,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
     const { position, frame } = seatAt(0, 0, -38, -244);
     ownFlagship.group.position.copy(position);
     ownFlagship.group.lookAt(position.clone().addScaledVector(frame.tangent, 100));
-    heroes.add(ownFlagship.group);
+    heroes.add(label(ownFlagship.group, 'own-flagship'));
   }
 
   // The friendly cruiser you run alongside. Its starboard broadside points
@@ -308,13 +316,13 @@ export function createEnvironmentInternal(scene: Scene): Environment {
     batterySide: 1,
     seed: 3301,
   });
-  heroes.add(cruiser.group);
+  heroes.add(label(cruiser.group, 'cruiser'));
 
   // The enemy warship whose belly you rake. Directly overhead and close, so
   // its keel plating is the ceiling of the raking act.
   const warship = createHullSurface(framesBetween(bar(14.6), bar(20.4), 40), {
     offsetX: 4,
-    offsetY: 42,
+    offsetY: 50,
     halfWidth: 36,
     halfHeight: 22,
     hullColor: FOE_HULL,
@@ -326,15 +334,19 @@ export function createEnvironmentInternal(scene: Scene): Environment {
     seams: true,
     seed: 5501,
   });
-  heroes.add(warship.group);
+  heroes.add(label(warship.group, 'warship'));
 
   // The enemy flagship. You strafe its dorsal surface for the shield pass,
   // climb over its bow shoulder, and dive into the canyon cut down its spine.
-  const flagshipDeck = createHullSurface(framesBetween(bar(20.2), bar(27.6), 52), {
+  const flagshipDeck = createHullSurface(framesBetween(bar(20.2), bar(27.0), 50), {
     offsetX: 0,
-    offsetY: -34,
+    offsetY: -44,
     halfWidth: 62,
     halfHeight: 23,
+    // Towers stay outboard of x=±34 and stop short of head height, so the lane
+    // you strafe stays clear and the emitters mounted in it stay visible.
+    towerKeepOut: 34,
+    towerMaxHeight: 1.15,
     hullColor: FOE_HULL,
     plateColor: FOE_PLATE,
     rimKey: NEBULA_MAGENTA,
@@ -344,14 +356,14 @@ export function createEnvironmentInternal(scene: Scene): Environment {
     seams: true,
     seed: 7701,
   });
-  heroes.add(flagshipDeck.group);
+  heroes.add(label(flagshipDeck.group, 'flagship-deck'));
 
   const trench = createTrench(framesBetween(bar(27.7), bar(32.6), 56), {
     offsetX: 0,
     offsetY: 0,
     // The mouth is wide and the throat is tight: the narrowing is the dive.
-    halfWidth: (t) => MathUtils.lerp(74, 23, MathUtils.clamp(t / 0.28, 0, 1) ** 0.7),
-    wallHeight: 92,
+    halfWidth: (t) => MathUtils.lerp(80, 30, MathUtils.clamp(t / 0.28, 0, 1) ** 0.7),
+    wallHeight: 78,
     floorDepth: 22,
     hullColor: FOE_HULL,
     plateColor: FOE_PLATE,
@@ -361,7 +373,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
     ribEvery: 4,
     seed: 9901,
   });
-  heroes.add(trench.group);
+  heroes.add(label(trench.group, 'trench'));
   root.add(heroes);
 
   // 5: debris, recycled down the rail the whole way.
@@ -375,7 +387,11 @@ export function createEnvironmentInternal(scene: Scene): Environment {
     alignToRail: false,
     place: (_index, rng) => ({
       u: rng(),
-      offset: new Vector3((rng() - 0.5) * 210, (rng() - 0.5) * 150, 0),
+      offset: new Vector3(
+        (rng() < 0.5 ? -1 : 1) * (70 + rng() * 150),
+        (rng() < 0.5 ? -1 : 1) * (45 + rng() * 110),
+        0,
+      ),
     }),
     make: (_index, rng) => {
       const group = new Group();
@@ -398,7 +414,7 @@ export function createEnvironmentInternal(scene: Scene): Environment {
       item.object.rotation.z += spin.z * dt;
     },
   });
-  root.add(debris.group);
+  root.add(label(debris.group, 'debris'));
 
   // ---- crossfire ---------------------------------------------------------------
   // Rounds crossing the gap between the fleets, continuously. This is the

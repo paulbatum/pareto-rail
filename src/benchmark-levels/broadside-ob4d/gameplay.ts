@@ -31,7 +31,7 @@ import type { BroadsideEnemyKind, BroadsideSpawnData, BroadsideSpawnEntry, Broad
 export { BROADSIDE_BPM, BROADSIDE_DURATION, bar } from './timing';
 export { CORE_COUNT, GENERATOR_COUNT, SHIELD_COLLAPSE_AT } from './flagship';
 
-export const BROADSIDE_PLAYER_HEALTH = 4;
+export const BROADSIDE_PLAYER_HEALTH = 5;
 
 // ---- the rail ------------------------------------------------------------------
 
@@ -165,7 +165,7 @@ const batteries = (
   time: number,
   lead: number,
   mounts: Array<[x: number, y: number]>,
-  interval = 3.3,
+  interval = 4.2,
 ): BroadsideSpawnEntry[] =>
   mounts.map(([x, y], index) => ({
     time: time + index * 0.14,
@@ -285,10 +285,10 @@ function buildTimeline(flagshipEntries: BroadsideSpawnEntry[]): BroadsideSpawnEn
       { fromX: -32, fromY: -4, toX: 32, toY: 20, arc: 2.2, helix: 1.2, delay: 0.54, crossTime: 2.1 },
     ]),
     ...darts(bar(14.1), 2.9, [
-      { fromX: -8, fromY: 24, toX: -26, toY: -14, helix: 2.6, crossTime: 2.1 },
-      { fromX: 8, fromY: 24, toX: 26, toY: -14, helix: 2.6, delay: 0.13, crossTime: 2.1 },
-      { fromX: -24, fromY: -16, toX: -6, toY: 22, helix: 2.6, delay: 0.26, crossTime: 2.1 },
-      { fromX: 24, fromY: -16, toX: 6, toY: 22, helix: 2.6, delay: 0.39, crossTime: 2.1 },
+      { fromX: -8, fromY: 20, toX: -26, toY: -14, helix: 2.6, crossTime: 2.1 },
+      { fromX: 8, fromY: 20, toX: 26, toY: -14, helix: 2.6, delay: 0.13, crossTime: 2.1 },
+      { fromX: -24, fromY: -16, toX: -6, toY: 19, helix: 2.6, delay: 0.26, crossTime: 2.1 },
+      { fromX: 24, fromY: -16, toX: 6, toY: 19, helix: 2.6, delay: 0.39, crossTime: 2.1 },
     ]),
     ...wasps(bar(14.7), 2.9, [{ x: -16, y: -2, radius: 5.5 }, { x: 16, y: 10, radius: 5.5 }]),
 
@@ -313,7 +313,7 @@ function buildTimeline(flagshipEntries: BroadsideSpawnEntry[]): BroadsideSpawnEn
       { fromX: -32, fromY: 19, toX: 32, toY: 19, arc: 2.0, delay: 0.6, crossTime: 2.2 },
     ]),
     ...batteries(bar(19.1), 4.0, [[-17, 9], [17, 17]]),
-    ...wasps(bar(19.5), 3.0, [{ x: -20, y: -8 }, { x: 20, y: -2 }]),
+    ...wasps(bar(19.5), 3.0, [{ x: -20, y: -2 }, { x: 20, y: 4 }]),
 
     // (bars 20–21: the eye of the battle. Nothing spawns; the silence is the cue.)
 
@@ -338,34 +338,37 @@ function buildTimeline(flagshipEntries: BroadsideSpawnEntry[]): BroadsideSpawnEn
     ...wasps(bar(25.4), 3.2, [{ x: -24, y: -4, driftX: 4 }, { x: -10, y: 16 }, { x: 6, y: -16 }]),
 
     // --- Breach. The hangars empty. Formation arrivals that fan to full width.
-    ...escorts(bar(26), 3.4, [[-26, 8], [-14, -12], [-2, 18], [10, -16], [22, 6], [28, -4]], 0, 4),
+    ...escorts(bar(26), 3.0, [[-26, 10], [-14, -4], [-2, 18], [10, -6], [22, 8], [28, 2]], 0, 4),
     ...darts(bar(26.9), 2.9, [
       { fromX: -32, fromY: -14, toX: 32, toY: 8, arc: 3.4, crossTime: 2.1 },
       { fromX: 32, fromY: 14, toX: -32, toY: -8, arc: 2.6, delay: 0.16, crossTime: 2.1 },
       { fromX: -32, fromY: 20, toX: 32, toY: -18, arc: 2.0, delay: 0.32, crossTime: 2.1 },
       { fromX: 32, fromY: -20, toX: -32, toY: 18, arc: 3.0, delay: 0.48, crossTime: 2.1 },
     ]),
-    ...escorts(bar(27.3), 3.0, [[-20, -10], [-7, 14], [7, -14], [20, 10]], 0, 0),
+    ...escorts(bar(27.1), 2.6, [[-20, -2], [-7, 14], [7, -4], [20, 12]], 0, 2),
 
     // --- Trench. Tight, fast, and walled: everything lives inside ±20.
     ...flagshipEntries.filter((entry) => entry.kind === 'core'),
-    ...batteries(bar(28.6), 2.6, [[-19, 13], [19, -13]], 2.6),
+    ...batteries(bar(28.6), 2.6, [[-15, 12], [15, -12]], 3.4),
     ...darts(bar(29.0), 2.2, [
-      { fromX: -19, fromY: -14, toX: 19, toY: 14, helix: 2.2, crossTime: 1.6 },
-      { fromX: 19, fromY: -14, toX: -19, toY: 14, helix: 2.2, delay: 0.12, crossTime: 1.6 },
+      { fromX: -16, fromY: -13, toX: 16, toY: 13, helix: 2.2, crossTime: 1.6 },
+      { fromX: 16, fromY: -13, toX: -16, toY: 13, helix: 2.2, delay: 0.12, crossTime: 1.6 },
       { fromX: 0, fromY: 18, toX: 0, toY: -18, helix: 3.4, delay: 0.24, crossTime: 1.6 },
     ]),
-    ...batteries(bar(29.8), 2.5, [[-20, -12], [20, 12]], 2.6),
+    ...batteries(bar(29.8), 2.5, [[-16, -11], [16, 11]], 3.4),
     ...darts(bar(30.4), 2.2, [
-      { fromX: -20, fromY: 15, toX: 20, toY: -15, helix: 2.4, crossTime: 1.6 },
-      { fromX: 20, fromY: 15, toX: -20, toY: -15, helix: 2.4, delay: 0.11, crossTime: 1.6 },
-      { fromX: -20, fromY: -4, toX: 20, toY: 4, arc: 2.4, delay: 0.22, crossTime: 1.6 },
-      { fromX: 20, fromY: 4, toX: -20, toY: -4, arc: 2.4, delay: 0.33, crossTime: 1.6 },
+      { fromX: -16, fromY: 13, toX: 16, toY: -13, helix: 2.4, crossTime: 1.6 },
+      { fromX: 16, fromY: 13, toX: -16, toY: -13, helix: 2.4, delay: 0.11, crossTime: 1.6 },
+      { fromX: -16, fromY: -4, toX: 16, toY: 4, arc: 2.4, delay: 0.22, crossTime: 1.6 },
+      { fromX: 16, fromY: 4, toX: -16, toY: -4, arc: 2.4, delay: 0.33, crossTime: 1.6 },
     ]),
-    ...batteries(bar(30.9), 2.4, [[-18, 6], [18, -6]], 2.4),
-    ...darts(bar(31.4), 2.0, [
-      { fromX: -18, fromY: 16, toX: 18, toY: 16, arc: 2.0, crossTime: 1.4 },
-      { fromX: 18, fromY: -16, toX: -18, toY: -16, arc: 2.0, delay: 0.1, crossTime: 1.4 },
+    ...batteries(bar(30.9), 2.4, [[-15, 6], [15, -6]], 3.2),
+    // The last pair of the run, kept tight to the centreline: the rail is
+    // pitching up out of the canyon here and a wide crossing would fly behind
+    // the trench lip on its way past.
+    ...darts(bar(31.35), 1.5, [
+      { fromX: -9, fromY: 7, toX: 9, toY: 7, arc: 1.2, crossTime: 1.15 },
+      { fromX: 9, fromY: -7, toX: -9, toY: -7, arc: 1.2, delay: 0.1, crossTime: 1.15 },
     ]),
 
     // (bars 32–33: the pull-out. Nothing spawns; the battle is the picture.)
@@ -568,7 +571,7 @@ export function createBroadsideGameplay(bus: EventBus): LockOnRunnerLevel<Broads
       // sized for slower levels — let shells slip past before the impact test
       // ever samples them. A wider catch radius and a longer brake keep the
       // last moment of an incoming round readable at this speed.
-      config: { hitDistance: 3.4, impactBrake: 0.42, damageDistance: 1.1 },
+      config: { hitDistance: 2.9, impactBrake: 0.45, damageDistance: 1.0 },
     });
     if (impact.phase === 'braking') {
       enemy.mesh.position.copy(data.position);
@@ -581,14 +584,16 @@ export function createBroadsideGameplay(bus: EventBus): LockOnRunnerLevel<Broads
       return false;
     }
 
-    // Shells have to out-close a camera that is itself doing 40–80 units a
-    // second, so they are genuinely fast — but they accelerate into it rather
-    // than starting there, which is what makes them readable as a threat.
+    // A shell has to close on a camera already doing 40-80 units a second, so
+    // it has to be faster than one in a slower level or it simply never
+    // arrives. But it must not be so fast that it cannot be shot down: the
+    // whole point of a lockable hazard is that answering it is a decision.
+    // These numbers give roughly two seconds of visible approach.
     steerHomingShot(data.position, data.velocity, hostileShotAimPoint(camera, data.position), age, dt, {
-      baseSpeed: 18,
-      maxSpeed: 58,
-      accel: 22,
-      turnRate: 3.4,
+      baseSpeed: 11,
+      maxSpeed: 34,
+      accel: 9,
+      turnRate: 3.0,
     });
     enemy.mesh.position.copy(data.position);
     if (data.velocity.lengthSq() > 0.0001) enemy.mesh.lookAt(data.position.clone().add(data.velocity));

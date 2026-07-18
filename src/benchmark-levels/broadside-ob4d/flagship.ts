@@ -34,8 +34,8 @@ const EXPOSED_FROM = 0.375;
 export const DOME_PHASES = [0, 0.25, 0.5] as const;
 /** Sixteenth-note steps within each bar where a dome drops. */
 export const DOME_OPEN_STEPS = [6, 2, 14] as const;
-const GENERATOR_LEAD = 4.2;
-const CORE_LEAD = 2.8;
+const GENERATOR_LEAD = 4.8;
+const CORE_LEAD = 3.4;
 
 // You strafe the flagship's dorsal surface, so emitters mount two ways: low on
 // the open deck, and high on the flanks of its superstructure towers. Pairs
@@ -56,10 +56,10 @@ const GENERATOR_MOUNTS: Array<{ time: number; x: number; y: number; phase: numbe
 // left. Each is two armour stages of two locks, so the deadline is real without
 // being unreachable: a clean run finishes the flagship with time to watch it go.
 const CORE_MOUNTS: Array<{ time: number; x: number; y: number }> = [
-  { time: bar(28.2), x: -15, y: -9 },
-  { time: bar(29.1), x: 16, y: 8 },
-  { time: bar(29.9), x: -13, y: 12 },
-  { time: bar(30.7), x: 12, y: -11 },
+  { time: bar(28.2), x: -12, y: -8 },
+  { time: bar(29.1), x: 13, y: 7 },
+  { time: bar(29.9), x: -11, y: 10 },
+  { time: bar(30.4), x: 10, y: -9 },
 ];
 
 export function createFlagshipEntries(): {
@@ -78,8 +78,10 @@ export function createFlagshipEntries(): {
   const cores: BroadsideSpawnEntry[] = CORE_MOUNTS.map((mount, index) => ({
     time: mount.time,
     kind: 'core',
-    // Armour casing, then the coupling itself: two stages, two locks each.
-    hitStages: [2, 2],
+    // Armour casing, then the coupling itself. One lock pops the casing and
+    // two finish the coupling, which fits inside the window the trench gives
+    // you at nearly two units a millisecond — a real deadline, not a bluff.
+    hitStages: [1, 2],
     lockable: false,
     data: { role: 'core', lead: CORE_LEAD, x: mount.x, y: mount.y, index },
   }));

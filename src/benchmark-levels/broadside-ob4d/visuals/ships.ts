@@ -236,6 +236,15 @@ export type HullSurfaceOptions = {
   accent: Color;
   /** Superstructure blocks per hundred units of hull. */
   towerDensity: number;
+  /**
+   * Keep superstructure outboard of this |x|, leaving a clear lane down the
+   * middle of the plating. The flagship needs this: you fly its dorsal surface
+   * at head height, and a randomly placed tower in the lane would hide the
+   * shield emitters you are there to shoot.
+   */
+  towerKeepOut?: number;
+  /** Ceiling on tower height, as a multiple of halfHeight. */
+  towerMaxHeight?: number;
   /** Broadside blisters per side, spread down the strip. */
   batteries?: number;
   /** Which flank the batteries face and fire from: -1 port, +1 starboard. */
@@ -328,9 +337,13 @@ export function createHullSurface(frames: HullFrame[], options: HullSurfaceOptio
     // Superstructure: blocks and masts walking the spine.
     if (rng() < options.towerDensity) {
       const w = options.halfWidth * (0.16 + rng() * 0.3);
-      const h = options.halfHeight * (0.5 + rng() * 1.5);
+      const h = options.halfHeight * Math.min(options.towerMaxHeight ?? 2, 0.5 + rng() * 1.5);
       const d = dz * (1.2 + rng() * 2.4);
-      const x = (rng() - 0.5) * options.halfWidth * 1.3;
+      const keepOut = options.towerKeepOut ?? 0;
+      const span = Math.max(0, options.halfWidth * 0.95 - keepOut);
+      const x = keepOut > 0
+        ? (rng() < 0.5 ? -1 : 1) * (keepOut + rng() * span)
+        : (rng() - 0.5) * options.halfWidth * 1.3;
       towers.push(new BoxGeometry(w, h, d)
         .applyMatrix4(new Matrix4().makeTranslation(x, options.halfHeight + h / 2, dz / 2))
         .applyMatrix4(matrix));
@@ -438,10 +451,10 @@ export function createTrench(frames: HullFrame[], options: TrenchOptions) {
       walls.push(place(new BoxGeometry(half * 0.24, options.wallHeight, dz * 1.05), side * (half + half * 0.12), 0));
       // Buttresses: irregular blocks that make the wall shear past at speed.
       if (i % 2 === 0) {
-        const w = half * (0.14 + rng() * 0.2);
+        const w = half * (0.1 + rng() * 0.13);
         walls.push(place(
           new BoxGeometry(w, options.wallHeight * (0.2 + rng() * 0.5), dz * (0.5 + rng() * 0.7)),
-          side * (half - w * 0.4),
+          side * (half + w * 0.1),
           (rng() - 0.5) * options.wallHeight * 0.5,
         ));
       }

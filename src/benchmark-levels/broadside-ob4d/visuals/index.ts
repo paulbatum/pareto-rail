@@ -20,6 +20,7 @@ import {
   createAdornmentSlot,
   createPendingVisualRecords,
   configureAdditiveMaterial,
+  disposeObject3D,
 } from '../../../engine/visual-kit';
 import type { EventBus } from '../../../events';
 import { battle } from '../state';
@@ -113,10 +114,23 @@ let hitsTaken = 0;
 let damagePulse = 0;
 let alarmPulse = 0;
 
+// Bracket geometry is shared across every lock in the run: a sixty-second run
+// takes hundreds of locks, and allocating a fresh ring per lock is how a level
+// fails the geometry-growth gate. Disposal therefore frees materials only.
+const BRACKET_ARC_GEOMETRY = [-1, 1].map((side) =>
+  new RingGeometry(0.76, 0.84, 20, 1, side > 0 ? -0.62 : Math.PI - 0.62, 1.24));
+const BRACKET_TICK_GEOMETRY = new PlaneGeometry(0.1, 0.28);
+
 const lockBrackets = createAdornmentSlot<EnemyRecord, Group>({
   get: (record) => record.lockBracket,
   set: (record, bracket) => {
     record.lockBracket = bracket;
+  },
+  disposeAdornment: (bracket) => {
+    bracket.traverse((child) => {
+      const material = (child as Mesh).material as MeshBasicMaterial | undefined;
+      material?.dispose();
+    });
   },
 });
 
@@ -124,7 +138,14 @@ const lockBrackets = createAdornmentSlot<EnemyRecord, Group>({
 // after calling it — pairing the queue with spawn events links mesh to id.
 const enemyRecords = createPendingVisualRecords<Group, EnemyRecord>({
   createRecord: (mesh) => ({ mesh, bornAt: null, lockBracket: null }),
-  disposeRecord: (record) => lockBrackets.detach(record),
+  disposeRecord: (record) => {
+    lockBrackets.detach(record);
+    // Every hostile is assembled from geometry built for that one instance, and
+    // a sixty-second run spawns well over a hundred of them. Releasing a dead
+    // target's buffers here is what keeps geometry count flat across the run
+    // instead of climbing until the perf gate trips.
+    disposeObject3D(record.mesh);
+  },
 });
 const projectileRecords = createPendingVisualRecords<ProjectileRecord, ProjectileRecord>({
   createRecord: (record) => record,
@@ -691,14 +712,11 @@ function makeLockBracket(color: Color): Group {
   const group = new Group();
   // Two outboard arcs, matching the reticle: the director handing the target
   // over to the guns.
-  for (const side of [-1, 1]) {
-    group.add(new Mesh(
-      new RingGeometry(0.76, 0.84, 20, 1, side > 0 ? -0.62 : Math.PI - 0.62, 1.24),
-      createAdditiveBasicMaterial({ color: hdr(color, 1.9), side: DoubleSide }),
-    ));
+  for (const geometry of BRACKET_ARC_GEOMETRY) {
+    group.add(new Mesh(geometry, createAdditiveBasicMaterial({ color: hdr(color, 1.9), side: DoubleSide })));
   }
   const tick = new Mesh(
-    new PlaneGeometry(0.1, 0.28),
+    BRACKET_TICK_GEOMETRY,
     createAdditiveBasicMaterial({ color: hdr(color.clone().lerp(WHITE_HOT, 0.4), 1.5), side: DoubleSide }),
   );
   tick.position.y = 0.9;

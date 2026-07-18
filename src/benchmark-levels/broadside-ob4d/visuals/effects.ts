@@ -12,7 +12,7 @@ import {
   Vector3,
 } from 'three';
 import type { Camera } from 'three';
-import { createAdditiveBasicMaterial, createTransientEffectPool, disposeObject3D } from '../../../engine/visual-kit';
+import { createAdditiveBasicMaterial, createTransientEffectPool } from '../../../engine/visual-kit';
 
 // Transient visual vocabulary. Everything here is additive, thin, and short —
 // the frame is already carrying two fleets and a nebula, so effects earn their
@@ -35,6 +35,7 @@ const shardGeometry = new ConeGeometry(0.24, 0.7, 4);
 const glintGeometry = new PlaneGeometry(1, 1);
 const streakGeometry = new BoxGeometry(0.1, 0.1, 1);
 const wreckGeometry = new OctahedronGeometry(1, 0);
+const wreckRimGeometry = new BoxGeometry(1, 1, 1);
 
 function opacityOf(mesh: Mesh) {
   return mesh.material as MeshBasicMaterial;
@@ -124,8 +125,13 @@ const wrecks = createTransientEffectPool<Wreck, undefined>({
     });
   },
   dispose(effect) {
+    // Geometry is shared with every other wreck; only the per-wreck materials
+    // belong to this effect.
     effect.mesh.removeFromParent();
-    disposeObject3D(effect.mesh);
+    effect.mesh.traverse((child) => {
+      const material = (child as Mesh).material as MeshBasicMaterial | undefined;
+      material?.dispose();
+    });
   },
 });
 
@@ -225,10 +231,8 @@ export function spawnWreck(position: Vector3, scale: number, hullColor: Color, r
   const body = new Mesh(wreckGeometry, new MeshBasicMaterial({ color: hullColor.clone(), transparent: true }));
   body.scale.set(scale * 1.7, scale * 0.5, scale);
   group.add(body);
-  const rim = new Mesh(
-    new BoxGeometry(scale * 2.6, scale * 0.06, scale * 0.14),
-    createAdditiveBasicMaterial({ color: rimColor.clone() }),
-  );
+  const rim = new Mesh(wreckRimGeometry, createAdditiveBasicMaterial({ color: rimColor.clone() }));
+  rim.scale.set(scale * 2.6, scale * 0.06, scale * 0.14);
   rim.position.y = scale * 0.34;
   group.add(rim);
   group.position.copy(position);
