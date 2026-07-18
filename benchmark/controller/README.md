@@ -63,6 +63,8 @@ Resume validates existing artifacts and continues at the first unfinished step. 
 
 Infrastructure failure: fix it, rerun, and keep and report the cost of every attempt. Model failure — a gate fails on the sealed output — is a DNF, shown as such. The operator classifies which one it was and records the decision as a free-text note in the run record.
 
+Two transient infrastructure failures recur on the Claude Code stage and are cleared by a fresh attempt, not a resume (a resume would continue on the half-built worktree and contaminate the entrant). The first is `Failed to authenticate: OAuth session expired and could not be refreshed`: the stage runs against a copy of the operator credential in its isolated home, and an operator Claude session running alongside the benchmark can rotate the shared refresh token out from under that copy, so a stage started with a near-expired token cannot refresh. The second is `API Error: Stream idle timeout - no chunks received`, a mid-stage stall of the streaming response. For either, archive the failed run, delete its worktree, and relaunch the same runId fresh. The OAuth race is intermittent; if it keeps recurring, re-login on the operator account (`claude`, interactive) to refresh the stored token before launching more Claude stages.
+
 ## Regate
 
 Gates are deterministic against the sealed commit, so a gate-tooling fix never re-runs generation. Move the run's `gates/` directory aside and resume; the disposition is recomputed from the refreshed gate records at the current controller commit.
