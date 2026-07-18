@@ -6,7 +6,7 @@ const BLUE=0x38bfff,VIOLET=0x9b5cff,WHITE=0xeaf8ff,AMBER=0xffb52e,GUN=0x182534;
 const mat=(color:number,wire=false)=>new MeshBasicMaterial({color,wireframe:wire,side:DoubleSide,depthWrite:false,transparent:wire,opacity:wire?.72:1});
 export function createEnvironment(scene:Scene){
  scene.background=new Color(0x020611);
- for(let i=0;i<64;i++){const z=-i*11-8;const ring=new Mesh(new TorusGeometry(11+(i%4===0?1:0),.045,6,48),mat(i<40?BLUE:i<112?VIOLET:WHITE));ring.position.z=z;ring.rotation.x=Math.PI/2;scene.add(ring);}
+ for(let i=0;i<128;i++){const z=-i*5.5-8;const ring=new Mesh(new TorusGeometry(11+(i%4===0?1.2:0),i%4===0?.065:.035,6,48),mat(i<48?BLUE:i<96?VIOLET:WHITE));ring.position.z=z;ring.rotation.x=Math.PI/2;ring.userData.ring=true;scene.add(ring);}
  const charge=new Mesh(new SphereGeometry(4,24,12),new MeshBasicMaterial({color:0x8f6cff,transparent:true,opacity:.08,depthWrite:false}));charge.position.z=-620;scene.add(charge);const beacon=new Mesh(new SphereGeometry(.5,12,8),mat(WHITE));beacon.position.set(0,3,-680);scene.add(beacon);
  for(const [x,y] of [[8,8],[-8,8],[8,-8],[-8,-8]]){const rail=new Mesh(new CylinderGeometry(.07,.07,620,6),mat(BLUE));rail.position.set(x,y,-300);rail.rotation.x=Math.PI/2;scene.add(rail);}
  for(let i=0;i<32;i++){const rib=new Mesh(new BoxGeometry(.16,3.5,1.8),mat(GUN));rib.position.set(Math.cos(i*1.91)*10.8,Math.sin(i*1.91)*10.8,-i*18-20);rib.lookAt(0,0,rib.position.z-1);scene.add(rib);}
