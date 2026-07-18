@@ -129,7 +129,7 @@ const pacer = createRailPacer({
   // Just inside the fog wall: targets appear at the edge of the readable bore
   // and close from there, so the engagement window equals the authored lead at
   // any speed. Without this the late bars would spawn targets past the fog.
-  spawnAheadUnits: 50,
+  spawnAheadUnits: 34,
   defaultLeadSeconds: 3.5,
 });
 
@@ -196,7 +196,10 @@ function threaders(
         to: span * spec.dir,
         yFrom: spec.y[0],
         yTo: spec.y[1],
-        arc: spec.arc ?? 3.2,
+        // The crossing bows the way it is already travelling, so a rising
+        // threader arcs over the frame and a falling one dips under it —
+        // twice the vertical spread for the same shallow arc.
+        arc: (spec.arc ?? 5.2) * (spec.y[1] >= spec.y[0] ? 1 : -1),
         sign: spec.sign ?? (index % 2 === 0 ? 1 : -1),
         phase: index * 1.9,
       },
