@@ -20,11 +20,11 @@ const entries: Array<LockOnSpawnEntry<MassDriverDetailedBe9eEnemyKind,MassDriver
 for(let b=1;b<28;b+=2){
  const phase=b*.7;
  if(b<5){ entries.push(e(T(b),'threader',-6,2.5,5,{phase}),e(T(b,.5),'threader',6,4,5,{phase:phase+3.14})); }
- else if(b<12){ for(let i=0;i<4;i++) entries.push(e(T(b)+i*.22,'coil',[-6,6,-4,4][i],[-3,3,4,-1][i],4.3,{phase:i})); if(b===9) entries.push(e(T(b,2),'capacitor',0,2,5.5)); }
- else if(b<20){ for(let i=0;i<6;i++) entries.push(e(T(b)+i*.18,'coil',Math.cos(i*Math.PI/3)*6,Math.sin(i*Math.PI/3)*4,4,{phase:i,firing:i%2===0})); entries.push(e(T(b,.8),'threader',-7,1,4,{phase}),e(T(b,1.5),'threader',7,4,4,{phase:phase+3.14})); if(b===17) { entries.push(e(T(b,1),'capacitor',-3,2,5),e(T(b,2),'capacitor',3,3,5)); } }
+ else if(b<12){ for(let i=0;i<4;i++) entries.push(e(T(b)+i*.22,'coil',[-6,6,-4,4][i],[-3,3,4,-1][i],4.3,{phase:i})); if(b===9) entries.push(e(T(b,2),'capacitor',-4,3,5.5)); }
+ else if(b<20){ for(let i=0;i<6;i++) entries.push(e(T(b)+i*.18,'coil',Math.cos(i*Math.PI/3)*6,Math.sin(i*Math.PI/3)*4,4,{phase:i,firing:i%2===0})); entries.push(e(T(b,.8),'threader',-7,1,4,{phase}),e(T(b,1.5),'threader',7,4,4,{phase:phase+3.14})); if(b===17) { entries.push(e(T(b,1),'capacitor',-5,3,5),e(T(b,2),'capacitor',5,1,5)); } }
  else if (b===21 || b===25) { for(let i=0;i<3;i++) entries.push({...e(T(b)+i*.35,'interlock',[-6,0,6][i],[-2,4,-1][i],6,{phase:i}), hitStages:[1,1,1]}); for(let i=0;i<2;i++) entries.push(e(T(b+1)+i*.5,'threader',i?6:-6,2+i,4,{phase:i})); }
 }
-for (const t of [T(14),T(16),T(18)]) entries.push({...e(t,'arc',0,0,3),countsTowardTotal:false});
+for (const [t,x,y] of [[T(14),-4,2],[T(16),4,3],[T(18),-3,1]] as const) entries.push({...e(t,'arc',x,y,3),countsTowardTotal:false});
 export const MASS_DRIVER_DETAILED_BE9E_SPAWN_TIMELINE=entries.sort((a,b)=>a.time-b.time);
 export const massDriverDetailedBe9eGameplay: LockOnRunnerLevel<MassDriverDetailedBe9eEnemyKind,MassDriverDetailedBe9eSpawnData>={
  duration:MASS_DRIVER_DETAILED_BE9E_RUN_DURATION,bpm:MASS_DRIVER_DETAILED_BE9E_BPM,createRail:createMassDriverDetailedBe9eRail,spawnTimeline:MASS_DRIVER_DETAILED_BE9E_SPAWN_TIMELINE,
