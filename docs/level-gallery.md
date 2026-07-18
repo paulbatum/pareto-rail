@@ -282,6 +282,24 @@ Showcase build. Inspection markers: `blueBank` (bar 8), `violetBank` (bar 16), a
 
 # Mass Driver
 
+A payload chambered in an orbital railgun rides a cold gunmetal bore toward a distant beacon. Every beat crosses another electric accelerator ring: blue at the breech, violet through the climb, and white-hot at the jammed safety clamps. Its identity is the strict 128 BPM pulse, the four-on-floor rail rhythm, and the final silent muzzle escape.
+
+## Visual language
+Near-black void, gunmetal rings and diagonal conductor rails, restrained arc-blue/violet glow, white cores, and amber hazard chevrons reserved for the six interlocks. Coils hug the rim, threaders corkscrew through the bore, and capacitors drift as caged banks.
+
+## Musical language
+A 128 BPM E-minor techno pulse with a steadily rising charge hum. Sparse injection opens into denser stage cadence, then the interlock alarm and a final push toward the muzzle.
+
+## Mechanical signature
+Sweeping formations alternate wall-riding coils, counter-rotating threaders, and armored capacitors before the six interlock clamps arrive in two rim ranks. The 32-bar rail is paced to accelerate toward its shot deadline.
+
+## Status & notes
+Benchmark directory-only output. Procedural geometry and audio; no registry changes.
+
+---
+
+# Mass Driver
+
 You are the payload. A 60-second ride down the barrel of an orbital railgun at 128 BPM — 32 bars to the muzzle, one glowing accelerator ring crossed on every beat. The rings space out as the charge accelerates you, but the crossing cadence never leaves the pulse: the speed and the music are the same object. At bar 24 the jammed safety interlocks reveal themselves on the payload collar; blow all six before the charge peaks at bar 30 and the gun fires you into silent open space — fail, and the barrel goes with you.
 
 ## Visual language
