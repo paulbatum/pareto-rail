@@ -413,10 +413,10 @@ export function createStrandlineGameplay(bus: EventBus): LockOnRunnerLevel<Stran
     },
     rankForRun(score, kills, totalEnemies) {
       const clearRate = totalEnemies === 0 ? 0 : kills / totalEnemies;
-      if (parent.destroyed && score >= 17000 && clearRate >= 0.88) return 'S';
-      if (score >= 12500 && clearRate >= 0.74) return 'A';
-      if (score >= 8000 && clearRate >= 0.55) return 'B';
-      if (score >= 4000 && clearRate >= 0.32) return 'C';
+      if (parent.destroyed && score >= 15500 && clearRate >= 0.88) return 'S';
+      if (score >= 11000 && clearRate >= 0.7) return 'A';
+      if (score >= 7000 && clearRate >= 0.5) return 'B';
+      if (score >= 3500 && clearRate >= 0.3) return 'C';
       return 'D';
     },
     detailsForRun() {
