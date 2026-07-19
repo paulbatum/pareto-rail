@@ -67,6 +67,10 @@ Two transient infrastructure failures recur on the Claude Code stage and are cle
 
 Moonshot's `kimi-coding` provider can end a pi stage with a final assistant error containing `access_terminated_error` (or `403` and `usage limit`) when its subscription quota window is exhausted. The controller-owned quota-wait extension handles this in-process for `kimi-coding` stages. If the stage timeout kills pi during a wait, use the normal preserved-worktree policy: relaunch a fresh stage, since pi stages have no mid-session controller resume.
 
+## Watching a live pi stage
+
+The stage's retained `events.jsonl` flushes lazily — half an hour with no file is normal, not a hang. The continuous liveness signal is pi's native session transcript under the run's `harness-home/sessions/`, which grows with every model turn; a transcript that stops growing with no new `quota-wait/quota-waits.jsonl` entry is the actual stall signature. To test whether a capped quota window has refreshed without touching the run, issue a trivial one-word pi call against the same provider from a scratch home: it fails instantly at zero cost while capped and succeeds on refresh. Its 403 arrives on stdout while auth-refresh chatter goes to stderr, so capture both streams when scripting the probe.
+
 ## Regate
 
 Gates are deterministic against the sealed commit, so a gate-tooling fix never re-runs generation. Move the run's `gates/` directory aside and resume; the disposition is recomputed from the refreshed gate records at the current controller commit.
