@@ -331,7 +331,16 @@ function extractUsage(eventLog, model, expectedSessionId) {
     perModel.set(name, current);
   }
 
-  const finalMessage = assistant.at(-1).message.content
+  // pi exits zero even when the provider terminates the session mid-run: the failure surfaces only
+  // as a final assistant message with `stopReason: "error"` and zeroed usage. That is a dead stage,
+  // not a completion — fail it so the controller stops for infrastructure classification instead of
+  // sealing and gating a half-built worktree.
+  const lastMessage = assistant.at(-1).message;
+  if (lastMessage.stopReason === 'error') {
+    fail(`pi ended on a provider error: ${lastMessage.errorMessage ?? 'final assistant message carried stopReason "error" with no errorMessage'}`);
+  }
+
+  const finalMessage = lastMessage.content
     ?.filter((block) => block?.type === 'text')
     .map((block) => block.text)
     .join('\n') ?? '';
