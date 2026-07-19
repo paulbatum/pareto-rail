@@ -1,3 +1,5 @@
+import mitLicense from '../../../LICENSE?raw';
+import thirdPartyNotices from '../../../THIRD_PARTY_NOTICES.md?raw';
 import { levelMetadatas } from '../../levels';
 import { allCatalogEntrants, rankCatalog } from '../../benchmark/catalog';
 import { homeCopy } from '../content';
@@ -108,10 +110,16 @@ export function AboutPage() {
       <p className="lede">Built by <a href="https://x.com/paulbatum" target="_blank" rel="noreferrer">@paulbatum</a></p>
       <h2>Open source</h2>
       <p>Pareto Rail is released under the MIT License. Third-party software, data, and reference material retain their original terms.</p>
-      <p className="legal-links">
-        <a className="text-link" href="/LICENSE.txt" target="_blank" rel="noreferrer">MIT License</a>
-        <a className="text-link" href="/THIRD_PARTY_NOTICES.md" target="_blank" rel="noreferrer">Third-party notices</a>
-      </p>
+      <div className="legal-disclosures">
+        <details className="legal-details">
+          <summary>MIT License</summary>
+          <pre className="legal-document">{mitLicense}</pre>
+        </details>
+        <details className="legal-details">
+          <summary>Third-party notices</summary>
+          <pre className="legal-document">{thirdPartyNotices}</pre>
+        </details>
+      </div>
     </section>
   );
 }

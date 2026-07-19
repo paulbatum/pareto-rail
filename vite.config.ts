@@ -6,33 +6,13 @@ import { defineConfig, type Plugin } from 'vite';
 import { rankApiDevPlugin } from './server/vite-rank-api';
 
 const templatePath = path.resolve(process.cwd(), 'src/levels/crystal/visuals/crystal-template.json');
-const licensePath = path.resolve(process.cwd(), 'LICENSE');
-const thirdPartyNoticesPath = path.resolve(process.cwd(), 'THIRD_PARTY_NOTICES.md');
 
 export default defineConfig({
-  plugins: [react(), thirdPartyNoticesPlugin(), crystalTemplateDevPlugin(), rankApiDevPlugin()],
+  plugins: [react(), crystalTemplateDevPlugin(), rankApiDevPlugin()],
   build: {
     chunkSizeWarningLimit: 1200,
   },
 });
-
-function thirdPartyNoticesPlugin(): Plugin {
-  return {
-    name: 'pareto-rail-third-party-notices',
-    async buildStart() {
-      this.emitFile({
-        type: 'asset',
-        fileName: 'LICENSE.txt',
-        source: await fs.readFile(licensePath, 'utf8'),
-      });
-      this.emitFile({
-        type: 'asset',
-        fileName: 'THIRD_PARTY_NOTICES.md',
-        source: await fs.readFile(thirdPartyNoticesPath, 'utf8'),
-      });
-    },
-  };
-}
 
 function crystalTemplateDevPlugin(): Plugin {
   return {

@@ -35,7 +35,7 @@ When adding or changing repo tools, update the appropriate human-facing docs in 
 
 ## Licensing
 
-Pareto Rail is MIT-licensed. Keep `THIRD_PARTY_NOTICES.md` accurate when adding distributed dependencies or copying third-party material; the Vite build emits that file with the deployed app.
+Pareto Rail is MIT-licensed. Keep `THIRD_PARTY_NOTICES.md` accurate when adding distributed dependencies or copying third-party material; the About page embeds that file and `LICENSE` directly.
 
 ## Vote tracking backend
 
