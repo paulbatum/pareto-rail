@@ -1,4 +1,9 @@
 {
   "id": "strandline-s2bq",
-  "title": "Strandline"
+  "title": "Strandline",
+  "contentImages": {
+    "overview": "/level-content/strandline-s2bq/overview.png",
+    "start": "/level-content/strandline-s2bq/start.png",
+    "hero": "/level-content/strandline-s2bq/hero.png"
+  }
 }

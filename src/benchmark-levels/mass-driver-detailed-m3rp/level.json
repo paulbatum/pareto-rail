@@ -1,4 +1,9 @@
 {
   "id": "mass-driver-detailed-m3rp",
-  "title": "Mass Driver"
+  "title": "Mass Driver",
+  "contentImages": {
+    "overview": "/level-content/mass-driver-detailed-m3rp/overview.png",
+    "start": "/level-content/mass-driver-detailed-m3rp/start.png",
+    "hero": "/level-content/mass-driver-detailed-m3rp/hero.png"
+  }
 }

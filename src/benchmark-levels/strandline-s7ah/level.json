@@ -1,4 +1,9 @@
 {
   "id": "strandline-s7ah",
-  "title": "Strandline"
+  "title": "Strandline",
+  "contentImages": {
+    "overview": "/level-content/strandline-s7ah/overview.png",
+    "start": "/level-content/strandline-s7ah/start.png",
+    "hero": "/level-content/strandline-s7ah/hero.png"
+  }
 }
