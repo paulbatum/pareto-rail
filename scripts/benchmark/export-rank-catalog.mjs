@@ -44,6 +44,64 @@ const configurationLabels = {
     delegateEffort: 'high',
     workflowSummary: 'Sol remains the planner and reviewer while a Terra subagent implements inside the same unattended Codex session.',
   },
+  'claude-opus-4-8-high': {
+    modelName: 'Claude Opus 4.8',
+    workflowName: 'solo',
+    primaryModel: 'claude-opus-4-8',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
+  'claude-fable-5-high-b20': {
+    modelName: 'Claude Fable 5',
+    workflowName: 'solo, $20 budget',
+    primaryModel: 'claude-fable-5',
+    effort: 'high',
+    workflowSummary: 'The solo unattended Claude Code session run under a $20 soft task budget: the model is told a budget exists, receives relative spend notices, and is resumed in the same session while it keeps submitting well under budget, so the budget is spent on the level\'s quality.',
+  },
+  'claude-opus-4-8-high-b20': {
+    modelName: 'Claude Opus 4.8',
+    workflowName: 'solo, $20 budget',
+    primaryModel: 'claude-opus-4-8',
+    effort: 'high',
+    workflowSummary: 'The solo unattended Claude Code session run under a $20 soft task budget: the model is told a budget exists, receives relative spend notices, and is resumed in the same session while it keeps submitting well under budget, so the budget is spent on the level\'s quality.',
+  },
+  'codex-sol-high-b20': {
+    modelName: 'GPT-5.6 Sol',
+    workflowName: 'solo, $20 budget',
+    primaryModel: 'gpt-5.6-sol',
+    effort: 'high',
+    workflowSummary: 'The solo unattended Codex session run under a $20 soft task budget: the model is told a budget exists, receives relative spend notices, and is resumed in the same session while it keeps submitting well under budget, so the budget is spent on the level\'s quality.',
+  },
+  'pi-openrouter-kimi-k3-max': {
+    modelName: 'Kimi K3',
+    workflowName: 'solo',
+    primaryModel: 'moonshotai/kimi-k3',
+    effort: 'max',
+    workflowSummary: 'One fresh unattended pi session driving Kimi K3 over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
+};
+
+// Per-version publication scope. `configurationLabels` above is global identity;
+// this declares which of those configurations actually appear in each version's
+// catalog slice. Keeping the two separate means labeling a configuration for a
+// later version never reaches back and republishes a finished version — v1 stays
+// exactly as it was published even though its budgeted runs now carry labels.
+const publishedConfigurations = {
+  v1: [
+    'claude-fable-5-high',
+    'claude-fable-5-opus-delegation',
+    'codex-sol-high',
+    'codex-sol-terra-delegation',
+  ],
+  v2: [
+    'claude-fable-5-high',
+    'claude-fable-5-high-b20',
+    'claude-opus-4-8-high',
+    'claude-opus-4-8-high-b20',
+    'codex-sol-high',
+    'codex-sol-high-b20',
+    'pi-openrouter-kimi-k3-max',
+  ],
 };
 
 const delegationIntroduction = 'Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.';
@@ -200,15 +258,24 @@ function scheduleFiles() {
     .sort((left, right) => left.localeCompare(right));
 }
 
-// The public label registry is the exporter-owned allowlist for catalog
-// configurations. Inputs can contain later registrations before their public
-// labels and presentation assets are ready; those are warned and withheld.
+// A level is published only when its configuration carries a global label (its
+// identity) and is listed in this version's publication scope. The two gates are
+// separate so onboarding a configuration for a later version never disturbs a
+// finished version's slice. A configuration missing from the version's scope is
+// warned and withheld; its levels never enter the pool.
 export function selectConfigurations(assignments, benchmarkVersion) {
-  const publicAssignments = assignments.filter((assignment) => configurationLabels[assignment.configurationId]);
-  for (const assignment of assignments.filter((assignment) => !configurationLabels[assignment.configurationId])) {
-    console.warn(`Withholding ${assignment.levelId} from ${benchmarkVersion}: configuration ${assignment.configurationId} has no public label.`);
+  const scope = publishedConfigurations[benchmarkVersion];
+  if (!scope) throw new Error(`No publication scope declared for ${benchmarkVersion} in publishedConfigurations.`);
+  const publishedScope = new Set(scope);
+  const isPublished = (assignment) => Boolean(configurationLabels[assignment.configurationId]) && publishedScope.has(assignment.configurationId);
+  for (const assignment of assignments) {
+    if (isPublished(assignment)) continue;
+    const reason = !configurationLabels[assignment.configurationId]
+      ? 'has no public label'
+      : `is not in the ${benchmarkVersion} publication scope`;
+    console.warn(`Withholding ${assignment.levelId} from ${benchmarkVersion}: configuration ${assignment.configurationId} ${reason}.`);
   }
-  return publicAssignments;
+  return assignments.filter(isPublished);
 }
 
 // Normalize a v2 plan's flat run rows onto the per-assignment shape buildVersion
