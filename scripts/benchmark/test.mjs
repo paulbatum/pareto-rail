@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
-import { assertSiblingSharedInputs, dispositionFor, firstLevelOneHeading, manifestNeedsRefresh, reusableGateRecord, validatePlan, validateRunDefinition } from './run.mjs';
+import { assertSiblingSharedInputs, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, validatePlan, validateRunDefinition } from './run.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
@@ -121,6 +121,101 @@ assert.deepEqual(validatePlan(delegationPlan), []);
 const badDelegation = structuredClone(delegationPlan);
 badDelegation.runs[0].delegation.delegateEffort = 'invalid';
 assert.ok(validatePlan(badDelegation).some((error) => error.includes('delegation.delegateEffort')));
+
+const continuationArtifacts = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-continuation-artifacts-'));
+try {
+  const stageDirectory = path.join(continuationArtifacts, 'stages/solo/pi');
+  await fs.mkdir(stageDirectory, { recursive: true });
+  await fs.writeFile(path.join(stageDirectory, 'events.jsonl'), '{}\n');
+  assert.equal(await nextContinuationRound(stageDirectory), 1);
+  await fs.writeFile(path.join(stageDirectory, 'events-resume-1.jsonl'), '{}\n');
+  await fs.writeFile(path.join(stageDirectory, 'events-resume-2.jsonl'), '{}\n');
+  assert.equal(await nextContinuationRound(stageDirectory), 3);
+
+  await fs.writeFile(path.join(stageDirectory, 'raw-usage.json'), JSON.stringify({ round: 0 }));
+  await fs.writeFile(path.join(stageDirectory, 'raw-usage-resume-1.json'), JSON.stringify({ round: 1 }));
+  await fs.writeFile(path.join(stageDirectory, 'raw-usage-resume-2.json'), JSON.stringify({ round: 2 }));
+  const usages = await loadRoundUsages(continuationArtifacts, { stageDir: 'stages/solo/pi' });
+  assert.deepEqual(usages.map((usage) => usage.round), [0, 1, 2], 'round usage discovery does not depend on budget.json');
+} finally {
+  await fs.rm(continuationArtifacts, { recursive: true, force: true });
+}
+
+await assertContinuationOptionGuards();
+
+async function assertContinuationOptionGuards() {
+  const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-continuation-guards-'));
+  const runner = path.join(process.cwd(), 'scripts/benchmark/run.mjs');
+  const piAdapter = path.join(process.cwd(), 'scripts/benchmark/pi-cli.mjs');
+  try {
+    await assert.rejects(
+      () => exec(process.execPath, [runner, '--plan', 'plan.json', '--run', 'run-a1b2c3d4', '--continue-stage', 'true'], { cwd: process.cwd() }),
+      /--continue-stage is only valid with --resume/,
+    );
+    await assert.rejects(
+      () => exec(process.execPath, [runner, '--resume', path.join(temporary, 'run-any'), '--continue-stage', 'true', '--accept-stage-output', 'true'], { cwd: process.cwd() }),
+      /cannot be combined with --accept-stage-output/,
+    );
+
+    const nonPiRun = path.join(temporary, 'run-nonpi');
+    await fs.mkdir(nonPiRun, { recursive: true });
+    await fs.writeFile(path.join(nonPiRun, 'run-definition.json'), `${JSON.stringify({
+      benchmarkVersion: 'v2',
+      materialsCommit: 'a'.repeat(40),
+      entrantBaseline: 'b'.repeat(40),
+      runId: 'run-nonpi',
+      slotId: 'a1b2',
+      levelId: 'cinder-a1b2',
+      themeId: 'cinder',
+      themePath: 'benchmark/themes/cinder.md',
+      configurationId: 'codex-terra-high',
+      recipePath: 'benchmark/recipes/codex-terra-high.md',
+      levelTitle: 'Cinder',
+      stage: { adapter: 'codex-cli', model: 'model', effort: 'high', timeoutSeconds: 1 },
+    }, null, 2)}\n`);
+    await assert.rejects(
+      () => exec(process.execPath, [runner, '--resume', nonPiRun, '--continue-stage', 'true'], { cwd: process.cwd() }),
+      /--continue-stage is only valid for pi-cli stages/,
+    );
+
+    await assert.rejects(
+      () => exec(process.execPath, [piAdapter, '--resume-round', '1', '--budget-usd', '2'], { cwd: process.cwd() }),
+      /--resume-round cannot be combined with --budget-usd/,
+    );
+
+    const fakePi = path.join(temporary, 'fake-pi.mjs');
+    await fs.writeFile(fakePi, `#!/usr/bin/env node
+const args = process.argv.slice(2);
+if (args.includes('--version')) console.log('fake-pi 1');
+else if (args.includes('--list-models')) console.log('fake-model');
+else console.log(JSON.stringify({ type: 'session', id: 'fake-session' }));
+`);
+    await fs.chmod(fakePi, 0o755);
+    const promptPath = path.join(temporary, 'prompt.md');
+    await fs.writeFile(promptPath, 'assignment\n');
+    const stageOutput = path.join(temporary, 'stage');
+    await fs.mkdir(stageOutput, { recursive: true });
+    await fs.writeFile(path.join(stageOutput, 'events.jsonl'), `${JSON.stringify({ type: 'session', id: 'fake-session' })}\n`);
+    await fs.writeFile(path.join(stageOutput, 'events-resume-1.jsonl'), '{}\n');
+    await assert.rejects(
+      () => exec(process.execPath, [
+        piAdapter,
+        '--worktree', process.cwd(),
+        '--prompt', promptPath,
+        '--out', stageOutput,
+        '--model', 'fake-model',
+        '--effort', 'low',
+        '--timeout-seconds', '1',
+        '--resume-round', '1',
+        '--pi-bin', fakePi,
+      ], { cwd: process.cwd() }),
+      /pi resume round 1 artifact events-resume-1\.jsonl already exists/,
+    );
+  } finally {
+    await fs.rm(temporary, { recursive: true, force: true });
+  }
+}
+
 assert.equal(firstLevelOneHeading('before\n# Derived Title  \n## detail'), 'Derived Title');
 assert.equal(firstLevelOneHeading('no heading here'), undefined);
 const renderingRuns = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-rendering-runs-'));

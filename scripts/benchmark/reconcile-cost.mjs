@@ -92,10 +92,12 @@ async function stageFor(runId) {
 }
 
 async function roundUsages(stagePath) {
-  const budget = await optionalJson(path.join(stagePath, 'budget.json'));
   const usages = [await optionalJson(path.join(stagePath, 'raw-usage.json'))];
-  for (let round = 1; round <= (budget?.resumes?.length ?? 0); round += 1) {
-    usages.push(await optionalJson(path.join(stagePath, `raw-usage-resume-${round}.json`)));
+  if (!usages[0]) return usages;
+  for (let round = 1; ; round += 1) {
+    const usage = await optionalJson(path.join(stagePath, `raw-usage-resume-${round}.json`));
+    if (!usage) break;
+    usages.push(usage);
   }
   return usages;
 }

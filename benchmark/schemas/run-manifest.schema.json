@@ -299,6 +299,7 @@
         "inputArtifactSha256": { "$ref": "#/$defs/sha256" },
         "outputArtifactSha256": { "$ref": "#/$defs/sha256" },
         "rolloutArtifactSha256": { "$ref": "#/$defs/sha256" },
+        "continuationRounds": { "type": "integer", "minimum": 1 },
         "startedAt": { "type": "string", "format": "date-time" },
         "finishedAt": { "type": "string", "format": "date-time" },
         "wallTimeSeconds": { "type": "number", "minimum": 0 },

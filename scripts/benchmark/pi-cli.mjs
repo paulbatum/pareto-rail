@@ -51,6 +51,8 @@ const PROVIDER_QUOTA_WAIT = new Set(['kimi-coding']);
 const DEFAULT_QUOTA_WAIT_MS = 900_000;
 const DEFAULT_QUOTA_WAIT_MAX = 50;
 
+export const MANUAL_RESUME_MESSAGE = 'Your previous session was interrupted. You have been resumed in the same session; continue the assignment from where you left off and finish it per the original instructions.';
+
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -64,12 +66,17 @@ async function main() {
     [--provider <pi-provider>] \\
     [--timeout-seconds <positive-integer>] \\
     [--budget-usd <positive-number>] \\
+    [--resume-round <integer-at-least-1>] \\
     [--pi-bin <path-or-command>]`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'provider', 'timeout-seconds', 'budget-usd', 'pi-bin']));
+  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'provider', 'timeout-seconds', 'budget-usd', 'resume-round', 'pi-bin']));
+  if (options['resume-round'] !== undefined && options['budget-usd'] !== undefined) {
+    fail('--resume-round cannot be combined with --budget-usd.');
+  }
 
+  const resumeRound = parseResumeRound(options['resume-round']);
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const promptPath = path.resolve(requireOption(options, 'prompt'));
   const model = requireOption(options, 'model');
@@ -84,9 +91,17 @@ async function main() {
   if (pathInside(outputDirectory, worktree)) fail('pi stage output must be outside the entrant worktree.');
   await assertDirectory(worktree, 'worktree');
   const prompt = await readFile(promptPath, 'prompt');
-  await assertAbsent(outputDirectory, 'stage output directory');
-  await fs.mkdir(outputDirectory, { recursive: true });
+  if (resumeRound === undefined) {
+    await assertAbsent(outputDirectory, 'stage output directory');
+    await fs.mkdir(outputDirectory, { recursive: true });
+  } else {
+    await assertDirectory(outputDirectory, 'existing stage output directory');
+    await assertRoundArtifactsAbsent(outputDirectory, resumeRound);
+  }
 
+  const resumedSessionId = resumeRound === undefined
+    ? undefined
+    : await readSessionId(path.join(outputDirectory, 'events.jsonl'));
   const cliVersion = await runCommand(piBin, ['--version'], { cwd: worktree });
   const catalog = await runCommand(piBin, ['--list-models'], { cwd: worktree });
   await fs.writeFile(path.join(outputDirectory, 'model-catalog.txt'), catalog.stdout, 'utf8');
@@ -166,23 +181,48 @@ async function main() {
   }
 
   if (timeoutSeconds !== undefined) deadline = Date.now() + timeoutSeconds * 1_000;
-  let turn = await runTurn({
-    executable: piBin,
-    args: sharedArgs,
-    cwd: worktree,
-    input: prompt,
-    timeoutSeconds,
-    outputDirectory,
-    cliVersion,
-    model,
-    expectedSessionId: undefined,
-    round: 0,
-    env: childEnv,
-  });
+  let turn;
+  let eventLogs;
+  if (resumeRound === undefined) {
+    turn = await runTurn({
+      executable: piBin,
+      args: sharedArgs,
+      cwd: worktree,
+      input: prompt,
+      timeoutSeconds,
+      outputDirectory,
+      cliVersion,
+      model,
+      expectedSessionId: undefined,
+      round: 0,
+      env: childEnv,
+    });
+    eventLogs = [{ path: 'events.jsonl', droppedLines: turn.result.droppedLines }];
+  } else {
+    turn = await runTurn({
+      executable: piBin,
+      args: [...sharedArgs, '--session', resumedSessionId],
+      cwd: worktree,
+      input: MANUAL_RESUME_MESSAGE,
+      timeoutSeconds,
+      outputDirectory,
+      cliVersion,
+      model,
+      expectedSessionId: resumedSessionId,
+      round: resumeRound,
+      env: childEnv,
+    });
+    eventLogs = [
+      { path: 'events.jsonl', droppedLines: 0 },
+      ...Array.from({ length: resumeRound }, (_, index) => ({
+        path: `events-resume-${index + 1}.jsonl`,
+        droppedLines: index + 1 === resumeRound ? turn.result.droppedLines : 0,
+      })),
+    ];
+  }
   const sessionId = turn.usage.sessionId;
   const finalMessage = path.join(outputDirectory, 'final-message.md');
   await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
-  const eventLogs = [{ path: 'events.jsonl', droppedLines: turn.result.droppedLines }];
 
   const resumes = [];
   let finalSpend;
@@ -441,6 +481,36 @@ async function findSessionFile(directory, sessionId) {
     }
   }
   return null;
+}
+
+async function assertRoundArtifactsAbsent(outputDirectory, round) {
+  const suffix = `-resume-${round}`;
+  for (const name of [`events${suffix}.jsonl`, `stderr${suffix}.log`, `command${suffix}.json`, `raw-usage${suffix}.json`, `final-message${suffix}.md`]) {
+    await assertAbsent(path.join(outputDirectory, name), `pi resume round ${round} artifact ${name}`);
+  }
+}
+
+async function readSessionId(eventPath) {
+  const source = await readFile(eventPath, 'existing pi session event log');
+  for (const [index, line] of source.split('\n').entries()) {
+    if (!line.trim()) continue;
+    let event;
+    try {
+      event = JSON.parse(line);
+    } catch (error) {
+      fail(`pi session event ${index + 1} was not valid JSON: ${error.message}`);
+    }
+    if (event?.type === 'session' && event.id) return event.id;
+  }
+  fail(`Existing pi session event log did not report a session identifier: ${eventPath}`);
+}
+
+function parseResumeRound(value) {
+  if (value === undefined) return undefined;
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1) {
+    fail('--resume-round must be an integer of at least 1.');
+  }
+  return Number(value);
 }
 
 function parseTimeout(value) {

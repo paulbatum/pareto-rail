@@ -89,12 +89,16 @@ async function main() {
   if (options.help) {
     console.log(`Usage:
   npm run benchmark:run -- --plan <plan.json> --run <runId>
-  npm run benchmark:run -- --resume <run-directory> [--accept-stage-output true]`);
+  npm run benchmark:run -- --resume <run-directory> [--accept-stage-output true] [--continue-stage true]`);
     return;
   }
   if (rest.length) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'plan', 'run', 'resume', 'accept-stage-output']));
+  assertOnlyOptions(options, new Set(['help', 'plan', 'run', 'resume', 'accept-stage-output', 'continue-stage']));
   const resuming = Boolean(options.resume);
+  const continueStage = options['continue-stage'] !== undefined;
+  if (continueStage && options['continue-stage'] !== 'true') fail('--continue-stage only accepts true.');
+  if (continueStage && !resuming) fail('--continue-stage is only valid with --resume.');
+  if (continueStage && options['accept-stage-output'] !== undefined) fail('--continue-stage cannot be combined with --accept-stage-output.');
   if (resuming && (options.plan || options.run)) fail('--resume cannot be combined with --plan or --run.');
   if (!resuming && (!options.plan || !options.run)) fail('A new run requires --plan and --run.');
 
@@ -105,6 +109,8 @@ async function main() {
     definition = await readJson(path.join(outputDirectory, 'run-definition.json'));
     const errors = validateRunDefinition(definition);
     if (errors.length) fail(`Invalid run definition:\n${errors.map((error) => `- ${error}`).join('\n')}`);
+    if (continueStage && definition.stage.adapter !== 'pi-cli') fail('--continue-stage is only valid for pi-cli stages.');
+    if (continueStage && definition.stage.budget) fail('--continue-stage cannot be used with a budgeted stage; the budget protocol owns its continuations.');
   } else {
     const planPath = path.resolve(options.plan);
     const plan = await readJson(planPath);
@@ -174,24 +180,35 @@ async function main() {
     const adapter = ADAPTERS[definition.stage.adapter];
     const harnessHome = path.join(outputDirectory, 'harness-home');
     await checkpoint(state, statePath, 'stage', async () => {
+      const stageDirectory = path.join(outputDirectory, adapter.stageDir);
       const launch = await optionalJson(path.join(outputDirectory, 'stage-launch.json'));
       if (launch) {
         if (launch.exitCode === 0) return { exitCode: 0 };
         const recovery = await optionalJson(path.join(outputDirectory, 'recovery.json'));
         if (recovery?.policy === 'completed entrant work accepted; normal sealing and gates resumed') return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
+        if (continueStage) {
+          const round = await nextContinuationRound(stageDirectory);
+          const originalLaunchPath = path.join(outputDirectory, 'stage-launch-round-0.json');
+          if (!await pathExists(originalLaunchPath)) await writeJson(originalLaunchPath, launch);
+          const roundLaunchPath = path.join(outputDirectory, `stage-launch-round-${round}.json`);
+          await assertAbsent(roundLaunchPath, `stage launch round ${round} record`);
+          await prepareHarnessHome(adapter, outputDirectory);
+          const stageArgs = buildStageArgs({ adapter, definition, worktree, inputs, stageDirectory, resumeRound: round });
+          const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
+          await writeCommandRecord(roundLaunchPath, [process.execPath, ...stageArgs], stage);
+          await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
+          if (stage.code !== 0) fail(`${adapter.harnessName} continuation stage failed; its worktree and artifacts were preserved for the next resumption.`);
+          return { exitCode: 0 };
+        }
         if (options['accept-stage-output'] === 'true') {
           await recordRecovery(outputDirectory, definition, worktree, launch);
           return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
         }
         fail('The recorded stage failed. Resume with --accept-stage-output true only after verifying that the entrant completed its worktree.');
       }
+      if (continueStage) fail('--continue-stage requires a previously recorded stage launch.');
       await prepareHarnessHome(adapter, outputDirectory);
-      const stageDirectory = path.join(outputDirectory, adapter.stageDir);
-      const stageArgs = [adapter.scriptPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
-      if (definition.stage.budget) stageArgs.push('--budget-usd', String(definition.stage.budget.usd));
-      if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
-      if (definition.delegation && adapter.delegationArgs) stageArgs.push(...adapter.delegationArgs);
-      if (adapter.stageArgs) stageArgs.push(...adapter.stageArgs(definition));
+      const stageArgs = buildStageArgs({ adapter, definition, worktree, inputs, stageDirectory });
       const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
       await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
       if (stage.code !== 0) fail(`${adapter.harnessName} stage failed; its worktree and artifacts were preserved for resumption.`);
@@ -531,6 +548,28 @@ async function prepareInputs(definition, materialsCommit, outputDirectory) {
   return { renderedPath };
 }
 
+function buildStageArgs({ adapter, definition, worktree, inputs, stageDirectory, resumeRound }) {
+  const stageArgs = [adapter.scriptPath, '--worktree', worktree.worktree, '--prompt', inputs.renderedPath, '--out', stageDirectory, '--model', definition.stage.model, '--effort', definition.stage.effort, '--timeout-seconds', String(definition.stage.timeoutSeconds)];
+  if (definition.stage.budget) stageArgs.push('--budget-usd', String(definition.stage.budget.usd));
+  if (definition.stage[adapter.binField]) stageArgs.push(adapter.binFlag, definition.stage[adapter.binField]);
+  if (definition.delegation && adapter.delegationArgs) stageArgs.push(...adapter.delegationArgs);
+  if (adapter.stageArgs) stageArgs.push(...adapter.stageArgs(definition));
+  if (resumeRound !== undefined) stageArgs.push('--resume-round', String(resumeRound));
+  return stageArgs;
+}
+
+export async function nextContinuationRound(stageDirectory) {
+  let entries;
+  try {
+    entries = await fs.readdir(stageDirectory, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT') fail(`Missing stage directory: ${stageDirectory}`);
+    throw error;
+  }
+  const completedRounds = entries.filter((entry) => entry.isFile() && /^events-resume-\d+\.jsonl$/.test(entry.name));
+  return completedRounds.length + 1;
+}
+
 function conventionalRunPaths(runId) {
   return {
     worktree: path.join('/tmp', `pareto-rail-${runId}`),
@@ -581,9 +620,9 @@ async function prepareHarnessHome(adapter, outputDirectory) {
 
 async function createManifest({ definition, materialsCommit, entrantBaseline, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
   const adapter = ADAPTERS[definition.stage.adapter];
-  const [usage, commandRecord, stageLaunch, recipe, theme, renderedMeta, eventLog, budget] = await Promise.all([
+  const [usage, commandRecords, stageLaunch, recipe, theme, renderedMeta, eventLog, budget] = await Promise.all([
     loadStageUsage(outputDirectory, adapter, definition),
-    readJson(path.join(outputDirectory, adapter.stageDir, 'command.json')),
+    loadRoundCommands(outputDirectory, adapter),
     readJson(path.join(outputDirectory, 'stage-launch.json')),
     gitShow(materialsCommit, definition.recipePath),
     gitShow(materialsCommit, definition.themePath),
@@ -595,16 +634,17 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ou
   // Cost starts from ccusage reading this run's isolated home: it parses the persisted rollouts
   // (parent + any delegated subagent threads) and prices with its own maintained rate DB. Replay
   // can under-report output, so it is cross-checked against the harness's own counter.
+  const commandRecord = commandRecords[0];
   const cost = reconcileCost(
     await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome }),
-    harnessCountersForRounds(definition.stage.adapter, await loadRoundUsages(outputDirectory, adapter, budget)),
+    harnessCountersForRounds(definition.stage.adapter, await loadRoundUsages(outputDirectory, adapter)),
   );
   for (const warning of reconciliationWarnings(cost.reconciliation)) console.warn(warning);
   const ccusage = await ccusageVersion();
   const finishedAt = new Date().toISOString();
   const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
   const stageResult = stageLaunch.exitCode === 0 ? 'completed' : (commandRecord.timedOut ? 'timed-out' : 'failed');
-  const stages = buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget });
+  const stages = buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget });
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -644,23 +684,24 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ou
   };
 }
 
-// One harness invocation produces the manifest's stages. When ccusage attributes cost per model
-// (Claude), a delegation run splits into one stage per model — parent (the model that answered the
-// init event) as `orchestrate`, the rest as `implement`. When per-model cost is unavailable (Codex),
-// the run collapses to a single stage carrying the run total. All stages share the one invocation's
-// session id, harness version, and wall-clock boundaries; the prompt hashes attach to the parent.
-function buildStages({ definition, adapter, cost, commandRecord, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null }) {
+// When ccusage attributes cost per model (Claude), a delegation run splits into one stage per
+// model — parent (the model that answered the init event) as `orchestrate`, the rest as `implement`.
+// When per-model cost is unavailable (Codex), the run collapses to a single stage carrying the run
+// total. All stage entries share the one session id and sum the active wall time of every invocation;
+// the prompt hashes attach to the parent.
+function buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null }) {
+  const commandRecord = commandRecords[0];
+  const lastCommand = commandRecords.at(-1);
+  const continuationRounds = commandRecords.length - 1;
   const harness = { name: adapter.harnessName, version: commandRecord.cliVersion };
-  const lastResume = budget?.resumes?.at(-1);
-  const finishedAt = lastResume?.finishedAt ?? commandRecord.finishedAt;
   const timing = {
     startedAt: commandRecord.startedAt,
-    finishedAt,
-    wallTimeSeconds: lastResume ? (Date.parse(finishedAt) - Date.parse(commandRecord.startedAt)) / 1_000 : commandRecord.wallTimeSeconds,
+    finishedAt: lastCommand.finishedAt,
+    wallTimeSeconds: commandRecords.reduce((total, record) => total + record.wallTimeSeconds, 0),
   };
   const promptSha256 = renderedMeta.rendering.sha256;
   const delegationPromptSha256 = renderedMeta.delegation?.sha256;
-  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, ...(budget ? { budget } : {}) };
+  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, ...(continuationRounds > 0 ? { continuationRounds } : {}), ...(budget ? { budget } : {}) };
   const delegated = Boolean(definition.delegation) && cost.models.length > 1;
 
   if (cost.perModelCostAvailable && cost.models.length >= 1) {
@@ -703,13 +744,27 @@ function stageUsage({ inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, ca
 }
 
 // Load every completed invocation. The cost module selects only the final cumulative counter for
-// Claude/Codex and sums pi's invocation-local counters across the appended session.
-async function loadRoundUsages(outputDirectory, adapter, budget) {
+// Claude/Codex and sums pi's invocation-local counters across the appended session. File presence,
+// rather than the budget record, also covers manual continuation rounds.
+export async function loadRoundUsages(outputDirectory, adapter) {
   const usages = [await optionalJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json'))];
-  for (let round = 1; round <= (budget?.resumes?.length ?? 0); round += 1) {
-    usages.push(await optionalJson(path.join(outputDirectory, adapter.stageDir, `raw-usage-resume-${round}.json`)));
+  if (!usages[0]) return usages;
+  for (let round = 1; ; round += 1) {
+    const usage = await optionalJson(path.join(outputDirectory, adapter.stageDir, `raw-usage-resume-${round}.json`));
+    if (!usage) break;
+    usages.push(usage);
   }
   return usages;
+}
+
+async function loadRoundCommands(outputDirectory, adapter) {
+  const commands = [await readJson(path.join(outputDirectory, adapter.stageDir, 'command.json'))];
+  for (let round = 1; ; round += 1) {
+    const commandRecord = await optionalJson(path.join(outputDirectory, adapter.stageDir, `command-resume-${round}.json`));
+    if (!commandRecord) break;
+    commands.push(commandRecord);
+  }
+  return commands;
 }
 
 async function loadStageUsage(outputDirectory, adapter, definition) {
