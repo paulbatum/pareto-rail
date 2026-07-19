@@ -6,18 +6,18 @@ export function getStartScreenTip(fullscreenAvailable: boolean) {
   const { isiOS, standalone, coarsePointer } = getClientTipPlatform();
 
   if (isiOS && !standalone) {
-    return 'Fullscreen recommended on iPhone/iPad: Share → Add to Home Screen. Audio starts after first tap.';
+    return 'Best with sound on and fullscreen. iPhone/iPad: Share → Add to Home Screen. Audio starts after first tap.';
   }
 
   if (isiOS) {
-    return 'Fullscreen recommended. Home Screen mode is active. Audio starts after first tap.';
+    return 'Best with sound on — audio starts after first tap. Home Screen mode is active.';
   }
 
   if (coarsePointer) {
-    return fullscreenAvailable ? 'Fullscreen recommended: open pause and tap Fullscreen.' : '';
+    return fullscreenAvailable ? 'Best with sound on and fullscreen: open pause and tap Fullscreen.' : 'Best with sound on.';
   }
 
-  return fullscreenAvailable ? 'Fullscreen recommended: press F.' : '';
+  return fullscreenAvailable ? 'Best with sound on and fullscreen: press F.' : 'Best with sound on.';
 }
 
 export function getLockUndoTip(): string {
