@@ -1,4 +1,9 @@
 {
   "id": "mass-driver-detailed-om6f",
-  "title": "Mass Driver"
+  "title": "Mass Driver",
+  "contentImages": {
+    "overview": "/level-content/mass-driver-detailed-om6f/overview.png",
+    "start": "/level-content/mass-driver-detailed-om6f/start.png",
+    "hero": "/level-content/mass-driver-detailed-om6f/hero.png"
+  }
 }

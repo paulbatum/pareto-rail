@@ -1,4 +1,9 @@
 {
   "id": "broadside-ob4d",
-  "title": "Broadside"
+  "title": "Broadside",
+  "contentImages": {
+    "overview": "/level-content/broadside-ob4d/overview.png",
+    "start": "/level-content/broadside-ob4d/start.png",
+    "hero": "/level-content/broadside-ob4d/hero.png"
+  }
 }
