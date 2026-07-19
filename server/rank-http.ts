@@ -41,7 +41,11 @@ export async function handleRankStatsRequest(request: Request, prisma: PrismaCli
   if (request.method !== 'GET') return json({ ok: false, error: 'Method not allowed' }, 405);
   try {
     const result = await readRankStats(prisma);
-    return json(result.body, result.status);
+    const response = json(result.body, result.status);
+    if (result.status === 200) {
+      response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300');
+    }
+    return response;
   } catch (error) {
     console.error('Rank stats persistence failed', error instanceof Error ? error.message : 'unknown error');
     return json({ ok: false, error: 'Stats unavailable' }, 500);

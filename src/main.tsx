@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './style.css';
 import './app/style.css';
 import './app/theme.css';
+import { Analytics } from '@vercel/analytics/react';
 import { App } from './app/App';
 import { installDevErrorOverlay } from './ui/dev-error-overlay';
 
@@ -14,6 +15,7 @@ if (!root) throw new Error('Missing #app root');
 createRoot(root).render(
   <StrictMode>
     <App />
+    <Analytics />
   </StrictMode>,
 );
 document.body.classList.remove('booting');
