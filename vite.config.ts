@@ -12,6 +12,7 @@ export default defineConfig({
   plugins: [react(), crystalTemplateDevPlugin(), rankApiDevPlugin(), adminApiDevPlugin()],
   build: {
     chunkSizeWarningLimit: 1200,
+    manifest: true,
   },
 });
 
