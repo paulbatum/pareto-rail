@@ -109,6 +109,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .text-link:hover { color: var(--ink); }
 .prose { max-width: 720px; }
 .prose h2 { margin-top: 42px; font-size: 20px; }
+.legal-links { display: flex; flex-wrap: wrap; gap: 10px 24px; }
 
 /* ---------- Progressive protocol disclosures ---------- */
 .data-details { margin-top: 18px; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }

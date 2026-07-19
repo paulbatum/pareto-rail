@@ -106,6 +106,12 @@ export function AboutPage() {
       <p className="eyebrow">About</p>
       <h1>Pareto Rail</h1>
       <p className="lede">Built by <a href="https://x.com/paulbatum" target="_blank" rel="noreferrer">@paulbatum</a></p>
+      <h2>Open source</h2>
+      <p>Pareto Rail is released under the MIT License. Third-party software, data, and reference material retain their original terms.</p>
+      <p className="legal-links">
+        <a className="text-link" href="/LICENSE.txt" target="_blank" rel="noreferrer">MIT License</a>
+        <a className="text-link" href="/THIRD_PARTY_NOTICES.md" target="_blank" rel="noreferrer">Third-party notices</a>
+      </p>
     </section>
   );
 }
