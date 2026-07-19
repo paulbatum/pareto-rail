@@ -120,6 +120,8 @@ export function AboutPage() {
           <pre className="legal-document">{thirdPartyNotices}</pre>
         </details>
       </div>
+      <h2>Privacy</h2>
+      <p>Pareto Rail uses Vercel Web Analytics to measure aggregate traffic. It sets no cookies, stores nothing on your device, and does not track you across sites or build a profile of you. Votes you cast are stored anonymously to compile the rankings.</p>
     </section>
   );
 }
