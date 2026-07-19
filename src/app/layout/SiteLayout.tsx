@@ -8,7 +8,7 @@ const navigation = [
   { href: '/rank', label: 'Rank' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/levels', label: 'Levels' },
-  { href: '/analysis', label: 'Analysis' },
+  ...(import.meta.env.DEV ? [{ href: '/analysis', label: 'Analysis' }] : []),
   { href: '/about', label: 'About' },
 ];
 
