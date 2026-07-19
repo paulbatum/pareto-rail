@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { SiteLayout } from './layout/SiteLayout';
 import { parseRoute, navigate, levelsViewPath, type AppRoute } from './router';
 import { AboutPage, HomePage, LeaderboardPage, NotFoundPage } from './pages/PublicPages';
 import { LevelsPage } from './pages/LevelsPage';
 import { PlayRoute } from './pages/GamePage';
 import { RankPage } from './pages/RankPage';
-import { AnalysisRoute } from './analysis/AnalysisRoute';
+
+const AnalysisRoute = lazy(() => import('./analysis/AnalysisRoute').then((module) => ({ default: module.AnalysisRoute })));
 
 export function App() {
   const [route, setRoute] = useState<AppRoute>(() => parseRoute());
@@ -40,7 +41,11 @@ function renderPage(route: AppRoute, onNavigate: (path: string) => void) {
   if (route.kind === 'play') return <PlayRoute route={route} onNavigate={onNavigate} />;
   if (route.kind === 'levels') return <LevelsPage route={route} onNavigate={onNavigate} />;
   if (route.kind === 'rank') return <RankPage route={route} onNavigate={onNavigate} />;
-  if (route.kind === 'analysis') return <AnalysisRoute route={route} onNavigate={onNavigate} />;
+  if (route.kind === 'analysis') return (
+    <Suspense fallback={<section className="page-panel"><p className="eyebrow">Loading</p><h1>Preparing analysis…</h1></section>}>
+      <AnalysisRoute route={route} onNavigate={onNavigate} />
+    </Suspense>
+  );
   if (route.kind === 'leaderboard') return <LeaderboardPage onNavigate={onNavigate} />;
   if (route.kind === 'about') return <AboutPage />;
   return <NotFoundPage onNavigate={onNavigate} />;
