@@ -41,7 +41,7 @@ Start from `npm run scaffold -- --id <id> [--title <Title>] [--bpm <n>]` for a b
 4. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`.
 5. Add the level to `src/levels/index.ts`.
 
-A built-in level task should only touch `src/levels/<id>/`, one registry line in `src/levels/index.ts`, the regenerated `docs/level-gallery.md`, and its own gallery content directory `public/level-content/<id>/`. Use `npm run check:scope -- <level-id>` to verify that boundary.
+A built-in level task should only touch `src/levels/<id>/`, one registry line in `src/levels/index.ts`, the regenerated `docs/level-gallery.md`, and its own gallery content directory `public/level-content/<id>/`. Public level imagery is AVIF; the build rejects tracked PNGs. Use `npm run check:scope -- <level-id>` to verify that boundary.
 
 ### Authoring a benchmark output
 

@@ -33,9 +33,9 @@ export const levelMetadatas: LevelMetadata[] = [
     aliases: ['crystal'],
     kind: 'playable',
     contentImages: {
-      overview: '/level-content/crystal-corridor/overview.png',
-      start: '/level-content/crystal-corridor/start.png',
-      hero: '/level-content/crystal-corridor/hero.png',
+      overview: '/level-content/crystal-corridor/overview.avif',
+      start: '/level-content/crystal-corridor/start.avif',
+      hero: '/level-content/crystal-corridor/hero.avif',
     },
   },
   { id: 'helios', title: 'Helios', kind: 'playable' },

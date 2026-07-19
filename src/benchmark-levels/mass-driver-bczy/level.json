@@ -2,8 +2,8 @@
   "id": "mass-driver-bczy",
   "title": "Mass Driver",
   "contentImages": {
-    "overview": "/level-content/mass-driver-bczy/overview.png",
-    "start": "/level-content/mass-driver-bczy/start.png",
-    "hero": "/level-content/mass-driver-bczy/hero.png"
+    "overview": "/level-content/mass-driver-bczy/overview.avif",
+    "start": "/level-content/mass-driver-bczy/start.avif",
+    "hero": "/level-content/mass-driver-bczy/hero.avif"
   }
 }

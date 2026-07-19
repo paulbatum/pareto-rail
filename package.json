@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "prisma generate && npm run validate:level-catalog && vite build",
+    "build": "prisma generate && npm run validate:level-catalog && node scripts/check-no-tracked-png.mjs && vite build",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
@@ -69,6 +69,7 @@
     "ccusage": "20.0.17",
     "prisma": "^7.8.0",
     "puppeteer": "^25.3.0",
+    "sharp": "^0.35.3",
     "typescript": "latest",
     "vite": "latest"
   }

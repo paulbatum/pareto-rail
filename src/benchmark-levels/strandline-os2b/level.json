@@ -2,8 +2,8 @@
   "id": "strandline-os2b",
   "title": "Strandline",
   "contentImages": {
-    "hero": "/level-content/strandline-os2b/hero.png",
-    "overview": "/level-content/strandline-os2b/overview.png",
-    "start": "/level-content/strandline-os2b/start.png"
+    "hero": "/level-content/strandline-os2b/hero.avif",
+    "overview": "/level-content/strandline-os2b/overview.avif",
+    "start": "/level-content/strandline-os2b/start.avif"
   }
 }

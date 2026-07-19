@@ -13,224 +13,224 @@
       "command": "for f in createCoilMesh createThreaderMesh createCapacitorMesh createArcMesh createInterlockMesh; do echo \"=== $f ===\"; npm run snapshot -- --module src/levels/mass-driver-wo4m/visuals/enemies.ts --export $f 2>&1 | tail -3; done; echo \"=== letter ===\"; npm run snapshot -- --module src/levels/mass-driver-wo4m/visuals/letters.ts --export createLetterMesh --args '[\"R\"]' 2>&1 | tail -3",
       "images": [
         {
-          "path": "snapshots/moment-1/createArcMesh-000.png",
+          "path": "snapshots/moment-1/createArcMesh-000.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createArcMesh",
             "yawDegrees": 0
           },
-          "bytes": 421836
+          "bytes": 5747
         },
         {
-          "path": "snapshots/moment-1/createArcMesh-090.png",
+          "path": "snapshots/moment-1/createArcMesh-090.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createArcMesh",
             "yawDegrees": 90
           },
-          "bytes": 479743
+          "bytes": 5805
         },
         {
-          "path": "snapshots/moment-1/createArcMesh-180.png",
+          "path": "snapshots/moment-1/createArcMesh-180.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createArcMesh",
             "yawDegrees": 180
           },
-          "bytes": 484230
+          "bytes": 6080
         },
         {
-          "path": "snapshots/moment-1/createArcMesh-270.png",
+          "path": "snapshots/moment-1/createArcMesh-270.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createArcMesh",
             "yawDegrees": 270
           },
-          "bytes": 479743
+          "bytes": 5805
         },
         {
-          "path": "snapshots/moment-1/createCapacitorMesh-000.png",
+          "path": "snapshots/moment-1/createCapacitorMesh-000.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createCapacitorMesh",
             "yawDegrees": 0
           },
-          "bytes": 226996
+          "bytes": 4673
         },
         {
-          "path": "snapshots/moment-1/createCapacitorMesh-090.png",
+          "path": "snapshots/moment-1/createCapacitorMesh-090.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createCapacitorMesh",
             "yawDegrees": 90
           },
-          "bytes": 385679
+          "bytes": 5743
         },
         {
-          "path": "snapshots/moment-1/createCapacitorMesh-180.png",
+          "path": "snapshots/moment-1/createCapacitorMesh-180.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createCapacitorMesh",
             "yawDegrees": 180
           },
-          "bytes": 302837
+          "bytes": 5945
         },
         {
-          "path": "snapshots/moment-1/createCapacitorMesh-270.png",
+          "path": "snapshots/moment-1/createCapacitorMesh-270.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createCapacitorMesh",
             "yawDegrees": 270
           },
-          "bytes": 386746
+          "bytes": 5870
         },
         {
-          "path": "snapshots/moment-1/createCoilMesh-000.png",
+          "path": "snapshots/moment-1/createCoilMesh-000.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createCoilMesh",
             "yawDegrees": 0
           },
-          "bytes": 332352
+          "bytes": 5993
         },
         {
-          "path": "snapshots/moment-1/createCoilMesh-090.png",
+          "path": "snapshots/moment-1/createCoilMesh-090.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createCoilMesh",
             "yawDegrees": 90
           },
-          "bytes": 284581
+          "bytes": 4171
         },
         {
-          "path": "snapshots/moment-1/createCoilMesh-180.png",
+          "path": "snapshots/moment-1/createCoilMesh-180.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createCoilMesh",
             "yawDegrees": 180
           },
-          "bytes": 289212
+          "bytes": 5606
         },
         {
-          "path": "snapshots/moment-1/createCoilMesh-270.png",
+          "path": "snapshots/moment-1/createCoilMesh-270.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createCoilMesh",
             "yawDegrees": 270
           },
-          "bytes": 292842
+          "bytes": 4736
         },
         {
-          "path": "snapshots/moment-1/createInterlockMesh-000.png",
+          "path": "snapshots/moment-1/createInterlockMesh-000.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createInterlockMesh",
             "yawDegrees": 0
           },
-          "bytes": 392337
+          "bytes": 7704
         },
         {
-          "path": "snapshots/moment-1/createInterlockMesh-090.png",
+          "path": "snapshots/moment-1/createInterlockMesh-090.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createInterlockMesh",
             "yawDegrees": 90
           },
-          "bytes": 343960
+          "bytes": 5356
         },
         {
-          "path": "snapshots/moment-1/createInterlockMesh-180.png",
+          "path": "snapshots/moment-1/createInterlockMesh-180.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createInterlockMesh",
             "yawDegrees": 180
           },
-          "bytes": 471381
+          "bytes": 7185
         },
         {
-          "path": "snapshots/moment-1/createInterlockMesh-270.png",
+          "path": "snapshots/moment-1/createInterlockMesh-270.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createInterlockMesh",
             "yawDegrees": 270
           },
-          "bytes": 344431
+          "bytes": 5291
         },
         {
-          "path": "snapshots/moment-1/createLetterMesh-000.png",
+          "path": "snapshots/moment-1/createLetterMesh-000.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/letters.ts",
             "export": "createLetterMesh",
             "yawDegrees": 0,
             "args": "[\"R\"]"
           },
-          "bytes": 307125
+          "bytes": 5779
         },
         {
-          "path": "snapshots/moment-1/createLetterMesh-090.png",
+          "path": "snapshots/moment-1/createLetterMesh-090.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/letters.ts",
             "export": "createLetterMesh",
             "yawDegrees": 90,
             "args": "[\"R\"]"
           },
-          "bytes": 169402
+          "bytes": 3207
         },
         {
-          "path": "snapshots/moment-1/createLetterMesh-180.png",
+          "path": "snapshots/moment-1/createLetterMesh-180.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/letters.ts",
             "export": "createLetterMesh",
             "yawDegrees": 180,
             "args": "[\"R\"]"
           },
-          "bytes": 370279
+          "bytes": 8118
         },
         {
-          "path": "snapshots/moment-1/createLetterMesh-270.png",
+          "path": "snapshots/moment-1/createLetterMesh-270.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/letters.ts",
             "export": "createLetterMesh",
             "yawDegrees": 270,
             "args": "[\"R\"]"
           },
-          "bytes": 168687
+          "bytes": 3143
         },
         {
-          "path": "snapshots/moment-1/createThreaderMesh-000.png",
+          "path": "snapshots/moment-1/createThreaderMesh-000.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createThreaderMesh",
             "yawDegrees": 0
           },
-          "bytes": 217801
+          "bytes": 2930
         },
         {
-          "path": "snapshots/moment-1/createThreaderMesh-090.png",
+          "path": "snapshots/moment-1/createThreaderMesh-090.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createThreaderMesh",
             "yawDegrees": 90
           },
-          "bytes": 364606
+          "bytes": 4455
         },
         {
-          "path": "snapshots/moment-1/createThreaderMesh-180.png",
+          "path": "snapshots/moment-1/createThreaderMesh-180.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createThreaderMesh",
             "yawDegrees": 180
           },
-          "bytes": 246521
+          "bytes": 2932
         },
         {
-          "path": "snapshots/moment-1/createThreaderMesh-270.png",
+          "path": "snapshots/moment-1/createThreaderMesh-270.avif",
           "depicts": {
             "module": "src/levels/mass-driver-wo4m/visuals/enemies.ts",
             "export": "createThreaderMesh",
             "yawDegrees": 270
           },
-          "bytes": 364901
+          "bytes": 4211
         }
       ],
       "filesChangedSincePreviousMoment": [
@@ -290,14 +290,14 @@
       "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --thumbnails 8 2>&1 | tail -15",
       "images": [
         {
-          "path": "snapshots/moment-2/gameplay__mass-driver-wo4m-thumbnails-8-3p75s-to-56p25s-full.png",
+          "path": "snapshots/moment-2/gameplay__mass-driver-wo4m-thumbnails-8-3p75s-to-56p25s-full.avif",
           "depicts": {
             "level": "mass-driver-wo4m",
             "fidelity": "full",
             "kind": "contact-sheet",
             "thumbnails": 8
           },
-          "bytes": 713615
+          "bytes": 36104
         }
       ],
       "filesChangedSincePreviousMoment": [
@@ -341,19 +341,19 @@
       "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 50,52,52.6,54 2>&1 | tail -8",
       "images": [
         {
-          "path": "snapshots/moment-3/gameplay__mass-driver-wo4m-thumbnails-4-50s-to-54s-full.png",
+          "path": "snapshots/moment-3/gameplay__mass-driver-wo4m-thumbnails-4-50s-to-54s-full.avif",
           "depicts": {
             "level": "mass-driver-wo4m",
             "fidelity": "full",
             "kind": "contact-sheet",
             "times": [
-              50.0,
-              52.0,
+              50,
+              52,
               52.6,
-              54.0
+              54
             ]
           },
-          "bytes": 173856
+          "bytes": 8968
         }
       ],
       "filesChangedSincePreviousMoment": [],
@@ -362,13 +362,13 @@
         "verified": "Rendered luminance matches the original run values recorded in the transcript for this command: 4 overlapping frames compared, max abs diff 0.0006.",
         "originalLuminance": [
           0.6952,
-          1.0,
+          1,
           0.9787,
           0.1056
         ],
         "replayedLuminance": [
           0.6958,
-          1.0,
+          1,
           0.9787,
           0.1056
         ],
@@ -383,23 +383,23 @@
       "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 3,10,18,26,38,48,52.8,56 2>&1 | tail -5",
       "images": [
         {
-          "path": "snapshots/moment-4/gameplay__mass-driver-wo4m-thumbnails-8-3s-to-56s-full.png",
+          "path": "snapshots/moment-4/gameplay__mass-driver-wo4m-thumbnails-8-3s-to-56s-full.avif",
           "depicts": {
             "level": "mass-driver-wo4m",
             "fidelity": "full",
             "kind": "contact-sheet",
             "times": [
-              3.0,
-              10.0,
-              18.0,
-              26.0,
-              38.0,
-              48.0,
+              3,
+              10,
+              18,
+              26,
+              38,
+              48,
               52.8,
-              56.0
+              56
             ]
           },
-          "bytes": 675939
+          "bytes": 34419
         }
       ],
       "filesChangedSincePreviousMoment": [
@@ -433,19 +433,19 @@
       "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 40,43,46,50 2>&1 | tail -2",
       "images": [
         {
-          "path": "snapshots/moment-5/gameplay__mass-driver-wo4m-thumbnails-4-40s-to-50s-full.png",
+          "path": "snapshots/moment-5/gameplay__mass-driver-wo4m-thumbnails-4-40s-to-50s-full.avif",
           "depicts": {
             "level": "mass-driver-wo4m",
             "fidelity": "full",
             "kind": "contact-sheet",
             "times": [
-              40.0,
-              43.0,
-              46.0,
-              50.0
+              40,
+              43,
+              46,
+              50
             ]
           },
-          "bytes": 348467
+          "bytes": 14629
         }
       ],
       "filesChangedSincePreviousMoment": [],
@@ -469,20 +469,20 @@
       "command": "npm run typecheck 2>&1 | tail -2 && npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 39,42,46,50,51.5 2>&1 | tail -2",
       "images": [
         {
-          "path": "snapshots/moment-6/gameplay__mass-driver-wo4m-thumbnails-5-39s-to-51p5s-full.png",
+          "path": "snapshots/moment-6/gameplay__mass-driver-wo4m-thumbnails-5-39s-to-51p5s-full.avif",
           "depicts": {
             "level": "mass-driver-wo4m",
             "fidelity": "full",
             "kind": "contact-sheet",
             "times": [
-              39.0,
-              42.0,
-              46.0,
-              50.0,
+              39,
+              42,
+              46,
+              50,
               51.5
             ]
           },
-          "bytes": 395273
+          "bytes": 17853
         }
       ],
       "filesChangedSincePreviousMoment": [
@@ -510,18 +510,18 @@
       "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 50,51.5,52.3 2>&1 | grep luminance; ",
       "images": [
         {
-          "path": "snapshots/moment-7/gameplay__mass-driver-wo4m-thumbnails-3-50s-to-52p3s-full.png",
+          "path": "snapshots/moment-7/gameplay__mass-driver-wo4m-thumbnails-3-50s-to-52p3s-full.avif",
           "depicts": {
             "level": "mass-driver-wo4m",
             "fidelity": "full",
             "kind": "contact-sheet",
             "times": [
-              50.0,
+              50,
               51.5,
               52.3
             ]
           },
-          "bytes": 209992
+          "bytes": 8912
         }
       ],
       "filesChangedSincePreviousMoment": [
@@ -551,18 +551,18 @@
       "command": "npm run snapshot:gameplay -- --level mass-driver-wo4m --sheet --times 10,24,42 --fidelity postless 2>&1 | tail -2",
       "images": [
         {
-          "path": "snapshots/moment-8/gameplay__mass-driver-wo4m-thumbnails-3-10s-to-42s-postless.png",
+          "path": "snapshots/moment-8/gameplay__mass-driver-wo4m-thumbnails-3-10s-to-42s-postless.avif",
           "depicts": {
             "level": "mass-driver-wo4m",
             "fidelity": "postless",
             "kind": "contact-sheet",
             "times": [
-              10.0,
-              24.0,
-              42.0
+              10,
+              24,
+              42
             ]
           },
-          "bytes": 133346
+          "bytes": 16395
         }
       ],
       "filesChangedSincePreviousMoment": [],

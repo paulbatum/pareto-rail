@@ -90,11 +90,11 @@ async function main() {
     try {
       const result = await promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory });
       await assertPromotion(fixture, result.promotionCommit);
-      assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.png'), 'utf8'), 'synthetic hero\n');
+      assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.avif'), 'utf8'), 'synthetic hero\n');
       const names = (await git(fixture.root, ['diff', '--name-only', `${fixture.base}..${result.promotionCommit}`])).trim().split('\n').filter(Boolean).sort();
       assert.deepEqual(names, [
         'docs/level-gallery.md',
-        'public/level-content/synthetic-a1b2/hero.png',
+        'public/level-content/synthetic-a1b2/hero.avif',
         'src/benchmark-levels/synthetic-a1b2/index.ts',
         'src/benchmark-levels/synthetic-a1b2/level.json',
         'src/benchmark-levels/synthetic-a1b2/level.md',
@@ -167,7 +167,7 @@ async function assertPromotion(fixture, promotionCommit) {
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(destination, 'level.json'), 'utf8')), { id: 'synthetic-a1b2', title: 'Synthetic Promotion' });
   assert.match(await fs.readFile(path.join(fixture.root, 'docs/level-gallery.md'), 'utf8'), /## Benchmark levels/);
   assert.equal((await git(fixture.root, ['show', '--format=%P', '--no-patch', promotionCommit])).trim(), fixture.base);
-  if (fixture.content) assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.png'), 'utf8'), 'synthetic hero\n');
+  if (fixture.content) assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.avif'), 'utf8'), 'synthetic hero\n');
 }
 
 async function createFixture({ payloadWorktree = false, rehearsal = false, payloadSymlink = false, content = false, outsidePayload = false } = {}) {
@@ -197,7 +197,7 @@ async function createFixture({ payloadWorktree = false, rehearsal = false, paylo
     'src/benchmark-levels/synthetic-a1b2/level.md': '# Synthetic Promotion\n\nSynthetic test payload.\n',
     'src/benchmark-levels/synthetic-a1b2/level.json': `${JSON.stringify({ id: 'synthetic-a1b2', title: 'Synthetic Promotion' }, null, 2)}\n`,
   };
-  if (content) sourceFiles['public/level-content/synthetic-a1b2/hero.png'] = 'synthetic hero\n';
+  if (content) sourceFiles['public/level-content/synthetic-a1b2/hero.avif'] = 'synthetic hero\n';
   const payloadPaths = ['src/benchmark-levels/synthetic-a1b2', ...(content ? ['public/level-content/synthetic-a1b2'] : [])];
   await git(root, ['switch', '-c', 'evaluated-run']);
   for (const [file, contents] of Object.entries(sourceFiles)) await writePayloadFile(path.join(root, file), contents, payloadSymlink);

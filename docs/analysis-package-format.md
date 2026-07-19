@@ -20,7 +20,7 @@ Every file uses stable event ids (`ev-NNNN` for the main session, `<agent-id>-ev
 
 ### Visual layer
 
-- `snapshots/moment-<n>/*.png` — the images the agent rendered of its own work, reconstructed by replaying the recorded file operations to the exact tree state at each moment and re-running the agent's exact command in the same renderer.
+- `snapshots/moment-<n>/*.avif` — the images the agent rendered of its own work, reconstructed by replaying the recorded file operations to the exact tree state at each moment and re-running the agent's exact command in the same renderer.
 - `snapshots.json` — index tying each image to its event, command, and the files changed since the previous moment, with per-moment reconstruction provenance and a final-state verification that the full replay reproduces the evaluated payload.
 
 ### Editorial layer (model-authored)

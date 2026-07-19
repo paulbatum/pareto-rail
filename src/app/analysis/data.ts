@@ -30,8 +30,8 @@ const sectionFiles = import.meta.glob('/benchmark/analysis/*/sections.json', { i
 const annotationFiles = import.meta.glob('/benchmark/analysis/*/annotations.json', { import: 'default' }) as Loader<AnalysisAnnotations>;
 const narrativeFiles = import.meta.glob('/benchmark/analysis/*/narrative.json', { import: 'default' }) as Loader<AnalysisNarrative>;
 
-/** Snapshot PNGs, resolved to served URLs at build time. Keyed by source path. */
-const imageUrls = import.meta.glob('/benchmark/analysis/*/snapshots/**/*.png', {
+/** Snapshot AVIFs, resolved to served URLs at build time. Keyed by source path. */
+const imageUrls = import.meta.glob('/benchmark/analysis/*/snapshots/**/*.avif', {
   query: '?url',
   import: 'default',
   eager: true,
@@ -54,7 +54,7 @@ export function hasAnalysisPackage(id: string): boolean {
   return `${packageDir(id)}/run.json` in runFiles;
 }
 
-/** URL for an image referenced from snapshots.json (`snapshots/moment-n/x.png`). */
+/** URL for an image referenced from snapshots.json (`snapshots/moment-n/x.avif`). */
 export function snapshotImageUrl(id: string, imagePath: string): string | undefined {
   return imageUrls[`${packageDir(id)}/${imagePath}`];
 }

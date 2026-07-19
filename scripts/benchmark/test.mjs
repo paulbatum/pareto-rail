@@ -642,14 +642,14 @@ try {
   );
   // A level co-owns its gallery content directory; self-produced images are in scope.
   await fs.mkdir(path.join(scopeRepo, 'public/level-content/synthetic-a1b2'), { recursive: true });
-  await fs.writeFile(path.join(scopeRepo, 'public/level-content/synthetic-a1b2/hero.png'), 'binary\n');
+  await fs.writeFile(path.join(scopeRepo, 'public/level-content/synthetic-a1b2/hero.avif'), 'binary\n');
   assert.deepEqual(
     await checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD' }),
-    ['public/level-content/synthetic-a1b2/hero.png', 'src/benchmark-levels/synthetic-a1b2/index.ts'],
+    ['public/level-content/synthetic-a1b2/hero.avif', 'src/benchmark-levels/synthetic-a1b2/index.ts'],
   );
   // Another level's content directory remains out of scope.
   await fs.mkdir(path.join(scopeRepo, 'public/level-content/other-z9z9'), { recursive: true });
-  await fs.writeFile(path.join(scopeRepo, 'public/level-content/other-z9z9/hero.png'), 'binary\n');
+  await fs.writeFile(path.join(scopeRepo, 'public/level-content/other-z9z9/hero.avif'), 'binary\n');
   await assert.rejects(
     () => checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD' }),
     /Out-of-scope files/,
@@ -668,16 +668,16 @@ try {
   await fs.writeFile(path.join(scopeRepo, 'src/levels/synthetic-a1b2/index.ts'), 'synthetic legacy\n');
   await fs.writeFile(path.join(scopeRepo, 'src/levels/index.ts'), 'derived registry\n');
   await fs.mkdir(path.join(scopeRepo, 'public/level-content/synthetic-a1b2'), { recursive: true });
-  await fs.writeFile(path.join(scopeRepo, 'public/level-content/synthetic-a1b2/hero.png'), 'legacy hero\n');
+  await fs.writeFile(path.join(scopeRepo, 'public/level-content/synthetic-a1b2/hero.avif'), 'legacy hero\n');
   assert.deepEqual(
     await checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', builtIn: true }),
-    ['public/level-content/synthetic-a1b2/hero.png', 'src/levels/index.ts', 'src/levels/synthetic-a1b2/index.ts'],
+    ['public/level-content/synthetic-a1b2/hero.avif', 'src/levels/index.ts', 'src/levels/synthetic-a1b2/index.ts'],
   );
   await fs.mkdir(path.join(scopeRepo, 'public/level-content/other-z9z9'), { recursive: true });
-  await fs.writeFile(path.join(scopeRepo, 'public/level-content/other-z9z9/hero.png'), 'other\n');
+  await fs.writeFile(path.join(scopeRepo, 'public/level-content/other-z9z9/hero.avif'), 'other\n');
   await assert.rejects(
     () => checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', builtIn: true }),
-    /public\/level-content\/other-z9z9\/hero\.png/,
+    /public\/level-content\/other-z9z9\/hero\.avif/,
   );
 } finally {
   await fs.rm(scopeRepo, { recursive: true, force: true });

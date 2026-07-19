@@ -2,8 +2,8 @@
   "id": "broadside-b3fk",
   "title": "Broadside",
   "contentImages": {
-    "hero": "/level-content/broadside-b3fk/hero.png",
-    "overview": "/level-content/broadside-b3fk/overview.png",
-    "start": "/level-content/broadside-b3fk/start.png"
+    "hero": "/level-content/broadside-b3fk/hero.avif",
+    "overview": "/level-content/broadside-b3fk/overview.avif",
+    "start": "/level-content/broadside-b3fk/start.avif"
   }
 }

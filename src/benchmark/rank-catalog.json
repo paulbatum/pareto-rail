@@ -130,7 +130,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-7rkv/hero.png",
+          "thumbnailPath": "/level-content/mass-driver-7rkv/hero.avif",
           "featured": true
         },
         {
@@ -170,7 +170,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-bczy/hero.png"
+          "thumbnailPath": "/level-content/mass-driver-bczy/hero.avif"
         },
         {
           "levelId": "mass-driver-vyxj",
@@ -200,7 +200,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-vyxj/hero.png",
+          "thumbnailPath": "/level-content/mass-driver-vyxj/hero.avif",
           "featured": true
         },
         {
@@ -242,7 +242,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-wo4m/hero.png"
+          "thumbnailPath": "/level-content/mass-driver-wo4m/hero.avif"
         },
         {
           "levelId": "skyhook-81u5",
@@ -281,7 +281,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/skyhook-81u5/hero.png"
+          "thumbnailPath": "/level-content/skyhook-81u5/hero.avif"
         },
         {
           "levelId": "skyhook-9uib",
@@ -311,7 +311,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/skyhook-9uib/hero.png",
+          "thumbnailPath": "/level-content/skyhook-9uib/hero.avif",
           "featured": true
         },
         {
@@ -353,7 +353,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/skyhook-lkor/hero.png"
+          "thumbnailPath": "/level-content/skyhook-lkor/hero.avif"
         },
         {
           "levelId": "skyhook-snxd",
@@ -384,7 +384,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/skyhook-snxd/hero.png",
+          "thumbnailPath": "/level-content/skyhook-snxd/hero.avif",
           "featured": true
         }
       ]
@@ -441,7 +441,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/broadside-b3fk/hero.png"
+          "thumbnailPath": "/level-content/broadside-b3fk/hero.avif"
         },
         {
           "levelId": "broadside-b4kd",
@@ -472,7 +472,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/broadside-b4kd/hero.png",
+          "thumbnailPath": "/level-content/broadside-b4kd/hero.avif",
           "featured": true
         },
         {
@@ -503,7 +503,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/broadside-b6ej/hero.png",
+          "thumbnailPath": "/level-content/broadside-b6ej/hero.avif",
           "featured": true
         },
         {
@@ -535,7 +535,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/broadside-b9mn/hero.png"
+          "thumbnailPath": "/level-content/broadside-b9mn/hero.avif"
         },
         {
           "levelId": "broadside-ob3c",
@@ -566,7 +566,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/broadside-ob3c/hero.png"
+          "thumbnailPath": "/level-content/broadside-ob3c/hero.avif"
         },
         {
           "levelId": "broadside-ob4d",
@@ -597,7 +597,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/broadside-ob4d/hero.png"
+          "thumbnailPath": "/level-content/broadside-ob4d/hero.avif"
         },
         {
           "levelId": "mass-driver-detailed-m3rp",
@@ -628,7 +628,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-m3rp/hero.png",
+          "thumbnailPath": "/level-content/mass-driver-detailed-m3rp/hero.avif",
           "featured": true
         },
         {
@@ -659,7 +659,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-m4gp/hero.png",
+          "thumbnailPath": "/level-content/mass-driver-detailed-m4gp/hero.avif",
           "featured": true
         },
         {
@@ -691,7 +691,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-m6vt/hero.png"
+          "thumbnailPath": "/level-content/mass-driver-detailed-m6vt/hero.avif"
         },
         {
           "levelId": "mass-driver-detailed-m7hq",
@@ -721,7 +721,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-m7hq/hero.png"
+          "thumbnailPath": "/level-content/mass-driver-detailed-m7hq/hero.avif"
         },
         {
           "levelId": "mass-driver-detailed-om5e",
@@ -752,7 +752,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-om5e/hero.png"
+          "thumbnailPath": "/level-content/mass-driver-detailed-om5e/hero.avif"
         },
         {
           "levelId": "mass-driver-detailed-om6f",
@@ -783,7 +783,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-om6f/hero.png"
+          "thumbnailPath": "/level-content/mass-driver-detailed-om6f/hero.avif"
         },
         {
           "levelId": "strandline-os1a",
@@ -814,7 +814,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/strandline-os1a/hero.png"
+          "thumbnailPath": "/level-content/strandline-os1a/hero.avif"
         },
         {
           "levelId": "strandline-os2b",
@@ -845,7 +845,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/strandline-os2b/hero.png"
+          "thumbnailPath": "/level-content/strandline-os2b/hero.avif"
         },
         {
           "levelId": "strandline-s2bq",
@@ -876,7 +876,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/strandline-s2bq/hero.png"
+          "thumbnailPath": "/level-content/strandline-s2bq/hero.avif"
         },
         {
           "levelId": "strandline-s5cx",
@@ -906,7 +906,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/strandline-s5cx/hero.png",
+          "thumbnailPath": "/level-content/strandline-s5cx/hero.avif",
           "featured": true
         },
         {
@@ -938,7 +938,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/strandline-s7ah/hero.png",
+          "thumbnailPath": "/level-content/strandline-s7ah/hero.avif",
           "featured": true
         },
         {
@@ -969,7 +969,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/strandline-s8dw/hero.png"
+          "thumbnailPath": "/level-content/strandline-s8dw/hero.avif"
         }
       ]
     }

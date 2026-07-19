@@ -5,11 +5,11 @@ description: "Create or refresh a Pareto Rail level's three public content image
 
 # Level content images
 
-Use this workflow for a built-in level or an integrated benchmark level that needs public showcase imagery. The deliverable is exactly three PNGs:
+Use this workflow for a built-in level or an integrated benchmark level that needs public showcase imagery. The deliverable is exactly three AVIFs:
 
-- `overview.png` — four gameplay moments, with no labels or gutters;
-- `start.png` — the attract screen before the run begins;
-- `hero.png` — the strongest single gameplay composition.
+- `overview.avif` — four gameplay moments, with no labels or gutters;
+- `start.avif` — the attract screen before the run begins;
+- `hero.avif` — the strongest single gameplay composition.
 
 Store them at `public/level-content/<level-id>/`. Connect the paths through `contentImages`: use `src/levels/index.ts` for a built-in level, or that level's `src/benchmark-levels/<level-id>/level.json` descriptor for a benchmark level.
 
@@ -48,8 +48,14 @@ Store them at `public/level-content/<level-id>/`. Connect the paths through `con
    npm run snapshot:gameplay -- --level <level-id> --start-screen --time 0.8 --width 1920 --height 1080 --out /tmp/<level-id>-content-final --fidelity full --seed 424242
    ```
 
-8. Copy the three results to `public/level-content/<level-id>/` as `hero.png`, `overview.png`, and `start.png`. Inspect those final three files. Do not use files from ignored `snapshots/` as product assets.
-9. Add or update `contentImages` metadata. Validate with:
+8. Convert the three selected PNG renders to AVIF before copying them into the public asset tree. Snapshot intermediates in `/tmp` remain PNG:
+
+   ```sh
+   find /tmp/<level-id>-content-final -maxdepth 1 -type f -name '*.png' -print0 | xargs -0 node scripts/png-to-avif.mjs
+   ```
+
+9. Copy the three AVIF results to `public/level-content/<level-id>/` as `hero.avif`, `overview.avif`, and `start.avif`. Inspect those final three files. Do not use files from ignored `snapshots/` as product assets.
+10. Add or update `contentImages` metadata. Validate with:
 
    ```sh
    npm run typecheck

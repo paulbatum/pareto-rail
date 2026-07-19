@@ -207,7 +207,7 @@ function imageCaption(image: SnapshotImage, ordinal: number): string {
     return `${image.depicts.export}${yaw}`;
   }
   const name = image.path.split('/').pop() ?? image.path;
-  return name.replace(/\.png$/, '').replace(/^gameplay__/, 'gameplay · ').replace(/-/g, ' ');
+  return name.replace(/\.avif$/, '').replace(/^gameplay__/, 'gameplay · ').replace(/-/g, ' ');
 }
 
 function shortPath(file: string, levelId: string): string {
