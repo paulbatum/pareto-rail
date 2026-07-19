@@ -41,6 +41,7 @@
     "test:benchmark-catalog": "node scripts/benchmark/test-catalog.mjs",
     "test:benchmark-controller": "node scripts/benchmark/test.mjs",
     "test:benchmark-budget": "node scripts/benchmark/test-budget.mjs",
+    "test:benchmark-quota-wait": "node scripts/benchmark/test-quota-wait.mjs",
     "test:benchmark-promotion": "node scripts/benchmark/test-promotion.mjs",
     "test:benchmark-domain": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs src/benchmark/domain.test.ts",
     "test:vote-api": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs scripts/benchmark/test-vote-api.ts",

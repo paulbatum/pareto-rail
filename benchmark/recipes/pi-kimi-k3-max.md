@@ -14,7 +14,7 @@ This configuration is one unattended solo stage, not a controller-agent conversa
 - pi CLI: `0.80.10` or later, matching the OpenRouter recipe's pin.
 - Stage timeout: 43,200 seconds, matching the other solo configurations.
 - Task budget: none.
-- Continuations: none.
+- Continuations: quota-window waits are handled inside this one pi process and session; there are no separate controller continuation turns.
 
 ## Shared inputs
 
@@ -24,8 +24,12 @@ Identical to `pi-openrouter-kimi-k3-max`: the rendered assignment on stdin byte-
 
 - Operator interaction after launch: none.
 - Network access: unrestricted. pi has no OS-level sandbox; unattended operation relies on `--approve` trusting the entrant worktree, the same material harness difference documented in `pi-luna-low-smoke.md`.
-- Harness continuation behavior: none. The controller starts one fresh local pi process per stage and issues no resume.
-- Failure behavior: a nonzero exit, timeout, missing session id, missing usage on the final assistant message, unsupported effort, or a missing provider extension package stops the run for controller-failure classification.
+- Harness continuation behavior: the controller-owned quota-wait extension is active for this `kimi-coding` stage. On `agent_end`, it examines the last assistant message and recognizes a case-insensitive `access_terminated_error` signature or an error containing both `403` and `usage limit`. It records the interruption in `quota-wait/quota-waits.jsonl`, waits 900,000 milliseconds, and queues this exact same-session continuation message:
+
+  > `You were interrupted by a provider usage limit and have been resumed in the same session. Continue the assignment from where you left off and finish it per the original instructions.`
+
+  It can ride out up to 50 quota waits before allowing the provider error to end the run. Every detected wait and resumed attempt is recorded in `quota-wait/quota-waits.jsonl`. This deliberately differs from the other solo configurations, whose stages run in one uninterrupted window.
+- Failure behavior: quota interruptions are ridden out in-process. A nonzero exit, a quota-wait cap, a stage timeout, missing session id, missing usage on the final assistant message, unsupported effort, or a missing provider extension package stops the run for controller-failure classification.
 - Dependency provisioning: before this stage, the controller runs `npm ci` in the fresh worktree and records its command, version, exit code, timing, and complete log as unmeasured deterministic setup. This is not a model stage.
 - Commit behavior: the agent may use the normal repository workflow. After it exits, the controller seals permitted changes, then derives the payload.
 - Controller usage treatment: deterministic/no model usage. The controller is a process runner, not a pi agent.
@@ -70,7 +74,7 @@ The `kimi-coding` provider authenticates with pi's stored OAuth credential, not 
 
 ## Review and revision limits
 
-This is a solo configuration. There are no plan, review, revision, continuation, retry, or operator-feedback stages.
+This is a solo configuration. There are no plan, review, revision, retry, or operator-feedback stages; quota-window recovery is an internal wait within the one session, not a separate continuation stage.
 
 ## Mechanical gates
 
@@ -78,7 +82,7 @@ The controller runs only the four standard gates specified in `benchmark/control
 
 ## Cost
 
-Cost is measured by [ccusage](https://github.com/ccusage/ccusage), pinned in the repository's `package.json` (`20.0.17`) and invoked with the repository's own Node, using its pi view (`--pi-path` scoped to this run's isolated sessions directory) as described in `benchmark/README.md`. The manifest records ccusage's computed USD as `cost.totalUsd` and the tool/version provenance in `cost.costSource`. Because this configuration bills through a subscription, its measured figures are rate-priced usage rather than real metered spend — the same subscription caveat that applies to the Claude and Codex solo configurations, and the key cost-basis difference from `pi-openrouter-kimi-k3-max`. The subscription fee itself is reported separately as actual expenditure, never allocated across runs.
+Cost is measured by [ccusage](https://github.com/ccusage/ccusage), pinned in the repository's `package.json` (`20.0.17`) and invoked with the repository's own Node, using its pi view (`--pi-path` scoped to this run's isolated sessions directory) as described in `benchmark/README.md`. The manifest records ccusage's computed USD as `cost.totalUsd` and the tool/version provenance in `cost.costSource`. Because this configuration bills through a subscription, its measured figures are rate-priced usage rather than real metered spend — the same subscription caveat that applies to the Claude and Codex solo configurations, and the key cost-basis difference from `pi-openrouter-kimi-k3-max`. The subscription fee itself is reported separately as actual expenditure, never allocated across runs. Measurement remains one session and one pi invocation; wall-clock time includes quota waits, while active time can be recovered by subtracting the recorded wait intervals in `quota-wait/quota-waits.jsonl`.
 
 ## Known harness defaults
 

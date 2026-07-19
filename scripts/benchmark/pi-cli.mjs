@@ -47,6 +47,10 @@ const PROVIDER_EXTENSIONS = {
   'kimi-coding': path.join(os.homedir(), '.pi/agent/npm/node_modules/pi-provider-kimi-code/index.ts'),
 };
 
+const PROVIDER_QUOTA_WAIT = new Set(['kimi-coding']);
+const DEFAULT_QUOTA_WAIT_MS = 900_000;
+const DEFAULT_QUOTA_WAIT_MAX = 50;
+
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -98,6 +102,26 @@ async function main() {
     await fs.access(providerExtension).catch(() => fail(`Provider ${provider} needs its pi extension package at ${providerExtension}, which is missing. Install it in the operator pi home (pi install npm:pi-provider-kimi-code).`));
   }
 
+  const quotaWait = provider && PROVIDER_QUOTA_WAIT.has(provider)
+    ? {
+      directory: path.join(outputDirectory, 'quota-wait'),
+      extensionPath: fileURLToPath(new URL('./pi-quota-wait-extension.js', import.meta.url)),
+      waitMs: DEFAULT_QUOTA_WAIT_MS,
+      maxWaits: DEFAULT_QUOTA_WAIT_MAX,
+    }
+    : undefined;
+  if (quotaWait) {
+    await fs.mkdir(quotaWait.directory, { recursive: true });
+    await writeJson(path.join(outputDirectory, 'quota-wait.json'), {
+      active: true,
+      provider,
+      stateDirectory: 'quota-wait',
+      waitMs: quotaWait.waitMs,
+      maxWaits: quotaWait.maxWaits,
+      extension: quotaWait.extensionPath,
+    });
+  }
+
   const credential = await resolveProviderKey(provider);
   await writeJson(path.join(outputDirectory, 'credential-source.json'), {
     provider: provider ?? null,
@@ -120,12 +144,18 @@ async function main() {
     '--model', model,
     ...(provider ? ['--provider', provider] : []),
     ...(providerExtension ? ['--extension', providerExtension] : []),
+    ...(quotaWait ? ['--extension', quotaWait.extensionPath] : []),
   ];
 
   let budgetDirectory;
   let poller;
   let deadline = Infinity;
   const childEnv = { ...(credential.env ?? {}) };
+  if (quotaWait) {
+    childEnv.PARETO_RAIL_QUOTA_WAIT_DIRECTORY = quotaWait.directory;
+    childEnv.PARETO_RAIL_QUOTA_WAIT_MS = String(quotaWait.waitMs);
+    childEnv.PARETO_RAIL_QUOTA_WAIT_MAX = String(quotaWait.maxWaits);
+  }
   if (budgetUsd !== undefined) {
     budgetDirectory = path.join(outputDirectory, 'budget');
     await initializeBudgetDirectory(budgetDirectory, budgetUsd);
