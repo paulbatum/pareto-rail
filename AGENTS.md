@@ -33,6 +33,10 @@ Headless Chrome in WSL2 cannot render WebGPU (broken device limits), so the game
 
 When adding or changing repo tools, update the appropriate human-facing docs in the same change. For level-building tools this usually means `docs/level-authoring.md` or `docs/level-brief.md`; edit `AGENTS.md` only when the guidance is broadly useful across repo tasks.
 
+## Licensing
+
+Pareto Rail is MIT-licensed. Keep `THIRD_PARTY_NOTICES.md` accurate when adding distributed dependencies or copying third-party material; the Vite build emits that file with the deployed app.
+
 ## Vote tracking backend
 
 Vote persistence runs on a Prisma database (`server/` handlers, `api/rank/` Vercel adapters). Local setup and production migrations are in `docs/backend.md`.

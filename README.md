@@ -27,3 +27,7 @@ npm run snapshot:gameplay -- --level helios --sheet --times 4,12,24,48
 npm run snapshot:gameplay -- --level helios --time 12 --projectiles
 npm run benchmark:catalog -- validate --source path/to/catalog.json --mode production
 ```
+
+## License
+
+Pareto Rail is available under the [MIT License](LICENSE). Third-party components retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
