@@ -100,7 +100,8 @@ const publishedConfigurations = {
     'claude-opus-4-8-high-b20',
     'codex-sol-high',
     'codex-sol-high-b20',
-    'pi-openrouter-kimi-k3-max',
+    // Kimi is withheld from the pool until its full level set is generated; its levels,
+    // run records, and label stay. Restore the id here to republish.
   ],
 };
 

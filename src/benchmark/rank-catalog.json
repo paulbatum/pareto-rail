@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T01:02:16.496Z",
+  "generatedAt": "2026-07-19T19:39:12.059Z",
   "activeBenchmarkVersion": "rank-catalog-v2",
   "configurations": [
     {
@@ -86,7 +86,7 @@
   "versions": [
     {
       "benchmarkVersion": "rank-catalog-v1",
-      "generatedAt": "2026-07-19T01:02:16.496Z",
+      "generatedAt": "2026-07-19T19:39:12.059Z",
       "themes": [
         {
           "id": "mass-driver",
@@ -391,7 +391,7 @@
     },
     {
       "benchmarkVersion": "rank-catalog-v2",
-      "generatedAt": "2026-07-19T01:02:16.496Z",
+      "generatedAt": "2026-07-19T19:39:12.059Z",
       "themes": [
         {
           "id": "broadside",
@@ -970,37 +970,6 @@
             ]
           },
           "thumbnailPath": "/level-content/strandline-s8dw/hero.png"
-        },
-        {
-          "levelId": "strandline-sk9q",
-          "themeId": "strandline",
-          "configurationId": "pi-openrouter-kimi-k3-max",
-          "modelName": "Kimi K3",
-          "workflowName": "solo",
-          "generationCost": 20.8299408,
-          "run": {
-            "generationWallTimeSeconds": 10895.97,
-            "totalWallTimeSeconds": 11607.376,
-            "result": "completed",
-            "orchestrationTreatment": "none",
-            "harness": {
-              "name": "pi",
-              "version": "0.80.10"
-            },
-            "models": [
-              {
-                "modelName": "moonshotai/kimi-k3",
-                "role": "solo",
-                "inputTokens": 709704,
-                "outputTokens": 209846,
-                "cacheReadTokens": 51843796,
-                "cacheWriteTokens": 0,
-                "usageSource": "agreed",
-                "costUsd": 20.8299408
-              }
-            ]
-          },
-          "thumbnailPath": "/level-content/strandline-sk9q/hero.png"
         }
       ]
     }
