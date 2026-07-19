@@ -38,6 +38,15 @@ const PROVIDER_KEY_ENV = {
   openai: 'OPENAI_API_KEY',
 };
 
+// Providers registered by an installed pi extension package rather than built into pi. The stage
+// runs `--no-extensions`, which skips settings-driven package discovery, so a package-provided
+// provider must have its entry loaded explicitly (explicit `--extension` paths stay active under
+// that flag). Paths resolve against the operator's real pi home: the isolated per-run home holds
+// only the copied credential, never installed packages.
+const PROVIDER_EXTENSIONS = {
+  'kimi-coding': path.join(os.homedir(), '.pi/agent/npm/node_modules/pi-provider-kimi-code/index.ts'),
+};
+
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -84,6 +93,11 @@ async function main() {
     selectedThinkingLevel: effort,
   });
 
+  const providerExtension = provider ? PROVIDER_EXTENSIONS[provider] : undefined;
+  if (providerExtension) {
+    await fs.access(providerExtension).catch(() => fail(`Provider ${provider} needs its pi extension package at ${providerExtension}, which is missing. Install it in the operator pi home (pi install npm:pi-provider-kimi-code).`));
+  }
+
   const credential = await resolveProviderKey(provider);
   await writeJson(path.join(outputDirectory, 'credential-source.json'), {
     provider: provider ?? null,
@@ -105,6 +119,7 @@ async function main() {
     '--thinking', effort,
     '--model', model,
     ...(provider ? ['--provider', provider] : []),
+    ...(providerExtension ? ['--extension', providerExtension] : []),
   ];
 
   let budgetDirectory;
