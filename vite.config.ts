@@ -4,11 +4,12 @@ import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { rankApiDevPlugin } from './server/vite-rank-api';
+import { adminApiDevPlugin } from './server/vite-admin-api';
 
 const templatePath = path.resolve(process.cwd(), 'src/levels/crystal/visuals/crystal-template.json');
 
 export default defineConfig({
-  plugins: [react(), crystalTemplateDevPlugin(), rankApiDevPlugin()],
+  plugins: [react(), crystalTemplateDevPlugin(), rankApiDevPlugin(), adminApiDevPlugin()],
   build: {
     chunkSizeWarningLimit: 1200,
   },
