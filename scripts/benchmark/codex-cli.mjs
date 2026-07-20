@@ -32,11 +32,12 @@ async function main() {
     [--timeout-seconds <positive-integer>] \\
     [--budget-usd <positive-number>] \\
     [--codex-bin <path-or-command>] \\
-    [--enable-multi-agent true]`);
+    [--enable-multi-agent true] \\
+    [--network-access <true|false>]`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'budget-usd', 'codex-bin', 'enable-multi-agent']));
+  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'budget-usd', 'codex-bin', 'enable-multi-agent', 'network-access']));
 
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const promptPath = path.resolve(requireOption(options, 'prompt'));
@@ -47,6 +48,7 @@ async function main() {
   const budgetUsd = parseBudgetUsd(options['budget-usd']);
   const codexBin = options['codex-bin'] ?? 'codex';
   const enableMultiAgent = options['enable-multi-agent'] === 'true';
+  const networkAccess = options['network-access'] === undefined ? true : parseBoolean(options['network-access'], '--network-access');
   const repositoryRoot = await primaryRepository(worktree);
   const outputDirectory = assertPrivateOrExternalPath(requireOption(options, 'out'), repositoryRoot);
   if (pathInside(outputDirectory, worktree)) fail('Codex stage output must be outside the entrant worktree.');
@@ -76,7 +78,7 @@ async function main() {
     '-m', model,
     '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
     '-c', 'approval_policy="never"',
-    '-c', 'sandbox_workspace_write.network_access=true',
+    '-c', `sandbox_workspace_write.network_access=${networkAccess}`,
     // Delegation configurations enable the multi_agent_v2 feature so a spawned subagent can run a
     // different model than its parent. `--ignore-user-config` drops the operator's config.toml
     // (which normally carries this), so it is re-declared here as an explicit `-c` override. Without
@@ -151,7 +153,7 @@ async function main() {
         '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
         '-c', 'approval_policy="never"',
         '-c', 'sandbox_mode="workspace-write"',
-        '-c', 'sandbox_workspace_write.network_access=true',
+        '-c', `sandbox_workspace_write.network_access=${networkAccess}`,
         ...(enableMultiAgent ? ['-c', 'features.multi_agent_v2.hide_spawn_agent_metadata=false', '-c', 'features.multi_agent_v2.tool_namespace="agents"'] : []),
         ...trustBypassArgs,
         '--output-last-message', resumeFinalMessage,
@@ -244,6 +246,12 @@ function parseTimeout(value) {
   if (value === undefined) return undefined;
   if (!/^\d+$/.test(value) || Number(value) === 0) fail('--timeout-seconds must be a positive integer.');
   return Number(value);
+}
+
+function parseBoolean(value, label) {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  fail(`${label} must be true or false.`);
 }
 
 async function primaryRepository(worktree) {

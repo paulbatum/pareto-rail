@@ -9,7 +9,18 @@
 export const BUILT_IN_SOURCE_ROOT = 'src/levels';
 export const BENCHMARK_SOURCE_ROOT = 'src/benchmark-levels';
 export const LEVEL_GALLERY_PATH = 'docs/level-gallery.md';
+export const LEVEL_CONTENT_ROOT = 'public/level-content';
 export const BUILT_IN_LEVEL_REGISTRY_PATH = 'src/levels/index.ts';
+
+// The built-in registry imports these files even when no promoted benchmark
+// level is present. The cut-baseline tool keeps this minimum discovery seam so
+// the application still typechecks and builds with an empty benchmark catalog.
+export const SCRUBBED_BENCHMARK_SCAFFOLD_PATHS = [
+  `${BENCHMARK_SOURCE_ROOT}/index.ts`,
+  `${BENCHMARK_SOURCE_ROOT}/catalog.ts`,
+  `${BENCHMARK_SOURCE_ROOT}/types.ts`,
+  `${BENCHMARK_SOURCE_ROOT}/validation.ts`,
+];
 
 /**
  * Benchmark levels: entrant-authored directories under src/benchmark-levels/<id>,
@@ -27,8 +38,8 @@ export function benchmarkLevelFootprint(levelId) {
       },
       {
         id: 'content',
-        path: `public/level-content/${levelId}`,
-        promotedPath: `public/level-content/${levelId}`,
+        path: `${LEVEL_CONTENT_ROOT}/${levelId}`,
+        promotedPath: `${LEVEL_CONTENT_ROOT}/${levelId}`,
         required: false,
       },
     ],
@@ -51,8 +62,8 @@ export function builtInLevelFootprint(levelId) {
       },
       {
         id: 'content',
-        path: `public/level-content/${levelId}`,
-        promotedPath: `public/level-content/${levelId}`,
+        path: `${LEVEL_CONTENT_ROOT}/${levelId}`,
+        promotedPath: `${LEVEL_CONTENT_ROOT}/${levelId}`,
         required: false,
       },
     ],

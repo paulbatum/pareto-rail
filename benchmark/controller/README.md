@@ -17,6 +17,7 @@ A plan is a hand-edited JSON file — private, because its rows carry the level-
 ```json
 {
   "benchmarkVersion": "v2",
+  "baselinePolicy": "scrubbed",
   "materialsCommit": "<commit>",
   "entrantBaseline": "<commit>",
   "runs": [
@@ -47,9 +48,27 @@ A plan is a hand-edited JSON file — private, because its rows carry the level-
 }
 ```
 
-`materialsCommit` and `entrantBaseline` pin the run: inputs are read from the materials commit and their hashes recorded in the manifest, and the entrant checkout is that baseline. Per row, `levelId` must equal `<themeId>-<slotId>`; the level title comes from the theme file's level-one heading, not the plan. `stage.adapter` is `codex-cli`, `claude-cli`, or `pi-cli`; `provider` and `budget` are optional and `budget` calibrates effort through the harness's spend notices. `delegation` is optional and turns the stage into a planner/reviewer over a cheaper implementer. `kind` defaults to `benchmark`; a `rehearsal` row runs the identical pipeline but never enters the results pool, the catalog, or promotion.
+`baselinePolicy` is required. New series use `scrubbed`: entrants receive the built-in levels and shared application only. `open` exists to record the historical v2 condition; every v2 row runs under `open` and remains unchanged, with promotion-time contamination audits as its control. `materialsCommit` and `entrantBaseline` pin the run: inputs are read from the materials commit and their hashes recorded in the manifest, and the entrant checkout is that baseline. Per row, `levelId` must equal `<themeId>-<slotId>`; the level title comes from the theme file's level-one heading, not the plan. `stage.adapter` is `codex-cli`, `claude-cli`, or `pi-cli`; `provider` and `budget` are optional and `budget` calibrates effort through the harness's spend notices. A Codex row may set `stage.networkAccess` explicitly; when omitted it defaults to `false` for a scrubbed plan and `true` for the historical open policy. `delegation` is optional and turns the stage into a planner/reviewer over a cheaper implementer. `kind` defaults to `benchmark`; a `rehearsal` row runs the identical pipeline but never enters the results pool, the catalog, or promotion.
+
+Before launching a scrubbed-policy row, the runner checks the declared baseline's git tree. `src/benchmark-levels/` may contain only the four empty-catalog scaffold files required by the built-in registry, `benchmark/` must be absent, and `public/level-content/` may contain only ids registered in that baseline's own `src/levels/index.ts`. The generated gallery and rank catalog must also be reduced to built-in content. Violations name the offending paths and direct the operator to `benchmark:cut-baseline`; the check runs before the entrant worktree checkpoint. A plan without `baselinePolicy` is invalid.
 
 Blindness is a discipline, not a lock. Slot ids are assigned randomly when the plan is expanded, so authoring the plan does not reveal the level-to-configuration mapping; the owner does not open the plan file before voting through the site; and the operator surfaces below stay blind by default.
+
+## Cutting a baseline
+
+Cut the next series' baseline from the source commit that contains that series' shared application and built-in levels:
+
+```sh
+npm run benchmark:cut-baseline -- --source <commit-ish> --branch <branch-name>
+```
+
+The tool creates the branch in an isolated temporary worktree, removes promoted benchmark source and records, removes non-built-in public content, regenerates the built-in-only gallery, empties the benchmark rank catalog, commits the result with the source commit in its message, and runs `npm run typecheck` and `npm run build` in that scrubbed checkout. It prints the resulting commit and branch. Do not cut a baseline during v2; v2 deliberately continues from its original open baseline.
+
+The four files under `src/benchmark-levels/` are retained because `src/levels/index.ts` imports the benchmark catalog even when Vite discovers no benchmark entries. No entrant level or test fixture is retained.
+
+## Network isolation groundwork
+
+The next series intends to run entrant shells with network isolation wherever the harness enforces it. Codex is recipe-controlled and defaults to `network_access=false` for scrubbed plans; the local snapshot tooling has been rehearsed in a Docker `--network none` environment and its Vite server, browser capture, and built-in level module load completed without outbound network. Claude Code requires a sandbox rehearsal before adoption because its current `bypassPermissions` mode has no network boundary. pi's `--offline` suppresses startup calls but cannot enforce isolation, so the contamination audit's web-event extraction remains per-run evidence; its web checks must not be removed or weakened. v2 Codex recipes and runs stay on their existing `network_access=true` behavior under `open` policy.
 
 ## Resume and recovery
 

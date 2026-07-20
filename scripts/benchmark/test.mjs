@@ -8,9 +8,10 @@ import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
-import { assertSiblingSharedInputs, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, validatePlan, validateRunDefinition } from './run.mjs';
+import { assertSiblingSharedInputs, codexNetworkAccess, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
+import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import { BENCHMARK_SOURCE_ROOT, BUILT_IN_SOURCE_ROOT } from './protocol.mjs';
 import { createWorktree, derivePayload, sealEvaluatedCommit } from './admin.mjs';
@@ -94,6 +95,7 @@ assert.equal(
 
 const plan = {
   benchmarkVersion: 'v2',
+  baselinePolicy: 'open',
   materialsCommit: 'c'.repeat(40),
   entrantBaseline: 'd'.repeat(40),
   runs: [{
@@ -104,6 +106,21 @@ const plan = {
 };
 assert.deepEqual(validatePlan(plan), []);
 assert.deepEqual(validateRunDefinition({ ...plan, ...plan.runs[0], levelTitle: 'Cinder' }), []);
+const actualV2Plan = JSON.parse(await fs.readFile(path.join(process.cwd(), 'benchmark/private/v2-plan.json'), 'utf8'));
+assert.equal(actualV2Plan.baselinePolicy, 'open');
+assert.deepEqual(validatePlan(actualV2Plan), []);
+const missingBaselinePolicy = structuredClone(plan);
+delete missingBaselinePolicy.baselinePolicy;
+assert.ok(validatePlan(missingBaselinePolicy).some((error) => error.includes('baselinePolicy is required')));
+const scrubbedPlan = structuredClone(plan);
+scrubbedPlan.baselinePolicy = 'scrubbed';
+assert.deepEqual(validatePlan(scrubbedPlan), []);
+const invalidBaselinePolicy = structuredClone(plan);
+invalidBaselinePolicy.baselinePolicy = 'sealed';
+assert.ok(validatePlan(invalidBaselinePolicy).some((error) => error.includes('baselinePolicy must be "open" or "scrubbed"')));
+assert.equal(codexNetworkAccess({ baselinePolicy: 'open', stage: {} }), true);
+assert.equal(codexNetworkAccess({ baselinePolicy: 'scrubbed', stage: {} }), false);
+assert.equal(codexNetworkAccess({ baselinePolicy: 'scrubbed', stage: { networkAccess: true } }), true);
 assert.deepEqual(dispositionFor({ kind: 'benchmark', passing: false, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'dnf', reasonCode: 'required-gate-failed' });
 assert.deepEqual(dispositionFor({ kind: 'rehearsal', passing: true, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'rehearsal' });
 const duplicateSlotPlan = structuredClone(plan);
@@ -694,6 +711,20 @@ try {
 
 assert.equal(BENCHMARK_SOURCE_ROOT, 'src/benchmark-levels');
 assert.equal(BUILT_IN_SOURCE_ROOT, 'src/levels');
+
+const legacyBaselineViolations = await scrubbedBaselineViolations({ repo: process.cwd(), baseline: '5305d89' });
+assert.ok(legacyBaselineViolations.some(({ path: pathName }) => pathName === 'benchmark/'));
+assert.ok(legacyBaselineViolations.some(({ path: pathName }) => pathName === 'src/benchmark-levels/hull-run-cvs3'));
+assert.ok(legacyBaselineViolations.some(({ path: pathName }) => pathName === 'public/level-content/hull-run-cvs3'));
+await assert.rejects(
+  () => assertScrubbedBaseline({ repo: process.cwd(), baseline: '5305d89' }),
+  /benchmark:cut-baseline[\s\S]*benchmark\/[\s\S]*src\/benchmark-levels\/[\s\S]*public\/level-content\//,
+);
+await assert.rejects(
+  () => validateEntrantBaseline({ baselinePolicy: 'scrubbed', entrantBaseline: '5305d89' }),
+  /baselinePolicy "scrubbed"[\s\S]*benchmark:cut-baseline/,
+);
+await assert.doesNotReject(() => validateEntrantBaseline({ baselinePolicy: 'open', entrantBaseline: '5305d89' }));
 
 const adminSource = await fs.readFile(path.join(process.cwd(), 'scripts/benchmark/admin.mjs'), 'utf8');
 assert.match(adminSource, /CONTROLLER_SCOPE_SCRIPT/);

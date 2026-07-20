@@ -18,6 +18,7 @@ import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
+import { assertScrubbedBaseline } from './baseline-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -54,6 +55,7 @@ const ADAPTERS = {
     // re-declares it (workaround for https://github.com/openai/codex/issues/31814). Claude's Agent
     // tool needs no equivalent, so claude-cli has no delegation args.
     delegationArgs: ['--enable-multi-agent', 'true'],
+    stageArgs: (definition) => ['--network-access', String(codexNetworkAccess(definition))],
   },
   'claude-cli': {
     scriptPath: path.join(ROOT, 'scripts/benchmark/claude-cli.mjs'),
@@ -139,6 +141,7 @@ async function main() {
   try {
     const materialsCommit = await gitCommit(definition.materialsCommit);
     const entrantBaseline = await gitCommit(definition.entrantBaseline);
+    await validateEntrantBaseline({ baselinePolicy: definition.baselinePolicy, entrantBaseline, repo: ROOT });
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
@@ -421,6 +424,8 @@ export function validatePlan(value) {
   if (value.benchmarkVersion !== undefined && value.benchmarkVersion !== 'v2') errors.push('plan.benchmarkVersion must equal v2.');
   validateString(value.materialsCommit, 'plan.materialsCommit', errors);
   validateString(value.entrantBaseline, 'plan.entrantBaseline', errors);
+  if (!Object.hasOwn(value, 'baselinePolicy')) errors.push('plan.baselinePolicy is required; choose "scrubbed" for a new series or "open" only for the historical v2 record.');
+  else if (!['open', 'scrubbed'].includes(value.baselinePolicy)) errors.push('plan.baselinePolicy must be "open" or "scrubbed"; choose a policy explicitly.');
   if (!Array.isArray(value.runs) || value.runs.length === 0) {
     errors.push('plan.runs must be a non-empty array.');
     return errors;
@@ -449,6 +454,7 @@ export function validateRunDefinition(value) {
   if (value.benchmarkVersion !== undefined && value.benchmarkVersion !== 'v2') errors.push('run definition.benchmarkVersion must equal v2.');
   validateString(value.materialsCommit, 'run definition.materialsCommit', errors);
   validateString(value.entrantBaseline, 'run definition.entrantBaseline', errors);
+  if (value.baselinePolicy !== undefined && !['open', 'scrubbed'].includes(value.baselinePolicy)) errors.push('run definition.baselinePolicy must be "open" or "scrubbed".');
   validateRunRow(value, 'run definition', errors, { requireTitle: true });
   return errors;
 }
@@ -470,6 +476,7 @@ function validateStage(value, label, errors) {
   if (!EFFORTS.has(value.effort)) errors.push(`${label}.effort is invalid.`);
   if (!Number.isInteger(value.timeoutSeconds) || value.timeoutSeconds < 1) errors.push(`${label}.timeoutSeconds must be a positive integer.`);
   if (value.provider !== undefined) validateString(value.provider, `${label}.provider`, errors);
+  if (value.networkAccess !== undefined && typeof value.networkAccess !== 'boolean') errors.push(`${label}.networkAccess must be a boolean.`);
   if (value.budget !== undefined) {
     if (!isPlainObject(value.budget)) errors.push(`${label}.budget must be an object.`);
     else if (!(typeof value.budget.usd === 'number' && Number.isFinite(value.budget.usd) && value.budget.usd > 0)) errors.push(`${label}.budget.usd must be a positive finite number.`);
@@ -501,6 +508,7 @@ async function synthesizeDefinition(plan, row, materialsCommit, entrantBaseline)
   return {
     ...structuredClone(row),
     benchmarkVersion: plan.benchmarkVersion,
+    baselinePolicy: plan.baselinePolicy,
     materialsCommit,
     entrantBaseline,
     kind: row.kind ?? 'benchmark',
@@ -556,6 +564,18 @@ function buildStageArgs({ adapter, definition, worktree, inputs, stageDirectory,
   if (adapter.stageArgs) stageArgs.push(...adapter.stageArgs(definition));
   if (resumeRound !== undefined) stageArgs.push('--resume-round', String(resumeRound));
   return stageArgs;
+}
+
+// Open-policy rows retain v2's historical network behavior. Scrubbed series
+// default to isolation, while a recipe can explicitly opt its Codex stage in.
+export function codexNetworkAccess(definition) {
+  if (typeof definition?.stage?.networkAccess === 'boolean') return definition.stage.networkAccess;
+  return definition?.baselinePolicy !== 'scrubbed';
+}
+
+export async function validateEntrantBaseline({ baselinePolicy, entrantBaseline, repo = ROOT }) {
+  if (baselinePolicy === 'scrubbed') return assertScrubbedBaseline({ repo, baseline: entrantBaseline });
+  return { commit: entrantBaseline, violations: [] };
 }
 
 export async function nextContinuationRound(stageDirectory) {
