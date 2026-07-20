@@ -5,7 +5,7 @@ import { RouteLink } from '../components/RouteLink';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
-  const rankPreviewHeroes = ['mass-driver-vyxj', 'mass-driver-wo4m'].flatMap((levelId) => {
+  const rankPreviewHeroes = ['skyhook-snxd', 'skyhook-lkor'].flatMap((levelId) => {
     const entrant = allCatalogEntrants(rankCatalog).find((candidate) => candidate.levelId === levelId);
     return entrant?.thumbnailPath ? [entrant.thumbnailPath] : [];
   });
