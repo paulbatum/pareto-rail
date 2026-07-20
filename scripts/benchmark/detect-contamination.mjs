@@ -298,9 +298,10 @@ function escapeRegExp(value) {
  * Classify one normalized tool call. The returned findings have no transcript
  * source or line number; auditTranscriptRecords adds those fields.
  */
-export function classifyToolCall(call, { worktree, assignedLevelId, cwd = worktree } = {}) {
+export function classifyToolCall(call, { worktree, assignedLevelId, cwd = worktree, ownRunDirectory } = {}) {
   if (!call || typeof call !== 'object') return [];
   const worktreeRoot = worktree ? path.resolve(worktree) : null;
+  const ownRunRoot = ownRunDirectory ? path.resolve(ownRunDirectory) : null;
   const source = toolSource(call);
   if (!source) return [];
   const operation = directToolOperation(call.name, call.input);
@@ -316,6 +317,9 @@ export function classifyToolCall(call, { worktree, assignedLevelId, cwd = worktr
     });
 
     if (info.outside) {
+      // The run's own artifact directory (harness home, tool results, rendered
+      // assignment) is run-owned machinery, not an escape.
+      if (ownRunRoot && info.absolutePath && !path.relative(ownRunRoot, info.absolutePath).startsWith('..')) continue;
       if (shouldIgnoreOutside(info, { candidate, source, operation })) continue;
       addFinding(findings, seen, {
         classification: 'outside-worktree',
@@ -851,7 +855,7 @@ export async function auditRun(runDirectory, { selfLookupContext } = {}) {
   const adapter = normalizeAdapter(definition.stage?.adapter ?? definition.assignment?.stage?.adapter);
   const transcriptFiles = await findTranscriptFiles(runDirectory);
   const identity = selfLookupContextForRun(selfLookupContext ?? await loadSelfLookupContext(), definition);
-  const options = { worktree, assignedLevelId: levelId, adapter, selfLookupContext: identity };
+  const options = { worktree, assignedLevelId: levelId, adapter, selfLookupContext: identity, ownRunDirectory: runDirectory };
   let scanned = { calls: 0, findings: [], webEvents: [] };
 
   for (const file of transcriptFiles) {

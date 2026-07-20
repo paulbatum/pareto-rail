@@ -124,6 +124,17 @@ function paths(findings) {
   assert.ok(paths(result.findings).includes('../../secrets.txt'));
 }
 
+// The run's own artifact directory (harness home, tool results) is run-owned
+// machinery, not an outside-worktree escape.
+{
+  const records = [
+    { type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: '/repo/benchmark/private/runs/run-a1b2/harness-home/tool-results/xyz.txt' } }] } },
+  ];
+  const scoped = { ...options, ownRunDirectory: '/repo/benchmark/private/runs/run-a1b2' };
+  assert.deepEqual(auditTranscriptRecords(records, scoped).findings, []);
+  assert.deepEqual(classes(auditTranscriptRecords(records, options).findings), ['outside-worktree']);
+}
+
 // Web extraction and self-lookup flagging cover Codex, Claude, and pi. The
 // synthetic identity context stands in for the repo config and discovered ids.
 {
