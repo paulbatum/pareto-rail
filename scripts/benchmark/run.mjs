@@ -18,7 +18,7 @@ import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
-import { assertScrubbedBaseline } from './baseline-policy.mjs';
+import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -141,7 +141,8 @@ async function main() {
   try {
     const materialsCommit = await gitCommit(definition.materialsCommit);
     const entrantBaseline = await gitCommit(definition.entrantBaseline);
-    await validateEntrantBaseline({ baselinePolicy: definition.baselinePolicy, entrantBaseline, repo: ROOT });
+    const baselineGuard = await validateEntrantBaseline({ baselinePolicy: definition.baselinePolicy, entrantBaseline, repo: ROOT });
+    reportBaselineGuard(baselineGuard);
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
@@ -258,7 +259,7 @@ async function main() {
         validateManifest(existing, definition, evaluated, payload, gateRecord);
         return existing;
       }
-      const value = await createManifest({ definition, materialsCommit, entrantBaseline, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt: state.startedAt });
+      const value = await createManifest({ definition, materialsCommit, entrantBaseline, baselineGuard, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt: state.startedAt });
       await writeJson(path.join(outputDirectory, 'manifest.json'), value);
       return value;
     });
@@ -583,9 +584,20 @@ export function codexNetworkAccess(definition) {
   return definition?.baselinePolicy !== 'scrubbed';
 }
 
+// The guard is evaluated for every policy; only the consequence differs. A scrubbed row aborts on any
+// violation, while an open row launches and carries the findings into its manifest, so the record shows
+// what the entrant could reach rather than leaving it to be reconstructed from transcripts later.
 export async function validateEntrantBaseline({ baselinePolicy, entrantBaseline, repo = ROOT }) {
-  if (baselinePolicy === 'scrubbed') return assertScrubbedBaseline({ repo, baseline: entrantBaseline });
-  return { commit: entrantBaseline, violations: [] };
+  const policy = baselinePolicy === 'scrubbed' ? 'scrubbed' : 'open';
+  if (policy === 'scrubbed') return { policy, ...await assertScrubbedBaseline({ repo, baseline: entrantBaseline }) };
+  return { policy, commit: entrantBaseline, violations: await scrubbedBaselineViolations({ repo, baseline: entrantBaseline }) };
+}
+
+export function reportBaselineGuard({ policy, commit, violations }) {
+  if (violations.length === 0) return;
+  console.warn(`Entrant baseline ${commit} carries ${violations.length} exposure${violations.length === 1 ? '' : 's'} under baselinePolicy "${policy}":`);
+  for (const { path: pathName, reason } of violations) console.warn(`- ${pathName}: ${reason}`);
+  console.warn('Launching anyway; an open policy records these in the run manifest rather than blocking.');
 }
 
 export async function nextContinuationRound(stageDirectory) {
@@ -648,7 +660,7 @@ async function prepareHarnessHome(adapter, outputDirectory) {
   return home;
 }
 
-async function createManifest({ definition, materialsCommit, entrantBaseline, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
+async function createManifest({ definition, materialsCommit, entrantBaseline, baselineGuard, outputDirectory, harnessHome, gateRecord, evaluated, payload, worktree, startedAt }) {
   const adapter = ADAPTERS[definition.stage.adapter];
   const [usage, commandRecords, stageLaunch, recipe, theme, renderedMeta, eventLog, budget] = await Promise.all([
     loadStageUsage(outputDirectory, adapter, definition),
@@ -685,6 +697,10 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ou
     baseline: {
       materialsCommit,
       entrantBaseline: { kind: 'git-commit', identifier: entrantBaseline },
+      guard: {
+        policy: baselineGuard.policy,
+        violations: baselineGuard.violations.map(({ path: pathName, reason }) => ({ path: pathName, reason })),
+      },
     },
     recipe: { path: definition.recipePath, sha256: sha256(recipe) },
     controller: { commit: await gitCommit('HEAD') },

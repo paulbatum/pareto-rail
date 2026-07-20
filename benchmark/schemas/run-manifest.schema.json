@@ -50,6 +50,28 @@
             "kind": { "const": "git-commit" },
             "identifier": { "$ref": "#/$defs/gitObject" }
           }
+        },
+        "guard": {
+          "description": "Result of the entrant-baseline structural check, evaluated at launch under every policy. Absent means the run predates the guard being recorded; present with an empty `violations` means it ran and found nothing.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy", "violations"],
+          "properties": {
+            "policy": { "enum": ["open", "scrubbed"] },
+            "violations": {
+              "description": "Structural exposures in the baseline tree. A scrubbed policy aborts the launch on any of these, so a scrubbed run's list is always empty; an open policy records them and proceeds.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path", "reason"],
+                "properties": {
+                  "path": { "type": "string", "minLength": 1 },
+                  "reason": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
         }
       }
     },

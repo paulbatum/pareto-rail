@@ -746,12 +746,43 @@ await assert.rejects(
   () => validateEntrantBaseline({ baselinePolicy: 'scrubbed', entrantBaseline: '5305d89' }),
   /baselinePolicy "scrubbed"[\s\S]*benchmark:cut-baseline/,
 );
-await assert.doesNotReject(() => validateEntrantBaseline({ baselinePolicy: 'open', entrantBaseline: '5305d89' }));
+// An open policy evaluates the same guard as a scrubbed one and records what it found instead of aborting.
+const openGuard = await validateEntrantBaseline({ baselinePolicy: 'open', entrantBaseline: '5305d89' });
+assert.equal(openGuard.policy, 'open');
+assert.ok(openGuard.violations.some(({ path: pathName }) => pathName === 'benchmark/'));
+assert.ok(openGuard.violations.every(({ path: pathName, reason }) => typeof pathName === 'string' && typeof reason === 'string'));
+await assertCleanOpenBaselineRecordsNothing();
+
+// Runs recorded before the guard was written to the manifest carry no baseline.guard and stay complete.
+assert.equal(resultManifest.baseline.guard, undefined);
+assert.deepEqual(manifestErrors(resultManifest), []);
 
 const adminSource = await fs.readFile(path.join(process.cwd(), 'scripts/benchmark/admin.mjs'), 'utf8');
 assert.match(adminSource, /CONTROLLER_SCOPE_SCRIPT/);
 assert.doesNotMatch(adminSource, /path\.resolve\(worktree, 'scripts\/check-benchmark-scope\.mjs'\)/);
 await assertMissingGatesResumeFixture();
+
+async function assertCleanOpenBaselineRecordsNothing() {
+  const repository = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-open-guard-'));
+  try {
+    await fs.mkdir(path.join(repository, 'src/levels'), { recursive: true });
+    await fs.writeFile(path.join(repository, 'src/levels/index.ts'), "export const levelMetadatas: LevelMetadata[] = [\n  { id: 'anchor', title: 'Anchor' },\n];\n");
+    await fs.mkdir(path.join(repository, 'src/benchmark-levels'), { recursive: true });
+    for (const file of ['index.ts', 'catalog.ts', 'types.ts', 'validation.ts']) {
+      await fs.writeFile(path.join(repository, 'src/benchmark-levels', file), '// required empty-catalog scaffold\n');
+    }
+    await exec('git', ['init', '-q'], { cwd: repository });
+    await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: repository });
+    await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: repository });
+    await exec('git', ['add', '.'], { cwd: repository });
+    await exec('git', ['commit', '-qm', 'clean open baseline'], { cwd: repository });
+    const guard = await validateEntrantBaseline({ baselinePolicy: 'open', entrantBaseline: 'HEAD', repo: repository });
+    assert.equal(guard.policy, 'open');
+    assert.deepEqual(guard.violations, []);
+  } finally {
+    await fs.rm(repository, { recursive: true, force: true });
+  }
+}
 
 async function assertMissingGatesResumeFixture() {
   const runDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-missing-gates-'));
