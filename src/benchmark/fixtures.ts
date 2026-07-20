@@ -70,12 +70,6 @@ export class FixtureBenchmarkApi implements BenchmarkApi {
     validateFixtureCatalog(catalog, mode);
   }
 
-  /** Rehydrate a locally persisted round after a browser refresh. */
-  restoreAssignment(assignment: MatchupAssignment, participantId: string, playCounts: PlayCounts = { a: 0, b: 0 }) {
-    this.assignments.set(assignment.matchupId, assignment);
-    this.counts.set(participantKey(participantId, assignment.matchupId), { ...playCounts });
-  }
-
   async nextMatchup(request: NextMatchupRequest): Promise<MatchupAssignment | null> {
     const judged = new Set((request.judged ?? []).map((item) => item.matchupId));
     const theme = this.catalog.themes[0];

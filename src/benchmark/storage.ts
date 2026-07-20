@@ -1,14 +1,8 @@
-import type { ComparisonState, MatchupVote, RevealPayload } from './types';
+import { mapVerdict, type MatchupVote, type VoteVerdict } from './types';
 
 export const BENCHMARK_STORAGE_KEY = 'pareto-rail-benchmark';
 export const BENCHMARK_PARTICIPANT_ID_KEY = 'pareto-rail-participant-id';
-export const BENCHMARK_STORAGE_VERSION = 2;
-
-export interface CompletedMatchup {
-  matchupId: string;
-  vote: MatchupVote;
-  reveal: RevealPayload;
-}
+export const BENCHMARK_STORAGE_VERSION = 3;
 
 export interface LevelRun {
   levelId: string;
@@ -19,15 +13,10 @@ export interface LevelRun {
 
 export interface LocalBenchmarkData {
   participantId: string;
-  unfinishedMatchup?: ComparisonState;
-  levelRuns: LevelRun[];
-  completedMatchups: CompletedMatchup[];
   /** Raw votes are retained so display ratings can be recomputed later. */
   history: MatchupVote[];
-  themeHistory: string[];
-  /** Number of completed judgments in which each level was exposed. */
-  levelExposureCounts: Record<string, number>;
-  revealedEntrants: RevealPayload['a'][];
+  /** Best local play results, independent of the benchmark catalog. */
+  levelRuns: LevelRun[];
 }
 
 export interface StorageEnvelope {
@@ -43,12 +32,8 @@ export interface KeyValueStorage {
 
 const emptyData = (participantId: string): LocalBenchmarkData => ({
   participantId,
-  levelRuns: [],
-  completedMatchups: [],
   history: [],
-  themeHistory: [],
-  levelExposureCounts: {},
-  revealedEntrants: [],
+  levelRuns: [],
 });
 
 function randomParticipantId(): string {
@@ -63,8 +48,9 @@ function randomParticipantId(): string {
 function isData(value: unknown): value is LocalBenchmarkData {
   if (!value || typeof value !== 'object') return false;
   const data = value as Partial<LocalBenchmarkData>;
-  return typeof data.participantId === 'string' && Array.isArray(data.completedMatchups)
-    && Array.isArray(data.history) && Array.isArray(data.themeHistory) && Array.isArray(data.revealedEntrants);
+  return typeof data.participantId === 'string'
+    && Array.isArray(data.history)
+    && Array.isArray(data.levelRuns);
 }
 
 function participantIdFromEnvelope(value: unknown): string | undefined {
@@ -120,13 +106,8 @@ export class BenchmarkLocalStore {
   private normalize(data: LocalBenchmarkData): LocalBenchmarkData {
     return {
       participantId: data.participantId || randomParticipantId(),
-      unfinishedMatchup: normalizeUnfinishedMatchup(data.unfinishedMatchup),
-      completedMatchups: [...data.completedMatchups],
-      history: [...data.history],
-      themeHistory: [...data.themeHistory],
-      levelRuns: mergeLevelRuns(levelRunsFromCompletedMatchups(data.completedMatchups), normalizeLevelRuns(data.levelRuns)),
-      levelExposureCounts: exposureCounts(data),
-      revealedEntrants: [...data.revealedEntrants],
+      history: normalizeHistory(data.history),
+      levelRuns: normalizeLevelRuns(data.levelRuns),
     };
   }
 
@@ -141,61 +122,19 @@ export class BenchmarkLocalStore {
     return this.snapshot;
   }
 
-  setUnfinishedMatchup(state: ComparisonState | undefined): LocalBenchmarkData { return this.save({ unfinishedMatchup: state }); }
   recordLevelRun(levelId: string, score: number, completedAt = new Date().toISOString()): LocalBenchmarkData {
     const prior = this.data.levelRuns.find((run) => run.levelId === levelId);
-    const run: LevelRun = { levelId, score, completedAt, count: (prior?.count ?? 0) + 1 };
+    const bestScore = prior?.score === undefined ? score : Math.max(prior.score, score);
+    const run: LevelRun = { levelId, score: bestScore, completedAt, count: (prior?.count ?? 0) + 1 };
     return this.save({ levelRuns: [...this.data.levelRuns.filter((item) => item.levelId !== levelId), run] });
   }
-  completeMatchup(completed: CompletedMatchup): LocalBenchmarkData {
-    const prior = this.data.completedMatchups.find((item) => item.matchupId === completed.matchupId);
-    const existing = this.data.completedMatchups.filter((item) => item.matchupId !== completed.matchupId);
-    const revealed = [...this.data.revealedEntrants, completed.reveal.a, completed.reveal.b]
-      .filter((entrant, index, all) => all.findIndex((other) => other.entrantId === entrant.entrantId) === index);
-    const levelExposureCounts = { ...this.data.levelExposureCounts };
-    if (!prior) {
-      for (const levelId of [completed.reveal.a.levelId, completed.reveal.b.levelId]) {
-        levelExposureCounts[levelId] = (levelExposureCounts[levelId] ?? 0) + 1;
-      }
-    }
-    return this.save({ completedMatchups: [...existing, completed], history: [...this.data.history.filter((item) => item.matchupId !== completed.matchupId), completed.vote], levelExposureCounts, revealedEntrants: revealed, unfinishedMatchup: undefined });
-  }
-  /** Remove the newest local judgment for development-only correction tools. */
-  undoLastVerdict(): CompletedMatchup | undefined {
-    const undone = this.data.completedMatchups.at(-1);
-    if (!undone) return undefined;
-    const completedMatchups = this.data.completedMatchups.slice(0, -1);
-    const completedIds = new Set(completedMatchups.map((item) => item.matchupId));
-    this.save({
-      completedMatchups,
-      history: this.data.history.filter((vote) => completedIds.has(vote.matchupId)),
-      levelExposureCounts: exposureCountsFromMatchups(completedMatchups),
-      revealedEntrants: revealedEntrantsFromMatchups(completedMatchups),
-    });
-    return undone;
-  }
 
-  /** Drop persisted rounds, votes, and reveals that reference levels or themes
-   * absent from the published catalog (for example retired rehearsal data). */
-  pruneToCatalog(knownLevelIds: ReadonlySet<string>, knownThemeIds: ReadonlySet<string>): LocalBenchmarkData {
-    const data = this.data;
-    const revealKnown = (reveal: RevealPayload) => knownLevelIds.has(reveal.a.levelId) && knownLevelIds.has(reveal.b.levelId);
-    const completedMatchups = data.completedMatchups.filter((item) => revealKnown(item.reveal));
-    const keptMatchupIds = new Set(completedMatchups.map((item) => item.matchupId));
-    const unfinished = data.unfinishedMatchup;
-    const unfinishedValid = !!unfinished
-      && knownThemeIds.has(unfinished.assignment.theme.id)
-      && knownLevelIds.has(unfinished.assignment.a.playableRef)
-      && knownLevelIds.has(unfinished.assignment.b.playableRef);
-    return this.save({
-      unfinishedMatchup: unfinishedValid ? unfinished : undefined,
-      levelRuns: data.levelRuns.filter((run) => knownLevelIds.has(run.levelId)),
-      completedMatchups,
-      history: data.history.filter((vote) => keptMatchupIds.has(vote.matchupId)),
-      themeHistory: data.themeHistory.filter((themeId) => knownThemeIds.has(themeId)),
-      levelExposureCounts: Object.fromEntries(Object.entries(data.levelExposureCounts).filter(([levelId]) => knownLevelIds.has(levelId))),
-      revealedEntrants: data.revealedEntrants.filter((entrant) => knownLevelIds.has(entrant.levelId)),
-    });
+  /** Remove the newest local judgment for development-only correction tools. */
+  undoLastVerdict(): MatchupVote | undefined {
+    const undone = this.data.history.at(-1);
+    if (!undone) return undefined;
+    this.save({ history: this.data.history.slice(0, -1) });
+    return undone;
   }
 
   clear(): void {
@@ -214,13 +153,32 @@ class MemoryStorage implements KeyValueStorage {
 
 export function createMemoryStorage(): KeyValueStorage { return new MemoryStorage(); }
 
-function normalizeUnfinishedMatchup(value: unknown): ComparisonState | undefined {
-  if (!value || typeof value !== 'object') return undefined;
-  const state = value as { kind?: unknown };
-  if (state.kind === 'assignment' || state.kind === 'playing-a' || state.kind === 'playing-b' || state.kind === 'ready-to-vote' || state.kind === 'submitting' || state.kind === 'reveal') {
-    return value as ComparisonState;
-  }
-  return undefined;
+function normalizeHistory(value: unknown): MatchupVote[] {
+  if (!Array.isArray(value)) return [];
+  const verdicts = new Set<VoteVerdict>(['a-better', 'b-better', 'both-good', 'both-bad']);
+  return value.flatMap((candidate): MatchupVote[] => {
+    if (!candidate || typeof candidate !== 'object') return [];
+    const vote = candidate as Partial<MatchupVote>;
+    if (typeof vote.matchupId !== 'string' || typeof vote.aEntrantId !== 'string' || typeof vote.bEntrantId !== 'string'
+      || typeof vote.verdict !== 'string' || !verdicts.has(vote.verdict)
+      || !vote.playCounts || typeof vote.playCounts !== 'object'
+      || !validCount(vote.playCounts.a) || !validCount(vote.playCounts.b)) return [];
+    const mapping = mapVerdict(vote.verdict);
+    return [{
+      matchupId: vote.matchupId,
+      aEntrantId: vote.aEntrantId,
+      bEntrantId: vote.bEntrantId,
+      verdict: vote.verdict,
+      relative: mapping.relative,
+      ...(mapping.sentiment ? { sentiment: mapping.sentiment } : {}),
+      playCounts: { a: vote.playCounts.a, b: vote.playCounts.b },
+      submittedAt: typeof vote.submittedAt === 'string' ? vote.submittedAt : '',
+    }];
+  });
+}
+
+function validCount(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
 
 function normalizeLevelRuns(value: unknown): LevelRun[] {
@@ -240,48 +198,4 @@ function normalizeLevelRuns(value: unknown): LevelRun[] {
     if (!existing || existing.completedAt <= normalized.completedAt) newest.set(normalized.levelId, normalized);
   }
   return [...newest.values()];
-}
-
-function levelRunsFromCompletedMatchups(matchups: readonly CompletedMatchup[]): LevelRun[] {
-  return matchups.flatMap((completed) => [
-    { levelId: completed.reveal.a.levelId, completedAt: completed.vote.submittedAt, count: Math.max(1, completed.vote.playCounts.a) },
-    { levelId: completed.reveal.b.levelId, completedAt: completed.vote.submittedAt, count: Math.max(1, completed.vote.playCounts.b) },
-  ]);
-}
-
-function mergeLevelRuns(...collections: readonly LevelRun[][]): LevelRun[] {
-  const runs = new Map<string, LevelRun>();
-  for (const collection of collections) {
-    for (const run of collection) {
-      const prior = runs.get(run.levelId);
-      if (!prior) { runs.set(run.levelId, run); continue; }
-      const latest = prior.completedAt > run.completedAt ? prior : run;
-      runs.set(run.levelId, {
-        ...latest,
-        ...(latest.score === undefined && prior.score !== undefined ? { score: prior.score } : {}),
-        count: Math.max(prior.count, run.count),
-      });
-    }
-  }
-  return [...runs.values()];
-}
-
-function exposureCounts(data: LocalBenchmarkData): Record<string, number> {
-  if (data.levelExposureCounts && Object.keys(data.levelExposureCounts).length > 0) return { ...data.levelExposureCounts };
-  return exposureCountsFromMatchups(data.completedMatchups);
-}
-
-function exposureCountsFromMatchups(matchups: readonly CompletedMatchup[]): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const completed of matchups) {
-    for (const levelId of [completed.reveal.a.levelId, completed.reveal.b.levelId]) {
-      counts[levelId] = (counts[levelId] ?? 0) + 1;
-    }
-  }
-  return counts;
-}
-
-function revealedEntrantsFromMatchups(matchups: readonly CompletedMatchup[]): RevealPayload['a'][] {
-  return matchups.flatMap((completed) => [completed.reveal.a, completed.reveal.b])
-    .filter((entrant, index, all) => all.findIndex((other) => other.entrantId === entrant.entrantId) === index);
 }

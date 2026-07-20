@@ -3,7 +3,7 @@
 // @ts-ignore Node's assert types are intentionally not a production dependency.
 import assert from 'node:assert/strict';
 import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
-import { CatalogBenchmarkApi } from './catalog-api';
+import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor } from './catalog-api';
 import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { mapVerdict, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
 import { rankCatalog, type RankCatalog, type RankCatalogEntrant, type RankCatalogVersion } from './catalog';
@@ -45,9 +45,10 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testConvergenceAndStability();
   testSameConfigurationPairs();
   testVersionedSchedulerPool();
-  testVersionedPruning();
+  testCatalogDerivedHistory();
   testVersionedPersonalCurveCatalog();
-  await testInactiveVersionRestore();
+  await testReloadPreservesMatchupAndPlayState();
+  await testCatalogChangesRefreshReveals();
   testVersionedVoteValidation();
   await testApisAndStateMachine();
 }
@@ -147,20 +148,20 @@ function coldStartHistory(): PersonalHistoryEntry[] {
 }
 
 function testStorageVersioning(): void {
-  assert.equal(BENCHMARK_STORAGE_VERSION, 2);
+  assert.equal(BENCHMARK_STORAGE_VERSION, 3);
   const storage = createMemoryStorage();
   storage.setItem('legacy', JSON.stringify({ participantId: 'old', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] }));
   assert.notEqual(new BenchmarkLocalStore(storage, 'legacy').participantId, 'old', 'unversioned data is discarded');
   storage.removeItem?.(BENCHMARK_PARTICIPANT_ID_KEY);
-  storage.setItem('old-envelope', JSON.stringify({ version: 1, data: { participantId: 'old', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] } }));
+  storage.setItem('old-envelope', JSON.stringify({ version: 2, data: { participantId: 'old', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] } }));
   const salvaged = new BenchmarkLocalStore(storage, 'old-envelope');
   assert.equal(salvaged.participantId, 'old', 'stale envelopes preserve the participant id');
   assert.equal(storage.getItem(BENCHMARK_PARTICIPANT_ID_KEY), 'old', 'stale envelope participant id is persisted separately');
   storage.setItem('old-kind', JSON.stringify({ version: 2, data: { participantId: 'old', unfinishedMatchup: { kind: 'a-complete', assignment: assignment(), playCounts: { a: 1, b: 0 } }, completedMatchups: [], history: [], themeHistory: [], levelExposureCounts: {}, revealedEntrants: [] } }));
-  assert.equal(new BenchmarkLocalStore(storage, 'old-kind').snapshot.unfinishedMatchup, undefined);
+  assert.deepEqual(new BenchmarkLocalStore(storage, 'old-kind').snapshot.history, []);
 
   const dedicatedWinsStorage = createMemoryStorage();
-  dedicatedWinsStorage.setItem('dedicated-wins', JSON.stringify({ version: 1, data: { participantId: 'envelope-participant', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] } }));
+  dedicatedWinsStorage.setItem('dedicated-wins', JSON.stringify({ version: 2, data: { participantId: 'envelope-participant', completedMatchups: [], history: [], themeHistory: [], revealedEntrants: [] } }));
   dedicatedWinsStorage.setItem(BENCHMARK_PARTICIPANT_ID_KEY, 'dedicated-participant');
   assert.equal(new BenchmarkLocalStore(dedicatedWinsStorage, 'dedicated-wins').participantId, 'dedicated-participant', 'dedicated participant id wins over the envelope');
 
@@ -174,7 +175,8 @@ function testStorageVersioning(): void {
   const current = new BenchmarkLocalStore(currentStorage, 'current');
   current.save({ participantId: 'current-participant' });
   const envelope = JSON.parse(currentStorage.getItem('current')!) as StorageEnvelope;
-  assert.equal(envelope.version, 2);
+  assert.equal(envelope.version, 3);
+  assert.deepEqual(Object.keys(envelope.data).sort(), ['history', 'levelRuns', 'participantId']);
   assert.equal(currentStorage.getItem(BENCHMARK_PARTICIPANT_ID_KEY), 'current-participant');
   assert.equal(new BenchmarkLocalStore(currentStorage, 'current').participantId, 'current-participant');
 }
@@ -199,19 +201,10 @@ function testPairIdCanonicalization(): void {
 function testStorageUndo(): void {
   const store = new BenchmarkLocalStore(createMemoryStorage(), 'undo');
   const vote: MatchupVote = { matchupId: 'm', aEntrantId: 'a', bEntrantId: 'b', verdict: 'a-better', relative: 'a', playCounts: { a: 2, b: 1 }, submittedAt: 'now' };
-  const reveal = {
-    matchupId: 'm',
-    a: { entrantId: 'a', playableRef: 'a', levelId: 'a', modelName: 'A', workflowName: 'solo', generationCost: 1, dataClass: 'eligible' as const },
-    b: { entrantId: 'b', playableRef: 'b', levelId: 'b', modelName: 'B', workflowName: 'solo', generationCost: 2, dataClass: 'eligible' as const },
-    vote,
-  };
-  store.completeMatchup({ matchupId: 'm', vote, reveal });
+  store.save({ history: [vote] });
   const undone = store.undoLastVerdict();
-  assert.equal(undone?.vote.verdict, 'a-better');
-  assert.equal(store.snapshot.completedMatchups.length, 0);
+  assert.equal(undone?.verdict, 'a-better');
   assert.equal(store.snapshot.history.length, 0);
-  assert.deepEqual(store.snapshot.levelExposureCounts, {});
-  assert.deepEqual(store.snapshot.revealedEntrants, []);
 }
 
 function testSchedulerCoverage(): void {
@@ -359,13 +352,13 @@ function testConvergenceAndStability(): void {
 
 function testSameConfigurationPairs(): void {
   const catalog = makeSchedulerCatalog(2, 1, true);
-  assert.equal(nextScheduledMatchup(catalog, 'same-config', { judged: [], levelExposureCounts: {} }), null, 'same-configuration levels are never paired');
+  assert.equal(nextScheduledMatchup(catalog, 'same-config', { judged: [] }), null, 'same-configuration levels are never paired');
 }
 
 function testVersionedSchedulerPool(): void {
   const inactive = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', 'v1');
   const active = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', 'v2');
-  const next = nextScheduledMatchup(active, 'versioned-scheduler', { judged: [], levelExposureCounts: {} });
+  const next = nextScheduledMatchup(active, 'versioned-scheduler', { judged: [] });
   assert.ok(next);
   assert.ok(active.entrants.some((entrant) => entrant.levelId === next!.levelIdA));
   assert.ok(active.entrants.some((entrant) => entrant.levelId === next!.levelIdB));
@@ -374,39 +367,28 @@ function testVersionedSchedulerPool(): void {
   const oldMatchup = pairId(inactive.themes[0]!.id, inactive.entrants[0]!.levelId, inactive.entrants[1]!.levelId);
   const afterOldHistory = nextScheduledMatchup(active, 'versioned-scheduler', {
     judged: [{ matchupId: oldMatchup, relative: 'a' }],
-    levelExposureCounts: { [inactive.entrants[0]!.levelId]: 99, [inactive.entrants[1]!.levelId]: 99 },
   });
   assert.ok(afterOldHistory);
   assert.ok(active.entrants.some((entrant) => entrant.levelId === afterOldHistory!.levelIdA));
   assert.ok(active.entrants.some((entrant) => entrant.levelId === afterOldHistory!.levelIdB));
 }
 
-function testVersionedPruning(): void {
-  const inactive = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', 'v1');
-  const active = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', 'v2');
-  const oldA = inactive.entrants[0]!;
-  const oldB = inactive.entrants[1]!;
-  const theme = inactive.themes[0]!;
-  const matchupId = pairId(theme.id, oldA.levelId, oldB.levelId);
-  const vote: MatchupVote = { matchupId, aEntrantId: oldA.levelId, bEntrantId: oldB.levelId, verdict: 'a-better', relative: 'a', playCounts: { a: 1, b: 1 }, submittedAt: 'now' };
-  const reveal = {
-    matchupId,
-    a: { entrantId: oldA.levelId, playableRef: oldA.levelId, levelId: oldA.levelId, modelName: oldA.modelName, workflowName: oldA.workflowName, generationCost: oldA.generationCost, dataClass: 'eligible' as const },
-    b: { entrantId: oldB.levelId, playableRef: oldB.levelId, levelId: oldB.levelId, modelName: oldB.modelName, workflowName: oldB.workflowName, generationCost: oldB.generationCost, dataClass: 'eligible' as const },
-    vote,
-  };
-  const store = new BenchmarkLocalStore(createMemoryStorage(), 'versioned-prune');
-  store.completeMatchup({ matchupId, vote, reveal });
-  const unfinished: MatchupAssignment = { matchupId: 'unfinished-v1', benchmarkVersion: inactive.benchmarkVersion, theme, a: { playableRef: oldA.levelId }, b: { playableRef: oldB.levelId }, assignedAt: 'now' };
-  store.setUnfinishedMatchup({ kind: 'assignment', assignment: unfinished, playCounts: { a: 0, b: 0 } });
-  store.pruneToCatalog(
-    new Set([...inactive.entrants, ...active.entrants].map((entrant) => entrant.levelId)),
-    new Set([...inactive.themes, ...active.themes].map((candidate) => candidate.id)),
-  );
-  assert.equal(store.snapshot.completedMatchups.length, 1, 'inactive-version completed matchup was pruned');
-  assert.equal(store.snapshot.history.length, 1, 'inactive-version vote history was pruned');
-  assert.equal(store.snapshot.revealedEntrants.length, 2, 'inactive-version reveal was pruned');
-  assert.equal(store.snapshot.unfinishedMatchup?.assignment.benchmarkVersion, inactive.benchmarkVersion, 'inactive-version unfinished matchup was pruned');
+function testCatalogDerivedHistory(): void {
+  const version = makeSchedulerCatalog(2, 1);
+  const catalog = makeRankCatalog(version);
+  const theme = version.themes[0]!;
+  const a = version.entrants[0]!;
+  const b = version.entrants[1]!;
+  const vote: MatchupVote = { matchupId: pairId(theme.id, a.levelId, b.levelId), aEntrantId: a.levelId, bEntrantId: b.levelId, verdict: 'a-better', relative: 'tie', playCounts: { a: 1, b: 1 }, submittedAt: 'now' };
+  const derived = completedMatchupsFromVotes(catalog, [vote]);
+  assert.equal(derived.length, 1);
+  assert.equal(derived[0]!.vote.relative, 'a', 'relative outcome is derived from the stored verdict');
+  assert.deepEqual(exposureCountsFromVotes(catalog, [vote]), { [a.levelId]: 1, [b.levelId]: 1 });
+
+  const missing = { ...vote, matchupId: pairId(theme.id, 'retired-a', b.levelId) };
+  assert.equal(completedMatchupsFromVotes(catalog, [missing]).length, 0, 'votes for retired levels are skipped at read time');
+  const missingTheme = { ...vote, matchupId: pairId('retired-theme', a.levelId, b.levelId) };
+  assert.equal(completedMatchupsFromVotes(catalog, [missingTheme]).length, 0, 'votes for retired themes are skipped at read time');
 }
 
 function testVersionedPersonalCurveCatalog(): void {
@@ -427,33 +409,52 @@ function testVersionedPersonalCurveCatalog(): void {
   assert.equal(curve.points.find((point) => point.configurationId === 'active-unplayed')?.status, 'pending', 'unplayed active configuration was not shown as pending');
 }
 
-async function testInactiveVersionRestore(): Promise<void> {
-  const inactive = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', 'v1');
-  const active = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', 'v2');
-  const catalog = makeRankCatalog(inactive, active);
-  const oldA = inactive.entrants[0]!;
-  const oldB = inactive.entrants[1]!;
-  const theme = inactive.themes[0]!;
-  const assignment: MatchupAssignment = {
-    matchupId: pairId(theme.id, oldA.levelId, oldB.levelId),
-    benchmarkVersion: inactive.benchmarkVersion,
-    theme,
-    a: { playableRef: oldA.levelId },
-    b: { playableRef: oldB.levelId },
-    assignedAt: 'now',
-  };
-  const store = new BenchmarkLocalStore(createMemoryStorage(), 'inactive-restore');
-  store.setUnfinishedMatchup({ kind: 'assignment', assignment, playCounts: { a: 0, b: 0 } });
-  const api = new CatalogBenchmarkApi(catalog, store);
+async function testReloadPreservesMatchupAndPlayState(): Promise<void> {
+  const catalog = makeRankCatalog(makeSchedulerCatalog(4, 1));
+  const storage = createMemoryStorage();
+  const firstStore = new BenchmarkLocalStore(storage, 'reload');
+  const firstApi = new CatalogBenchmarkApi(catalog, firstStore);
+  const participantId = firstStore.participantId;
+  const first = await firstApi.nextMatchup({ participantId });
+  assert.ok(first);
+  firstStore.recordLevelRun(first!.a.playableRef, 42);
+
+  const reloadedStore = new BenchmarkLocalStore(storage, 'reload');
+  const reloadedApi = new CatalogBenchmarkApi(catalog, reloadedStore);
+  const second = await reloadedApi.nextMatchup({ participantId: reloadedStore.participantId });
+  assert.ok(second);
+  assert.equal(second!.matchupId, first!.matchupId, 'the scheduler reproduces the same current matchup after reload');
+  assert.deepEqual(playCountsFor(second!, reloadedStore.snapshot.levelRuns), { a: 1, b: 0 }, 'local runs pre-fill one side after reload');
+}
+
+async function testCatalogChangesRefreshReveals(): Promise<void> {
+  const originalVersion = makeSchedulerCatalog(2, 1);
+  const original = makeRankCatalog({
+    ...originalVersion,
+    entrants: originalVersion.entrants.map((entrant, index) => ({ ...entrant, thumbnailPath: `/old-${index}.png` })),
+  });
+  const storage = createMemoryStorage();
+  const store = new BenchmarkLocalStore(storage, 'thumbnail-refresh');
+  const api = new CatalogBenchmarkApi(original, store);
   const participantId = store.participantId;
-  await api.recordPlay({ matchupId: assignment.matchupId, participantId, side: 'a' });
-  await api.recordPlay({ matchupId: assignment.matchupId, participantId, side: 'b' });
-  assert.equal(store.snapshot.unfinishedMatchup?.assignment.benchmarkVersion, inactive.benchmarkVersion);
-  await api.submitVote({ matchupId: assignment.matchupId, participantId, verdict: 'a-better', playCounts: { a: 1, b: 1 } });
-  const reveal = await api.reveal(assignment.matchupId, participantId);
-  assert.equal(reveal.a.levelId, oldA.levelId);
-  assert.equal(reveal.b.levelId, oldB.levelId);
-  assert.equal(store.snapshot.completedMatchups.length, 1);
+  const matchup = await api.nextMatchup({ participantId });
+  assert.ok(matchup);
+  await api.recordPlay({ matchupId: matchup!.matchupId, participantId, side: 'a' });
+  await api.recordPlay({ matchupId: matchup!.matchupId, participantId, side: 'b' });
+  await api.submitVote({ matchupId: matchup!.matchupId, participantId, verdict: 'a-better', playCounts: { a: 1, b: 1 } });
+
+  const changedVersion = {
+    ...original.versions[0]!,
+    entrants: original.versions[0]!.entrants.map((entrant, index) => ({ ...entrant, thumbnailPath: `/new-${index}.avif` })),
+  };
+  const changedCatalog = makeRankCatalog(changedVersion);
+  const reloaded = new BenchmarkLocalStore(storage, 'thumbnail-refresh');
+  const derived = completedMatchupsFromVotes(changedCatalog, reloaded.snapshot.history);
+  const savedVote = reloaded.snapshot.history[0]!;
+  assert.equal(derived[0]!.reveal.a.levelId, savedVote.aEntrantId, 'reconstructed reveal preserves the original side order');
+  assert.equal(derived[0]!.reveal.b.levelId, savedVote.bEntrantId, 'reconstructed reveal preserves the original side order');
+  assert.equal(derived[0]!.reveal.a.thumbnailPath, changedVersion.entrants.find((entrant) => entrant.levelId === savedVote.aEntrantId)?.thumbnailPath);
+  assert.equal(derived[0]!.reveal.b.thumbnailPath, changedVersion.entrants.find((entrant) => entrant.levelId === savedVote.bEntrantId)?.thumbnailPath);
 }
 
 function testVersionedVoteValidation(): void {
@@ -501,9 +502,7 @@ async function testApisAndStateMachine(): Promise<void> {
   const reveal = await api.reveal(next!.matchupId, participantId);
   assert.equal(reveal.a.dataClass, 'eligible');
   assert.equal(store.snapshot.history.length, 1);
-  api.restoreAssignment(next!, participantId, { a: 0, b: 0 });
-  assert.equal(store.snapshot.unfinishedMatchup?.kind, 'ready-to-vote');
-  assert.deepEqual(store.snapshot.unfinishedMatchup?.playCounts, { a: 1, b: 1 });
+  assert.deepEqual(store.snapshot.levelRuns, [], 'matchup state is not written into local storage');
 }
 
 function simulateAssignments(catalog: RankCatalogVersion, count: number, participantId = 'test-participant'): { judged: Judged[]; exposures: Record<string, number>; themes: string[]; assignments: { themeId: string; levelIdA: string; levelIdB: string }[] } {
@@ -521,7 +520,7 @@ function simulateAssignments(catalog: RankCatalogVersion, count: number, partici
 }
 
 function scheduleOne(catalog: RankCatalogVersion, judged: readonly Judged[], exposures: Readonly<Record<string, number>>, themes: readonly string[], participantId = 'test-participant') {
-  return nextScheduledMatchup(catalog, participantId, { judged, levelExposureCounts: exposures, themeHistory: themes });
+  return nextScheduledMatchup(catalog, participantId, { judged });
 }
 
 function appendJudgment(catalog: RankCatalogVersion, matchup: { themeId: string; levelIdA: string; levelIdB: string }, judged: Judged[], exposures: Record<string, number>, themes: string[]): void {

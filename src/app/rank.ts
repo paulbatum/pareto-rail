@@ -3,10 +3,10 @@ import {
   personalHistoryFromReveals,
   type PersonalHistoryEntry,
 } from '../benchmark/personal-curve';
-import { activeCatalogVersion, allCatalogEntrants, findCatalogVersionForLevels, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
-import { parsePairId } from '../benchmark/scheduler';
+import { activeCatalogVersion, allCatalogEntrants, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
+import { assignmentFromVote, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, type CompletedMatchup } from '../benchmark/catalog-api';
 import { ComparisonStateMachine } from '../benchmark/state';
-import { BenchmarkLocalStore, type CompletedMatchup } from '../benchmark/storage';
+import { BenchmarkLocalStore } from '../benchmark/storage';
 import { RemoteVoteRecorder, type RemoteVotePayload } from '../benchmark/remote-recorder';
 import type {
   BenchmarkApi,
@@ -51,13 +51,14 @@ export class RankController {
   get assignment(): MatchupAssignment | null { return this.machine?.state.assignment ?? null; }
   get state(): ComparisonState | null { return this.machine?.state ?? null; }
   get participantId() { return this.store.participantId; }
-  get judgedMatchups(): readonly CompletedMatchup[] { return this.store.snapshot.completedMatchups; }
+  get judgedMatchups(): readonly CompletedMatchup[] { return completedMatchupsFromVotes(rankCatalog, this.store.snapshot.history); }
+  get levelExposureCounts(): Readonly<Record<string, number>> { return exposureCountsFromVotes(rankCatalog, this.store.snapshot.history); }
   get lastUndoneVerdict(): VoteVerdict | null { return this.undoneVerdict; }
   /** Complete local inputs for development-only diagnostics and reproducible exports. */
   get debugSnapshot() { return this.store.snapshot; }
   get curve() {
-    const data = this.store.snapshot;
-    const history = personalHistoryFromReveals(data.history, data.completedMatchups.map((item) => item.reveal));
+    const matchups = this.judgedMatchups;
+    const history = personalHistoryFromReveals(matchups.map((item) => item.vote), matchups.map((item) => item.reveal));
     return recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history) });
   }
 
@@ -86,7 +87,6 @@ export class RankController {
     const next = state.kind === 'ready-to-vote'
       ? this.machine!.replay(side)
       : this.machine!.start(side);
-    this.persist(next);
     this.emit();
     return { side, levelId: this.resolvePlayable(side === 'a' ? next.assignment.a.playableRef : next.assignment.b.playableRef) };
   }
@@ -106,7 +106,6 @@ export class RankController {
       const counts = await this.api.recordPlay({ matchupId: state.assignment.matchupId, side, participantId: this.store.participantId });
       const next = this.machine.completeRun(side);
       this.machine = new ComparisonStateMachine(next.assignment, { ...next, playCounts: counts } as ComparisonState);
-      this.persist(this.machine.state);
       this.emit();
     } finally { this.busy = false; }
   }
@@ -117,14 +116,11 @@ export class RankController {
     this.busy = true;
     try {
       const submitting = this.machine.submit(verdict);
-      this.persist(submitting);
       const vote = await this.api.submitVote({ matchupId: submitting.assignment.matchupId, participantId: this.store.participantId, verdict, playCounts: submitting.playCounts });
       this.remoteRecorder.record(remotePayload(submitting.assignment, vote, this.store));
       const reveal = await this.api.reveal(submitting.assignment.matchupId, this.store.participantId);
       const revealed = this.machine.reveal({ ...reveal, vote });
-      this.store.completeMatchup({ matchupId: reveal.matchupId, vote, reveal });
       this.machine = new ComparisonStateMachine(revealed.assignment, revealed);
-      this.persist(this.machine.state);
       this.emit();
     } catch (error) {
       console.warn('Could not submit benchmark vote', error);
@@ -132,7 +128,6 @@ export class RankController {
       if (current?.kind === 'submitting') {
         const ready: ComparisonState = { kind: 'ready-to-vote', assignment: current.assignment, playCounts: { ...current.playCounts } };
         this.machine = new ComparisonStateMachine(ready.assignment, ready);
-        this.persist(ready);
         this.emit();
       }
     } finally { this.busy = false; }
@@ -146,7 +141,6 @@ export class RankController {
       const assignment = await this.api.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
       if (!assignment) return;
       this.machine = this.machineForAssignment(assignment);
-      this.persist(this.machine.state);
       this.emit();
     } finally { this.busy = false; }
   }
@@ -154,60 +148,39 @@ export class RankController {
   /** Development-only correction for the newest completed judgment. */
   undoLastVerdict(): VoteVerdict | null {
     if (!import.meta.env.DEV || this.busy) return null;
-    const latest = this.store.snapshot.completedMatchups.at(-1);
+    const latest = this.judgedMatchups.at(-1);
     if (!latest) return null;
-    const assignment = assignmentFromCompleted(latest);
+    const assignment = assignmentFromVote(rankCatalog, latest.vote);
     if (!assignment) return null;
     const undone = this.store.undoLastVerdict();
     if (!undone) return null;
     const restored: ComparisonState = {
       kind: 'ready-to-vote',
       assignment,
-      playCounts: { ...undone.vote.playCounts },
+      playCounts: { ...undone.playCounts },
     };
     this.machine = new ComparisonStateMachine(assignment, restored);
-    this.store.setUnfinishedMatchup(restored);
-    this.undoneVerdict = undone.vote.verdict;
+    this.undoneVerdict = undone.verdict;
     this.emit();
     return this.undoneVerdict;
   }
 
   private async ensureRound() {
-    const unfinished = this.store.snapshot.unfinishedMatchup;
-    if (unfinished) {
-      let safe = unfinished;
-      if (safe.kind === 'playing-a' || safe.kind === 'playing-b') {
-        const kind = safe.playCounts.a > 0 && safe.playCounts.b > 0 ? 'ready-to-vote' : 'assignment';
-        safe = { kind, assignment: safe.assignment, playCounts: { ...safe.playCounts } };
-      }
-      const fixture = this.api as BenchmarkApi & { restoreAssignment?: (assignment: MatchupAssignment, participantId: string, counts: { a: number; b: number }) => void };
-      fixture.restoreAssignment?.(safe.assignment, this.store.participantId, safe.playCounts);
-      const restored = this.store.snapshot.unfinishedMatchup;
-      const initial = restored?.assignment.matchupId === safe.assignment.matchupId ? restored : safe;
-      this.machine = new ComparisonStateMachine(safe.assignment, initial);
-      this.store.setUnfinishedMatchup(this.machine.state);
-      return;
-    }
     const assignment = await this.api!.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
     if (!assignment) return;
     this.machine = this.machineForAssignment(assignment);
-    this.persist(this.machine.state);
   }
 
-  /** Catalog-backed APIs precompute whether either level has been played in a
-   * previous matchup. Preserve that prepared state instead of replacing it
-   * with the zero-count initial state. */
   private machineForAssignment(assignment: MatchupAssignment): ComparisonStateMachine {
-    const prepared = this.store.snapshot.unfinishedMatchup;
-    return new ComparisonStateMachine(
-      assignment,
-      prepared?.assignment.matchupId === assignment.matchupId ? prepared : undefined,
-    );
-  }
-
-  private persist(state: ComparisonState) {
-    const prior = this.store.snapshot.themeHistory;
-    this.store.save({ unfinishedMatchup: state, themeHistory: [...prior, state.assignment.theme.id] });
+    const existing = this.machine?.state;
+    if (existing?.assignment.matchupId === assignment.matchupId && (existing.kind === 'assignment' || existing.kind === 'ready-to-vote')) {
+      return new ComparisonStateMachine(assignment, existing);
+    }
+    const counts = playCountsFor(assignment, this.store.snapshot.levelRuns);
+    const initial: ComparisonState = counts.a > 0 && counts.b > 0
+      ? { kind: 'ready-to-vote', assignment, playCounts: counts }
+      : { kind: 'assignment', assignment, playCounts: counts };
+    return new ComparisonStateMachine(assignment, initial);
   }
 
   private emit() { for (const listener of this.listeners) listener(); }
@@ -231,25 +204,5 @@ function remotePayload(assignment: MatchupAssignment, vote: MatchupVote, store: 
     assignedAt: assignment.assignedAt,
     clientSubmittedAt: vote.submittedAt,
     idempotencyKey: `${assignment.matchupId}:${store.participantId}`,
-  };
-}
-
-function assignmentFromCompleted(completed: CompletedMatchup): MatchupAssignment | null {
-  const parsed = parsePairId(completed.matchupId);
-  const themeId = parsed?.themeId ?? '';
-  const version = findCatalogVersionForLevels(rankCatalog, completed.reveal.a.levelId, completed.reveal.b.levelId);
-  const theme = version?.themes.find((candidate) => candidate.id === themeId);
-  if (!version || !theme) return null;
-  const preVote = (side: MatchupSide) => {
-    const entrant = completed.reveal[side];
-    return { playableRef: entrant.playableRef, ...(entrant.thumbnailPath ? { thumbnailPath: entrant.thumbnailPath } : {}) };
-  };
-  return {
-    matchupId: completed.matchupId,
-    benchmarkVersion: version.benchmarkVersion,
-    theme,
-    a: preVote('a'),
-    b: preVote('b'),
-    assignedAt: completed.vote.submittedAt,
   };
 }

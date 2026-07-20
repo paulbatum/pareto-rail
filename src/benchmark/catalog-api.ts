@@ -1,29 +1,80 @@
-import { initialComparisonState, type ComparisonState } from './types';
 import { mapVerdict, type BenchmarkApi, type MatchupAssignment, type MatchupVote, type NextMatchupRequest, type PlayCounts, type RecordPlayRequest, type RevealPayload, type SubmitVoteRequest } from './types';
-import { activeCatalogVersion, allCatalogEntrants, findCatalogVersionForLevels, type RankCatalog, type RankCatalogEntrant } from './catalog';
+import { allCatalogEntrants, findCatalogVersionForLevels, activeCatalogVersion, type RankCatalog, type RankCatalogEntrant } from './catalog';
 import { nextScheduledMatchup, pairId, parsePairId } from './scheduler';
-import { BenchmarkLocalStore } from './storage';
+import { BenchmarkLocalStore, type LevelRun } from './storage';
+
+export interface CompletedMatchup {
+  matchupId: string;
+  vote: MatchupVote;
+  reveal: RevealPayload;
+}
+
+/** Rebuild catalog-derived reveal data from the vote log. Current catalog
+ * metadata is deliberately used here, so changed thumbnails and other
+ * published details are reflected after a reload. */
+export function completedMatchupsFromVotes(catalog: RankCatalog, votes: readonly MatchupVote[]): CompletedMatchup[] {
+  return votes.flatMap((vote) => {
+    const reveal = revealFromVote(catalog, vote);
+    return reveal ? [{ matchupId: reveal.matchupId, vote: reveal.vote, reveal }] : [];
+  });
+}
+
+export function exposureCountsFromVotes(catalog: RankCatalog, votes: readonly MatchupVote[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const completed of completedMatchupsFromVotes(catalog, votes)) {
+    for (const levelId of [completed.reveal.a.levelId, completed.reveal.b.levelId]) {
+      counts[levelId] = (counts[levelId] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
+
+export function assignmentFromVote(catalog: RankCatalog, vote: MatchupVote): MatchupAssignment | null {
+  const parsed = parsePairId(vote.matchupId);
+  const parsedA = parsed ? findCatalogEntrant(catalog, parsed.levelA) : undefined;
+  const parsedB = parsed ? findCatalogEntrant(catalog, parsed.levelB) : undefined;
+  const a = findCatalogEntrant(catalog, vote.aEntrantId);
+  const b = findCatalogEntrant(catalog, vote.bEntrantId);
+  const pairLevels = parsed ? new Set([parsed.levelA, parsed.levelB]) : new Set<string>();
+  const sideOrderIsValid = !!a && !!b && a.levelId !== b.levelId && pairLevels.has(a.levelId) && pairLevels.has(b.levelId);
+  const version = parsed && parsedA && parsedB ? findCatalogVersionForLevels(catalog, parsedA.levelId, parsedB.levelId) : undefined;
+  const theme = version && parsed ? version.themes.find((candidate) => candidate.id === parsed.themeId) : undefined;
+  if (!parsed || !parsedA || !parsedB || !a || !b || !sideOrderIsValid || !version || !theme
+    || parsedA.themeId !== parsed.themeId || parsedB.themeId !== parsed.themeId) return null;
+  return {
+    matchupId: vote.matchupId,
+    benchmarkVersion: version.benchmarkVersion,
+    theme,
+    a: { playableRef: a.levelId, ...(a.thumbnailPath ? { thumbnailPath: a.thumbnailPath } : {}) },
+    b: { playableRef: b.levelId, ...(b.thumbnailPath ? { thumbnailPath: b.thumbnailPath } : {}) },
+    assignedAt: vote.submittedAt,
+  };
+}
+
+export function revealFromVote(catalog: RankCatalog, vote: MatchupVote): RevealPayload | null {
+  const assignment = assignmentFromVote(catalog, vote);
+  if (!assignment) return null;
+  const a = findCatalogEntrant(catalog, assignment.a.playableRef);
+  const b = findCatalogEntrant(catalog, assignment.b.playableRef);
+  if (!a || !b) return null;
+  return {
+    matchupId: assignment.matchupId,
+    a: revealFor(a),
+    b: revealFor(b),
+    vote: voteForCatalog(vote, a, b),
+  };
+}
 
 /** Browser-local benchmark implementation backed only by the checked-in rank catalog. */
 export class CatalogBenchmarkApi implements BenchmarkApi {
   readonly catalog: RankCatalog;
   readonly store: BenchmarkLocalStore;
   private readonly assignments = new Map<string, MatchupAssignment>();
+  private readonly playCounts = new Map<string, PlayCounts>();
 
   constructor(catalog: RankCatalog, store = new BenchmarkLocalStore()) {
     this.catalog = catalog;
     this.store = store;
-  }
-
-  /** Rehydrate an assignment after the controller restores an unfinished round. */
-  restoreAssignment(assignment: MatchupAssignment, _participantId: string, playCounts: PlayCounts = { a: 0, b: 0 }): void {
-    this.assignments.set(assignment.matchupId, assignment);
-    const recorded = this.playCountsFor(assignment);
-    const counts = {
-      a: Math.max(playCounts.a, recorded.a),
-      b: Math.max(playCounts.b, recorded.b),
-    };
-    this.store.setUnfinishedMatchup(newState(assignment, counts));
   }
 
   async nextMatchup(request: NextMatchupRequest): Promise<MatchupAssignment | null> {
@@ -31,15 +82,12 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
     const data = this.store.snapshot;
     const activeVersion = activeCatalogVersion(this.catalog);
     if (!activeVersion) return null;
-    const scheduled = nextScheduledMatchup(activeVersion, this.store.participantId, {
-      judged: data.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })),
-      levelExposureCounts: data.levelExposureCounts,
-      themeHistory: data.themeHistory,
-    });
+    const judged = completedMatchupsFromVotes(this.catalog, data.history).map(({ vote }) => ({ matchupId: vote.matchupId, relative: vote.relative }));
+    const scheduled = nextScheduledMatchup(activeVersion, this.store.participantId, { judged });
     if (!scheduled) return null;
     const theme = activeVersion.themes.find((candidate) => candidate.id === scheduled.themeId);
-    const a = this.entrant(scheduled.levelIdA);
-    const b = this.entrant(scheduled.levelIdB);
+    const a = findCatalogEntrant(this.catalog, scheduled.levelIdA);
+    const b = findCatalogEntrant(this.catalog, scheduled.levelIdB);
     if (!theme || !a || !b) return null;
     const assignment: MatchupAssignment = {
       matchupId: pairId(theme.id, a.levelId, b.levelId),
@@ -50,22 +98,17 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
       assignedAt: new Date().toISOString(),
     };
     this.assignments.set(assignment.matchupId, assignment);
-    this.store.setUnfinishedMatchup(newState(assignment, this.playCountsFor(assignment)));
+    if (!this.playCounts.has(assignment.matchupId)) this.playCounts.set(assignment.matchupId, playCountsFor(assignment, data.levelRuns));
     return assignment;
   }
 
   async recordPlay(request: RecordPlayRequest): Promise<PlayCounts> {
     this.requireParticipant(request.participantId);
     const assignment = this.assignmentFor(request.matchupId);
-    const current = this.store.snapshot.unfinishedMatchup;
-    const counts = current?.assignment.matchupId === request.matchupId ? { ...current.playCounts } : { a: 0, b: 0 };
+    const counts = { ...(this.playCounts.get(request.matchupId) ?? playCountsFor(assignment, this.store.snapshot.levelRuns)) };
     counts[request.side] += 1;
-    if (current?.assignment.matchupId === request.matchupId) {
-      this.store.setUnfinishedMatchup({ ...current, playCounts: counts });
-    } else {
-      this.store.setUnfinishedMatchup(newState(assignment, counts));
-    }
-    return counts;
+    this.playCounts.set(request.matchupId, counts);
+    return { ...counts };
   }
 
   async submitVote(request: SubmitVoteRequest): Promise<MatchupVote> {
@@ -76,11 +119,10 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
       if (prior.verdict !== request.verdict) throw new Error('A matchup already has a different vote');
       return prior;
     }
-    const current = this.store.snapshot.unfinishedMatchup;
-    const counts = current?.assignment.matchupId === request.matchupId ? current.playCounts : { a: 0, b: 0 };
+    const counts = this.playCounts.get(request.matchupId) ?? playCountsFor(assignment, this.store.snapshot.levelRuns);
     if (counts.a < 1 || counts.b < 1 || request.playCounts.a < 1 || request.playCounts.b < 1) throw new Error('Both entrants must be played before voting');
-    const a = this.entrant(assignment.a.playableRef);
-    const b = this.entrant(assignment.b.playableRef);
+    const a = findCatalogEntrant(this.catalog, assignment.a.playableRef);
+    const b = findCatalogEntrant(this.catalog, assignment.b.playableRef);
     if (!a || !b) throw new Error('Unknown playable reference');
     const mapping = mapVerdict(request.verdict);
     const vote: MatchupVote = {
@@ -100,54 +142,22 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
 
   async reveal(matchupId: string, participantId = ''): Promise<RevealPayload> {
     if (participantId) this.requireParticipant(participantId);
-    const completed = this.store.snapshot.completedMatchups.find((item) => item.matchupId === matchupId);
-    if (completed) return completed.reveal;
-    const assignment = this.assignmentFor(matchupId);
     const vote = this.store.snapshot.history.find((item) => item.matchupId === matchupId);
     if (!vote) throw new Error('Reveal is available only after a vote');
-    const a = this.entrant(assignment.a.playableRef);
-    const b = this.entrant(assignment.b.playableRef);
-    if (!a || !b) throw new Error('Unknown playable reference');
-    const reveal: RevealPayload = { matchupId, a: revealFor(a), b: revealFor(b), vote };
-    this.store.completeMatchup({ matchupId, vote, reveal });
+    const reveal = revealFromVote(this.catalog, vote);
+    if (!reveal) throw new Error('Unknown matchup');
     return reveal;
   }
 
   private assignmentFor(matchupId: string): MatchupAssignment {
     const cached = this.assignments.get(matchupId);
     if (cached) return cached;
-    const unfinished = this.store.snapshot.unfinishedMatchup;
-    if (unfinished?.assignment.matchupId === matchupId) {
-      this.assignments.set(matchupId, unfinished.assignment);
-      return unfinished.assignment;
-    }
-    const completed = this.store.snapshot.completedMatchups.find((item) => item.matchupId === matchupId);
-    const parsed = parsePairId(matchupId);
-    const version = parsed ? findCatalogVersionForLevels(this.catalog, parsed.levelA, parsed.levelB) : undefined;
-    const theme = version && parsed ? version.themes.find((candidate) => candidate.id === parsed.themeId) : undefined;
-    if (!completed || !parsed || !version || !theme) throw new Error('Unknown matchup');
-    const assignment: MatchupAssignment = {
-      matchupId,
-      benchmarkVersion: version.benchmarkVersion,
-      theme,
-      a: { playableRef: completed.reveal.a.playableRef, ...(completed.reveal.a.thumbnailPath ? { thumbnailPath: completed.reveal.a.thumbnailPath } : {}) },
-      b: { playableRef: completed.reveal.b.playableRef, ...(completed.reveal.b.thumbnailPath ? { thumbnailPath: completed.reveal.b.thumbnailPath } : {}) },
-      assignedAt: completed.vote.submittedAt,
-    };
+    const vote = this.store.snapshot.history.find((item) => item.matchupId === matchupId);
+    const assignment = vote ? assignmentFromVote(this.catalog, vote) : null;
+    if (!assignment) throw new Error('Unknown matchup');
     this.assignments.set(matchupId, assignment);
+    if (!this.playCounts.has(matchupId)) this.playCounts.set(matchupId, playCountsFor(assignment, this.store.snapshot.levelRuns));
     return assignment;
-  }
-
-  private playCountsFor(assignment: MatchupAssignment): PlayCounts {
-    const completed = new Set(this.store.snapshot.levelRuns.map((run) => run.levelId));
-    return {
-      a: completed.has(assignment.a.playableRef) ? 1 : 0,
-      b: completed.has(assignment.b.playableRef) ? 1 : 0,
-    };
-  }
-
-  private entrant(levelId: string): RankCatalogEntrant | undefined {
-    return allCatalogEntrants(this.catalog).find((candidate) => candidate.levelId === levelId);
   }
 
   private requireParticipant(participantId: string): void {
@@ -156,14 +166,31 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
   }
 }
 
-function newState(assignment: MatchupAssignment, playCounts: PlayCounts): ComparisonState {
-  const counts = { ...playCounts };
-  return counts.a > 0 && counts.b > 0
-    ? { kind: 'ready-to-vote', assignment, playCounts: counts }
-    : { kind: 'assignment', assignment, playCounts: counts };
+export function playCountsFor(assignment: MatchupAssignment, levelRuns: readonly LevelRun[]): PlayCounts {
+  const completed = new Set(levelRuns.map((run) => run.levelId));
+  return {
+    a: completed.has(assignment.a.playableRef) ? 1 : 0,
+    b: completed.has(assignment.b.playableRef) ? 1 : 0,
+  };
 }
 
-function revealFor(entrant: RankCatalogEntrant): RevealPayload['a'] {
+function findCatalogEntrant(catalog: RankCatalog, levelId: string): RankCatalogEntrant | undefined {
+  return allCatalogEntrants(catalog).find((candidate) => candidate.levelId === levelId);
+}
+
+function voteForCatalog(vote: MatchupVote, a: RankCatalogEntrant, b: RankCatalogEntrant): MatchupVote {
+  const mapping = mapVerdict(vote.verdict);
+  const { sentiment: _storedSentiment, ...withoutSentiment } = vote;
+  return {
+    ...withoutSentiment,
+    aEntrantId: a.levelId,
+    bEntrantId: b.levelId,
+    relative: mapping.relative,
+    ...(mapping.sentiment ? { sentiment: mapping.sentiment } : {}),
+  };
+}
+
+export function revealFor(entrant: RankCatalogEntrant): RevealPayload['a'] {
   return {
     entrantId: entrant.levelId,
     playableRef: entrant.levelId,

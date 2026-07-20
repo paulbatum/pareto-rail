@@ -15,9 +15,6 @@ export function pairId(themeId: string, levelA: string, levelB: string): string 
 
 export interface SchedulerHistory {
   judged?: readonly { matchupId: string; relative: RelativeOutcome }[];
-  levelExposureCounts?: Readonly<Record<string, number>> | ReadonlyMap<string, number>;
-  /** Assignment theme ids in chronological order. */
-  themeHistory?: readonly string[];
 }
 
 export interface ScheduledMatchup {
@@ -43,13 +40,13 @@ export function nextScheduledMatchup(catalog: RankCatalogVersion, participantId:
   if (!participantId || catalog.themes.length === 0) return null;
   const entrantsByTheme = new Map(catalog.themes.map((theme) => [theme.id, catalog.entrants.filter((entrant) => entrant.themeId === theme.id)]));
   const judged = history.judged ?? [];
-  const exposureCounts = exposureMap(catalog, history, judged);
+  const exposureCounts = exposureMap(catalog, judged);
   const pairCounts = countJudgedPairs(catalog, judged);
   const configurationPairCounts = countJudgedConfigurationPairs(catalog, judged);
   const candidates = [...entrantsByTheme.entries()].flatMap(([themeId, entrants]) => pairsForTheme(themeId, entrants, exposureCounts, pairCounts, configurationPairCounts));
   if (candidates.length === 0) return null;
 
-  const lastThemeId = history.themeHistory?.at(-1);
+  const lastThemeId = parsePairId(judged.at(-1)?.matchupId ?? '')?.themeId;
   const hasUnseenLevel = candidates.some((candidate) => candidate.unseenCount > 0);
   const selected = hasUnseenLevel
     ? selectCoveragePhase(catalog, entrantsByTheme, candidates, exposureCounts, judged, lastThemeId)
@@ -221,7 +218,6 @@ function countJudgedConfigurationPairs(catalog: RankCatalogVersion, judged: read
 
 function exposureMap(
   catalog: RankCatalogVersion,
-  history: SchedulerHistory,
   judged: readonly { matchupId: string; relative: RelativeOutcome }[],
 ): Map<string, number> {
   const counts = new Map<string, number>();
@@ -231,11 +227,6 @@ function exposureMap(
     if (!parsed || !knownIds.has(parsed.levelA) || !knownIds.has(parsed.levelB)) continue;
     counts.set(parsed.levelA, (counts.get(parsed.levelA) ?? 0) + 1);
     counts.set(parsed.levelB, (counts.get(parsed.levelB) ?? 0) + 1);
-  }
-  if (history.levelExposureCounts instanceof Map) {
-    for (const [levelId, count] of history.levelExposureCounts) if (knownIds.has(levelId)) counts.set(levelId, count);
-  } else if (history.levelExposureCounts) {
-    for (const [levelId, count] of Object.entries(history.levelExposureCounts)) if (knownIds.has(levelId)) counts.set(levelId, count);
   }
   return counts;
 }

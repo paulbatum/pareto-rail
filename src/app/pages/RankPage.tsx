@@ -3,9 +3,9 @@ import type { RunSummary } from '../../engine/scoring';
 import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, RevealPayload, VoteVerdict } from '../../benchmark/types';
 import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
-import { CatalogBenchmarkApi } from '../../benchmark/catalog-api';
-import { allCatalogEntrants, catalogLevelIds, catalogThemeIds, findCatalogTheme, rankCatalog, type RankCatalogConfiguration } from '../../benchmark/catalog';
-import { BenchmarkLocalStore, type CompletedMatchup } from '../../benchmark/storage';
+import { CatalogBenchmarkApi, type CompletedMatchup } from '../../benchmark/catalog-api';
+import { allCatalogEntrants, findCatalogTheme, rankCatalog, type RankCatalogConfiguration } from '../../benchmark/catalog';
+import { BenchmarkLocalStore } from '../../benchmark/storage';
 import { RankController, type RankLaunch } from '../rank';
 import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
@@ -97,7 +97,7 @@ function RankStage({ controller, state, lastUndoneVerdict, onLaunch, onVote, onN
     return <article className={`compare-card${emphasized}`}>
       <LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} />
       <h2>Level {side.toUpperCase()}</h2>
-      <p className="compare-stats">{completedRuns && <span>Completed run</span>}{priorRun?.score !== undefined && <span className="run-score">Latest score: {priorRun.score.toLocaleString('en-US')}</span>}</p>
+      <p className="compare-stats">{completedRuns && <span>Completed run</span>}{priorRun?.score !== undefined && <span className="run-score">Best score: {priorRun.score.toLocaleString('en-US')}</span>}</p>
       <button className={`button${nextSide === side ? ' primary' : ''}`} type="button" onClick={() => onLaunch(side)}>{label} Level {side.toUpperCase()}</button>
     </article>;
   };
@@ -450,7 +450,7 @@ function debugCurrentMatchup(controller: RankController): string[] {
   const levelLine = (side: MatchupSide) => {
     const entrant = assignment[side];
     const run = snapshot.levelRuns.find((candidate) => candidate.levelId === entrant.playableRef);
-    const exposures = snapshot.levelExposureCounts[entrant.playableRef] ?? 0;
+    const exposures = controller.levelExposureCounts[entrant.playableRef] ?? 0;
     return `${side.toUpperCase()} | playableRef=${entrant.playableRef} | currentPlays=${playCounts[side]} | priorRuns=${run?.count ?? 0} | priorJudgmentExposures=${exposures}`;
   };
 
@@ -526,7 +526,6 @@ function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavi
 
 function createRankController(): RankController {
   const store = new BenchmarkLocalStore();
-  store.pruneToCatalog(catalogLevelIds(rankCatalog), catalogThemeIds(rankCatalog));
   const api = new CatalogBenchmarkApi(rankCatalog, store);
   return new RankController({ api, store, resolvePlayable: (ref) => ref });
 }
