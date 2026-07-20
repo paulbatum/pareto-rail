@@ -85,6 +85,11 @@ export function installDebugPanel(level: DebugPanelLevel) {
   body.className = 'debug-panel-body';
   panel.append(body);
 
+  const levelReadout = document.createElement('div');
+  levelReadout.className = 'debug-panel-readout';
+  levelReadout.textContent = `Level: ${level.id}`;
+  body.append(levelReadout);
+
   if (level.debugSelector) body.append(createDebugModeSection(level, level.debugSelector));
   body.append(createCameraSection());
 
