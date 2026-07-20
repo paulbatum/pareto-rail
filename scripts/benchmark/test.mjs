@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
-import { assertSiblingSharedInputs, codexNetworkAccess, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
+import { assertSiblingSharedInputs, codexNetworkAccess, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
@@ -106,6 +106,28 @@ const plan = {
 };
 assert.deepEqual(validatePlan(plan), []);
 assert.deepEqual(validateRunDefinition({ ...plan, ...plan.runs[0], levelTitle: 'Cinder' }), []);
+const overridePlan = structuredClone(plan);
+overridePlan.runs[0].entrantBaseline = 'e'.repeat(40);
+assert.deepEqual(validatePlan(overridePlan), []);
+assert.deepEqual(validateRunDefinition({ ...overridePlan, ...overridePlan.runs[0], levelTitle: 'Cinder' }), []);
+const badOverridePlan = structuredClone(overridePlan);
+badOverridePlan.runs[0].entrantBaseline = 'not-a-commit';
+assert.ok(validatePlan(badOverridePlan).some((error) => error.includes('plan.runs[0].entrantBaseline')));
+assert.ok(validateRunDefinition({ ...badOverridePlan, ...badOverridePlan.runs[0], levelTitle: 'Cinder' }).some((error) => error.includes('run definition.entrantBaseline')));
+const synthesisMaterialsCommit = (await exec('git', ['rev-parse', 'HEAD'], { cwd: process.cwd() })).stdout.trim();
+const synthesisPlan = { ...plan, entrantBaseline: 'f'.repeat(40) };
+const synthesisRow = {
+  ...plan.runs[0],
+  levelId: 'mass-driver-detailed-a1b2',
+  themeId: 'mass-driver-detailed',
+  themePath: 'benchmark/themes/mass-driver-detailed.md',
+  recipePath: 'benchmark/recipes/codex-sol-high.md',
+  entrantBaseline: 'e'.repeat(40),
+};
+const synthesizedOverride = await synthesizeDefinition(synthesisPlan, synthesisRow, synthesisMaterialsCommit);
+assert.equal(synthesizedOverride.entrantBaseline, synthesisRow.entrantBaseline);
+const synthesizedFallback = await synthesizeDefinition(synthesisPlan, { ...synthesisRow, entrantBaseline: undefined }, synthesisMaterialsCommit);
+assert.equal(synthesizedFallback.entrantBaseline, synthesisPlan.entrantBaseline);
 const actualV2Plan = JSON.parse(await fs.readFile(path.join(process.cwd(), 'benchmark/private/v2-plan.json'), 'utf8'));
 assert.equal(actualV2Plan.baselinePolicy, 'open');
 assert.deepEqual(validatePlan(actualV2Plan), []);
@@ -239,7 +261,7 @@ const renderingRuns = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-rende
 try {
   const sibling = path.join(renderingRuns, 'run-sibling');
   await fs.mkdir(sibling, { recursive: true });
-  await fs.writeFile(path.join(sibling, 'run-definition.json'), JSON.stringify({ benchmarkVersion: 'v2', themeId: 'cinder', runId: 'run-sibling' }));
+  await fs.writeFile(path.join(sibling, 'run-definition.json'), JSON.stringify({ benchmarkVersion: 'v2', themeId: 'cinder', runId: 'run-sibling', entrantBaseline: 'c'.repeat(40) }));
   await fs.writeFile(path.join(sibling, 'rendered-assignment.md'), 'shared base');
   const sharedInputs = { templateSha256: sha256('template'), themeSha256: sha256('theme') };
   // Divergent theme text is a misrendered assignment and must be caught before an expensive launch.
@@ -254,9 +276,9 @@ try {
     () => assertSiblingSharedInputs({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sharedInputs),
     /Assignment template differs from sibling/,
   );
-  // Matching shared inputs pass even though the level id and budget flag (folded into no comparison here) differ per entrant.
+  // Matching shared inputs pass even when sibling rows use different entrant baselines; the baseline is not a prompt input.
   await fs.writeFile(path.join(sibling, 'rendered-assignment.json'), JSON.stringify({ template: { sha256: sha256('template') }, theme: { sha256: sha256('theme') } }));
-  await assert.doesNotReject(() => assertSiblingSharedInputs({ benchmarkVersion: 'v2', themeId: 'cinder' }, path.join(renderingRuns, 'run-current'), sharedInputs));
+  await assert.doesNotReject(() => assertSiblingSharedInputs({ benchmarkVersion: 'v2', themeId: 'cinder', entrantBaseline: 'd'.repeat(40) }, path.join(renderingRuns, 'run-current'), sharedInputs));
 } finally {
   await fs.rm(renderingRuns, { recursive: true, force: true });
 }

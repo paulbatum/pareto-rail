@@ -125,7 +125,7 @@ async function main() {
     await assertAbsent(outputDirectory, 'run output directory');
     await assertCleanRepository();
     const materialsCommit = await gitCommit(plan.materialsCommit);
-    const entrantBaseline = await gitCommit(plan.entrantBaseline);
+    const entrantBaseline = await gitCommit(row.entrantBaseline ?? plan.entrantBaseline);
     definition = await synthesizeDefinition(plan, row, materialsCommit, entrantBaseline);
     const errors = validateRunDefinition(definition);
     if (errors.length) fail(`Invalid run definition:\n${errors.map((error) => `- ${error}`).join('\n')}`);
@@ -423,7 +423,7 @@ export function validatePlan(value) {
   validateString(value.benchmarkVersion, 'plan.benchmarkVersion', errors);
   if (value.benchmarkVersion !== undefined && value.benchmarkVersion !== 'v2') errors.push('plan.benchmarkVersion must equal v2.');
   validateString(value.materialsCommit, 'plan.materialsCommit', errors);
-  validateString(value.entrantBaseline, 'plan.entrantBaseline', errors);
+  validateGitCommitString(value.entrantBaseline, 'plan.entrantBaseline', errors);
   if (!Object.hasOwn(value, 'baselinePolicy')) errors.push('plan.baselinePolicy is required; choose "scrubbed" for a new series or "open" only for the historical v2 record.');
   else if (!['open', 'scrubbed'].includes(value.baselinePolicy)) errors.push('plan.baselinePolicy must be "open" or "scrubbed"; choose a policy explicitly.');
   if (!Array.isArray(value.runs) || value.runs.length === 0) {
@@ -453,7 +453,7 @@ export function validateRunDefinition(value) {
   validateString(value.benchmarkVersion, 'run definition.benchmarkVersion', errors);
   if (value.benchmarkVersion !== undefined && value.benchmarkVersion !== 'v2') errors.push('run definition.benchmarkVersion must equal v2.');
   validateString(value.materialsCommit, 'run definition.materialsCommit', errors);
-  validateString(value.entrantBaseline, 'run definition.entrantBaseline', errors);
+  validateGitCommitString(value.entrantBaseline, 'run definition.entrantBaseline', errors);
   if (value.baselinePolicy !== undefined && !['open', 'scrubbed'].includes(value.baselinePolicy)) errors.push('run definition.baselinePolicy must be "open" or "scrubbed".');
   validateRunRow(value, 'run definition', errors, { requireTitle: true });
   return errors;
@@ -464,6 +464,7 @@ function validateRunRow(row, label, errors, { requireTitle }) {
   for (const field of ['runId', 'slotId', 'levelId', 'themeId', 'themePath', 'configurationId', 'recipePath']) validateString(row[field], `${label}.${field}`, errors);
   if (requireTitle) validateString(row.levelTitle, `${label}.levelTitle`, errors);
   if (row.kind !== undefined && !['rehearsal', 'benchmark'].includes(row.kind)) errors.push(`${label}.kind must be rehearsal or benchmark.`);
+  if (row.entrantBaseline !== undefined) validateGitCommitString(row.entrantBaseline, `${label}.entrantBaseline`, errors);
   if (row.levelId && row.themeId && row.slotId && row.levelId !== `${row.themeId}-${row.slotId}`) errors.push(`${label}.levelId must equal ${row.themeId}-${row.slotId}.`);
   validateStage(row.stage, `${label}.stage`, errors);
   if (row.delegation !== undefined) validateDelegation(row.delegation, `${label}.delegation`, errors);
@@ -494,11 +495,20 @@ function validateString(value, label, errors) {
   if (typeof value !== 'string' || !value) errors.push(`${label} is required.`);
 }
 
+function validateGitCommitString(value, label, errors) {
+  if (typeof value !== 'string' || !value) {
+    errors.push(`${label} is required.`);
+  } else if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(value)) {
+    errors.push(`${label} must be a 40- or 64-character hexadecimal Git commit hash.`);
+  }
+}
+
 export function firstLevelOneHeading(source) {
   return source.match(/^#\s+(.+?)\s*$/m)?.[1] ?? undefined;
 }
 
-async function synthesizeDefinition(plan, row, materialsCommit, entrantBaseline) {
+export async function synthesizeDefinition(plan, row, materialsCommit, resolvedEntrantBaseline) {
+  const entrantBaseline = resolvedEntrantBaseline ?? row.entrantBaseline ?? plan.entrantBaseline;
   const theme = await gitShow(materialsCommit, row.themePath);
   const levelTitle = firstLevelOneHeading(theme);
   if (!levelTitle) fail(`Theme ${row.themePath} must contain a level-one heading.`);
