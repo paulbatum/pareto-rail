@@ -87,6 +87,18 @@ const WEB_FETCH_TOOL_NAMES = new Set([
   'web_fetch',
   'webfetch',
 ]);
+const PLAUSIBLE_FILESYSTEM_ROOTS = new Set([
+  'etc',
+  'home',
+  'media',
+  'mnt',
+  'opt',
+  'root',
+  'srv',
+  'tmp',
+  'usr',
+  'var',
+]);
 
 /**
  * Convert one transcript record into normalized tool calls. Unknown record shapes
@@ -666,17 +678,153 @@ function shouldIgnoreOutside(info, { candidate, source, operation }) {
 
 function isNonFilesystemPath(source, offset, raw) {
   if (raw === '/**' || raw.startsWith('/**/')) return true;
+  if (!hasPlausibleFilesystemRoot(raw)) return true;
+
   const before = source.slice(0, offset);
   if (/\bssrLoadModule\(\s*['"]$/.test(before)) return true;
-  if (/\b(?:from|import|require)\s*\(?\s*['"]$/.test(before)) return true;
+  if (/\b(?:from|import|require|export)\s*(?:type\s+)?\(?\s*['"]$/.test(before)) return true;
   if (/\.(?:replace|replaceAll)\([^\n;]*['"]$/.test(before)) return true;
+  if (isModuleSpecifier(source, offset, raw)) return true;
+  if (isInsideSubstitutionBody(source, offset)) return true;
+  if (isGeneratedSourceContext(source, offset)) return true;
+
   const segment = commandSegment(source, offset);
   const localOffset = Math.max(0, offset - segmentStart(source, offset));
-  if (/\b(?:sed|grep|rg)\b/i.test(segment)) {
+  if (/\b(?:sed|perl|grep|rg)\b/i.test(segment)) {
     const singleQuotes = (segment.slice(0, localOffset).match(/'/g) ?? []).length;
     const doubleQuotes = (segment.slice(0, localOffset).match(/"/g) ?? []).length;
     if (singleQuotes % 2 === 1 || doubleQuotes % 2 === 1) return true;
     if (!raw.slice(1).includes('/')) return true;
+  }
+  return false;
+}
+
+function hasPlausibleFilesystemRoot(raw) {
+  if (!raw.startsWith('/')) return true;
+  const firstSegment = raw.slice(1).split('/')[0].toLowerCase();
+  return PLAUSIBLE_FILESYSTEM_ROOTS.has(firstSegment);
+}
+
+function isModuleSpecifier(source, offset, raw) {
+  if (!raw.startsWith('../') && !raw.startsWith('./')) return false;
+  const before = source.slice(0, offset);
+  const after = source.slice(offset + raw.length);
+  const quoted = /['"]$/.test(before) && /^['"]/.test(after);
+  if (!quoted) return false;
+
+  // A quoted path passed to a read/copy/list command is still a filesystem
+  // reference. In ordinary source text, however, extensionless ./ and ../
+  // strings are overwhelmingly import specifiers (or code copied into a
+  // replacement operation), not paths the agent inspected.
+  const segment = commandSegment(source, offset).toLowerCase();
+  if (/\b(?:cat|head|tail|less|more|read|readlink|file|stat|open|python|node|cp|mv|rsync|install|cd|pushd|ls|find|tree|dir|sed|perl|grep|rg)\b/.test(segment)) return false;
+  return true;
+}
+
+function isInsideSubstitutionBody(source, offset) {
+  const start = segmentStart(source, offset);
+  const segment = commandSegment(source, offset);
+  const localOffset = Math.max(0, offset - start);
+  const pattern = /(?:^|[\s'"`\\])(?:s|tr|y)\s*([/|#@%~])/g;
+
+  for (const match of segment.matchAll(pattern)) {
+    const delimiter = match.index + match[0].length - 1;
+    if (delimiter > localOffset) continue;
+    const quote = /^[\'"`]$/.test(segment[match.index]) ? segment[match.index] : null;
+    let delimiters = 0;
+    let end = segment.length;
+    for (let index = delimiter; index < segment.length; index += 1) {
+      const character = segment[index];
+      if (character === "\\") {
+        index += 1;
+        continue;
+      }
+      if (character === segment[delimiter]) {
+        delimiters += 1;
+        if (delimiters === 3) {
+          end = index + 1;
+          break;
+        }
+      }
+      if (quote && delimiters >= 2 && character === quote) {
+        end = index + 1;
+        break;
+      }
+      if (!quote && delimiters >= 2 && (character === ';' || character === '\n' || character === '\\n')) {
+        end = index;
+        break;
+      }
+    }
+    if (localOffset >= delimiter && localOffset < end) return true;
+  }
+  return false;
+}
+
+function isGeneratedSourceContext(source, offset) {
+  if (isPatchBody(source, offset) || isWritingHeredoc(source, offset)) return true;
+
+  const before = source.slice(0, offset);
+  const statementStart = Math.max(before.lastIndexOf(';'), before.lastIndexOf('\\n'), before.lastIndexOf('\n')) + 1;
+  const statement = source.slice(statementStart, offset);
+  if (!/\b(?:const|let|var)\s+(?:patch|content|contents|source|code|script|body|text|data)\s*=/.test(statement)) return false;
+  if (/\b(?:readFile|read_text|read_file|readlink|open)\s*\(/.test(statement)) return false;
+  return isInsideStringLiteral(source, offset);
+}
+
+function isPatchBody(source, offset) {
+  const begin = source.lastIndexOf('*** Begin Patch', offset);
+  const end = source.indexOf('*** End Patch', offset);
+  if (begin < 0 || end < 0 || begin >= offset || end <= offset) return false;
+
+  const previousNewline = source.lastIndexOf('\n', offset - 1);
+  const previousEscapedNewline = source.lastIndexOf('\\n', offset - 1);
+  const lineStart = previousEscapedNewline > previousNewline ? previousEscapedNewline + 2 : previousNewline + 1;
+  const nextNewline = [source.indexOf('\n', offset), source.indexOf('\\n', offset)]
+    .filter((index) => index >= 0)
+    .sort((a, b) => a - b)[0] ?? source.length;
+  const line = source.slice(lineStart, nextNewline);
+  return !/^\s*\*\*\*\s+(?:Update|Add|Delete) File:\s*/.test(line)
+    && !/^\s*\*\*\*\s+(?:Begin|End) Patch\b/.test(line);
+}
+
+function isWritingHeredoc(source, offset) {
+  const heredocPattern = /<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_-]*)\1/g;
+  for (const marker of source.matchAll(heredocPattern)) {
+    const markerIndex = marker.index ?? 0;
+    if (markerIndex >= offset) continue;
+    const markerEnd = markerIndex + marker[0].length;
+    const lineEnd = [source.indexOf('\n', markerEnd), source.indexOf('\\n', markerEnd)]
+      .filter((index) => index >= 0)
+      .sort((a, b) => a - b)[0] ?? source.length;
+    const command = source.slice(segmentStart(source, markerIndex), lineEnd);
+    if (!/\b(?:cat|tee|apply_patch)\b/i.test(command) && !/\b(?:writeFile|write_text|open)\s*\(/i.test(command)) continue;
+    if (!/\bapply_patch\b/i.test(command) && !/>/.test(command)) continue;
+
+    const terminator = new RegExp(`(?:^|\\n|\\\\n)\\s*${escapeRegExp(marker[2])}\\s*(?:\\n|\\\\n|$)`);
+    const remainder = source.slice(markerEnd);
+    const match = remainder.match(terminator);
+    const terminatorIndex = match ? markerEnd + (match.index ?? remainder.length) : source.length;
+    if (offset > markerEnd && offset < terminatorIndex) return true;
+  }
+  return false;
+}
+
+function isInsideStringLiteral(source, offset) {
+  for (const quote of ["'", '"', '`']) {
+    let escaped = false;
+    let count = 0;
+    for (const character of source.slice(0, offset)) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (character === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (character === quote) count += 1;
+    }
+    if (count % 2 === 1) return true;
   }
   return false;
 }

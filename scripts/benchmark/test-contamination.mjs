@@ -114,12 +114,14 @@ function paths(findings) {
 // evidence; a relative path that remains inside the worktree is not.
 {
   const records = [
+    { type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: '/tmp/other-run/src/benchmark-levels/other-zz99/gameplay.ts' } }] } },
     { type: 'message', message: { role: 'assistant', content: [{ type: 'toolCall', name: 'bash', arguments: { command: 'cd /tmp/another-worktree && cat package.json' } }] } },
     { type: 'message', message: { role: 'assistant', content: [{ type: 'toolCall', name: 'read', arguments: { path: '../../secrets.txt' } }] } },
     { type: 'message', message: { role: 'assistant', content: [{ type: 'toolCall', name: 'read', arguments: { path: '../entrant-worktree/src/engine/types.ts' } }] } },
   ];
   const result = auditTranscriptRecords(records, options);
-  assert.deepEqual(classes(result.findings), ['outside-worktree', 'outside-worktree']);
+  assert.deepEqual(classes(result.findings), ['outside-worktree', 'outside-worktree', 'outside-worktree']);
+  assert.ok(paths(result.findings).includes('/tmp/other-run/src/benchmark-levels/other-zz99/gameplay.ts'));
   assert.ok(paths(result.findings).includes('/tmp/another-worktree'));
   assert.ok(paths(result.findings).includes('../../secrets.txt'));
 }
@@ -128,11 +130,46 @@ function paths(findings) {
 // machinery, not an outside-worktree escape.
 {
   const records = [
-    { type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: '/repo/benchmark/private/runs/run-a1b2/harness-home/tool-results/xyz.txt' } }] } },
+    { type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: '/tmp/repo/benchmark/private/runs/run-a1b2/harness-home/tool-results/xyz.txt' } }] } },
   ];
-  const scoped = { ...options, ownRunDirectory: '/repo/benchmark/private/runs/run-a1b2' };
+  const scoped = { ...options, ownRunDirectory: '/tmp/repo/benchmark/private/runs/run-a1b2' };
   assert.deepEqual(auditTranscriptRecords(records, scoped).findings, []);
   assert.deepEqual(classes(auditTranscriptRecords(records, options).findings), ['outside-worktree']);
+}
+
+// Code and prose fragments that happen to contain slashes are not filesystem
+// references. Keep these examples verbatim because they came from real audit
+// noise, rather than reducing them to a generic slash fixture.
+{
+  const nonFindings = [
+    's/omitted/p',
+    's/coverage/p',
+    's/PRISM_WARM_Q8S5_/g',
+    's/threaderWeave(bar(1\\.5), 4,/…/',
+    '${broodsKilled}/3',
+    '6/6',
+    'Math.max(0, 4 - hitsTaken)}/4',
+    'lock (ion white)/denied (hazard red)/damage-flash',
+    'spawn/lock/unlock/fire/hit/…/volley/beat/playerhit',
+    "import { EventBus } from '../../events'",
+    "import '../timing'",
+    "require('../../events')",
+  ];
+  for (const command of nonFindings) {
+    assert.deepEqual(classifyToolCall({ name: 'bash', input: { command } }, options), [], command);
+  }
+
+  const substitution = classifyToolCall({
+    name: 'bash',
+    input: { command: "perl -pi -e 's/needle/\\/home\\/other-run\\/generated/' /tmp/other-worktree/src/generated.ts" },
+  }, options);
+  assert.deepEqual(paths(substitution), ['/tmp/other-worktree/src/generated.ts']);
+
+  const generatedSource = classifyToolCall({
+    name: 'bash',
+    input: { command: "cat > generated.ts <<'EOF'\\nconst secret = '/home/other-run/secrets.txt'\\nEOF" },
+  }, options);
+  assert.deepEqual(generatedSource, []);
 }
 
 // Web extraction and self-lookup flagging cover Codex, Claude, and pi. The
