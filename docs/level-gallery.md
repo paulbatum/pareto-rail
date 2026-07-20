@@ -206,152 +206,26 @@ Showcase build. Inspection markers: `firstWake` (bar 4), `batteriesOnline` (bar 
 
 # Mass Driver
 
-A sixty-second payload ride down a colossal orbital railgun, where every accelerator ring meets the camera on a beat and the barrel's growing physical spacing makes acceleration visible. The run climbs from cold blue injection through violet compression into a white-hot electrical final charge, then either breaks into silent open space or ruptures around the player.
+You are the payload chambered in an orbital railgun, riding the bore from breech to muzzle over exactly sixty seconds. The run is scored to a locked 128 BPM minimal-techno pulse in E minor, and the core conceit is geometric: the payload crosses one glowing accelerator ring on every quarter-note beat, so the ring tunnel *is* the transport grid. The gun fires on the downbeat of bar 28 whether or not you are ready; six jammed safety interlocks decide whether that shot throws you cleanly into silent open space or detonates the barrel around you.
 
 ## Visual language
-Arc blue, induction violet, and muzzle white are carried by thin HDR conductor seams and accelerator coils against an almost-black steel barrel. Rings are physically spaced from the authored speed integral, defense drones use distinct swept-wing, gyroscopic, and braced silhouettes, and six magenta safety interlocks clamp around the barrel for the finale.
+Electric, not fire: near-black void, cold gunmetal rib walls, and one electrical heat ramp — arc blue → volt violet → blinding near-white — climbing the bore across 113 beat-spaced accelerator rings, four diagonal conductor rails, and camera-riding speed streaks. The player's kit (reticle, locks, ion-dart shots) stays ion-white and arc blue; hazard amber is strictly reserved for the six chevron-banded interlock clamps, and denial/detonation flush hazard red. Letters are stencil plates off the gun housing; the reticle is a six-segment breech charge gauge whose sixth segment lights ignition-white. Three full-frame overlays (flash, center-pooling charge, detonation) carry the whiteout, the building charge, and containment failure.
 
 ## Musical language
-144 BPM, exactly 36 bars and 144 ring crossings. A locked four-on-the-floor induction pulse and dry high-voltage ticks sit under the gun's own sixty-second rising fundamental; added induction voices grow denser as the payload accelerates. Locks, volleys, impacts, and a section-specific kill lane are transport-quantized and tuned to live harmony.
+128 BPM, 32 bars = 60.000 s, Em–Em–C–D two bars per chord, Em–F Phrygian dread through the interlock bars, and a sustained E-major bloom after the shot — the whole run is minor, the release is major. Underneath everything a persistent detuned-saw hum climbs from E1 up a fourth by the middle, an octave by the interlocks, then accelerates into the charge peak and is cut dead by the shot. Locks walk the live lead, kills walk hidden per-section melodic lanes in five crossfaded timbres, each interlock kill plays a climbing confirmation one note longer than the last, and the sixth lands a ducked beat, an impact, and a conclusive descent.
 
 ## Mechanical signature
-A 60-second variable-speed run with lateral skimmers, helical weavers, two-hit wall clamps, and six two-stage safety interlocks. The safeties pace the payload through the final eight bars: destroy all six before peak charge to fire through the muzzle; leave even one and the barrel overload kills the player.
+A 60-second, 3-point-hull run whose speed profile only ever rises, spiking roughly threefold on the bar-28 shot. Wall-riding coil sentries slide the bore rim and lunge to loose interceptable arc bolts, needle threaders corkscrew counter-rotating helices across the frame, two-stage capacitor banks shed their insulator staves, and six two-stage interlock clamps station-keep at the frame rim from bar 20 on a hard musical deadline: clear all six before the charge peaks for the muzzle exit, or the barrel detonates with you inside it. S rank requires the gun to have actually fired.
 
 ## What to read
-- `src/levels/mass-driver-7rkv/timing.ts`
-- `src/levels/mass-driver-7rkv/gameplay.ts`
-- `src/levels/mass-driver-7rkv/audio.ts`
-- `src/levels/mass-driver-7rkv/audio-voices.ts`
-- `src/levels/mass-driver-7rkv/visuals/index.ts`
+- `src/benchmark-levels/mass-driver-detailed-k4wz/timing.ts`
+- `src/benchmark-levels/mass-driver-detailed-k4wz/gameplay.ts`
+- `src/benchmark-levels/mass-driver-detailed-k4wz/audio.ts`
+- `src/benchmark-levels/mass-driver-detailed-k4wz/visuals/index.ts`
+- `src/benchmark-levels/mass-driver-detailed-k4wz/visuals/environment.ts`
 
 ## Status & notes
-Showcase build. Human playtest should first confirm one-ring-per-beat sync, the rising-hum balance, bloom-zero target readability, and the contrast between successful silent muzzle release and containment failure.
-
----
-
-# Mass Driver
-
-Ride a payload through the kilometer-long throat of an orbital railgun. Every accelerator coil crosses the cockpit on the beat, even as the widening gaps and climbing electrical hum reveal impossible acceleration; the final safety chamber turns that hypnotic certainty into a four-interlock deadline and a binary launch-or-burst finish.
-
-## Visual language
-Near-black vacuum steel, deep dormant cobalt, arc blue, ultraviolet, and small white-hot electrical cores. The tunnel is 129 procedural accelerator rings laid directly onto the authored speed curve, tied together by longitudinal barrel conductors and a radial muzzle crown. A camera-relative hexagonal payload nose and two slim shoulder clamps anchor the lower frame; twelve charge cells walk from cyan through violet to white as the firing deadline approaches. Defense drones borrow the same coil, clamp, blade, and capacitor geometry; sentinels launch caged arc-bolts that visibly brake against the cockpit. Success tears the tunnel away into procedural star streaks, while failure twists and overcharges the barrel violet-white. Letters, reticle, projectiles, lock pulses, armor breaks, hull impacts, and rejected releases remain geometric and readable with bloom disabled.
-
-## Musical language
-120 BPM, 32 bars, and one pitched coil impulse on every quarter-note crossing. A locked electronic pulse and sub-bass motor sit beneath a railgun hum that rises monotonically by more than twenty-two semitones from breech to muzzle; phase lock adds a second bass strike, overdrive fills the sixteenth grid with high-voltage ticks, and the critical phrase spits filtered arc noise around the player’s harmony-quantized lock, fire, hit, and kill notes. Sentinel volleys and interlock activations land on exact beats. Interlock hits climb as the safety array opens. The successful firing charge ducks the mix into a long clean discharge and near-silence; an uncleared array answers with a short unstable burst.
-
-## Mechanical signature
-A 64-second, three-hull run with four primary motion grammars: coil-orbiting weavers, full-width crossing switchblades, armored radial sentinels, and four staged safety interlocks. Sentinels fire eight interceptable homing arc-bolts through the shared impact-braking model. The interlocks enter together at the charge warning but phase-enable across the final phrase; 60.0 seconds is a hard safety deadline, followed by either four seconds of launch velocity or barrel rupture. Full six-target clears earn a 9281-point payload bonus, and the run summary records safeties, bolt interceptions, hull hits, and the final outcome.
-
-## What to read
-- `src/levels/mass-driver-9281/index.ts`
-- `src/levels/mass-driver-9281/gameplay.ts`
-- `src/levels/mass-driver-9281/audio.ts`
-- `src/levels/mass-driver-9281/audio-voices.ts`
-- `src/levels/mass-driver-9281/visuals/index.ts`
-- `src/levels/mass-driver-9281/visuals/environment.ts`
-- `src/levels/mass-driver-9281/visuals/enemies.ts`
-
-## Status & notes
-Showcase build. Authored inspection moments: `phaseLock` (bar 6), `overdrive` (bar 14), `critical` (bar 24), and `muzzle` (bar 30). Automated checks cover duration, simulation outcomes, audio structure, target distribution, occlusion, performance, type safety, and production build; a human WebGPU playtest should first verify that beat-ring crossings feel exact, the late white-hot coils do not wash out the interlocks, and the successful launch’s sudden quiet lands with enough contrast.
-
----
-
-# Mass Driver
-
-Mass Driver is a sixty-second ride through a superconducting launch barrel. One blue-to-violet coil lands on every beat, its spacing physically opening as the rail accelerates; defense drones haunt the gaps until a jammed safety array decides whether the barrel launches or tears itself apart.
-
-## Visual language
-Thin electric-blue conductor lines, one enormous accelerator ring per beat, violet high-energy coils, and white-hot launch heat. Skimmers cut sideways, coilguards orbit their cores, and slab-like safety interlocks brace across the final barrel.
-
-## Musical language
-128 BPM hypnotic pulse music: a climbing bass hum and every-beat sine impact build into bright electrical ticks. Locks, volleys, impacts, and kills are quantized into the same live harmonic lane; clearing the array ends in a rising launch tone.
-
-## Mechanical signature
-A variable-speed rail where widening coil gaps are the speedometer. Three motion grammars build to eight two-hit safety interlocks; clear all of them for launch, or miss them and the driver reports a barrel detonation.
-
-## What to read
-- `src/levels/mass-driver-bczy/index.ts`
-- `src/levels/mass-driver-bczy/gameplay.ts`
-- `src/levels/mass-driver-bczy/audio.ts`
-- `src/levels/mass-driver-bczy/visuals/index.ts`
-
-## Status & notes
-Showcase build. Inspection markers: `blueBank` (bar 8), `violetBank` (bar 16), and `interlocks` (bar 24). Human playtest should check that the physical growth in ring spacing remains clear with bloom at zero and that the final array is readable at full speed.
-
----
-
-# Mass Driver
-
-You are the payload. A 60-second ride down the barrel of an orbital railgun at 128 BPM — 32 bars to the muzzle, one glowing accelerator ring crossed on every beat. The rings space out as the charge accelerates you, but the crossing cadence never leaves the pulse: the speed and the music are the same object. At bar 24 the jammed safety interlocks reveal themselves on the payload collar; blow all six before the charge peaks at bar 30 and the gun fires you into silent open space — fail, and the barrel goes with you.
-
-## Visual language
-Electric heat, not fire: coil glow climbs arc blue through violet toward blinding white along the barrel and with the charge. Near-black gunmetal ring lattice with bus-bar struts, stars and a dim planet visible through the gaps, stray discharge arcs crackling between coils. Hostile drones are hazard amber; the jammed clamps add hazard chevrons and a seething warning-red jam light; player optics are the coldest cyan-white. Letters are charge-gauge segment readouts.
-
-## Musical language
-128 BPM techno — 32 bars is exactly 60 seconds. The gun is the instrument: a detuned bass hum whose root climbs a full octave (E–F#–G–A–B–C–D–E') across the run under a locked four-on-the-floor pulse, with a struck-coil chime marking every ring crossing. The charge section stacks a six-bar riser and a klaxon climbing a tone per bar; at bar 30 one enormous transient, then airless shimmer — the first silence in the level. Player actions snap to the transport and read the live climbing harmony; kills walk hidden melodic lanes whose register rises with the hum.
-
-## Mechanical signature
-A 60-second run with a 3-point hull and beat-locked ring geometry (ring k sits where the camera is at beat k). Weaver darts braid across the bore, stators crawl the coil wall circumferentially, twin-stage sentinel pods lob interceptable arc bolts, and six two-stage interlock clamps ride the collar from bar 22.5 — armor plate off, then the core. Clearing all six is the launch condition; the firing slam at bar 30 triples rail speed into a quiet two-bar coast. START/REPLAY are LAUNCH/RELOAD.
-
-## What to read
-- `src/levels/mass-driver-esvz/timing.ts`
-- `src/levels/mass-driver-esvz/gameplay.ts`
-- `src/levels/mass-driver-esvz/audio.ts`
-- `src/levels/mass-driver-esvz/visuals/index.ts`
-- `src/levels/mass-driver-esvz/visuals/environment.ts`
-
-## Status & notes
-Built to the standing brief from the Mass Driver theme assignment. typecheck, build, check:scope (vs branch baseline), simulate, occlusion, and perf gates verified in this environment; WSL2 cannot render WebGPU headless, so the visual mix and audio balance need a human playtest. First things to check: ring-glow readability with bloom at zero, interlock collar legibility during the charge, and whether the bar-30 launch slam-to-silence lands.
-
----
-
-# Mass Driver
-
-A 60-second launch down the barrel of an orbital railgun. The tunnel is 120 accelerator rings and the payload crosses exactly one on every beat — ring spacing widens as the launch accelerates, so the speed and the music are the same thing. The gun's safety interlocks are jammed, the firing charge builds anyway, and the run ends either shot into open space at muzzle velocity or scattered across it.
-
-## Visual language
-Electric heat, not fire: the ring tunnel charges arc blue through violet toward blinding white across the run, with gunmetal coil housings, six ionized conduit rails, and hexagonal geometry everywhere (coils, shockwaves, the reticle, the charge collar). Defense drones carry magenta signal light; the player's reticle, locks, and tracers are kinetic amber. Lightning arcs — jagged, strobing — are the level's signature effect, and the muzzle exit breaks the fog wall into starfield, planet limb, and silence.
-
-## Musical language
-128 BPM electro; 32 bars is exactly 60 seconds. The gun is the instrument: a persistent hum (sub sine plus resonant coil whine) climbs a two-octave E-minor ladder one rung every two bars, the harmony riding it, and a ring-crossing tick plays every beat because a ring passes every beat. Stage drops land on bars 4 and 12, the interlock alarm strips the track to the naked hum, the charge window stacks risers, and the firing cuts everything to a weightless shimmer. Locks, shots, and kills are pitched from the live rung; kills walk hidden melodic lanes; interlock kills are escalating metal clangs.
-
-## Mechanical signature
-A 3-point hull and a monotonically accelerating rail (rail-paced spawns): weavers are tri-blade spinners wheeling around the full tunnel clock, sliders grind the conduit rails with surging approaches, armored sentinels telegraph interceptable arc bolts. At bar 22 the jammed charge collar arrives — six hex-mounted interlocks, two casings deep — and all six must be cleared before bar 30 or the barrel detonates with the player in it. Clear them and the gun fires you out of the muzzle at ~3× peak speed for a silent two-bar coda.
-
-## What to read
-- `src/levels/mass-driver-vyxj/timing.ts`
-- `src/levels/mass-driver-vyxj/gameplay.ts`
-- `src/levels/mass-driver-vyxj/audio.ts`
-- `src/levels/mass-driver-vyxj/visuals/index.ts`
-- `src/levels/mass-driver-vyxj/visuals/environment.ts`
-
-## Status & notes
-Built to the standing brief from the Mass Driver theme assignment. Verified headless (typecheck, build, scope, floor: simulate/occlusion/perf, audio trace); WebGPU visuals and the mix need a human playtest — check first that ring crossings feel beat-locked and that the muzzle exit reads as a release.
-
----
-
-# Mass Driver
-
-A sixty-second ride down the barrel of an orbital railgun, where the music is the gun: the payload crosses one glowing accelerator ring on every beat of a locked 128 BPM pulse, the rings burn from arc blue through violet toward blinding white as the run accelerates, and the bass hum underneath climbs in pitch from breech to muzzle. The finale jams the gun's own safety interlocks in your face — clear all six before the charge peaks and the shot throws you out of the muzzle into silent open space.
-
-## Visual language
-Near-black void and gunmetal barrel structure; 112 beat-spaced accelerator rings on an electric heat ramp (arc blue → violet → blinding white), four HDR conductor rails, and camera-riding ion streaks. Hazard amber is reserved for the jammed interlocks, charge warnings, and denial. Letters are stencil plates off the gun housing; the reticle is a six-segment breech charge gauge that fills one segment per lock.
-
-## Musical language
-128 BPM locked minimal techno in E minor, 32 bars = exactly 60 seconds. The gun is the instrument: a persistent bass hum climbs from E1 across the whole run and accelerates into the firing charge through the interlock bars, cutting dead on the bar-28 shot. Locks, shots, hits, and kills are transport-quantized and pitched from the live harmony; kills walk hidden per-section melodic lanes; each interlock destroyed plays a climbing confirmation. After the shot, everything strips to a quiet E-major bloom in open space.
-
-## Mechanical signature
-A 60-second run with a 3-point hull and a strictly accelerating speed profile that spikes ~3× on the bar-28 shot. Wall-riding coil sentries that lob interceptable arc bolts, needle threaders corkscrewing through the bore, two-stage capacitor banks, and a six-interlock boss on a hard musical deadline: clear them before bar 28 and the gun fires you into space; fail and the barrel detonates with you in it.
-
-## What to read
-- `src/levels/mass-driver-wo4m/timing.ts`
-- `src/levels/mass-driver-wo4m/gameplay.ts`
-- `src/levels/mass-driver-wo4m/audio.ts`
-- `src/levels/mass-driver-wo4m/visuals/index.ts`
-- `src/levels/mass-driver-wo4m/visuals/environment.ts`
-
-## Status & notes
-Built to the standing brief from the Mass Driver theme assignment. Verified by typecheck, build, check:scope, check:floor (simulation, occlusion, perf), and trace:audio; WSL2 cannot render WebGPU headless, so ring-pass feel, bloom discipline, and the music mix still need a human playtest. First things to check by hand: rings landing on the beat, the bar-28 shot moment, and interlock readability against the charge glow.
+Built to the standing brief from the Mass Driver theme assignment. Verified headless: typecheck, build, check:benchmark-scope, check:floor (simulation, occlusion, distribution, perf), and trace:audio. WSL2 cannot render WebGPU, so the real frame and the mix need a human playtest — check first that ring crossings land audibly and visibly on the beat, that the bar-28 shot reads as the single biggest moment (speed spike, whiteout, FOV kick, hum cut, E-major bloom at once), and that the interlocks stay legible against the charge glow with bloom at zero.
 
 ---
 
