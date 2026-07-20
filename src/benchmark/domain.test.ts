@@ -3,7 +3,7 @@
 // @ts-ignore Node's assert types are intentionally not a production dependency.
 import assert from 'node:assert/strict';
 import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
-import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor } from './catalog-api';
+import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, revealFromVote } from './catalog-api';
 import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { mapVerdict, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
 import { rankCatalog, type RankCatalog, type RankCatalogEntrant, type RankCatalogVersion } from './catalog';
@@ -44,8 +44,10 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testThemeBalance();
   testConvergenceAndStability();
   testSameConfigurationPairs();
+  testRetiredEntrantsNotScheduled();
   testVersionedSchedulerPool();
   testCatalogDerivedHistory();
+  testRetiredEntrantReveal();
   testVersionedPersonalCurveCatalog();
   await testReloadPreservesMatchupAndPlayState();
   await testCatalogChangesRefreshReveals();
@@ -355,6 +357,27 @@ function testSameConfigurationPairs(): void {
   assert.equal(nextScheduledMatchup(catalog, 'same-config', { judged: [] }), null, 'same-configuration levels are never paired');
 }
 
+function testRetiredEntrantsNotScheduled(): void {
+  const theme = { id: 'retired-theme', title: 'Retired', summary: 'S', prompt: 'P' };
+  const catalog: RankCatalogVersion = {
+    benchmarkVersion: 'rank-catalog-retired-test',
+    generatedAt: 'test',
+    themes: [theme],
+    entrants: [
+      entrant('retired-theme-a1b2', 'configuration-a', true),
+      entrant('retired-theme-c3d4', 'configuration-b'),
+      entrant('retired-theme-e5f6', 'configuration-c'),
+    ],
+  };
+  const next = nextScheduledMatchup(catalog, 'retired-test');
+  assert.ok(next);
+  assert.equal([next!.levelIdA, next!.levelIdB].includes('retired-theme-a1b2'), false, 'retired entrants must not be scheduled');
+
+  function entrant(levelId: string, configurationId: string, retired = false): RankCatalogEntrant {
+    return { levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost: 1, ...(retired ? { retired: true } : {}) };
+  }
+}
+
 function testVersionedSchedulerPool(): void {
   const inactive = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', 'v1');
   const active = makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', 'v2');
@@ -389,6 +412,27 @@ function testCatalogDerivedHistory(): void {
   assert.equal(completedMatchupsFromVotes(catalog, [missing]).length, 0, 'votes for retired levels are skipped at read time');
   const missingTheme = { ...vote, matchupId: pairId('retired-theme', a.levelId, b.levelId) };
   assert.equal(completedMatchupsFromVotes(catalog, [missingTheme]).length, 0, 'votes for retired themes are skipped at read time');
+}
+
+function testRetiredEntrantReveal(): void {
+  const version = rankCatalog.versions.find((candidate) => candidate.benchmarkVersion === 'rank-catalog-v2')!;
+  const retired = version.entrants.find((entrant) => entrant.retired)!;
+  const live = version.entrants.find((entrant) => entrant.themeId === retired.themeId && !entrant.retired)!;
+  assert.ok(retired && live);
+  const theme = version.themes.find((candidate) => candidate.id === retired.themeId)!;
+  const vote: MatchupVote = {
+    matchupId: pairId(theme.id, retired.levelId, live.levelId),
+    aEntrantId: retired.levelId,
+    bEntrantId: live.levelId,
+    verdict: 'a-better',
+    relative: 'a',
+    playCounts: { a: 1, b: 1 },
+    submittedAt: 'now',
+  };
+  const reveal = revealFromVote(rankCatalog, vote);
+  assert.ok(reveal, 'a vote involving a retired entrant remains revealable');
+  assert.equal(reveal!.a.levelId, retired.levelId);
+  assert.ok(reveal!.a.run, 'retired entrant retains its generation record for reveal');
 }
 
 function testVersionedPersonalCurveCatalog(): void {

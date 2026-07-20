@@ -475,6 +475,15 @@ const recoveredResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', m
 assert.equal(recoveredResult.state, 'completed');
 assert.equal(recoveredResult.recovered, true);
 assert.equal(recoveredResult.recoveryReason, 'infrastructure-timeout');
+const incidentResult = resultFromArtifacts({
+  directoryName: 'run-incident',
+  manifest: eligibleManifest,
+  incident: { schemaVersion: 1, incident: '2026-07-baseline-contamination', auditVerdict: 'CONTAMINATED' },
+  disqualification: { schemaVersion: 1, status: 'disqualified' },
+});
+assert.equal(incidentResult.state, 'disqualified', 'disqualification marker overrides display state');
+assert.equal(incidentResult.manifestDerivedState, 'completed');
+assert.equal(incidentResult.incident, '2026-07-baseline-contamination');
 
 const snapshotRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-snapshot-repo-'));
 const snapshotRun = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-snapshot-run-'));

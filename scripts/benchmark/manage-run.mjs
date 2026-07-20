@@ -34,20 +34,29 @@ async function main() {
 async function showStatus({ unblind = false } = {}) {
   const results = await loadResults(RUNS_DIR, { unblind });
   const successful = results.filter((result) => result.state === 'completed');
+  const disqualified = results.filter((result) => result.state === 'disqualified');
   const failed = results.filter((result) => FAILED_STATES.has(result.state));
   console.log('=== Benchmark Run Status ===');
   console.log(`Successful/Completed: ${successful.length}`);
   for (const result of successful) {
     const promotion = result.promotionStatus === 'not-applicable' ? '' : `, promotion ${result.promotionStatus}`;
-    console.log(`  - ${result.runId} (${result.levelId}) [run completed${promotion}${result.recovered ? ', recovered' : ''}]${identitySuffix(result, unblind)}`);
+    console.log(`  - ${result.runId} (${result.levelId}) [run completed${promotion}${result.recovered ? ', recovered' : ''}${incidentSuffix(result)}]${identitySuffix(result, unblind)}`);
     if (result.promotionStatus === 'pending' || result.promotionStatus === 'failed') console.log(`    Resume: npm run benchmark:promote -- --run ${result.runId}`);
+  }
+  console.log(`Disqualified: ${disqualified.length}`);
+  for (const result of disqualified) {
+    console.log(`  - ${result.runId} (${result.levelId}) [disqualified${incidentSuffix(result)}]${identitySuffix(result, unblind)}`);
   }
   console.log(`Failed/DNF/Incomplete: ${failed.length}`);
   for (const result of failed) {
     const spend = result.state === 'incomplete' ? await activeBudgetSpend(result.runId) : null;
     const budgetStatus = spend ? `, task budget ${Math.round(spend.fraction * 100)}%` : '';
-    console.log(`  - ${result.runId} (${result.levelId}) [${result.state}${budgetStatus}]${identitySuffix(result, unblind)}`);
+    console.log(`  - ${result.runId} (${result.levelId}) [${result.state}${budgetStatus}${incidentSuffix(result)}]${identitySuffix(result, unblind)}`);
   }
+}
+
+function incidentSuffix(result) {
+  return result.incident ? ', incident' : '';
 }
 
 function identitySuffix(result, unblind) {

@@ -24,6 +24,7 @@ export interface RankCatalogEntrant {
   run?: BenchmarkRunMetrics;
   thumbnailPath?: string;
   featured?: boolean;
+  retired?: boolean;
   dataClass?: BenchmarkDataClass;
 }
 

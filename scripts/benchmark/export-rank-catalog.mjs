@@ -217,6 +217,23 @@ function bareVersion(version) {
   return version.replace(/\s*\(.*\)\s*$/, '').replace(/^\S+\s+(?=\d)/, '').trim();
 }
 
+function historicalEntrantFor(assignment) {
+  const catalog = readJson(outputPath);
+  const entrant = (catalog.versions ?? [])
+    .flatMap((version) => version.entrants ?? [])
+    .find((candidate) => candidate.levelId === assignment.levelId);
+  if (!entrant) {
+    throw new Error(`Retired entrant ${assignment.levelId} has no retained catalog record.`);
+  }
+  if (entrant.themeId !== assignment.theme.id || entrant.configurationId !== assignment.configurationId) {
+    throw new Error(`Retired entrant ${assignment.levelId} does not match its plan identity.`);
+  }
+  // The retired level's content images are deleted with it, so drop the
+  // reference; the site renders its thumbnail fallback for retired entrants.
+  const { thumbnailPath, ...retained } = entrant;
+  return { ...retained, retired: true };
+}
+
 function entrantFor(assignment, cost, manifest) {
   const descriptorPath = path.join(levelsRoot, assignment.levelId, 'level.json');
   const descriptor = readJson(descriptorPath);
@@ -291,12 +308,13 @@ export function planAssignments(plan) {
 export function buildVersion(benchmarkVersion, assignments, generatedAt) {
   const publicAssignments = selectConfigurations(assignments, benchmarkVersion);
 
-  // Validate every already-promoted assignment before applying theme completeness.
-  // This prevents a bad promoted entry from being silently hidden by an incomplete
-  // theme while still allowing not-yet-promoted assignments to remain unpublished.
+  // Validate every already-promoted non-retired assignment before applying theme
+  // completeness. This prevents a bad promoted entry from being silently hidden by
+  // an incomplete theme while allowing retired rows to use retained catalog data
+  // and not-yet-promoted assignments to remain unpublished.
   const runData = new Map();
   for (const assignment of publicAssignments) {
-    if (!promotedDirectory(assignment.levelId)) continue;
+    if (assignment.retired || !promotedDirectory(assignment.levelId)) continue;
     const manifest = runManifest(assignment);
     runData.set(assignment.levelId, { manifest, cost: generationCost(assignment, manifest) });
   }
@@ -312,11 +330,23 @@ export function buildVersion(benchmarkVersion, assignments, generatedAt) {
 
   const themes = [];
   const entrants = [];
+  const allowPartialThemes = benchmarkVersion === 'v2';
   for (const themeId of [...assignmentsByTheme.keys()].sort()) {
     const assignments = assignmentsByTheme.get(themeId);
-    if (assignments.some((assignment) => !promotedDirectory(assignment.levelId))) continue;
+    const completenessAssignments = allowPartialThemes
+      ? assignments.filter((assignment) => !assignment.retired && promotedDirectory(assignment.levelId))
+      : assignments;
+    const publishedAssignments = allowPartialThemes
+      ? assignments.filter((assignment) => assignment.retired || promotedDirectory(assignment.levelId))
+      : assignments;
+    if (completenessAssignments.length === 0 || completenessAssignments.some((assignment) => !promotedDirectory(assignment.levelId))) continue;
     themes.push(parseTheme(themeId));
-    for (const assignment of [...assignments].sort((left, right) => left.levelId.localeCompare(right.levelId))) {
+    for (const assignment of [...publishedAssignments]
+      .sort((left, right) => left.levelId.localeCompare(right.levelId))) {
+      if (assignment.retired) {
+        entrants.push(historicalEntrantFor(assignment));
+        continue;
+      }
       const data = runData.get(assignment.levelId);
       entrants.push(entrantFor(assignment, data.cost, data.manifest));
     }

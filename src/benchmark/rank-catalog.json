@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T19:39:12.059Z",
+  "generatedAt": "2026-07-20T05:45:02.872Z",
   "activeBenchmarkVersion": "rank-catalog-v2",
   "configurations": [
     {
@@ -86,7 +86,7 @@
   "versions": [
     {
       "benchmarkVersion": "rank-catalog-v1",
-      "generatedAt": "2026-07-19T19:39:12.059Z",
+      "generatedAt": "2026-07-20T05:45:02.872Z",
       "themes": [
         {
           "id": "mass-driver",
@@ -391,7 +391,7 @@
     },
     {
       "benchmarkVersion": "rank-catalog-v2",
-      "generatedAt": "2026-07-19T19:39:12.059Z",
+      "generatedAt": "2026-07-20T05:45:02.872Z",
       "themes": [
         {
           "id": "broadside",
@@ -628,8 +628,8 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-m3rp/hero.avif",
-          "featured": true
+          "featured": true,
+          "retired": true
         },
         {
           "levelId": "mass-driver-detailed-m4gp",
@@ -659,8 +659,8 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-m4gp/hero.avif",
-          "featured": true
+          "featured": true,
+          "retired": true
         },
         {
           "levelId": "mass-driver-detailed-m6vt",
@@ -721,7 +721,7 @@
               }
             ]
           },
-          "thumbnailPath": "/level-content/mass-driver-detailed-m7hq/hero.avif"
+          "retired": true
         },
         {
           "levelId": "mass-driver-detailed-om5e",

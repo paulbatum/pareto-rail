@@ -64,6 +64,15 @@ const v2Version = buildVersion('v2', selected, new Date().toISOString());
 assert.equal(v2Version.benchmarkVersion, 'rank-catalog-v2');
 assert.ok(Array.isArray(v2Version.entrants));
 
+const actualPlan = JSON.parse(await fs.readFile(path.join(root, 'benchmark/private/v2-plan.json'), 'utf8'));
+const actualVersion = buildVersion('v2', planAssignments(actualPlan), new Date().toISOString());
+const massDriverTheme = actualVersion.entrants.filter((entrant) => entrant.themeId === 'mass-driver-detailed');
+assert.equal(actualVersion.themes.some((theme) => theme.id === 'mass-driver-detailed'), true, 'a theme with retired and live rows remains published');
+assert.equal(massDriverTheme.filter((entrant) => entrant.retired).length, 3, 'retired entrants remain in the exported slice');
+assert.equal(massDriverTheme.filter((entrant) => !entrant.retired).length, 3, 'the three live mass-driver entrants remain in the slice');
+assert.ok(massDriverTheme.find((entrant) => entrant.retired)?.run, 'retired entrants retain reveal metadata');
+assert.ok(!massDriverTheme.some((entrant) => entrant.levelId.endsWith('-v3qf') || entrant.levelId.endsWith('-k4wz') || entrant.levelId.endsWith('-p8jn')), 'unpromoted replacements are not exported before promotion');
+
 console.log('Benchmark catalog tests passed.');
 
 function validateRankCatalogIds(catalog) {

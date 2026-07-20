@@ -54,7 +54,7 @@ export function shouldUnblind(unblind = false) {
   return unblind === true;
 }
 
-export function resultFromArtifacts({ directoryName, manifest, definition, gates, failure, recovery, promotion }, { unblind = false } = {}) {
+export function resultFromArtifacts({ directoryName, manifest, definition, gates, failure, recovery, promotion, incident, disqualification }, { unblind = false } = {}) {
   const benchmarkVersion = manifest?.benchmarkVersion ?? definition?.benchmarkVersion ?? null;
   const unblinded = shouldUnblind(unblind);
   const gateRecords = manifest?.gates ?? gates?.gates ?? [];
@@ -73,6 +73,8 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
   else if (manifest?.disposition?.status === 'controller-failure') state = 'controller-failure';
   else if (manifest) state = 'completed';
   else if (failure) state = 'controller-failure';
+  const manifestDerivedState = state;
+  if (disqualification?.status === 'disqualified') state = 'disqualified';
 
   return {
     runId: manifest?.runId ?? definition?.runId ?? definition?.assignment?.runId ?? directoryName,
@@ -83,6 +85,8 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
     identity: unblinded ? 'unblinded' : 'blinded',
     ...(unblinded ? { configuration, models } : {}),
     state,
+    manifestDerivedState,
+    incident: incident?.incident ?? null,
     gates: gateSummary(gateRecords),
     failedGates,
     notRunGates,
@@ -124,6 +128,8 @@ export async function loadResults(runsDirectory, { version, theme, unblind = fal
       failure: await optionalJson(path.join(runDirectory, 'controller-failure.json')),
       recovery: await optionalJson(path.join(runDirectory, 'recovery.json')),
       promotion: await optionalJson(path.join(runDirectory, 'promotion.json')),
+      incident: await optionalJson(path.join(runDirectory, 'incident.json')),
+      disqualification: await optionalJson(path.join(runDirectory, 'disqualification.json')),
     };
     if (!artifacts.manifest && !artifacts.definition) continue;
     const result = resultFromArtifacts(artifacts, { unblind });
@@ -137,7 +143,7 @@ export async function loadResults(runsDirectory, { version, theme, unblind = fal
 export function formatTable(results) {
   if (!results.length) return 'No benchmark runs found.';
   const unblinded = results.some((result) => result.identity === 'unblinded');
-  const headers = ['RUN', 'SLOT', 'VERSION', ...(unblinded ? ['CONFIGURATION', 'MODEL(S)'] : []), 'LEVEL', 'STATE', 'GATES', 'STAGE', 'TOTAL', 'COST', 'MANIFEST'];
+  const headers = ['RUN', 'SLOT', 'VERSION', ...(unblinded ? ['CONFIGURATION', 'MODEL(S)'] : []), 'LEVEL', 'STATE', 'INCIDENT', 'GATES', 'STAGE', 'TOTAL', 'COST', 'MANIFEST'];
   const rows = results.map((result) => [
     result.runId,
     result.slotId ?? '—',
@@ -145,6 +151,7 @@ export function formatTable(results) {
     ...(unblinded ? [result.configuration ?? '—', result.models.join(',') || '—'] : []),
     result.levelId ?? '—',
     result.state,
+    result.incident ? 'incident' : '—',
     result.gates,
     formatDuration(result.stageWallTimeSeconds),
     formatDuration(result.controllerWallTimeSeconds),
@@ -158,7 +165,7 @@ export function formatTable(results) {
 
 export function formatCsv(results) {
   const unblinded = results.some((result) => result.identity === 'unblinded');
-  const keys = ['runId', 'slotId', 'benchmarkVersion', 'themeId', 'levelId', 'identity', ...(unblinded ? ['configuration', 'models'] : []), 'state', 'gates', 'stageWallTimeSeconds', 'controllerWallTimeSeconds', 'costUsd', 'costStatus', 'evaluatedCommit', 'payloadCommit', 'recovered', 'manifestState'];
+  const keys = ['runId', 'slotId', 'benchmarkVersion', 'themeId', 'levelId', 'identity', ...(unblinded ? ['configuration', 'models'] : []), 'state', 'manifestDerivedState', 'incident', 'gates', 'stageWallTimeSeconds', 'controllerWallTimeSeconds', 'costUsd', 'costStatus', 'evaluatedCommit', 'payloadCommit', 'recovered', 'manifestState'];
   const rows = results.map((result) => keys.map((key) => csvCell(Array.isArray(result[key]) ? result[key].join('|') : result[key])).join(','));
   return [keys.join(','), ...rows].join('\n');
 }

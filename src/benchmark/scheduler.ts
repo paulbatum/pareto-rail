@@ -38,7 +38,7 @@ interface PairCandidate {
 /** Choose the next anonymous comparison without mutable or wall-clock state. */
 export function nextScheduledMatchup(catalog: RankCatalogVersion, participantId: string, history: SchedulerHistory = {}): ScheduledMatchup | null {
   if (!participantId || catalog.themes.length === 0) return null;
-  const entrantsByTheme = new Map(catalog.themes.map((theme) => [theme.id, catalog.entrants.filter((entrant) => entrant.themeId === theme.id)]));
+  const entrantsByTheme = new Map(catalog.themes.map((theme) => [theme.id, catalog.entrants.filter((entrant) => entrant.themeId === theme.id && !entrant.retired)]));
   const judged = history.judged ?? [];
   const exposureCounts = exposureMap(catalog, judged);
   const pairCounts = countJudgedPairs(catalog, judged);
