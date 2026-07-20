@@ -96,17 +96,23 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
     costStatus: manifest?.cost?.status ?? 'unavailable',
     evaluatedCommit: manifest?.output?.evaluated?.commit ?? gates?.evaluatedCommit ?? null,
     payloadCommit: manifest?.output?.payload?.commit ?? null,
-    promotionStatus: manifest?.disposition?.status === 'playable'
-      ? manifest.output?.sourceRoot === 'src/benchmark-levels'
-        ? 'not-required'
-        : (promotion?.status === 'completed' ? 'completed' : promotion?.status === 'failed' ? 'failed' : 'pending')
-      : 'not-applicable',
+    promotionStatus: promotionStatusFor({ disposition: manifest?.disposition?.status, state, promotion }),
     promotionCommit: promotion?.promotionCommit ?? null,
     recovered: Boolean(recovery),
     recoveryReason: recovery?.reason ?? null,
     manifestState: !manifest ? 'missing' : (errors.length ? 'invalid' : 'complete'),
     manifestErrors: errors,
   };
+}
+
+// Only a playable run that is still in the running can be promoted; rehearsals and disqualified
+// entrants are not-applicable. A promotable run takes its status from promotion.json, so a run that
+// has never been promoted reads as pending. promotionCommit still carries the record either way.
+function promotionStatusFor({ disposition, state, promotion }) {
+  if (disposition !== 'playable' || state === 'disqualified') return 'not-applicable';
+  if (promotion?.status === 'completed') return 'completed';
+  if (promotion?.status === 'failed') return 'failed';
+  return 'pending';
 }
 
 export async function loadResults(runsDirectory, { version, theme, unblind = false } = {}) {

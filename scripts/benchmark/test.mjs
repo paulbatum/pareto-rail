@@ -510,6 +510,23 @@ assert.equal(eligibleResult.models, undefined);
 assert.equal(eligibleResult.promotionStatus, 'pending');
 assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: { ...resultManifest, benchmarkVersion: 'v1' }, promotion: { status: 'completed', promotionCommit: 'c'.repeat(40) } }).promotionStatus, 'not-applicable');
 assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: eligibleManifest, promotion: { status: 'completed', promotionCommit: 'c'.repeat(40) } }).promotionStatus, 'completed');
+assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: eligibleManifest, promotion: { status: 'failed' } }).promotionStatus, 'failed');
+// Where the entrant wrote its level does not decide promotion applicability.
+const benchmarkLevelsManifest = { ...eligibleManifest, output: { ...eligibleManifest.output, sourceRoot: 'src/benchmark-levels' } };
+assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: benchmarkLevelsManifest, promotion: { status: 'completed', promotionCommit: 'c'.repeat(40) } }).promotionStatus, 'completed');
+assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: benchmarkLevelsManifest }).promotionStatus, 'pending');
+// A disqualified entrant is never advertised as promotable, even with a playable disposition.
+const disqualifiedPromotion = resultFromArtifacts({
+  directoryName: 'run-a1b2',
+  manifest: benchmarkLevelsManifest,
+  disqualification: { schemaVersion: 1, status: 'disqualified' },
+  promotion: { status: 'completed', promotionCommit: 'c'.repeat(40) },
+});
+assert.equal(disqualifiedPromotion.promotionStatus, 'not-applicable');
+assert.equal(disqualifiedPromotion.promotionCommit, 'c'.repeat(40), 'a disqualified run still reports the promotion it received');
+assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: benchmarkLevelsManifest, disqualification: { schemaVersion: 1, status: 'disqualified' } }).promotionStatus, 'not-applicable');
+// Rehearsals never enter promotion, whatever promotion.json happens to hold.
+assert.equal(resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest, promotion: { status: 'failed' } }).promotionStatus, 'not-applicable');
 const recoveredResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest, recovery: { recoveredAt: '2026-01-01T01:00:00.000Z', reason: 'infrastructure-timeout' } });
 assert.equal(recoveredResult.state, 'completed');
 assert.equal(recoveredResult.recovered, true);
