@@ -51,7 +51,7 @@ Future benchmark entrants use the directory-only protocol. Start with:
 npm run scaffold -- --mode benchmark --id <id> --title '<Title>'
 ```
 
-This creates `src/benchmark-levels/<id>/`, including `index.ts`, `gameplay.ts`, `audio.ts`, `visuals/index.ts`, `level.json`, and `level.md`. The descriptor is controller-free authored input, but discovery validates its id and title against the loaded `LevelDefinition`; do not treat it as a second gameplay identity or edit shared registry code. The benchmark scope gate permits the assigned directory and the level's own gallery content directory `public/level-content/<id>/` (for self-produced hero/overview/start images referenced by `level.json`):
+This creates `src/benchmark-levels/<id>/`, including `index.ts`, `gameplay.ts`, `audio.ts`, `visuals/index.ts`, `level.json`, and `level.md`. The descriptor is controller-free authored input, but discovery validates its id and title against the loaded `LevelDefinition`; do not treat it as a second gameplay identity or edit shared registry code. The benchmark scope gate permits the assigned directory and the level's own gallery content directory `public/level-content/<id>/` (for self-produced hero/overview/start images referenced by `level.json`; AVIF is the shipped format, and promotion converts any PNG and rewrites the descriptor, so an entrant need not):
 
 ```sh
 npm run check:benchmark-scope -- --level <id> --base <entrant-baseline-ref>

@@ -2,6 +2,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const QUALITY = 55;
@@ -52,7 +53,12 @@ async function outputPaths(inputs, out) {
   return [path.join(out, `${path.basename(inputs[0], path.extname(inputs[0]))}.avif`)];
 }
 
-async function convert(input, output) {
+/**
+ * Convert one PNG to AVIF at the repository's single set of encode settings.
+ * Exported so benchmark promotion converts entrant imagery the same way a
+ * hand-run conversion does.
+ */
+export async function convertPngToAvif(input, output) {
   if (path.extname(input).toLowerCase() !== '.png') {
     throw new Error(`Input is not a PNG: ${input}`);
   }
@@ -61,15 +67,26 @@ async function convert(input, output) {
   await sharp(input)
     .avif({ quality: QUALITY, effort: EFFORT, chromaSubsampling: '4:4:4' })
     .toFile(output);
-  console.log(`${input} -> ${output} (${metadata.width}x${metadata.height})`);
+  return { input, output, width: metadata.width, height: metadata.height };
 }
 
-try {
+async function convert(input, output) {
+  const result = await convertPngToAvif(input, output);
+  console.log(`${input} -> ${output} (${result.width}x${result.height})`);
+}
+
+async function main() {
   const { inputs, out } = parseArgs(process.argv.slice(2));
   const outputs = await outputPaths(inputs, out);
   await Promise.all(outputs.map((output, index) => convert(inputs[index], output)));
-} catch (error) {
-  console.error(`PNG to AVIF conversion failed: ${error instanceof Error ? error.message : String(error)}`);
-  usage();
-  process.exitCode = 1;
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    await main();
+  } catch (error) {
+    console.error(`PNG to AVIF conversion failed: ${error instanceof Error ? error.message : String(error)}`);
+    usage();
+    process.exitCode = 1;
+  }
 }

@@ -16,11 +16,12 @@ import {
 } from './common.mjs';
 import { manifestErrors } from './results.mjs';
 import { benchmarkLevelFootprint } from './protocol.mjs';
+import { convertPngToAvif } from '../png-to-avif.mjs';
 
 const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const REQUIRED_GATES = ['typecheck', 'build', 'scope', 'floor'];
-const CHECKPOINTS = ['validation', 'extraction', 'application', 'catalog', 'commit'];
+const CHECKPOINTS = ['validation', 'extraction', 'conversion', 'application', 'catalog', 'commit'];
 const PROMOTION_SCHEMA_VERSION = 1;
 const PROMOTION_LOCK_NAME = 'raild-benchmark-promotion.lock';
 
@@ -61,6 +62,9 @@ export async function promoteRun({ root = ROOT, runDirectory, interruptAfter } =
 
     await checkpoint(context, 'extraction', () => extractPayload(context));
     await interruptIfRequested(interruptAfter, 'extraction');
+
+    context.conversion = await checkpoint(context, 'conversion', (checkpointState) => convertContentImages(context, checkpointState));
+    await interruptIfRequested(interruptAfter, 'conversion');
 
     await checkpoint(context, 'application', () => verifyApplication(context));
     await interruptIfRequested(interruptAfter, 'application');
@@ -190,10 +194,11 @@ async function validatePreflight(context) {
   const status = await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
   const existingPromotion = Boolean(state.source?.levelId);
   assertOnlyPromotionChanges(status, root, presentRoots.map((rootEntry) => rootEntry.destination), existingPromotion);
+  const recordedImageConversion = recordedConversion(state);
   for (const rootEntry of presentRoots) {
     if (!await pathExists(rootEntry.destination)) continue;
     if (!existingPromotion) throw new Error(`Promotion destination already exists: ${rootEntry.destination}`);
-    await verifyPayloadTree(rootEntry.destination, rootEntry.payloadEntries, root);
+    await verifyPayloadTree(rootEntry.destination, rootEntry.payloadEntries, root, conversionDeviations(recordedImageConversion, rootEntry));
   }
 
   const sourceSnapshot = {
@@ -227,6 +232,7 @@ async function extractPayload(context) {
   const { root, runId } = context;
   const { source, presentRoots } = context.preflight;
   const gitDirectory = path.resolve(root, (await gitText(root, ['rev-parse', '--git-dir'])).trim());
+  const recorded = recordedConversion(context.state);
   const results = [];
 
   for (const rootEntry of presentRoots) {
@@ -234,7 +240,7 @@ async function extractPayload(context) {
     const stage = path.join(gitDirectory, 'raild-promotion-staging', `${source.levelId}-${runId}-${rootEntry.id}`);
     await fs.mkdir(path.dirname(destination), { recursive: true });
     if (await pathExists(destination)) {
-      await verifyPayloadTree(destination, rootEntry.payloadEntries, root);
+      await verifyPayloadTree(destination, rootEntry.payloadEntries, root, conversionDeviations(recorded, rootEntry));
       if (await pathExists(stage)) await fs.rm(stage, { recursive: true, force: true });
       results.push({ id: rootEntry.id, destination: `${rootEntry.promotedPath}/`, files: rootEntry.payloadEntries.length, reused: true });
       continue;
@@ -246,7 +252,7 @@ async function extractPayload(context) {
       await fs.rename(stage, destination);
     } catch (error) {
       if (error?.code !== 'EEXIST') throw error;
-      await verifyPayloadTree(destination, rootEntry.payloadEntries, root);
+      await verifyPayloadTree(destination, rootEntry.payloadEntries, root, conversionDeviations(recorded, rootEntry));
       await fs.rm(stage, { recursive: true, force: true });
     }
     await fs.rm(stage, { recursive: true, force: true });
@@ -256,10 +262,133 @@ async function extractPayload(context) {
   return { roots: results };
 }
 
+/**
+ * Public level imagery ships as AVIF, and the build refuses tracked PNGs. An
+ * entrant may still hand us PNGs, so promotion re-encodes them here — after the
+ * extracted tree has been proven byte-identical to the sealed payload, and
+ * before anything is staged for commit. The sealed payload commit stays the
+ * untouched record of what the entrant produced; this is the one place
+ * promotion is allowed to deviate from it, and every deviation is written into
+ * promotion.json so a resumed run can re-verify it instead of redoing it.
+ */
+async function convertContentImages(context, { completed = false, data: previousData } = {}) {
+  const { presentRoots, sourceRoot } = context.preflight;
+  const contentRoot = presentRoots.find((rootEntry) => rootEntry.id === 'content');
+  const pngEntries = (contentRoot?.payloadEntries ?? []).filter((entry) => isPngPath(entry.relativePath));
+  const descriptorPath = path.join(sourceRoot.destination, 'level.json');
+
+  if (completed) {
+    const record = assertConversionRecord(previousData, pngEntries);
+    for (const image of record.images) {
+      if (await pathExists(path.join(contentRoot.destination, image.path))) throw new Error(`Recorded image conversion left the source PNG in place: ${image.path}`);
+      const bytes = await fs.readFile(safeJoin(contentRoot.destination, image.avifPath));
+      if (sha256(bytes) !== image.avifSha256) throw new Error(`Converted image does not match its recorded hash: ${image.avifPath}`);
+    }
+    if (record.descriptor) {
+      const source = await fs.readFile(descriptorPath, 'utf8');
+      if (sha256(source) !== record.descriptor.sha256After) throw new Error('Rewritten descriptor does not match its recorded hash.');
+    }
+    return record;
+  }
+
+  const images = [];
+  for (const entry of pngEntries) {
+    const avifRelativePath = `${entry.relativePath.slice(0, -path.extname(entry.relativePath).length)}.avif`;
+    if (contentRoot.payloadEntries.some((candidate) => candidate.relativePath === avifRelativePath)) {
+      throw new Error(`Payload already contains ${avifRelativePath}; refusing to overwrite it with a converted image.`);
+    }
+    const sourcePath = safeJoin(contentRoot.destination, entry.relativePath);
+    const targetPath = safeJoin(contentRoot.destination, avifRelativePath);
+    const pngSha256 = sha256(await fs.readFile(sourcePath));
+    await convertPngToAvif(sourcePath, targetPath);
+    const avifSha256 = sha256(await fs.readFile(targetPath));
+    await fs.rm(sourcePath);
+    images.push({ path: entry.relativePath, avifPath: avifRelativePath, pngSha256, avifSha256 });
+  }
+
+  const descriptor = await rewriteDescriptorImages(descriptorPath, contentRoot, images);
+  return { images, descriptor };
+}
+
+async function rewriteDescriptorImages(descriptorPath, contentRoot, images) {
+  const before = await fs.readFile(descriptorPath, 'utf8');
+  const descriptor = parseJson(before, 'promoted descriptor level.json');
+  const contentImages = descriptor?.contentImages;
+  if (!isRecord(contentImages)) return null;
+  const prefix = contentRoot ? `${contentRoot.promotedPath.replace(/^public\//, '/')}/` : null;
+  const keys = [];
+  const replacements = new Map();
+  for (const [key, value] of Object.entries(contentImages)) {
+    if (typeof value !== 'string' || !isPngPath(value)) continue;
+    const relativePath = prefix && value.startsWith(prefix) ? value.slice(prefix.length) : null;
+    if (!relativePath || !images.some((image) => image.path === relativePath)) {
+      throw new Error(`Benchmark descriptor contentImages.${key} references a PNG the payload does not contain: ${value}`);
+    }
+    keys.push(key);
+    replacements.set(value, `${value.slice(0, -path.extname(value).length)}.avif`);
+  }
+  if (!keys.length) return null;
+  let after = before;
+  for (const [value, replacement] of replacements) {
+    const needle = JSON.stringify(value);
+    if (after.split(needle).length - 1 !== 1) throw new Error(`Cannot rewrite descriptor image path ${value} unambiguously.`);
+    after = after.replace(needle, JSON.stringify(replacement));
+  }
+  await writeAtomicBytes(descriptorPath, Buffer.from(after, 'utf8'));
+  return { path: 'level.json', keys, sha256Before: sha256(before), sha256After: sha256(after) };
+}
+
+function assertConversionRecord(value, pngEntries) {
+  if (!isRecord(value) || !Array.isArray(value.images)) throw new Error('Completed conversion checkpoint has no verifiable record.');
+  const expected = pngEntries.map((entry) => entry.relativePath).sort();
+  const recorded = value.images.map((image) => image?.path).sort();
+  if (JSON.stringify(expected) !== JSON.stringify(recorded)) throw new Error('Recorded image conversion does not cover exactly the payload PNGs.');
+  for (const image of value.images) {
+    if (typeof image.avifPath !== 'string' || !/^[a-f0-9]{64}$/.test(image.pngSha256 ?? '') || !/^[a-f0-9]{64}$/.test(image.avifSha256 ?? '')) {
+      throw new Error(`Recorded image conversion for ${image.path} is incomplete.`);
+    }
+  }
+  if (value.descriptor !== null && value.descriptor !== undefined) {
+    const { path: descriptorPath, keys, sha256Before, sha256After } = value.descriptor;
+    if (descriptorPath !== 'level.json' || !Array.isArray(keys) || !keys.length || !/^[a-f0-9]{64}$/.test(sha256Before ?? '') || !/^[a-f0-9]{64}$/.test(sha256After ?? '')) {
+      throw new Error('Recorded descriptor rewrite is incomplete.');
+    }
+  }
+  return { images: value.images, descriptor: value.descriptor ?? null };
+}
+
+/**
+ * The extracted tree's allowed deviations from the sealed payload, derived
+ * only from the recorded conversion: the PNGs it removed, the AVIFs it wrote,
+ * and the descriptor it rewrote. Nothing else is tolerated.
+ */
+function conversionDeviations(conversion, rootEntry) {
+  const deviations = new Map();
+  if (!conversion) return deviations;
+  if (rootEntry.id === 'content') {
+    for (const image of conversion.images ?? []) {
+      deviations.set(image.path, { kind: 'removed' });
+      deviations.set(image.avifPath, { kind: 'added', sha256: image.avifSha256 });
+    }
+  } else if (rootEntry.id === 'source' && conversion.descriptor) {
+    deviations.set(conversion.descriptor.path, { kind: 'replaced', sha256: conversion.descriptor.sha256After });
+  }
+  return deviations;
+}
+
+function recordedConversion(state) {
+  const entry = state?.checkpoints?.conversion;
+  if (entry?.status !== 'completed' || !isRecord(entry.data)) return null;
+  return entry.data;
+}
+
+function isPngPath(value) { return path.extname(value).toLowerCase() === '.png'; }
+
 async function verifyApplication(context) {
   const { destination, payloadEntries, source, presentRoots } = context.preflight;
+  const conversion = context.conversion ?? recordedConversion(context.state);
   for (const rootEntry of presentRoots) {
-    await verifyPayloadTree(rootEntry.destination, rootEntry.payloadEntries, context.root);
+    await verifyPayloadTree(rootEntry.destination, rootEntry.payloadEntries, context.root, conversionDeviations(conversion, rootEntry));
   }
   const module = payloadEntries.find((entry) => entry.relativePath === 'index.ts');
   const card = payloadEntries.find((entry) => entry.relativePath === 'level.md');
@@ -315,7 +444,10 @@ async function commitPromotion(context) {
   const { source, presentRoots } = context.preflight;
   const expected = new Set();
   for (const rootEntry of presentRoots) {
-    for (const entry of await listFiles(rootEntry.destination)) expected.add(`${rootEntry.promotedPath}/${entry}`);
+    for (const entry of await listFiles(rootEntry.destination)) {
+      if (isPngPath(entry)) throw new Error(`Refusing to commit a PNG the conversion step should have replaced: ${rootEntry.promotedPath}/${entry}`);
+      expected.add(`${rootEntry.promotedPath}/${entry}`);
+    }
   }
   const status = await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
   assertOnlyPromotionChanges(status, root, presentRoots.map((rootEntry) => rootEntry.destination), true);
@@ -524,9 +656,22 @@ async function materializeTree(root, commit, prefix, destination, entries) {
   }
 }
 
-async function verifyPayloadTree(directory, entries, root = ROOT) {
+async function verifyPayloadTree(directory, entries, root = ROOT, deviations = new Map()) {
   const actual = await collectFilesystemEntries(directory);
   const expected = new Map(entries.map((entry) => [entry.relativePath, entry]));
+  for (const [relativePath, deviation] of deviations) {
+    const entry = expected.get(relativePath);
+    if (deviation.kind === 'removed') {
+      if (!entry) throw new Error(`Recorded conversion removes ${relativePath}, which the payload does not contain.`);
+      expected.delete(relativePath);
+    } else if (deviation.kind === 'added') {
+      if (entry) throw new Error(`Recorded conversion adds ${relativePath}, which the payload already contains.`);
+      expected.set(relativePath, { relativePath, mode: '100644', sha256: deviation.sha256 });
+    } else {
+      if (!entry) throw new Error(`Recorded conversion rewrites ${relativePath}, which the payload does not contain.`);
+      expected.set(relativePath, { ...entry, sha256: deviation.sha256 });
+    }
+  }
   const expectedDirectories = new Set();
   for (const relativePath of expected.keys()) {
     const segments = relativePath.split('/');
@@ -539,8 +684,12 @@ async function verifyPayloadTree(directory, entries, root = ROOT) {
     if (!item) throw new Error(`Payload is missing ${relativePath}.`);
     if (item.kind === 'symlink') throw new Error(`Payload contains a symbolic link at ${relativePath}.`);
     const actualBytes = await fs.readFile(item.path);
-    const expectedBytes = await gitBuffer(root, ['cat-file', 'blob', expectedEntry.oid]);
-    if (!actualBytes.equals(expectedBytes)) throw new Error(`Payload changed bytes at ${relativePath}.`);
+    if (expectedEntry.sha256) {
+      if (sha256(actualBytes) !== expectedEntry.sha256) throw new Error(`Converted payload file does not match its recorded hash at ${relativePath}.`);
+    } else {
+      const expectedBytes = await gitBuffer(root, ['cat-file', 'blob', expectedEntry.oid]);
+      if (!actualBytes.equals(expectedBytes)) throw new Error(`Payload changed bytes at ${relativePath}.`);
+    }
     const executable = ((await fs.stat(item.path)).mode & 0o111) !== 0;
     if (executable !== (expectedEntry.mode === '100755')) throw new Error(`Payload changed executable mode at ${relativePath}.`);
   }

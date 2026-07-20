@@ -21,7 +21,7 @@ This is a showcase piece, not a prototype or a proof of concept. Polish is the p
 ## Hard constraints
 
 - Use `createLockOnRunner`. Do not build a bespoke runtime or modify the engine.
-- A built-in level touches only `src/levels/<id>/` plus one registry line. A benchmark entrant touches only `src/benchmark-levels/<id>/`, plus its own gallery content directory `public/level-content/<id>/` (optional hero/overview/start images referenced by `level.json`); `npm run check:benchmark-scope -- --level <id> --base <entrant-baseline-ref>` must pass.
+- A built-in level touches only `src/levels/<id>/` plus one registry line. A benchmark entrant touches only `src/benchmark-levels/<id>/`, plus its own gallery content directory `public/level-content/<id>/` (optional hero/overview/start images referenced by `level.json`, in AVIF or PNG — promotion converts PNG for you); `npm run check:benchmark-scope -- --level <id> --base <entrant-baseline-ref>` must pass.
 - No imports from other levels' directories.
 - Do not turn an existing level into a parameterized template for new levels; each level stays independent.
 - `npm run typecheck`, `npm run build`, and `npm run check:floor -- --level <id>` must pass.
