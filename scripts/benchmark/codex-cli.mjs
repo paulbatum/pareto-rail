@@ -74,11 +74,35 @@ async function main() {
   });
 
   const finalMessage = path.join(outputDirectory, 'final-message.md');
+  // The entrant sandbox is an allowlist permission profile rather than the legacy
+  // `workspace-write` sandbox mode: workspace-write constrains writes only, and run
+  // sol-high-mdd-v3qf exploited its unrestricted reads to copy a sibling run's level
+  // (benchmark/incidents/2026-07-baseline-contamination.md). Under this profile the
+  // worktree is the only writable root; other runs, the primary repository, and the
+  // host `/tmp` do not exist in the mount namespace, and the sandbox `/tmp` is a fresh
+  // tmpfs per tool call. `:minimal` covers `/usr`, `/bin`, and `/etc` but not nvm's
+  // node or Chrome, hence the explicit read grants. `/tmp/.X11-unix` keeps Chrome's
+  // GPU process from hanging forever on the WSLg X socket it probes when `DISPLAY` is
+  // set. Network lives inside the profile: with it disabled the sandbox rejects even
+  // loopback binds, which the floor and snapshot tooling need.
+  const tomlPath = (value) => JSON.stringify(value);
+  const permissionProfile = `permissions.entrant={filesystem={`
+    + `":minimal"="read", `
+    + `${tomlPath(`${worktree}/**`)}="write", `
+    + `${tomlPath(`${nodeToolchainRoot()}/**`)}="read", `
+    + `"/opt/google/**"="read", `
+    + `"/tmp/.X11-unix"="read"`
+    + `}, network={enabled=${networkAccess}}}`;
   const configOverrides = [
     '-m', model,
     '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
     '-c', 'approval_policy="never"',
-    '-c', `sandbox_workspace_write.network_access=${networkAccess}`,
+    // The profile must arrive as one inline TOML override: the `-c` dotted-path parser
+    // splits keys on every `.`, which would mangle absolute grant paths. It must also be
+    // re-declared despite `--ignore-user-config`, which drops the operator's
+    // `[permissions]` table.
+    '-c', 'default_permissions="entrant"',
+    '-c', permissionProfile,
     // Delegation configurations enable the multi_agent_v2 feature so a spawned subagent can run a
     // different model than its parent. `--ignore-user-config` drops the operator's config.toml
     // (which normally carries this), so it is re-declared here as an explicit `-c` override. Without
@@ -115,7 +139,6 @@ async function main() {
     '--strict-config',
     ...configOverrides,
     ...trustBypassArgs,
-    '-s', 'workspace-write',
     '-C', worktree,
     '--output-last-message', finalMessage,
     '-',
@@ -152,8 +175,8 @@ async function main() {
         '-m', model,
         '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
         '-c', 'approval_policy="never"',
-        '-c', 'sandbox_mode="workspace-write"',
-        '-c', `sandbox_workspace_write.network_access=${networkAccess}`,
+        '-c', 'default_permissions="entrant"',
+        '-c', permissionProfile,
         ...(enableMultiAgent ? ['-c', 'features.multi_agent_v2.hide_spawn_agent_metadata=false', '-c', 'features.multi_agent_v2.tool_namespace="agents"'] : []),
         ...trustBypassArgs,
         '--output-last-message', resumeFinalMessage,
@@ -240,6 +263,16 @@ function remainingTime(deadline) {
 function remainingTimeoutSeconds(deadline) {
   if (deadline === Infinity) return undefined;
   return Math.max(1, Math.floor(remainingTime(deadline) / 1_000));
+}
+
+// Root of the node installation the entrant needs read access to. Under nvm that is the
+// whole `.nvm` tree (node, npm, and npx all resolve inside it); elsewhere fall back to the
+// prefix two levels above the node binary (`<prefix>/bin/node`).
+function nodeToolchainRoot() {
+  const segments = process.execPath.split(path.sep);
+  const nvmIndex = segments.indexOf('.nvm');
+  if (nvmIndex !== -1) return segments.slice(0, nvmIndex + 1).join(path.sep);
+  return path.dirname(path.dirname(process.execPath));
 }
 
 function parseTimeout(value) {
