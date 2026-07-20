@@ -68,6 +68,8 @@ try {
   assert.equal((await git(['ls-tree', '-r', '--name-only', result.scrubbedCommit, 'src/benchmark-levels/entrant'])).trim(), '');
   assert.equal((await git(['ls-tree', '-r', '--name-only', result.scrubbedCommit, 'public/level-content/entrant'])).trim(), '');
   const gallery = await git(['show', `${result.scrubbedCommit}:docs/level-gallery.md`]);
+  assert.match(gallery, /## Built-in levels/);
+  assert.match(gallery, /# Anchor/);
   assert.doesNotMatch(gallery, /Benchmark levels/);
   const catalog = JSON.parse(await git(['show', `${result.scrubbedCommit}:src/benchmark/rank-catalog.json` ]));
   assert.deepEqual(catalog.versions, []);

@@ -74,8 +74,8 @@ async function scrubWorktree(worktree, builtInIds) {
     if (!builtInIds.has(entry.name)) await fs.rm(path.join(contentRoot, entry.name), { recursive: true, force: true });
   }
 
-  // collect-gallery uses the source registry at this commit, so it writes the
-  // built-in cards in registry order and omits the now-empty benchmark domain.
+  // The gallery is built-in only by construction; regenerating it here writes
+  // the cards in this commit's registry order.
   await runProcess('npm', ['run', 'gallery'], worktree);
   await reduceRankCatalog(worktree);
 }
@@ -92,7 +92,7 @@ async function reduceRankCatalog(worktree) {
 }
 
 function scrubCommitMessage(sourceCommit) {
-  return `Cut scrubbed entrant baseline from ${sourceCommit}\n\nScrubbed promoted benchmark levels, tracked benchmark records, non-built-in level content, and benchmark-derived gallery and rank catalog entries; retained only the minimum benchmark catalog scaffold required by the application build.`;
+  return `Cut scrubbed entrant baseline from ${sourceCommit}\n\nScrubbed promoted benchmark levels, tracked benchmark records, non-built-in level content, and benchmark rank catalog entries; regenerated the built-in-only gallery and retained only the minimum benchmark catalog scaffold required by the application build.`;
 }
 
 async function assertBranchAvailable(repo, branch) {

@@ -15,7 +15,7 @@ import {
   sha256,
 } from './common.mjs';
 import { manifestErrors } from './results.mjs';
-import { LEVEL_GALLERY_PATH, benchmarkLevelFootprint } from './protocol.mjs';
+import { benchmarkLevelFootprint } from './protocol.mjs';
 
 const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -23,7 +23,6 @@ const REQUIRED_GATES = ['typecheck', 'build', 'scope', 'floor'];
 const CHECKPOINTS = ['validation', 'extraction', 'application', 'catalog', 'commit'];
 const PROMOTION_SCHEMA_VERSION = 1;
 const PROMOTION_LOCK_NAME = 'raild-benchmark-promotion.lock';
-const GALLERY_PATH = LEVEL_GALLERY_PATH;
 
 export class PromotionInterrupted extends Error {
   constructor(checkpoint) {
@@ -178,6 +177,10 @@ async function validatePreflight(context) {
   if (!descriptor || typeof descriptor.id !== 'string' || typeof descriptor.title !== 'string') throw new Error('Benchmark descriptor level.json must contain id and title.');
   if (descriptor.id !== levelId) throw new Error('Benchmark descriptor id does not match the assigned level id.');
   if (descriptor.title !== title) throw new Error('Benchmark descriptor title does not match the assigned title.');
+  const cardEntry = sourceRoot.payloadEntries.find((entry) => entry.relativePath === 'level.md');
+  if (!cardEntry) throw new Error('Benchmark payload must contain the entrant-authored level.md identity card.');
+  const cardSource = (await gitBuffer(root, ['cat-file', 'blob', cardEntry.oid])).toString('utf8');
+  if (!cardSource.startsWith(`# ${descriptor.title}`)) throw new Error(`Benchmark level.md must start with # ${descriptor.title}.`);
 
   const benchmarkIdentities = await readPromotedIdentities(root, path.posix.dirname(sourceRoot.promotedPath));
   if (benchmarkIdentities.has(levelId) && !state.source?.levelId) throw new Error(`Assigned level id is already a promoted benchmark level: ${levelId}`);
@@ -186,8 +189,7 @@ async function validatePreflight(context) {
   const presentRoots = roots.filter((rootEntry) => rootEntry.present);
   const status = await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
   const existingPromotion = Boolean(state.source?.levelId);
-  const galleryMayBePromotionChange = existingPromotion && (state.currentCheckpoint === 'catalog' || state.checkpoints.catalog?.status === 'completed' || state.checkpoints.commit?.status === 'completed');
-  assertOnlyPromotionChanges(status, root, presentRoots.map((rootEntry) => rootEntry.destination), existingPromotion, galleryMayBePromotionChange);
+  assertOnlyPromotionChanges(status, root, presentRoots.map((rootEntry) => rootEntry.destination), existingPromotion);
   for (const rootEntry of presentRoots) {
     if (!await pathExists(rootEntry.destination)) continue;
     if (!existingPromotion) throw new Error(`Promotion destination already exists: ${rootEntry.destination}`);
@@ -265,8 +267,7 @@ async function verifyApplication(context) {
   if (!module || !card || !descriptor) throw new Error('Promoted payload must contain index.ts, level.md, and level.json.');
   const cardText = (await fs.readFile(path.join(destination, 'level.md'), 'utf8')).trimStart();
   if (cardText.split(/\r?\n/, 1)[0] !== `# ${source.title}`) throw new Error('Benchmark level.md title does not match the assigned title.');
-  const galleryWasGenerated = context.state.currentCheckpoint === 'catalog' || context.state.checkpoints.catalog?.status === 'completed' || context.state.checkpoints.commit?.status === 'completed';
-  await assertNoUnexpectedApplicationChanges(context, { allowGallery: galleryWasGenerated });
+  await assertNoUnexpectedApplicationChanges(context);
   return { destination: source.destinationPath, verifiedFiles: presentRoots.reduce((count, rootEntry) => count + rootEntry.payloadEntries.length, 0) };
 }
 
@@ -275,23 +276,15 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
   const { source } = context.preflight;
   const baseCommit = source.baseCommit;
   if (completed) {
-    if (!previousData?.gallerySha256 || !Array.isArray(previousData.checks) || previousData.checks.length !== 4) throw new Error('Completed catalog checkpoint has no verifiable record.');
-    const gallerySource = await readText(path.join(root, GALLERY_PATH));
-    if (sha256(gallerySource) !== previousData.gallerySha256) throw new Error('Derived gallery changed after the completed catalog checkpoint.');
+    if (!Array.isArray(previousData?.checks) || previousData.checks.length !== 4) throw new Error('Completed catalog checkpoint has no verifiable record.');
     for (const check of previousData.checks) {
       if (check.exitCode !== 0) throw new Error(`Completed promotion check ${check.id} was not successful.`);
       const record = await optionalJson(path.join(runDirectory, 'promotion-checks', `${check.id}.json`));
       if (!record || record.exitCode !== check.exitCode || record.stdoutSha256 !== check.stdoutSha256 || record.stderrSha256 !== check.stderrSha256) throw new Error(`Promotion check record ${check.id} is missing or tampered.`);
     }
-    await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, context.preflight.presentRoots.map((rootEntry) => rootEntry.destination), true, true);
+    await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, context.preflight.presentRoots.map((rootEntry) => rootEntry.destination), true);
     return previousData;
   }
-  const gallery = await runCommand(root, 'npm', ['run', 'gallery']);
-  await writeCommandLog(runDirectory, 'gallery', gallery);
-  if (gallery.code !== 0) throw new Error('Gallery regeneration failed; promotion remains resumable.');
-  const gallerySource = await readText(path.join(root, GALLERY_PATH));
-  if (!gallerySource.includes('## Benchmark levels')) throw new Error('Regenerated gallery has no benchmark-level section.');
-  if (!gallerySource.includes(`# ${source.title}`)) throw new Error('Regenerated gallery does not contain the promoted descriptor title.');
   const checks = [];
   const commands = [
     ['typecheck', 'npm', ['run', 'typecheck']],
@@ -313,19 +306,19 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
     });
     if (result.code !== 0) throw new Error(`Promotion ${id} check failed: ${result.stderr || result.stdout}`);
   }
-  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, context.preflight.presentRoots.map((rootEntry) => rootEntry.destination), true, true);
-  return { gallerySha256: sha256(gallerySource), checks };
+  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, context.preflight.presentRoots.map((rootEntry) => rootEntry.destination), true);
+  return { checks };
 }
 
 async function commitPromotion(context) {
   const { root } = context;
   const { source, presentRoots } = context.preflight;
-  const expected = new Set([GALLERY_PATH]);
+  const expected = new Set();
   for (const rootEntry of presentRoots) {
     for (const entry of await listFiles(rootEntry.destination)) expected.add(`${rootEntry.promotedPath}/${entry}`);
   }
   const status = await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']);
-  assertOnlyPromotionChanges(status, root, presentRoots.map((rootEntry) => rootEntry.destination), true, true);
+  assertOnlyPromotionChanges(status, root, presentRoots.map((rootEntry) => rootEntry.destination), true);
   const head = await currentHead(root);
   const baseCommit = source.baseCommit;
   if (context.state.promotionCommit || context.state.checkpoints.commit?.promotionCommit) {
@@ -337,11 +330,10 @@ async function commitPromotion(context) {
     await verifyPromotionCommit(root, head, baseCommit, expected);
     return { promotionCommit: head, reused: true };
   }
-  const addPaths = [...presentRoots.map((rootEntry) => rootEntry.promotedPath), GALLERY_PATH];
-  await git(root, ['add', '--', ...addPaths]);
+  await git(root, ['add', '--', ...presentRoots.map((rootEntry) => rootEntry.promotedPath)]);
   const staged = await gitText(root, ['diff', '--cached', '--name-only']);
   const stagedNames = staged.split('\n').map((line) => line.trim()).filter(Boolean);
-  if (!stagedNames.length || stagedNames.some((name) => !expected.has(name))) throw new Error('Refusing to commit files outside the verified promotion payload and gallery.');
+  if (!stagedNames.length || stagedNames.some((name) => !expected.has(name))) throw new Error('Refusing to commit files outside the verified promotion payload.');
   await git(root, ['commit', '-m', `Promote benchmark level ${source.levelId}`]);
   const promotionCommit = await currentHead(root);
   await verifyPromotionCommit(root, promotionCommit, baseCommit, expected);
@@ -355,7 +347,7 @@ async function verifyPromotionCommit(root, commit, baseCommit, expected) {
   const names = (await gitText(root, ['diff', '--name-only', `${baseCommit}..${resolved}`])).split('\n').map((line) => line.trim()).filter(Boolean);
   const unexpected = names.filter((name) => !expected.has(name));
   if (!names.length || unexpected.length) throw new Error('Promotion commit contains an unexpected application path.');
-  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, [], false, false);
+  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, [], false);
 }
 
 async function checkpoint(context, id, action) {
@@ -386,13 +378,13 @@ async function checkpoint(context, id, action) {
   }
 }
 
-async function assertNoUnexpectedApplicationChanges(context, { allowGallery }) {
+async function assertNoUnexpectedApplicationChanges(context) {
   const { root } = context;
   const destinations = context.preflight.presentRoots.map((rootEntry) => rootEntry.destination);
-  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destinations, true, allowGallery);
+  await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, destinations, true);
 }
 
-function assertOnlyPromotionChanges(status, root, destinations, allowPromotionChanges, allowGallery) {
+function assertOnlyPromotionChanges(status, root, destinations, allowPromotionChanges) {
   const paths = parsePorcelain(status);
   if (!paths.length) return;
   if (!allowPromotionChanges) throw new Error(`Refusing to overwrite unrelated local changes: ${paths.join(', ')}`);
@@ -403,7 +395,7 @@ function assertOnlyPromotionChanges(status, root, destinations, allowPromotionCh
   for (const item of paths) {
     const normalized = item.replaceAll(path.sep, '/');
     const inDestination = destinationRoots.some(({ relative, prefix }) => normalized === relative || normalized.startsWith(prefix));
-    if ((allowGallery && normalized === GALLERY_PATH) || inDestination) continue;
+    if (inDestination) continue;
     throw new Error(`Refusing to overwrite unrelated local changes: ${item}`);
   }
 }

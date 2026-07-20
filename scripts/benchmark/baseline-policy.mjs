@@ -52,6 +52,8 @@ export async function scrubbedBaselineViolations({ repo = process.cwd(), baselin
     }
   }
 
+  // A generated gallery is built-in only, so this catches a hand-edited or
+  // stale committed one rather than anything collect-gallery can produce.
   if (paths.includes(LEVEL_GALLERY_PATH)) {
     const gallery = await gitShow(repo, commit, LEVEL_GALLERY_PATH);
     if (/^## Benchmark levels\s*$/m.test(gallery)) {

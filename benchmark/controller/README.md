@@ -63,7 +63,7 @@ Cut the next series' baseline from the source commit that contains that series' 
 npm run benchmark:cut-baseline -- --source <commit-ish> --branch <branch-name>
 ```
 
-The tool creates the branch in an isolated temporary worktree, removes promoted benchmark source and records, removes non-built-in public content, regenerates the built-in-only gallery, empties the benchmark rank catalog, commits the result with the source commit in its message, and runs `npm run typecheck` and `npm run build` in that scrubbed checkout. It prints the resulting commit and branch. Do not cut a baseline during v2; v2 deliberately continues from its original open baseline.
+The tool creates the branch in an isolated temporary worktree, removes promoted benchmark source and records, removes non-built-in public content, regenerates the gallery, empties the benchmark rank catalog, commits the result with the source commit in its message, and runs `npm run typecheck` and `npm run build` in that scrubbed checkout. It prints the resulting commit and branch. Do not cut a baseline during v2; v2 deliberately continues from its original open baseline.
 
 The four files under `src/benchmark-levels/` are retained because `src/levels/index.ts` imports the benchmark catalog even when Vite discovers no benchmark entries. No entrant level or test fixture is retained.
 
@@ -110,7 +110,7 @@ npm run benchmark:manage -- status
 npm run benchmark:promote -- --run <run-id>
 ```
 
-Promotion takes a playable benchmark run, validates its manifest, gates, and refs, materializes the payload under `src/benchmark-levels/<id>/`, regenerates the gallery, runs the four checks, and records a separate commit. Before promoting, execute `npm run benchmark:contamination -- --run <runId> --json`, review every `web` event against the entrant's output for plausible reuse of external level material, and record the reviewer's verdict in the promotion decision. A `web-self-lookup` or any other violation blocks promotion pending operator review. It holds a lock, checkpoints its progress in `promotion.json`, and never edits the run manifest or its disposition. `benchmark:manage -- status` reports a playable run that has not been promoted as pending — or a failed attempt as failed — and prints this command.
+Promotion takes a playable benchmark run, validates its manifest, gates, and refs, materializes the payload under `src/benchmark-levels/<id>/`, runs the four checks, and records a separate commit. Before promoting, execute `npm run benchmark:contamination -- --run <runId> --json`, review every `web` event against the entrant's output for plausible reuse of external level material, and record the reviewer's verdict in the promotion decision. A `web-self-lookup` or any other violation blocks promotion pending operator review. It holds a lock, checkpoints its progress in `promotion.json`, and never edits the run manifest or its disposition. `benchmark:manage -- status` reports a playable run that has not been promoted as pending — or a failed attempt as failed — and prints this command.
 
 ## Publishing the catalog
 

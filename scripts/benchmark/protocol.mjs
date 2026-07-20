@@ -43,7 +43,7 @@ export function benchmarkLevelFootprint(levelId) {
         required: false,
       },
     ],
-    sharedDerived: [LEVEL_GALLERY_PATH],
+    sharedDerived: [],
   };
 }
 

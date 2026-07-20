@@ -10,6 +10,7 @@ import { promoteRun, PromotionInterrupted } from './promote.mjs';
 const execFileAsync = promisify(execFile);
 const HERE = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 const CHECKPOINTS = ['validation', 'extraction', 'application', 'catalog', 'commit'];
+const GALLERY = '# Level gallery\n\n## Built-in levels\n\n# Built-in Level\n';
 
 async function main() {
   for (const checkpoint of CHECKPOINTS) {
@@ -93,12 +94,22 @@ async function main() {
       assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.avif'), 'utf8'), 'synthetic hero\n');
       const names = (await git(fixture.root, ['diff', '--name-only', `${fixture.base}..${result.promotionCommit}`])).trim().split('\n').filter(Boolean).sort();
       assert.deepEqual(names, [
-        'docs/level-gallery.md',
         'public/level-content/synthetic-a1b2/hero.avif',
         'src/benchmark-levels/synthetic-a1b2/index.ts',
         'src/benchmark-levels/synthetic-a1b2/level.json',
         'src/benchmark-levels/synthetic-a1b2/level.md',
       ]);
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+
+  for (const [card, pattern] of [['missing', /must contain the entrant-authored level\.md/], ['mistitled', /level\.md must start with # Synthetic Promotion/]]) {
+    const fixture = await createFixture({ card });
+    try {
+      await assert.rejects(() => promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory }), pattern, `a ${card} identity card is rejected`);
+      assert.equal(await exists(path.join(fixture.root, 'src/benchmark-levels/synthetic-a1b2')), false, `a ${card} identity card is rejected before destination creation`);
+      assert.equal((await git(fixture.root, ['rev-list', '--count', `${fixture.base}..HEAD`])).trim(), '0');
     } finally {
       await fixture.cleanup();
     }
@@ -165,12 +176,12 @@ async function assertPromotion(fixture, promotionCommit) {
   assert.equal(await fs.readFile(path.join(destination, 'index.ts'), 'utf8'), "export const syntheticLevel = { id: 'synthetic-a1b2', title: 'Synthetic Promotion' };\n");
   assert.equal(await fs.readFile(path.join(destination, 'level.md'), 'utf8'), '# Synthetic Promotion\n\nSynthetic test payload.\n');
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(destination, 'level.json'), 'utf8')), { id: 'synthetic-a1b2', title: 'Synthetic Promotion' });
-  assert.match(await fs.readFile(path.join(fixture.root, 'docs/level-gallery.md'), 'utf8'), /## Benchmark levels/);
+  assert.equal(await fs.readFile(path.join(fixture.root, 'docs/level-gallery.md'), 'utf8'), GALLERY, 'promotion leaves the gallery untouched');
   assert.equal((await git(fixture.root, ['show', '--format=%P', '--no-patch', promotionCommit])).trim(), fixture.base);
   if (fixture.content) assert.equal(await fs.readFile(path.join(fixture.root, 'public/level-content/synthetic-a1b2/hero.avif'), 'utf8'), 'synthetic hero\n');
 }
 
-async function createFixture({ payloadWorktree = false, rehearsal = false, payloadSymlink = false, content = false, outsidePayload = false } = {}) {
+async function createFixture({ payloadWorktree = false, rehearsal = false, payloadSymlink = false, content = false, outsidePayload = false, card = 'valid' } = {}) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-promotion-repo-'));
   const externalPayloadWorktree = `${root}-payload-worktree`;
   const runDirectory = path.join(root, 'benchmark/private/runs/synthetic-run-a1b2');
@@ -179,10 +190,9 @@ async function createFixture({ payloadWorktree = false, rehearsal = false, paylo
   await fs.mkdir(path.join(root, 'docs'), { recursive: true });
   await fs.mkdir(path.join(root, 'scripts/benchmark'), { recursive: true });
   await writeText(path.join(root, '.gitignore'), 'benchmark/private/\n');
-  await writeText(path.join(root, 'package.json'), JSON.stringify({ name: 'synthetic-promotion', scripts: { gallery: 'node gallery.mjs', typecheck: 'node -e ""', build: 'node -e ""', 'check:floor': 'node -e "process.exit(0)" --' } }, null, 2) + '\n');
-  await writeText(path.join(root, 'gallery.mjs'), "import fs from 'node:fs/promises';\nawait fs.writeFile('docs/level-gallery.md', '# Level gallery\\n\\n## Benchmark levels\\n\\n# Synthetic Promotion\\n');\n");
+  await writeText(path.join(root, 'package.json'), JSON.stringify({ name: 'synthetic-promotion', scripts: { typecheck: 'node -e ""', build: 'node -e ""', 'check:floor': 'node -e "process.exit(0)" --' } }, null, 2) + '\n');
   await writeText(path.join(root, 'src/levels/index.ts'), "export const levelMetadatas = [{ id: 'built-in-level', title: 'Built-in Level', aliases: ['built-in'], kind: 'playable' }];\n");
-  await writeText(path.join(root, 'docs/level-gallery.md'), '# Level gallery\n\n## Built-in levels\n');
+  await writeText(path.join(root, 'docs/level-gallery.md'), GALLERY);
   await fs.copyFile(path.join(HERE, 'scripts/check-benchmark-scope.mjs'), path.join(root, 'scripts/check-benchmark-scope.mjs'));
   await fs.copyFile(path.join(HERE, 'scripts/benchmark/protocol.mjs'), path.join(root, 'scripts/benchmark/protocol.mjs'));
   await git(root, ['init', '-q']);
@@ -197,6 +207,8 @@ async function createFixture({ payloadWorktree = false, rehearsal = false, paylo
     'src/benchmark-levels/synthetic-a1b2/level.md': '# Synthetic Promotion\n\nSynthetic test payload.\n',
     'src/benchmark-levels/synthetic-a1b2/level.json': `${JSON.stringify({ id: 'synthetic-a1b2', title: 'Synthetic Promotion' }, null, 2)}\n`,
   };
+  if (card === 'missing') delete sourceFiles['src/benchmark-levels/synthetic-a1b2/level.md'];
+  if (card === 'mistitled') sourceFiles['src/benchmark-levels/synthetic-a1b2/level.md'] = '# Some Other Level\n\nSynthetic test payload.\n';
   if (content) sourceFiles['public/level-content/synthetic-a1b2/hero.avif'] = 'synthetic hero\n';
   const payloadPaths = ['src/benchmark-levels/synthetic-a1b2', ...(content ? ['public/level-content/synthetic-a1b2'] : [])];
   await git(root, ['switch', '-c', 'evaluated-run']);

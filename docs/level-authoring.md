@@ -51,7 +51,7 @@ Future benchmark entrants use the directory-only protocol. Start with:
 npm run scaffold -- --mode benchmark --id <id> --title '<Title>'
 ```
 
-This creates `src/benchmark-levels/<id>/`, including `index.ts`, `gameplay.ts`, `audio.ts`, `visuals/index.ts`, `level.json`, and `level.md`. The descriptor is controller-free authored input, but discovery validates its id and title against the loaded `LevelDefinition`; do not treat it as a second gameplay identity or edit shared registry code. The benchmark scope gate permits the assigned directory, the level's own gallery content directory `public/level-content/<id>/` (for self-produced hero/overview/start images referenced by `level.json`), and explicitly permitted derived gallery output:
+This creates `src/benchmark-levels/<id>/`, including `index.ts`, `gameplay.ts`, `audio.ts`, `visuals/index.ts`, `level.json`, and `level.md`. The descriptor is controller-free authored input, but discovery validates its id and title against the loaded `LevelDefinition`; do not treat it as a second gameplay identity or edit shared registry code. The benchmark scope gate permits the assigned directory and the level's own gallery content directory `public/level-content/<id>/` (for self-produced hero/overview/start images referenced by `level.json`):
 
 ```sh
 npm run check:benchmark-scope -- --level <id> --base <entrant-baseline-ref>
@@ -61,7 +61,7 @@ Benchmark levels are discovered automatically by the permanent catalog and appea
 
 ### Promoting a benchmark output
 
-Benchmark outputs use the separate `src/benchmark-levels/<id>/` domain. Add a `level.json` descriptor with the public `id` and `title`, an `index.ts` exporting exactly one `LevelDefinition`, and a `level.md` identity card. The permanent discovery module associates the matching direct-child files automatically; do not add benchmark outputs to `src/levels/index.ts`. The descriptor id must equal its directory name, and the loaded definition must use the descriptor's id and title. Test-only benchmark fixtures belong under `src/benchmark-levels/test-fixtures/`; they are intentionally excluded from discovery and the gallery.
+Benchmark outputs use the separate `src/benchmark-levels/<id>/` domain. Add a `level.json` descriptor with the public `id` and `title`, an `index.ts` exporting exactly one `LevelDefinition`, and a `level.md` identity card. The permanent discovery module associates the matching direct-child files automatically; do not add benchmark outputs to `src/levels/index.ts`. The descriptor id must equal its directory name, and the loaded definition must use the descriptor's id and title. Test-only benchmark fixtures belong under `src/benchmark-levels/test-fixtures/`; they are intentionally excluded from discovery.
 
 ## Handoff checks
 
