@@ -23,3 +23,11 @@ The other entrants remain retained. Cross-theme reads are equivalent in kind to 
 ## Actions
 
 The three runs are marked disqualified and will be rerun under fresh slots: `sol-high-mdd-v3qf`, `fable-high-mdd-k4wz`, and `sol-b20-mdd-p8jn`. The reruns use a derived baseline — the frozen v2 baseline with the prior mass-driver levels removed — recorded on `benchmark-baseline-v2-mdd-reruns`; cross-theme benchmark levels remain as the shared reference pool. Each rerun remains subject to the promotion-time contamination audit. The v1-to-v2 configuration comparison carries a baseline-exposure caveat because v1 used the scrubbed procedure and v2 did not. Scrubbed entrant baselines and their launch guard begin with the next series; the `baselinePolicy`, `benchmark:cut-baseline`, and launch-guard controls now exist for that handoff.
+
+## Reruns
+
+The derived baseline removed the prior mass-driver source directories but not every reference to them. Their entries survived in the generated level gallery — the document the assignment directs every entrant to read in full — along with the analysis dossier for `mass-driver-wo4m` under `benchmark/analysis/`, and their names in the rank catalog and the public pages. The gallery is now generated from built-in levels only, so a promoted level no longer publishes a design summary into entrant reading material.
+
+The removal was also routed around rather than defeated: the three reruns overlapped in time and their checkouts under `/tmp` were mutually readable. `sol-high-mdd-v3qf` found `mass-driver-wo4m` in full inside a sibling run's checkout, copied all fourteen of its source files through a `sed` rename, and shipped the result. It is disqualified. Entrant checkouts need isolation from each other, not only from the repository.
+
+`fable-high-mdd-k4wz` and `sol-b20-mdd-p8jn` stayed inside their own checkouts and read no same-family source. Their exposure is the gallery's prose descriptions of seven prior mass-driver levels, whose file pointers they could not follow. Both are retained and promoted with that caveat recorded.
