@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-20T05:45:02.872Z",
+  "generatedAt": "2026-07-20T19:59:55.878Z",
   "activeBenchmarkVersion": "rank-catalog-v2",
   "configurations": [
     {
@@ -86,7 +86,7 @@
   "versions": [
     {
       "benchmarkVersion": "rank-catalog-v1",
-      "generatedAt": "2026-07-20T05:45:02.872Z",
+      "generatedAt": "2026-07-20T19:59:55.878Z",
       "themes": [
         {
           "id": "mass-driver",
@@ -391,7 +391,7 @@
     },
     {
       "benchmarkVersion": "rank-catalog-v2",
-      "generatedAt": "2026-07-20T05:45:02.872Z",
+      "generatedAt": "2026-07-20T19:59:55.878Z",
       "themes": [
         {
           "id": "broadside",
@@ -600,6 +600,38 @@
           "thumbnailPath": "/level-content/broadside-ob4d/hero.avif"
         },
         {
+          "levelId": "mass-driver-detailed-k4wz",
+          "themeId": "mass-driver-detailed",
+          "configurationId": "claude-fable-5-high",
+          "modelName": "Claude Fable 5",
+          "workflowName": "solo",
+          "generationCost": 58.065569,
+          "run": {
+            "generationWallTimeSeconds": 2961.129,
+            "totalWallTimeSeconds": 3130.993,
+            "result": "completed",
+            "orchestrationTreatment": "none",
+            "harness": {
+              "name": "Claude Code CLI",
+              "version": "2.1.215"
+            },
+            "models": [
+              {
+                "modelName": "claude-fable-5",
+                "role": "solo",
+                "inputTokens": 233,
+                "outputTokens": 212527,
+                "cacheReadTokens": 38132269,
+                "cacheWriteTokens": 465231,
+                "usageSource": "agreed",
+                "costUsd": 58.065569
+              }
+            ]
+          },
+          "thumbnailPath": "/level-content/mass-driver-detailed-k4wz/hero.avif",
+          "featured": true
+        },
+        {
           "levelId": "mass-driver-detailed-m3rp",
           "themeId": "mass-driver-detailed",
           "configurationId": "claude-fable-5-high",
@@ -784,6 +816,36 @@
             ]
           },
           "thumbnailPath": "/level-content/mass-driver-detailed-om6f/hero.avif"
+        },
+        {
+          "levelId": "mass-driver-detailed-p8jn",
+          "themeId": "mass-driver-detailed",
+          "configurationId": "codex-sol-high-b20",
+          "modelName": "GPT-5.6 Sol",
+          "workflowName": "solo, $20 budget",
+          "generationCost": 15.763852,
+          "run": {
+            "generationWallTimeSeconds": 3012.616,
+            "totalWallTimeSeconds": 3185.549,
+            "result": "completed",
+            "orchestrationTreatment": "none",
+            "harness": {
+              "name": "Codex CLI",
+              "version": "0.144.1"
+            },
+            "models": [
+              {
+                "modelName": "gpt-5.6-sol",
+                "role": "orchestrate",
+                "inputTokens": 722130,
+                "outputTokens": 104695,
+                "cacheReadTokens": 18024704,
+                "cacheWriteTokens": 0,
+                "reasoningTokens": 28766
+              }
+            ]
+          },
+          "thumbnailPath": "/level-content/mass-driver-detailed-p8jn/hero.avif"
         },
         {
           "levelId": "strandline-os1a",

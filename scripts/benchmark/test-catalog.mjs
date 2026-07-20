@@ -67,11 +67,21 @@ assert.ok(Array.isArray(v2Version.entrants));
 const actualPlan = JSON.parse(await fs.readFile(path.join(root, 'benchmark/private/v2-plan.json'), 'utf8'));
 const actualVersion = buildVersion('v2', planAssignments(actualPlan), new Date().toISOString());
 const massDriverTheme = actualVersion.entrants.filter((entrant) => entrant.themeId === 'mass-driver-detailed');
+const massDriverRows = actualPlan.runs.filter((run) => run.themeId === 'mass-driver-detailed');
+const promoted = new Set(await fs.readdir(path.join(root, 'src/benchmark-levels')));
 assert.equal(actualVersion.themes.some((theme) => theme.id === 'mass-driver-detailed'), true, 'a theme with retired and live rows remains published');
-assert.equal(massDriverTheme.filter((entrant) => entrant.retired).length, 3, 'retired entrants remain in the exported slice');
-assert.equal(massDriverTheme.filter((entrant) => !entrant.retired).length, 3, 'the three live mass-driver entrants remain in the slice');
+assert.deepEqual(
+  massDriverTheme.filter((entrant) => entrant.retired).map((entrant) => entrant.levelId).sort(),
+  massDriverRows.filter((run) => run.retired).map((run) => run.levelId).sort(),
+  'every retired row remains in the exported slice',
+);
+assert.deepEqual(
+  massDriverTheme.filter((entrant) => !entrant.retired).map((entrant) => entrant.levelId).sort(),
+  massDriverRows.filter((run) => !run.retired && promoted.has(run.levelId)).map((run) => run.levelId).sort(),
+  'a live row is exported once its payload is promoted, and not before',
+);
+assert.ok(massDriverTheme.some((entrant) => entrant.retired), 'the theme still exercises the retired path');
 assert.ok(massDriverTheme.find((entrant) => entrant.retired)?.run, 'retired entrants retain reveal metadata');
-assert.ok(!massDriverTheme.some((entrant) => entrant.levelId.endsWith('-v3qf') || entrant.levelId.endsWith('-k4wz') || entrant.levelId.endsWith('-p8jn')), 'unpromoted replacements are not exported before promotion');
 
 console.log('Benchmark catalog tests passed.');
 
