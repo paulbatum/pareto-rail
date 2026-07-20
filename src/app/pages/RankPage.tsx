@@ -89,16 +89,17 @@ function RankStage({ controller, state, lastUndoneVerdict, onLaunch, onVote, onN
   const nextSide = state.kind === 'assignment' && (state.playCounts.a > 0) !== (state.playCounts.b > 0)
     ? state.playCounts.a > 0 ? 'b' : 'a'
     : null;
+  const freshAssignment = state.kind === 'assignment' && state.playCounts.a === 0 && state.playCounts.b === 0;
   const card = (side: MatchupSide) => {
     const priorRun = controller.levelRun(state.assignment[side].playableRef);
     const completedRuns = state.playCounts[side] > 0;
     const label = completedRuns ? 'Replay' : 'Play';
     const emphasized = nextSide === side ? ' is-next' : '';
     return <article className={`compare-card${emphasized}`}>
-      <LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} />
       <h2>Level {side.toUpperCase()}</h2>
+      <LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} />
       <p className="compare-stats">{completedRuns && <span>Completed run</span>}{priorRun?.score !== undefined && <span className="run-score">Best score: {priorRun.score.toLocaleString('en-US')}</span>}</p>
-      <button className={`button${nextSide === side ? ' primary' : ''}`} type="button" onClick={() => onLaunch(side)}>{label} Level {side.toUpperCase()}</button>
+      <button className={`button${nextSide === side || freshAssignment ? ' primary' : ''}`} type="button" onClick={() => onLaunch(side)}>{label} Level {side.toUpperCase()}</button>
     </article>;
   };
   const versusLayout = <div className="compare-grid">{card('a')}<div className="versus-divider" aria-label="Versus"><span>VS</span></div>{card('b')}</div>;

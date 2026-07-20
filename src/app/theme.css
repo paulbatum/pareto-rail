@@ -22,6 +22,13 @@
   --pr-accent-ink:    #171410;  /* text on accent fills */
   --pr-accent-soft:   #3A2230;  /* accent-tinted surface (pick highlights, was #F0DCE5) */
 
+  /* ---- CTA ---- */
+  /* Acid lime, reserved for primary action buttons only; raspberry stays the
+     identity accent (labels, links, focus). */
+  --pr-cta:           #C6E84F;
+  --pr-cta-ink:       #171410;  /* text on CTA fills */
+  --pr-cta-soft:      #2E331C;  /* CTA-tinted surface (hover shadows) */
+
   /* ---- Line-work / etching graphics ---- */
   --pr-etch-faint:    #3A3425;  /* far tunnel rings (was #DCD5C4) */
   --pr-etch-mid:      #5C543D;  /* near tunnel rings, stray marks (was #B8AF9A) */
@@ -53,6 +60,9 @@
   --pr-accent: #C42463;
   --pr-accent-ink: #FFFFFF;
   --pr-accent-soft: #F0DCE5;
+  --pr-cta: #8FAE2A;
+  --pr-cta-ink: #1B1813;
+  --pr-cta-soft: #E4ECC8;
   --pr-etch-faint: #DCD5C4;
   --pr-etch-mid: #B8AF9A;
   --pr-stripe-a: #F2EEE3;
@@ -107,6 +117,9 @@ input:focus, select:focus, textarea:focus {
   --ghost: var(--pr-etch-mid);
   --accent: var(--pr-accent);
   --accent-tint: var(--pr-accent-soft);
+  --cta: var(--pr-cta);
+  --cta-ink: var(--pr-cta-ink);
+  --cta-tint: var(--pr-cta-soft);
   --sans: var(--pr-font-display);
   --mono: var(--pr-font-mono);
 }
@@ -116,6 +129,7 @@ input:focus, select:focus, textarea:focus {
   --paper: #171410; --card: #1F1B15; --ink: #F2EDDF; --body-text: #B3AA94;
   --soft-text: #A69D88; --muted: #948B75; --hairline: #332E22; --hairline-2: #2A251B;
   --ghost: #5C543D; --accent: #E85D93; --accent-tint: #3A2230;
+  --cta: #C6E84F; --cta-ink: #171410; --cta-tint: #2E331C;
   --pr-kbd-fill-border: #5C543D; --pr-kbd-fill-text: #948B75;
   color: var(--ink);
 }
