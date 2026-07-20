@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BenchmarkModelUsage, BenchmarkTheme } from '../../benchmark/types';
+import { entrantLabel } from '../../benchmark/identity';
 import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog, selectableLevelGroups } from '../../levels';
 import { builtInLevelBlurbs, levelsCopy } from '../content';
@@ -137,7 +138,7 @@ function galleryMeta(record: LevelRecord) {
   if (record.kind === 'built-in') {
     return record.reference ? <span className="ref">Reference run</span> : <span>Built-in level</span>;
   }
-  return <><span>{record.entrant.modelName} · {record.entrant.workflowName}</span><span>{formatCost(record.entrant.generationCost)}</span></>;
+  return <><span>{entrantLabel({ modelName: record.entrant.modelName, workflowName: record.entrant.workflowName })}</span><span>{formatCost(record.entrant.generationCost)}</span></>;
 }
 
 /* ---------- Data ---------- */

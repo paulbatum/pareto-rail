@@ -1,3 +1,4 @@
+import { entrantLabel } from './identity';
 import type { MatchupVote, RevealPayload, RelativeOutcome } from './types.ts';
 
 export interface PersonalCurveCatalogEntry {
@@ -176,7 +177,7 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
       configurationId,
       modelName: label.modelName,
       workflowName: label.workflowName,
-      label: `${label.modelName} · ${label.workflowName}`,
+      label: entrantLabel({ modelName: label.modelName, workflowName: label.workflowName }),
       ...(seenIds.has(configurationId) ? { rating: ratings.get(configurationId) } : {}),
       meanCost: mean(costs),
       comparisons: stats.comparisons,
