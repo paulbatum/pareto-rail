@@ -593,10 +593,17 @@ export async function validateEntrantBaseline({ baselinePolicy, entrantBaseline,
   return { policy, commit: entrantBaseline, violations: await scrubbedBaselineViolations({ repo, baseline: entrantBaseline }) };
 }
 
+// One finding per reason, not per path: a baseline carrying a dozen promoted levels repeats one reason a
+// dozen times, and the paths are the short part. The manifest keeps the ungrouped list.
 export function reportBaselineGuard({ policy, commit, violations }) {
   if (violations.length === 0) return;
-  console.warn(`Entrant baseline ${commit} carries ${violations.length} exposure${violations.length === 1 ? '' : 's'} under baselinePolicy "${policy}":`);
-  for (const { path: pathName, reason } of violations) console.warn(`- ${pathName}: ${reason}`);
+  const findings = new Map();
+  for (const { path: pathName, reason } of violations) {
+    if (!findings.has(reason)) findings.set(reason, []);
+    findings.get(reason).push(pathName);
+  }
+  console.warn(`Entrant baseline ${commit} carries ${findings.size} finding${findings.size === 1 ? '' : 's'} across ${violations.length} path${violations.length === 1 ? '' : 's'} under baselinePolicy "${policy}":`);
+  for (const [reason, paths] of findings) console.warn(`- ${reason}: ${paths.join(', ')}`);
   console.warn('Launching anyway; an open policy records these in the run manifest rather than blocking.');
 }
 
