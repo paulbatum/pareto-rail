@@ -31,7 +31,14 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 
 /* The home hero is the one full-width page composition. The copy stays aligned
    with the site content while the tunnel graphic runs to the viewport edge. */
+.app-shell[data-route="home"] { display: flex; flex-direction: column; }
+/* On viewports taller than the composition, leftover height splits around the
+   start cards; on short screens the auto margins collapse and padding keeps the gap. */
+.app-shell[data-route="home"] .home-choice-grid { margin-block: auto; padding-block: 16px 0; }
 .app-shell[data-route="home"] .app-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   width: 100%;
   padding-top: 0;
   padding-right: clamp(20px, 5vw, 87px);
@@ -39,11 +46,13 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 }
 .hero-with-graphic {
   display: grid;
+  flex: 1 1 auto;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 31vw);
   align-items: stretch;
   width: 100vw;
   max-width: none;
   min-height: min(180px, calc(22svh - 32px));
+  max-height: 400px;
   margin-left: calc((100% - 100vw) / 2);
   padding: 0;
   border-bottom: 1px solid var(--hairline);
@@ -76,7 +85,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .action-row { display: flex; flex-wrap: wrap; gap: 12px; }
 
 /* ---------- Home ---------- */
-.home-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: none; margin: 16px auto 0; }
+.home-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(16px, calc((100vw - 1560px) / 20), 56px); width: 100%; max-width: none; margin: 16px auto 0; }
 .home-choice { display: flex; flex-direction: column; align-items: stretch; overflow: hidden; background: var(--card); border: 1px solid var(--hairline); }
 .home-choice:hover { border-color: var(--ink); }
 .home-choice.recommended { border-color: var(--accent); box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 12%, transparent); }
@@ -96,6 +105,12 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .home-choice:last-child .choice-eyebrow { color: var(--muted); }
 .home-choice h2 { margin: 0 0 11px; color: var(--ink); font-size: 19px; }
 .home-choice p:not(.choice-eyebrow) { margin: 0; color: var(--soft-text); font-size: 15px; line-height: 1.55; }
+
+/* Tall desktop viewports get roomier type; short laptop screens keep the compact scale. */
+@media (min-height: 1000px) and (min-width: 1200px) {
+  .app-shell[data-route="home"] .hero-copy h1 { font-size: clamp(48px, 5.6vw, 64px); }
+  .hero-copy .lede { font-size: clamp(14px, 1.2vw, 16px); }
+}
 
 /* ---------- Buttons ---------- */
 .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); font: inherit; font-size: 11px; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; cursor: pointer; transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease; }
