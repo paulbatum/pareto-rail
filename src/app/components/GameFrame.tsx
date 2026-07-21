@@ -68,7 +68,7 @@ export function GameFrame({ level, title = level.title, launchContext, onNavigat
 function CrystalInvitation({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <section className="crystal-invitation" aria-label="What next">
-      <p><strong>Crystal Corridor</strong> is the polished reference. Ready to see what models can build?</p>
+      <p>Ready to see what models can build?</p>
       <div className="invitation-actions">
         <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank model levels</RouteLink>
       </div>
