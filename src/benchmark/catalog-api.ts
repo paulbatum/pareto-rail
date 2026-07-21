@@ -1,5 +1,5 @@
 import { mapVerdict, type BenchmarkApi, type MatchupAssignment, type MatchupVote, type NextMatchupRequest, type PlayCounts, type RecordPlayRequest, type RevealPayload, type SubmitVoteRequest } from './types';
-import { allCatalogEntrants, findCatalogVersionForLevels, activeCatalogVersion, type RankCatalog, type RankCatalogEntrant } from './catalog';
+import { allCatalogEntrants, findCatalogVersionForLevels, schedulingPool, type RankCatalog, type RankCatalogEntrant } from './catalog';
 import { nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { BenchmarkLocalStore, type LevelRun } from './storage';
 
@@ -80,18 +80,24 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
   async nextMatchup(request: NextMatchupRequest): Promise<MatchupAssignment | null> {
     this.requireParticipant(request.participantId);
     const data = this.store.snapshot;
-    const activeVersion = activeCatalogVersion(this.catalog);
-    if (!activeVersion) return null;
+    // Schedule against the union of every slice's scheduled themes, not just the
+    // active slice, so returning series live alongside the latest one.
+    const pool = schedulingPool(this.catalog);
+    if (pool.themes.length === 0) return null;
     const judged = completedMatchupsFromVotes(this.catalog, data.history).map(({ vote }) => ({ matchupId: vote.matchupId, relative: vote.relative, aLevelId: vote.aEntrantId }));
-    const scheduled = nextScheduledMatchup(activeVersion, this.store.participantId, { judged });
+    const scheduled = nextScheduledMatchup(pool, this.store.participantId, { judged });
     if (!scheduled) return null;
-    const theme = activeVersion.themes.find((candidate) => candidate.id === scheduled.themeId);
+    const theme = pool.themes.find((candidate) => candidate.id === scheduled.themeId);
     const a = findCatalogEntrant(this.catalog, scheduled.levelIdA);
     const b = findCatalogEntrant(this.catalog, scheduled.levelIdB);
     if (!theme || !a || !b) return null;
+    // The vote must record against the pair's owning slice version, since the
+    // server validates entrants within the named version's slice.
+    const owningVersion = findCatalogVersionForLevels(this.catalog, a.levelId, b.levelId);
+    if (!owningVersion) return null;
     const assignment: MatchupAssignment = {
       matchupId: pairId(theme.id, a.levelId, b.levelId),
-      benchmarkVersion: this.catalog.activeBenchmarkVersion,
+      benchmarkVersion: owningVersion.benchmarkVersion,
       theme,
       a: { playableRef: a.levelId, ...(a.thumbnailPath ? { thumbnailPath: a.thumbnailPath } : {}) },
       b: { playableRef: b.levelId, ...(b.thumbnailPath ? { thumbnailPath: b.thumbnailPath } : {}) },

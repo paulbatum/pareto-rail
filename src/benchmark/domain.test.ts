@@ -6,7 +6,7 @@ import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
 import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, revealFromVote } from './catalog-api';
 import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { mapVerdict, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
-import { rankCatalog, type RankCatalog, type RankCatalogEntrant, type RankCatalogVersion } from './catalog';
+import { findCatalogEntrant, findCatalogTheme, findCatalogVersionForLevels, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogEntrant, type RankCatalogVersion } from './catalog';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import { ComparisonStateMachine } from './state';
@@ -47,6 +47,11 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testConvergenceAndStability();
   testSameConfigurationPairs();
   testRetiredEntrantsNotScheduled();
+  testSchedulingPoolSpansSlices();
+  testUnscheduledThemesNeverScheduledButRevealable();
+  testHistoricalV1VoteJudgedNeverReserved();
+  testFeaturedOpenerStaysBroadside();
+  await testPoolMatchupRecordsOwningSliceVersion();
   testVersionedSchedulerPool();
   testCatalogDerivedHistory();
   testRetiredEntrantReveal();
@@ -424,6 +429,157 @@ function testRetiredEntrantsNotScheduled(): void {
   function entrant(levelId: string, configurationId: string, retired = false): RankCatalogEntrant {
     return { levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost: 1, ...(retired ? { retired: true } : {}) };
   }
+}
+
+function testSchedulingPoolSpansSlices(): void {
+  const pool = schedulingPool(rankCatalog);
+  const poolThemeIds = new Set(pool.themes.map((theme) => theme.id));
+  // The pool merges scheduled themes from both slices: mass-driver and skyhook
+  // return from v1, broadside and strandline stay from v2.
+  for (const themeId of ['mass-driver', 'skyhook', 'broadside', 'strandline']) {
+    assert.ok(poolThemeIds.has(themeId), `${themeId} should be in the scheduling pool`);
+  }
+  // Unscheduled themes are absent from the pool entirely, entrants included.
+  for (const themeId of ['hull-run', 'mass-driver-detailed']) {
+    assert.equal(poolThemeIds.has(themeId), false, `${themeId} is unscheduled and must not be in the pool`);
+    assert.equal(pool.entrants.some((entrant) => entrant.themeId === themeId), false, `${themeId} entrants must not be in the pool`);
+  }
+  // Every pooled entrant belongs to a pooled theme, and no entrant is duplicated
+  // across the merged slices.
+  const poolLevelIds = pool.entrants.map((entrant) => entrant.levelId);
+  assert.equal(new Set(poolLevelIds).size, poolLevelIds.length, 'the pool must not duplicate entrants across slices');
+  for (const entrant of pool.entrants) assert.ok(poolThemeIds.has(entrant.themeId), `pooled entrant ${entrant.levelId} has an unpooled theme`);
+
+  // A merged catalog with the same theme in two slices is a collision the pool rejects.
+  const collision = makeRankCatalog(
+    makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v1', ''),
+    makeSchedulerCatalog(2, 1, false, [], 'rank-catalog-v2', ''),
+  );
+  assert.throws(() => schedulingPool(collision), /appears in more than one/, 'duplicate scheduled theme ids across slices must throw');
+}
+
+function testUnscheduledThemesNeverScheduledButRevealable(): void {
+  const pool = schedulingPool(rankCatalog);
+  const unscheduled = new Set(['hull-run', 'mass-driver-detailed']);
+  // Drive the pool scheduler to exhaustion for a participant; no served pair may
+  // come from an unscheduled theme.
+  const judged: Judged[] = [];
+  for (let index = 0; index < 400; index += 1) {
+    const next = nextScheduledMatchup(pool, 'unscheduled-guard', { judged });
+    if (!next) break;
+    assert.equal(unscheduled.has(next.themeId), false, `an unscheduled theme (${next.themeId}) was scheduled`);
+    judged.push({ matchupId: pairId(next.themeId, next.levelIdA, next.levelIdB), relative: 'a', aLevelId: next.levelIdA });
+  }
+  assert.ok(judged.length > 0, 'the pool served at least one matchup');
+
+  // Retired levels and their content are gone, but a returning voter's stored
+  // vote on an unscheduled theme still reconstructs into a reveal.
+  const a = findCatalogEntrant(rankCatalog, 'mass-driver-detailed-k4wz');
+  const b = findCatalogEntrant(rankCatalog, 'mass-driver-detailed-uk78');
+  assert.ok(a && b, 'unscheduled-theme entrants remain resolvable in the catalog');
+  assert.ok(findCatalogTheme(rankCatalog, 'mass-driver-detailed')?.unscheduled, 'mass-driver-detailed carries the unscheduled flag');
+  const vote: MatchupVote = {
+    matchupId: pairId('mass-driver-detailed', a!.levelId, b!.levelId),
+    aEntrantId: a!.levelId,
+    bEntrantId: b!.levelId,
+    verdict: 'a-better',
+    relative: 'a',
+    playCounts: { a: 1, b: 1 },
+    submittedAt: 'now',
+  };
+  const derived = completedMatchupsFromVotes(rankCatalog, [vote]);
+  assert.equal(derived.length, 1, 'a vote on an unscheduled theme still counts as judged history');
+  assert.equal(revealFromVote(rankCatalog, vote)?.a.levelId, a!.levelId, 'an unscheduled-theme vote remains revealable');
+}
+
+function testHistoricalV1VoteJudgedNeverReserved(): void {
+  // A returning voter's past decision on a v1 mass-driver pair. (The published
+  // v1 mass-driver entrants are 7rkv/bczy/vyxj/wo4m; the pair below is real.)
+  const a = findCatalogEntrant(rankCatalog, 'mass-driver-7rkv');
+  const b = findCatalogEntrant(rankCatalog, 'mass-driver-bczy');
+  assert.ok(a && b, 'v1 mass-driver entrants are in the catalog');
+  const matchupId = pairId('mass-driver', a!.levelId, b!.levelId);
+  const vote: MatchupVote = {
+    matchupId,
+    aEntrantId: a!.levelId,
+    bEntrantId: b!.levelId,
+    verdict: 'a-better',
+    relative: 'a',
+    playCounts: { a: 1, b: 1 },
+    submittedAt: 'now',
+  };
+  assert.equal(completedMatchupsFromVotes(rankCatalog, [vote]).length, 1, 'a v1 pair vote counts as judged');
+  assert.equal(findCatalogVersionForLevels(rankCatalog, a!.levelId, b!.levelId)?.benchmarkVersion, 'rank-catalog-v1', 'the v1 pair resolves to the v1 slice');
+
+  const pool = schedulingPool(rankCatalog);
+  const judged: Judged[] = [{ matchupId, relative: 'a', aLevelId: a!.levelId }];
+  for (let index = 0; index < 60; index += 1) {
+    const next = nextScheduledMatchup(pool, 'v1-returning-voter', { judged });
+    if (!next) break;
+    const id = pairId(next.themeId, next.levelIdA, next.levelIdB);
+    assert.notEqual(id, matchupId, 'the already-judged v1 pair is never re-served');
+    judged.push({ matchupId: id, relative: 'a', aLevelId: next.levelIdA });
+  }
+}
+
+function testFeaturedOpenerStaysBroadside(): void {
+  const pool = schedulingPool(rankCatalog);
+  // The featured opener is participant-salted across all featured pairs, but for
+  // a given participant it stays anchored to its theme as the pool grows.
+  // participant-1 lands on the broadside Fable-solo vs Sol-solo pairing.
+  const opener = nextScheduledMatchup(pool, 'participant-1', { judged: [] });
+  assert.ok(opener);
+  assert.equal(
+    pairId(opener!.themeId, opener!.levelIdA, opener!.levelIdB),
+    pairId('broadside', 'broadside-b4kd', 'broadside-b6ej'),
+    'a fresh participant still opens on the broadside featured pair',
+  );
+
+  // Whatever theme hosts a participant's opener, it is always a featured pair and
+  // never migrates onto an unscheduled theme.
+  const unscheduled = new Set(['hull-run', 'mass-driver-detailed']);
+  for (let index = 0; index < 60; index += 1) {
+    const first = nextScheduledMatchup(pool, `opener-participant-${index}`, { judged: [] });
+    assert.ok(first);
+    assert.equal(unscheduled.has(first!.themeId), false, 'the featured opener never comes from an unscheduled theme');
+    const ea = findCatalogEntrant(rankCatalog, first!.levelIdA);
+    const eb = findCatalogEntrant(rankCatalog, first!.levelIdB);
+    assert.equal(ea?.featured === true && eb?.featured === true, true, 'the opener is a featured pairing');
+  }
+}
+
+async function testPoolMatchupRecordsOwningSliceVersion(): Promise<void> {
+  // The served assignment must name the pair's owning slice, not a merged-pool
+  // marker, so the server validates and records the vote against the right version.
+  const store = new BenchmarkLocalStore(createMemoryStorage(), 'owning-version');
+  store.save({ participantId: 'participant-1' });
+  const api = new CatalogBenchmarkApi(rankCatalog, store);
+  const matchup = await api.nextMatchup({ participantId: 'participant-1' });
+  assert.ok(matchup);
+  const owning = findCatalogVersionForLevels(rankCatalog, matchup!.a.playableRef, matchup!.b.playableRef);
+  assert.ok(owning);
+  assert.equal(matchup!.benchmarkVersion, owning!.benchmarkVersion, 'the assignment records under the pair owning slice');
+  assert.equal(matchup!.benchmarkVersion, 'rank-catalog-v2', 'participant-1 opens on a v2 (broadside) pair');
+
+  // A participant whose opener is a v1 theme records under the v1 slice.
+  const v1Store = new BenchmarkLocalStore(createMemoryStorage(), 'owning-version-v1');
+  const v1Participant = findV1OpenerParticipant();
+  v1Store.save({ participantId: v1Participant });
+  const v1Api = new CatalogBenchmarkApi(rankCatalog, v1Store);
+  const v1Matchup = await v1Api.nextMatchup({ participantId: v1Participant });
+  assert.ok(v1Matchup);
+  assert.equal(v1Matchup!.benchmarkVersion, 'rank-catalog-v1', 'a v1-theme opener records under the v1 slice');
+}
+
+function findV1OpenerParticipant(): string {
+  const pool = schedulingPool(rankCatalog);
+  const v1Themes = new Set(['mass-driver', 'skyhook']);
+  for (let index = 0; index < 400; index += 1) {
+    const participantId = `v1-opener-${index}`;
+    const first = nextScheduledMatchup(pool, participantId, { judged: [] });
+    if (first && v1Themes.has(first.themeId)) return participantId;
+  }
+  throw new Error('no participant opened on a v1 theme');
 }
 
 function testVersionedSchedulerPool(): void {

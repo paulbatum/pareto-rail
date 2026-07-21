@@ -105,6 +105,10 @@ const publishedConfigurations = {
   ],
 };
 
+// Themes retired from scheduling: their levels stay in the gallery and past
+// votes on them still count, but the site never draws them into new matchups.
+const unscheduledThemeIds = new Set(['hull-run', 'mass-driver-detailed']);
+
 const delegationIntroduction = 'Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.';
 const delegationResponsibility = 'You remain fully responsible for the quality of the final product. Take an active role in refining the outputs from the subagent, not just passive review.';
 
@@ -340,7 +344,8 @@ export function buildVersion(benchmarkVersion, assignments, generatedAt) {
       ? assignments.filter((assignment) => assignment.retired || promotedDirectory(assignment.levelId))
       : assignments;
     if (completenessAssignments.length === 0 || completenessAssignments.some((assignment) => !promotedDirectory(assignment.levelId))) continue;
-    themes.push(parseTheme(themeId));
+    const theme = parseTheme(themeId);
+    themes.push(unscheduledThemeIds.has(themeId) ? { ...theme, unscheduled: true } : theme);
     for (const assignment of [...publishedAssignments]
       .sort((left, right) => left.levelId.localeCompare(right.levelId))) {
       if (assignment.retired) {
