@@ -128,13 +128,14 @@ function RevealStage({ reveal, onNext }: { reveal: RevealPayload; onNext: () => 
   return <><div className="reveal-grid">{card('a')}{card('b')}</div><div className="reveal-actions"><button className="button primary" type="button" onClick={onNext}>Next matchup</button></div></>;
 }
 
-function GenerationDetails({ entrant }: { entrant: RevealPayload['a'] }) {
+function GenerationDetails({ entrant, expanded = false }: { entrant: RevealPayload['a']; expanded?: boolean }) {
   const published = allCatalogEntrants(rankCatalog).find((candidate) => candidate.levelId === entrant.levelId);
   const run = entrant.run ?? published?.run;
   if (!run) return null;
   const configuration = configurationFor(entrant.configurationId);
-  return <details className="run-details">
-    <summary><span>Generation details</span><span>{formatDuration(run.generationWallTimeSeconds)} · {run.models.length} model{run.models.length === 1 ? '' : 's'}</span></summary>
+  const Shell = expanded ? 'div' : 'details';
+  return <Shell className={`run-details${expanded ? ' expanded' : ''}`}>
+    {!expanded && <summary><span>Generation details</span><span>{formatDuration(run.generationWallTimeSeconds)} · {run.models.length} model{run.models.length === 1 ? '' : 's'}</span></summary>}
     <div className="run-details-body">
       <dl className="run-facts">
         <div><dt>Level ID</dt><dd>{entrant.levelId}</dd></div>
@@ -150,7 +151,7 @@ function GenerationDetails({ entrant }: { entrant: RevealPayload['a'] }) {
       {configuration && <WorkflowDetails configuration={configuration} />}
       <p className="run-data-note">Generation time covers the model session. Full run time also includes deterministic setup, sealing, and verification. Total input counts every token the model read, cached or not, since each harness bills first-sight tokens differently. Output includes reasoning tokens.</p>
     </div>
-  </details>;
+  </Shell>;
 }
 
 function WorkflowDetails({ configuration }: { configuration: RankCatalogConfiguration }) {
@@ -323,7 +324,7 @@ function VerdictLog({ matchups, onUndo }: { matchups: readonly CompletedMatchup[
       <div><strong className="verdict-theme">{themeTitleForMatchup(matchup.matchupId)}</strong><span className="verdict-separator"> — </span><span className={`verdict-outcome verdict-${matchup.vote.verdict}`}>{verdictOutcome(matchup.vote.verdict, matchup.reveal)}</span></div>
       {import.meta.env.DEV && index === 0 && onUndo && <button className="verdict-undo" type="button" onClick={onUndo}>Undo</button>}
     </div>
-    <details className="verdict-data"><summary>Inspect level generation records</summary><div className="verdict-run-grid"><article><h4>Level A</h4><GenerationDetails entrant={matchup.reveal.a} /></article><article><h4>Level B</h4><GenerationDetails entrant={matchup.reveal.b} /></article></div></details>
+    <details className="verdict-data"><summary>Inspect level generation records</summary><div className="verdict-run-grid"><article><h4>Level A</h4><GenerationDetails entrant={matchup.reveal.a} expanded /></article><article><h4>Level B</h4><GenerationDetails entrant={matchup.reveal.b} expanded /></article></div></details>
   </li>)}</ol>;
 }
 
