@@ -666,7 +666,9 @@ function tintEnemy(record: EnemyRecord, camera: PerspectiveCamera) {
       material.color.copy(hdr(PANEL_WHITE, part.kind === 'hull' ? 0.7 : 1.8));
       continue;
     }
-    material.color.copy(part.base).multiplyScalar(part.kind === 'hull' ? 0.34 + 0.66 * closeness : 0.5 + 0.5 * closeness);
+    // Hulls sit well under the sky's value so white hardware still reads as a
+    // solid shape against a bright cloud deck; trim and lamps carry the accent.
+    material.color.copy(part.base).multiplyScalar(part.kind === 'hull' ? 0.22 + 0.36 * closeness : 0.52 + 0.58 * closeness);
     // A charging sentry visibly heats its iris before it spits.
     if (part.kind === 'lamp' && charge > 0) material.color.lerp(hdr(ALERT, 1.6), charge * 0.8);
   }

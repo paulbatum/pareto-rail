@@ -15,13 +15,13 @@ export const ALERT = new Color(1.0, 0.16, 0.10);
 
 // Sky ramp: the four altitudes the run passes through.
 export const SKY_STORM = new Color(0.088, 0.098, 0.116);
-export const SKY_SUNLIT = new Color(0.185, 0.330, 0.520);
+export const SKY_SUNLIT = new Color(0.105, 0.235, 0.470);
 export const SKY_INDIGO = new Color(0.038, 0.052, 0.130);
 export const SKY_VOID = new Color(0.004, 0.006, 0.016);
 
 export const SUNLIGHT = new Color(1.0, 0.95, 0.85);
 export const CLOUD_GREY = new Color(0.36, 0.39, 0.44);
-export const CLOUD_LIT = new Color(0.92, 0.90, 0.86);
+export const CLOUD_LIT = new Color(0.80, 0.81, 0.82);
 export const STARLIGHT = new Color(0.82, 0.87, 1.0);
 
 // Locks charge from cold instrument cyan through white to hazard orange: the

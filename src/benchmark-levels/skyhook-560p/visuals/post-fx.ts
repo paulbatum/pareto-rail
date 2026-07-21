@@ -18,7 +18,7 @@ export function composeSkyhookOutput({ base }: LevelPostComposeInput): LevelPost
   const edge = centered.length().mul(1.9).clamp(0, 1);
 
   // Thick air lifts the blacks and pulls everything toward the sky's grey.
-  const hazed = mix(base, base.add(vec4(0.055, 0.062, 0.075, 0)), hazeUniform.clamp(0, 1));
+  const hazed = mix(base, base.add(vec4(0.030, 0.036, 0.046, 0)), hazeUniform.clamp(0, 1));
 
   // Hull strain burns in from the edges of the frame, never the middle, so it
   // never hides a target.

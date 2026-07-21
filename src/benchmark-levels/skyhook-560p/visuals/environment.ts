@@ -123,7 +123,7 @@ function makeNonOccluding(object: Object3D) {
 function createTetherRibbon() {
   const group = new Group();
   const segments = 150;
-  const halfWidth = 0.44;
+  const halfWidth = 0.62;
 
   for (const axis of [new Vector3(1, 0, 0), new Vector3(0, 0, 1)]) {
     const positions = new Float32Array((segments + 1) * 2 * 3);
@@ -234,18 +234,18 @@ function createCowl(alarms: MeshBasicMaterial[], sparkAnchors: Vector3[]) {
   // corner of the frame. The car has to be visible — it is what the latchers
   // bite and what the Descender is trying to tear apart — but it must never be
   // somewhere a target can hide behind it.
-  const lip = new Mesh(new BoxGeometry(13, 0.8, 3.0), new MeshBasicMaterial({ color: PANEL_WHITE.clone().multiplyScalar(0.62) }));
-  lip.position.set(0, -4.2, -6.4);
+  const lip = new Mesh(new BoxGeometry(13, 0.8, 3.0), new MeshBasicMaterial({ color: PANEL_WHITE.clone().multiplyScalar(0.26) }));
+  lip.position.set(0, -4.55, -6.1);
   lip.rotation.x = -0.34;
   group.add(lip);
 
   const chevrons = new Mesh(new BoxGeometry(11.4, 0.34, 0.3), new MeshBasicMaterial({ color: hdr(HAZARD, 0.5) }));
-  chevrons.position.set(0, -3.92, -5.8);
+  chevrons.position.set(0, -4.24, -5.6);
   chevrons.rotation.x = -0.34;
   group.add(chevrons);
 
   for (const side of [-1, 1]) {
-    const strut = new Mesh(new BoxGeometry(0.4, 1.7, 0.4), new MeshBasicMaterial({ color: PANEL_GREY.clone().multiplyScalar(1.2) }));
+    const strut = new Mesh(new BoxGeometry(0.4, 1.7, 0.4), new MeshBasicMaterial({ color: PANEL_GREY.clone().multiplyScalar(0.7) }));
     strut.position.set(side * 6.5, -3.85, -6.4);
     strut.rotation.z = side * 0.24;
     group.add(strut);
@@ -260,17 +260,17 @@ function createCowl(alarms: MeshBasicMaterial[], sparkAnchors: Vector3[]) {
   // Clamp arms: the car is holding the ribbon, and you can see it holding on.
   // They run out of the bottom-left corner, below the play area.
   for (const reach of [-0.9, 1.1]) {
-    const arm = new Mesh(new BoxGeometry(0.42, 0.42, 6.2), new MeshBasicMaterial({ color: STEEL.clone().multiplyScalar(0.75) }));
-    arm.position.set(TETHER_OFFSET_X / 2 - 1.4, -3.8 + reach * 0.25, -7.0 + reach);
+    const arm = new Mesh(new BoxGeometry(0.42, 0.42, 6.2), new MeshBasicMaterial({ color: STEEL.clone().multiplyScalar(0.42) }));
+    arm.position.set(TETHER_OFFSET_X / 2 - 0.4, -4.4 + reach * 0.25, -7.0 + reach);
     arm.rotation.y = Math.PI / 2 - 0.34;
     arm.rotation.z = 0.16;
     group.add(arm);
 
-    const jaw = new Mesh(new TorusGeometry(1.1, 0.22, 5, 12, Math.PI * 1.4), new MeshBasicMaterial({ color: PANEL_WHITE.clone().multiplyScalar(0.7) }));
-    jaw.position.set(TETHER_OFFSET_X + 0.6, -3.0 + reach * 0.4, -7.0 + reach);
+    const jaw = new Mesh(new TorusGeometry(1.1, 0.22, 5, 12, Math.PI * 1.4), new MeshBasicMaterial({ color: PANEL_WHITE.clone().multiplyScalar(0.34) }));
+    jaw.position.set(TETHER_OFFSET_X, TETHER_OFFSET_Y + 1.4 + reach * 0.4, -7.0 + reach);
     jaw.rotation.y = Math.PI / 2;
     group.add(jaw);
-    sparkAnchors.push(new Vector3(TETHER_OFFSET_X + 0.6, -3.0 + reach * 0.4, -7.0 + reach));
+    sparkAnchors.push(new Vector3(TETHER_OFFSET_X, TETHER_OFFSET_Y + 1.4 + reach * 0.4, -7.0 + reach));
   }
 
   return group;
@@ -329,8 +329,8 @@ export function createEnvironmentInternal(scene: Scene): Environment {
   const applyAtmosphere = createAtmosphereRamp(scene, [
     { progress: 0, background: SKY_STORM, fog: SKY_STORM, density: 0.0145 },
     { progress: DECK_U * 0.72, background: SKY_STORM.clone().lerp(SKY_SUNLIT, 0.25), fog: CLOUD_GREY, density: 0.021 },
-    { progress: DECK_U, background: SKY_SUNLIT, fog: CLOUD_LIT, density: 0.026 },
-    { progress: DECK_U + 0.035, background: SKY_SUNLIT, fog: SKY_SUNLIT, density: 0.0055 },
+    { progress: DECK_U, background: SKY_SUNLIT, fog: CLOUD_LIT, density: 0.019 },
+    { progress: DECK_U + 0.035, background: SKY_SUNLIT, fog: SKY_SUNLIT, density: 0.0038 },
     { progress: THIN_U, background: SKY_SUNLIT.clone().lerp(SKY_INDIGO, 0.55), fog: SKY_INDIGO, density: 0.0016 },
     { progress: DESCENDER_U, background: SKY_INDIGO.clone().lerp(SKY_VOID, 0.7), fog: SKY_VOID, density: 0.0004 },
     { progress: 1, background: SKY_VOID, fog: SKY_VOID, density: 0.0002 },
@@ -443,8 +443,8 @@ export function createEnvironmentInternal(scene: Scene): Environment {
   // Sun: the light that arrives the moment the car clears the deck.
   const sun = new Group();
   const sunMaterials: MeshBasicMaterial[] = [];
-  const disc = new Mesh(new CircleGeometry(7.5, 26), createAdditiveBasicMaterial({ color: hdr(SUNLIGHT, 2.2), side: DoubleSide, opacity: 0 }));
-  const halo = new Mesh(new CircleGeometry(26, 26), createAdditiveBasicMaterial({ color: hdr(SUNLIGHT, 0.35), side: DoubleSide, opacity: 0 }));
+  const disc = new Mesh(new CircleGeometry(4.6, 26), createAdditiveBasicMaterial({ color: hdr(SUNLIGHT, 1.25), side: DoubleSide, opacity: 0 }));
+  const halo = new Mesh(new CircleGeometry(19, 26), createAdditiveBasicMaterial({ color: hdr(SUNLIGHT, 0.35), side: DoubleSide, opacity: 0 }));
   halo.position.z = -1;
   sunMaterials.push(disc.material as MeshBasicMaterial, halo.material as MeshBasicMaterial);
   sun.add(halo, disc);
@@ -604,11 +604,13 @@ export function updateSky(environment: Environment, cameraPosition: Vector3, air
   environment.starMaterial.opacity = MathUtils.clamp((0.55 - air) / 0.5, 0, 1) * 0.95;
 
   environment.sun.position.copy(cameraPosition)
-    .addScaledVector(scratch.set(0.42, 0.78, -0.46).normalize(), 300);
+    .addScaledVector(scratch.set(0.38, 0.80, 0.46).normalize(), 300);
   environment.sun.lookAt(cameraPosition);
   const sunlit = MathUtils.clamp((cameraPosition.y - (DECK_Y - 20)) / 70, 0, 1);
   environment.sunMaterials[0].opacity = sunlit;
-  environment.sunMaterials[1].opacity = sunlit * (0.42 + Math.sin(elapsed * 0.6) * 0.05);
+  // The halo is atmospheric scatter: it dies with the air, so the sun hardens
+  // from a bloom-soft flare above the deck into a bare point in vacuum.
+  environment.sunMaterials[1].opacity = sunlit * air * (0.5 + Math.sin(elapsed * 0.6) * 0.06);
 
   environment.planet.position.copy(cameraPosition).add(scratch.set(0, -300, 0));
   environment.cloudFloor.position.copy(cameraPosition).add(scratch.set(0, -150, 0));

@@ -133,10 +133,12 @@ export function climbOffset(curve: CatmullRomCurve3, u: number, x: number, y: nu
 /** How much rail parameter one world unit of climb is worth. */
 const U_PER_UNIT = 1 / CLIMB_HEIGHT;
 
-// The tether ribbon rides just off the camera's left shoulder and the car's
-// clamp arms reach for it. Visuals and gameplay both read these numbers.
-export const TETHER_OFFSET_X = -11.5;
-export const TETHER_OFFSET_Y = 1.6;
+// The ribbon runs past the car's lower-left shoulder, so it leaves the frame
+// through the bottom-left corner and converges on the vanishing point ahead:
+// the read is a cable dropping away beneath you, not a wire strung sideways.
+// Visuals and gameplay both place against these numbers.
+export const TETHER_OFFSET_X = -3.6;
+export const TETHER_OFFSET_Y = -6.4;
 
 // ---- spawn timeline ------------------------------------------------------------
 
