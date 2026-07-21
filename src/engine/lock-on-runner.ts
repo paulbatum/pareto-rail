@@ -935,7 +935,14 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
       projectile.speed = impactContractSpeed(distance, projectile.impactAt - worldTime);
       const desired = toTarget.normalize().multiplyScalar(projectile.speed);
-      projectile.velocity.lerp(desired, Math.min(1, dt * 8));
+      // The smoothed steering caps turn rate at 8 rad/s, while the overdue
+      // contract speed is proportional to distance — together those make a
+      // stable orbit (turn radius = speed/8 ≥ distance) that a shot which
+      // barely missed its beat can never leave. Overdue shots steer straight
+      // at the target instead; distance-proportional speed then guarantees
+      // convergence at any frame rate.
+      if (worldTime >= projectile.impactAt) projectile.velocity.copy(desired);
+      else projectile.velocity.lerp(desired, Math.min(1, dt * 8));
       projectile.mesh.position.addScaledVector(projectile.velocity, dt);
       projectile.mesh.lookAt(enemy.mesh.position);
     }
