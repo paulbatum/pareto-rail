@@ -60,6 +60,8 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
           </svg>
           <span>Pareto Rail</span>
         </RouteLink>
+        {/* Filled by GameFrame during play; collapses to nothing everywhere else. */}
+        <div className="nav-game-slot" id="nav-game-slot" />
         <nav aria-label="Primary">
           {navigation.map((item) => {
             const active = item.href === currentPath

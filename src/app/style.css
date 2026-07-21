@@ -368,7 +368,6 @@ body.game-ui-hidden .debug-panel,
 body.game-ui-hidden .perf-overlay { display: none !important; }
 body.game-active .site-nav a { pointer-events: auto; }
 html:fullscreen .site-nav,
-html:fullscreen .game-toolbar,
 html:fullscreen .level-picker,
 html:fullscreen .debug-panel,
 html:fullscreen .perf-overlay { display: none; }
@@ -376,8 +375,13 @@ html:fullscreen .perf-overlay { display: none; }
    HUD. `translateZ(0)` makes it the containing block for the runtime's
    position:fixed overlays (HUD, end screen, pause menu), so they inset with it. */
 .game-frame { position: fixed; inset: var(--nav-h, 0px) 0 0 0; background: #02040a; transform: translateZ(0); }
-.game-toolbar { position: fixed; top: 0; left: 0; right: 0; z-index: 15; display: flex; justify-content: space-between; padding: 14px 20px; pointer-events: none; background: linear-gradient(rgb(2 4 10 / 72%), transparent); }
-.game-toolbar a, .game-toolbar span { pointer-events: auto; color: var(--ghost); font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
+/* The slot claims the space between the wordmark and the primary nav, so the
+   toolbar centres in that gap instead of butting against either. */
+.nav-game-slot { display: flex; flex: 1; justify-content: center; min-width: 0; }
+.nav-game-slot:empty { display: none; }
+.game-toolbar { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+.game-toolbar a, .game-toolbar span { color: var(--muted); font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; white-space: nowrap; }
+.game-toolbar .game-title { overflow: hidden; color: var(--ink); text-overflow: ellipsis; }
 .game-toolbar a:hover { color: var(--ink); }
 .game-mount { position: absolute; inset: 0; }
 .app-shell .game-frame { font-family: var(--mono); }

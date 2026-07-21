@@ -23,6 +23,13 @@ export function GameFrame({ level, title = level.title, backPath = '/levels', ba
   const frameRef = useRef<HTMLElement>(null);
   const runtimeRef = useRef<HTMLDivElement>(null);
   const [endPanel, setEndPanel] = useState<HTMLElement | null>(null);
+  /* The back link and level title live in the site header rather than over the
+     render, where they crowded the score and lock readouts. */
+  const [navSlot, setNavSlot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setNavSlot(document.getElementById('nav-game-slot'));
+  }, []);
 
   useEffect(() => {
     const runtimeRoot = runtimeRef.current;
@@ -61,14 +68,17 @@ export function GameFrame({ level, title = level.title, backPath = '/levels', ba
 
   return <>
     <section className="game-frame" aria-label={`${title} game`} ref={frameRef}>
-      <div className="game-toolbar" data-game-ui>
-        <RouteLink className="game-back" href={backPath} onNavigate={onNavigate}>← {backLabel}</RouteLink>
-        <span className="game-title">{title}</span>
-      </div>
       <div className="game-mount">
         <GameRuntimeShell ref={runtimeRef} />
       </div>
     </section>
+    {navSlot ? createPortal(
+      <div className="game-toolbar">
+        <RouteLink className="game-back" href={backPath} onNavigate={onNavigate}>← {backLabel}</RouteLink>
+        <span className="game-title">{title}</span>
+      </div>,
+      navSlot,
+    ) : null}
     {endPanel && endContent ? createPortal(endContent, endPanel) : null}
   </>;
 }
