@@ -1,4 +1,4 @@
-import { MathUtils, Object3D, Quaternion, Raycaster, Vector2, Vector3 } from 'three';
+import { MathUtils, type Material, Object3D, Quaternion, Raycaster, Vector2, Vector3 } from 'three';
 import {
   setActionSfxQuantization,
   setShotDelaySettings,
@@ -26,6 +26,22 @@ import { smoothRunProgress } from './rail';
 import { scoreForKill as defaultScoreForKill, rankForRun as defaultRankForRun, type RunSummary } from './scoring';
 
 const RETICLE_DISTANCE = 24;
+const RETICLE_RENDER_ORDER = 1000;
+
+// The reticle sits at a real world depth, so level geometry closer than
+// RETICLE_DISTANCE would otherwise swallow it. It reads as a sight, not as an
+// object in the world, so draw it last and ignore the depth buffer.
+function keepReticleOnTop(reticle: Object3D) {
+  reticle.traverse((child) => {
+    child.renderOrder = RETICLE_RENDER_ORDER;
+    const { material } = child as { material?: Material | Material[] };
+    if (!material) return;
+    for (const entry of Array.isArray(material) ? material : [material]) {
+      entry.depthTest = false;
+      entry.depthWrite = false;
+    }
+  });
+}
 export const LOCK_RADIUS_NDC = 0.085;
 const PROJECTILE_SPEED = 82;
 const PROJECTILE_MAX_SPEED = PROJECTILE_SPEED * 3;
@@ -152,6 +168,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const raycaster = new Raycaster();
   const reticle = visuals.createReticle();
   reticle.userData.raildRole = 'reticle';
+  keepReticleOnTop(reticle);
 
   let state: RunState = 'attract';
   let runNumber = 0;
