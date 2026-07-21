@@ -31,6 +31,13 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
         </div>
       </div>
 
+      <button type="button" data-game-ui data-pause="open" className="touch-pause" aria-label="Pause">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <rect x="3.4" y="2.6" width="3.2" height="10.8" />
+          <rect x="9.4" y="2.6" width="3.2" height="10.8" />
+        </svg>
+      </button>
+
       <div id="end-screen" data-game-ui className="end-screen hidden">
         <div className="end-panel">
           <div className="label">Score</div>
@@ -53,29 +60,36 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
         className="pause-overlay hidden"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="pause-title"
+        aria-label="Paused"
       >
         <div className="pause-panel">
-          <h1 id="pause-title">Paused</h1>
-          <button type="button" className="button primary" data-pause="resume">Resume</button>
-          <button type="button" className="button" data-pause="end-run">End Run</button>
-          <button type="button" className="button" data-pause="fullscreen">Fullscreen</button>
-          <label>
-            <span>Music</span>
-            <input data-pause="music" type="range" min="0" max="100" defaultValue="80" />
-          </label>
-          <label>
-            <span>Sound Effects</span>
-            <input data-pause="sfx" type="range" min="0" max="100" defaultValue="80" />
-          </label>
-          <label>
-            <span>Bloom</span>
-            <input data-pause="bloom" type="range" min="0" max="100" defaultValue="100" />
-          </label>
-          <label>
-            <span>Motion Blur</span>
-            <input data-pause="motion-blur" type="range" min="0" max="100" defaultValue="100" />
-          </label>
+          <div className="pause-columns">
+            <div className="pause-actions">
+              <button type="button" className="button primary" data-pause="resume">Resume</button>
+              <button type="button" className="button" data-pause="fullscreen">Fullscreen</button>
+              <button type="button" className="button pause-exit" data-pause="end-run">End Run (Exit)</button>
+            </div>
+            <div className="pause-settings">
+              <h2>Sound</h2>
+              <label>
+                <span>Music</span>
+                <input data-pause="music" type="range" min="0" max="100" defaultValue="80" />
+              </label>
+              <label>
+                <span>Effects</span>
+                <input data-pause="sfx" type="range" min="0" max="100" defaultValue="80" />
+              </label>
+              <h2>Visual</h2>
+              <label>
+                <span>Bloom</span>
+                <input data-pause="bloom" type="range" min="0" max="100" defaultValue="100" />
+              </label>
+              <label>
+                <span>Motion Blur</span>
+                <input data-pause="motion-blur" type="range" min="0" max="100" defaultValue="100" />
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 

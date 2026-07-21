@@ -120,6 +120,9 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 /* ---------- Buttons ---------- */
 .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); font: inherit; font-size: 12px; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; cursor: pointer; transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
 .button:hover, .button:focus-visible { background: var(--card); transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--ghost); }
+/* This sheet loads after the game's, so its .button display wins over the
+   game's generic .hidden at equal specificity without this. */
+.button.hidden { display: none; }
 .button.primary { color: var(--cta-ink); background: var(--cta); border-color: var(--cta); }
 .button.primary:hover, .button.primary:focus-visible { background: color-mix(in srgb, var(--cta) 88%, white); transform: translate(-2px, -2px); box-shadow: 4px 4px 0 color-mix(in srgb, var(--cta) 40%, var(--paper)); }
 /* Home cards handle their own hover affordance; the CTA span stays static. */
@@ -372,10 +375,19 @@ body.game-active .site-nav a { pointer-events: auto; }
 html:fullscreen .site-nav,
 html:fullscreen .debug-panel,
 html:fullscreen .perf-overlay { display: none; }
+/* Phone landscape has no vertical room to spare, so the header steps out during
+   play and returns with the end panel — which is where its back link is next
+   needed. `--nav-h` republishes as 0 via the header's ResizeObserver, so the
+   game frame reclaims the row automatically. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+  body.game-active:not(.run-ended) .site-nav { display: none; }
+}
 /* The frame sits below the site nav so the header never covers the render or the
    HUD. `translateZ(0)` makes it the containing block for the runtime's
    position:fixed overlays (HUD, end screen, pause menu), so they inset with it. */
-.game-frame { position: fixed; inset: var(--nav-h, 0px) 0 0 0; background: #02040a; transform: translateZ(0); }
+/* `touch-action: none` claims touch drags for aiming; without it Safari reads
+   them as scroll gestures and slides its minimized chrome back in. */
+.game-frame { position: fixed; inset: var(--nav-h, 0px) 0 0 0; background: #02040a; transform: translateZ(0); touch-action: none; }
 /* The slot claims the space between the wordmark and the primary nav, so the
    toolbar centres in that gap instead of butting against either. */
 .nav-game-slot { display: flex; flex: 1; justify-content: center; min-width: 0; }

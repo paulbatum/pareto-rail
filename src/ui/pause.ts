@@ -12,6 +12,7 @@ export type PauseMenuOptions = {
   initialMotionBlur: number;
   fullscreenAvailable: boolean;
   onResume: () => void;
+  onOpen: () => void;
   onEndRun: () => void;
   onFullscreen: () => void;
   onMusicVolume: (value: number) => void;
@@ -27,6 +28,8 @@ export function createPauseMenu(options: PauseMenuOptions) {
   // Keep this optional so a stale game frame from a hot update cannot prevent
   // the rest of the runtime, including Escape handling, from mounting.
   const endRun = root.querySelector<HTMLButtonElement>('[data-pause="end-run"]');
+  // Touch devices have no Escape key; this is their only way into the menu.
+  const open = root.querySelector<HTMLButtonElement>('[data-pause="open"]');
   const fullscreen = requireElement<HTMLButtonElement>(root, '[data-pause="fullscreen"]');
   const music = requireElement<HTMLInputElement>(root, '[data-pause="music"]');
   const sfx = requireElement<HTMLInputElement>(root, '[data-pause="sfx"]');
@@ -49,6 +52,7 @@ export function createPauseMenu(options: PauseMenuOptions) {
   const onBloom = () => options.onBloom(Number(bloom.value));
   const onMotionBlur = () => options.onMotionBlur(Number(motionBlur.value));
   resume.addEventListener('click', options.onResume);
+  open?.addEventListener('click', options.onOpen);
   endRun?.addEventListener('click', options.onEndRun);
   fullscreen.addEventListener('click', options.onFullscreen);
   document.addEventListener('fullscreenchange', updateFullscreenText);
@@ -62,6 +66,7 @@ export function createPauseMenu(options: PauseMenuOptions) {
     },
     dispose() {
       resume.removeEventListener('click', options.onResume);
+      open?.removeEventListener('click', options.onOpen);
       endRun?.removeEventListener('click', options.onEndRun);
       fullscreen.removeEventListener('click', options.onFullscreen);
       document.removeEventListener('fullscreenchange', updateFullscreenText);

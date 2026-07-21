@@ -187,6 +187,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       initialBloom: getBloomLevel() * 100,
       initialMotionBlur: getMotionBlurLevel() * 100,
       onResume: () => setPaused(false),
+      onOpen: () => setPaused(true),
       onEndRun: () => { bus.emit('runendrequest', undefined); setPaused(false); },
       onFullscreen: toggleFullscreen,
       onMusicVolume: (value) => { localStorage.setItem('pareto-rail-music-volume', `${value}`); audio.setMusicVolume(value / 100); },
@@ -205,9 +206,14 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const runtime = level.createRuntime({ scene, camera, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(fullscreenAvailable), debugValue });
     stack.add(() => runtime.dispose());
     const offRunEnd = bus.on('runend', (summary) => {
+      document.body.classList.add('run-ended');
       onRunEnd?.(summary, launchContext);
     });
     stack.add(offRunEnd);
+    /* Phone-landscape CSS hides the site header during play but restores it with
+       the end panel, where its back link is the way out. */
+    const offRunStart = bus.on('runstart', () => document.body.classList.remove('run-ended'));
+    stack.add(() => { offRunStart(); document.body.classList.remove('run-ended'); });
     if (import.meta.env.DEV) {
       try {
         const installedDebugPanel = await import('../ui/debug-panel').then(({ installDebugPanel }) => installDebugPanel({ id: level.id, bpm: level.bpm, debugSelector: level.debugSelector, urlParams, mountPerfReadout: perfOverlay ? (host) => perfOverlay.mount(host) : undefined })) as { dispose?: () => void } | undefined;

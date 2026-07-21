@@ -92,6 +92,34 @@ canvas {
   background: linear-gradient(to bottom, rgb(2 4 10 / 55%), transparent);
 }
 
+/* Escape is the pause key everywhere else; touch screens get a corner button.
+   The HUD's lock readout steps left to clear it. */
+.touch-pause {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
+  display: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--cyan);
+  background: rgb(3 8 18 / 62%);
+  border: 1px solid var(--cyan-dim);
+  cursor: pointer;
+}
+
+.touch-pause svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+@media (pointer: coarse) {
+  .touch-pause { display: grid; place-items: center; }
+  .hud { padding-right: 84px; }
+}
+
 .hud-cell {
   display: grid;
   gap: 2px;
@@ -437,27 +465,74 @@ canvas {
 
 .pause-panel {
   display: grid;
-  gap: 18px;
-  width: min(420px, calc(100vw - 32px));
-  padding: 28px 32px;
+  gap: 16px;
+  width: min(560px, calc(100vw - 32px));
+  padding: 22px 26px;
   background: #1F1B15;
   border: 1px solid #332E22;
   box-shadow: 6px 6px 0 rgb(2 4 10 / 55%);
 }
 
-.game-frame .pause-panel h1 {
+.pause-columns {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px 28px;
+}
+
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Quit sits last and apart, pinned to the column's foot. */
+.pause-actions .pause-exit { margin-top: auto; }
+
+.pause-settings {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.pause-settings h2 {
   margin: 0;
-  font-family: Archivo, system-ui, sans-serif;
-  font-size: 22px;
-  font-weight: 750;
-  letter-spacing: -.02em;
   color: #F2EDDF;
-  text-align: left;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #332E22;
+  padding-bottom: 5px;
+}
+
+.pause-settings h2 + label { margin-top: 2px; }
+
+/* Narrow portrait screens can't fit both columns side by side. */
+@media (max-width: 460px) {
+  .pause-columns { grid-template-columns: 1fr; }
+}
+
+/* End Run leaves the run behind, so it sits apart from the ordinary actions
+   and carries a warning tint. */
+.pause-panel .pause-exit {
+  color: #ff5d6c;
+  background: transparent;
+  border-color: rgb(255 93 108 / 45%);
+}
+
+.pause-panel .pause-exit:hover,
+.pause-panel .pause-exit:focus-visible {
+  color: #ff8290;
+  background: rgb(255 93 108 / 12%);
+  box-shadow: 4px 4px 0 rgb(255 93 108 / 25%);
 }
 
 .pause-panel label {
   display: grid;
-  gap: 8px;
+  grid-template-columns: 88px 1fr;
+  align-items: center;
+  gap: 12px;
   color: #948B75;
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 10px;
