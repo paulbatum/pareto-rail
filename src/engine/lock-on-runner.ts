@@ -352,24 +352,26 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   }
 
   function updateAttractCamera(dt: number) {
-    if (level.updateAttractCamera) {
-      level.updateAttractCamera({ camera, curve, modeTime, dt });
-    } else {
-      const base = curve.getPointAt(0);
-      const lookBase = curve.getPointAt(0.03);
-      const drift = new Vector3(
-        Math.sin(modeTime * 0.7) * 0.035,
-        Math.cos(modeTime * 0.9) * 0.025,
-        Math.sin(modeTime * 0.5) * 0.02,
-      );
-      const lookDrift = new Vector3(
-        Math.sin(modeTime * 0.55 + 1.4) * 0.07,
-        Math.cos(modeTime * 0.6) * 0.045,
-        0,
-      );
-      camera.position.copy(base).add(drift);
-      camera.lookAt(lookBase.clone().add(lookDrift));
-    }
+    // Establish the default attract pose before the level hook, giving
+    // updateAttractCamera the same contract as updateCameraEffects: a
+    // freshly-placed camera it may overwrite or nudge. Without the reset, an
+    // incremental adjustment like `camera.rotation.z +=` integrates across
+    // frames into a frame-rate-dependent roll.
+    const base = curve.getPointAt(0);
+    const lookBase = curve.getPointAt(0.03);
+    const drift = new Vector3(
+      Math.sin(modeTime * 0.7) * 0.035,
+      Math.cos(modeTime * 0.9) * 0.025,
+      Math.sin(modeTime * 0.5) * 0.02,
+    );
+    const lookDrift = new Vector3(
+      Math.sin(modeTime * 0.55 + 1.4) * 0.07,
+      Math.cos(modeTime * 0.6) * 0.045,
+      0,
+    );
+    camera.position.copy(base).add(drift);
+    camera.lookAt(lookBase.clone().add(lookDrift));
+    level.updateAttractCamera?.({ camera, curve, modeTime, dt });
     captureCameraBaseAndApplyEdgeLook(dt);
   }
 
