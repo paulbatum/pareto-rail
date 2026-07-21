@@ -399,7 +399,9 @@ html:fullscreen .perf-overlay { display: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 @media (max-width: 640px) {
   /* Row one is the wordmark and the icons; the links wrap to their own row. */
-  .site-nav { flex-wrap: wrap; padding: 7px 20px; gap: 10px; }
+  /* Keep the safe-area insets from the base rule (line 17) so an installed app's
+     header still clears the status bar; only the flat 7px/20px would otherwise win. */
+  .site-nav { flex-wrap: wrap; padding: calc(7px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-right, 0px)) 7px calc(20px + env(safe-area-inset-left, 0px)); gap: 10px; }
   .nav-cluster { display: contents; }
   .site-nav nav { order: 1; width: 100%; justify-content: space-between; flex-wrap: wrap; }
   .nav-actions { gap: 18px; }
