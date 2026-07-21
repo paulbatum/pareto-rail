@@ -1,9 +1,11 @@
 import mitLicense from '../../../LICENSE?raw';
 import thirdPartyNotices from '../../../THIRD_PARTY_NOTICES.md?raw';
+import aboutContent from '../about.md?raw';
 import { levelMetadatas } from '../../levels';
 import { allCatalogEntrants, rankCatalog } from '../../benchmark/catalog';
 import { homeCopy } from '../content';
 import { RouteLink } from '../components/RouteLink';
+import { Markdown } from '../components/Markdown';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
@@ -123,11 +125,7 @@ export function AboutPage() {
       <p className="eyebrow">About</p>
       <h1>Pareto Rail</h1>
       <p className="lede">Built by <a href="https://x.com/paulbatum" target="_blank" rel="noreferrer">@paulbatum</a></p>
-      <h2>Methodology</h2>
-      <p>Every benchmark level here was built by an AI coding agent, unattended, in one shot. Each agent gets the same assignment: a short theme, the standing brief every level in this project is built to, and a clean checkout of the game with the hand-built levels as reference. Whatever it submits is what you play - no human edits, no retries for quality.</p>
-      <p>Before a level enters the pool it has to clear four mechanical gates: it must typecheck, build, stay inside its own level directory, and meet a basic gameplay floor.</p>
-      <p>Cost is measured after each run by replaying the agent's full transcript - including any subagents it spawned - against per-model pricing. Some entrants bill real metered API spend; others run on subscription plans and are priced the same way for comparability.</p>
-      <p>Judging is blind pairwise play. You get two levels built from the same theme. Your votes fit a Bradley-Terry model per entrant, plotted against average cost as your personal quality-versus-cost curve.</p>
+      <Markdown source={aboutContent} />
       <h2>Open source</h2>
       <p>Pareto Rail is released under the MIT License. Third-party software, data, and reference material retain their original terms.</p>
       <div className="legal-disclosures">
@@ -140,9 +138,6 @@ export function AboutPage() {
           <pre className="legal-document">{thirdPartyNotices}</pre>
         </details>
       </div>
-      <h2>Privacy</h2>
-      <p>Pareto Rail uses Vercel Web Analytics to measure aggregate traffic. It sets no cookies, does not track you across sites, and does not build a profile of you.</p>
-      <p>The site does keep some things in your browser's local storage: your theme and display preferences, audio and visual settings, your best local run for each level, and the votes you've cast. That data stays on your device - clearing your browser storage erases it. Alongside it we store a random identifier that is generated in your browser and sent with your votes, so that repeat votes from the same visitor can be recognised when compiling the rankings. It isn't linked to any account or personal information, and we ask for no personal information anywhere on the site.</p>
     </section>
   );
 }

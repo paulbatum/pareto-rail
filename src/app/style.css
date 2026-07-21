@@ -127,7 +127,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 42px 0; }
 .info-grid > div { padding: 20px; border-top: 1px solid var(--ink); background: var(--card); }
 .info-grid h2, .prose h2 { margin: 9px 0; color: var(--ink); font-size: 16px; }
-.info-grid p, .prose p { color: var(--soft-text); line-height: 1.65; }
+.info-grid p, .prose p:not(.eyebrow, .lede) { color: var(--soft-text); line-height: 1.65; }
 .step { color: var(--accent); letter-spacing: .15em; }
 .empty-state { margin: 40px 0 28px; padding: 38px 24px; text-align: center; border: 1px dashed var(--ghost); background: var(--card); }
 .empty-glyph { color: var(--accent); font-size: 38px; }
