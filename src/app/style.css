@@ -10,7 +10,11 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .app-shell { width: 100%; max-width: 100%; min-height: 100dvh; overflow-x: clip; color: var(--ink); background: var(--paper); font-family: var(--sans); }
 
 /* ---------- Navigation ---------- */
-.site-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 0; padding: 13px clamp(20px, 5vw, 72px) 7px; background: color-mix(in srgb, var(--paper) 92%, transparent); border-bottom: 1px solid var(--hairline); backdrop-filter: blur(10px); }
+/* Installed to a home screen the page runs under the status bar (the
+   black-translucent style in index.html), so the safe-area insets are what keep
+   the header clear of the notch or dynamic island. They are zero in a normal
+   browser tab, where the chrome already reserves that space. */
+.site-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 0; padding: calc(13px + env(safe-area-inset-top, 0px)) calc(clamp(20px, 5vw, 72px) + env(safe-area-inset-right, 0px)) 7px calc(clamp(20px, 5vw, 72px) + env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--paper) 92%, transparent); border-bottom: 1px solid var(--hairline); backdrop-filter: blur(10px); }
 .nav-cluster, .site-nav nav, .nav-actions { display: flex; gap: clamp(12px, 3vw, 30px); min-width: 0; }
 .site-nav a { color: var(--muted); text-decoration: none; letter-spacing: .12em; text-transform: uppercase; font-size: 11px; padding-bottom: 3px; border-bottom: 1px solid transparent; }
 .site-nav a:hover { color: var(--ink); }
@@ -27,7 +31,9 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 /* ---------- Shell / hero ---------- */
 /* Pages open straight onto their content, so the top padding stays tight. The
    home hero zeroes it below; the play route is fixed-position and ignores it. */
-.app-content { width: min(1080px, calc(100% - 40px)); max-width: 100%; min-width: 0; margin: 0 auto; padding: clamp(28px, 3vw, 40px) 0 80px; }
+/* The insets shrink the column rather than pad it, so it stays centred and
+   clear of a landscape notch. They are zero everywhere but an installed app. */
+.app-content { width: min(1080px, calc(100% - 40px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); max-width: 100%; min-width: 0; margin: 0 auto; padding: clamp(28px, 3vw, 40px) 0 80px; }
 .page-panel { width: 100%; max-width: 880px; min-width: 0; margin: 0 auto; }
 .hero { padding: clamp(22px, 5vw, 64px) 0; }
 
@@ -43,8 +49,8 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
   flex-direction: column;
   width: 100%;
   padding-top: 0;
-  padding-right: clamp(20px, 5vw, 87px);
-  padding-left: clamp(20px, 5vw, 87px);
+  padding-right: calc(clamp(20px, 5vw, 87px) + env(safe-area-inset-right, 0px));
+  padding-left: calc(clamp(20px, 5vw, 87px) + env(safe-area-inset-left, 0px));
 }
 .hero-with-graphic {
   display: grid;
