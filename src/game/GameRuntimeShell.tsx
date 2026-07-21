@@ -53,10 +53,10 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
       <div id="damage-flash" data-game-ui className="damage-flash" aria-hidden="true" />
       <div id="max-lock-flash" data-game-ui className="max-lock-flash hidden" aria-hidden="true">MAX</div>
       <div id="callout" data-game-ui className="callout hidden" aria-live="polite" />
-      <div id="tip-stack" data-game-ui className="tip-stack">
+      <div id="nudge-stack" data-game-ui className="nudge-stack">
         <div id="sound-tip" className="start-nudge hidden">
           <span className="sound-tip-note" aria-hidden="true">♪</span>
-          <span>Best with sound on</span>
+          <span>Turn sound on</span>
           <span className="sound-tip-note sound-tip-note-alt" aria-hidden="true">♫</span>
         </div>
         <div id="rotate-tip" className="start-nudge rotate-tip hidden">
@@ -64,10 +64,10 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
             <rect x="6.2" y="2.8" width="7.6" height="14.4" rx="1.8" fill="none" stroke="currentColor" strokeWidth="1.5" />
             <circle cx="10" cy="14.4" r="0.9" fill="currentColor" />
           </svg>
-          <span>Best in landscape</span>
+          <span>Rotate your device</span>
         </div>
-        <div id="tip" className="tip hidden">HOLD to charge — SWEEP across all six targets — RELEASE to fire</div>
       </div>
+      <div id="tip" data-game-ui className="tip hidden">HOLD to charge — SWEEP across all six targets — RELEASE to fire</div>
 
       <div
         id="pause"

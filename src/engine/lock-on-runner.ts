@@ -779,10 +779,13 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
     if (rejection.reason === 'incomplete-word' && state === 'attract') {
       failedAttractReleases += 1;
-      if (failedAttractReleases >= 3) {
+      if (failedAttractReleases >= 2) {
         showingStartTip = false;
         hud.setTip(controlTip(startWord.length));
         hud.showTip();
+        /* The player is fumbling the controls: clear the nudges so the help has the stage
+           (and room — the control tip wraps tall on portrait phones). */
+        hud.setStartNudgesVisible(false);
       }
     }
   }
@@ -1185,10 +1188,11 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function recordAttractPointerDown() {
     if (state !== 'attract' || attractReachedFullLocks) return;
     attractPointerDowns += 1;
-    if (attractPointerDowns >= 8) {
+    if (attractPointerDowns >= 3) {
       showingStartTip = false;
       hud.setTip(controlTip(startWord.length));
       hud.showTip();
+      hud.setStartNudgesVisible(false);
     }
   }
 

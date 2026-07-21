@@ -436,21 +436,33 @@ canvas {
   100% { opacity: 1; transform: translateX(-50%) scale(1); }
 }
 
-.tip-stack {
+/* The nudges sit well above the tip, pulled toward the center so they share the player's
+   focus with the start letters without covering them. */
+.nudge-stack {
   position: fixed;
   left: 50%;
-  bottom: 58px;
+  bottom: 20vh;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  max-width: min(760px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
   pointer-events: none;
 }
 
+/* Portrait phones show both nudges and wrap level tips over several lines, so they
+   need extra clearance above the tip box. */
+@media (pointer: coarse) and (orientation: portrait) {
+  .nudge-stack { bottom: 24vh; }
+}
+
 .tip {
-  max-width: 100%;
+  position: fixed;
+  left: 50%;
+  bottom: 58px;
+  transform: translateX(-50%);
+  max-width: min(760px, calc(100vw - 32px));
   padding: 14px 20px;
   color: #fff;
   background: rgb(3 8 18 / 82%);
@@ -462,34 +474,36 @@ canvas {
   text-shadow: 0 0 12px rgb(70 232 255 / 65%);
 }
 
-/* Warm gold against the game's cyan so the start nudges read as invitations, not controls. */
+/* Warm hues against the game's cyan so the start nudges read as invitations, not controls.
+   Each nudge picks its own --nudge-rgb; everything glowing derives from it. */
 .start-nudge {
+  --nudge-rgb: 255 200 96;
   display: inline-flex;
   align-items: center;
   gap: 14px;
   padding: 10px 22px;
-  color: #ffd987;
-  background: rgb(20 13 2 / 78%);
-  border: 1px solid rgb(255 200 96 / 50%);
+  color: rgb(var(--nudge-rgb));
+  background: rgb(10 8 6 / 78%);
+  border: 1px solid rgb(var(--nudge-rgb) / 50%);
   border-radius: 999px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   white-space: nowrap;
   pointer-events: none;
-  text-shadow: 0 0 12px rgb(255 193 79 / 60%);
+  text-shadow: 0 0 12px rgb(var(--nudge-rgb) / 60%);
   animation: start-nudge-pulse 2.6s ease-in-out infinite;
 }
 
 @keyframes start-nudge-pulse {
-  0%, 100% { box-shadow: 0 0 12px rgb(255 180 60 / 12%); border-color: rgb(255 200 96 / 38%); }
-  50% { box-shadow: 0 0 26px rgb(255 180 60 / 32%); border-color: rgb(255 213 122 / 72%); }
+  0%, 100% { box-shadow: 0 0 12px rgb(var(--nudge-rgb) / 12%); border-color: rgb(var(--nudge-rgb) / 38%); }
+  50% { box-shadow: 0 0 26px rgb(var(--nudge-rgb) / 32%); border-color: rgb(var(--nudge-rgb) / 72%); }
 }
 
 .sound-tip-note {
   display: inline-block;
   font-size: 1.2em;
   line-height: 1;
-  text-shadow: 0 0 10px rgb(255 200 90 / 85%);
+  text-shadow: 0 0 10px rgb(var(--nudge-rgb) / 85%);
   animation: sound-tip-note-bob 1.3s ease-in-out infinite;
 }
 
@@ -501,8 +515,11 @@ canvas {
 }
 
 /* Only a phone/tablet held upright needs the landscape nudge; rotating the device
-   both satisfies it and dismisses it. */
-.rotate-tip { display: none; }
+   both satisfies it and dismisses it. Pink, so the pair doesn't read as one message. */
+.rotate-tip {
+  --nudge-rgb: 255 138 176;
+  display: none;
+}
 
 @media (pointer: coarse) and (orientation: portrait) {
   .rotate-tip:not(.hidden) { display: inline-flex; }
@@ -511,7 +528,7 @@ canvas {
 .rotate-tip-phone {
   width: 1.35em;
   height: 1.35em;
-  filter: drop-shadow(0 0 6px rgb(255 200 90 / 70%));
+  filter: drop-shadow(0 0 6px rgb(var(--nudge-rgb) / 70%));
   animation: rotate-tip-phone 3s ease-in-out infinite;
 }
 
