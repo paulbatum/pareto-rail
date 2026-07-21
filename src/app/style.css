@@ -181,6 +181,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .assignment-card h2 { margin-top: 0; color: var(--ink); }
 .compare-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(28px, 5vw, 56px) minmax(0, 1fr); gap: 16px; align-items: stretch; margin: 28px 0 18px; }
 .reveal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 28px 0 18px; }
+.reveal-actions { display: flex; justify-content: center; margin: 22px 0; }
 .compare-card, .reveal-card { padding: 18px; background: var(--card); border: 1px solid var(--hairline); }
 .compare-card { display: flex; min-width: 0; flex-direction: column; }
 .compare-card.is-next { border-color: var(--accent); box-shadow: 4px 4px 0 var(--accent-tint); }
@@ -216,8 +217,6 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .reveal-card .cost-value { color: var(--ink); font-size: clamp(26px, 4vw, 34px); font-weight: 800; line-height: 1; letter-spacing: -.03em; text-shadow: none; }
 .reveal-card.is-picked .cost-value { color: var(--accent); }
 .reveal-card .cost-label { color: var(--muted); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
-.cost-comparison { max-width: 680px; margin: 14px 0 22px; color: var(--soft-text); font-size: 14px; font-weight: 400; line-height: 1.55; }
-.cost-comparison strong { color: var(--ink); }
 .run-details { width: 100%; margin-top: 17px; border-top: 1px solid var(--hairline-2); }
 .run-details > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 0 0; color: var(--accent); font: 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
 .run-details > summary span:last-child { color: var(--muted); letter-spacing: .04em; text-align: right; text-transform: none; }
@@ -241,8 +240,6 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .workflow-details > p { color: var(--soft-text); font-size: 11px; line-height: 1.55; }
 .workflow-details > p strong { display: block; margin-bottom: 4px; color: var(--ink); }
 .run-data-note { margin: 14px 0 0 !important; color: var(--muted) !important; font-size: 10px !important; line-height: 1.5; }
-.vote-result { margin: 22px 0; color: var(--body-text); }
-.vote-result strong { color: var(--accent); }
 .curve-progress { margin-top: 38px; color: var(--muted); font-size: 11px; letter-spacing: .08em; }
 
 /* ---------- Verdict log ---------- */

@@ -125,8 +125,7 @@ function RevealStage({ reveal, onNext }: { reveal: RevealPayload; onNext: () => 
       <GenerationDetails entrant={entrant} />
     </article>;
   };
-  const comparison = costComparison(reveal);
-  return <><div className="reveal-grid">{card('a')}{card('b')}</div><p className="vote-result">You chose <strong>{verdictLabel(reveal.vote.verdict)}</strong>.</p>{comparison && <p className="cost-comparison">{comparison}</p>}<button className="button primary" type="button" onClick={onNext}>Next matchup</button></>;
+  return <><div className="reveal-grid">{card('a')}{card('b')}</div><div className="reveal-actions"><button className="button primary" type="button" onClick={onNext}>Next matchup</button></div></>;
 }
 
 function GenerationDetails({ entrant }: { entrant: RevealPayload['a'] }) {
@@ -238,7 +237,7 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
 
   if (!curve.frontierReady) return <section className="curve-panel" aria-labelledby="personal-curve-title">
     <div className="curve-heading">
-      <div><p className="eyebrow">Your verdicts</p><h2 id="personal-curve-title">How you rank the models</h2></div>
+      <div><h2 id="personal-curve-title">Your verdicts</h2></div>
       <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('verdicts')} />
     </div>
     <p className="curve-progress">Your Pareto chart unlocks as verdicts accumulate.</p>
@@ -545,15 +544,5 @@ function revealMarker(verdict: VoteVerdict, side: MatchupSide): { className: str
   return picked === side ? { className: ' is-picked', label: 'Your pick' } : { className: '', label: null };
 }
 
-function costComparison(reveal: RevealPayload): string | null {
-  const preferred = reveal.vote.verdict === 'a-better' ? 'a' : reveal.vote.verdict === 'b-better' ? 'b' : null;
-  if (!preferred) return null;
-  const other = preferred === 'a' ? 'b' : 'a';
-  const preferredCost = reveal[preferred].generationCost.toFixed(2);
-  const otherCost = reveal[other].generationCost.toFixed(2);
-  if (preferredCost === otherCost) return null;
-  return `You preferred the $${preferredCost} level over the $${otherCost} one.`;
-}
 
-function verdictLabel(verdict: VoteVerdict) { return verdict === 'a-better' ? 'Level A' : verdict === 'b-better' ? 'Level B' : verdict === 'both-good' ? 'both good' : 'both bad'; }
 function verdictText(verdict: VoteVerdict) { return verdict === 'a-better' ? 'A is better' : verdict === 'b-better' ? 'B is better' : verdict === 'both-good' ? 'Both are good' : 'Both are bad'; }
