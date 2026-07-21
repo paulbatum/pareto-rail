@@ -450,6 +450,20 @@ html:fullscreen .perf-overlay { display: none; }
 /* Persist the chosen view (localStorage) and reflect it in the URL:
    /levels (gallery, default) and /levels/data — deep links keep working. */
 
+/* ---------- Filter bar (shared by both views) ---------- */
+.levels-filters { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 32px; padding: 0 0 22px; border-top: 1px solid var(--hairline); padding-top: 20px; }
+.levels-filter-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; }
+.levels-filter-label { color: var(--muted); font: 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.levels-filter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.filter-chip { padding: 7px 12px; color: var(--muted); background: transparent; border: 1px solid var(--hairline); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: color 120ms ease, border-color 120ms ease, background 120ms ease; }
+.filter-chip:hover { color: var(--ink); border-color: var(--ghost); }
+.filter-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.filter-chip[aria-pressed="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+
+.retired-tag { margin: 0 8px; padding: 2px 6px; color: var(--accent); border: 1px solid var(--accent); font: 8px var(--mono); letter-spacing: .12em; text-transform: uppercase; vertical-align: middle; }
+
+.levels-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 48px 0; border-top: 1px solid var(--hairline); color: var(--muted); font: 12px var(--mono); letter-spacing: .04em; }
+
 /* ============================================================
    VIEW 1 — GALLERY (7a): browse by thumbnail
    ============================================================ */

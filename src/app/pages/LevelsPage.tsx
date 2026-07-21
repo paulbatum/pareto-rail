@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BenchmarkModelUsage, BenchmarkTheme } from '../../benchmark/types';
 import { entrantLabel } from '../../benchmark/identity';
-import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant } from '../../benchmark/catalog';
+import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type RankCatalogTheme } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog, selectableLevelGroups } from '../../levels';
 import { BenchmarkLocalStore } from '../../benchmark/storage';
 import { builtInLevelBlurbs, levelsCopy, levelsSplashCopy } from '../content';
@@ -25,24 +25,59 @@ type BenchmarkRecord = {
   kind: 'benchmark';
   levelId: string;
   entrant: RankCatalogEntrant;
-  theme: BenchmarkTheme;
+  theme: RankCatalogTheme;
   configuration?: RankCatalogConfiguration;
   entrantIndex: number;
 };
 
 type LevelRecord = BuiltInRecord | BenchmarkRecord;
-type ThemeBand = { key: string; theme: BenchmarkTheme; records: BenchmarkRecord[] };
+type ThemeBand = { key: string; theme: RankCatalogTheme; records: BenchmarkRecord[] };
 type Navigate = (path: string) => void;
 
 const REFERENCE_LEVEL_ID = 'crystal-corridor';
 
+/** User-facing name for themes retired from active matchup scheduling (the
+ * catalog's internal `unscheduled` flag). Kept jargon-free per the levels-page
+ * copy rules. */
+const RETIRED_LABEL = 'Retired';
+
+const EMPTY_BUILT_IN: BuiltInRecord[] = [];
+
 export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { kind: 'levels' }>; onNavigate: Navigate }) {
   const builtIn = useMemo(builtInRecords, []);
   const bands = useMemo(themeBands, []);
-  const benchmarkCount = bands.reduce((total, band) => total + band.records.length, 0);
+
+  // Filter state is transient: a fresh visit starts from the default view of
+  // built-ins plus the levels still in rotation, with every configuration shown.
+  const [showRetired, setShowRetired] = useState(false);
+  const [selectedConfigs, setSelectedConfigs] = useState<ReadonlySet<string>>(() => new Set());
+  const configOptions = useMemo(() => configOptionsFrom(bands), [bands]);
+  const hasRetired = useMemo(() => bands.some((band) => band.theme.unscheduled === true), [bands]);
+
+  const toggleConfig = useCallback((id: string) => {
+    setSelectedConfigs((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+  const clearConfigs = useCallback(() => setSelectedConfigs(new Set()), []);
+  const toggleRetired = useCallback(() => setShowRetired((current) => !current), []);
+
+  // Narrowing to specific configurations hides the built-ins: they carry no
+  // generation record, so they can never match a configuration.
+  const configFiltering = selectedConfigs.size > 0;
+  const filteredBuiltIn = configFiltering ? EMPTY_BUILT_IN : builtIn;
+  const filteredBands = useMemo(
+    () => filterBands(bands, showRetired, selectedConfigs),
+    [bands, showRetired, selectedConfigs],
+  );
+  const benchmarkCount = filteredBands.reduce((total, band) => total + band.records.length, 0);
 
   // The splash decision is computed once per mount so it cannot flicker; a
-  // dismissal only flips this local state and persists the seen ids.
+  // dismissal only flips this local state and persists the seen ids. It weighs
+  // every published level, not the filtered subset, so hiding a level with the
+  // filters never changes whether the spoiler gate has already been satisfied.
   const displayedIds = useMemo(() => bands.flatMap((band) => band.records.map((record) => record.levelId)), [bands]);
   const [splash, setSplash] = useState<SpoilerGateDecision>(() => decideSpoilerGate({
     displayedIds,
@@ -72,15 +107,80 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
         </div>
         <div className="levels-header-meta">
           <ViewToggle view={route.view} onNavigate={onNavigate} />
-          <span className="levels-count">{builtIn.length + benchmarkCount} levels · {builtIn.length} built-in · {benchmarkCount} benchmark</span>
+          <span className="levels-count">{filteredBuiltIn.length + benchmarkCount} levels · {filteredBuiltIn.length} built-in · {benchmarkCount} benchmark</span>
         </div>
       </header>
       {showSplash
         ? <LevelsSplash decision={splash} onDismiss={dismissSplash} onNavigate={onNavigate} />
-        : route.view === 'data'
-          ? <DataView builtIn={builtIn} bands={bands} benchmarkCount={benchmarkCount} onNavigate={onNavigate} />
-          : <GalleryView builtIn={builtIn} bands={bands} onNavigate={onNavigate} />}
+        : <>
+            <LevelsFilters
+              configOptions={configOptions}
+              selectedConfigs={selectedConfigs}
+              onToggleConfig={toggleConfig}
+              onClearConfigs={clearConfigs}
+              hasRetired={hasRetired}
+              showRetired={showRetired}
+              onToggleRetired={toggleRetired}
+            />
+            {route.view === 'data'
+              ? <DataView builtIn={filteredBuiltIn} bands={filteredBands} benchmarkCount={benchmarkCount} onClearConfigs={clearConfigs} onNavigate={onNavigate} />
+              : <GalleryView builtIn={filteredBuiltIn} bands={filteredBands} onClearConfigs={clearConfigs} onNavigate={onNavigate} />}
+          </>}
     </>
+  );
+}
+
+type ConfigOption = { id: string; label: string };
+
+/** Filter bar shared by both views. Configuration is a multi-select: with no
+ * chip pressed every configuration shows and the built-ins are included; press
+ * one or more and the list narrows to those runs, built-ins dropping out. The
+ * retired toggle only appears when there is something retired to reveal. */
+function LevelsFilters({ configOptions, selectedConfigs, onToggleConfig, onClearConfigs, hasRetired, showRetired, onToggleRetired }: {
+  configOptions: ConfigOption[];
+  selectedConfigs: ReadonlySet<string>;
+  onToggleConfig: (id: string) => void;
+  onClearConfigs: () => void;
+  hasRetired: boolean;
+  showRetired: boolean;
+  onToggleRetired: () => void;
+}) {
+  const allConfigs = selectedConfigs.size === 0;
+  return (
+    <div className="levels-filters">
+      <div className="levels-filter-group" role="group" aria-label="Filter by configuration">
+        <span className="levels-filter-label" id="levels-filter-config">Configuration</span>
+        <div className="levels-filter-chips">
+          <button type="button" className="filter-chip" aria-pressed={allConfigs} onClick={onClearConfigs}>All</button>
+          {configOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className="filter-chip"
+              aria-pressed={selectedConfigs.has(option.id)}
+              onClick={() => onToggleConfig(option.id)}
+            >{option.label}</button>
+          ))}
+        </div>
+      </div>
+      {hasRetired && (
+        <div className="levels-filter-group">
+          <span className="levels-filter-label">Themes</span>
+          <button type="button" className="filter-chip" aria-pressed={showRetired} onClick={onToggleRetired}>
+            {RETIRED_LABEL}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LevelsEmpty({ onClearConfigs }: { onClearConfigs: () => void }) {
+  return (
+    <section className="levels-empty">
+      <p>No levels match the current filters.</p>
+      <button type="button" className="filter-chip" onClick={onClearConfigs}>Show all configurations</button>
+    </section>
   );
 }
 
@@ -127,19 +227,22 @@ function ViewToggle({ view, onNavigate }: { view: LevelsView; onNavigate: Naviga
 
 /* ---------- Gallery ---------- */
 
-function GalleryView({ builtIn, bands, onNavigate }: { builtIn: BuiltInRecord[]; bands: ThemeBand[]; onNavigate: Navigate }) {
+function GalleryView({ builtIn, bands, onClearConfigs, onNavigate }: { builtIn: BuiltInRecord[]; bands: ThemeBand[]; onClearConfigs: () => void; onNavigate: Navigate }) {
+  if (builtIn.length === 0 && bands.length === 0) return <LevelsEmpty onClearConfigs={onClearConfigs} />;
   return (
     <>
-      <section className="levels-band">
-        <div className="levels-band-head"><h2>Built-in levels — {builtIn.length}</h2></div>
-        <div className="levels-grid">
-          {builtIn.map((record) => <GalleryCard key={record.levelId} record={record} onNavigate={onNavigate} />)}
-        </div>
-      </section>
+      {builtIn.length > 0 && (
+        <section className="levels-band">
+          <div className="levels-band-head"><h2>Built-in levels — {builtIn.length}</h2></div>
+          <div className="levels-grid">
+            {builtIn.map((record) => <GalleryCard key={record.levelId} record={record} onNavigate={onNavigate} />)}
+          </div>
+        </section>
+      )}
       {bands.map((band) => (
         <section className="levels-band" key={band.key}>
           <div className="levels-band-head">
-            <h2>Benchmark — {band.theme.title} — {band.records.length} run{band.records.length === 1 ? '' : 's'}</h2>
+            <h2>Benchmark — {band.theme.title}{band.theme.unscheduled && <span className="retired-tag">{RETIRED_LABEL}</span>} — {band.records.length} run{band.records.length === 1 ? '' : 's'}</h2>
             <RouteLink href={`${levelsViewPath.data}#theme-${band.theme.id}`} onNavigate={onNavigate}>Theme prompt ▸</RouteLink>
           </div>
           <div className="levels-grid">
@@ -192,7 +295,7 @@ function galleryMeta(record: LevelRecord) {
 
 /* ---------- Data ---------- */
 
-function DataView({ builtIn, bands, benchmarkCount, onNavigate }: { builtIn: BuiltInRecord[]; bands: ThemeBand[]; benchmarkCount: number; onNavigate: Navigate }) {
+function DataView({ builtIn, bands, benchmarkCount, onClearConfigs, onNavigate }: { builtIn: BuiltInRecord[]; bands: ThemeBand[]; benchmarkCount: number; onClearConfigs: () => void; onNavigate: Navigate }) {
   const hash = useLocationHash();
   const themeTarget = hash.startsWith('theme-') ? hash.slice('theme-'.length) : null;
   const entrantTarget = hash.startsWith('entrant-') ? hash.slice('entrant-'.length) : null;
@@ -201,24 +304,26 @@ function DataView({ builtIn, bands, benchmarkCount, onNavigate }: { builtIn: Bui
     ?? (themeTarget === null ? undefined : bands.find((band) => band.theme.id === themeTarget)?.records[0])
     ?? bands[0]?.records[0]
     ?? builtIn[0];
-  if (!selected) return null;
+  if (!selected) return <LevelsEmpty onClearConfigs={onClearConfigs} />;
 
   return (
     <div className="levels-data-layout">
       <aside className="catalog-rail" aria-label="Level navigator">
-        <div className="catalog-rail-section">
-          <h2>Built-in — {builtIn.length}</h2>
-          {builtIn.map((record) => (
-            <RailItem key={record.levelId} record={record} selected={record.levelId === selected.levelId}>
-              {record.reference && <b className="ref-tag">Ref</b>}
-            </RailItem>
-          ))}
-        </div>
+        {builtIn.length > 0 && (
+          <div className="catalog-rail-section">
+            <h2>Built-in — {builtIn.length}</h2>
+            {builtIn.map((record) => (
+              <RailItem key={record.levelId} record={record} selected={record.levelId === selected.levelId}>
+                {record.reference && <b className="ref-tag">Ref</b>}
+              </RailItem>
+            ))}
+          </div>
+        )}
         <div className="catalog-rail-section">
           <h2>Benchmark — {benchmarkCount}</h2>
           {bands.map((band) => (
             <Fragment key={band.key}>
-              <p className="catalog-rail-group">{band.theme.title}</p>
+              <p className="catalog-rail-group">{band.theme.title}{band.theme.unscheduled && <span className="retired-tag">{RETIRED_LABEL}</span>}</p>
               {band.records.map((record) => (
                 <RailItem key={record.levelId} record={record} selected={record.levelId === selected.levelId}>
                   {record.entrant.featured === true && <b className="featured-mark" title="Featured">◆</b>}
@@ -278,6 +383,7 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
     <>
       <header className="catalog-record-header">
         <h2>{entrant.levelId}</h2>
+        {theme.unscheduled && <span className="result-tag">{RETIRED_LABEL}</span>}
         {run && <span className={completed ? 'result-tag' : 'result-tag timed-out'}>{formatResult(run.result)}</span>}
         <span className="spacer" />
         <RouteLink className="button primary" href={playPath(entrant.levelId)} onNavigate={onNavigate}>▸ Play this level</RouteLink>
@@ -481,6 +587,38 @@ function themeBands(): ThemeBand[] {
   }
 
   return bands;
+}
+
+/** The configurations that actually produced a displayed benchmark run, in the
+ * catalog's own configuration order, each with its visitor-facing label. */
+function configOptionsFrom(bands: ThemeBand[]): ConfigOption[] {
+  const present = new Set<string>();
+  for (const band of bands) {
+    for (const record of band.records) present.add(record.entrant.configurationId);
+  }
+  return (rankCatalog.configurations ?? [])
+    .filter((configuration) => present.has(configuration.id))
+    .map((configuration) => ({
+      id: configuration.id,
+      label: entrantLabel({ modelName: configuration.modelName, workflowName: configuration.workflowName }),
+    }));
+}
+
+/** Apply the levels-page filters. Retired themes stay hidden until asked for;
+ * a non-empty configuration selection keeps only runs from those configurations
+ * and drops any theme band left empty. */
+function filterBands(bands: ThemeBand[], showRetired: boolean, configs: ReadonlySet<string>): ThemeBand[] {
+  const result: ThemeBand[] = [];
+  for (const band of bands) {
+    if (band.theme.unscheduled === true && !showRetired) continue;
+    if (configs.size === 0) {
+      result.push(band);
+      continue;
+    }
+    const records = band.records.filter((record) => configs.has(record.entrant.configurationId));
+    if (records.length > 0) result.push({ ...band, records });
+  }
+  return result;
 }
 
 function thumbnailPathOf(record: LevelRecord): string | undefined {
