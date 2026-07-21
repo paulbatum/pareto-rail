@@ -307,11 +307,6 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-tooltip dt { color: var(--ghost); font: 8px var(--mono); text-transform: uppercase; }
 .curve-tooltip dd { margin: 3px 0 0; color: var(--ink); font: 600 11px var(--mono); }
 .curve-tooltip p { margin: 0; padding-top: 8px; color: var(--accent); border-top: 1px solid var(--hairline-2); font-size: 10px; }
-.curve-tooltip-levels { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--hairline-2); }
-.curve-tooltip-levels > span { color: var(--muted); font: 8px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
-.curve-tooltip-levels ul { display: grid; gap: 5px; margin: 8px 0 0; padding: 0; list-style: none; }
-.curve-tooltip-levels li { display: flex; justify-content: space-between; gap: 10px; color: var(--body-text); font-size: 10px; }
-.curve-tooltip-levels code { color: var(--muted); font: 9px var(--mono); }
 .curve-help { margin: 4px 0 20px; color: var(--muted); font-size: 12.5px; line-height: 1.55; }
 
 /* ---------- Curve table ---------- */
@@ -326,12 +321,6 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-table tbody th strong { color: var(--ink); font-family: var(--sans); font-size: 14.5px; font-weight: 600; }
 .curve-table tbody th span { margin-top: 3px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
 .curve-table tbody td { color: var(--body-text); }
-.curve-levels > a { display: block; text-align: left; text-decoration: none; }
-.curve-levels > a + a { margin-top: 5px; }
-.curve-levels strong, .curve-levels code { display: block; }
-.curve-levels strong { color: var(--body-text); font-family: var(--sans); font-size: 11.5px; }
-.curve-levels code { margin-top: 1px; color: var(--muted); font: 9.5px var(--mono); }
-.curve-levels a:hover strong, .curve-levels a:focus-visible strong { color: var(--accent); }
 .curve-table .frontier-status { color: var(--accent); }
 
 /* ---------- Invitations ---------- */

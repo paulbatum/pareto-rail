@@ -81,7 +81,7 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
       <p className="lede">“{assignment.theme.summary}”</p>
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
       <RankStage controller={controller} state={state} lastUndoneVerdict={controller.lastUndoneVerdict} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
-      {controller.curve.comparisonCount > 0 && <PersonalCurve controller={controller} onNavigate={onNavigate} />}
+      {controller.curve.comparisonCount > 0 && <PersonalCurve controller={controller} />}
     </section>
   );
 }
@@ -193,7 +193,7 @@ type CurveDebugChart = {
   frontierPath: string | null;
 };
 
-function PersonalCurve({ controller, onNavigate }: { controller: RankController; onNavigate: (path: string) => void }) {
+function PersonalCurve({ controller }: { controller: RankController }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const curve = controller.curve;
@@ -297,9 +297,8 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
           {plotted.map((point) => {
             const labelOnLeft = point.x > CURVE_CHART.width * .62;
             const labelX = point.x + (labelOnLeft ? -14 : 14);
-            const levelNames = levelsForConfiguration(point.configurationId).map((level) => `${level.themeTitle}: ${level.levelId}`).join(', ');
             const qualifier = workflowQualifier(point.workflowName);
-            return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${point.comparisons} comparisons. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''} Levels: ${levelNames}.`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
+            return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${point.comparisons} comparisons. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
               <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
               <circle cx={point.x} cy={point.y} r={point.frontier ? 8 : 6} />
               <text className="point-label" x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{point.modelName}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>
@@ -311,11 +310,10 @@ function PersonalCurve({ controller, onNavigate }: { controller: RankController;
         <strong>{active.modelName}</strong>{workflowQualifier(active.workflowName) && <span>{workflowQualifier(active.workflowName)}</span>}
         <dl><div><dt>Preference</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>${active.meanCost.toFixed(2)}</dd></div><div><dt>Evidence</dt><dd>{active.comparisons} comparison{active.comparisons === 1 ? '' : 's'}</dd></div></dl>
         <p>{statusLabel(active.status)} · {active.frontier ? 'On your Pareto frontier' : 'Dominated by a higher-value option'}</p>
-        <div className="curve-tooltip-levels"><span>Levels behind this point</span><ul>{levelsForConfiguration(active.configurationId).map((level) => <li key={level.levelId}><strong>{level.themeTitle}</strong><code>{level.levelId}</code></li>)}</ul></div>
       </div>}
     </div>
     <p className="curve-help">Hover, tap, or focus a point for details. Ratings start at 1,000 and move with your matchup choices; dashed points are early estimates that firm up with more matchups.</p>
-    <PersonalCurveTable points={placedPoints} showFrontier onNavigate={onNavigate} />
+    <PersonalCurveTable points={placedPoints} showFrontier />
     <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} /></details>
   </section>;
 }
@@ -362,31 +360,20 @@ function CopyDebugButton({ status, onCopy }: { status: 'idle' | 'copied' | 'fail
   </button>;
 }
 
-function PersonalCurveTable({ points, showFrontier, onNavigate }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean; onNavigate: (path: string) => void }) {
+function PersonalCurveTable({ points, showFrontier }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean }) {
   const ordered = [...points].sort((left, right) => (right.rating ?? -Infinity) - (left.rating ?? -Infinity) || left.configurationId.localeCompare(right.configurationId));
-  return <div className="curve-table-wrap"><table className="curve-table"><caption>Chart data and underlying levels</caption><thead><tr><th scope="col">Model</th><th scope="col">Levels</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
+  return <div className="curve-table-wrap"><table className="curve-table"><caption>Chart data</caption><thead><tr><th scope="col">Model</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
     const frontierStatus = showFrontier && point.frontier;
     const record = point.comparisons === 0
       ? <span aria-label="No comparisons yet">—</span>
       : <span aria-label={recordAriaLabel(point)}>{point.wins}–{point.ties}–{point.losses}</span>;
-    const levels = levelsForConfiguration(point.configurationId);
     const qualifier = workflowQualifier(point.workflowName);
-    return <tr key={point.configurationId}><th scope="row"><strong>{point.modelName}</strong>{qualifier && <span>{qualifier}</span>}</th><td className="curve-levels">{levels.map((level) => <RouteLink key={level.levelId} href={`/play/${encodeURIComponent(level.levelId)}`} onNavigate={onNavigate}><strong>{level.themeTitle}</strong><code>{level.levelId}</code></RouteLink>)}</td><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
+    return <tr key={point.configurationId}><th scope="row"><strong>{point.modelName}</strong>{qualifier && <span>{qualifier}</span>}</th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
   })}</tbody></table></div>;
 }
 
 function configurationFor(configurationId?: string): RankCatalogConfiguration | undefined {
   return configurationId ? rankCatalog.configurations?.find((configuration) => configuration.id === configurationId) : undefined;
-}
-
-function levelsForConfiguration(configurationId: string): { levelId: string; themeTitle: string }[] {
-  return allCatalogEntrants(rankCatalog)
-    .filter((entrant) => entrant.configurationId === configurationId)
-    .map((entrant) => ({
-      levelId: entrant.levelId,
-      themeTitle: findCatalogTheme(rankCatalog, entrant.themeId)?.title ?? entrant.themeId,
-    }))
-    .sort((left, right) => left.themeTitle.localeCompare(right.themeTitle));
 }
 
 function formatDuration(seconds: number): string {
