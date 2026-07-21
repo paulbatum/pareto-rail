@@ -131,32 +131,6 @@ canvas {
   opacity: 0;
 }
 
-.level-picker {
-  position: fixed;
-  left: 18px;
-  bottom: 18px;
-  z-index: 4;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 10px;
-  color: var(--cyan-dim);
-  background: rgb(3 8 18 / 72%);
-  border: 1px solid rgb(70 232 255 / 28%);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  cursor: auto;
-}
-
-.level-picker select {
-  color: #e8f6ff;
-  background: rgb(2 4 10 / 95%);
-  border: 1px solid rgb(70 232 255 / 35%);
-  font: inherit;
-  cursor: pointer;
-}
-
 .debug-panel {
   position: fixed;
   right: 18px;

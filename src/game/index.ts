@@ -8,9 +8,7 @@ import { getStartScreenTip } from '../ui/client-tip';
 import { installDevErrorOverlay } from '../ui/dev-error-overlay';
 import { createHud, showUnsupported } from '../ui/hud';
 import { createPauseMenu } from '../ui/pause';
-import { selectableLevelGroups } from '../levels';
 import type { LevelDefinition } from '../engine/types';
-import { navigate } from '../app/router';
 
 export type GameLaunchContext = {
   source?: 'home' | 'play' | 'rank';
@@ -22,7 +20,6 @@ export type GameMountOptions = {
   host: HTMLElement;
   level: LevelDefinition;
   launchContext?: GameLaunchContext;
-  showLevelPicker?: boolean;
   onRunEnd?: (summary: RunSummary, context?: GameLaunchContext) => void;
   signal?: AbortSignal;
 };
@@ -64,7 +61,7 @@ function createDisposerStack() {
 }
 
 // StrictMode, route changes, and hot updates may invalidate a mount before async initialization settles; cancellation and cleanup must remain idempotent.
-export async function mountGame({ host, level, launchContext, showLevelPicker, onRunEnd, signal }: GameMountOptions): Promise<GameMount> {
+export async function mountGame({ host, level, launchContext, onRunEnd, signal }: GameMountOptions): Promise<GameMount> {
   await Promise.resolve();
   if (signal?.aborted) return inertGameMount;
 
@@ -181,10 +178,6 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
       onRunEnd?.(summary, launchContext);
     });
     stack.add(offRunEnd);
-    const removeLevelPicker = showLevelPicker !== false
-      ? installLevelPicker(host, level.id, import.meta.env.DEV)
-      : undefined;
-    if (removeLevelPicker) stack.add(removeLevelPicker);
     if (import.meta.env.DEV) {
       try {
         const installedDebugPanel = await import('../ui/debug-panel').then(({ installDebugPanel }) => installDebugPanel({ id: level.id, bpm: level.bpm, debugSelector: level.debugSelector, urlParams })) as { dispose?: () => void } | undefined;
@@ -257,34 +250,6 @@ function installUiVisibilityControls() {
   };
 }
 
-function installLevelPicker(host: HTMLElement, activeId: string, includeTechnical: boolean) {
-  const picker = document.createElement('label'); picker.className = 'level-picker'; picker.dataset.gameUi = 'true'; picker.textContent = 'Level ';
-  const select = document.createElement('select');
-  const groups = selectableLevelGroups({ includeTechnical });
-  const appendGroup = (label: string, levels: readonly { id: string; title: string }[]) => {
-    if (levels.length === 0) return;
-    const group = document.createElement('optgroup');
-    group.label = label;
-    for (const level of levels) {
-      const option = document.createElement('option');
-      option.value = level.id;
-      option.textContent = level.title;
-      option.selected = level.id === activeId;
-      group.append(option);
-    }
-    select.append(group);
-  };
-  appendGroup('Built-in levels', groups.builtIn);
-  appendGroup('Benchmark levels', groups.benchmark);
-  const onChange = () => navigate(`/play/${encodeURIComponent(select.value)}`);
-  select.addEventListener('change', onChange);
-  picker.append(select);
-  host.append(picker);
-  return () => {
-    select.removeEventListener('change', onChange);
-    picker.remove();
-  };
-}
 function canUseFullscreen() { return Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen); }
 async function setFullscreen(enabled: boolean) { try { if (enabled) await document.documentElement.requestFullscreen(); else if (document.fullscreenElement) await document.exitFullscreen(); } catch (error) { console.warn('Fullscreen request failed', error); } }
 function readStoredPercent(key: string, fallback: number) { const raw = localStorage.getItem(key); if (raw === null) return fallback; const value = Number(raw); return Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : fallback; }

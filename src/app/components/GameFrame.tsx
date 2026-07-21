@@ -13,13 +13,12 @@ export type GameFrameProps = {
   backPath?: string;
   backLabel?: string;
   launchContext?: GameLaunchContext;
-  showLevelPicker?: boolean;
   onNavigate: (path: string) => void;
   onRunEnd?: (summary: RunSummary, frame: HTMLElement, context?: GameLaunchContext) => void | Promise<void>;
   runEndContent?: ReactNode;
 };
 
-export function GameFrame({ level, title = level.title, backPath = '/levels', backLabel = 'Levels', launchContext, showLevelPicker, onNavigate, onRunEnd, runEndContent }: GameFrameProps) {
+export function GameFrame({ level, title = level.title, backPath = '/levels', backLabel = 'Levels', launchContext, onNavigate, onRunEnd, runEndContent }: GameFrameProps) {
   const frameRef = useRef<HTMLElement>(null);
   const runtimeRef = useRef<HTMLDivElement>(null);
   const [endPanel, setEndPanel] = useState<HTMLElement | null>(null);
@@ -45,7 +44,6 @@ export function GameFrame({ level, title = level.title, backPath = '/levels', ba
       level,
       signal: controller.signal,
       launchContext,
-      showLevelPicker,
       onRunEnd: (summary, context) => {
         if (controller.signal.aborted) return;
         setEndPanel(frame.querySelector<HTMLElement>('.end-panel'));
@@ -62,7 +60,7 @@ export function GameFrame({ level, title = level.title, backPath = '/levels', ba
       controller.abort();
       game?.dispose();
     };
-  }, [level, title, launchContext?.source, launchContext?.levelId, launchContext?.mode, showLevelPicker, onRunEnd]);
+  }, [level, title, launchContext?.source, launchContext?.levelId, launchContext?.mode, onRunEnd]);
 
   const endContent = runEndContent ?? (level.id === 'crystal-corridor' ? <CrystalInvitation onNavigate={onNavigate} /> : null);
 

@@ -549,7 +549,7 @@ function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavi
     </section>
   );
   if (!level) return <section className="page-panel"><p className="eyebrow">Rank</p><h1>Loading anonymous level…</h1></section>;
-  return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} backPath="/rank" backLabel="Matchup" launchContext={{ source: 'rank', levelId: launch.levelId, mode: 'benchmark' }} showLevelPicker={false} onNavigate={onNavigate} onRunEnd={onRunEnd} runEndContent={<BenchmarkInvitation side={launch.side} onNavigate={onNavigate} />} />;
+  return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} backPath="/rank" backLabel="Matchup" launchContext={{ source: 'rank', levelId: launch.levelId, mode: 'benchmark' }} onNavigate={onNavigate} onRunEnd={onRunEnd} runEndContent={<BenchmarkInvitation side={launch.side} onNavigate={onNavigate} />} />;
 }
 
 function createRankController(): RankController {
