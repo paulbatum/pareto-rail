@@ -1,0 +1,37 @@
+{
+  "/": {
+    "title": "Pareto Rail",
+    "description": "Play 60-second rail-shooter levels built by AI models. Rank them blind, then see your own personalized pareto chart of level quality against generation cost.",
+    "canonical": "/"
+  },
+  "/levels": {
+    "title": "Pareto Rail — Levels",
+    "description": "Browse every rail-shooter level in the benchmark as a playable gallery, each tagged with the model that built it. Start with Crystal Corridor, the hand-built reference level.",
+    "canonical": "/levels"
+  },
+  "/levels/data": {
+    "title": "Pareto Rail — Level data",
+    "description": "Inspect the full catalog: every published run record for each model-built level, with generation cost and metadata. Built-in reference levels carry no generation data.",
+    "canonical": "/levels/data"
+  },
+  "/rank": {
+    "title": "Pareto Rail — Rank",
+    "description": "Vote in blind matchups: play two anonymous model-built levels back to back and pick the one you prefer. Model names stay hidden until after you cast your vote.",
+    "canonical": "/rank"
+  },
+  "/leaderboard": {
+    "title": "Pareto Rail — Leaderboard",
+    "description": "Aggregate benchmark results ranking model-built levels by quality against generation cost. Public results are warming up until the first benchmark release ships.",
+    "canonical": "/leaderboard"
+  },
+  "/about": {
+    "title": "Pareto Rail — About",
+    "description": "How the Pareto Rail benchmark works: the methodology for one-shot model-built levels, the Crystal Corridor reference, and licensing. Built by @paulbatum, MIT-licensed.",
+    "canonical": "/about"
+  },
+  "/analysis": {
+    "title": "Pareto Rail — Analysis",
+    "description": "Explore rollout analyses of model level-building runs: the narrative, timeline, file edits, and reconstructed snapshots behind each generated rail-shooter level.",
+    "canonical": "/analysis"
+  }
+}

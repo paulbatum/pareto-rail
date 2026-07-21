@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { SiteLayout } from './layout/SiteLayout';
 import { parseRoute, navigate, levelsViewPath, type AppRoute } from './router';
+import { applyRouteHead } from './seo';
 import { AboutPage, HomePage, LeaderboardPage, NotFoundPage } from './pages/PublicPages';
 import { LevelsPage } from './pages/LevelsPage';
 import { PlayRoute } from './pages/GamePage';
@@ -25,12 +26,10 @@ export function App() {
     }
   }, [route]);
 
+  // Keep the document head (title, description, canonical, og/twitter, robots)
+  // in sync with the route, matching what the prerendered file would have served.
   useEffect(() => {
-    document.title = route.kind === 'home'
-      ? 'Pareto Rail'
-      : route.kind === 'notFound'
-        ? 'Pareto Rail — Not found'
-        : `Pareto Rail — ${route.kind[0].toUpperCase()}${route.kind.slice(1)}`;
+    applyRouteHead(route);
   }, [route]);
 
   return <SiteLayout route={route} onNavigate={onNavigate}>{renderPage(route, onNavigate)}</SiteLayout>;
