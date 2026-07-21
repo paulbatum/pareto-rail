@@ -227,7 +227,7 @@ function acquireGameActivity() {
 function installUiVisibilityControls() {
   let shortcutUiHidden = false;
   const updateUiVisibility = () => {
-    document.body.classList.toggle('game-ui-hidden', shortcutUiHidden || Boolean(document.fullscreenElement));
+    document.body.classList.toggle('game-ui-hidden', shortcutUiHidden);
   };
   const onKeyDown = (event: KeyboardEvent) => {
     if (!event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.key.toLowerCase() !== 'd') return;
@@ -236,11 +236,9 @@ function installUiVisibilityControls() {
     updateUiVisibility();
   };
   window.addEventListener('keydown', onKeyDown);
-  document.addEventListener('fullscreenchange', updateUiVisibility);
   updateUiVisibility();
   return () => {
     window.removeEventListener('keydown', onKeyDown);
-    document.removeEventListener('fullscreenchange', updateUiVisibility);
     document.body.classList.remove('game-ui-hidden');
   };
 }

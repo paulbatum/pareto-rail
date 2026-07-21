@@ -381,7 +381,10 @@ body.game-ui-hidden .debug-panel,
 body.game-ui-hidden .perf-overlay { display: none !important; }
 body.game-active .site-nav a { pointer-events: auto; }
 html:fullscreen .site-nav,
-html:fullscreen .game-toolbar { display: none; }
+html:fullscreen .game-toolbar,
+html:fullscreen .level-picker,
+html:fullscreen .debug-panel,
+html:fullscreen .perf-overlay { display: none; }
 .game-frame { position: fixed; inset: 0; background: #02040a; }
 .game-toolbar { position: fixed; top: 0; left: 0; right: 0; z-index: 15; display: flex; justify-content: space-between; padding: 14px 20px; pointer-events: none; background: linear-gradient(rgb(2 4 10 / 72%), transparent); }
 .game-toolbar a, .game-toolbar span { pointer-events: auto; color: var(--ghost); font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
