@@ -229,9 +229,12 @@ export function createStepTransport(options: StepTransportOptions): StepTranspor
   let stepIndex = 0;
 
   const emitNextStep = () => {
-    options.onStep({ index: stepIndex, time: nextStepTime });
+    // Advance before dispatching: a step callback that throws must not leave the
+    // transport parked on the same step, re-firing it on every scheduler tick.
+    const step = { index: stepIndex, time: nextStepTime };
     stepIndex += 1;
     nextStepTime += typeof options.stepSeconds === 'function' ? options.stepSeconds(stepIndex) : options.stepSeconds;
+    options.onStep(step);
   };
 
   return {

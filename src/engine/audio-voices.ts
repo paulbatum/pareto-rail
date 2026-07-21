@@ -77,6 +77,10 @@ export function voice<Call extends object = object>(spec: VoiceSpec<Call>) {
         const weight = options.weight ?? 1;
         const gain = (options.gain ?? 1) * oscGain * velocity * weight;
         const frequency = oscillatorFrequency(options, oscillator, call);
+        if (!Number.isFinite(frequency)) {
+          warnOnce(`Voice skipped: non-finite frequency from midi ${options.midi}, frequency ${options.frequency}.`);
+          continue;
+        }
         const detune = options.detune ?? resolve(oscillator.detune, call, undefined);
         const filter = resolveFilter(spec.filter, options, call, time);
         const gainAutomation = spec.gainAutomation
@@ -143,6 +147,15 @@ export function noiseHit<Call extends object = object>(spec: NoiseHitSpec<Call>)
       });
     },
   };
+}
+
+const warned = new Set<string>();
+
+/** Report an authoring fault once per distinct message so a per-step fault cannot flood the console. */
+function warnOnce(message: string) {
+  if (warned.has(message)) return;
+  warned.add(message);
+  console.warn(message);
 }
 
 function oscillatorFrequency<Call extends object>(options: VoicePlayOptions<Call>, oscillator: VoiceOscillatorSpec<Call>, call: Call) {
