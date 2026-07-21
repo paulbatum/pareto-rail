@@ -13,8 +13,19 @@ export async function POST(request: Request): Promise<Response> {
   }
 }
 
+/**
+ * The client IP as seen by Vercel's edge. `x-real-ip` is set by the platform and
+ * is not client-spoofable; the rightmost `x-forwarded-for` entry (appended by the
+ * trusted proxy) is the fallback. Never trust the leftmost XFF entry — the client
+ * controls it.
+ */
 function requestIp(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')
-    || 'unknown';
+  const realIp = request.headers.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const parts = forwarded.split(',').map((part) => part.trim()).filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1];
+  }
+  return 'unknown';
 }

@@ -29,7 +29,7 @@ export async function handleRankVotesRequest(request: Request, prisma: PrismaCli
   if (!validation.ok) return json({ ok: false, error: validation.error }, validation.status);
 
   try {
-    const result = await recordRankVote(validation.value, prisma);
+    const result = await recordRankVote(validation.value, prisma, ip);
     return json(result.body, result.status);
   } catch (error) {
     console.error('Rank vote persistence failed', error instanceof Error ? error.message : 'unknown error');

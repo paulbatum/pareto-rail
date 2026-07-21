@@ -64,8 +64,10 @@ model RankVote {
   clientSubmittedAt DateTime?
   createdAt         DateTime       @default(now())
   idempotencyKey    String?
+  ipHash            String?
   matchup           RankMatchup    @relation(fields: [matchupId], references: [id])
 
   @@unique([matchupId, participantHash])
   @@index([createdAt])
+  @@index([ipHash])
 }

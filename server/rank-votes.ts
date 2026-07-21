@@ -45,9 +45,10 @@ const dataClassToPrisma = {
   development: RankDataClass.DEVELOPMENT,
 } as const;
 
-export async function recordRankVote(input: ValidatedRankVote, prisma: PrismaClient): Promise<RankHandlerResult<RankVoteResponse>> {
+export async function recordRankVote(input: ValidatedRankVote, prisma: PrismaClient, ip?: string): Promise<RankHandlerResult<RankVoteResponse>> {
   const mapping = mapVerdict(input.verdict);
   const participantHash = hashParticipant(input.participantId);
+  const ipHash = hashIp(ip);
   const [levelIdFirst, levelIdSecond] = [input.aLevelId, input.bLevelId].sort(compareIds);
   let duplicate = false;
 
@@ -82,6 +83,7 @@ export async function recordRankVote(input: ValidatedRankVote, prisma: PrismaCli
         assignedAt: input.assignedAt ? new Date(input.assignedAt) : undefined,
         clientSubmittedAt: input.clientSubmittedAt ? new Date(input.clientSubmittedAt) : undefined,
         idempotencyKey: input.idempotencyKey,
+        ipHash,
       },
       skipDuplicates: true,
     });
@@ -111,4 +113,16 @@ export async function readRankStats(prisma: PrismaClient): Promise<RankHandlerRe
 export function hashParticipant(participantId: string, salt = process.env.PARTICIPANT_SALT): string {
   if (!salt) throw new Error('PARTICIPANT_SALT is not configured');
   return createHash('sha256').update(`${salt}${participantId}`, 'utf8').digest('hex');
+}
+
+/**
+ * One-way hash of the trusted client IP, stored only so ballot-stuffing can be
+ * detected after the fact (many participant hashes sharing one IP). Domain-separated
+ * from participant hashes so the two can't be cross-correlated, and null when the IP
+ * is unknown so absent origins don't cluster under a shared hash.
+ */
+export function hashIp(ip: string | undefined, salt = process.env.PARTICIPANT_SALT): string | undefined {
+  if (!ip || ip === 'unknown') return undefined;
+  if (!salt) throw new Error('PARTICIPANT_SALT is not configured');
+  return createHash('sha256').update(`${salt}ip:${ip}`, 'utf8').digest('hex');
 }
