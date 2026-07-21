@@ -136,7 +136,8 @@ export function AboutPage() {
         </details>
       </div>
       <h2>Privacy</h2>
-      <p>Pareto Rail uses Vercel Web Analytics to measure aggregate traffic. It sets no cookies, stores nothing on your device, and does not track you across sites or build a profile of you. Votes you cast are stored anonymously to compile the rankings.</p>
+      <p>Pareto Rail uses Vercel Web Analytics to measure aggregate traffic. It sets no cookies, does not track you across sites, and does not build a profile of you.</p>
+      <p>The site does keep some things in your browser's local storage: your theme and display preferences, audio and visual settings, your best local run for each level, and the votes you've cast. That data stays on your device - clearing your browser storage erases it. Alongside it we store a random identifier that is generated in your browser and sent with your votes, so that repeat votes from the same visitor can be recognised when compiling the rankings. It isn't linked to any account or personal information, and we ask for no personal information anywhere on the site.</p>
     </section>
   );
 }
