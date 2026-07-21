@@ -92,7 +92,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   const spawnWarningCount = warnings.length;
   let reticleWarnings = 0;
   const reticle = result.engineDefaults.lockRadius.reticle;
-  if (reticle.status === 'measured' && reticle.correctionScale > 1) {
+  if (reticle && reticle.correctionScale > 1) {
     reticleWarnings += 1;
     warnings.push(
       `Reticle visual radius (${reticle.visualNdc.toFixed(3)} NDC) is below half the lock radius `

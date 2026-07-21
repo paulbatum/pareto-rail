@@ -98,9 +98,8 @@ type FieldSource = 'level-authored' | 'engine default';
 
 // The XY visual radius of the level's drawn reticle, compared against the lock
 // radius. correctionScale is what the engine applies at runtime (1 = none).
-type ReticleMeasurement =
-  | { status: 'measured'; visualNdc: number; visualFraction: number; correctionScale: number }
-  | { status: 'unmeasurable'; reason: string };
+// null means the reticle could not be measured.
+type ReticleMeasurement = { visualNdc: number; visualFraction: number; correctionScale: number } | null;
 
 type EngineDefaultsReport = {
   shotRhythm: {
@@ -698,7 +697,7 @@ function summarizeEngineDefaults(level: LockOnRunnerLevel<string, unknown>): Eng
       engineDefault: LOCK_RADIUS_NDC,
       // Filled in asynchronously by measureLevelReticle once the level's visuals
       // module has been imported; summarizeEngineDefaults has no source/folder.
-      reticle: { status: 'unmeasurable', reason: 'not measured' },
+      reticle: null,
     },
     identityHooks: {
       declared: declaredHooks,
@@ -709,7 +708,7 @@ function summarizeEngineDefaults(level: LockOnRunnerLevel<string, unknown>): Eng
 
 // Instantiate the level's own reticle (core three.js objects only, so it runs
 // headless) and measure it against the exact engine math the game applies.
-// Any failure is recorded as unmeasurable rather than crashing the harness.
+// Returns null if the reticle can't be measured, rather than crashing.
 async function measureLevelReticle(
   sourceRoot: 'levels' | 'benchmark-levels',
   folder: string,
@@ -717,20 +716,17 @@ async function measureLevelReticle(
 ): Promise<ReticleMeasurement> {
   try {
     const mod = await import(`../src/${sourceRoot}/${folder}/visuals`);
-    if (typeof mod.createReticle !== 'function') {
-      return { status: 'unmeasurable', reason: 'visuals module does not export createReticle' };
-    }
+    if (typeof mod.createReticle !== 'function') return null;
     const reticle = mod.createReticle() as Object3D;
     const visualNdc = measureReticleVisualNdc(reticle, GAME_FOV_DEGREES);
-    if (!(visualNdc > 0)) return { status: 'unmeasurable', reason: 'reticle has no measurable XY extent' };
+    if (!(visualNdc > 0)) return null;
     return {
-      status: 'measured',
       visualNdc: round(visualNdc),
       visualFraction: round(visualNdc / lockRadiusNdc),
       correctionScale: round(reticleCorrectionScale(visualNdc, lockRadiusNdc)),
     };
-  } catch (error) {
-    return { status: 'unmeasurable', reason: error instanceof Error ? error.message : String(error) };
+  } catch {
+    return null;
   }
 }
 
@@ -1028,7 +1024,7 @@ function formatLockRadius(lockRadius: EngineDefaultsReport['lockRadius']) {
     ? `[default] ${lockRadius.value} NDC`
     : `${lockRadius.value} NDC (engine default ${lockRadius.engineDefault})`;
   const reticle = lockRadius.reticle;
-  if (reticle.status !== 'measured') return `${base}; reticle unmeasurable (${reticle.reason})`;
+  if (!reticle) return base;
   const scaling = reticle.correctionScale > 1
     ? `engine scales reticle ${reticle.correctionScale.toFixed(2)}x`
     : 'no reticle scaling';
