@@ -112,7 +112,7 @@ export type ComparisonState =
 
 export interface NextMatchupRequest {
   participantId: string;
-  judged?: readonly { matchupId: string; relative: RelativeOutcome }[];
+  judged?: readonly { matchupId: string; relative: RelativeOutcome; aLevelId?: string }[];
 }
 
 export interface RecordPlayRequest {

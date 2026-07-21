@@ -63,7 +63,7 @@ export function RankPage({ route, onNavigate }: RankPageProps) {
 
   if (!controller || !prepared) return <section className="page-panel"><p className="eyebrow">Rank</p><h1>Preparing a matchup…</h1></section>;
   if (launch) return <RankGame launch={launch} onNavigate={onNavigate} onRunEnd={handleRunEnd} />;
-  if (!controller.state) return <ProductionRankPage />;
+  if (!controller.state) return controller.judgedMatchups.length > 0 ? <CompletedRankPage controller={controller} /> : <ProductionRankPage />;
   return <RankContent controller={controller} state={controller.state} onNavigate={onNavigate} />;
 }
 
@@ -498,6 +498,17 @@ function LevelThumbnail({ side, path }: { side: MatchupSide; path?: string }) {
   const [failed, setFailed] = useState(false);
   if (!path || failed) return <div className="thumbnail-fallback" aria-label={`Level ${side.toUpperCase()} thumbnail unavailable`}><span>Level {side.toUpperCase()}</span></div>;
   return <img className="level-thumbnail" src={path} alt={`Anonymous Level ${side.toUpperCase()}`} onError={() => setFailed(true)} />;
+}
+
+function CompletedRankPage({ controller }: { controller: RankController }) {
+  return (
+    <section className="page-panel rank-panel">
+      <p className="eyebrow">Rank</p>
+      <h1>You’ve compared everything</h1>
+      <p className="lede">Every matchup in the current benchmark has your verdict. New levels will appear here as the catalog grows.</p>
+      <PersonalCurve controller={controller} />
+    </section>
+  );
 }
 
 function ProductionRankPage() {

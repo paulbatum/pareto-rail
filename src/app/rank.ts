@@ -138,9 +138,10 @@ export class RankController {
     this.undoneVerdict = null;
     this.busy = true;
     try {
-      const assignment = await this.api.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
-      if (!assignment) return;
-      this.machine = this.machineForAssignment(assignment);
+      const assignment = await this.api.nextMatchup({ participantId: this.store.participantId, judged: this.judgedForScheduler() });
+      // A null assignment means every available pair has been judged; clearing
+      // the machine lets the page show the completed state instead of the last reveal.
+      this.machine = assignment ? this.machineForAssignment(assignment) : null;
       this.emit();
     } finally { this.busy = false; }
   }
@@ -166,9 +167,13 @@ export class RankController {
   }
 
   private async ensureRound() {
-    const assignment = await this.api!.nextMatchup({ participantId: this.store.participantId, judged: this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative })) });
+    const assignment = await this.api!.nextMatchup({ participantId: this.store.participantId, judged: this.judgedForScheduler() });
     if (!assignment) return;
     this.machine = this.machineForAssignment(assignment);
+  }
+
+  private judgedForScheduler() {
+    return this.store.snapshot.history.map((vote) => ({ matchupId: vote.matchupId, relative: vote.relative, aLevelId: vote.aEntrantId }));
   }
 
   private machineForAssignment(assignment: MatchupAssignment): ComparisonStateMachine {

@@ -15,7 +15,7 @@ import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-cu
 
 declare const process: { argv: string[]; exitCode?: number } | undefined;
 
-type Judged = { matchupId: string; relative: RelativeOutcome };
+type Judged = { matchupId: string; relative: RelativeOutcome; aLevelId?: string };
 
 function assignment(): MatchupAssignment {
   return { matchupId: 'm', benchmarkVersion: 'v1', theme: { id: 't', title: 'T', summary: 'S', prompt: 'P' }, a: { playableRef: 'a' }, b: { playableRef: 'b' }, assignedAt: 'now' };
@@ -40,7 +40,9 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testFeaturedThemeCoverage();
   testNewcomerAnchoring();
   testNewThemeCoverage();
-  testFeaturedNewThemeOpener();
+  testEachPairServedOnceThenExhausts();
+  testServedSideOrderCanonicalization();
+  testParticipantSequencesDiverge();
   testThemeBalance();
   testConvergenceAndStability();
   testSameConfigurationPairs();
@@ -126,8 +128,14 @@ function testConnectionPromotes(): void {
 
 function testSelfHealingSchedule(): void {
   const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
-  const simulated = simulateAssignments(catalog, 4);
-  const next = scheduleOne(catalog, simulated.judged, simulated.exposures, simulated.themes);
+  // Two comparison islands: {0,1} and {2,3} judged within themselves in both themes.
+  const judged: Judged[] = [
+    { matchupId: pairId('theme-a', 'theme-a-0', 'theme-a-1'), relative: 'a', aLevelId: 'theme-a-0' },
+    { matchupId: pairId('theme-b', 'theme-b-0', 'theme-b-1'), relative: 'a', aLevelId: 'theme-b-0' },
+    { matchupId: pairId('theme-a', 'theme-a-2', 'theme-a-3'), relative: 'a', aLevelId: 'theme-a-2' },
+    { matchupId: pairId('theme-b', 'theme-b-2', 'theme-b-3'), relative: 'a', aLevelId: 'theme-b-2' },
+  ];
+  const next = scheduleOne(catalog, judged, {}, []);
   assert.ok(next);
   const configurationIds = [next!.levelIdA, next!.levelIdB].map((levelId) => catalog.entrants.find((entrant) => entrant.levelId === levelId)!.configurationId);
   const solo = new Set(['configuration-0', 'configuration-1']);
@@ -214,26 +222,27 @@ function testSchedulerCoverage(): void {
   const { judged, exposures, themes, assignments } = simulateAssignments(catalog, 4);
   assert.equal(assignments.length, 4);
   assert.equal(new Set(assignments.flatMap((matchup) => [matchup.levelIdA, matchup.levelIdB])).size, 8, 'cold start covers every level');
-  assert.equal(new Set(judged.map((item) => configurationPairFromMatchup(catalog, item.matchupId))).size, 4, 'cold start uses four configuration pairs');
+  const firstByTheme = new Map<string, { themeId: string; levelIdA: string; levelIdB: string }>();
+  for (const matchup of assignments) if (!firstByTheme.has(matchup.themeId)) firstByTheme.set(matchup.themeId, matchup);
+  const openerPairs = [...firstByTheme.values()].map((matchup) => configurationPairFromMatchup(catalog, pairId(matchup.themeId, matchup.levelIdA, matchup.levelIdB)));
+  assert.equal(new Set(openerPairs).size, catalog.themes.length, 'theme openers spread across distinct configuration pairs');
   const curve = curveFromJudged(catalog, judged);
   assert.equal(curve.placedCount, 4, 'the four-vote cold-start graph places every configuration');
   assert.ok(Object.values(exposures).every((count) => count === 1));
 }
 
 function testFeaturedFirstMatchup(): void {
-  const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
+  const catalog = makeSchedulerCatalog(4, 3, false, [0, 1]);
+  const isFeaturedPair = (matchup: { levelIdA: string; levelIdB: string }) =>
+    [matchup.levelIdA, matchup.levelIdB].every((levelId) => catalog.entrants.find((entrant) => entrant.levelId === levelId)!.featured === true);
   for (const participantId of ['participant-a', 'participant-b']) {
-    const { assignments } = simulateAssignments(catalog, catalog.themes.length, participantId);
-    const firstByTheme = new Map<string, { themeId: string; levelIdA: string; levelIdB: string }>();
+    const { assignments } = simulateAssignments(catalog, 6, participantId);
+    assert.equal(isFeaturedPair(assignments[0]!), true, `${participantId} did not open on the featured pairing`);
+    const firstByTheme = new Map<string, { levelIdA: string; levelIdB: string }>();
     for (const matchup of assignments) if (!firstByTheme.has(matchup.themeId)) firstByTheme.set(matchup.themeId, matchup);
     assert.equal(firstByTheme.size, catalog.themes.length);
-    for (const [themeId, matchup] of firstByTheme) {
-      const a = catalog.entrants.find((entrant) => entrant.levelId === matchup.levelIdA)!;
-      const b = catalog.entrants.find((entrant) => entrant.levelId === matchup.levelIdB)!;
-      assert.equal(themeId, matchup.themeId);
-      assert.equal(a.featured, true, `${participantId} opened ${themeId} without a featured entrant`);
-      assert.equal(b.featured, true, `${participantId} opened ${themeId} without a featured entrant`);
-    }
+    const featuredOpeners = [...firstByTheme.values()].filter(isFeaturedPair).length;
+    assert.equal(featuredOpeners, 1, 'the featured pairing opens the first theme only, not every theme');
   }
 }
 
@@ -303,22 +312,58 @@ function testNewThemeCoverage(): void {
   assert.ok([...newThemeLevels].every((levelId) => (exposures[levelId] ?? 0) > 0), 'the new theme gets covered');
 }
 
-function testFeaturedNewThemeOpener(): void {
-  const established = makeSchedulerCatalog(8, 2, false, [0, 1]);
-  const simulated = simulateAssignments(established, 12);
-  const catalog = makeSchedulerCatalog(8, 3, false, [0, 1]);
-  const next = scheduleOne(catalog, simulated.judged, simulated.exposures, simulated.themes);
-  assert.ok(next);
-  assert.equal(next!.themeId, 'theme-c');
-  const a = catalog.entrants.find((entrant) => entrant.levelId === next!.levelIdA)!;
-  const b = catalog.entrants.find((entrant) => entrant.levelId === next!.levelIdB)!;
-  assert.equal(a.featured, true, 'a newly added theme opens with a featured entrant');
-  assert.equal(b.featured, true, 'a newly added theme opens with a featured entrant');
+function testEachPairServedOnceThenExhausts(): void {
+  const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
+  const judged: Judged[] = [];
+  const seen = new Set<string>();
+  const totalPairs = 12;
+  for (let index = 0; index < totalPairs; index += 1) {
+    const next = nextScheduledMatchup(catalog, 'exhaustion', { judged });
+    assert.ok(next, `pair ${index} was available`);
+    const id = pairId(next!.themeId, next!.levelIdA, next!.levelIdB);
+    assert.equal(seen.has(id), false, `pair ${id} was served twice`);
+    seen.add(id);
+    appendJudgment(catalog, next!, judged, {}, []);
+  }
+  assert.equal(nextScheduledMatchup(catalog, 'exhaustion', { judged }), null, 'an exhausted catalog stops scheduling instead of repeating pairs');
+}
+
+function testServedSideOrderCanonicalization(): void {
+  const catalog = makeSchedulerCatalog(4, 1);
+  const theme = catalog.themes[0]!.id;
+  const level = (index: number) => `${theme}-${index}`;
+  // Ground truth: 0 beats 1 and 2; 2 and 1 beat 3. The undecided pairs are
+  // 0-3 (lopsided) and 1-2 (near-even, most informative).
+  const canonical: Judged[] = [
+    { matchupId: pairId(theme, level(0), level(1)), relative: 'a', aLevelId: level(0) },
+    { matchupId: pairId(theme, level(0), level(2)), relative: 'a', aLevelId: level(0) },
+    { matchupId: pairId(theme, level(2), level(3)), relative: 'a', aLevelId: level(2) },
+    { matchupId: pairId(theme, level(1), level(3)), relative: 'a', aLevelId: level(1) },
+  ];
+  // The same outcomes with some matchups served with flipped sides.
+  const flipped: Judged[] = [
+    { matchupId: pairId(theme, level(0), level(1)), relative: 'b', aLevelId: level(1) },
+    canonical[1]!,
+    { matchupId: pairId(theme, level(2), level(3)), relative: 'b', aLevelId: level(3) },
+    canonical[3]!,
+  ];
+  const fromCanonical = nextScheduledMatchup(catalog, 'sides', { judged: canonical });
+  const fromFlipped = nextScheduledMatchup(catalog, 'sides', { judged: flipped });
+  assert.ok(fromCanonical);
+  assert.equal(pairId(theme, fromCanonical!.levelIdA, fromCanonical!.levelIdB), pairId(theme, level(1), level(2)), 'the near-even pair is scheduled as most informative');
+  assert.deepEqual(fromFlipped, fromCanonical, 'served side order does not change how outcomes are interpreted');
+}
+
+function testParticipantSequencesDiverge(): void {
+  const catalog = makeSchedulerCatalog(6, 1);
+  const sequences = ['participant-a', 'participant-b', 'participant-c', 'participant-d'].map((participantId) =>
+    simulateAssignments(catalog, 3, participantId).judged.map((item) => item.matchupId).join('|'));
+  assert.ok(new Set(sequences).size > 1, 'coverage visits the same pairs in the same order for every participant');
 }
 
 function testThemeBalance(): void {
   const catalog = makeSchedulerCatalog(4, 2);
-  const simulated = simulateAssignments(catalog, 30);
+  const simulated = simulateAssignments(catalog, 12);
   const counts = new Map<string, number>();
   for (const item of simulated.judged) {
     const themeId = parsePairId(item.matchupId)?.themeId;
@@ -572,7 +617,7 @@ function appendJudgment(catalog: RankCatalogVersion, matchup: { themeId: string;
   const b = catalog.entrants.find((entrant) => entrant.levelId === matchup.levelIdB)!;
   const aIndex = Number(a.configurationId.split('-').at(-1));
   const bIndex = Number(b.configurationId.split('-').at(-1));
-  judged.push({ matchupId: pairId(matchup.themeId, matchup.levelIdA, matchup.levelIdB), relative: aIndex >= bIndex ? 'a' : 'b' });
+  judged.push({ matchupId: pairId(matchup.themeId, matchup.levelIdA, matchup.levelIdB), relative: aIndex >= bIndex ? 'a' : 'b', aLevelId: matchup.levelIdA });
   exposures[a.levelId] = (exposures[a.levelId] ?? 0) + 1;
   exposures[b.levelId] = (exposures[b.levelId] ?? 0) + 1;
   themes.push(matchup.themeId);

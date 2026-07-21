@@ -13,8 +13,17 @@ export function pairId(themeId: string, levelA: string, levelB: string): string 
   return `${themeId}:${first}__${second}`;
 }
 
+/** A prior judgment. `aLevelId` names the level shown on side A so the
+ * outcome can be mapped onto the canonical pair order; without it the
+ * relative outcome is assumed to already be in pair-id order. */
+export interface SchedulerJudgedVote {
+  matchupId: string;
+  relative: RelativeOutcome;
+  aLevelId?: string;
+}
+
 export interface SchedulerHistory {
-  judged?: readonly { matchupId: string; relative: RelativeOutcome }[];
+  judged?: readonly SchedulerJudgedVote[];
 }
 
 export interface ScheduledMatchup {
@@ -32,7 +41,6 @@ interface PairCandidate {
   pairCount: number;
   configurationPairCount: number;
   unseenCount: number;
-  costDifference: number;
 }
 
 /** Choose the next anonymous comparison without mutable or wall-clock state. */
@@ -48,9 +56,10 @@ export function nextScheduledMatchup(catalog: RankCatalogVersion, participantId:
 
   const lastThemeId = parsePairId(judged.at(-1)?.matchupId ?? '')?.themeId;
   const hasUnseenLevel = candidates.some((candidate) => candidate.unseenCount > 0);
+  const hasVersionHistory = pairCounts.size > 0;
   const selected = hasUnseenLevel
-    ? selectCoveragePhase(catalog, entrantsByTheme, candidates, exposureCounts, judged, lastThemeId)
-    : selectPlayoffPhase(catalog, candidates, judged, lastThemeId);
+    ? selectCoveragePhase(catalog, entrantsByTheme, candidates, exposureCounts, judged, lastThemeId, hasVersionHistory, participantId)
+    : selectPlayoffPhase(catalog, candidates, judged, lastThemeId, participantId);
   if (!selected) return null;
 
   const [levelIdA, levelIdB] = deterministicSideOrder(participantId, selected.id, selected.a.levelId, selected.b.levelId);
@@ -62,13 +71,18 @@ function selectCoveragePhase(
   entrantsByTheme: ReadonlyMap<string, readonly RankCatalogEntrant[]>,
   candidates: readonly PairCandidate[],
   exposureCounts: ReadonlyMap<string, number>,
-  judged: readonly { matchupId: string; relative: RelativeOutcome }[],
+  judged: readonly SchedulerJudgedVote[],
   lastThemeId: string | undefined,
+  hasVersionHistory: boolean,
+  participantId: string,
 ): PairCandidate | null {
   const themeId = selectCoverageTheme(entrantsByTheme, candidates, exposureCounts, lastThemeId);
   if (!themeId) return null;
   const themeCandidates = candidates.filter((candidate) => candidate.themeId === themeId);
-  if (!judged.some((item) => parsePairId(item.matchupId)?.themeId === themeId)) {
+  // A participant's very first comparison in this catalog version is the
+  // featured pairing. Later matchups spread across the pool instead of
+  // repeating it per theme.
+  if (!hasVersionHistory) {
     const featuredPair = themeCandidates
       .filter((candidate) => candidate.a.featured === true && candidate.b.featured === true)
       .sort((left, right) => compareIds(left.id, right.id))[0] ?? null;
@@ -76,13 +90,15 @@ function selectCoveragePhase(
   }
   // Seed each theme with a placed pool before switching to anchored
   // arrivals. Existing placed configurations keep new catalog entries
-  // attached to the same component.
+  // attached to the same component. Participant-salted ordering spreads
+  // different visitors across different pairs so aggregate coverage is
+  // not concentrated on one deterministic sequence.
   const curve = schedulerCurve(catalog, judged);
   const coldStart = curve.placedCount < catalog.themes.length * 2;
   const bothUnseen = themeCandidates
     .filter((candidate) => candidate.unseenCount === 2)
     .sort((left, right) => left.configurationPairCount - right.configurationPairCount
-      || left.costDifference - right.costDifference
+      || participantOrder(participantId, left.id) - participantOrder(participantId, right.id)
       || compareIds(left.id, right.id))[0] ?? null;
   if (coldStart && bothUnseen) return bothUnseen;
 
@@ -95,8 +111,8 @@ function selectCoveragePhase(
       const leftAnchor = leftUnseen === left.a ? left.b : left.a;
       const rightAnchor = rightUnseen === right.a ? right.b : right.a;
       return Number(placed.has(rightAnchor.configurationId)) - Number(placed.has(leftAnchor.configurationId))
-        || left.costDifference - right.costDifference
         || left.configurationPairCount - right.configurationPairCount
+        || participantOrder(participantId, left.id) - participantOrder(participantId, right.id)
         || compareIds(left.id, right.id);
     })[0] ?? null;
   // A fully unseen theme (for example a newly added one) has no seen anchors;
@@ -107,28 +123,34 @@ function selectCoveragePhase(
 function selectPlayoffPhase(
   catalog: RankCatalogVersion,
   candidates: readonly PairCandidate[],
-  judged: readonly { matchupId: string; relative: RelativeOutcome }[],
+  judged: readonly SchedulerJudgedVote[],
   lastThemeId: string | undefined,
+  participantId: string,
 ): PairCandidate | null {
+  // Serving an already-judged pair would deadlock the participant: a repeat
+  // vote leaves history unchanged, so the deterministic scheduler would pick
+  // the same pair forever. Each pair is asked at most once; exhaustion is the
+  // terminal state and returns null.
+  const fresh = candidates.filter((candidate) => candidate.pairCount === 0);
+  if (fresh.length === 0) return null;
   const themeCounts = new Map<string, number>();
   for (const theme of catalog.themes) themeCounts.set(theme.id, 0);
   for (const item of judged) {
     const parsed = parsePairId(item.matchupId);
     if (parsed && themeCounts.has(parsed.themeId)) themeCounts.set(parsed.themeId, themeCounts.get(parsed.themeId)! + 1);
   }
-  const themeIds = [...new Set(candidates.map((candidate) => candidate.themeId))];
+  const themeIds = [...new Set(fresh.map((candidate) => candidate.themeId))];
   const minimum = Math.min(...themeIds.map((themeId) => themeCounts.get(themeId) ?? 0));
   const themeId = alternateLexicalTheme(themeIds.filter((candidate) => (themeCounts.get(candidate) ?? 0) === minimum), lastThemeId);
   if (!themeId) return null;
 
   const curve = schedulerCurve(catalog, judged);
   const ratings = new Map(curve.points.flatMap((point) => point.rating === undefined ? [] : [[point.configurationId, point.rating] as const]));
-  return candidates
+  return fresh
     .filter((candidate) => candidate.themeId === themeId)
     .map((candidate) => ({ candidate, information: playoffInformation(candidate, ratings) }))
     .sort((left, right) => right.information - left.information
-      || left.candidate.pairCount - right.candidate.pairCount
-      || left.candidate.costDifference - right.candidate.costDifference
+      || participantOrder(participantId, left.candidate.id) - participantOrder(participantId, right.candidate.id)
       || compareIds(left.candidate.id, right.candidate.id))[0]?.candidate ?? null;
 }
 
@@ -183,14 +205,13 @@ function pairsForTheme(
         pairCount: pairCounts.get(id) ?? 0,
         configurationPairCount: configurationPairCounts.get(configurationPairId) ?? 0,
         unseenCount: Number(exposureA === 0) + Number(exposureB === 0),
-        costDifference: Math.abs(a.generationCost - b.generationCost),
       });
     }
   }
   return candidates;
 }
 
-function countJudgedPairs(catalog: RankCatalogVersion, judged: readonly { matchupId: string; relative: RelativeOutcome }[]): Map<string, number> {
+function countJudgedPairs(catalog: RankCatalogVersion, judged: readonly SchedulerJudgedVote[]): Map<string, number> {
   const knownIds = new Set(catalog.entrants.map((entrant) => entrant.levelId));
   const counts = new Map<string, number>();
   for (const item of judged) {
@@ -202,7 +223,7 @@ function countJudgedPairs(catalog: RankCatalogVersion, judged: readonly { matchu
   return counts;
 }
 
-function countJudgedConfigurationPairs(catalog: RankCatalogVersion, judged: readonly { matchupId: string; relative: RelativeOutcome }[]): Map<string, number> {
+function countJudgedConfigurationPairs(catalog: RankCatalogVersion, judged: readonly SchedulerJudgedVote[]): Map<string, number> {
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const counts = new Map<string, number>();
   for (const item of judged) {
@@ -218,7 +239,7 @@ function countJudgedConfigurationPairs(catalog: RankCatalogVersion, judged: read
 
 function exposureMap(
   catalog: RankCatalogVersion,
-  judged: readonly { matchupId: string; relative: RelativeOutcome }[],
+  judged: readonly SchedulerJudgedVote[],
 ): Map<string, number> {
   const counts = new Map<string, number>();
   const knownIds = new Set(catalog.entrants.map((entrant) => entrant.levelId));
@@ -231,7 +252,7 @@ function exposureMap(
   return counts;
 }
 
-function schedulerCurve(catalog: RankCatalogVersion, judged: readonly { matchupId: string; relative: RelativeOutcome }[]) {
+function schedulerCurve(catalog: RankCatalogVersion, judged: readonly SchedulerJudgedVote[]) {
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const history: PersonalHistoryEntry[] = [];
   for (const item of judged) {
@@ -239,12 +260,15 @@ function schedulerCurve(catalog: RankCatalogVersion, judged: readonly { matchupI
     const a = parsed ? entrants.get(parsed.levelA) : undefined;
     const b = parsed ? entrants.get(parsed.levelB) : undefined;
     if (!parsed || !a || !b || a.themeId !== parsed.themeId || b.themeId !== parsed.themeId || a.configurationId === b.configurationId) continue;
+    // The stored outcome refers to the sides as served, which may be flipped
+    // relative to the canonical pair order used here.
+    const relative = item.aLevelId === parsed.levelB ? invertRelative(item.relative) : item.relative;
     const vote: MatchupVote = {
       matchupId: item.matchupId,
       aEntrantId: a.levelId,
       bEntrantId: b.levelId,
-      verdict: item.relative === 'a' ? 'a-better' : item.relative === 'b' ? 'b-better' : 'both-good',
-      relative: item.relative,
+      verdict: relative === 'a' ? 'a-better' : relative === 'b' ? 'b-better' : 'both-good',
+      relative,
       playCounts: { a: 1, b: 1 },
       submittedAt: '',
     };
@@ -273,6 +297,16 @@ export function parsePairId(id: string): { themeId: string; levelA: string; leve
 function alternateLexicalTheme(themeIds: readonly string[], lastThemeId: string | undefined): string | null {
   const ordered = [...themeIds].sort(compareIds);
   return ordered.find((themeId) => themeId !== lastThemeId) ?? ordered[0] ?? null;
+}
+
+function invertRelative(relative: RelativeOutcome): RelativeOutcome {
+  return relative === 'a' ? 'b' : relative === 'b' ? 'a' : 'tie';
+}
+
+/** Deterministic per-participant ordering over pair ids, so equally eligible
+ * pairs are visited in a different sequence by each participant. */
+function participantOrder(participantId: string, id: string): number {
+  return hashString(`${participantId}|${id}`);
 }
 
 function deterministicSideOrder(participantId: string, matchupId: string, levelA: string, levelB: string): [string, string] {

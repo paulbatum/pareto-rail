@@ -82,7 +82,7 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
     const data = this.store.snapshot;
     const activeVersion = activeCatalogVersion(this.catalog);
     if (!activeVersion) return null;
-    const judged = completedMatchupsFromVotes(this.catalog, data.history).map(({ vote }) => ({ matchupId: vote.matchupId, relative: vote.relative }));
+    const judged = completedMatchupsFromVotes(this.catalog, data.history).map(({ vote }) => ({ matchupId: vote.matchupId, relative: vote.relative, aLevelId: vote.aEntrantId }));
     const scheduled = nextScheduledMatchup(activeVersion, this.store.participantId, { judged });
     if (!scheduled) return null;
     const theme = activeVersion.themes.find((candidate) => candidate.id === scheduled.themeId);
