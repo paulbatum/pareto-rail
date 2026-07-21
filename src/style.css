@@ -462,8 +462,8 @@ canvas {
   text-shadow: 0 0 12px rgb(70 232 255 / 65%);
 }
 
-/* Warm gold against the game's cyan so the sound nudge reads as an invitation, not a control. */
-.sound-tip {
+/* Warm gold against the game's cyan so the start nudges read as invitations, not controls. */
+.start-nudge {
   display: inline-flex;
   align-items: center;
   gap: 14px;
@@ -474,12 +474,13 @@ canvas {
   border-radius: 999px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  white-space: nowrap;
   pointer-events: none;
   text-shadow: 0 0 12px rgb(255 193 79 / 60%);
-  animation: sound-tip-pulse 2.6s ease-in-out infinite;
+  animation: start-nudge-pulse 2.6s ease-in-out infinite;
 }
 
-@keyframes sound-tip-pulse {
+@keyframes start-nudge-pulse {
   0%, 100% { box-shadow: 0 0 12px rgb(255 180 60 / 12%); border-color: rgb(255 200 96 / 38%); }
   50% { box-shadow: 0 0 26px rgb(255 180 60 / 32%); border-color: rgb(255 213 122 / 72%); }
 }
@@ -499,8 +500,29 @@ canvas {
   50% { transform: translateY(-3px) rotate(7deg); }
 }
 
+/* Only a phone/tablet held upright needs the landscape nudge; rotating the device
+   both satisfies it and dismisses it. */
+.rotate-tip { display: none; }
+
+@media (pointer: coarse) and (orientation: portrait) {
+  .rotate-tip:not(.hidden) { display: inline-flex; }
+}
+
+.rotate-tip-phone {
+  width: 1.35em;
+  height: 1.35em;
+  filter: drop-shadow(0 0 6px rgb(255 200 90 / 70%));
+  animation: rotate-tip-phone 3s ease-in-out infinite;
+}
+
+@keyframes rotate-tip-phone {
+  0%, 18% { transform: rotate(0deg); }
+  45%, 78% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .sound-tip, .sound-tip-note { animation: none; }
+  .start-nudge, .sound-tip-note, .rotate-tip-phone { animation: none; }
 }
 
 .pause-overlay {
@@ -597,7 +619,7 @@ canvas {
 
 .pause-overlay.hidden,
 .tip.hidden,
-.sound-tip.hidden {
+.start-nudge.hidden {
   display: none;
 }
 

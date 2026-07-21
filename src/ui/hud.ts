@@ -29,6 +29,7 @@ export function createHud(options: HudOptions = {}) {
   const callout = requireElement<HTMLElement>('#callout');
   const tip = requireElement<HTMLElement>('#tip');
   const soundTip = requireElement<HTMLElement>('#sound-tip');
+  const rotateTip = requireElement<HTMLElement>('#rotate-tip');
   const endScore = requireElement<HTMLElement>('[data-end="score"]');
   const endKills = requireElement<HTMLElement>('[data-end="kills"]');
   const endRank = requireElement<HTMLElement>('[data-end="rank"]');
@@ -134,8 +135,11 @@ export function createHud(options: HudOptions = {}) {
       tip.classList.add('hidden');
     },
 
-    setSoundTipVisible(visible: boolean) {
+    /* Sound and landscape encouragement. The landscape nudge is additionally gated by a
+       portrait-touch media query in CSS, so it only ever shows where rotating would help. */
+    setStartNudgesVisible(visible: boolean) {
       soundTip.classList.toggle('hidden', !visible);
+      rotateTip.classList.toggle('hidden', !visible);
     },
   };
 }

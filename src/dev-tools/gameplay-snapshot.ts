@@ -689,7 +689,7 @@ function createSnapshotHud(): Hud {
     setTip: () => {},
     showTip: () => {},
     hideTip: () => {},
-    setSoundTipVisible: () => {},
+    setStartNudgesVisible: () => {},
   };
 }
 

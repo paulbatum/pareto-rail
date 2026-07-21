@@ -1,5 +1,5 @@
-/* The sound encouragement lives in its own start-screen banner (see hud.setSoundTipVisible),
-   so the client tip only carries guidance that varies by platform. */
+/* The sound and landscape encouragements live in their own start-screen banners (see
+   hud.setStartNudgesVisible), so the client tip only carries guidance that varies by platform. */
 export function getStartScreenTip(fullscreenAvailable: boolean) {
   if (isCoarsePointer()) return '';
   return fullscreenAvailable ? 'Fullscreen: press F' : '';
