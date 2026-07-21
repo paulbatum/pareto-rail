@@ -1,31 +1,40 @@
 # Pareto Rail
 
-Pareto Rail is a procedural WebGPU rail shooter and a public benchmark experience for one-shot model-built levels. Visitors can play the polished Crystal Corridor reference, compare development entrants blind, and inspect quality-versus-cost results without launching WebGPU gameplay.
+Public site: [paretorail.com](https://paretorail.com/)
 
-The production site is [paretorail.vercel.app](https://paretorail.vercel.app/).
+<!-- The region between these markers is also rendered on the site's About page.
+     Keep the markers in place, and keep what's between them free of anything
+     that only makes sense on GitHub. -->
 
-The main routes are `/levels`, `/play/<id>`, `/rank`, `/leaderboard`, and `/about`. Older links such as `/play` and `?level=crystal-corridor` remain supported.
+<!-- site:start -->
+Pareto Rail is inspired by my love for [Rez](https://en.wikipedia.org/wiki/Rez_(video_game)) and distrust of my own bias on which models are best. Its a procedural WebGPU rail shooter and a public benchmark for one-shot, model-built levels.
+
+While I have a background in building software, this project is 100% vibe coded, and its my first time building something benchmark-ish. I've made many mistakes with plenty more to come. I welcome your feedback via [Twitter](https://x.com/paulbatum) or [GitHub](https://github.com/paulbatum/pareto-rail/issues).
+
+## Rez
+
+Rez is a brilliant example of the human creative spirit and the levels you can play on this site do not hold a candle to its beauty. At least, not yet. Rez is available on [Steam](https://store.steampowered.com/app/636450/Rez_Infinite/).
+
+## Methodology
+
+Every benchmark level here was built by an AI coding agent, unattended, in one shot. Each agent gets the same assignment: a short theme, the standing brief every level in this project is built to, and a clean checkout of the game with the hand-built levels as reference. Whatever it submits is what you play - no human edits, no retries for quality.
+
+Before a level enters the pool it has to clear four mechanical gates: it must typecheck, build, stay inside its own level directory, and meet a basic gameplay floor.
+
+Cost is measured after each run by replaying the agent's full transcript - including any subagents it spawned - against per-model pricing. Some entrants bill real metered API spend; others run on subscription plans and are priced the same way for comparability.
+
+Judging is blind pairwise play. You get two levels built from the same theme. I use Bradley-Terry for scoring, plotted against what each level cost to build.
+
+More details are available in the [benchmark readme](https://github.com/paulbatum/pareto-rail/blob/main/benchmark/README.md).
+<!-- site:end -->
 
 ## Run it
+
+I suggest you use a coding agent for repo setup, but this should get you started:
 
 ```sh
 npm install
 npm run dev
-```
-
-Requires a WebGPU-capable browser (recent Chrome/Edge). Esc pauses and opens volume/glow/fullscreen settings. Shift+D toggles the play UI for a clean view; entering fullscreen hides the same UI until fullscreen closes. On iPhone/iPad Safari, use Share → Add to Home Screen for the closest fullscreen experience.
-
-The Rank page stays provisional until an eligible public catalog and backend are connected; rehearsal levels are retained only in ignored benchmark records and are not playable or rankable in the app. Built-in levels live under `src/levels/`; promoted benchmark outputs are discovered from self-contained directories under `src/benchmark-levels/`.
-
-## Tools
-
-```sh
-npm run snapshot -- --module src/levels/crystal/visuals/crystal.ts --export createCrystalNode
-npm run snapshot:gameplay -- --level crystal-corridor --time 12
-npm run snapshot:gameplay -- --level helios --thumbnails 8
-npm run snapshot:gameplay -- --level helios --sheet --times 4,12,24,48
-npm run snapshot:gameplay -- --level helios --time 12 --projectiles
-npm run benchmark:catalog -- validate --source path/to/catalog.json --mode production
 ```
 
 ## License

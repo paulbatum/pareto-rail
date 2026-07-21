@@ -1,11 +1,12 @@
 import mitLicense from '../../../LICENSE?raw';
 import thirdPartyNotices from '../../../THIRD_PARTY_NOTICES.md?raw';
 import aboutContent from '../about.md?raw';
+import readme from '../../../README.md?raw';
 import { levelMetadatas } from '../../levels';
 import { allCatalogEntrants, rankCatalog } from '../../benchmark/catalog';
 import { homeCopy } from '../content';
 import { RouteLink } from '../components/RouteLink';
-import { Markdown } from '../components/Markdown';
+import { Markdown, markdownRegion } from '../components/Markdown';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
@@ -125,9 +126,10 @@ export function AboutPage() {
       <p className="eyebrow">About</p>
       <h1>Pareto Rail</h1>
       <p className="lede">Built by <a href="https://x.com/paulbatum" target="_blank" rel="noreferrer">@paulbatum</a></p>
+      <Markdown source={markdownRegion(readme, 'site')} />
       <Markdown source={aboutContent} />
-      <h2>Open source</h2>
-      <p>Pareto Rail is released under the MIT License. Third-party software, data, and reference material retain their original terms.</p>
+      <h2>License</h2>
+      <p>Pareto Rail is open source under the MIT License, available on <a href="https://github.com/paulbatum/pareto-rail" target="_blank" rel="noreferrer">GitHub</a>. Third-party software, data, and reference material retain their original terms.</p>
       <div className="legal-disclosures">
         <details className="legal-details">
           <summary>MIT License</summary>

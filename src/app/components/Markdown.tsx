@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
  * Content is authored in this repo, not user-supplied, and is turned into React
  * elements rather than raw HTML. */
 export function Markdown({ source }: { source: string }) {
-  const blocks = source.trim().split(/\n{2,}/);
+  const blocks = source.trim().split(/\n{2,}/).filter((block) => !block.startsWith('<!--'));
   return (
     <>
       {blocks.map((block, index) => {
@@ -19,6 +19,21 @@ export function Markdown({ source }: { source: string }) {
       })}
     </>
   );
+}
+
+/** Returns the region of `source` between `<!-- name:start -->` and its matching
+ * end marker. Lets a document be authored once and shown in part somewhere else
+ * — the site's About page renders a region of the repository README. */
+export function markdownRegion(source: string, name: string): string {
+  const open = `<!-- ${name}:start -->`;
+  const close = `<!-- ${name}:end -->`;
+  const from = source.indexOf(open);
+  const to = source.indexOf(close);
+  if (from < 0 || to < from) {
+    if (import.meta.env.DEV) console.error(`Markdown region "${name}" is missing its ${from < 0 ? 'start' : 'end'} marker.`);
+    return '';
+  }
+  return source.slice(from + open.length, to).trim();
 }
 
 function inline(text: string): ReactNode[] {
