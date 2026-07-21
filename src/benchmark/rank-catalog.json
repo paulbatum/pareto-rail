@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-20T19:59:55.878Z",
+  "generatedAt": "2026-07-21T00:46:09.904Z",
   "activeBenchmarkVersion": "rank-catalog-v2",
   "configurations": [
     {
@@ -86,7 +86,7 @@
   "versions": [
     {
       "benchmarkVersion": "rank-catalog-v1",
-      "generatedAt": "2026-07-20T19:59:55.878Z",
+      "generatedAt": "2026-07-21T00:46:09.904Z",
       "themes": [
         {
           "id": "mass-driver",
@@ -391,7 +391,7 @@
     },
     {
       "benchmarkVersion": "rank-catalog-v2",
-      "generatedAt": "2026-07-20T19:59:55.878Z",
+      "generatedAt": "2026-07-21T00:46:09.904Z",
       "themes": [
         {
           "id": "broadside",
@@ -846,6 +846,37 @@
             ]
           },
           "thumbnailPath": "/level-content/mass-driver-detailed-p8jn/hero.avif"
+        },
+        {
+          "levelId": "mass-driver-detailed-uk78",
+          "themeId": "mass-driver-detailed",
+          "configurationId": "codex-sol-high",
+          "modelName": "GPT-5.6 Sol",
+          "workflowName": "solo",
+          "generationCost": 6.57154,
+          "run": {
+            "generationWallTimeSeconds": 1235.325,
+            "totalWallTimeSeconds": 1495.987,
+            "result": "completed",
+            "orchestrationTreatment": "none",
+            "harness": {
+              "name": "Codex CLI",
+              "version": "0.144.1"
+            },
+            "models": [
+              {
+                "modelName": "gpt-5.6-sol",
+                "role": "solo",
+                "inputTokens": 334332,
+                "outputTokens": 53740,
+                "cacheReadTokens": 6575360,
+                "cacheWriteTokens": 0,
+                "reasoningTokens": 10835
+              }
+            ]
+          },
+          "thumbnailPath": "/level-content/mass-driver-detailed-uk78/hero.avif",
+          "featured": true
         },
         {
           "levelId": "strandline-os1a",
