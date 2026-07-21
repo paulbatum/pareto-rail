@@ -63,7 +63,7 @@ type KillPosition = {
 };
 
 type RunResult = {
-  level: { id: string; folder: string; title: string; duration: number; bpm: number };
+  level: { id: string; folder: string; sourceRoot: 'levels' | 'benchmark-levels'; title: string; duration: number; bpm: number };
   policy: SimPolicy;
   seed: number;
   dt: number;
@@ -182,6 +182,7 @@ const LOG_EVENT_TYPES = [
 type LevelTarget = {
   canonical: string;
   folder: string;
+  sourceRoot: 'levels' | 'benchmark-levels';
   title: string;
 };
 
@@ -236,10 +237,41 @@ async function resolveLevelTarget(levelIdOrAlias: string, rootDir: string): Prom
   }
 
   if (!canonicalId || !cases.has(canonicalId)) {
+    // Auto-discovered benchmark levels live under src/benchmark-levels/<id>/ and
+    // are not in the built-in registry; resolve them from their descriptors.
+    for (const target of await readBenchmarkTargets(rootDir)) {
+      if (target.canonical === levelIdOrAlias || target.aliases.includes(levelIdOrAlias)) {
+        return { canonical: target.canonical, folder: target.folder, sourceRoot: 'benchmark-levels', title: target.title };
+      }
+    }
     throw new Error(`Unsupported simulation level: ${levelIdOrAlias}`);
   }
   const folder = cases.get(canonicalId)!;
-  return { canonical: canonicalId, folder, title };
+  return { canonical: canonicalId, folder, sourceRoot: 'levels', title };
+}
+
+async function readBenchmarkTargets(rootDir: string): Promise<Array<LevelTarget & { aliases: string[] }>> {
+  const benchmarkRoot = path.resolve(rootDir, 'src/benchmark-levels');
+  let entries;
+  try {
+    entries = await fs.readdir(benchmarkRoot, { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw error;
+  }
+  const targets: Array<LevelTarget & { aliases: string[] }> = [];
+  for (const entry of entries.filter((item) => item.isDirectory() && item.name !== 'test-fixtures').sort((a, b) => a.name.localeCompare(b.name))) {
+    const descriptorPath = path.join(benchmarkRoot, entry.name, 'level.json');
+    try {
+      const descriptor = JSON.parse(await fs.readFile(descriptorPath, 'utf8')) as { id?: string; title?: string; aliases?: string[] };
+      if (descriptor.id !== entry.name || !descriptor.title) throw new Error(`Benchmark descriptor ${descriptorPath} must match its directory and contain a title.`);
+      targets.push({ canonical: descriptor.id, folder: entry.name, sourceRoot: 'benchmark-levels', title: descriptor.title, aliases: descriptor.aliases ?? [] });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+      throw error;
+    }
+  }
+  return targets;
 }
 
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
@@ -343,7 +375,7 @@ export async function validateLevelAudioConfig(levelIdOrAlias: string, rootDir =
   const target = await resolveLevelTarget(levelIdOrAlias, rootDir);
   const bus = createEventBus();
   try {
-    const mod = await import(`../src/levels/${target.folder}/audio`);
+    const mod = await import(`../src/${target.sourceRoot}/${target.folder}/audio`);
     if (typeof mod.createAudio !== 'function') return [`${target.canonical} audio module does not export createAudio`];
     const audio = mod.createAudio(bus);
     audio.dispose();
@@ -385,7 +417,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
   window.__raildDebug = { ...(window.__raildDebug ?? {}), immortal: options.engagement };
   const bus = createEventBus();
   const hud = createStubHud();
-  const level = await createGameplay(target.folder, bus, hud);
+  const level = await createGameplay(target.sourceRoot, target.folder, bus, hud);
   const engineDefaults = summarizeEngineDefaults(level);
   const scene = new Scene();
   const camera = new PerspectiveCamera(60, 16 / 9, 0.1, 5000);
@@ -551,7 +583,7 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
 
   return {
     engineDefaults,
-    level: { id: target.canonical, folder: target.folder, title: target.title, duration: level.duration, bpm: level.bpm },
+    level: { id: target.canonical, folder: target.folder, sourceRoot: target.sourceRoot, title: target.title, duration: level.duration, bpm: level.bpm },
     policy: options.policy,
     seed: options.policy === 'imperfect' ? options.seed : 0,
     dt: options.dt,
@@ -635,8 +667,8 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
   }
 }
 
-async function createGameplay(folder: string, bus: ReturnType<typeof createEventBus>, hud: Hud): Promise<LockOnRunnerLevel<string, unknown>> {
-  const mod = await import(`../src/levels/${folder}/gameplay`);
+async function createGameplay(sourceRoot: 'levels' | 'benchmark-levels', folder: string, bus: ReturnType<typeof createEventBus>, hud: Hud): Promise<LockOnRunnerLevel<string, unknown>> {
+  const mod = await import(`../src/${sourceRoot}/${folder}/gameplay`);
 
   // Pattern 1: Any function starting with 'create' and ending with 'Gameplay'
   const factoryKey = Object.keys(mod).find(key => key.startsWith('create') && key.endsWith('Gameplay'));
@@ -1209,10 +1241,10 @@ async function getAllLevels(rootDir: string): Promise<LevelTarget[]> {
     const entryTitle = match[2];
     const folder = cases.get(entryId);
     if (folder) {
-      list.push({ canonical: entryId, folder, title: entryTitle });
+      list.push({ canonical: entryId, folder, sourceRoot: 'levels', title: entryTitle });
     }
   }
-  return list;
+  return [...list, ...(await readBenchmarkTargets(rootDir))];
 }
 
 export function computeCenterMetrics(run: RunResult) {

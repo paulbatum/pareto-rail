@@ -59,7 +59,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
     }
   }
 
-  const cardPath = path.join(root, 'src', 'levels', level.folder, 'level.md');
+  const cardPath = path.join(root, 'src', level.sourceRoot, level.folder, 'level.md');
   try {
     const card = await fs.readFile(cardPath, 'utf8');
     if (!isNonTemplateCard(card, level.title)) failures.push(`${relative(root, cardPath)} is missing, too thin, or still looks like a template.`);
