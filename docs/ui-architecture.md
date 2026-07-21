@@ -18,6 +18,14 @@ Client-side via the History API (`src/app/router.ts`). An unrecognized path reso
 
 `GameFrame` bridges React pages to the imperative game runtime and is loaded lazily (via `LazyGameFrame`) so the three.js/WebGPU runtime stays out of the shell bundle. Content pages and the level/matchup pickers must not statically import it.
 
+## SEO / indexing
+
+The site is a single-page app, so crawlers need help discovering its routes.
+
+- `public/robots.txt` allows all crawlers and points them at `https://paretorail.com/sitemap.xml`. Vite copies it verbatim into `dist/`.
+- `scripts/generate-sitemap.mjs` runs after `vite build` in the `build` script and writes `dist/sitemap.xml`. It is dependency-free and derives its URL list from the same data files the app uses, so it can't drift: static routes, `/play/<id>` for every playable level (built-in registry ids excluding `technical` levels, plus non-retired rank-catalog entrant ids; test fixtures never appear because they never enter the catalog), and `/analysis/<id>` for each package directory under `benchmark/analysis/`. It fails the build loudly if it can't enumerate the built-in registry or the rank catalog. On Vercel, static files in `dist` are served before the SPA catch-all rewrite applies, so `sitemap.xml` and `robots.txt` are reachable despite that rewrite.
+- `vercel.json` adds a permanent redirect from the `paretorail.vercel.app` host to `https://paretorail.com/<same path>`, giving the site one canonical origin. The redirect excludes `api/` paths (via the same `(?!api/)` negative lookahead the SPA rewrite uses) so API clients pinned to the vercel.app host keep working.
+
 ## Homepage bundle budget
 
 `scripts/check-bundle-budget.mjs` runs at the end of `npm run build` and measures the gzip size of the eager homepage graph — the entry chunk plus everything it *statically* imports (JS and CSS), i.e. what a first visitor downloads before any lazy route or `LazyGameFrame` loads. Small growth is allowed; a jump past `MAX_GROWTH_RATIO` (15%) over the seeded baseline fails the build, which is what catches a heavy feature accidentally reaching the shell instead of sitting behind `React.lazy`. When growth is intentional, re-seed `BASELINE_GZIP_BYTES` to the size the failure message reports. The check relies on `build.manifest` being enabled in `vite.config.ts`.
