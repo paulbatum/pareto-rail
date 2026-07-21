@@ -16,7 +16,7 @@ import {
   Vector3,
 } from 'three';
 import type { Camera } from 'three';
-import { createTransientEffectPool, disposeObject3D } from '../../../engine/visual-kit';
+import { createTransientEffectPool } from '../../../engine/visual-kit';
 
 // Everything that happens in this barrel is an electrical discharge, so the
 // effect vocabulary is deliberately narrow: shock rings (a pressure wave down
@@ -85,7 +85,7 @@ const arcs = createTransientEffectPool<Arc, Camera>({
     // Current does not fade smoothly; it stutters and then breaks.
     material.opacity = (1 - progress) * (0.55 + 0.45 * Math.sin(progress * 43));
   },
-  dispose: (effect) => detach(effect.line),
+  dispose: (effect) => detach(effect.line, true),
 });
 
 const trails = createTransientEffectPool<TrailDot, Camera>({
@@ -96,9 +96,16 @@ const trails = createTransientEffectPool<TrailDot, Camera>({
   dispose: (effect) => detach(effect.mesh),
 });
 
-function detach(object: Mesh | Line) {
+/**
+ * Effect meshes share their geometry with every other effect of the same kind
+ * and own only their material, so retiring one must dispose the material alone.
+ * Arcs are the exception: each one builds a fresh jagged path.
+ */
+function detach(object: Mesh | Line, ownsGeometry = false) {
   object.removeFromParent();
-  disposeObject3D(object);
+  const material = object.material;
+  for (const entry of Array.isArray(material) ? material : [material]) entry.dispose();
+  if (ownsGeometry) object.geometry.dispose();
 }
 
 export function createEffects(scene: Scene) {

@@ -87,6 +87,11 @@ const SHAKE: CameraFeelShakeOptions = {
   smoothing: 22,
 };
 
+// Shot geometry is interned: a run fires hundreds of these and each one is
+// otherwise identical, so only the material needs to be per-instance.
+const SLUG_CORE = new OctahedronGeometry(0.3, 0).scale(0.4, 0.4, 2.4);
+const SLUG_SHELL = new OctahedronGeometry(0.5, 0).scale(0.55, 0.55, 2.0);
+
 const DENY_EDGE = new Color(1.7, 0.12, 0.06);
 const DENY_PLATE = new Color(0.26, 0.02, 0.015);
 const rail = createMassDriverRail();
@@ -172,12 +177,8 @@ export function setEnemyDenied(mesh: Object3D) {
 /** Player ordnance: a cold ice-white slug — the only thing in the bore that is not the gun's. */
 export function createProjectileMesh() {
   const group = new Group();
-  const core = new OctahedronGeometry(0.3, 0);
-  core.scale(0.4, 0.4, 2.4);
-  group.add(new Mesh(core, new MeshBasicMaterial({ color: hdr(WHITE_HOT, 2.8) })));
-  const shell = new OctahedronGeometry(0.5, 0);
-  shell.scale(0.55, 0.55, 2.0);
-  group.add(new Mesh(shell, createAdditiveBasicMaterial({ color: hdr(ICE, 1.0), opacity: 0.5 })));
+    group.add(new Mesh(SLUG_CORE, new MeshBasicMaterial({ color: hdr(WHITE_HOT, 2.8) })));
+  group.add(new Mesh(SLUG_SHELL, createAdditiveBasicMaterial({ color: hdr(ICE, 1.0), opacity: 0.5 })));
   projectileRecords.enqueue({ mesh: group, trailColor: ICE.clone().multiplyScalar(0.9) });
   return group;
 }

@@ -71,13 +71,19 @@ const pacer = createRailPacer({
   curve: rail,
   duration: MASS_DRIVER_DURATION,
   runProgress: massDriverRunProgress,
-  spawnAheadUnits: 100,
+  // Kept deliberately tight. A wider budget lets targets spawn far down the
+  // bore, where they are both hard to read and clustered near the vanishing
+  // point; pulling it in puts engagements across the full width of the frame.
+  spawnAheadUnits: 76,
   defaultLeadSeconds: 2.9,
 });
 
 export { pacer as massDriverPacer };
 
 const MISS_GRACE = 0.14;
+/** Furthest a target may sit from the bore axis before wall plate can occlude it. */
+const SENTRY_MAX_BORE = 0.84;
+const WEAVER_MAX_BORE = 0.8;
 const BOLT_MAX_AGE = 9;
 const DEG = Math.PI / 180;
 
@@ -261,6 +267,9 @@ function buildTimeline(): MassDriverSpawnEntry[] {
       { from: -0.86, to: 0.86, height: -0.24, arc: 0.34, cross: 1.7 },
       { from: 0.86, to: -0.86, height: 0.24, arc: -0.34, cross: 1.7 },
     ]),
+    // The last thing in the barrel: two skimmers thrown at you a bar before the
+    // muzzle, so the run is still a fight right up to the moment it goes quiet.
+    ...skimmers(at(31), 2.2, [{ angle: 75, bore: 0.58 }, { angle: 255, bore: 0.58 }]),
   ].sort((a, b) => a.time - b.time);
 }
 
@@ -318,7 +327,7 @@ export function createMassDriverGameplay(bus: EventBus): LockOnRunnerLevel<MassD
     const { enemy, runTime, age, curve, camera } = context;
     const pace = pacer.sample(enemy.entry.time, runTime, data.engagement);
     const theta = data.angle + age * data.spin;
-    const radius = barrelRadiusAt(pace.anchorU) * data.bore;
+    const radius = barrelRadiusAt(pace.anchorU) * Math.min(SENTRY_MAX_BORE, data.bore);
     enemy.mesh.position.copy(offsetFromRail(curve, pace.anchorU, boreOffset(theta, radius, 0, scratch)));
     // Billboard so the plate always reads face-on, then roll it so its notch
     // points out at the wall it is bolted to.
@@ -361,9 +370,16 @@ export function createMassDriverGameplay(bus: EventBus): LockOnRunnerLevel<MassD
     const radius = barrelRadiusAt(pace.anchorU);
     const sample = (progress: number, target: Vector3) => {
       const smooth = MathUtils.clamp(progress, 0, 1);
+      const across = MathUtils.lerp(data.fromBore, data.toBore, smooth);
+      const up = data.height + Math.sin(smooth * Math.PI) * data.arc;
+      // Across and up are authored independently, so their corners can land
+      // outside the bore and put wall plate between the target and the player.
+      // Pull the whole offset back inside the tube instead of clipping either axis.
+      const reach = Math.hypot(across, up);
+      const fit = reach > WEAVER_MAX_BORE ? WEAVER_MAX_BORE / reach : 1;
       return target.set(
-        MathUtils.lerp(data.fromBore, data.toBore, smooth) * radius,
-        (data.height + Math.sin(smooth * Math.PI) * data.arc) * radius,
+        across * fit * radius,
+        up * fit * radius,
         Math.sin(age * 2.4 + enemy.id) * 1.6,
       );
     };
