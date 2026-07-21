@@ -38,7 +38,16 @@ export const levelMetadatas: LevelMetadata[] = [
       hero: '/level-content/crystal-corridor/hero.avif',
     },
   },
-  { id: 'helios', title: 'Helios', kind: 'playable' },
+  {
+    id: 'helios',
+    title: 'Helios',
+    kind: 'playable',
+    contentImages: {
+      overview: '/level-content/helios/overview.avif',
+      start: '/level-content/helios/start.avif',
+      hero: '/level-content/helios/hero.avif',
+    },
+  },
   { id: 'prism-bloom', title: 'Prism Bloom', aliases: ['prism'], kind: 'playable' },
   { id: 'rezdle', title: 'Rezdle', kind: 'playable' },
   { id: 'rush', title: 'Rush', kind: 'technical' },
