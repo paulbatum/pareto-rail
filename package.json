@@ -6,11 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "prisma generate && npm run validate:level-catalog && node scripts/check-no-tracked-png.mjs && vite build && node scripts/check-bundle-budget.mjs",
+    "build": "prisma generate && npm run validate:level-catalog && node scripts/check-serverless-imports.mjs && node scripts/check-no-tracked-png.mjs && vite build && node scripts/check-bundle-budget.mjs",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "typecheck": "tsc --noEmit",
+    "check:serverless-imports": "node scripts/check-serverless-imports.mjs",
     "check:scope": "node scripts/check-benchmark-scope.mjs",
     "check:benchmark-scope": "node scripts/check-benchmark-scope.mjs",
     "snapshot": "node scripts/snapshot.mjs",
