@@ -43,7 +43,12 @@ export function benchmarkLevelFootprint(levelId) {
         required: false,
       },
     ],
-    sharedDerived: [],
+    // The gallery stays scope-permitted for benchmark entrants: v2 baselines ship a floor
+    // gate that fails unless the entrant regenerates docs/level-gallery.md with its own
+    // card, so forbidding the file here would make those baselines unsealable. Shared
+    // derived paths gate scope only — payload and promotion iterate `roots`, so entrant
+    // gallery edits still never reach the mainline gallery, which lists built-ins only.
+    sharedDerived: [LEVEL_GALLERY_PATH],
   };
 }
 
