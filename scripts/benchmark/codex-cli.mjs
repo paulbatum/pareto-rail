@@ -85,15 +85,26 @@ async function main() {
   // GPU process from hanging forever on the WSLg X socket it probes when `DISPLAY` is
   // set. Network lives inside the profile: with it disabled the sandbox rejects even
   // loopback binds, which the floor and snapshot tooling need.
+  // With --network-access false the sandbox still needs loopback (Vite + browser capture),
+  // so isolation comes from Codex's managed network_proxy mode instead of disabling network:
+  // loopback binds and fetches work while external DNS, direct connections, and the proxy
+  // itself deny everything else. That mode's Linux seccomp filter also denies AF_UNIX
+  // socket creation, which full Chrome requires at startup (its profile-singleton lock), so
+  // isolated runs steer Puppeteer to chrome-headless-shell — a stripped browser with no
+  // singleton whose IPC rides socketpair and whose CDP rides TCP loopback, both permitted.
+  const headlessShell = networkAccess ? undefined : await findHeadlessShell();
+  if (headlessShell) process.env.PUPPETEER_EXECUTABLE_PATH = headlessShell;
   const tomlPath = (value) => JSON.stringify(value);
   const permissionProfile = `permissions.entrant={filesystem={`
     + `":minimal"="read", `
     + `${tomlPath(`${worktree}/**`)}="write", `
     + `${tomlPath(`${nodeToolchainRoot()}/**`)}="read", `
     + `"/opt/google/**"="read", `
+    + (headlessShell ? `${tomlPath(`${path.join(os.homedir(), '.cache', 'pareto-rail')}/**`)}="read", ` : '')
     + `"/tmp/.X11-unix"="read"`
-    + `}, network={enabled=${networkAccess}}}`;
+    + `}, network={enabled=true${networkAccess ? '' : ', allow_local_binding=true'}}}`;
   const configOverrides = [
+    ...(networkAccess ? [] : ['-c', 'features.network_proxy=true']),
     '-m', model,
     '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
     '-c', 'approval_policy="never"',
@@ -175,6 +186,7 @@ async function main() {
         '-m', model,
         '-c', `model_reasoning_effort=${JSON.stringify(effort)}`,
         '-c', 'approval_policy="never"',
+        ...(networkAccess ? [] : ['-c', 'features.network_proxy=true']),
         '-c', 'default_permissions="entrant"',
         '-c', permissionProfile,
         ...(enableMultiAgent ? ['-c', 'features.multi_agent_v2.hide_spawn_agent_metadata=false', '-c', 'features.multi_agent_v2.tool_namespace="agents"'] : []),
@@ -273,6 +285,19 @@ function nodeToolchainRoot() {
   const nvmIndex = segments.indexOf('.nvm');
   if (nvmIndex !== -1) return segments.slice(0, nvmIndex + 1).join(path.sep);
   return path.dirname(path.dirname(process.execPath));
+}
+
+// chrome-headless-shell install used by network-isolated runs. Installed once, outside the
+// repository so no entrant checkout can reach anything else through the read grant:
+//   npx @puppeteer/browsers install chrome-headless-shell@stable --path ~/.cache/pareto-rail/chrome-headless-shell
+async function findHeadlessShell() {
+  const root = path.join(os.homedir(), '.cache', 'pareto-rail', 'chrome-headless-shell');
+  const versions = await fs.readdir(root).catch(() => []);
+  for (const version of versions.sort().reverse()) {
+    const candidate = path.join(root, version, 'chrome-headless-shell-linux64', 'chrome-headless-shell');
+    if (await fs.access(candidate).then(() => true, () => false)) return candidate;
+  }
+  fail(`--network-access false requires chrome-headless-shell (full Chrome cannot start under the network sandbox). Install it with: npx @puppeteer/browsers install chrome-headless-shell@stable --path ${root}`);
 }
 
 function parseTimeout(value) {
