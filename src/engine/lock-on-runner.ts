@@ -122,6 +122,7 @@ type Projectile = {
   velocity: Vector3;
   speed: number;
   impactAt: number;
+  lastTargetPosition: Vector3;
   volleyId?: number;
   indexInVolley?: number;
 };
@@ -901,6 +902,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         velocity: toTarget.normalize().multiplyScalar(speed),
         speed,
         impactAt: shot.impactAt,
+        lastTargetPosition: enemy.mesh.position.clone(),
         volleyId: shot.volleyId,
         indexInVolley: shot.indexInVolley,
       });
@@ -925,6 +927,14 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
         resolveVolleyMember(projectile.volleyId, projectile.indexInVolley, false);
         continue;
       }
+
+      // Targets can translate arbitrarily fast — rail-paced enemies, or
+      // letters anchored to a moving camera. Feed the target's frame-to-frame
+      // displacement forward so pursuit happens in the target's rest frame:
+      // the speed contract, steering, and hit test then act on relative
+      // distance, and convergence never depends on how the target moves.
+      projectile.mesh.position.add(enemy.mesh.position.clone().sub(projectile.lastTargetPosition));
+      projectile.lastTargetPosition.copy(enemy.mesh.position);
 
       const toTarget = enemy.mesh.position.clone().sub(projectile.mesh.position);
       const distance = toTarget.length();
