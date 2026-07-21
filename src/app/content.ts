@@ -23,6 +23,23 @@ export const levelsCopy = {
   dataHint: 'Every published run record · Built-in levels carry no generation data',
 } as const;
 
+/** The spoiler nudge shown to visitors who have not yet ranked. This page names
+ * the model behind each level and its cost — knowledge that skews a blind vote. */
+export const levelsSplashCopy = {
+  intro: {
+    heading: 'Spoiler warning',
+    body: 'On this page you can browse all the levels and see which model built them. We suggest ranking a few levels blind first — the comparison is fairer before you know who made what.',
+  },
+  newAdditions: {
+    heading: (count: number) => `${count} new level${count === 1 ? '' : 's'} since your last visit.`,
+    body: (count: number) => count === 1
+      ? 'It has joined the blind comparison. We suggest ranking it before the catalog tells you who built it.'
+      : 'They have joined the blind comparison. We suggest ranking them before the catalog tells you who built them.',
+  },
+  primary: 'Rank levels blind ▸',
+  secondary: 'Browse anyway',
+} as const;
+
 /** Player-facing one-liners for the hand-built levels. Benchmark entrants are
  * described by their theme and run record instead. */
 export const builtInLevelBlurbs: Record<string, string> = {

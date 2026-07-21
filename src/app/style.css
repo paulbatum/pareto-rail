@@ -587,3 +587,24 @@ html:fullscreen .game-toolbar { display: none; }
   .catalog-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 480px) { .levels-grid { grid-template-columns: 1fr; } }
+
+/* ---------- Spoiler splash ---------- */
+/* Rendered in place of the catalog until dismissed, nudging un-ranked
+   visitors to /rank before the run records spoil the blind comparison. */
+.levels-splash {
+  width: min(520px, 100%);
+  margin: clamp(48px, 14vh, 140px) auto;
+  padding: clamp(26px, 4vw, 38px);
+  text-align: center;
+  color: var(--ink); background: var(--card);
+  border: 1px solid var(--ink); box-shadow: 6px 6px 0 var(--ghost);
+}
+.levels-splash h2 { margin: 0 0 14px; font-size: clamp(24px, 3.4vw, 30px); font-weight: 750; line-height: 1.04; letter-spacing: -.025em; }
+.levels-splash-body { margin: 0 auto; max-width: 40ch; color: var(--body-text); font-size: 14px; line-height: 1.5; }
+.levels-splash-actions { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 26px; }
+.levels-splash-dismiss {
+  padding: 4px 2px; color: var(--muted); background: none; border: none;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  cursor: pointer; transition: color 120ms ease;
+}
+.levels-splash-dismiss:hover, .levels-splash-dismiss:focus-visible { color: var(--ink); }

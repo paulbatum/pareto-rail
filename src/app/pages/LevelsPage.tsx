@@ -1,13 +1,15 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BenchmarkModelUsage, BenchmarkTheme } from '../../benchmark/types';
 import { entrantLabel } from '../../benchmark/identity';
 import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog, selectableLevelGroups } from '../../levels';
-import { builtInLevelBlurbs, levelsCopy } from '../content';
+import { BenchmarkLocalStore } from '../../benchmark/storage';
+import { builtInLevelBlurbs, levelsCopy, levelsSplashCopy } from '../content';
 import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
 import { ModelUsage, totalInputTokens } from '../components/ModelUsage';
 import { getLevelsView, setLevelsView } from '../levels-view';
+import { acknowledgeSpoilers, decideSpoilerGate, readSeenSpoilerIds, type SpoilerGateDecision } from '../spoilers';
 import { levelsViewPath, navigate, type AppRoute, type LevelsView } from '../router';
 
 type BuiltInRecord = {
@@ -39,6 +41,20 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
   const bands = useMemo(themeBands, []);
   const benchmarkCount = bands.reduce((total, band) => total + band.records.length, 0);
 
+  // The splash decision is computed once per mount so it cannot flicker; a
+  // dismissal only flips this local state and persists the seen ids.
+  const displayedIds = useMemo(() => bands.flatMap((band) => band.records.map((record) => record.levelId)), [bands]);
+  const [splash, setSplash] = useState<SpoilerGateDecision>(() => decideSpoilerGate({
+    displayedIds,
+    ...engagementCounts(),
+    seen: readSeenSpoilerIds(),
+  }));
+  const dismissSplash = useCallback(() => {
+    acknowledgeSpoilers(displayedIds);
+    setSplash({ variant: 'hidden', newCount: 0 });
+  }, [displayedIds]);
+  const showSplash = splash.variant !== 'hidden';
+
   // The toggle writes the preference before navigating, so a bare /levels visit
   // resumes the last-used view without trapping anyone in it. This redirects
   // before paint: /levels is the data view for most visitors, and an effect
@@ -59,10 +75,43 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
           <span className="levels-count">{builtIn.length + benchmarkCount} levels · {builtIn.length} built-in · {benchmarkCount} benchmark</span>
         </div>
       </header>
-      {route.view === 'data'
-        ? <DataView builtIn={builtIn} bands={bands} benchmarkCount={benchmarkCount} onNavigate={onNavigate} />
-        : <GalleryView builtIn={builtIn} bands={bands} onNavigate={onNavigate} />}
+      {showSplash
+        ? <LevelsSplash decision={splash} onDismiss={dismissSplash} onNavigate={onNavigate} />
+        : route.view === 'data'
+          ? <DataView builtIn={builtIn} bands={bands} benchmarkCount={benchmarkCount} onNavigate={onNavigate} />
+          : <GalleryView builtIn={builtIn} bands={bands} onNavigate={onNavigate} />}
     </>
+  );
+}
+
+/** Vote and distinct-play counts from the local benchmark snapshot. A fresh
+ * store instance for a read is the established pattern (see RankPage). */
+function engagementCounts(): { historyLength: number; levelRunsLength: number } {
+  try {
+    const snapshot = new BenchmarkLocalStore().snapshot;
+    return { historyLength: snapshot.history.length, levelRunsLength: snapshot.levelRuns.length };
+  } catch {
+    return { historyLength: 0, levelRunsLength: 0 };
+  }
+}
+
+/** Spoiler gate shown in place of the catalog until dismissed. The primary
+ * action navigates without recording a dismissal, so an un-engaged visitor
+ * sees it again next time they land here. */
+function LevelsSplash({ decision, onDismiss, onNavigate }: { decision: SpoilerGateDecision; onDismiss: () => void; onNavigate: Navigate }) {
+  const isNew = decision.variant === 'new-additions';
+  const heading = isNew ? levelsSplashCopy.newAdditions.heading(decision.newCount) : levelsSplashCopy.intro.heading;
+  const body = isNew ? levelsSplashCopy.newAdditions.body(decision.newCount) : levelsSplashCopy.intro.body;
+
+  return (
+    <section className="levels-splash">
+      <h2>{heading}</h2>
+      <p className="levels-splash-body">{body}</p>
+      <div className="levels-splash-actions">
+        <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>{levelsSplashCopy.primary}</RouteLink>
+        <button type="button" className="levels-splash-dismiss" onClick={onDismiss}>{levelsSplashCopy.secondary}</button>
+      </div>
+    </section>
   );
 }
 
