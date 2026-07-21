@@ -13,7 +13,9 @@ import {
   GAME_FOV_DEGREES,
   LOCK_RADIUS_NDC,
   measureReticleVisualNdc,
+  REPLAY_WORD,
   reticleCorrectionScale,
+  START_WORD,
 } from '../src/engine/lock-on-runner';
 import type { LockOnRunnerLevel, LockOnSpawnEntry } from '../src/engine/lock-on-runner';
 import { MAX_LOCKS } from '../src/engine/locks';
@@ -122,6 +124,10 @@ type EngineDefaultsReport = {
   identityHooks: {
     declared: string[];
     inherited: string[];
+  };
+  words: {
+    start: string;
+    replay: string;
   };
 };
 
@@ -703,6 +709,10 @@ function summarizeEngineDefaults(level: LockOnRunnerLevel<string, unknown>): Eng
       declared: declaredHooks,
       inherited: inheritedHooks,
     },
+    words: {
+      start: level.startWord ?? START_WORD,
+      replay: level.replayWord ?? REPLAY_WORD,
+    },
   };
 }
 
@@ -1003,6 +1013,7 @@ export function formatEngineDefaultsReport(report: EngineDefaultsReport) {
   }
   lines.push(`  action SFX snap: ${formatActionSfxSnap(report.actionSfxSnap)}`);
   lines.push(`  lock radius: ${formatLockRadius(report.lockRadius)}`);
+  lines.push(`  words: start "${report.words.start}" (${report.words.start.length}), replay "${report.words.replay}" (${report.words.replay.length}); MAX_LOCKS ${MAX_LOCKS}`);
   lines.push(`  identity hooks declared: ${report.identityHooks.declared.join(', ') || 'none'}`);
   lines.push(`  identity hooks [default]: ${report.identityHooks.inherited.join(', ') || 'none'}`);
   return lines.join('\n');

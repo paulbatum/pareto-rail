@@ -3,6 +3,7 @@ import path from 'node:path';
 import { computeCenterMetrics, formatEngineDefaultsReport, runSimulationSuite, validateLevelAudioConfig } from './simulation-cli';
 import { analyzeOcclusionLevels, formatReports } from './target-occlusion.mjs';
 import { buildGallery } from './level-gallery.mjs';
+import { MAX_LOCKS } from '../src/engine/locks';
 
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
@@ -90,6 +91,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   // runtime, so the level is playable, but the drawn sight should match the
   // lock radius the level authored.
   const spawnWarningCount = warnings.length;
+  const words = result.engineDefaults.words;
   let reticleWarnings = 0;
   const reticle = result.engineDefaults.lockRadius.reticle;
   if (reticle && reticle.correctionScale > 1) {
@@ -98,6 +100,19 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
       `Reticle visual radius (${reticle.visualNdc.toFixed(3)} NDC) is below half the lock radius `
       + `(lockRadiusNdc ${result.engineDefaults.lockRadius.value}); the engine renders it scaled `
       + `${reticle.correctionScale.toFixed(2)}x. Draw the reticle to match the lock radius.`,
+    );
+  }
+
+  // The letter screens raise their own lock cap to fit the word, so a long word
+  // is playable rather than broken. It still costs the player a longer sweep
+  // than the run itself ever asks for, so surface it.
+  let wordWarnings = 0;
+  for (const [label, word] of [['start', words.start], ['replay', words.replay]] as const) {
+    if (word.length <= MAX_LOCKS) continue;
+    wordWarnings += 1;
+    warnings.push(
+      `The ${label} word "${word}" is ${word.length} letters, above the ${MAX_LOCKS}-lock run cap. `
+      + `The letter screen raises its cap to fit, but consider a word of ${MAX_LOCKS} letters or fewer.`,
     );
   }
 
@@ -113,6 +128,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   lines.push(`audio configuration failures: ${audioConfigErrors.length}`);
   lines.push(`spawn centerness/distance warnings: ${spawnWarningCount}`);
   lines.push(`reticle warnings: ${reticleWarnings}`);
+  lines.push(`start/replay word warnings: ${wordWarnings}`);
   
   if (warnings.length) {
     lines.push('');

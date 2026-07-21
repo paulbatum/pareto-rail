@@ -72,9 +72,15 @@ const PROJECTILE_SPEED = 82;
 const PROJECTILE_MAX_SPEED = PROJECTILE_SPEED * 3;
 const PROJECTILE_HIT_RADIUS = 1.15;
 const WORD_DISTANCE = 20;
-const START_WORD = 'START!';
-const REPLAY_WORD = 'REPLAY';
-const CONTROL_TIP = 'HOLD to charge — SWEEP across all six targets — RELEASE to fire';
+export const START_WORD = 'START!';
+export const REPLAY_WORD = 'REPLAY';
+// The tip teaches the sweep on the start screen, so it counts that screen's
+// letters rather than a fixed six.
+const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+function controlTip(targetCount: number) {
+  const count = COUNT_WORDS[targetCount] ?? String(targetCount);
+  return `HOLD to charge — SWEEP across all ${count} targets — RELEASE to fire`;
+}
 const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 const REPEAT_LOCK_DELAY = 0.18;
 const EDGE_LOOK_EXPONENT = 1.35;
@@ -611,11 +617,22 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     enemy.mesh.rotateZ(Math.sin(modeTime * 1.15 + index * 0.7) * 0.15);
   }
 
+  // The letter screens ask for the whole word at once, so the run cap would
+  // make a word longer than MAX_LOCKS impossible to spell. Only letters are
+  // lockable there and each takes a single lock, so the word length is itself
+  // the cap.
+  function maxLocksForState() {
+    if (state === 'attract') return startWord.length;
+    if (state === 'ended') return replayWord.length;
+    return MAX_LOCKS;
+  }
+
   function updateLocks() {
-    if (!input.state.pointerDown || locks.length >= MAX_LOCKS) return;
+    const maxLocks = maxLocksForState();
+    if (!input.state.pointerDown || locks.length >= maxLocks) return;
 
     for (const enemy of lockPriorityTargets()) {
-      if (locks.length >= MAX_LOCKS) return;
+      if (locks.length >= maxLocks) return;
       if (!canLockEnemy(enemy)) continue;
       const projected = enemy.mesh.position.clone().project(camera);
       if (projected.z < -1 || projected.z > 1) continue;
@@ -664,7 +681,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       worldPosition: enemy.mesh.position.clone(),
       letter: enemy.letter,
     });
-    if (locks.length === MAX_LOCKS) flashMaxLock();
+    if (locks.length === maxLocksForState()) flashMaxLock();
   }
 
   function flashMaxLock() {
@@ -759,7 +776,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       failedAttractReleases += 1;
       if (failedAttractReleases >= 3) {
         showingStartTip = false;
-        hud.setTip(CONTROL_TIP);
+        hud.setTip(controlTip(startWord.length));
         hud.showTip();
       }
     }
@@ -1165,7 +1182,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     attractPointerDowns += 1;
     if (attractPointerDowns >= 8) {
       showingStartTip = false;
-      hud.setTip(CONTROL_TIP);
+      hud.setTip(controlTip(startWord.length));
       hud.showTip();
     }
   }
