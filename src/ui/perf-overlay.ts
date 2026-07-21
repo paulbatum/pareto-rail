@@ -87,6 +87,12 @@ class PerfOverlay {
     });
   }
 
+  /** Moves the readout into a host container (the debug panel) instead of floating over the game. */
+  mount(parent: HTMLElement) {
+    this.root.classList.add('perf-overlay-embedded');
+    parent.append(this.root);
+  }
+
   recordFrame(dtMs: number, now = performance.now()) {
     if (this.disposed) return;
     const frameSlot = this.frameIndex % MAX_FRAMES;
@@ -241,6 +247,14 @@ function installStyle() {
       font: 11px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       pointer-events: auto;
       user-select: none;
+    }
+    .perf-overlay-embedded {
+      position: static;
+      justify-content: space-between;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      background: none;
     }
     .perf-overlay button {
       padding: 1px 4px;

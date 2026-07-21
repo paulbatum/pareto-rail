@@ -40,6 +40,8 @@ type DebugPanelLevel = {
   bpm: number;
   debugSelector?: LevelDebugSelector;
   urlParams?: URLSearchParams;
+  /** Mounts the perf readout at the top of the panel body instead of leaving it floating. */
+  mountPerfReadout?: (host: HTMLElement) => void;
 };
 
 const OLD_PRESET: TimingPreset = {
@@ -73,17 +75,23 @@ export function installDebugPanel(level: DebugPanelLevel) {
   if (!import.meta.env.DEV) return undefined;
 
   const thirtysecondSeconds = 60 / level.bpm / 8;
-  const panel = document.createElement('details');
+  /* The perf readout sits outside the <details> so it stays visible while the panel is collapsed. */
+  const panel = document.createElement('div');
   panel.className = 'debug-panel';
-  panel.open = false;
+  level.mountPerfReadout?.(panel);
+
+  const details = document.createElement('details');
+  details.className = 'debug-panel-details';
+  details.open = false;
+  panel.append(details);
 
   const summary = document.createElement('summary');
   summary.textContent = 'Debug';
-  panel.append(summary);
+  details.append(summary);
 
   const body = document.createElement('div');
   body.className = 'debug-panel-body';
-  panel.append(body);
+  details.append(body);
 
   const levelReadout = document.createElement('div');
   levelReadout.className = 'debug-panel-readout';

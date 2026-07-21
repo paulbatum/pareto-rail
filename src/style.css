@@ -147,6 +147,12 @@ canvas {
   cursor: auto;
 }
 
+.perf-overlay-embedded + .debug-panel-details {
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid rgb(70 232 255 / 18%);
+}
+
 .debug-panel summary {
   color: var(--cyan);
   cursor: pointer;

@@ -210,7 +210,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     stack.add(offRunEnd);
     if (import.meta.env.DEV) {
       try {
-        const installedDebugPanel = await import('../ui/debug-panel').then(({ installDebugPanel }) => installDebugPanel({ id: level.id, bpm: level.bpm, debugSelector: level.debugSelector, urlParams })) as { dispose?: () => void } | undefined;
+        const installedDebugPanel = await import('../ui/debug-panel').then(({ installDebugPanel }) => installDebugPanel({ id: level.id, bpm: level.bpm, debugSelector: level.debugSelector, urlParams, mountPerfReadout: perfOverlay ? (host) => perfOverlay.mount(host) : undefined })) as { dispose?: () => void } | undefined;
         if (installedDebugPanel) stack.add(() => installedDebugPanel.dispose?.());
       } catch (error) {
         console.warn('Debug panel failed to install', error);
