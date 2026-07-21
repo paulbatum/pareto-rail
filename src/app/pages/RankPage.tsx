@@ -517,16 +517,37 @@ function ProductionRankPage() {
 
 function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavigate: (path: string) => void; onRunEnd: (summary: RunSummary, frame: HTMLElement, context?: GameLaunchContext) => void | Promise<void> }) {
   const [level, setLevel] = useState<Awaited<ReturnType<typeof loadRankLevel>> | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
     setLevel(null);
-    void loadRankLevel(launch.levelId).then((loaded) => {
+    setLoadFailed(false);
+    loadRankLevel(launch.levelId).then((loaded) => {
       if (active) setLevel(loaded);
+    }).catch((error) => {
+      console.error('Could not load anonymous level', launch.levelId, error);
+      if (active) setLoadFailed(true);
     });
     return () => { active = false; };
   }, [launch.levelId]);
 
+  if (loadFailed) return (
+    <section className="page-panel rank-panel">
+      <p className="eyebrow">Rank</p>
+      <h1>This level could not load</h1>
+      <p className="lede">Something went wrong preparing the anonymous level, so this matchup can’t be played right now.</p>
+      <div className="empty-state">
+        <span className="empty-glyph">◌</span>
+        <h2>Back to the matchup</h2>
+        <p>Return to Rank to pick up where you left off, or reload to try again.</p>
+        <div className="invitation-actions">
+          <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Back to Rank</RouteLink>
+          <button className="button" type="button" onClick={() => window.location.reload()}>Reload</button>
+        </div>
+      </div>
+    </section>
+  );
   if (!level) return <section className="page-panel"><p className="eyebrow">Rank</p><h1>Loading anonymous level…</h1></section>;
   return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} backPath="/rank" backLabel="Matchup" launchContext={{ source: 'rank', levelId: launch.levelId, mode: 'benchmark' }} showLevelPicker={false} onNavigate={onNavigate} onRunEnd={onRunEnd} runEndContent={<BenchmarkInvitation side={launch.side} onNavigate={onNavigate} />} />;
 }

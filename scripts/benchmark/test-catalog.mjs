@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { validateCatalog, projectPreVote, DOWNPOUR_REHEARSAL_IDS } from './catalog.mjs';
 import { generateThumbnail } from './generate-thumbnails.mjs';
 import { buildVersion, planAssignments, selectConfigurations } from './export-rank-catalog.mjs';
+import { benchmarkLevelFootprint } from './protocol.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const rankCatalog = JSON.parse(await fs.readFile(path.join(root, 'src/benchmark/rank-catalog.json'), 'utf8'));
@@ -83,7 +84,49 @@ assert.deepEqual(
 assert.ok(massDriverTheme.some((entrant) => entrant.retired), 'the theme still exercises the retired path');
 assert.ok(massDriverTheme.find((entrant) => entrant.retired)?.run, 'retired entrants retain reveal metadata');
 
+// Every live (non-retired) catalog entrant must resolve to a promoted level module on disk;
+// retired rows are gallery-only and intentionally have no directory. If a retired flag is flipped
+// (or a row is promoted without its payload), this bites here instead of at level-load time.
+assert.deepEqual(
+  await benchmarkModuleErrors(rankCatalog),
+  [],
+  'every live catalog entrant resolves to a promoted level module',
+);
+const flippedRetired = structuredClone(rankCatalog);
+const retiredEntrant = (flippedRetired.versions ?? []).flatMap((version) => version.entrants ?? []).find((entrant) => entrant.retired);
+assert.ok(retiredEntrant, 'catalog fixture retains at least one retired entrant to exercise the negative path');
+retiredEntrant.retired = false;
+assert.ok(
+  (await benchmarkModuleErrors(flippedRetired)).some((error) => error.includes(retiredEntrant.levelId)),
+  'flipping a retired entrant live surfaces its missing module',
+);
+
 console.log('Benchmark catalog tests passed.');
+
+async function benchmarkModuleErrors(catalog) {
+  const errors = [];
+  for (const version of catalog.versions ?? []) {
+    for (const entrant of version.entrants ?? []) {
+      if (entrant.retired) continue;
+      const source = benchmarkLevelFootprint(entrant.levelId).roots.find((rootDef) => rootDef.id === 'source');
+      for (const file of ['index.ts', 'level.json']) {
+        if (!(await fileExists(path.join(root, source.path, file)))) {
+          errors.push(`live catalog entrant ${entrant.levelId} (${version.benchmarkVersion}) is missing ${source.path}/${file}`);
+        }
+      }
+    }
+  }
+  return errors;
+}
+
+async function fileExists(target) {
+  try {
+    await fs.access(target);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function validateRankCatalogIds(catalog) {
   const pattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
