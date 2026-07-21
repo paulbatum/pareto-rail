@@ -109,10 +109,9 @@ function HeroTunnel() {
 export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <section className="page-panel">
-      <p className="eyebrow">Leaderboard</p>
-      <h1>Quality meets cost.</h1>
-      <p className="lede">Aggregate benchmark rankings will appear here as public comparisons accumulate.</p>
-      <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Aggregate results will appear here once the first benchmark release ships. Play some matchups meanwhile - your personal curve is yours immediately.</p></div>
+      <p className="eyebrow">Quality vs cost</p>
+      <h1>Leaderboard</h1>
+      <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Aggregate results will appear here once the first benchmark release ships. Play some matchups meanwhile - your personal curve is yours immediately.</p><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Play a matchup</RouteLink></div>
       <RouteLink className="text-link" href="/about" onNavigate={onNavigate}>Read the methodology →</RouteLink>
     </section>
   );

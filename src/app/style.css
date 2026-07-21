@@ -133,6 +133,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .empty-glyph { color: var(--accent); font-size: 38px; }
 .empty-state h2 { color: var(--ink); font-size: 19px; }
 .empty-state p { max-width: 510px; margin: 0 auto; color: var(--soft-text); line-height: 1.6; }
+.empty-state .button { margin-top: 24px; }
 .text-link { color: var(--accent); text-underline-offset: 4px; }
 .text-link:hover { color: var(--ink); }
 .prose { max-width: 720px; }
