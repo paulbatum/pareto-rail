@@ -115,6 +115,27 @@ function promotionStatusFor({ disposition, state, promotion }) {
   return 'pending';
 }
 
+export async function readRunArtifacts(runDirectory, directoryName) {
+  const artifacts = {
+    directoryName,
+    manifest: await optionalJson(path.join(runDirectory, 'manifest.json')),
+    definition: await optionalJson(path.join(runDirectory, 'run-definition.json')),
+    gates: await optionalJson(path.join(runDirectory, 'gates', 'gates.json')),
+    failure: await optionalJson(path.join(runDirectory, 'controller-failure.json')),
+    recovery: await optionalJson(path.join(runDirectory, 'recovery.json')),
+    promotion: await optionalJson(path.join(runDirectory, 'promotion.json')),
+    incident: await optionalJson(path.join(runDirectory, 'incident.json')),
+    disqualification: await optionalJson(path.join(runDirectory, 'disqualification.json')),
+  };
+  if (!artifacts.manifest && !artifacts.definition) return null;
+  return artifacts;
+}
+
+export async function loadRunResult(runDirectory, directoryName, { unblind = false } = {}) {
+  const artifacts = await readRunArtifacts(runDirectory, directoryName);
+  return artifacts ? resultFromArtifacts(artifacts, { unblind }) : null;
+}
+
 export async function loadResults(runsDirectory, { version, theme, unblind = false } = {}) {
   let entries;
   try {
@@ -125,20 +146,8 @@ export async function loadResults(runsDirectory, { version, theme, unblind = fal
   }
   const results = [];
   for (const entry of entries.filter((candidate) => candidate.isDirectory()).sort((left, right) => left.name.localeCompare(right.name))) {
-    const runDirectory = path.join(runsDirectory, entry.name);
-    const artifacts = {
-      directoryName: entry.name,
-      manifest: await optionalJson(path.join(runDirectory, 'manifest.json')),
-      definition: await optionalJson(path.join(runDirectory, 'run-definition.json')),
-      gates: await optionalJson(path.join(runDirectory, 'gates', 'gates.json')),
-      failure: await optionalJson(path.join(runDirectory, 'controller-failure.json')),
-      recovery: await optionalJson(path.join(runDirectory, 'recovery.json')),
-      promotion: await optionalJson(path.join(runDirectory, 'promotion.json')),
-      incident: await optionalJson(path.join(runDirectory, 'incident.json')),
-      disqualification: await optionalJson(path.join(runDirectory, 'disqualification.json')),
-    };
-    if (!artifacts.manifest && !artifacts.definition) continue;
-    const result = resultFromArtifacts(artifacts, { unblind });
+    const result = await loadRunResult(path.join(runsDirectory, entry.name), entry.name, { unblind });
+    if (!result) continue;
     if (version && result.benchmarkVersion !== version) continue;
     if (theme && result.themeId !== theme) continue;
     results.push(result);
@@ -164,6 +173,10 @@ export function formatTable(results) {
     result.costUsd === null ? '—' : `$${result.costUsd.toFixed(2)}`,
     result.manifestState,
   ]);
+  return renderTable(headers, rows);
+}
+
+export function renderTable(headers, rows) {
   const widths = headers.map((header, index) => Math.max(header.length, ...rows.map((row) => String(row[index]).length)));
   const render = (row) => row.map((cell, index) => String(cell).padEnd(widths[index])).join('  ').trimEnd();
   return [render(headers), render(widths.map((width) => '─'.repeat(width))), ...rows.map(render)].join('\n');

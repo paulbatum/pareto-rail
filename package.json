@@ -33,6 +33,7 @@
     "benchmark:run": "node scripts/benchmark/run.mjs",
     "benchmark:cut-baseline": "node scripts/benchmark/cut-baseline.mjs",
     "benchmark:results": "node scripts/benchmark/results.mjs",
+    "benchmark:status": "node scripts/benchmark/status.mjs",
     "benchmark:manage": "node scripts/benchmark/manage-run.mjs",
     "benchmark:promote": "node scripts/benchmark/promote.mjs",
     "benchmark:restore-src": "node scripts/benchmark/restore-src.mjs",

@@ -1,5 +1,7 @@
 # AGENTS.md
 
+This file is an index: it records where things live and which doc owns each area. Commands and operational detail belong in the docs it points to, not here.
+
 ## Project
 
 Pareto Rail is a benchmark for one-shot, model-built game levels, built as a browser rail shooter. Models generate levels; the site lets visitors play them and compare entrants blind, ranking quality against cost. Crystal Corridor is the hand-built reference level the entrants are calibrated against.
@@ -20,7 +22,7 @@ Stack: Vite + strict TypeScript + three.js **WebGPU only** (`WebGPURenderer` fro
 - `src/ui/` — DOM HUD, pause menu, end panel.
 - `/dev` (dev server only) — enemy tuning gallery for `crystal-corridor`.
 - See `docs/level-authoring.md` before adding or reshaping levels, and build new levels to the standing brief in `docs/level-brief.md`. Authoring covers the *how* — module layout, runner contract, conventions; the brief is the *assignment* handed to an implementing agent — the effort bar, the floor, and what gets judged.
-- The level-generation benchmark — methodology, protocol, and operations — is documented in `benchmark/README.md`. Its canonical level footprints (built-in and benchmark; owned per-id roots and shared derived files) live in `scripts/benchmark/protocol.mjs`; scope, payload, and promotion code must consume that model rather than hardcode owned paths.
+- For any benchmark work — status, runs, promotion, publishing — start at `benchmark/README.md`, which documents the level-generation benchmark's methodology, protocol, and operations. Its canonical level footprints (built-in and benchmark; owned per-id roots and shared derived files) live in `scripts/benchmark/protocol.mjs`; scope, payload, and promotion code must consume that model rather than hardcode owned paths.
 - Public compatibility contracts (identifier immutability, localStorage evolution, vote API rollout rules) are documented in `docs/compat.md`. Read it before renaming ids, changing stored data shapes, or touching the vote API.
 
 ## Verification
