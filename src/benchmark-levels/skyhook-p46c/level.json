@@ -1,4 +1,9 @@
 {
   "id": "skyhook-p46c",
-  "title": "Skyhook"
+  "title": "Skyhook",
+  "contentImages": {
+    "hero": "/level-content/skyhook-p46c/hero.avif",
+    "overview": "/level-content/skyhook-p46c/overview.avif",
+    "start": "/level-content/skyhook-p46c/start.avif"
+  }
 }
