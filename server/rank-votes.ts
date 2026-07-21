@@ -82,7 +82,7 @@ export async function recordRankVote(input: ValidatedRankVote, prisma: PrismaCli
         dataClass: dataClassToPrisma[resolveDataClass(input.aEntrant, input.bEntrant)],
         assignedAt: input.assignedAt ? new Date(input.assignedAt) : undefined,
         clientSubmittedAt: input.clientSubmittedAt ? new Date(input.clientSubmittedAt) : undefined,
-        idempotencyKey: input.idempotencyKey,
+        idempotencyKey: hashIdempotencyKey(input.idempotencyKey),
         ipHash,
       },
       skipDuplicates: true,
@@ -125,4 +125,17 @@ export function hashIp(ip: string | undefined, salt = process.env.PARTICIPANT_SA
   if (!ip || ip === 'unknown') return undefined;
   if (!salt) throw new Error('PARTICIPANT_SALT is not configured');
   return createHash('sha256').update(`${salt}ip:${ip}`, 'utf8').digest('hex');
+}
+
+/**
+ * One-way hash of the client-supplied idempotency key. The raw key embeds the
+ * participant id, so it is never stored verbatim. Domain-separated from participant
+ * and IP hashes so the three can't be cross-correlated. The column is never queried —
+ * vote dedup rides on the (matchupId, participantHash) unique constraint — so hashing
+ * has no functional effect.
+ */
+export function hashIdempotencyKey(key: string | undefined, salt = process.env.PARTICIPANT_SALT): string | undefined {
+  if (key === undefined) return undefined;
+  if (!salt) throw new Error('PARTICIPANT_SALT is not configured');
+  return createHash('sha256').update(`${salt}idem:${key}`, 'utf8').digest('hex');
 }

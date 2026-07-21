@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { getPrismaClient } from '../../server/prisma.ts';
 import { handleRankStatsRequest, handleRankVotesRequest } from '../../server/rank-http.ts';
-import { hashParticipant } from '../../server/rank-votes.ts';
+import { hashIdempotencyKey, hashParticipant } from '../../server/rank-votes.ts';
 import { activeCatalogVersion, rankCatalog } from '../../src/benchmark/catalog.ts';
 import { pairId } from '../../src/benchmark/scheduler.ts';
 
@@ -44,6 +44,19 @@ const participantHash = hashParticipant(participantId);
 assert.equal(await prisma.rankVote.count({ where: { matchupId, participantHash } }), 1, 'duplicate submit created another vote');
 assert.equal(await prisma.rankMatchup.count({ where: { id: matchupId } }), 1, 'duplicate submit created another matchup');
 
+const storedVote = await prisma.rankVote.findFirstOrThrow({ where: { matchupId, participantHash }, select: { idempotencyKey: true } });
+assert.equal(storedVote.idempotencyKey, hashIdempotencyKey(payload.idempotencyKey), 'idempotencyKey not stored as its salted hash');
+assert.ok(!storedVote.idempotencyKey?.includes(participantId), 'stored idempotencyKey leaked the raw participant id');
+
+const crossOrigin = await vote(payload, { origin: 'https://evil.example' });
+assert.equal(crossOrigin.status, 403, 'cross-origin POST was not rejected');
+
+const nullOrigin = await vote({ ...payload, participantId: `vote-api-${randomUUID()}` }, { origin: 'null' });
+assert.equal(nullOrigin.status, 403, 'opaque null Origin was not rejected');
+
+const sameOrigin = await vote({ ...payload, participantId: `vote-api-${randomUUID()}` }, { origin: 'http://localhost' });
+assert.equal(sameOrigin.status, 200, 'same-origin POST was rejected');
+
 const forged = await vote({ ...payload, matchupId: `${theme.id}:forged__pair` });
 assert.equal(forged.status, 422);
 
@@ -57,18 +70,20 @@ const zeroPlay = await vote({ ...payload, participantId: `vote-api-${randomUUID(
 assert.equal(zeroPlay.status, 422);
 
 const statsAfter = await stats();
-assert.equal(statsAfter.votes, statsBefore.votes + 1, 'stats did not count the new vote');
+assert.equal(statsAfter.votes, statsBefore.votes + 2, 'stats did not count the new votes');
 assert.ok(statsAfter.matchups >= statsBefore.matchups && statsAfter.matchups > 0, 'stats did not expose matchup count');
 assert.ok(statsAfter.latestVoteAt, 'stats did not expose the latest vote timestamp');
 
 await prisma.$disconnect();
 console.log('Vote API tests passed.');
 
-async function vote(body: unknown): Promise<Response> {
+async function vote(body: unknown, options: { origin?: string } = {}): Promise<Response> {
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (options.origin !== undefined) headers.origin = options.origin;
   return handleRankVotesRequest(
     new Request('http://localhost/api/rank/votes', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify(body),
     }),
     prisma,

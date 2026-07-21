@@ -8,6 +8,7 @@ const rateBuckets = new Map<string, { startedAt: number; count: number }>();
 
 export async function handleRankVotesRequest(request: Request, prisma: PrismaClient, ip: string): Promise<Response> {
   if (request.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
+  if (!isSameOrigin(request)) return json({ ok: false, error: 'Cross-origin request rejected' }, 403);
   if (!allowRequest(ip)) return json({ ok: false, error: 'Too many requests' }, 429);
   if (!isJsonContentType(request.headers.get('content-type'))) {
     return json({ ok: false, error: 'Content-Type must be application/json' }, 400);
@@ -63,6 +64,27 @@ function allowRequest(ip: string): boolean {
   if (prior.count >= RATE_LIMIT_MAX_REQUESTS) return false;
   prior.count += 1;
   return true;
+}
+
+/**
+ * Reject cross-origin scripted POSTs without a config list of allowed hosts: when the
+ * request carries an Origin, its host must match the host the request was sent to (the
+ * same value on paretorail.com, *.vercel.app previews, and localhost). A missing Origin
+ * is allowed for non-browser clients and older same-origin browsers that omit it, while
+ * an opaque `Origin: null` is treated as a mismatch.
+ */
+function isSameOrigin(request: Request): boolean {
+  const origin = request.headers.get('origin');
+  if (origin === null) return true;
+  if (origin === 'null') return false;
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    return false;
+  }
+  const expectedHost = request.headers.get('host') ?? new URL(request.url).host;
+  return originHost === expectedHost;
 }
 
 function isJsonContentType(value: string | null): boolean {
