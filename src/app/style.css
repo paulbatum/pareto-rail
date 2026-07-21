@@ -353,9 +353,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .app-shell .curve-panel h2 span,
 .app-shell .curve-panel .axis-label,
 .app-shell kbd,
-.app-shell .compare-stats,
-.app-shell .game-toolbar a,
-.app-shell .game-toolbar span { font-family: var(--mono); }
+.app-shell .compare-stats { font-family: var(--mono); }
 .app-shell .home-choice h2,
 .app-shell .info-grid h2,
 .app-shell .prose h2,
@@ -388,14 +386,6 @@ html:fullscreen .perf-overlay { display: none; }
 /* `touch-action: none` claims touch drags for aiming; without it Safari reads
    them as scroll gestures and slides its minimized chrome back in. */
 .game-frame { position: fixed; inset: var(--nav-h, 0px) 0 0 0; background: #02040a; transform: translateZ(0); touch-action: none; }
-/* The slot claims the space between the wordmark and the primary nav, so the
-   toolbar centres in that gap instead of butting against either. */
-.nav-game-slot { display: flex; flex: 1; justify-content: center; min-width: 0; }
-.nav-game-slot:empty { display: none; }
-.game-toolbar { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
-.game-toolbar a, .game-toolbar span { color: var(--muted); font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; white-space: nowrap; }
-.game-toolbar .game-title { overflow: hidden; color: var(--ink); text-overflow: ellipsis; }
-.game-toolbar a:hover { color: var(--ink); }
 .game-mount { position: absolute; inset: 0; }
 .app-shell .game-frame { font-family: var(--mono); }
 
@@ -405,7 +395,7 @@ html:fullscreen .perf-overlay { display: none; }
   /* Row one is the wordmark and the icons; the links wrap to their own row. */
   .site-nav { flex-wrap: wrap; padding: 7px 20px; gap: 10px; }
   .nav-cluster { display: contents; }
-  .site-nav nav, .nav-game-slot { order: 1; width: 100%; justify-content: space-between; flex-wrap: wrap; }
+  .site-nav nav { order: 1; width: 100%; justify-content: space-between; flex-wrap: wrap; }
   .nav-actions { gap: 18px; }
   .wordmark { flex: 1; min-width: 0; }
   .home-choice-grid { grid-template-columns: 1fr; margin-top: 36px; }

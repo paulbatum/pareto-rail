@@ -10,25 +10,16 @@ import { RouteLink } from './RouteLink';
 export type GameFrameProps = {
   level: LevelDefinition;
   title?: string;
-  backPath?: string;
-  backLabel?: string;
   launchContext?: GameLaunchContext;
   onNavigate: (path: string) => void;
   onRunEnd?: (summary: RunSummary, frame: HTMLElement, context?: GameLaunchContext) => void | Promise<void>;
   runEndContent?: ReactNode;
 };
 
-export function GameFrame({ level, title = level.title, backPath = '/levels', backLabel = 'Levels', launchContext, onNavigate, onRunEnd, runEndContent }: GameFrameProps) {
+export function GameFrame({ level, title = level.title, launchContext, onNavigate, onRunEnd, runEndContent }: GameFrameProps) {
   const frameRef = useRef<HTMLElement>(null);
   const runtimeRef = useRef<HTMLDivElement>(null);
   const [endPanel, setEndPanel] = useState<HTMLElement | null>(null);
-  /* The back link and level title live in the site header rather than over the
-     render, where they crowded the score and lock readouts. */
-  const [navSlot, setNavSlot] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setNavSlot(document.getElementById('nav-game-slot'));
-  }, []);
 
   useEffect(() => {
     const runtimeRoot = runtimeRef.current;
@@ -70,13 +61,6 @@ export function GameFrame({ level, title = level.title, backPath = '/levels', ba
         <GameRuntimeShell ref={runtimeRef} />
       </div>
     </section>
-    {navSlot ? createPortal(
-      <div className="game-toolbar">
-        <RouteLink className="game-back" href={backPath} onNavigate={onNavigate}>← {backLabel}</RouteLink>
-        <span className="game-title">{title}</span>
-      </div>,
-      navSlot,
-    ) : null}
     {endPanel && endContent ? createPortal(endContent, endPanel) : null}
   </>;
 }

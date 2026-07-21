@@ -60,8 +60,6 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
           </svg>
           <span>Pareto Rail</span>
         </RouteLink>
-        {/* Filled by GameFrame during play; collapses to nothing everywhere else. */}
-        <div className="nav-game-slot" id="nav-game-slot" />
         {/* Links and icons are separate groups so narrow viewports can keep the
             icons beside the wordmark and drop the links to their own row. */}
         <div className="nav-cluster">
