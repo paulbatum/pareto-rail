@@ -1,4 +1,9 @@
 {
   "id": "mass-driver-esvz",
-  "title": "Mass Driver"
+  "title": "Mass Driver",
+  "contentImages": {
+    "hero": "/level-content/mass-driver-esvz/hero.avif",
+    "overview": "/level-content/mass-driver-esvz/overview.avif",
+    "start": "/level-content/mass-driver-esvz/start.avif"
+  }
 }
