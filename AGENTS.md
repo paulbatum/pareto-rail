@@ -13,6 +13,7 @@ Stack: Vite + strict TypeScript + three.js **WebGPU only** (`WebGPURenderer` fro
 - `src/main.tsx` — React entrypoint for the route-based website shell.
 - `src/app/` — React website shell: layout, pages, client-side routing, and the benchmark controller. `LazyGameFrame` is the only bridge to the WebGPU runtime; content pages and pickers must not statically import `GameFrame`. See `docs/ui-architecture.md`.
 - `vercel.json` — SPA rewrite so deep links (`/rank`, `/play/<id>`, …) serve `index.html` instead of 404ing; the `(?!api/)` exclusion keeps the `api/` functions live. Any new deploy target needs an equivalent fallback.
+- `public/manifest.webmanifest` and `public/icon.svg` — the "add to home screen" install metadata and the mark it is drawn from. The PNG icon set is generated into the gitignored `public/icons/` by `scripts/generate-icons.mjs`, which runs before both `dev` and `build`; tracked PNGs are rejected by the build.
 - `src/game/` — the imperative WebGPU game runtime: renderer, scene/camera, postprocessing, pause menu, level picker, and runtime mount/disposal.
 - `src/engine/` — level-agnostic mechanics and utilities shared across levels; `lock-on-runner.ts` is the shared rail-shooter flow. The engine module list lives in `docs/level-authoring.md`.
 - `src/events.ts` — typed event bus (`spawn`, `lock`, `fire`, `hit`, `kill`, `beat`, `runstart`, …). Gameplay, visuals, and audio coordinate through events.

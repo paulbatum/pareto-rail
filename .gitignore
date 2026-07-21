@@ -8,3 +8,4 @@ src/generated/
 .vercel
 benchmark/private/
 tmp/
+public/icons/

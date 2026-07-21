@@ -5,7 +5,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/generate-icons.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/generate-icons.mjs",
     "build": "prisma generate && npm run validate:level-catalog && node scripts/check-serverless-imports.mjs && node scripts/check-no-tracked-png.mjs && vite build && node scripts/prerender-heads.mjs && node scripts/generate-sitemap.mjs && node scripts/check-bundle-budget.mjs",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
