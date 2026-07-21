@@ -76,18 +76,20 @@ function selectCoveragePhase(
   hasVersionHistory: boolean,
   participantId: string,
 ): PairCandidate | null {
+  // A participant's very first comparison in this catalog version is the
+  // featured pairing, hosted by a participant-salted theme so first
+  // impressions spread across all of them. Later matchups spread across
+  // the pool instead of repeating the pairing per theme.
+  if (!hasVersionHistory) {
+    const featuredPair = candidates
+      .filter((candidate) => candidate.a.featured === true && candidate.b.featured === true)
+      .sort((left, right) => participantOrder(participantId, left.id) - participantOrder(participantId, right.id)
+        || compareIds(left.id, right.id))[0] ?? null;
+    if (featuredPair) return featuredPair;
+  }
   const themeId = selectCoverageTheme(entrantsByTheme, candidates, exposureCounts, lastThemeId);
   if (!themeId) return null;
   const themeCandidates = candidates.filter((candidate) => candidate.themeId === themeId);
-  // A participant's very first comparison in this catalog version is the
-  // featured pairing. Later matchups spread across the pool instead of
-  // repeating it per theme.
-  if (!hasVersionHistory) {
-    const featuredPair = themeCandidates
-      .filter((candidate) => candidate.a.featured === true && candidate.b.featured === true)
-      .sort((left, right) => compareIds(left.id, right.id))[0] ?? null;
-    if (featuredPair) return featuredPair;
-  }
   // Seed each theme with a placed pool before switching to anchored
   // arrivals. Existing placed configurations keep new catalog entries
   // attached to the same component. Participant-salted ordering spreads

@@ -235,15 +235,18 @@ function testFeaturedFirstMatchup(): void {
   const catalog = makeSchedulerCatalog(4, 3, false, [0, 1]);
   const isFeaturedPair = (matchup: { levelIdA: string; levelIdB: string }) =>
     [matchup.levelIdA, matchup.levelIdB].every((levelId) => catalog.entrants.find((entrant) => entrant.levelId === levelId)!.featured === true);
-  for (const participantId of ['participant-a', 'participant-b']) {
+  const openerThemes = new Set<string>();
+  for (const participantId of ['participant-a', 'participant-b', 'participant-c', 'participant-d', 'participant-e', 'participant-f']) {
     const { assignments } = simulateAssignments(catalog, 6, participantId);
     assert.equal(isFeaturedPair(assignments[0]!), true, `${participantId} did not open on the featured pairing`);
+    openerThemes.add(assignments[0]!.themeId);
     const firstByTheme = new Map<string, { levelIdA: string; levelIdB: string }>();
     for (const matchup of assignments) if (!firstByTheme.has(matchup.themeId)) firstByTheme.set(matchup.themeId, matchup);
     assert.equal(firstByTheme.size, catalog.themes.length);
     const featuredOpeners = [...firstByTheme.values()].filter(isFeaturedPair).length;
-    assert.equal(featuredOpeners, 1, 'the featured pairing opens the first theme only, not every theme');
+    assert.equal(featuredOpeners, 1, 'the featured pairing opens one theme only, not every theme');
   }
+  assert.ok(openerThemes.size > 1, 'the featured opener theme varies across participants');
 }
 
 function testFeaturedThemeCoverage(): void {
