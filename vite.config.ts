@@ -10,6 +10,11 @@ const templatePath = path.resolve(process.cwd(), 'src/levels/crystal/visuals/cry
 
 export default defineConfig({
   plugins: [react(), crystalTemplateDevPlugin(), rankApiDevPlugin(), adminApiDevPlugin()],
+  server: {
+    /* Reaching the dev server from a phone needs HTTPS, since WebGPU is secure-context only.
+       `tailscale serve 5173` fronts it with a cert under the tailnet's own domain. */
+    allowedHosts: ['.ts.net'],
+  },
   build: {
     chunkSizeWarningLimit: 1200,
     manifest: true,
