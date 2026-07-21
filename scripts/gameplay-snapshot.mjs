@@ -172,7 +172,7 @@ async function captureOnce(browser, baseUrl, options, time, fidelity) {
 }
 
 function newGameplaySnapshotUrl(baseUrl, options, time, fidelity) {
-  const url = new URL('/gameplay-snapshot.html', baseUrl);
+  const url = new URL('/dev-tools/gameplay-snapshot.html', baseUrl);
   url.searchParams.set('level', options.level);
   url.searchParams.set('time', String(time));
   url.searchParams.set('dt', String(options.dt));

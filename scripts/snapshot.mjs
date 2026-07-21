@@ -64,7 +64,7 @@ async function main() {
     page.on('pageerror', (error) => console.error(`[page] ${error.message}`));
     await page.setViewport({ width: options.size, height: options.size, deviceScaleFactor: 1 });
 
-    const url = new URL('/snapshot.html', baseUrl);
+    const url = new URL('/dev-tools/snapshot.html', baseUrl);
     url.searchParams.set('module', options.module);
     url.searchParams.set('export', options.exportName);
     url.searchParams.set('size', String(options.size));

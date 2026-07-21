@@ -101,7 +101,7 @@ async function analyzeLevel(browser, baseUrl, level, options) {
   let client;
   try {
     await page.setViewport({ width: options.width, height: options.height, deviceScaleFactor: 1 });
-    const url = new URL('/gameplay-snapshot.html', baseUrl);
+    const url = new URL('/dev-tools/gameplay-snapshot.html', baseUrl);
     url.searchParams.set('level', level);
     url.searchParams.set('time', '0');
     url.searchParams.set('dt', String(options.dt));

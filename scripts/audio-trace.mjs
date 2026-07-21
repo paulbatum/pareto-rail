@@ -156,7 +156,7 @@ async function captureTrace(options) {
     });
     page.on('pageerror', (error) => console.error(`[page] ${error.message}`));
 
-    await page.goto(new URL('/audio-trace.html', baseUrl).href, { waitUntil: 'networkidle0' });
+    await page.goto(new URL('/dev-tools/audio-trace.html', baseUrl).href, { waitUntil: 'networkidle0' });
     return await page.evaluate(
       async ({ modulePath, seconds }) => {
         const mod = await import(modulePath);
@@ -216,7 +216,7 @@ async function captureWebAudioGraph(options) {
     client.on('WebAudio.nodeParamDisconnected', record('nodeParamDisconnected'));
     await client.send('WebAudio.enable');
 
-    await page.goto(new URL('/audio-trace.html', baseUrl).href, { waitUntil: 'networkidle0' });
+    await page.goto(new URL('/dev-tools/audio-trace.html', baseUrl).href, { waitUntil: 'networkidle0' });
     await page.evaluate(
       async ({ audioModulePath, graphMs }) => {
         const [audioModule, eventsModule] = await Promise.all([import(audioModulePath), import('/src/events.ts')]);
