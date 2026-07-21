@@ -312,7 +312,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
         <p>{statusLabel(active.status)} · {active.frontier ? 'On your Pareto frontier' : 'Dominated by a higher-value option'}</p>
       </div>}
     </div>
-    <PersonalCurveTable points={placedPoints} showFrontier />
+    <PersonalCurveTable points={curve.points.filter((point) => point.comparisons > 0)} showFrontier />
     <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} /></details>
   </section>;
 }
@@ -361,7 +361,7 @@ function CopyDebugButton({ status, onCopy }: { status: 'idle' | 'copied' | 'fail
 
 function PersonalCurveTable({ points, showFrontier }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean }) {
   const ordered = [...points].sort((left, right) => (right.rating ?? -Infinity) - (left.rating ?? -Infinity) || left.configurationId.localeCompare(right.configurationId));
-  return <div className="curve-table-wrap"><table className="curve-table"><caption>Chart data</caption><thead><tr><th scope="col">Model</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
+  return <div className="curve-table-wrap"><table className="curve-table"><caption>Every configuration you have judged</caption><thead><tr><th scope="col">Model</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
     const frontierStatus = showFrontier && point.frontier;
     const record = point.comparisons === 0
       ? <span aria-label="No comparisons yet">—</span>
