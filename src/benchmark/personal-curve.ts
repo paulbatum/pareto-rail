@@ -1,5 +1,5 @@
-import { entrantLabel } from './identity';
-import type { MatchupVote, RevealPayload, RelativeOutcome } from './types.ts';
+import { entrantLabel } from './identity.js';
+import type { MatchupVote, RevealPayload, RelativeOutcome } from './types';
 
 export interface PersonalCurveCatalogEntry {
   configurationId: string;
