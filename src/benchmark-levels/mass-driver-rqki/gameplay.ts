@@ -507,9 +507,9 @@ export function createMassDriverGameplay(bus: EventBus): LockOnRunnerLevel<MassD
       const clearRate = totalEnemies === 0 ? 0 : kills / totalEnemies;
       // Nothing above C if the gun never fired. The run has one job.
       if (!breech.fired()) return clearRate >= 0.5 ? 'C' : 'D';
-      if (score >= 21000 && clearRate >= 0.82) return 'S';
-      if (score >= 15000 && clearRate >= 0.64) return 'A';
-      if (score >= 9500 && clearRate >= 0.44) return 'B';
+      if (score >= 17500 && clearRate >= 0.9) return 'S';
+      if (score >= 13000 && clearRate >= 0.62) return 'A';
+      if (score >= 8000 && clearRate >= 0.42) return 'B';
       return 'C';
     },
     detailsForRun() {

@@ -16,7 +16,7 @@ export const MAGENTA = new Color(0.92, 0.32, 0.98);
 export const WHITE_HOT = new Color(0.90, 0.95, 1.0);
 
 export const STEEL = new Color(0.24, 0.29, 0.40);
-export const BORE_WALL = new Color(0.055, 0.070, 0.115);
+export const BORE_WALL = new Color(0.105, 0.130, 0.205);
 export const BORE_FOG = new Color(0.012, 0.018, 0.042);
 export const VOID = new Color(0.002, 0.003, 0.010);
 

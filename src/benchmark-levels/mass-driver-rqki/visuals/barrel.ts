@@ -42,7 +42,11 @@ const STUD_ROWS = [Math.PI / 6, (5 * Math.PI) / 6, (7 * Math.PI) / 6, (11 * Math
 const STUD_SPACING = 6;
 const STUD_RADIUS = BARREL_RADIUS - 0.55;
 const CONDUCTOR_SEGMENT = 18;
-const CONDUCTOR_ANGLES = [0, Math.PI];
+// Diagonals, deliberately not the horizontal or vertical axes. A conductor at
+// the payload's own eye level projects to a flat bar straight across the frame;
+// on the diagonals the four rails converge on the vanishing point instead, and
+// the convergence is the single strongest speed cue in the level.
+const CONDUCTOR_ANGLES = [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4];
 const STAR_COUNT = 900;
 const STAR_SHELL = 400;
 

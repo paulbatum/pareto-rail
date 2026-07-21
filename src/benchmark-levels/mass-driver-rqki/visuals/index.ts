@@ -429,7 +429,9 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
 
   const runTime = ctx.running ? ctx.runTime : 0;
   const cameraU = ctx.running ? massDriverRunProgress(runTime, MASS_DRIVER_DURATION) : 0;
-  const charge = ctx.running ? chargeAt(runTime) : 0;
+  // Past the muzzle the charge is spent, whichever way it went. Releasing it
+  // here is what lets the frame fall quiet for the last three seconds.
+  const charge = ctx.running && runTime < MUZZLE_TIME ? chargeAt(runTime) : 0;
 
   detectMuzzleMoment(ctx);
   paintBarrel(ctx, runTime, cameraU, charge);
@@ -456,13 +458,13 @@ function detectMuzzleMoment(ctx: VisualContext) {
   if (interlocksAlive === 0) {
     // Clean fire. Everything the barrel has been holding goes out the front.
     firedAt = elapsedNow;
-    flashUniform.value = 1.5;
+    flashUniform.value = 0.85;
     surge = 1.4;
     ctx.feel.shake(1.5, SHAKE);
   } else {
     // Nowhere for the charge to go, and the bore is the weakest part now.
     burstAt = elapsedNow;
-    flashUniform.value = 2.0;
+    flashUniform.value = 1.15;
     surge = 1.6;
     ctx.feel.shake(1.8, SHAKE);
   }
@@ -499,19 +501,21 @@ function paintBarrel(ctx: VisualContext, runTime: number, cameraU: number, charg
     const dim = 1 / (1 + (Math.max(0, ahead) / COIL_FALLOFF) ** 2);
     coilColor(index / RING_COUNT, scratchColor);
 
-    let intensity = (0.3 + energy * 1.5) * dim * heat;
+    let intensity = (0.18 + energy * 1.5) * dim * heat;
     if (waveArc >= 0) {
       // The firing wave: a band of white racing out of the breech ahead of you.
+      // Kept to a band rather than a global flash — a whole white frame reads as
+      // a broken renderer, a moving front reads as the gun going off.
       const band = Math.abs(barrel.coilArc[index] - (cameraArc + waveArc));
       if (band < 45) {
-        intensity += (1 - band / 45) * 7;
+        intensity += (1 - band / 45) * 3.5;
         scratchColor.lerp(WHITE_HOT, 0.8);
       }
     }
     if (burstAt >= 0) scratchColor.lerp(FAULT_RED, Math.min(1, (elapsedNow - burstAt) * 3));
 
     barrel.coilCore.setColorAt(index, scratchColor.clone().multiplyScalar(intensity * 1.5));
-    barrel.coilGlow.setColorAt(index, scratchColor.multiplyScalar(intensity * 0.32));
+    barrel.coilGlow.setColorAt(index, scratchColor.multiplyScalar(intensity * 0.18));
   }
   if (barrel.coilCore.instanceColor) barrel.coilCore.instanceColor.needsUpdate = true;
   if (barrel.coilGlow.instanceColor) barrel.coilGlow.instanceColor.needsUpdate = true;
@@ -524,8 +528,12 @@ function paintBarrel(ctx: VisualContext, runTime: number, cameraU: number, charg
       scratchColor.setScalar(0);
     } else {
       const dim = 1 / (1 + (Math.max(0, ahead) / (COIL_FALLOFF * 1.3)) ** 2);
+      // The nearest segments cover most of the frame, so they get pulled down —
+      // otherwise the four rails read as a bright X painted over the tunnel
+      // instead of as lines running away from you.
+      const near = Math.min(1, Math.max(0, ahead) / 26);
       coilColor(index / barrel.conductorArc.length, scratchColor)
-        .multiplyScalar(dim * (0.55 + beatEnergy * 0.35) * heat);
+        .multiplyScalar(dim * near * (0.55 + beatEnergy * 0.35) * heat);
     }
     barrel.conductors.setColorAt(index, scratchColor);
   }
@@ -560,7 +568,7 @@ function updatePostUniforms(dt: number, ctx: VisualContext, charge: number) {
 
   flashUniform.value = Math.max(0, flashUniform.value - dt * (flashUniform.value > 1 ? 2.2 : 2.8));
   if (burstAt >= 0 && elapsedNow - burstAt < 0.7) {
-    flashUniform.value = Math.max(flashUniform.value, 1.4 * (1 - (elapsedNow - burstAt) / 0.7));
+    flashUniform.value = Math.max(flashUniform.value, 0.8 * (1 - (elapsedNow - burstAt) / 0.7));
   }
 }
 

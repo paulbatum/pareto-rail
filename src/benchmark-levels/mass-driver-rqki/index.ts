@@ -41,7 +41,7 @@ export const massDriverRqkiLevel: LevelDefinition = {
     clearColor: 0x01020a,
     // Thin filaments and small cores carry the glow here, so the bore can take a
     // strong bloom without the tunnel washing out into a white sheet.
-    bloom: { strength: 1.15, threshold: 0.6, radius: 0.22 },
+    bloom: { strength: 0.85, threshold: 0.68, radius: 0.22 },
     vignette: { inner: 0.3, outer: 1.05, strength: 0.72 },
     composeOutput: composeMassDriverOutput,
   },
