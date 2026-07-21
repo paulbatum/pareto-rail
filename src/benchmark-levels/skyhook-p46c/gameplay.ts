@@ -216,10 +216,12 @@ const darts = (
   }));
 
 // Latch points sit on the visible car deck at the bottom of the frame.
+// All three project comfortably inside the frame at the game's 62° FOV — a
+// latch the player cannot see or shoot would be unavoidable damage.
 const GRAPPLE_LATCHES: Array<[number, number]> = [
-  [1.3, -2.15],
-  [2.9, -1.95],
-  [0.4, -2.5],
+  [1.3, -1.5],
+  [2.7, -1.35],
+  [0.3, -1.7],
 ];
 
 const grappler = (time: number, latchIndex: number, fromSide: number): SkyhookSpawnEntry => ({
@@ -228,7 +230,7 @@ const grappler = (time: number, latchIndex: number, fromSide: number): SkyhookSp
   hitPoints: 2,
   data: {
     role: 'grappler',
-    latch: new Vector3(GRAPPLE_LATCHES[latchIndex % GRAPPLE_LATCHES.length][0], GRAPPLE_LATCHES[latchIndex % GRAPPLE_LATCHES.length][1], 3.4),
+    latch: new Vector3(GRAPPLE_LATCHES[latchIndex % GRAPPLE_LATCHES.length][0], GRAPPLE_LATCHES[latchIndex % GRAPPLE_LATCHES.length][1], 3.6),
     approachTime: 2.1,
     armTime: 3.4,
     fromSide,
@@ -602,8 +604,8 @@ export function createSkyhookGameplay(bus: EventBus): LockOnRunnerLevel<SkyhookE
     },
     rankForRun(score, kills, totalEnemies) {
       const clearRate = totalEnemies === 0 ? 0 : kills / totalEnemies;
-      if (tetherjack.killed() && score >= 12000 && clearRate >= 0.8) return 'S';
-      if (score >= 8200 && clearRate >= 0.6) return 'A';
+      if (tetherjack.killed() && score >= 13800 && clearRate >= 0.9) return 'S';
+      if (score >= 9000 && clearRate >= 0.6) return 'A';
       if (score >= 4800 && clearRate >= 0.4) return 'B';
       if (score >= 2200 && clearRate >= 0.2) return 'C';
       return 'D';

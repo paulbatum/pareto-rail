@@ -571,7 +571,7 @@ function createCarDeck() {
 
   const deckGeometry = new BoxGeometry(4.6, 2.3, 0.3);
   const deck = new Mesh(deckGeometry, new MeshBasicMaterial({ color: PANEL_WHITE.clone().multiplyScalar(0.42) }));
-  deck.position.set(1.7, -2.55, 3.8);
+  deck.position.set(1.5, -2.2, 3.8);
   cosmetic(deck);
   group.add(deck);
   const rim = new LineSegments(
@@ -586,19 +586,19 @@ function createCarDeck() {
       new BoxGeometry(0.85, 0.3, 0.05),
       new MeshBasicMaterial({ color: HAZARD_ORANGE.clone().multiplyScalar(0.6) }),
     );
-    chevron.position.set(0.4 + i * 1.3, -1.62, 3.98);
+    chevron.position.set(0.3 + i * 1.25, -1.15, 3.98);
     chevron.rotation.z = -0.5;
     cosmetic(chevron);
     group.add(chevron);
   }
 
   // Latch pylons — the hardware grapplers actually grab.
-  for (const [x, y] of [[1.3, -2.15], [2.9, -1.95]] as const) {
+  for (const [x, y] of [[1.3, -1.5], [2.7, -1.35]] as const) {
     const pylon = new Mesh(
       new BoxGeometry(0.4, 0.4, 0.5),
       new MeshBasicMaterial({ color: PANEL_SHADOW.clone().multiplyScalar(1.8) }),
     );
-    pylon.position.set(x, y, 3.62);
+    pylon.position.set(x, y, 3.82);
     cosmetic(pylon);
     group.add(pylon);
   }
@@ -608,7 +608,7 @@ function createCarDeck() {
     new BoxGeometry(1.6, 0.35, 0.35),
     new MeshBasicMaterial({ color: PANEL_SHADOW.clone().multiplyScalar(2) }),
   );
-  arm.position.set(3.1, -1.9, 3.8);
+  arm.position.set(3.1, -1.75, 3.8);
   arm.rotation.z = 0.32;
   cosmetic(arm);
   group.add(arm);
@@ -623,11 +623,11 @@ function createCarDeck() {
   // Status beacon + a warning lamp that reddens as the hull goes.
   const beaconMaterial = createAdditiveBasicMaterial({ color: hdr(WARN_AMBER, 1.2) });
   const beacon = new Mesh(new OctahedronGeometry(0.16, 1), beaconMaterial);
-  beacon.position.set(-0.35, -2.3, 3.75);
+  beacon.position.set(-0.5, -1.95, 3.75);
   group.add(beacon);
   const hullLampMaterial = createAdditiveBasicMaterial({ color: hdr(PANEL_WHITE, 0.5) });
   const hullLamp = new Mesh(new BoxGeometry(0.5, 0.2, 0.1), hullLampMaterial);
-  hullLamp.position.set(3.5, -2.6, 3.95);
+  hullLamp.position.set(3.3, -2.3, 3.95);
   group.add(hullLamp);
 
   function update(elapsed: number, beatEnergy: number, hull: number) {
