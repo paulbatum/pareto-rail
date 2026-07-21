@@ -28,6 +28,7 @@ export function createHud(options: HudOptions = {}) {
   const endPanel = requireElement<HTMLElement>('#end-screen .end-panel');
   const callout = requireElement<HTMLElement>('#callout');
   const tip = requireElement<HTMLElement>('#tip');
+  const soundTip = requireElement<HTMLElement>('#sound-tip');
   const endScore = requireElement<HTMLElement>('[data-end="score"]');
   const endKills = requireElement<HTMLElement>('[data-end="kills"]');
   const endRank = requireElement<HTMLElement>('[data-end="rank"]');
@@ -120,7 +121,9 @@ export function createHud(options: HudOptions = {}) {
     },
 
     setTip(message: string) {
-      tip.textContent = message;
+      /* Levels compose their instructions onto the client tip with ' • ', which can leave a
+         dangling separator when the client tip is empty on their platform. */
+      tip.textContent = message.replace(/^[\s•]+|[\s•]+$/g, '');
     },
 
     showTip() {
@@ -129,6 +132,10 @@ export function createHud(options: HudOptions = {}) {
 
     hideTip() {
       tip.classList.add('hidden');
+    },
+
+    setSoundTipVisible(visible: boolean) {
+      soundTip.classList.toggle('hidden', !visible);
     },
   };
 }

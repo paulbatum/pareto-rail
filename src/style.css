@@ -436,12 +436,21 @@ canvas {
   100% { opacity: 1; transform: translateX(-50%) scale(1); }
 }
 
-.tip {
+.tip-stack {
   position: fixed;
   left: 50%;
   bottom: 58px;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   max-width: min(760px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.tip {
+  max-width: 100%;
   padding: 14px 20px;
   color: #fff;
   background: rgb(3 8 18 / 82%);
@@ -451,6 +460,47 @@ canvas {
   text-transform: uppercase;
   pointer-events: none;
   text-shadow: 0 0 12px rgb(70 232 255 / 65%);
+}
+
+/* Warm gold against the game's cyan so the sound nudge reads as an invitation, not a control. */
+.sound-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 22px;
+  color: #ffd987;
+  background: rgb(20 13 2 / 78%);
+  border: 1px solid rgb(255 200 96 / 50%);
+  border-radius: 999px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow: 0 0 12px rgb(255 193 79 / 60%);
+  animation: sound-tip-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes sound-tip-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgb(255 180 60 / 12%); border-color: rgb(255 200 96 / 38%); }
+  50% { box-shadow: 0 0 26px rgb(255 180 60 / 32%); border-color: rgb(255 213 122 / 72%); }
+}
+
+.sound-tip-note {
+  display: inline-block;
+  font-size: 1.2em;
+  line-height: 1;
+  text-shadow: 0 0 10px rgb(255 200 90 / 85%);
+  animation: sound-tip-note-bob 1.3s ease-in-out infinite;
+}
+
+.sound-tip-note-alt { animation-delay: -0.65s; }
+
+@keyframes sound-tip-note-bob {
+  0%, 100% { transform: translateY(1px) rotate(-7deg); }
+  50% { transform: translateY(-3px) rotate(7deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sound-tip, .sound-tip-note { animation: none; }
 }
 
 .pause-overlay {
@@ -546,7 +596,8 @@ canvas {
 }
 
 .pause-overlay.hidden,
-.tip.hidden {
+.tip.hidden,
+.sound-tip.hidden {
   display: none;
 }
 

@@ -306,6 +306,9 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     hud.hideEnd();
     hud.setCallout('');
     showStartTip();
+    /* The sound nudge is its own element: unlike the start tip it stays up in fullscreen and
+       alongside the control tip, for as long as the player is on the attract screen. */
+    hud.setSoundTipVisible(true);
     hud.setHudActive(false);
     hud.update({ score, elapsedTime: 0, lockCount: 0, health: readyHealthForHud() });
     updateAttractCamera(0);
@@ -337,6 +340,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     startDelay = -1;
     hud.hideEnd();
     hud.hideTip();
+    hud.setSoundTipVisible(false);
     hud.setCallout('');
     hud.setHudActive(true);
     hud.update({ score, elapsedTime: 0, lockCount: 0, health: currentHealthForHud() });
@@ -644,6 +648,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (state === 'attract' && countLockedLetters('start-letter') === startWord.length) {
       attractReachedFullLocks = true;
       hud.hideTip();
+      hud.setSoundTipVisible(false);
     }
   }
 
@@ -1259,6 +1264,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       died: died || undefined,
     };
     hud.setHudActive(false);
+    hud.setSoundTipVisible(false);
     hud.update({ score, elapsedTime: runTime, lockCount: 0, health: readyHealthForHud() });
     hud.showEnd(summary);
     bus.emit('runend', summary);

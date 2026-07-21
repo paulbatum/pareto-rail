@@ -1,6 +1,8 @@
+/* The sound encouragement lives in its own start-screen banner (see hud.setSoundTipVisible),
+   so the client tip only carries guidance that varies by platform. */
 export function getStartScreenTip(fullscreenAvailable: boolean) {
-  if (isCoarsePointer()) return 'Best with sound on.';
-  return fullscreenAvailable ? 'Best with sound on and fullscreen: press F.' : 'Best with sound on.';
+  if (isCoarsePointer()) return '';
+  return fullscreenAvailable ? 'Fullscreen: press F' : '';
 }
 
 export function getLockUndoTip(): string {
