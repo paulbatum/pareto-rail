@@ -18,6 +18,8 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .theme-toggle { display: inline-flex; align-items: center; color: var(--muted); background: transparent; border: 0; padding: 0 0 3px; cursor: pointer; }
 .theme-toggle:hover { color: var(--ink); }
 .theme-mark { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+.site-nav a.icon-link { display: inline-flex; align-items: center; padding-bottom: 3px; border-bottom: none; }
+.icon-mark { width: 17px; height: 17px; fill: currentColor; }
 .wordmark { display: inline-flex; align-items: center; gap: 11px; color: var(--ink) !important; font-size: 13px !important; font-weight: 600; letter-spacing: .14em !important; border-bottom: none !important; }
 .wordmark-mark { width: 18px; height: 18px; fill: none; stroke: var(--ink); stroke-width: 1.4; filter: none; }
 .wordmark-mark .wordmark-dot, .wordmark-mark circle { fill: var(--accent); stroke: none; }
