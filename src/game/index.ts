@@ -107,8 +107,11 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
       renderer.dispose();
     });
     (renderer as WebGPURenderer & { _getFallback: null })._getFallback = null;
+    /* The runtime fills its frame, which the site nav insets from the top. */
+    const viewWidth = () => app.clientWidth || window.innerWidth;
+    const viewHeight = () => app.clientHeight || window.innerHeight;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(viewWidth(), viewHeight());
     renderer.setClearColor(level.post?.clearColor ?? 0x02040a, 1);
     try {
       await renderer.init();
@@ -122,7 +125,7 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
     app.append(renderer.domElement);
 
     const scene = new Scene();
-    const camera = new PerspectiveCamera(GAME_FOV_DEGREES, window.innerWidth / window.innerHeight, 0.1, 500);
+    const camera = new PerspectiveCamera(GAME_FOV_DEGREES, viewWidth() / viewHeight(), 0.1, 500);
     const hud = createHud({ showTimer: import.meta.env.DEV });
     const bus = createEventBus();
     stack.add(() => bus.clear());
@@ -191,9 +194,19 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
       }
       if (signal?.aborted) return abort();
     }
-    const resize = () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setSize(window.innerWidth, window.innerHeight); };
-    window.addEventListener('resize', resize);
-    stack.add(() => window.removeEventListener('resize', resize));
+    const resize = () => {
+      const width = viewWidth();
+      const height = viewHeight();
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(width, height);
+    };
+    /* Observing the frame rather than the window catches nav reflow and
+       fullscreen transitions, which change the frame without resizing the window. */
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(app);
+    stack.add(() => resizeObserver.disconnect());
     renderer.setAnimationLoop(() => {
       if (disposed) return;
       const now = performance.now(); const dtMs = now - last; const dt = Math.min(0.05, dtMs / 1000); last = now;

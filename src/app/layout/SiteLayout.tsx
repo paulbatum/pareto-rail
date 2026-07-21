@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { routePath, type AppRoute } from '../router';
 import { RouteLink } from '../components/RouteLink';
 import { getTheme, setTheme, type Theme } from '../theme';
@@ -22,10 +22,29 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
   const currentPath = routePath(route);
   const [theme, setActiveTheme] = useState<Theme>(() => getTheme());
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setTheme(theme);
   }, [theme]);
+
+  /* The nav wraps and restacks with viewport width, and hides outright in
+     fullscreen, so its height is published as `--nav-h` for the game frame to
+     inset by rather than being hardcoded. */
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const publish = () => {
+      document.documentElement.style.setProperty('--nav-h', `${header.getBoundingClientRect().height}px`);
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--nav-h');
+    };
+  }, []);
 
   const toggleTheme = () => {
     setActiveTheme(nextTheme);
@@ -33,7 +52,7 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
 
   return (
     <div className="app-shell" data-route={route.kind}>
-      <header className="site-nav">
+      <header className="site-nav" ref={headerRef}>
         <RouteLink className="wordmark" href="/" onNavigate={onNavigate}>
           <svg className="wordmark-mark" viewBox="0 0 22 22" aria-hidden="true">
             <rect x="4.5" y="4.5" width="13" height="13" transform="rotate(45 11 11)" />

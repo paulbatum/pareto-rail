@@ -358,7 +358,9 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .app-shell .curve-panel h2 { font-weight: 750; }
 
 /* ---------- Game frame (stays dark — the game is the one neon thing) ---------- */
-body.game-active .site-nav { pointer-events: none; }
+/* The in-world reticle replaces the cursor over the game, but the nav is still a
+   click target during play, so it gets the pointer back. */
+body.game-active .site-nav { pointer-events: none; cursor: auto; }
 body.game-ui-hidden .site-nav,
 body.game-ui-hidden [data-game-ui],
 body.game-ui-hidden .level-picker,
@@ -370,7 +372,10 @@ html:fullscreen .game-toolbar,
 html:fullscreen .level-picker,
 html:fullscreen .debug-panel,
 html:fullscreen .perf-overlay { display: none; }
-.game-frame { position: fixed; inset: 0; background: #02040a; }
+/* The frame sits below the site nav so the header never covers the render or the
+   HUD. `translateZ(0)` makes it the containing block for the runtime's
+   position:fixed overlays (HUD, end screen, pause menu), so they inset with it. */
+.game-frame { position: fixed; inset: var(--nav-h, 0px) 0 0 0; background: #02040a; transform: translateZ(0); }
 .game-toolbar { position: fixed; top: 0; left: 0; right: 0; z-index: 15; display: flex; justify-content: space-between; padding: 14px 20px; pointer-events: none; background: linear-gradient(rgb(2 4 10 / 72%), transparent); }
 .game-toolbar a, .game-toolbar span { pointer-events: auto; color: var(--ghost); font-size: 11px; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
 .game-toolbar a:hover { color: var(--ink); }
