@@ -1397,6 +1397,7 @@ function createStubHud(): Hud {
     setTip() {},
     showTip() {},
     hideTip() {},
+    setStartNudgesVisible() {},
   } as Hud;
 }
 
