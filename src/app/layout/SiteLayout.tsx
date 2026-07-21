@@ -62,20 +62,26 @@ export function SiteLayout({ route, onNavigate, children }: SiteLayoutProps) {
         </RouteLink>
         {/* Filled by GameFrame during play; collapses to nothing everywhere else. */}
         <div className="nav-game-slot" id="nav-game-slot" />
-        <nav aria-label="Primary">
-          {navigation.map((item) => {
-            const active = item.href === currentPath
-              || ((route.kind === 'play' || route.kind === 'levels') && item.href === '/levels')
-              || (route.kind === 'analysis' && item.href === '/analysis');
-            return <RouteLink key={item.href} href={item.href} onNavigate={onNavigate} aria-current={active ? 'page' : undefined}>{item.label}</RouteLink>;
-          })}
-          <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Switch to ${nextTheme} theme`}>
-            <ThemeMark theme={nextTheme} />
-          </button>
-          <a className="icon-link" href="https://github.com/paulbatum/pareto-rail" target="_blank" rel="noreferrer" aria-label="Source on GitHub">
-            <GitHubMark />
-          </a>
-        </nav>
+        {/* Links and icons are separate groups so narrow viewports can keep the
+            icons beside the wordmark and drop the links to their own row. */}
+        <div className="nav-cluster">
+          <nav aria-label="Primary">
+            {navigation.map((item) => {
+              const active = item.href === currentPath
+                || ((route.kind === 'play' || route.kind === 'levels') && item.href === '/levels')
+                || (route.kind === 'analysis' && item.href === '/analysis');
+              return <RouteLink key={item.href} href={item.href} onNavigate={onNavigate} aria-current={active ? 'page' : undefined}>{item.label}</RouteLink>;
+            })}
+          </nav>
+          <div className="nav-actions">
+            <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Switch to ${nextTheme} theme`}>
+              <ThemeMark theme={nextTheme} />
+            </button>
+            <a className="icon-link" href="https://github.com/paulbatum/pareto-rail" target="_blank" rel="noreferrer" aria-label="Source on GitHub">
+              <GitHubMark />
+            </a>
+          </div>
+        </div>
       </header>
       <main className="app-content">{isEntryPoint(route) && <WebGPUNotice />}{children}</main>
     </div>

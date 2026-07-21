@@ -11,7 +11,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 
 /* ---------- Navigation ---------- */
 .site-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 0; padding: 13px clamp(20px, 5vw, 72px) 7px; background: color-mix(in srgb, var(--paper) 92%, transparent); border-bottom: 1px solid var(--hairline); backdrop-filter: blur(10px); }
-.site-nav nav { display: flex; gap: clamp(12px, 3vw, 30px); min-width: 0; }
+.nav-cluster, .site-nav nav, .nav-actions { display: flex; gap: clamp(12px, 3vw, 30px); min-width: 0; }
 .site-nav a { color: var(--muted); text-decoration: none; letter-spacing: .12em; text-transform: uppercase; font-size: 11px; padding-bottom: 3px; border-bottom: 1px solid transparent; }
 .site-nav a:hover { color: var(--ink); }
 .site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
@@ -402,15 +402,19 @@ html:fullscreen .perf-overlay { display: none; }
 /* ---------- Motion / responsive ---------- */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 @media (max-width: 640px) {
-  .site-nav { align-items: flex-start; flex-direction: column; padding: 7px 20px; gap: 10px; }
-  .site-nav nav { width: 100%; justify-content: space-between; flex-wrap: wrap; }
-  .wordmark { min-width: 0; }
+  /* Row one is the wordmark and the icons; the links wrap to their own row. */
+  .site-nav { flex-wrap: wrap; padding: 7px 20px; gap: 10px; }
+  .nav-cluster { display: contents; }
+  .site-nav nav, .nav-game-slot { order: 1; width: 100%; justify-content: space-between; flex-wrap: wrap; }
+  .nav-actions { gap: 18px; }
+  .wordmark { flex: 1; min-width: 0; }
   .home-choice-grid { grid-template-columns: 1fr; margin-top: 36px; }
   .protocol-grid, .data-dictionary, .verdict-run-grid { grid-template-columns: 1fr; }
   .run-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero-with-graphic { grid-template-columns: 1fr; min-height: 0; }
   .hero-copy { padding-top: 48px; padding-bottom: 48px; }
-  .hero-graphic { min-height: 188px; border-top: 1px solid var(--hairline); border-left: none; }
+  /* Vertical space is scarce on phones, so the decorative tunnel steps aside. */
+  .hero-graphic { display: none; }
   .info-grid, .reveal-grid { grid-template-columns: 1fr; }
   .compare-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .versus-divider { flex-direction: row; min-height: 20px; }
