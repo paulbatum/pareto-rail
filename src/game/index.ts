@@ -88,13 +88,32 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const removeUiVisibilityControls = installUiVisibilityControls();
     stack.add(removeUiVisibilityControls);
 
+    const urlParams = new URLSearchParams(window.location.search);
+    /* Failures here are usually read on a phone, where there is no console to open. */
+    const debugDetail = import.meta.env.DEV || urlParams.get('debug') === '1';
+    const userAgent = navigator.userAgent;
+    const describe = (detail: string) => (debugDetail ? detail : undefined);
+
     if (!('gpu' in navigator)) {
-      showUnsupported(host, 'This game requires WebGPU');
+      /* navigator.gpu is only exposed in a secure context, so plain HTTP on anything but loopback
+         looks exactly like a browser without WebGPU. Say which one it is. */
+      if (!window.isSecureContext) {
+        showUnsupported(host, {
+          message: 'This page must be served over HTTPS',
+          hint: 'WebGPU is only available in a secure context. Reload this page over HTTPS, or use localhost.',
+          detail: describe(`origin: ${window.location.origin}\nisSecureContext: false\nnavigator.gpu: undefined`),
+        });
+      } else {
+        showUnsupported(host, {
+          message: 'This game requires WebGPU',
+          hint: 'Please open this page in a browser with WebGPU enabled.',
+          detail: describe(`navigator.gpu: undefined\nuserAgent: ${userAgent}`),
+        });
+      }
       return { dispose };
     }
 
     const app = host.querySelector<HTMLElement>('[data-game="app"]')!;
-    const urlParams = new URLSearchParams(window.location.search);
     const debugValue = import.meta.env.DEV && level.debugSelector
       ? urlParams.get(level.debugSelector.queryParam) ?? undefined
       : undefined;
@@ -115,7 +134,18 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     } catch (error) {
       if (signal?.aborted || !host.isConnected) return abort();
       console.error(error);
-      showUnsupported(host, 'This game requires WebGPU');
+      /* The adapter exists but the device would not come up: a driver, a blocklist, or an
+         out-of-memory tab, not a browser that lacks WebGPU. */
+      const adapter = await navigator.gpu.requestAdapter().catch(() => null);
+      showUnsupported(host, {
+        message: adapter ? 'The graphics device failed to start' : 'This game requires WebGPU',
+        hint: adapter
+          ? 'Your browser supports WebGPU but could not open a device. Closing other tabs and reloading often clears it up.'
+          : 'Please open this page in a browser with WebGPU enabled.',
+        detail: describe(
+          `adapter: ${adapter ? 'available' : 'none'}\n${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}`,
+        ),
+      });
       return { dispose };
     }
     if (signal?.aborted || !host.isConnected) return abort();

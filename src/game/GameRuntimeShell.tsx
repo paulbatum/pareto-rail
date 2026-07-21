@@ -82,7 +82,8 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
       <section className="unsupported hidden" data-game="unsupported" aria-live="assertive">
         <div className="unsupported-panel">
           <h1 data-unsupported="message">This game requires WebGPU</h1>
-          <p>Please open this page in a browser with WebGPU enabled.</p>
+          <p data-unsupported="hint">Please open this page in a browser with WebGPU enabled.</p>
+          <pre className="unsupported-detail hidden" data-unsupported="detail" />
         </div>
       </section>
 

@@ -477,3 +477,18 @@ canvas {
 }
 
 .unsupported-panel p { color: #B3AA94; }
+
+.unsupported-detail {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  max-width: min(520px, calc(100vw - 72px));
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #B3AA94;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: rgb(2 4 10 / 45%);
+  border: 1px solid #332E22;
+}

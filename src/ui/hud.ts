@@ -133,10 +133,23 @@ export function createHud(options: HudOptions = {}) {
   };
 }
 
-export function showUnsupported(host: HTMLElement, message = 'This game requires WebGPU') {
+export type UnsupportedNotice = {
+  message: string;
+  hint: string;
+  /* Diagnostics for the on-screen panel. Only pass this when debug output is enabled: it is the
+     only way to read a failure on a phone, where there is no console to open. */
+  detail?: string;
+};
+
+export function showUnsupported(host: HTMLElement, notice: UnsupportedNotice) {
   const panel = host.querySelector<HTMLElement>('[data-game="unsupported"]');
   const heading = panel?.querySelector<HTMLElement>('[data-unsupported="message"]');
-  if (!panel || !heading) throw new Error('Missing unsupported game panel');
-  heading.textContent = message;
+  const hint = panel?.querySelector<HTMLElement>('[data-unsupported="hint"]');
+  const detail = panel?.querySelector<HTMLElement>('[data-unsupported="detail"]');
+  if (!panel || !heading || !hint || !detail) throw new Error('Missing unsupported game panel');
+  heading.textContent = notice.message;
+  hint.textContent = notice.hint;
+  detail.textContent = notice.detail ?? '';
+  detail.classList.toggle('hidden', !notice.detail);
   panel.classList.remove('hidden');
 }
