@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-21T00:46:09.904Z",
+  "generatedAt": "2026-07-21T00:57:55.163Z",
   "activeBenchmarkVersion": "rank-catalog-v2",
   "configurations": [
     {
@@ -86,8 +86,14 @@
   "versions": [
     {
       "benchmarkVersion": "rank-catalog-v1",
-      "generatedAt": "2026-07-21T00:46:09.904Z",
+      "generatedAt": "2026-07-21T00:57:55.163Z",
       "themes": [
+        {
+          "id": "hull-run",
+          "title": "Hull Run",
+          "summary": "Build a level where you're skimming low over the hull of a warship so big its surface is basically terrain.",
+          "prompt": "Build a level where you're skimming low over the hull of a warship so big its surface is basically terrain. You're meters off the deck the whole way - antenna masts whip past at eye level, the rail rises and dips over bulkhead ridges, and the surface detail streaming underneath is what sells the speed. The horizon barely moves, the ground tears past. The ship is dark when you arrive and it wakes up as you cross it: running lights spreading ahead of you, hatches opening, more and more defenses coming online the deeper you get. The palette is the warship's own - gunmetal and shadow lit by red and amber alert lighting, nothing decorative. The music is the ship's too: percussion-led and martial, klaxons and metal folded into the score, a new layer slamming in as each stretch of the ship wakes.\n\nEnemies are the ship's own defense drones popping out of hatches ahead of you.\n\nBoss: the bow turret, the last big gun still alive. It rises out of the deck ahead and fires down the length of the ship at you, tearing up the deck plating you then have to weave through. Its armor opens to vent heat after each volley - that's when you hurt it. When it finally dies you shoot past the wreckage of it and straight off the bow, the deck drops away, nothing under you but open space, level ends."
+        },
         {
           "id": "mass-driver",
           "title": "Mass Driver",
@@ -102,6 +108,76 @@
         }
       ],
       "entrants": [
+        {
+          "levelId": "hull-run-cvs3",
+          "themeId": "hull-run",
+          "configurationId": "codex-sol-terra-delegation",
+          "modelName": "GPT-5.6 Sol",
+          "workflowName": "delegated",
+          "generationCost": 4.8857775,
+          "run": {
+            "generationWallTimeSeconds": 824.882,
+            "totalWallTimeSeconds": 840.869,
+            "result": "completed",
+            "orchestrationTreatment": "included",
+            "harness": {
+              "name": "Codex CLI",
+              "version": "0.144.1"
+            },
+            "models": [
+              {
+                "modelName": "gpt-5.6-sol",
+                "role": "orchestrate",
+                "inputTokens": 256618,
+                "outputTokens": 31958,
+                "cacheReadTokens": 4647680,
+                "cacheWriteTokens": 0,
+                "reasoningTokens": 5941
+              },
+              {
+                "modelName": "gpt-5.6-terra",
+                "role": "implement",
+                "inputTokens": 64887,
+                "outputTokens": 4254,
+                "cacheReadTokens": 376320,
+                "cacheWriteTokens": 0,
+                "reasoningTokens": 1361
+              }
+            ]
+          },
+          "thumbnailPath": "/level-content/hull-run-cvs3/hero.avif"
+        },
+        {
+          "levelId": "hull-run-ns5n",
+          "themeId": "hull-run",
+          "configurationId": "codex-sol-high",
+          "modelName": "GPT-5.6 Sol",
+          "workflowName": "solo",
+          "generationCost": 3.449194,
+          "run": {
+            "generationWallTimeSeconds": 673.914,
+            "totalWallTimeSeconds": 723.271,
+            "result": "completed",
+            "orchestrationTreatment": "none",
+            "harness": {
+              "name": "Codex CLI",
+              "version": "0.144.1"
+            },
+            "models": [
+              {
+                "modelName": "gpt-5.6-sol",
+                "role": "solo",
+                "inputTokens": 141316,
+                "outputTokens": 29797,
+                "cacheReadTokens": 3697408,
+                "cacheWriteTokens": 0,
+                "reasoningTokens": 5284
+              }
+            ]
+          },
+          "thumbnailPath": "/level-content/hull-run-ns5n/hero.avif",
+          "featured": true
+        },
         {
           "levelId": "mass-driver-7rkv",
           "themeId": "mass-driver",
@@ -391,7 +467,7 @@
     },
     {
       "benchmarkVersion": "rank-catalog-v2",
-      "generatedAt": "2026-07-21T00:46:09.904Z",
+      "generatedAt": "2026-07-21T00:57:55.163Z",
       "themes": [
         {
           "id": "broadside",
