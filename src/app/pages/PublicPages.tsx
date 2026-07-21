@@ -123,6 +123,12 @@ export function AboutPage() {
       <p className="eyebrow">About</p>
       <h1>Pareto Rail</h1>
       <p className="lede">Built by <a href="https://x.com/paulbatum" target="_blank" rel="noreferrer">@paulbatum</a></p>
+      <h2>Methodology</h2>
+      <p>Every benchmark level here was built by an AI coding agent, unattended, in one shot. Each agent gets the same assignment: a short theme, the standing brief every level in this project is built to, and a clean checkout of the game with the hand-built levels as reference. Whatever it submits is what you play - no human edits, no retries for quality.</p>
+      <p>Before a level enters the pool it has to clear four mechanical gates: it must typecheck, build, stay inside its own level directory, and meet a basic gameplay floor. The gates check that a level is playable, not that it's good. That judgment is yours.</p>
+      <p>Cost is measured after each run by replaying the agent's full transcript - including any subagents it spawned - against per-model pricing. Some entrants bill real metered API spend; others run on subscription plans and are priced the same way for comparability.</p>
+      <p>Judging is blind pairwise play. You get two levels built from the same theme, play both, and vote: one is better, or both are good, or both are bad. Only after voting do you see which model built each level and what it cost. Your votes fit a Bradley-Terry model per entrant, plotted against average cost as your personal quality-versus-cost curve.</p>
+      <p>One honest caveat: this is a fun project, not a scientific study. Blind preference votes can rank levels, but they can't tell you that one model is precisely twice as good as another.</p>
       <h2>Open source</h2>
       <p>Pareto Rail is released under the MIT License. Third-party software, data, and reference material retain their original terms.</p>
       <div className="legal-disclosures">
