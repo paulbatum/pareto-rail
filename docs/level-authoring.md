@@ -93,7 +93,7 @@ Optional overrides fall into two groups. The first group shapes the level's iden
 - `rankForRun`: the level's own rank ladder.
 - `easeRunProgress`: authored variable rail speed; use `createSpeedProfile` and pass its `runProgress` through.
 - `timing`: the level's shot-rhythm and action-SFX-snap profile (see below).
-- `playerHealth`, `allowLockUndo`, `lockRadiusNdc`: the hull system, right-click undo-lock (off by default), and the screen-space lock threshold.
+- `playerHealth`, `allowLockUndo`, `lockRadiusNdc`: the hull system, right-click undo-lock (off by default), and the screen-space lock threshold. The reticle drawn by `createReticle()` should visually depict `lockRadiusNdc`; if its visual radius falls below half of `lockRadiusNdc`, the engine scales the rendered reticle up to that floor and the floor check warns.
 
 The second group is utilities: `updateAttractCamera`, `updateCameraEffects`, `detailsForRun` (compact end-screen lines), `startWord`, and `replayWord`.
 

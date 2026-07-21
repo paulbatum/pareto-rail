@@ -1,6 +1,7 @@
 import { PerspectiveCamera, Scene } from 'three';
 import { WebGPURenderer } from 'three/webgpu';
 import type { RunSummary } from '../engine/scoring';
+import { GAME_FOV_DEGREES } from '../engine/lock-on-runner';
 import { createEventBus } from '../events';
 import { createPost, getBloomLevel, getMotionBlurLevel, setBloomLevel, setMotionBlurLevel } from '../engine/post';
 import { getStartScreenTip } from '../ui/client-tip';
@@ -121,7 +122,7 @@ export async function mountGame({ host, level, launchContext, showLevelPicker, o
     app.append(renderer.domElement);
 
     const scene = new Scene();
-    const camera = new PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
+    const camera = new PerspectiveCamera(GAME_FOV_DEGREES, window.innerWidth / window.innerHeight, 0.1, 500);
     const hud = createHud({ showTimer: import.meta.env.DEV });
     const bus = createEventBus();
     stack.add(() => bus.clear());

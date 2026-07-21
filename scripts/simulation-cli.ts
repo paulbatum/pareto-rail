@@ -8,7 +8,13 @@ import {
   resolveShotDelaySettings,
 } from '../src/engine/action-sfx-quantization';
 import type { ActionSfxQuantizationSettings, ShotDelaySettings } from '../src/engine/action-sfx-quantization';
-import { createLockOnRunner, LOCK_RADIUS_NDC } from '../src/engine/lock-on-runner';
+import {
+  createLockOnRunner,
+  GAME_FOV_DEGREES,
+  LOCK_RADIUS_NDC,
+  measureReticleVisualNdc,
+  reticleCorrectionScale,
+} from '../src/engine/lock-on-runner';
 import type { LockOnRunnerLevel, LockOnSpawnEntry } from '../src/engine/lock-on-runner';
 import { MAX_LOCKS } from '../src/engine/locks';
 import { createEventBus, type GameEvents } from '../src/events';
@@ -90,6 +96,12 @@ type RunResult = {
 
 type FieldSource = 'level-authored' | 'engine default';
 
+// The XY visual radius of the level's drawn reticle, compared against the lock
+// radius. correctionScale is what the engine applies at runtime (1 = none).
+type ReticleMeasurement =
+  | { status: 'measured'; visualNdc: number; visualFraction: number; correctionScale: number }
+  | { status: 'unmeasurable'; reason: string };
+
 type EngineDefaultsReport = {
   shotRhythm: {
     profile: ShotDelaySettings;
@@ -106,6 +118,7 @@ type EngineDefaultsReport = {
     value: number;
     source: FieldSource;
     engineDefault: number;
+    reticle: ReticleMeasurement;
   };
   identityHooks: {
     declared: string[];
@@ -379,6 +392,11 @@ async function simulateRun(options: CliOptions & { policy: SimPolicy }): Promise
   const hud = createStubHud();
   const level = await createGameplay(target.sourceRoot, target.folder, bus, hud);
   const engineDefaults = summarizeEngineDefaults(level);
+  engineDefaults.lockRadius.reticle = await measureLevelReticle(
+    target.sourceRoot,
+    target.folder,
+    engineDefaults.lockRadius.value,
+  );
   const scene = new Scene();
   const camera = new PerspectiveCamera(60, 16 / 9, 0.1, 5000);
   const canvas = createCanvasStub(1280, 720) as HTMLCanvasElement;
@@ -678,12 +696,42 @@ function summarizeEngineDefaults(level: LockOnRunnerLevel<string, unknown>): Eng
       value: level.lockRadiusNdc ?? LOCK_RADIUS_NDC,
       source: level.lockRadiusNdc === undefined ? 'engine default' : 'level-authored',
       engineDefault: LOCK_RADIUS_NDC,
+      // Filled in asynchronously by measureLevelReticle once the level's visuals
+      // module has been imported; summarizeEngineDefaults has no source/folder.
+      reticle: { status: 'unmeasurable', reason: 'not measured' },
     },
     identityHooks: {
       declared: declaredHooks,
       inherited: inheritedHooks,
     },
   };
+}
+
+// Instantiate the level's own reticle (core three.js objects only, so it runs
+// headless) and measure it against the exact engine math the game applies.
+// Any failure is recorded as unmeasurable rather than crashing the harness.
+async function measureLevelReticle(
+  sourceRoot: 'levels' | 'benchmark-levels',
+  folder: string,
+  lockRadiusNdc: number,
+): Promise<ReticleMeasurement> {
+  try {
+    const mod = await import(`../src/${sourceRoot}/${folder}/visuals`);
+    if (typeof mod.createReticle !== 'function') {
+      return { status: 'unmeasurable', reason: 'visuals module does not export createReticle' };
+    }
+    const reticle = mod.createReticle() as Object3D;
+    const visualNdc = measureReticleVisualNdc(reticle, GAME_FOV_DEGREES);
+    if (!(visualNdc > 0)) return { status: 'unmeasurable', reason: 'reticle has no measurable XY extent' };
+    return {
+      status: 'measured',
+      visualNdc: round(visualNdc),
+      visualFraction: round(visualNdc / lockRadiusNdc),
+      correctionScale: round(reticleCorrectionScale(visualNdc, lockRadiusNdc)),
+    };
+  } catch (error) {
+    return { status: 'unmeasurable', reason: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 function sourceMap<T extends Record<string, unknown>>(defaults: T, authored: Partial<T>): Record<keyof T, FieldSource> {
@@ -976,8 +1024,15 @@ function formatActionSfxSnap(snap: EngineDefaultsReport['actionSfxSnap']) {
 }
 
 function formatLockRadius(lockRadius: EngineDefaultsReport['lockRadius']) {
-  if (lockRadius.source === 'engine default') return `[default] ${lockRadius.value} NDC`;
-  return `${lockRadius.value} NDC (engine default ${lockRadius.engineDefault})`;
+  const base = lockRadius.source === 'engine default'
+    ? `[default] ${lockRadius.value} NDC`
+    : `${lockRadius.value} NDC (engine default ${lockRadius.engineDefault})`;
+  const reticle = lockRadius.reticle;
+  if (reticle.status !== 'measured') return `${base}; reticle unmeasurable (${reticle.reason})`;
+  const scaling = reticle.correctionScale > 1
+    ? `engine scales reticle ${reticle.correctionScale.toFixed(2)}x`
+    : 'no reticle scaling';
+  return `${base}; reticle visual ${reticle.visualNdc.toFixed(3)} NDC = ${reticle.visualFraction.toFixed(2)}x lock radius, ${scaling}`;
 }
 
 const SHOT_DELAY_FIELDS = [

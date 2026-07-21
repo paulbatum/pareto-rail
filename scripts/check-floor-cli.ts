@@ -86,6 +86,21 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   }
   for (const error of audioConfigErrors) failures.push(`Audio configuration validation failed: ${error}`);
 
+  // An under-drawn reticle only warns: the engine already scales it up at
+  // runtime, so the level is playable, but the drawn sight should match the
+  // lock radius the level authored.
+  const spawnWarningCount = warnings.length;
+  let reticleWarnings = 0;
+  const reticle = result.engineDefaults.lockRadius.reticle;
+  if (reticle.status === 'measured' && reticle.correctionScale > 1) {
+    reticleWarnings += 1;
+    warnings.push(
+      `Reticle visual radius (${reticle.visualNdc.toFixed(3)} NDC) is below half the lock radius `
+      + `(lockRadiusNdc ${result.engineDefaults.lockRadius.value}); the engine renders it scaled `
+      + `${reticle.correctionScale.toFixed(2)}x. Draw the reticle to match the lock radius.`,
+    );
+  }
+
   const lines: string[] = [];
   lines.push(`${level.title} floor check`);
   lines.push(`duration ${level.duration.toFixed(1)}s; spawned kinds ${spawnedKinds.size}: ${[...spawnedKinds].sort().join(', ') || 'none'}`);
@@ -96,7 +111,8 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   lines.push(`target occlusion warnings: ${occlusionWarnings.length}`);
   lines.push(`performance gate failures: ${perfFailures.length}`);
   lines.push(`audio configuration failures: ${audioConfigErrors.length}`);
-  lines.push(`spawn centerness/distance warnings: ${warnings.length}`);
+  lines.push(`spawn centerness/distance warnings: ${spawnWarningCount}`);
+  lines.push(`reticle warnings: ${reticleWarnings}`);
   
   if (warnings.length) {
     lines.push('');

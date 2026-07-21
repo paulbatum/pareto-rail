@@ -1,4 +1,4 @@
-import { MathUtils, type Material, Object3D, Quaternion, Raycaster, Vector2, Vector3 } from 'three';
+import { Box3, Group, MathUtils, type Material, Object3D, Quaternion, Raycaster, Vector2, Vector3 } from 'three';
 import {
   setActionSfxQuantization,
   setShotDelaySettings,
@@ -25,8 +25,33 @@ import { getPlayerCameraSettings } from './player-camera';
 import { smoothRunProgress } from './rail';
 import { scoreForKill as defaultScoreForKill, rankForRun as defaultRankForRun, type RunSummary } from './scoring';
 
-const RETICLE_DISTANCE = 24;
+export const RETICLE_DISTANCE = 24;
 const RETICLE_RENDER_ORDER = 1000;
+
+// The game's vertical field of view. Shared so the offline harness measures
+// the reticle against the same projection the game renders it with.
+export const GAME_FOV_DEGREES = 62;
+
+// The drawn reticle must depict at least this fraction of the lock radius; a
+// smaller one locks targets visibly outside the sight, so the engine scales it
+// up to this floor.
+export const RETICLE_MIN_VISUAL_FRACTION = 0.5;
+
+// The reticle's XY half-extent at RETICLE_DISTANCE, expressed as an NDC radius:
+// the same units lockRadiusNdc uses, so the two are directly comparable.
+export function measureReticleVisualNdc(reticle: Object3D, fovDeg: number): number {
+  const box = new Box3().setFromObject(reticle);
+  if (box.isEmpty()) return 0;
+  const radius = Math.max(Math.abs(box.min.x), Math.abs(box.max.x), Math.abs(box.min.y), Math.abs(box.max.y));
+  return radius / (RETICLE_DISTANCE * Math.tan((fovDeg * Math.PI) / 360));
+}
+
+// Factor the rendered reticle must be scaled by to reach the visual floor.
+// Never below 1: an already-large reticle is left as the level drew it.
+export function reticleCorrectionScale(visualNdc: number, lockRadiusNdc: number): number {
+  if (!(visualNdc > 0)) return 1;
+  return Math.max(1, (RETICLE_MIN_VISUAL_FRACTION * lockRadiusNdc) / visualNdc);
+}
 
 // The reticle sits at a real world depth, so level geometry closer than
 // RETICLE_DISTANCE would otherwise swallow it. It reads as a sight, not as an
@@ -169,7 +194,26 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const raycaster = new Raycaster();
   const reticle = visuals.createReticle();
   reticle.userData.raildRole = 'reticle';
-  keepReticleOnTop(reticle);
+  // A level draws its own sight, but the acquisition radius is the engine's. If
+  // the drawn reticle is far smaller than the lock radius it locks targets well
+  // outside the ring, so scale an under-drawn reticle up to the visual floor.
+  // Levels animate reticle.scale every frame in setReticleActive, so the
+  // correction rides on an engine-owned wrapper the level never touches; the
+  // inner group keeps its authored transform. Only wrap when a correction is
+  // actually needed, so a well-drawn reticle stays exactly as the level built
+  // it. When wrapping, the wrapper adopts the inner reticle's userData (shared
+  // by reference) so levels that look the reticle up from the scene by
+  // raildRole still see its spinner/active/lockCount state through the wrapper.
+  const reticleScale = reticleCorrectionScale(measureReticleVisualNdc(reticle, camera.fov), lockRadiusNdc);
+  let reticleWrapper: Group | undefined;
+  if (reticleScale > 1) {
+    reticleWrapper = new Group();
+    reticleWrapper.userData = reticle.userData;
+    reticleWrapper.scale.setScalar(reticleScale);
+    reticleWrapper.add(reticle);
+  }
+  const reticleRoot: Object3D = reticleWrapper ?? reticle;
+  keepReticleOnTop(reticleRoot);
 
   let state: RunState = 'attract';
   let runNumber = 0;
@@ -216,7 +260,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     },
   };
 
-  scene.add(reticle);
+  scene.add(reticleRoot);
   document.addEventListener('fullscreenchange', updateStartTipVisibility);
 
   function showStartTip() {
@@ -425,7 +469,11 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function updateReticle() {
     raycaster.setFromCamera(input.state.pointerNdc, camera);
     reticlePoint.copy(raycaster.ray.direction).multiplyScalar(RETICLE_DISTANCE).add(raycaster.ray.origin);
-    reticle.position.copy(reticlePoint);
+    // Position and correction scale live on the root (the wrapper when present);
+    // orientation and the level's per-frame reticle.scale/rotation stay on the
+    // inner group. When unwrapped the root is the inner group, so this matches
+    // the original single-object behaviour exactly.
+    reticleRoot.position.copy(reticlePoint);
     reticle.quaternion.copy(camera.quaternion);
     visuals.setReticleActive(reticle, input.state.pointerDown || locks.length > 0, locks.length);
   }
@@ -1224,7 +1272,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       offBeat();
       offEndRunRequest();
       input.dispose();
-      scene.remove(reticle);
+      scene.remove(reticleRoot);
       clearRunObjects();
     },
     get state() {
