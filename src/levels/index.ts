@@ -59,7 +59,16 @@ export const levelMetadatas: LevelMetadata[] = [
       hero: '/level-content/prism-bloom/hero.avif',
     },
   },
-  { id: 'rezdle', title: 'Rezdle', kind: 'playable' },
+  {
+    id: 'rezdle',
+    title: 'Rezdle',
+    kind: 'playable',
+    contentImages: {
+      overview: '/level-content/rezdle/overview.avif',
+      start: '/level-content/rezdle/start.avif',
+      hero: '/level-content/rezdle/hero.avif',
+    },
+  },
   { id: 'rush', title: 'Rush', kind: 'technical' },
 ];
 
