@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "prisma generate && npm run validate:level-catalog && node scripts/check-serverless-imports.mjs && node scripts/check-no-tracked-png.mjs && vite build && node scripts/check-bundle-budget.mjs",
+    "build": "prisma generate && npm run validate:level-catalog && node scripts/check-serverless-imports.mjs && node scripts/check-no-tracked-png.mjs && vite build && node scripts/prerender-heads.mjs && node scripts/generate-sitemap.mjs && node scripts/check-bundle-budget.mjs",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
