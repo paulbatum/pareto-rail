@@ -1,4 +1,9 @@
 {
   "id": "mass-driver-rqki",
-  "title": "Mass Driver"
+  "title": "Mass Driver",
+  "contentImages": {
+    "hero": "/level-content/mass-driver-rqki/hero.avif",
+    "overview": "/level-content/mass-driver-rqki/overview.avif",
+    "start": "/level-content/mass-driver-rqki/start.avif"
+  }
 }
