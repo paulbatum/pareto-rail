@@ -5,6 +5,7 @@ import { AboutPage, HomePage, LeaderboardPage, NotFoundPage } from './pages/Publ
 import { LevelsPage } from './pages/LevelsPage';
 import { PlayRoute } from './pages/GamePage';
 import { RankPage } from './pages/RankPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const AnalysisRoute = lazy(() => import('./analysis/AnalysisRoute').then((module) => ({ default: module.AnalysisRoute })));
 
@@ -33,7 +34,11 @@ export function App() {
         : `Pareto Rail — ${route.kind[0].toUpperCase()}${route.kind.slice(1)}`;
   }, [route]);
 
-  return <SiteLayout route={route} onNavigate={onNavigate}>{renderPage(route, onNavigate)}</SiteLayout>;
+  return (
+    <SiteLayout route={route} onNavigate={onNavigate}>
+      <ErrorBoundary key={JSON.stringify(route)}>{renderPage(route, onNavigate)}</ErrorBoundary>
+    </SiteLayout>
+  );
 }
 
 function renderPage(route: AppRoute, onNavigate: (path: string) => void) {

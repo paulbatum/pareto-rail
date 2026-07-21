@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import type { GameFrameProps } from './GameFrame';
+import { ErrorBoundary } from './ErrorBoundary';
 
 // GameFrame pulls in the three.js/WebGPU runtime, so it loads on demand. This keeps
 // the content pages (home, about, leaderboard) and the level/matchup pickers out of
@@ -8,8 +9,13 @@ const GameFrameImpl = lazy(() => import('./GameFrame').then((module) => ({ defau
 
 export function GameFrame(props: GameFrameProps) {
   return (
-    <Suspense fallback={<section className="page-panel"><p className="eyebrow">Loading</p><h1>Preparing renderer…</h1></section>}>
-      <GameFrameImpl {...props} />
-    </Suspense>
+    <ErrorBoundary
+      title="The game couldn't start."
+      message="The renderer ran into a problem. Reloading usually clears it up; if it keeps happening, your browser may not support WebGPU."
+    >
+      <Suspense fallback={<section className="page-panel"><p className="eyebrow">Loading</p><h1>Preparing renderer…</h1></section>}>
+        <GameFrameImpl {...props} />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
