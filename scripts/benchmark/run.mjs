@@ -422,7 +422,7 @@ export function validatePlan(value) {
   const errors = [];
   if (!isPlainObject(value)) return ['plan must be an object.'];
   validateString(value.benchmarkVersion, 'plan.benchmarkVersion', errors);
-  if (value.benchmarkVersion !== undefined && value.benchmarkVersion !== 'v2') errors.push('plan.benchmarkVersion must equal v2.');
+  if (value.benchmarkVersion !== undefined && !/^v[1-9][0-9]*$/.test(value.benchmarkVersion)) errors.push('plan.benchmarkVersion must use v<number>.');
   validateString(value.materialsCommit, 'plan.materialsCommit', errors);
   validateGitCommitString(value.entrantBaseline, 'plan.entrantBaseline', errors);
   if (!Object.hasOwn(value, 'baselinePolicy')) errors.push('plan.baselinePolicy is required; choose "scrubbed" for a new series or "open" only for the historical v2 record.');
@@ -452,7 +452,7 @@ export function validateRunDefinition(value) {
   const errors = [];
   if (!isPlainObject(value)) return ['run definition must be an object.'];
   validateString(value.benchmarkVersion, 'run definition.benchmarkVersion', errors);
-  if (value.benchmarkVersion !== undefined && value.benchmarkVersion !== 'v2') errors.push('run definition.benchmarkVersion must equal v2.');
+  if (value.benchmarkVersion !== undefined && !/^v[1-9][0-9]*$/.test(value.benchmarkVersion)) errors.push('run definition.benchmarkVersion must use v<number>.');
   validateString(value.materialsCommit, 'run definition.materialsCommit', errors);
   validateGitCommitString(value.entrantBaseline, 'run definition.entrantBaseline', errors);
   if (value.baselinePolicy !== undefined && !['open', 'scrubbed'].includes(value.baselinePolicy)) errors.push('run definition.baselinePolicy must be "open" or "scrubbed".');
