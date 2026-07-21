@@ -188,7 +188,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .compare-card .button { width: 100%; margin-top: auto; padding-inline: 8px; }
 .compare-card h2 { margin: 0 0 12px; color: var(--ink); font-size: 19px; }
 .reveal-card h2 { margin: 16px 0 6px; color: var(--ink); font-size: 19px; }
-.compare-card .compare-stats { margin-top: 6px; }
+.compare-card .compare-stats { margin: 6px 0 14px; }
 .versus-divider { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--accent); font: 600 11px var(--mono); letter-spacing: .12em; text-shadow: none; }
 .versus-divider::before, .versus-divider::after { width: 1px; flex: 1; content: ''; background: var(--hairline); }
 .versus-divider span { color: var(--accent); }
@@ -204,7 +204,8 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); font: inherit; font-family: var(--mono); font-size: 9.5px; }
 .button.primary kbd { color: var(--cta-ink); border-color: color-mix(in srgb, var(--cta-ink) 45%, var(--cta)); }
 .compare-stats { display: flex; flex-wrap: wrap; gap: 5px 14px; align-items: baseline; }
-.run-score { color: var(--accent); }
+.run-score { color: var(--muted); }
+.run-recent { margin-left: auto; padding: 4px 7px; color: var(--accent); background: var(--accent-tint); border: 1px solid var(--accent); font-size: 9px; font-weight: 600; line-height: 1; letter-spacing: .12em; text-transform: uppercase; }
 
 /* ---------- Rank: reveal ---------- */
 .reveal-card { position: relative; transition: border-color 180ms ease, box-shadow 180ms ease, opacity 180ms ease; }

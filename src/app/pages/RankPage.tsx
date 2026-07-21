@@ -91,15 +91,21 @@ function RankStage({ controller, state, lastUndoneVerdict, onLaunch, onVote, onN
     ? state.playCounts.a > 0 ? 'b' : 'a'
     : null;
   const freshAssignment = state.kind === 'assignment' && state.playCounts.a === 0 && state.playCounts.b === 0;
+  const runA = controller.levelRun(state.assignment.a.playableRef);
+  const runB = controller.levelRun(state.assignment.b.playableRef);
+  /** Only meaningful once both sides have a run, so the badge implies the other side came first. */
+  const recentSide: MatchupSide | null = runA && runB && runA.completedAt !== runB.completedAt
+    ? (runA.completedAt > runB.completedAt ? 'a' : 'b')
+    : null;
   const card = (side: MatchupSide) => {
-    const priorRun = controller.levelRun(state.assignment[side].playableRef);
+    const priorRun = side === 'a' ? runA : runB;
     const completedRuns = state.playCounts[side] > 0;
     const label = completedRuns ? 'Replay' : 'Play';
     const emphasized = nextSide === side ? ' is-next' : '';
     return <article className={`compare-card${emphasized}`}>
       <h2>Level {side.toUpperCase()}</h2>
       <LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} />
-      <p className="compare-stats">{completedRuns && <span>Completed run</span>}{priorRun?.score !== undefined && <span className="run-score">Best score: {priorRun.score.toLocaleString('en-US')}</span>}</p>
+      <p className="compare-stats">{completedRuns && <span>Completed run</span>}{priorRun?.score !== undefined && <span className="run-score">Best score: {priorRun.score.toLocaleString('en-US')}</span>}{recentSide === side && <span className="run-recent">Played most recently</span>}</p>
       <button className={`button${nextSide === side || freshAssignment ? ' primary' : ''}`} type="button" onClick={() => onLaunch(side)}>{label} Level {side.toUpperCase()}</button>
     </article>;
   };
