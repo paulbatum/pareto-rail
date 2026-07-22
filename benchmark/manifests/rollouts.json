@@ -1,0 +1,782 @@
+{
+  "dataset": "paulbatum/pareto-rail-rollouts",
+  "baseUrl": "https://huggingface.co/datasets/paulbatum/pareto-rail-rollouts/resolve/main",
+  "runs": [
+    {
+      "runId": "fable-b20-broadside-b9mn",
+      "levelId": "broadside-b9mn",
+      "themeId": "broadside",
+      "configurationId": "claude-fable-5-high-b20",
+      "files": [
+        {
+          "path": "runs/fable-b20-broadside-b9mn/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 2106749,
+          "sha256": "7e35aae11fb044f15749b43749f26e77d9c13396502167f1e72b68854c7f2dfb"
+        },
+        {
+          "path": "runs/fable-b20-broadside-b9mn/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 2811715,
+          "sha256": "6e8c96a9d99264671a39c97d822f5052fb052291842ed4761d0e79e6cf9447f8"
+        }
+      ]
+    },
+    {
+      "runId": "fable-b20-mdd-m6vt",
+      "levelId": "mass-driver-detailed-m6vt",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-fable-5-high-b20",
+      "files": [
+        {
+          "path": "runs/fable-b20-mdd-m6vt/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 1889604,
+          "sha256": "6b652237dda520839701e4910996903517126823a73e393e8a6bb09e0aa7229f"
+        },
+        {
+          "path": "runs/fable-b20-mdd-m6vt/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 2285082,
+          "sha256": "fd2d30b4774e72fd7d43df25b3168192ace38fc5da4664aa75e37bbdba89a3d0"
+        }
+      ]
+    },
+    {
+      "runId": "fable-b20-strandline-s2bq",
+      "levelId": "strandline-s2bq",
+      "themeId": "strandline",
+      "configurationId": "claude-fable-5-high-b20",
+      "files": [
+        {
+          "path": "runs/fable-b20-strandline-s2bq/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 3725432,
+          "sha256": "0933fa8b4a6b5d43c6e9a97a786a60c522bfd09effdaf676bf298a3546a8c5d4"
+        },
+        {
+          "path": "runs/fable-b20-strandline-s2bq/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 3819650,
+          "sha256": "5ced216cb13ee56c084d5b3fc57e31b65ab940f77035b8c29250476cca1478c1"
+        }
+      ]
+    },
+    {
+      "runId": "fable-high-broadside-b4kd",
+      "levelId": "broadside-b4kd",
+      "themeId": "broadside",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/fable-high-broadside-b4kd/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 11797667,
+          "sha256": "3d3ac5b848e1a6aaf53ca33d839a1fa22923a10154a1519f1e60e669306704d5"
+        },
+        {
+          "path": "runs/fable-high-broadside-b4kd/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 11866240,
+          "sha256": "63b20fa7dbf2007781aa7b83caa31d0049e45e5879db0fb79fee00fc65e66b08"
+        }
+      ]
+    },
+    {
+      "runId": "fable-high-mdd-k4wz",
+      "levelId": "mass-driver-detailed-k4wz",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/fable-high-mdd-k4wz/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 8217264,
+          "sha256": "505165d00e11c5c758c364fb3077f6fb82a8df945a689ba0472aff9456e3694e"
+        },
+        {
+          "path": "runs/fable-high-mdd-k4wz/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 8795195,
+          "sha256": "b0e392213e8ecbb6d2be45fc5e3b76051dacba376180a36b9d64810fdcc03501"
+        }
+      ]
+    },
+    {
+      "runId": "fable-high-mdd-m3rp",
+      "levelId": "mass-driver-detailed-m3rp",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-fable-5-high",
+      "retired": true,
+      "files": [
+        {
+          "path": "runs/fable-high-mdd-m3rp/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 5728006,
+          "sha256": "a3f05b0586fd4937831be99d68573f79d729b5d19d15c1375c8b9f4acfa4baa9"
+        },
+        {
+          "path": "runs/fable-high-mdd-m3rp/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 5684669,
+          "sha256": "396f28268b1d859c285a84dd2ffb483e33838d697eed3be305e66c0200eb04c3"
+        }
+      ]
+    },
+    {
+      "runId": "fable-high-strandline-s7ah",
+      "levelId": "strandline-s7ah",
+      "themeId": "strandline",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/fable-high-strandline-s7ah/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 6486022,
+          "sha256": "83b0a826064c9e5e624c1418f35ac1a9810285c7c097acd4d8adeca88a4a7e5f"
+        },
+        {
+          "path": "runs/fable-high-strandline-s7ah/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 7524371,
+          "sha256": "2a0403dc81a29b7fe6606af709a142fb75e53291ea31b2dfadcfc2ac1d7699fe"
+        }
+      ]
+    },
+    {
+      "runId": "opus-b20-broadside-ob4d",
+      "levelId": "broadside-ob4d",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-4-8-high-b20",
+      "files": [
+        {
+          "path": "runs/opus-b20-broadside-ob4d/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 2079929,
+          "sha256": "a10fde553f0ed318beddffedfb2f14829d859d7e1ce6a0a6358647eaadf25965"
+        },
+        {
+          "path": "runs/opus-b20-broadside-ob4d/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 2314380,
+          "sha256": "7e8c067528df1587d8eb2e17db70dd645319d602ad27a3e1d160b7e22377c45c"
+        }
+      ]
+    },
+    {
+      "runId": "opus-b20-mdd-om6f",
+      "levelId": "mass-driver-detailed-om6f",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-opus-4-8-high-b20",
+      "files": [
+        {
+          "path": "runs/opus-b20-mdd-om6f/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 5937903,
+          "sha256": "fbbc6b774b15981a073c6c55d9c8f0ea214f6b9b108ce47eac148e401e368be1"
+        },
+        {
+          "path": "runs/opus-b20-mdd-om6f/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 5935503,
+          "sha256": "78204bb87e3e8b3cc7d17cd59cb0c36b8b7193bacc2c64a4c4cc788dbbccc61a"
+        }
+      ]
+    },
+    {
+      "runId": "opus-b20-strandline-os2b",
+      "levelId": "strandline-os2b",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-4-8-high-b20",
+      "files": [
+        {
+          "path": "runs/opus-b20-strandline-os2b/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 5423860,
+          "sha256": "32dc656e5e27fb77807da4a19f0655fb185ce91a34e5b10d95fcfa9d8a594936"
+        },
+        {
+          "path": "runs/opus-b20-strandline-os2b/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 5634350,
+          "sha256": "9cf09c2bf062ffdd988203b6c72240de1992aa3946209fbe8593bb6af0ce664c"
+        }
+      ]
+    },
+    {
+      "runId": "opus-high-broadside-ob3c",
+      "levelId": "broadside-ob3c",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-4-8-high",
+      "files": [
+        {
+          "path": "runs/opus-high-broadside-ob3c/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 11545280,
+          "sha256": "94fbe8e04bcc06b2b4feae5962ba3eb420fb8c8ad8bea7271415df10d333d7a7"
+        },
+        {
+          "path": "runs/opus-high-broadside-ob3c/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 11824998,
+          "sha256": "81db57b9fe804d0e5c8e07058d379d1ed033b8266cebc5e6c5ac45f4818da08b"
+        }
+      ]
+    },
+    {
+      "runId": "opus-high-mdd-om5e",
+      "levelId": "mass-driver-detailed-om5e",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-opus-4-8-high",
+      "files": [
+        {
+          "path": "runs/opus-high-mdd-om5e/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 11563753,
+          "sha256": "a00141b4a3601869b781a416c34c953859e8580c709e38e8673b1dfd2a7c5064"
+        },
+        {
+          "path": "runs/opus-high-mdd-om5e/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 11702250,
+          "sha256": "2997b13bd5057c6ea69bb64b5f524a95c38f0325e4c7708bf326a06db4a15558"
+        }
+      ]
+    },
+    {
+      "runId": "opus-high-purse-svok",
+      "levelId": "purse-pursuit-svok",
+      "themeId": "purse-pursuit",
+      "configurationId": "claude-opus-4-8-high",
+      "files": [
+        {
+          "path": "runs/opus-high-purse-svok/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 12010991,
+          "sha256": "4f6bd919eb30a51f7445f91a904cb9e11144f0376901c10186678969fd8664ab"
+        },
+        {
+          "path": "runs/opus-high-purse-svok/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 12102921,
+          "sha256": "4acf6fe62437805d28a3b4499c45bf4bfba1852e9617a7c6e37c4b0f9ea48ef1"
+        }
+      ]
+    },
+    {
+      "runId": "opus-high-solve-zq4n",
+      "levelId": "speedsolve-zq4n",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-4-8-high",
+      "files": [
+        {
+          "path": "runs/opus-high-solve-zq4n/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 15097094,
+          "sha256": "c92549c125734057277c13e8160fbf0288d2826a04aad1673bbc6a3c77c65626"
+        },
+        {
+          "path": "runs/opus-high-solve-zq4n/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 15265023,
+          "sha256": "f4eeb6f32003bdb4aaf51ebc8c47a62d8fecee46138099f63d21ab39c6fb88d3"
+        }
+      ]
+    },
+    {
+      "runId": "opus-high-strandline-os1a",
+      "levelId": "strandline-os1a",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-4-8-high",
+      "files": [
+        {
+          "path": "runs/opus-high-strandline-os1a/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 8447636,
+          "sha256": "11d7abfbc25482381adb26cd61d99064fe436ae323955913d0be3ce5561886cd"
+        },
+        {
+          "path": "runs/opus-high-strandline-os1a/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 8657679,
+          "sha256": "bd16fbfa81edb62676c3fcab319b3766804b15d3dfde67384fbec452862c8cb1"
+        }
+      ]
+    },
+    {
+      "runId": "run-0cafsiuauv6e",
+      "levelId": "mass-driver-vyxj",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/run-0cafsiuauv6e/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 9792655,
+          "sha256": "6b8f3f259fd301f046096595a55b11fb46a2d1dec95dbd01a5f87f8056d97e19"
+        }
+      ]
+    },
+    {
+      "runId": "run-2dzleoxfhatr",
+      "levelId": "mass-driver-rqki",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-4-8-high-b20",
+      "files": [
+        {
+          "path": "runs/run-2dzleoxfhatr/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 2796040,
+          "sha256": "8e3bdc9e80a2ad18c461e711a20992f179dd5258ef507d31f0c9ce0191736971"
+        },
+        {
+          "path": "runs/run-2dzleoxfhatr/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 2877515,
+          "sha256": "1cf896ac701cbe31590d7761ed1bd2cee838f31e7dfa4f87b0d701d3472b45e2"
+        }
+      ]
+    },
+    {
+      "runId": "run-3wx1zsc87lp9",
+      "levelId": "skyhook-p46c",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-high-b20",
+      "files": [
+        {
+          "path": "runs/run-3wx1zsc87lp9/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 1864983,
+          "sha256": "aa5616045c864bbbdbfef54891e56006b53fb29262172a06bcd0afc7c0e9156d"
+        },
+        {
+          "path": "runs/run-3wx1zsc87lp9/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 1877312,
+          "sha256": "ca005f9cf3740fe2caddfb734e240a84c2c0defc82e3527205b2e9961402fbf6"
+        }
+      ]
+    },
+    {
+      "runId": "run-5d1aac1gjbuv",
+      "levelId": "skyhook-lkor",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-opus-delegation",
+      "retired": true,
+      "files": [
+        {
+          "path": "runs/run-5d1aac1gjbuv/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 8204668,
+          "sha256": "11191aacfd0122f56ccbf4d3f45c9167f1da7229fa1ace6b8b2ba769782fbbc2"
+        },
+        {
+          "path": "runs/run-5d1aac1gjbuv/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 19588784,
+          "sha256": "5c40ca0fd726aaba637166521697429fe07e915cbeda5dc127c71f780985f446"
+        }
+      ]
+    },
+    {
+      "runId": "run-5m77cl6rn5kd",
+      "levelId": "mass-driver-bczy",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-terra-delegation",
+      "retired": true,
+      "files": [
+        {
+          "path": "runs/run-5m77cl6rn5kd/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 1136203,
+          "sha256": "25e6e84e1c8e4ceadb150fbbb540fb610b070670fae9f2d2db38d603a9ce92c7"
+        },
+        {
+          "path": "runs/run-5m77cl6rn5kd/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 263489,
+          "sha256": "bb1734463c9d38f25ea66b727bc925d42bee719969d07dd7c0d70cbfc61f9c1a"
+        }
+      ]
+    },
+    {
+      "runId": "run-6m3dhz1loblr",
+      "levelId": "skyhook-9uib",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-high",
+      "files": [
+        {
+          "path": "runs/run-6m3dhz1loblr/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 892146,
+          "sha256": "91cdb1d8b2bc8a91e47d459918a88fcf480367a44521c520c723a63909110886"
+        },
+        {
+          "path": "runs/run-6m3dhz1loblr/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 250704,
+          "sha256": "8c511b4471d66cb475e45a9a23db31388278ce9b361c37bd4132d89999699751"
+        }
+      ]
+    },
+    {
+      "runId": "run-770j1pokdphe",
+      "levelId": "skyhook-560p",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-4-8-high-b20",
+      "files": [
+        {
+          "path": "runs/run-770j1pokdphe/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 4996471,
+          "sha256": "2d45259836b8b9ea07b1501227ead46f567598fe062a96815729c09af94220c7"
+        },
+        {
+          "path": "runs/run-770j1pokdphe/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 5207593,
+          "sha256": "c1bcfb1d804c9516e11a7d3113228409ccc40d24dc23a470c65e4142ec35f836"
+        }
+      ]
+    },
+    {
+      "runId": "run-c340azfgk0vd",
+      "levelId": "mass-driver-9281",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-high-b20",
+      "files": [
+        {
+          "path": "runs/run-c340azfgk0vd/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 2845004,
+          "sha256": "77419eb719c550cea6f35b1ba8ce8dddca0be2ec156892f1e5dc65cb755360f1"
+        },
+        {
+          "path": "runs/run-c340azfgk0vd/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 339185,
+          "sha256": "62bb83ef9fb90101f757cabcb74d0bb07bc60f5d29b41dcf0f65fba6e96e59ea"
+        }
+      ]
+    },
+    {
+      "runId": "run-eztdwig5twea",
+      "levelId": "mass-driver-wo4m",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-opus-delegation",
+      "retired": true,
+      "files": [
+        {
+          "path": "runs/run-eztdwig5twea/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 5133234,
+          "sha256": "cdd9fa6ed8e0ec696bdd7dd66e77655ebd9fb55ca0fe7a845197f287d33cee8f"
+        },
+        {
+          "path": "runs/run-eztdwig5twea/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 10835882,
+          "sha256": "b4563b1ecf81443db9c061e63d6f64754fc70339b46ea79ff9b92dd9870b7012"
+        }
+      ]
+    },
+    {
+      "runId": "run-gucf476jvkqr",
+      "levelId": "mass-driver-esvz",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-high-b20",
+      "files": [
+        {
+          "path": "runs/run-gucf476jvkqr/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 1486594,
+          "sha256": "8921a1d459027a464377e56c77a2654df6518bb4f4f315bdb22b610cc46586c8"
+        },
+        {
+          "path": "runs/run-gucf476jvkqr/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 1607701,
+          "sha256": "df8a8206446471ccd24b4c94be98d517c9645f7e14da60bd9fff6d31df022266"
+        }
+      ]
+    },
+    {
+      "runId": "run-pnpwjrxhz8uu",
+      "levelId": "skyhook-loyy",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-high-b20",
+      "files": [
+        {
+          "path": "runs/run-pnpwjrxhz8uu/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 12957661,
+          "sha256": "35ea260abad548878f6b11628f4e6a4e420f7de0d3d554cca156ea315d90263f"
+        },
+        {
+          "path": "runs/run-pnpwjrxhz8uu/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 447849,
+          "sha256": "0ac44e75165c5994e7126b5981445f7a01d1f9643fe08dfd762406d63e2429c1"
+        }
+      ]
+    },
+    {
+      "runId": "run-qsgvgteqxgn0",
+      "levelId": "mass-driver-7rkv",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-high",
+      "files": [
+        {
+          "path": "runs/run-qsgvgteqxgn0/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 976816,
+          "sha256": "f09a84ba1dde17234ed61f551b3e0183199dc6aa53783a3e75ff13fca384845b"
+        },
+        {
+          "path": "runs/run-qsgvgteqxgn0/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 266454,
+          "sha256": "85e20bafcb79b30c45fe3369808c06b8ddc3f041cef1bb6c684e79e2e5d52663"
+        }
+      ]
+    },
+    {
+      "runId": "run-rah3o96wxqcw",
+      "levelId": "hull-run-ns5n",
+      "themeId": "hull-run",
+      "configurationId": "codex-sol-high",
+      "files": [
+        {
+          "path": "runs/run-rah3o96wxqcw/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 560000,
+          "sha256": "73dd3a20fa6a3a6ac146a3c6562ec06fa86db1bb6dc34083aa7b22cb9e93a326"
+        },
+        {
+          "path": "runs/run-rah3o96wxqcw/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 243240,
+          "sha256": "7755e4f1d8daa3a7f9e06be59f6e3df142e97c4cc07f1a1f93b099d427d915ad"
+        }
+      ]
+    },
+    {
+      "runId": "run-uitiw02p99w9",
+      "levelId": "skyhook-ggl2",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-4-8-high",
+      "files": [
+        {
+          "path": "runs/run-uitiw02p99w9/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 7864922,
+          "sha256": "411004dc835094ed7f9b6697c00da9ec9cbf1f94bc7ee368b36c6326537e6dd1"
+        },
+        {
+          "path": "runs/run-uitiw02p99w9/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 8497228,
+          "sha256": "6a01dbf321d4b97693f4be7095c7d21725e4f5f67154e367364bce79d97c6b2a"
+        }
+      ]
+    },
+    {
+      "runId": "run-vbovdxbaxq9v",
+      "levelId": "skyhook-81u5",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-terra-delegation",
+      "retired": true,
+      "files": [
+        {
+          "path": "runs/run-vbovdxbaxq9v/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 1207213,
+          "sha256": "479b6ca22cd439044178074522fe327fc464f2c1a3beb02fcf44f1dad08dcd1f"
+        },
+        {
+          "path": "runs/run-vbovdxbaxq9v/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 294293,
+          "sha256": "8f2f4d50e02c5fc279f2b1c633b94364d967500145d4f9c88e5ce5fda6157578"
+        }
+      ]
+    },
+    {
+      "runId": "run-x58xikqvx62i",
+      "levelId": "hull-run-cvs3",
+      "themeId": "hull-run",
+      "configurationId": "codex-sol-terra-delegation",
+      "files": [
+        {
+          "path": "runs/run-x58xikqvx62i/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 1139790,
+          "sha256": "3c16517d8fa18209beaa239ae0250f3df201e74157ff13355e38d28f0a072f36"
+        },
+        {
+          "path": "runs/run-x58xikqvx62i/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 666665,
+          "sha256": "dbda1d5d1402d21037b9ec507398353daee5700c97e16764e7fa9030c722e974"
+        }
+      ]
+    },
+    {
+      "runId": "run-xbd3e4ho3x7d",
+      "levelId": "mass-driver-o9ok",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-4-8-high",
+      "files": [
+        {
+          "path": "runs/run-xbd3e4ho3x7d/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 6067051,
+          "sha256": "ead471123f8f1896ac23690b2b33e92d2d89bfca5421e57bbbb7018f790cab1f"
+        },
+        {
+          "path": "runs/run-xbd3e4ho3x7d/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 6148780,
+          "sha256": "903bac344180e15640f95f2f5f1ac2321bc05106c209c4f2bb9bc3139b26301b"
+        }
+      ]
+    },
+    {
+      "runId": "run-xixwfev1c60s",
+      "levelId": "skyhook-snxd",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/run-xixwfev1c60s/stages/solo/claude/rollout.jsonl.gz",
+          "rawBytes": 10989913,
+          "sha256": "9c1b18a0e21f43ebffbe8ef8614daf1bf640b8cf0e8c0edacdfb6176a471b22f"
+        },
+        {
+          "path": "runs/run-xixwfev1c60s/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 11679491,
+          "sha256": "9340488884bae795eafc4711451d9679baea8fecc492fe3666bd7116684bee27"
+        }
+      ]
+    },
+    {
+      "runId": "sol-b20-broadside-b3fk",
+      "levelId": "broadside-b3fk",
+      "themeId": "broadside",
+      "configurationId": "codex-sol-high-b20",
+      "files": [
+        {
+          "path": "runs/sol-b20-broadside-b3fk/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 21498289,
+          "sha256": "4d3c5f1831ea470795f4494f1d2155b0c409d6dd4f2981e05d322301fba46f29"
+        },
+        {
+          "path": "runs/sol-b20-broadside-b3fk/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 1463549,
+          "sha256": "a35b1538cf86421c5abadee1ab2f4ce6c696519e10eeb4395b1b4d58d1026525"
+        }
+      ]
+    },
+    {
+      "runId": "sol-b20-mdd-m7hq",
+      "levelId": "mass-driver-detailed-m7hq",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "codex-sol-high-b20",
+      "retired": true,
+      "files": [
+        {
+          "path": "runs/sol-b20-mdd-m7hq/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 21082518,
+          "sha256": "a36ff5bbb63f8ffd28a8c90f2ea6742108ea435e3a7454b7330481954ed1bdd7"
+        },
+        {
+          "path": "runs/sol-b20-mdd-m7hq/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 422671,
+          "sha256": "70dbcd1fee5b778e1b6cb3f6f67c2315fd51a11c9beb2ed13276bd32aefbe9d1"
+        }
+      ]
+    },
+    {
+      "runId": "sol-b20-mdd-p8jn",
+      "levelId": "mass-driver-detailed-p8jn",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "codex-sol-high-b20",
+      "files": [
+        {
+          "path": "runs/sol-b20-mdd-p8jn/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 16436283,
+          "sha256": "893cbd07b991daa3641a007b6282f83f45f1073c2d360a051c6d1538d4cd458e"
+        },
+        {
+          "path": "runs/sol-b20-mdd-p8jn/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 331783,
+          "sha256": "6e6943b375ad1a5199af96deaa8387ffe1fac38578d407880c8e90645357473e"
+        }
+      ]
+    },
+    {
+      "runId": "sol-b20-strandline-s8dw",
+      "levelId": "strandline-s8dw",
+      "themeId": "strandline",
+      "configurationId": "codex-sol-high-b20",
+      "files": [
+        {
+          "path": "runs/sol-b20-strandline-s8dw/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 18723792,
+          "sha256": "a45914cd903c73aa19355ee22258c7d3f7c81585cf1c86f9a6a8a5c6181479cd"
+        },
+        {
+          "path": "runs/sol-b20-strandline-s8dw/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 500067,
+          "sha256": "df9410ff67de288ebb2b21dc5c704891f53a9186d114fdab86cf63de0005a067"
+        }
+      ]
+    },
+    {
+      "runId": "sol-high-broadside-b6ej",
+      "levelId": "broadside-b6ej",
+      "themeId": "broadside",
+      "configurationId": "codex-sol-high",
+      "files": [
+        {
+          "path": "runs/sol-high-broadside-b6ej/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 4270911,
+          "sha256": "e6dd9613b1e8c00212326a7a7345ed6eeaaa069ef60b7b1297f54b43fd111484"
+        },
+        {
+          "path": "runs/sol-high-broadside-b6ej/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 241436,
+          "sha256": "811cb2f68e3a7c17aeb0f89c1aa83bbd8a7d406c04da17da5f6aa6aaa8dcf3c8"
+        }
+      ]
+    },
+    {
+      "runId": "sol-high-mdd-m4gp",
+      "levelId": "mass-driver-detailed-m4gp",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "codex-sol-high",
+      "retired": true,
+      "files": [
+        {
+          "path": "runs/sol-high-mdd-m4gp/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 6791039,
+          "sha256": "1d30b48abc10ae02196c5786034474a3026e6baa7cad131e312fefff753102a9"
+        },
+        {
+          "path": "runs/sol-high-mdd-m4gp/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 247281,
+          "sha256": "32ee46f81e50f26d0839f412a6deabd1be65584da86cc4880075307a058370ff"
+        }
+      ]
+    },
+    {
+      "runId": "sol-high-mdd-uk78",
+      "levelId": "mass-driver-detailed-uk78",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "codex-sol-high",
+      "files": [
+        {
+          "path": "runs/sol-high-mdd-uk78/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 7385866,
+          "sha256": "33e0f09bf8ed566e707ffc1d21394b1bbc84dc2f707f29ce8819a2623a05e260"
+        },
+        {
+          "path": "runs/sol-high-mdd-uk78/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 261791,
+          "sha256": "9a588c9e0b9413be17b4e2c276c5fd9273c64478f279ab1bba4b8402ed62819f"
+        }
+      ]
+    },
+    {
+      "runId": "sol-high-purse-tahr",
+      "levelId": "purse-pursuit-tahr",
+      "themeId": "purse-pursuit",
+      "configurationId": "codex-sol-high",
+      "files": [
+        {
+          "path": "runs/sol-high-purse-tahr/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 6041839,
+          "sha256": "e5011f9bef38375c23dcbce0cf37f07f6c6de7127542fe79e5cb0e803139a93a"
+        },
+        {
+          "path": "runs/sol-high-purse-tahr/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 421040,
+          "sha256": "82548ddea01be07fc634995690fa63a7e24743e6a57fe6a191e66b620056864c"
+        }
+      ]
+    },
+    {
+      "runId": "sol-high-solve-wvdv",
+      "levelId": "speedsolve-wvdv",
+      "themeId": "speedsolve",
+      "configurationId": "codex-sol-high",
+      "files": [
+        {
+          "path": "runs/sol-high-solve-wvdv/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 4328884,
+          "sha256": "641d2c592ce9f055ee72086b0521f47953f331ca715f8e73b618993b3c27d081"
+        },
+        {
+          "path": "runs/sol-high-solve-wvdv/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 379873,
+          "sha256": "4fd5cb3e98741725c3c36d4a14d8cdda2594e17caf5c07f15ca376e66b267142"
+        }
+      ]
+    },
+    {
+      "runId": "sol-high-strandline-s5cx",
+      "levelId": "strandline-s5cx",
+      "themeId": "strandline",
+      "configurationId": "codex-sol-high",
+      "files": [
+        {
+          "path": "runs/sol-high-strandline-s5cx/stages/solo/codex/rollout.jsonl.gz",
+          "rawBytes": 8960713,
+          "sha256": "8946bd927706dd6491b84ad344e0cabab531e0deb73c2b16bc1a07547fbda5b9"
+        },
+        {
+          "path": "runs/sol-high-strandline-s5cx/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 216835,
+          "sha256": "692362158072b86fe6c4ec1277c6df9ab944dfc6cc455be3fb5d12075964ab78"
+        }
+      ]
+    }
+  ]
+}

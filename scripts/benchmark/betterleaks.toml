@@ -1,0 +1,30 @@
+# Leak-scanner config for benchmark transcript exports (export-rollouts.mjs).
+# Extends the default ruleset; the only deviations are the filters below.
+#
+# First branch: codex rollouts carry the JSON key
+# "internal_chat_message_metadata_passthrough" right after tool-call ids; its 42
+# characters fit the IBM Cloud key shape and the default rule captures the key
+# name itself as the secret. It is a fixed field name, not a credential.
+#
+# Second branch: rollouts embed screenshots as base64, and random base64 runs
+# occasionally spell a key-shaped substring. A finding is skipped only when the
+# secret appears with 40 unbroken base64-alphabet characters on BOTH sides — a
+# real credential is delimited by quotes, whitespace, or punctuation, never
+# spliced seamlessly into kilobytes of base64. (A secret hidden inside a base64
+# blob is invisible to any regex scanner regardless of this filter.) A secret
+# containing regex metacharacters makes the pattern fail to match, which keeps
+# the finding — the safe direction.
+filter = '''
+(
+    finding["rule_id"] == "ibm-cloud-user-api-key" &&
+    finding["secret"] == "internal_chat_message_metadata_passthrough"
+)
+||
+filter.matchesAny(
+    finding["line"],
+    [`[A-Za-z0-9+/]{40}` + finding["secret"] + `[A-Za-z0-9+/]{40}`]
+)
+'''
+
+[extend]
+useDefault = true
