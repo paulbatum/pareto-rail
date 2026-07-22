@@ -138,7 +138,8 @@ export async function GET(request: Request): Promise<Response> {
           </div>
         </div>
 
-        {/* Brand lockup: mark + wordmark, bottom-left. */}
+        {/* Brand lockup: mark + wordmark, bottom-left, on a dark bar so it
+            stays readable over bright heroes. */}
         <div
           style={{
             position: 'absolute',
@@ -146,6 +147,8 @@ export async function GET(request: Request): Promise<Response> {
             bottom: 30,
             display: 'flex',
             alignItems: 'center',
+            padding: '12px 20px',
+            background: BG,
           }}
         >
           <img src={markDataUri()} width={36} height={36} />
@@ -157,8 +160,6 @@ export async function GET(request: Request): Promise<Response> {
               fontWeight: 600,
               letterSpacing: 6,
               color: CREAM,
-              // Keep the wordmark legible over bright heroes.
-              textShadow: '0 1px 4px rgba(0,0,0,0.65)',
             }}
           >
             PARETO RAIL

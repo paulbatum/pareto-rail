@@ -48,6 +48,8 @@ A shared `/match?a=<id>&b=<id>` link unfurls on social platforms with a composit
 - `api/og/match.tsx` (edge, `@vercel/og`) composites the card. It fetches the two hero JPEGs from the request origin — which doubles as the id-existence check — and renders them with an SVG mark; unknown ids or a failed fetch redirect to the default `/social/card.jpg`. The card is CDN/crawler-cacheable.
 - `scripts/generate-social-heroes.mjs` (post `vite build`) rasterizes every `public/level-content/<id>/hero.avif` to `dist/social/heroes/<id>.jpg` via `sharp`, because satori cannot decode the committed AVIF heroes. The JPEGs live in gitignored `dist/`, nothing is committed.
 
+To see a card while working on it, `node scripts/render-match-card.mjs [<id-a> <id-b>]` renders the composite to `tmp/match-card.png` without a deploy (needs the generated hero JPEGs in `dist/`).
+
 ## Homepage bundle budget
 
 `scripts/check-bundle-budget.mjs` runs at the end of `npm run build` and measures the gzip size of the eager homepage graph — the entry chunk plus everything it *statically* imports (JS and CSS), i.e. what a first visitor downloads before any lazy route or `LazyGameFrame` loads. Small growth is allowed; a jump past `MAX_GROWTH_RATIO` (15%) over the seeded baseline fails the build, which is what catches a heavy feature accidentally reaching the shell instead of sitting behind `React.lazy`. When growth is intentional, re-seed `BASELINE_GZIP_BYTES` to the size the failure message reports. The check relies on `build.manifest` being enabled in `vite.config.ts`.
