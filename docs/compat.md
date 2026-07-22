@@ -4,10 +4,10 @@ The engine, game runtime, level internals, scheduler internals, and benchmark to
 
 ## Identifiers
 
-Level ids, theme ids, benchmark version strings, and configuration ids are persisted in production vote rows and embedded in matchup ids. Once any production vote references an id, it is immutable.
+Level ids, theme ids, and configuration ids are persisted in production vote rows and embedded in matchup ids. Once any production vote references an id, it is immutable.
 
 - Renaming a level: keep the old id in the level's `aliases` list forever. URLs (`/play/<id>`) and content-image paths (`/level-content/<id>/`) resolve through aliases and external caches.
-- Theme ids and benchmark version strings cannot be renamed at all; add new ones instead.
+- Theme ids cannot be renamed at all; add new ones instead.
 - Ids use lowercase letters, digits, and hyphens only. The matchup id grammar (`themeId:levelFirst__levelSecond`) reserves `:` and `__`.
 - Matchup ids canonicalize their level pair by codepoint order. The sort must be locale-independent — never `localeCompare` — because clients derive the same id in arbitrary browser locales and the server re-derives it during validation.
 
@@ -23,7 +23,7 @@ Keys, once shipped, exist on visitors' machines forever.
 
 Deployed clients go stale: a tab left open posts the old payload shape, and the outbox retries queued votes across deploys.
 
-- The server must keep accepting every payload shape it has ever accepted. New fields are optional; required fields are never added or removed.
+- The server must keep accepting every payload shape it has ever accepted. New fields are optional; required fields are never added or removed. (`benchmarkVersion` was once required: the server accepts it forever and ignores its value.)
 - The server rejects unknown top-level keys with a 400, and the client outbox permanently drops entries on 4xx (except 429). Therefore new fields roll out server first, client in a later deploy — never the reverse.
 - `PARTICIPANT_SALT` never rotates. Participant identity is `sha256(salt + participantId)`; a rotation makes every returning participant unrecognizable to vote dedup.
 
