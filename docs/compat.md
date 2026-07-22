@@ -18,6 +18,7 @@ Keys, once shipped, exist on visitors' machines forever.
 - The benchmark envelope is versioned. Its current data contains only `participantId`, the raw vote `history`, and local `levelRuns` (best scores and play counts). Matchup assignments, reveals, exposure counts, theme history, and revealed entrants are derived from the current catalog and vote history rather than persisted.
 - The participant id must survive any schema change; it is the client's voting identity and the server dedups on it. A version bump may discard old local data when there is no safe migration.
 - All storage access must tolerate throwing storage (private browsing, quota): wrap reads and writes, fall back to in-memory defaults.
+- Presentation-only flags (for example `pareto-rail-helios-interlude`, the one-time Rank-page intermission) live under their own keys, outside the versioned envelope. They must stay safe to read as free-form strings: unknown values mean "unset", never an error.
 
 ## Vote API
 

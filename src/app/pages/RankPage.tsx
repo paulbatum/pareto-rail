@@ -14,6 +14,9 @@ import { ModelUsage } from '../components/ModelUsage';
 import type { AppRoute } from '../router';
 import { GameFrame } from '../components/LazyGameFrame';
 import { loadRankLevel } from '../rank-level';
+import { builtInLevelCatalog, getBuiltInLevelById } from '../../levels';
+import type { LevelDefinition } from '../../engine/types';
+import { INTERLUDE_VERDICT_THRESHOLD, interludeOutcome, recordInterludeOutcome } from '../interlude';
 
 type RankRoute = Extract<AppRoute, { kind: 'rank' }>;
 
@@ -27,6 +30,7 @@ export function RankPage({ route, onNavigate }: RankPageProps) {
   const [controller, setController] = useState<RankController | null>(null);
   const [prepared, setPrepared] = useState(false);
   const [launch, setLaunch] = useState<RankLaunch | null>(null);
+  const [interlude, setInterlude] = useState<'idle' | 'playing' | 'just-dismissed'>('idle');
   const [, refresh] = useState(0);
 
   useEffect(() => {
@@ -63,11 +67,23 @@ export function RankPage({ route, onNavigate }: RankPageProps) {
 
   if (!controller || !prepared) return <section className="page-panel"><p className="eyebrow">Rank</p><h1>Preparing a matchup…</h1></section>;
   if (launch) return <RankGame launch={launch} onNavigate={onNavigate} onRunEnd={handleRunEnd} />;
+  if (interlude === 'playing') return <InterludeGame onNavigate={onNavigate} onReturn={() => setInterlude('idle')} />;
   if (!controller.state) return controller.judgedMatchups.length > 0 ? <CompletedRankPage controller={controller} /> : <ProductionRankPage />;
-  return <RankContent controller={controller} state={controller.state} onNavigate={onNavigate} />;
+  const state = controller.state;
+  // A one-time Helios detour, offered only between matchups so it never
+  // interrupts a comparison someone has already started playing.
+  const offerInterlude = interlude === 'idle'
+    && state.kind === 'assignment' && state.playCounts.a === 0 && state.playCounts.b === 0
+    && controller.judgedMatchups.length >= INTERLUDE_VERDICT_THRESHOLD
+    && interludeOutcome() === null;
+  if (offerInterlude) return <InterludeOffer
+    onPlay={() => { recordInterludeOutcome('played'); setInterlude('playing'); }}
+    onDismiss={() => { recordInterludeOutcome('dismissed'); setInterlude('just-dismissed'); }}
+  />;
+  return <RankContent controller={controller} state={state} onNavigate={onNavigate} showInterludeHint={interlude === 'just-dismissed'} />;
 }
 
-function RankContent({ controller, state, onNavigate }: { controller: RankController; state: ComparisonState; onNavigate: (path: string) => void }) {
+function RankContent({ controller, state, onNavigate, showInterludeHint = false }: { controller: RankController; state: ComparisonState; onNavigate: (path: string) => void; showInterludeHint?: boolean }) {
   const assignment = state.assignment;
   const launch = (side: MatchupSide) => {
     const next = controller.launch(side);
@@ -79,6 +95,7 @@ function RankContent({ controller, state, onNavigate }: { controller: RankContro
       <p className="eyebrow">Rank</p>
       <h1>{assignment.theme.title}</h1>
       <p className="lede">“{assignment.theme.summary}”</p>
+      {showInterludeHint && <p className="interlude-hint" role="status">No problem — Helios is always on the <RouteLink href="/levels" onNavigate={onNavigate}>Levels</RouteLink> page if you change your mind.</p>}
       <details className="prompt-details"><summary>Read full prompt</summary><p>{assignment.theme.prompt}</p></details>
       <RankStage controller={controller} state={state} lastUndoneVerdict={controller.lastUndoneVerdict} onLaunch={launch} onVote={(verdict) => void controller.submit(verdict)} onNext={() => void controller.nextMatchup()} />
       {controller.curve.comparisonCount > 0 && <PersonalCurve controller={controller} />}
@@ -560,6 +577,54 @@ function createRankController(): RankController {
 
 function BenchmarkInvitation({ side, onNavigate }: { side: 'a' | 'b'; onNavigate: (path: string) => void }) {
   return <section className="benchmark-invitation"><p>Level {side.toUpperCase()} recorded. Continue when you are ready.</p><div className="invitation-actions"><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Continue comparison</RouteLink></div></section>;
+}
+
+function InterludeOffer({ onPlay, onDismiss }: { onPlay: () => void; onDismiss: () => void }) {
+  const hero = builtInLevelCatalog.find((level) => level.id === 'helios')?.contentImages?.hero;
+  return <section className="page-panel rank-panel interlude-panel">
+    <p className="eyebrow">Intermission</p>
+    <h1>Thanks for voting — want to try something different?</h1>
+    <p className="lede">Helios is a one-shot level built from a single instruction: “make something epic.” No benchmark theme, no comparison — a two-minute dive into a dying star.</p>
+    {hero && <img className="level-thumbnail interlude-hero" src={hero} alt="Helios — a rail dive toward a dying star" />}
+    <div className="rank-actions interlude-actions">
+      <button className="button primary" type="button" onClick={onPlay}>Play Helios</button>
+      <button className="button" type="button" onClick={onDismiss}>Not now — keep ranking</button>
+    </div>
+    <p className="interlude-note">When your run ends you’ll land right back at your next matchup.</p>
+  </section>;
+}
+
+function InterludeGame({ onNavigate, onReturn }: { onNavigate: (path: string) => void; onReturn: () => void }) {
+  const [level, setLevel] = useState<LevelDefinition | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getBuiltInLevelById('helios').then((loaded) => {
+      if (active) setLevel(loaded);
+    }).catch((error: unknown) => {
+      console.error('Could not load Helios', error);
+      if (active) setLoadFailed(true);
+    });
+    return () => { active = false; };
+  }, []);
+
+  if (loadFailed) return (
+    <section className="page-panel rank-panel">
+      <p className="eyebrow">Intermission</p>
+      <h1>Helios could not load</h1>
+      <p className="lede">Something went wrong preparing the level. Your matchups are unaffected.</p>
+      <div className="invitation-actions"><button className="button primary" type="button" onClick={onReturn}>Back to ranking</button></div>
+    </section>
+  );
+  if (!level) return <section className="page-panel"><p className="eyebrow">Intermission</p><h1>Loading Helios…</h1></section>;
+  return <GameFrame
+    level={level}
+    title="Helios"
+    launchContext={{ source: 'play', levelId: 'helios' }}
+    onNavigate={onNavigate}
+    runEndContent={<section className="benchmark-invitation"><p>That was Helios. Back to the matchups when you’re ready.</p><div className="invitation-actions"><button className="button primary" type="button" onClick={onReturn}>Back to ranking</button></div></section>}
+  />;
 }
 
 function revealMarker(verdict: VoteVerdict, side: MatchupSide): { className: string; label: string | null } {
