@@ -155,6 +155,15 @@ type PlottedCurvePoint = {
   labelY: number;
 };
 
+const configurationEfforts = new Map((rankCatalog.configurations ?? []).map((configuration) => [configuration.id, configuration.effort]));
+
+/** The reasoning effort a configuration ran at, as a parenthetical suffix for
+ * model names on the results chart and table. */
+function effortSuffix(configurationId: string): string | null {
+  const effort = configurationEfforts.get(configurationId);
+  return effort ? `(${effort.charAt(0).toUpperCase()}${effort.slice(1)})` : null;
+}
+
 type CurveDebugStage = 'verdicts' | 'chart';
 
 type CurveDebugChart = {
@@ -272,16 +281,17 @@ function PersonalCurve({ controller }: { controller: RankController }) {
             const labelOnLeft = point.x > CURVE_CHART.width * .62;
             const labelX = point.x + (labelOnLeft ? -14 : 14);
             const qualifier = workflowQualifier(point.workflowName);
+            const effort = effortSuffix(point.configurationId);
             return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${point.comparisons} comparisons. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
               <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
               <circle cx={point.x} cy={point.y} r={point.frontier ? 8 : 6} />
-              <text className="point-label" x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{point.modelName}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>
+              <text className="point-label" x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{effort ? `${point.modelName} ${effort}` : point.modelName}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>
             </g>;
           })}
         </g>
       </svg>
       {active && <div className={`curve-tooltip${active.x > CURVE_CHART.width * .62 ? ' align-right' : ''}`} style={{ left: `${active.x / CURVE_CHART.width * 100}%`, top: `${active.y / CURVE_CHART.height * 100}%` }} role="status">
-        <strong>{active.modelName}</strong>{workflowQualifier(active.workflowName) && <span>{workflowQualifier(active.workflowName)}</span>}
+        <strong>{effortSuffix(active.configurationId) ? `${active.modelName} ${effortSuffix(active.configurationId)}` : active.modelName}</strong>{workflowQualifier(active.workflowName) && <span>{workflowQualifier(active.workflowName)}</span>}
         <dl><div><dt>Preference</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>${active.meanCost.toFixed(2)}</dd></div><div><dt>Evidence</dt><dd>{active.comparisons} comparison{active.comparisons === 1 ? '' : 's'}</dd></div></dl>
         <p>{statusLabel(active.status)} · {active.frontier ? 'On your Pareto frontier' : 'Dominated by a higher-value option'}</p>
       </div>}
@@ -341,7 +351,8 @@ function PersonalCurveTable({ points, showFrontier }: { points: readonly Persona
       ? <span aria-label="No comparisons yet">—</span>
       : <span aria-label={recordAriaLabel(point)}>{point.wins}–{point.ties}–{point.losses}</span>;
     const qualifier = workflowQualifier(point.workflowName);
-    return <tr key={point.configurationId}><th scope="row"><strong>{point.modelName}</strong>{qualifier && <span>{qualifier}</span>}</th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
+    const effort = effortSuffix(point.configurationId);
+    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong>{qualifier && <span>{qualifier}</span>}</th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
   })}</tbody></table></div>;
 }
 
