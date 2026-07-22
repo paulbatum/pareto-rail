@@ -114,7 +114,7 @@ export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => 
     <section className="page-panel">
       <p className="eyebrow">Quality vs cost</p>
       <h1>Leaderboard</h1>
-      <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Aggregate results will appear here once the first benchmark release ships. Play some matchups meanwhile - your personal curve is yours immediately.</p><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Play a matchup</RouteLink></div>
+      <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Aggregate results will appear here once the first benchmark release ships. Help us populate the leaderboard by ranking some levels!</p><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank Levels</RouteLink></div>
       <RouteLink className="text-link" href="/about" onNavigate={onNavigate}>Read the methodology →</RouteLink>
     </section>
   );
