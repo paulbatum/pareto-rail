@@ -284,5 +284,5 @@ function MatchGame({ launch, backPath, onNavigate, onRunEnd }: { launch: MatchLa
 }
 
 function MatchInvitation({ side, backPath, onNavigate }: { side: MatchupSide; backPath: string; onNavigate: (path: string) => void }) {
-  return <section className="benchmark-invitation"><p>Level {side.toUpperCase()} played — your run is remembered on this device. Continue when you are ready.</p><div className="invitation-actions"><RouteLink className="button primary" href={backPath} onNavigate={onNavigate}>Back to match</RouteLink></div></section>;
+  return <section className="benchmark-invitation"><p>Continue when you are ready.</p><div className="invitation-actions"><RouteLink className="button primary" href={backPath} onNavigate={onNavigate}>Back to match</RouteLink></div></section>;
 }
