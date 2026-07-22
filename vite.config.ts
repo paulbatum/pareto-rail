@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import type { IncomingMessage } from 'node:http';
 import path from 'node:path';
@@ -8,8 +9,23 @@ import { adminApiDevPlugin } from './server/vite-admin-api';
 
 const templatePath = path.resolve(process.cwd(), 'src/levels/crystal/visuals/crystal-template.json');
 
+/* Full commit SHA of the deployed build, surfaced on the About page. Vercel sets
+   VERCEL_GIT_COMMIT_SHA; locally we fall back to git. Empty string when neither is available. */
+function resolveCommitHash(): string {
+  const fromEnv = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (fromEnv) return fromEnv;
+  try {
+    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+}
+
 export default defineConfig({
   plugins: [react(), crystalTemplateDevPlugin(), rankApiDevPlugin(), adminApiDevPlugin()],
+  define: {
+    __COMMIT_HASH__: JSON.stringify(resolveCommitHash()),
+  },
   server: {
     /* Reaching the dev server from a phone needs HTTPS, since WebGPU is secure-context only.
        `tailscale serve 5173` fronts it with a cert under the tailnet's own domain. */

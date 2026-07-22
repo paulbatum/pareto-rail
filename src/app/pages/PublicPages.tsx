@@ -140,7 +140,21 @@ export function AboutPage() {
           <pre className="legal-document">{thirdPartyNotices}</pre>
         </details>
       </div>
+      <BuildVersion />
     </section>
+  );
+}
+
+function BuildVersion() {
+  const hash = __COMMIT_HASH__;
+  if (!hash) return null;
+  return (
+    <p className="build-version">
+      Build{' '}
+      <a href={`https://github.com/paulbatum/pareto-rail/commit/${hash}`} target="_blank" rel="noreferrer">
+        <code>{hash.slice(0, 7)}</code>
+      </a>
+    </p>
   );
 }
 

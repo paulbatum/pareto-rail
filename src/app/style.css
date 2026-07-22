@@ -154,6 +154,8 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .legal-details > summary { padding: 16px 0; color: var(--accent); font: 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
 .legal-details > summary:hover, .legal-details[open] > summary { color: var(--ink); }
 .legal-document { max-height: min(65vh, 680px); margin: 0 0 18px; padding: 18px; overflow: auto; color: var(--body-text); background: var(--card); border: 1px solid var(--hairline); font: 11px/1.65 var(--mono); overflow-wrap: anywhere; white-space: pre-wrap; }
+.build-version { margin-top: 24px; color: var(--muted); font: 11px var(--mono); letter-spacing: .04em; }
+.build-version code { font: inherit; }
 
 /* ---------- Progressive protocol disclosures ---------- */
 .data-details { margin-top: 18px; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
