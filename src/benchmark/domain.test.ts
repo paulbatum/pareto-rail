@@ -64,6 +64,51 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   await testApisAndStateMachine();
   testMatchRouteParsing();
   testCustomMatchController();
+  testCustomMatchPlaysPersist();
+}
+
+/** A tiny catalog: two shared-theme entrants (`lv-a`, `lv-b`) and one in a
+ * second theme (`lv-c`), enough to exercise the custom-match controller. */
+function customMatchCatalog(): RankCatalog {
+  return {
+    generatedAt: 'test',
+    themes: [
+      { id: 'th', title: 'Theme', summary: 'S', prompt: 'P' },
+      { id: 'th2', title: 'Theme two', summary: 'S2', prompt: 'P2' },
+    ],
+    entrants: [
+      { levelId: 'lv-a', themeId: 'th', configurationId: 'c1', modelName: 'M1', workflowName: 'solo', generationCost: 1 },
+      { levelId: 'lv-b', themeId: 'th', configurationId: 'c2', modelName: 'M2', workflowName: 'solo', generationCost: 2 },
+      { levelId: 'lv-c', themeId: 'th2', configurationId: 'c3', modelName: 'M3', workflowName: 'solo', generationCost: 3 },
+    ],
+  };
+}
+
+function testCustomMatchPlaysPersist(): void {
+  const catalog = customMatchCatalog();
+  const storage = createMemoryStorage();
+  // Match plays share the normal benchmark envelope (default key), so a fresh
+  // store over the same storage reads what the match wrote.
+  const store = () => new BenchmarkLocalStore(storage);
+
+  const first = new CustomMatchController('lv-a', 'lv-b', catalog, store());
+  first.launch('a');
+  first.completeRun('a', 100);
+  first.launch('b');
+  first.completeRun('b', 250);
+  first.submit('a-better');
+
+  // Plays are recorded to the shared levelRuns; the vote is never written to history.
+  const persisted = store().snapshot;
+  assert.equal(persisted.levelRuns.find((run) => run.levelId === 'lv-a')?.score, 100);
+  assert.equal(persisted.levelRuns.find((run) => run.levelId === 'lv-b')?.score, 250);
+  assert.equal(persisted.history.length, 0);
+
+  // A fresh controller for the same pair resumes at ready-to-vote from the shared runs.
+  const resumed = new CustomMatchController('lv-a', 'lv-b', catalog, store());
+  const resumedState: ComparisonState | null = resumed.state;
+  assert.equal(resumedState?.kind, 'ready-to-vote');
+  assert.equal(resumed.bestScore('lv-b'), 250);
 }
 
 function testMatchRouteParsing(): void {
@@ -79,18 +124,7 @@ function testMatchRouteParsing(): void {
 }
 
 function testCustomMatchController(): void {
-  const catalog: RankCatalog = {
-    generatedAt: 'test',
-    themes: [
-      { id: 'th', title: 'Theme', summary: 'S', prompt: 'P' },
-      { id: 'th2', title: 'Theme two', summary: 'S2', prompt: 'P2' },
-    ],
-    entrants: [
-      { levelId: 'lv-a', themeId: 'th', configurationId: 'c1', modelName: 'M1', workflowName: 'solo', generationCost: 1 },
-      { levelId: 'lv-b', themeId: 'th', configurationId: 'c2', modelName: 'M2', workflowName: 'solo', generationCost: 2 },
-      { levelId: 'lv-c', themeId: 'th2', configurationId: 'c3', modelName: 'M3', workflowName: 'solo', generationCost: 3 },
-    ],
-  };
+  const catalog = customMatchCatalog();
 
   assert.deepEqual(new CustomMatchController(undefined, 'lv-a', catalog).error, { kind: 'missing' });
   assert.deepEqual(new CustomMatchController('lv-a', 'lv-a', catalog).error, { kind: 'same', id: 'lv-a' });

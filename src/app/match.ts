@@ -1,6 +1,7 @@
 import { ComparisonStateMachine } from '../benchmark/state';
 import { findCatalogEntrant, findCatalogTheme, rankCatalog, type RankCatalog, type RankCatalogEntrant, type RankCatalogTheme } from '../benchmark/catalog';
-import { revealFor } from '../benchmark/catalog-api';
+import { playCountsFor, revealFor } from '../benchmark/catalog-api';
+import { BenchmarkLocalStore, type LevelRun } from '../benchmark/storage';
 import { mapVerdict, type BenchmarkTheme, type ComparisonState, type MatchupAssignment, type MatchupSide, type MatchupVote, type RevealPayload, type VoteVerdict } from '../benchmark/types';
 
 export type MatchLaunch = { side: MatchupSide; levelId: string };
@@ -22,9 +23,13 @@ const CUSTOM_THEME: BenchmarkTheme = {
 
 /**
  * Controller for the casual `/match` page. It mirrors the ranked comparison flow
- * (play both, vote, reveal) using {@link ComparisonStateMachine}, but persists
- * nothing: no local store, no remote recorder, no benchmark API. Play counts and
- * scores live only in this instance, so a refresh restarts the match by design.
+ * (play both, vote, reveal) using {@link ComparisonStateMachine}. Plays are
+ * remembered on the device — completed runs, best scores, and last-played — in
+ * the same local {@link BenchmarkLocalStore} `levelRuns` that `/rank` uses, so a
+ * level played here counts as played there and vice versa (the global play
+ * semantics `playCountsFor` already has). The vote and reveal are never
+ * persisted: the in-tab factory cache carries reveal state across navigation,
+ * and a refresh after a vote returns to `ready-to-vote`.
  *
  * Eligibility is any catalog entrant resolved via {@link findCatalogEntrant} —
  * deliberately broader than the ranked scheduler, so retired entrants and
@@ -38,22 +43,24 @@ export class CustomMatchController {
    * and the page shows each side's theme separately. */
   readonly sharedTheme: RankCatalogTheme | null;
   private readonly catalog: RankCatalog;
+  private readonly store: BenchmarkLocalStore | null;
   private readonly listeners = new Set<Listener>();
-  private readonly bestScores = new Map<string, number>();
   private machine: ComparisonStateMachine | null = null;
 
-  constructor(aId: string | undefined, bId: string | undefined, catalog: RankCatalog = rankCatalog) {
+  constructor(aId: string | undefined, bId: string | undefined, catalog: RankCatalog = rankCatalog, store?: BenchmarkLocalStore) {
     this.catalog = catalog;
     if (!aId || !bId) {
       this.error = { kind: 'missing' };
       this.a = this.b = null;
       this.sharedTheme = null;
+      this.store = null;
       return;
     }
     if (aId === bId) {
       this.error = { kind: 'same', id: aId };
       this.a = this.b = null;
       this.sharedTheme = null;
+      this.store = null;
       return;
     }
     const a = findCatalogEntrant(catalog, aId) ?? null;
@@ -63,11 +70,13 @@ export class CustomMatchController {
       this.error = { kind: 'unknown', ids: unknown };
       this.a = this.b = null;
       this.sharedTheme = null;
+      this.store = null;
       return;
     }
     this.error = null;
     this.a = a;
     this.b = b;
+    this.store = store ?? new BenchmarkLocalStore();
     this.sharedTheme = a!.themeId === b!.themeId ? findCatalogTheme(catalog, a!.themeId) ?? null : null;
     const theme = this.sharedTheme ?? CUSTOM_THEME;
     const assignment: MatchupAssignment = {
@@ -77,7 +86,14 @@ export class CustomMatchController {
       b: { playableRef: b!.levelId, ...(b!.thumbnailPath ? { thumbnailPath: b!.thumbnailPath } : {}) },
       assignedAt: new Date().toISOString(),
     };
-    this.machine = new ComparisonStateMachine(assignment);
+    // A level ever played on this device — ranked or custom — counts as
+    // played, the same global semantics rank uses; both sides played resumes
+    // at ready-to-vote.
+    const counts = playCountsFor(assignment, this.store.snapshot.levelRuns);
+    const initial: ComparisonState = counts.a > 0 && counts.b > 0
+      ? { kind: 'ready-to-vote', assignment, playCounts: counts }
+      : { kind: 'assignment', assignment, playCounts: counts };
+    this.machine = new ComparisonStateMachine(assignment, initial);
   }
 
   get valid(): boolean { return this.error === null; }
@@ -91,7 +107,14 @@ export class CustomMatchController {
     return entrant ? findCatalogTheme(this.catalog, entrant.themeId) : undefined;
   }
 
-  bestScore(levelId: string): number | undefined { return this.bestScores.get(levelId); }
+  /** The persisted play record for a level (best score, last-played), or
+   * undefined if it has never been played on this device — in a match or on
+   * `/rank`, which share the same local `levelRuns`. */
+  levelRun(levelId: string): LevelRun | undefined {
+    return this.store?.snapshot.levelRuns.find((run) => run.levelId === levelId);
+  }
+
+  bestScore(levelId: string): number | undefined { return this.levelRun(levelId)?.score; }
 
   subscribe(listener: Listener) {
     this.listeners.add(listener);
@@ -114,8 +137,7 @@ export class CustomMatchController {
     const state = this.machine.state;
     if ((state.kind !== 'playing-a' && state.kind !== 'playing-b') || (state.kind === 'playing-a' ? 'a' : 'b') !== side) return;
     const levelId = state.assignment[side].playableRef;
-    const prior = this.bestScores.get(levelId);
-    if (prior === undefined || score > prior) this.bestScores.set(levelId, score);
+    this.store?.recordLevelRun(levelId, score);
     this.machine.completeRun(side);
     this.emit();
   }
@@ -145,4 +167,20 @@ export class CustomMatchController {
   }
 
   private emit() { for (const listener of this.listeners) listener(); }
+}
+
+let activeController: CustomMatchController | null = null;
+
+/**
+ * The controller for a level pair, reattaching to the in-flight match when one
+ * exists. The app remounts pages on every route change (the error boundary is
+ * keyed by the full route), so navigating to a play sub-route and back would
+ * otherwise discard the match mid-flow. A refresh still starts over: this cache
+ * is module state, alive only for the tab session.
+ */
+export function customMatchControllerFor(aId: string | undefined, bId: string | undefined, catalog: RankCatalog = rankCatalog): CustomMatchController {
+  const current = activeController;
+  if (current?.valid && current.a?.levelId === aId && current.b?.levelId === bId) return current;
+  activeController = new CustomMatchController(aId, bId, catalog);
+  return activeController;
 }

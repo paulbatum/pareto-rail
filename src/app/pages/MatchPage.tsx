@@ -4,7 +4,7 @@ import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, VoteVerdict } from '../../benchmark/types';
 import { rankCatalog, type RankCatalogTheme } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog } from '../../levels';
-import { CustomMatchController, type MatchError, type MatchLaunch } from '../match';
+import { customMatchControllerFor, type CustomMatchController, type MatchError, type MatchLaunch } from '../match';
 import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
 import { CompareCard, RevealCards, VersusGrid, VoteButtons } from '../components/matchup';
@@ -26,7 +26,7 @@ function matchPath(a: string, b: string): string {
 }
 
 export function MatchPage({ route, onNavigate }: MatchPageProps) {
-  const controller = useMemo(() => new CustomMatchController(route.a, route.b), [route.a, route.b]);
+  const controller = useMemo(() => customMatchControllerFor(route.a, route.b), [route.a, route.b]);
   const [, refresh] = useState(0);
   const [launch, setLaunch] = useState<MatchLaunch | null>(null);
 
@@ -77,22 +77,28 @@ function MatchStage({ controller, state, crossTheme, onLaunch, onVote, onNavigat
     ? state.playCounts.a > 0 ? 'b' : 'a'
     : null;
   const freshAssignment = state.kind === 'assignment' && state.playCounts.a === 0 && state.playCounts.b === 0;
+  const runA = controller.levelRun(state.assignment.a.playableRef);
+  const runB = controller.levelRun(state.assignment.b.playableRef);
+  /** Only meaningful once both sides have a run, so the badge implies the other side came first. */
+  const recentSide: MatchupSide | null = runA && runB && runA.completedAt !== runB.completedAt
+    ? (runA.completedAt > runB.completedAt ? 'a' : 'b')
+    : null;
   const card = (side: MatchupSide) => {
     const played = state.playCounts[side] > 0;
-    const score = controller.bestScore(state.assignment[side].playableRef);
+    const priorRun = side === 'a' ? runA : runB;
     return <CompareCard side={side} thumbnailPath={state.assignment[side].thumbnailPath}
       className={nextSide === side ? 'is-next' : undefined}
       primary={nextSide === side || freshAssignment}
       buttonLabel={`${played ? 'Replay' : 'Play'} Level ${side.toUpperCase()}`}
       onLaunch={() => onLaunch(side)}>
       {themeAnnotation(side)}
-      <p className="compare-stats">{played && <span>Completed run</span>}{score !== undefined && <span className="run-score">Best score: {score.toLocaleString('en-US')}</span>}</p>
+      <p className="compare-stats">{played && <span>Completed run</span>}{priorRun?.score !== undefined && <span className="run-score">Best score: {priorRun.score.toLocaleString('en-US')}</span>}{recentSide === side && <span className="run-recent">Played most recently</span>}</p>
     </CompareCard>;
   };
   const versusLayout = <VersusGrid a={card('a')} b={card('b')} />;
 
   if (state.kind === 'assignment') return versusLayout;
-  if (state.kind === 'playing-a' || state.kind === 'playing-b') return <div className="assignment-card"><h2>Level {state.kind === 'playing-a' ? 'A' : 'B'} is in progress</h2><p>This match lives only in this tab. Refreshing starts it over — nothing is saved either way.</p></div>;
+  if (state.kind === 'playing-a' || state.kind === 'playing-b') return <div className="assignment-card"><h2>Level {state.kind === 'playing-a' ? 'A' : 'B'} is in progress</h2><p>Your run is remembered on this device, so it counts when it ends. Your pick is never recorded.</p></div>;
   if (state.kind === 'ready-to-vote') return <>{versusLayout}<h2 className="vote-heading">Which run felt better?</h2><VoteButtons onVote={onVote} /></>;
   if (state.kind === 'reveal') return <>
     <RevealCards reveal={state.reveal} sideAnnotation={themeAnnotation} />
@@ -278,5 +284,5 @@ function MatchGame({ launch, backPath, onNavigate, onRunEnd }: { launch: MatchLa
 }
 
 function MatchInvitation({ side, backPath, onNavigate }: { side: MatchupSide; backPath: string; onNavigate: (path: string) => void }) {
-  return <section className="benchmark-invitation"><p>Level {side.toUpperCase()} played. Nothing was saved — continue when you are ready.</p><div className="invitation-actions"><RouteLink className="button primary" href={backPath} onNavigate={onNavigate}>Back to match</RouteLink></div></section>;
+  return <section className="benchmark-invitation"><p>Level {side.toUpperCase()} played — your run is remembered on this device. Continue when you are ready.</p><div className="invitation-actions"><RouteLink className="button primary" href={backPath} onNavigate={onNavigate}>Back to match</RouteLink></div></section>;
 }
