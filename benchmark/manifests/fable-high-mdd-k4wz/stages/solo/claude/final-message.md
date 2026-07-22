@@ -1,0 +1,17 @@
+**Mass Driver is built and fully verified** at `src/benchmark-levels/mass-driver-detailed-k4wz/` — a 60.000-second run (32 bars at 128 BPM, exactly per the theme) with every headless gate green.
+
+## What was built
+
+**Gameplay** — The core conceit is enforced geometrically: ring *k* sits at the rail position the speed integral puts the camera at on beat *k*, so all 113 accelerator rings are crossed exactly on the beat by construction. The speed profile only ever rises (12 → 46 u/s through the barrel), then steps ~3× on the bar-28 downbeat — THE SHOT — and the camera reaches the muzzle at that instant. Five enemy kinds with distinct grammars: wall-riding coils that sweep on in clock-position ranks and telegraph lunges, counter-rotating helix threaders, two-stage capacitor banks that shed their stave cage, interceptable homing arc bolts, and six two-stage interlock clamps that station-keep at the frame rim from bar 20 and can never be overtaken. Any interlock alive at the deadline detonates the barrel (lethal, `died` run). Hull 3, CHARGE/RELOAD words, volley bonuses with a 900-point perfect six, and an S rank gated on the gun actually firing.
+
+**Visuals** — One electrical heat ramp (arc blue → violet → near-white) drives rings, conductor rails, streaks, and the lock gradient; hazard amber appears only on the interlocks; denial/detonation are red. Six-segment charge-gauge reticle with an ignition-white sixth segment, stencil-plate letters, shared-facet gunmetal enemies with a single tint pass, arc-lightning polylines, per-beat shockwave pulses thrown down-bore, a size-capped charge glow at the muzzle, a starfield-and-beacon muzzle field revealed by the shot, and flash/charge/detonation screen overlays.
+
+**Audio** — Locked minimal techno in E minor (Em–Em–C–D, Em–F for the boss bars, E-major bloom after the shot), with a persistent detuned-saw hum that climbs a fourth by mid-run, an octave by the interlocks, accelerates into the charge peak, and is cut dead by the shot. Klaxon, alarm sweeps, per-bar risers, and a snare roll fill the interlock bars. All player sounds are transport-quantized and pitched from the live harmony: five crossfaded per-section timbres, hidden kill-melody lanes, interlock confirmations that grow one note per kill with dropping clamp-clanks, a ducked-silence-and-descent sixth kill, a breaker-trip reject, and a sub-rumble detonation.
+
+## Verified headless
+`typecheck`, `build`, `check:benchmark-scope` (18 paths), `check:floor` all pass — simulation (perfect 76/76 → S at 13.8k; imperfect 68/76 → A; no-fire dies to detonation at 52.17s exactly), occlusion 0 warnings, perf gates green after sharing geometries, spawn distance/centerness clean, audio config valid. `trace:audio` confirms the arrangement lands (klaxon bar 20, snare roll bar 27, hum-cut + crash + bloom on bar 28). Snapshots confirm the tunnel, interlock finale, capped charge glow, bloom-off legibility, and the CHARGE start screen; hero/overview/start images ship in `level.json`.
+
+## Needs human eyes (WSL2 can't render WebGPU)
+1. **Ring crossings landing audibly and visibly on the beat** — the level's one non-negotiable.
+2. **The bar-28 shot** — speed spike, whiteout, FOV kick, hum cut, and E-major bloom must land as one simultaneous event, and the muzzle bars after it should feel empty and weightless.
+3. **Interlock legibility against the charge glow** in the last bar and a half, and the final mix balance (hum vs. kit vs. player notes).

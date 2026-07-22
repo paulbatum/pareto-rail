@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "6972ad1b2a49900d50a04395d58b92df34cccf06dfe3c4ab1f849e32062a4169"
+  },
+  "theme": {
+    "path": "benchmark/themes/speedsolve.md",
+    "sha256": "5ab6f77afe7eadd9fa61c9f0218516a16967cf4aa526698060344154261c8b0b"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-sol-high.md",
+    "sha256": "a7c501267f4e7fe0d85ba06f2eb3fd60637d0790c47241740a2d5d8811584bb4"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-solve-wvdv/rendered-assignment.md",
+    "sha256": "6f6543ef53948a2e491589ccd54feb334f857b14b6e8a0287c401c792a58b8e3"
+  },
+  "baseRendering": {
+    "sha256": "6f6543ef53948a2e491589ccd54feb334f857b14b6e8a0287c401c792a58b8e3"
+  }
+}

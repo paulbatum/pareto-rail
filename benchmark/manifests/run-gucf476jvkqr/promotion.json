@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-gucf476jvkqr",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-13T20:01:01.834Z",
+      "data": {
+        "source": {
+          "runId": "run-gucf476jvkqr",
+          "slotId": "esvz",
+          "themeId": "mass-driver",
+          "levelId": "mass-driver-esvz",
+          "title": "Mass Driver",
+          "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+          "evaluatedCommit": "349ba25fbc567a453bfad69c565ad2cd0f33cf25",
+          "payloadCommit": "9eade9611c8f7cf53c042f436fb292af7e49e00c",
+          "manifestSha256": "1eb032c773d8d708a7be1868723a00bd15bc68fb6fa2ec6fe727f919a3148b86",
+          "definitionSha256": "8338d1e84a30a35fb097d2dc21f96536b6e7412b5f259528937fed4980389368",
+          "evaluatedSha256": "534bb023f16ed67c48c504468c0d8668d9ad322bd62dac7dbb8188f200a0c316",
+          "payloadSha256": "f96b6678043127048de0afd55751e40f502087416a73598e14637985113b81bc",
+          "payloadDiffSha256": "6b842ef70d1a10603ef7273fc6c9759e39bc95aa7cce2eef90f2b13fdc870e8d",
+          "sourcePath": "src/levels/mass-driver-esvz/",
+          "destinationPath": "src/benchmark-levels/mass-driver-esvz/",
+          "legacySourcePresent": false,
+          "derivative": null,
+          "descriptor": {
+            "source": "controller-owned assignment data",
+            "id": "mass-driver-esvz",
+            "title": "Mass Driver",
+            "sha256": "7db19cf643d006ce208e46f01b798d63fe6740f0bd72788e6d159d02ab164633"
+          },
+          "baseCommit": "ddbe3029eda3717ba0b63b3d91f851a503b837f5"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-13T20:01:01.961Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-esvz/",
+        "files": 13,
+        "reused": false
+      }
+    },
+    "descriptor": {
+      "status": "completed",
+      "finishedAt": "2026-07-13T20:01:01.965Z",
+      "data": {
+        "path": "src/benchmark-levels/mass-driver-esvz/level.json",
+        "sha256": "7db19cf643d006ce208e46f01b798d63fe6740f0bd72788e6d159d02ab164633",
+        "reused": false
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-13T20:01:02.041Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-esvz/",
+        "verifiedFiles": 14
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-13T20:01:23.353Z",
+      "data": {
+        "gallerySha256": "4f4cd5799b38c8904d3e451def4a4061bf14ab561be9e5358ee5726dc857fb5f",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 6.253365505000111,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "d518581edd561cb2096c8fd9ec8b3c29f9fe73d71212c8bb9b3c27307fc50c40",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.184579761000117,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-esvz --base ddbe3029eda3717ba0b63b3d91f851a503b837f5",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04003147800010629,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-esvz",
+            "exitCode": 0,
+            "stdoutSha256": "8a9e7fb8cbc5ddadecab23e1a4e0021d437509bc4e8daf4080da40cc4c851732",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 10.657697406999999,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-13T20:01:23.414Z",
+      "data": {
+        "promotionCommit": "7cbd21ce40651dca266105e992545a1664e32bb1",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-13T20:01:23.415Z",
+  "migration": false,
+  "source": {
+    "runId": "run-gucf476jvkqr",
+    "slotId": "esvz",
+    "themeId": "mass-driver",
+    "levelId": "mass-driver-esvz",
+    "title": "Mass Driver",
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "evaluatedCommit": "349ba25fbc567a453bfad69c565ad2cd0f33cf25",
+    "payloadCommit": "9eade9611c8f7cf53c042f436fb292af7e49e00c",
+    "manifestSha256": "1eb032c773d8d708a7be1868723a00bd15bc68fb6fa2ec6fe727f919a3148b86",
+    "definitionSha256": "8338d1e84a30a35fb097d2dc21f96536b6e7412b5f259528937fed4980389368",
+    "evaluatedSha256": "534bb023f16ed67c48c504468c0d8668d9ad322bd62dac7dbb8188f200a0c316",
+    "payloadSha256": "f96b6678043127048de0afd55751e40f502087416a73598e14637985113b81bc",
+    "payloadDiffSha256": "6b842ef70d1a10603ef7273fc6c9759e39bc95aa7cce2eef90f2b13fdc870e8d",
+    "sourcePath": "src/levels/mass-driver-esvz/",
+    "destinationPath": "src/benchmark-levels/mass-driver-esvz/",
+    "legacySourcePresent": false,
+    "derivative": null,
+    "descriptor": {
+      "source": "controller-owned assignment data",
+      "id": "mass-driver-esvz",
+      "title": "Mass Driver",
+      "sha256": "7db19cf643d006ce208e46f01b798d63fe6740f0bd72788e6d159d02ab164633"
+    },
+    "baseCommit": "ddbe3029eda3717ba0b63b3d91f851a503b837f5"
+  },
+  "promotionCommit": "7cbd21ce40651dca266105e992545a1664e32bb1"
+}

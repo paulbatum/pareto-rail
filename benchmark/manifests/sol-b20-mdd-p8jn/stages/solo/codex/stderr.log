@@ -1,0 +1,2 @@
+2026-07-20T07:24:57.475085Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-sol-b20-mdd-p8jn/src/benchmark-levels/mass-driver-detailed-p8jn/visuals/index.ts:
+    if (record && !record.lockRing) { record.lockRing = createLockClamp(color, Boolean(record.mesh.userData.isInterlock)); scene.add(record.lockRing); }

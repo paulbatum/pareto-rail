@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "benchmarkVersion": "v1",
+  "mode": "eligible",
+  "assignment": {
+    "runId": "run-vbovdxbaxq9v",
+    "slotId": "81u5",
+    "configurationId": "codex-sol-terra-delegation",
+    "recipe": {
+      "id": "recipe",
+      "path": "benchmark/recipes/codex-sol-terra-delegation.md",
+      "sha256": "21dacdb86a5c04a2bedc25212d0c0cd79ad33fe678c258259509ff4a16ad07e6"
+    },
+    "theme": {
+      "id": "skyhook",
+      "path": "benchmark/themes/skyhook.md",
+      "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+    },
+    "levelId": "skyhook-81u5",
+    "levelTitle": "Skyhook"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
+    "configurationCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+  },
+  "release": {
+    "path": "benchmark/releases/v1/freeze.json",
+    "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "f317210e16f948f1c4ba245be383e51fcbe888801e7efee6f21276477228de29"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "70a7e48fbeddeceb5e9425aec20874252458f8c8f031346a9fbadc39fbc553bd"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/codex-cli.mjs",
+    "sha256": "1facba2cb1aedb6cec620064c9412b506903bfac2a97affeb9f07f0e34a90c85"
+  },
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "128da6eb067e60c41ea29a94c7f8b0af6456d77344ad01b575722c4e8f0384c5"
+  },
+  "failureTaxonomy": {
+    "path": "benchmark/controller/failure-taxonomy.md",
+    "sha256": "018fc9b7a198fb5187bcab2b50f661cc86c645108cac74fe943f09b0e7a2e6d0"
+  },
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 10800
+  },
+  "worktree": {
+    "path": "/tmp/raild-run-vbovdxbaxq9v"
+  },
+  "payload": {
+    "path": "/tmp/raild-payload-run-vbovdxbaxq9v",
+    "branch": "benchmark-payload-run-vbovdxbaxq9v"
+  },
+  "delegation": {
+    "prompt": {
+      "path": "benchmark/prompts/flexible-delegation.md",
+      "sha256": "aed79129e2186ab333616bfa8a8bc235385baae377ca271f3310cd0c9d8cdef9"
+    },
+    "delegateModel": "gpt-5.6-terra",
+    "delegateEffort": "high"
+  }
+}

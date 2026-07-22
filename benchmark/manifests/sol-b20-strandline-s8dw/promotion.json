@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "runId": "sol-b20-strandline-s8dw",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:45:08.136Z",
+      "data": {
+        "source": {
+          "runId": "sol-b20-strandline-s8dw",
+          "slotId": "s8dw",
+          "themeId": "strandline",
+          "levelId": "strandline-s8dw",
+          "title": "Strandline",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "52c4284d892d3ed3fc41c0342234743794ba825d",
+          "payloadCommit": "86635310da011696d6389abc68aa77fe94604ccb",
+          "manifestSha256": "12e7cb9971e8f5ca149c02c5f612642d2e460dbfcd77c4f5f72473bae23496a3",
+          "definitionSha256": "b67f606a57bbb0c09ac19487d1ac14bac49640af8ad70553a7a0ef23d40ac669",
+          "evaluatedSha256": "514122cfc0205c72acb4ba86046bca92aec0cf10c4595f8044a2afb9f7e2f597",
+          "payloadSha256": "3afa64e88e84755d6a6b3571f6f20cc20a36a22be15225e94f7aaf933251ef15",
+          "payloadDiffSha256": "bbba824c2e9b5d4e2a51a0f7fc4fd2bf450dfbbe084e172f21818e26291c07ed",
+          "sourcePath": "src/benchmark-levels/strandline-s8dw/",
+          "destinationPath": "src/benchmark-levels/strandline-s8dw/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/strandline-s8dw",
+              "promotedPath": "src/benchmark-levels/strandline-s8dw",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/strandline-s8dw",
+              "promotedPath": "public/level-content/strandline-s8dw",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "4c3e49360065e9e9be3191b7b2372d91ba737298"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:45:08.272Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/strandline-s8dw/",
+            "files": 10,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/strandline-s8dw/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:45:08.356Z",
+      "data": {
+        "destination": "src/benchmark-levels/strandline-s8dw/",
+        "verifiedFiles": 13
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:45:35.768Z",
+      "data": {
+        "gallerySha256": "899f8b1c6f91686c7be313370bb9b1a8a27ae15be3db79fe3ab15ec655b15a10",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 2.889758676,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "38d74aa9b33c0bcfe8c3b8c38e64b4976f7152515fc6ca26c0bb326848e4b4dc",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 8.086746618000001,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-s8dw --base 4c3e49360065e9e9be3191b7b2372d91ba737298",
+            "exitCode": 0,
+            "stdoutSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04032392600000094,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level strandline-s8dw",
+            "exitCode": 0,
+            "stdoutSha256": "5f1ec318d7695743dd4886830d3f04b24205db50488b3ba8a13efd77f99a7872",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 16.074921108,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:45:35.843Z",
+      "data": {
+        "promotionCommit": "c7e59a7594ede4fb8b5ef83db2d846b92e91124a",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:45:35.844Z",
+  "source": {
+    "runId": "sol-b20-strandline-s8dw",
+    "slotId": "s8dw",
+    "themeId": "strandline",
+    "levelId": "strandline-s8dw",
+    "title": "Strandline",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "52c4284d892d3ed3fc41c0342234743794ba825d",
+    "payloadCommit": "86635310da011696d6389abc68aa77fe94604ccb",
+    "manifestSha256": "12e7cb9971e8f5ca149c02c5f612642d2e460dbfcd77c4f5f72473bae23496a3",
+    "definitionSha256": "b67f606a57bbb0c09ac19487d1ac14bac49640af8ad70553a7a0ef23d40ac669",
+    "evaluatedSha256": "514122cfc0205c72acb4ba86046bca92aec0cf10c4595f8044a2afb9f7e2f597",
+    "payloadSha256": "3afa64e88e84755d6a6b3571f6f20cc20a36a22be15225e94f7aaf933251ef15",
+    "payloadDiffSha256": "bbba824c2e9b5d4e2a51a0f7fc4fd2bf450dfbbe084e172f21818e26291c07ed",
+    "sourcePath": "src/benchmark-levels/strandline-s8dw/",
+    "destinationPath": "src/benchmark-levels/strandline-s8dw/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/strandline-s8dw",
+        "promotedPath": "src/benchmark-levels/strandline-s8dw",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/strandline-s8dw",
+        "promotedPath": "public/level-content/strandline-s8dw",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "4c3e49360065e9e9be3191b7b2372d91ba737298"
+  },
+  "promotionCommit": "c7e59a7594ede4fb8b5ef83db2d846b92e91124a"
+}

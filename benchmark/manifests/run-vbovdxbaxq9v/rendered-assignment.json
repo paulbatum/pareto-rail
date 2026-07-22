@@ -1,0 +1,20 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "128da6eb067e60c41ea29a94c7f8b0af6456d77344ad01b575722c4e8f0384c5"
+  },
+  "theme": {
+    "path": "benchmark/themes/skyhook.md",
+    "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/run-vbovdxbaxq9v/rendered-assignment.md",
+    "sha256": "b699707a5cfe9a8fd829d6b673fdbc977c7ce311c80b3cb5c9cadad9557d7ec5"
+  },
+  "delegation": {
+    "path": "benchmark/prompts/flexible-delegation.md",
+    "delegateModel": "gpt-5.6-terra",
+    "delegateEffort": "high",
+    "sha256": "7cab2fc5d9cd38e29948d61dd152c74d2f92bc215be6b59b69bcbd1d9afab9e8"
+  }
+}

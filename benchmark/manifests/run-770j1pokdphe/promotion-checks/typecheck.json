@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 2.589440218,
+  "stdout": "\n> pareto-rail@0.0.0 typecheck\n> tsc --noEmit\n\n",
+  "stderr": ""
+}

@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "234721600751104c90eca3c7d0c0d47359bfbb8f9046837562e901a7e5883200",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 16.528388703000005,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level broadside-ob3c\n\nBroadside floor check\nduration 60.0s; spawned kinds 8: bolt, core, corsair, escort, generator, interceptor, lance, turret\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=0.28\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 0\nAll floor checks passed.\n",
+  "stderr": ""
+}

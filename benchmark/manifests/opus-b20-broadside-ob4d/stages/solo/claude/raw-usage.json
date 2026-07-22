@@ -1,0 +1,114 @@
+{
+  "sessionId": "0a734440-2b2a-42b6-8c83-19d7b6790b6c",
+  "initResolvedModel": "claude-opus-4-8",
+  "finalMessage": "Committed with everything green. **Broadside** is complete.\n\n## What I built\n\n`src/benchmark-levels/broadside-ob4d/` — a 60.0-second (33 bars @ 132 BPM) fleet-action level in nine movements: catapult launch → crossfire → cruiser flank → raking an enemy keel → one bar of silence in the eye of the battle → the enemy flagship's shield emitters → escort breach → trench dive → victory pull-out.\n\n**The idea that ties it together:** the nebula is the only light source, so nothing is lit and everything is backlit. Every hull — swarm dart to dreadnought — is near-black wearing a magenta rim on its upper chine and gold underneath. The fleets are told apart by *signal colour alone*: yours cyan, theirs molten orange firing crimson. Any crimson on screen is shooting at you.\n\n**Boss mechanic I'm happiest with:** the flagship's six shield emitters open on steps 2, 6, and 14 of every bar — and the score plays accents on exactly those steps from the moment the flagship arrives. The rhythm you must shoot on is in your ear before you consciously see it. Four of six collapses the shield; only then are the trench's reactor couplings targetable.\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope` (19 paths), and `check:floor` — all pass. Simulation: perfect policy **rank S** with the flagship destroyed; imperfect survives at rank B with 1 hull hit; full event coverage. Target occlusion is clean at **zero** warnings.\n\n## Things worth knowing\n\nTwo bugs the gates caught that I'd have missed by eye:\n\n- **Enemy meshes were never disposed on kill.** Each hostile builds per-instance geometry and the run spawns 137 of them, so geometry count climbed to 7.66× and tripped the perf gate. Now disposed on record removal, with lock-bracket and wreck geometry shared across the run.\n- **Hostile shells were badly miscalibrated.** My first fix for \"shells can't catch a camera doing 80 units/second\" was to make them very fast — which made them *unavoidable*. Both reference levels take zero hull hits on the imperfect policy; mine was killing it at 46s. They're now slower with a ~2-second visible approach, so answering one is a decision rather than a tax.\n\nOne remaining advisory warning: average destruction distance is 52m against a 45m soft threshold — a consequence of the fast rail and long leads, not a gate failure.\n\n**Needs a human WebGPU playtest** — WSL2 can't render it, so I have not seen this level run. Check first: whether the rim strips separate hulls from the nebula with bloom at zero; whether the bar-20 silence lands; and whether the victory pull-out actually frames the breaking flagship rather than rising into empty space. By ear, the brass ostinato vs. the player's kill melody is the one place the orchestra could bury the soloist.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 2833693,
+    "duration_api_ms": 2669762,
+    "ttft_ms": 2402,
+    "ttft_stream_ms": 1402,
+    "time_to_request_ms": 64,
+    "num_turns": 120,
+    "result": "Committed with everything green. **Broadside** is complete.\n\n## What I built\n\n`src/benchmark-levels/broadside-ob4d/` — a 60.0-second (33 bars @ 132 BPM) fleet-action level in nine movements: catapult launch → crossfire → cruiser flank → raking an enemy keel → one bar of silence in the eye of the battle → the enemy flagship's shield emitters → escort breach → trench dive → victory pull-out.\n\n**The idea that ties it together:** the nebula is the only light source, so nothing is lit and everything is backlit. Every hull — swarm dart to dreadnought — is near-black wearing a magenta rim on its upper chine and gold underneath. The fleets are told apart by *signal colour alone*: yours cyan, theirs molten orange firing crimson. Any crimson on screen is shooting at you.\n\n**Boss mechanic I'm happiest with:** the flagship's six shield emitters open on steps 2, 6, and 14 of every bar — and the score plays accents on exactly those steps from the moment the flagship arrives. The rhythm you must shoot on is in your ear before you consciously see it. Four of six collapses the shield; only then are the trench's reactor couplings targetable.\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope` (19 paths), and `check:floor` — all pass. Simulation: perfect policy **rank S** with the flagship destroyed; imperfect survives at rank B with 1 hull hit; full event coverage. Target occlusion is clean at **zero** warnings.\n\n## Things worth knowing\n\nTwo bugs the gates caught that I'd have missed by eye:\n\n- **Enemy meshes were never disposed on kill.** Each hostile builds per-instance geometry and the run spawns 137 of them, so geometry count climbed to 7.66× and tripped the perf gate. Now disposed on record removal, with lock-bracket and wreck geometry shared across the run.\n- **Hostile shells were badly miscalibrated.** My first fix for \"shells can't catch a camera doing 80 units/second\" was to make them very fast — which made them *unavoidable*. Both reference levels take zero hull hits on the imperfect policy; mine was killing it at 46s. They're now slower with a ~2-second visible approach, so answering one is a decision rather than a tax.\n\nOne remaining advisory warning: average destruction distance is 52m against a 45m soft threshold — a consequence of the fast rail and long leads, not a gate failure.\n\n**Needs a human WebGPU playtest** — WSL2 can't render it, so I have not seen this level run. Check first: whether the rim strips separate hulls from the nebula with bloom at zero; whether the bar-20 silence lands; and whether the victory pull-out actually frames the breaking flagship rather than rising into empty space. By ear, the brass ostinato vs. the player's kill melody is the one place the orchestra could bury the soloist.",
+    "stop_reason": "end_turn",
+    "session_id": "0a734440-2b2a-42b6-8c83-19d7b6790b6c",
+    "total_cost_usd": 24.6734135,
+    "usage": {
+      "input_tokens": 175,
+      "cache_creation_input_tokens": 428581,
+      "cache_read_input_tokens": 29195895,
+      "output_tokens": 231495,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 428581,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 989,
+          "cache_read_input_tokens": 434551,
+          "cache_creation_input_tokens": 589,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 589
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1336,
+        "outputTokens": 14,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001406,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-opus-4-8": {
+        "inputTokens": 175,
+        "outputTokens": 231495,
+        "cacheReadInputTokens": 29195895,
+        "cacheCreationInputTokens": 428581,
+        "webSearchRequests": 0,
+        "costUSD": 24.6720075,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "f7e12b18-6f5a-493b-a4a2-19e52ff7d22a"
+  },
+  "normalized": {
+    "inputTokens": 29196070,
+    "outputTokens": 231495,
+    "cacheReadInputTokens": 29195895,
+    "cacheWriteInputTokens": 428581,
+    "vendorFields": {
+      "totalCostUsd": 24.6734135,
+      "durationMs": 2833693,
+      "durationApiMs": 2669762,
+      "numTurns": 120,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1336,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001406,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 175,
+          "outputTokens": 231495,
+          "cacheReadInputTokens": 29195895,
+          "cacheCreationInputTokens": 428581,
+          "webSearchRequests": 0,
+          "costUSD": 24.6720075,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "053e36c4-2273-4a6a-8238-191e2cd45cf3",
+  "usageSha256": "2ca318709d1b7918b7fcf3e0ec14893c148ca3803ed4cc43304d346088870bbc",
+  "eventLogSha256": "6e8c96a9d99264671a39c97d822f5052fb052291842ed4761d0e79e6cf9447f8",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-b20-broadside-b9mn/harness-home/projects/-tmp-pareto-rail-fable-b20-broadside-b9mn/053e36c4-2273-4a6a-8238-191e2cd45cf3.jsonl",
+    "sha256": "7e35aae11fb044f15749b43749f26e77d9c13396502167f1e72b68854c7f2dfb"
+  },
+  "budget": {
+    "path": "budget.json"
+  }
+}

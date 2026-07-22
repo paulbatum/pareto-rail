@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/claude-cli.mjs",
+    "--worktree",
+    "/tmp/raild-run-0cafsiuauv6e",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-0cafsiuauv6e/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-0cafsiuauv6e/stages/solo/claude",
+    "--model",
+    "claude-fable-5",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "10800"
+  ],
+  "exitCode": 1,
+  "startedAt": "2026-07-11T18:33:09.336Z",
+  "finishedAt": "2026-07-11T21:33:29.139Z",
+  "wallTimeSeconds": 10801.786087051998,
+  "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrSha256": "eb5ddb6356b434830a14ea1d4ea0e73cf169bff7a43f653761d1883c8ef4cf1e",
+  "stdout": "",
+  "stderr": "Claude JSONL did not report a terminal result event.\n"
+}

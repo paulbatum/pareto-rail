@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "220c5c6d-54fc-4e16-9602-cb9b4665bb15",
+  "usageSha256": "3e4254fa338a9dac346db995f393c6c0859001aac19c11262227dc7c4c7b3823",
+  "eventLogSha256": "4acf6fe62437805d28a3b4499c45bf4bfba1852e9617a7c6e37c4b0f9ea48ef1",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/opus-high-purse-svok/harness-home/projects/-tmp-pareto-rail-opus-high-purse-svok/220c5c6d-54fc-4e16-9602-cb9b4665bb15.jsonl",
+    "sha256": "4f6bd919eb30a51f7445f91a904cb9e11144f0376901c10186678969fd8664ab"
+  }
+}

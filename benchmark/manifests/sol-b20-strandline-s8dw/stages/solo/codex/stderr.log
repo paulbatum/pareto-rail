@@ -1,0 +1,2 @@
+2026-07-18T10:35:34.369546Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-sol-b20-strandline-s8dw/src/benchmark-levels/strandline-s8dw/visuals/environment.ts:
+      organism.position.set(0, 0, 0);

@@ -1,0 +1,29 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-fable-5",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--session-id",
+    "e00fa2fa-8952-4549-a591-7b1d0a824f3d"
+  ],
+  "cliVersion": "2.1.214 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-fable-high-broadside-b4kd",
+  "startedAt": "2026-07-18T11:04:14.407Z",
+  "finishedAt": "2026-07-18T12:01:57.505Z",
+  "wallTimeSeconds": 3260.289328237,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

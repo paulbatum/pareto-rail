@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/codex-cli.mjs",
+    "--worktree",
+    "/tmp/raild-run-x58xikqvx62i",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-x58xikqvx62i/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-x58xikqvx62i/stages/solo/codex",
+    "--model",
+    "gpt-5.6-sol",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "10800",
+    "--enable-multi-agent",
+    "true"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-07-11T18:33:26.060Z",
+  "finishedAt": "2026-07-11T18:47:11.684Z",
+  "wallTimeSeconds": 825.083817456,
+  "stdoutSha256": "dbbf655c9bab06d28d998b4a229a56a22a19e908792e320a4e4f709c6e99324c",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"019f5274-b5cd-7510-8175-071a50dd2808\",\"usage\":{\"inputTokens\":4904298,\"outputTokens\":31958,\"cacheReadInputTokens\":4647680,\"reasoningTokens\":5941,\"vendorFields\":{\"input_tokens\":4904298,\"cached_input_tokens\":4647680,\"output_tokens\":31958,\"reasoning_output_tokens\":5941}},\"wallTimeSeconds\":824.8819432900001}\n",
+  "stderr": ""
+}

@@ -1,0 +1,29 @@
+
+> raild@0.0.0 build
+> vite build
+
+vite v8.1.3 building client environment for production...
+[2Ktransforming...✓ 117 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                1.82 kB │ gzip:   0.90 kB
+dist/assets/index-CdxIYldy.css                15.14 kB │ gzip:   4.11 kB
+dist/assets/audio-trace-GtutyGgA.js            0.40 kB │ gzip:   0.27 kB
+dist/assets/speed-profile-W-oLAii7.js          0.70 kB │ gzip:   0.43 kB
+dist/assets/hostile-shot-DgqdHDPg.js           1.68 kB │ gzip:   0.74 kB
+dist/assets/glyphs-COS-68cO.js                 2.42 kB │ gzip:   0.53 kB
+dist/assets/arrangement-CaH2hOjH.js            3.44 kB │ gzip:   1.44 kB
+dist/assets/BufferGeometryUtils-DjrHv2ta.js    3.77 kB │ gzip:   1.09 kB
+dist/assets/perf-overlay-C2NutT9n.js           5.73 kB │ gzip:   2.26 kB
+dist/assets/environment-kit-Vxu2Wqm0.js       11.62 kB │ gzip:   4.60 kB
+dist/assets/prism-9W_6TXal.js                 14.49 kB │ gzip:   5.81 kB
+dist/assets/rezdle-x1mCcUgv.js                17.48 kB │ gzip:   6.98 kB
+dist/assets/rush-BMGi7Hpl.js                  26.71 kB │ gzip:   9.66 kB
+dist/assets/audio-kit-CJQOTXOj.js             30.45 kB │ gzip:  10.38 kB
+dist/assets/crystal-BLuxKEHi.js               52.24 kB │ gzip:  17.39 kB
+dist/assets/helios-C96cYCkP.js                73.19 kB │ gzip:  23.97 kB
+dist/assets/skyhook-lkor-8fhH1si3.js          75.31 kB │ gzip:  24.85 kB
+dist/assets/word-data-bEQzhfW8.js            622.40 kB │ gzip: 206.10 kB
+dist/assets/index-CA3UFw-y.js                916.76 kB │ gzip: 254.15 kB
+
+✓ built in 1.31s

@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-5m77cl6rn5kd",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.680Z",
+      "data": {
+        "source": {
+          "runId": "run-5m77cl6rn5kd",
+          "slotId": "bczy",
+          "themeId": "mass-driver",
+          "levelId": "mass-driver-bczy",
+          "title": "Mass Driver",
+          "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+          "evaluatedCommit": "a825ec0c207021cecc8de21ca9082e357c441994",
+          "payloadCommit": "3144127a6050187a94cd20431400d29a8d1b17c0",
+          "manifestSha256": "37f7e8f91e49f799b34e0c743514bc8f3fe4e31d9bad042c74219853c8dc6ad8",
+          "definitionSha256": "62e54cc764351ebb58230aa0930f48e80466c49e14fa388d9c227042e00a0ce7",
+          "evaluatedSha256": "58fd50ed31db0c90e8a301cb3099978ebeee152cab7c2a2cf345a07dedefe21d",
+          "payloadSha256": "eef109eb5a2feecc5616c69b58ba54fc913651f9266baae14d49a421def99932",
+          "payloadDiffSha256": "997f5459d26dda2c124752b751c465dec64db6b5c7c1c39de8d7f1f0957a946f",
+          "sourcePath": "src/levels/mass-driver-bczy/",
+          "destinationPath": "src/benchmark-levels/mass-driver-bczy/",
+          "legacySourcePresent": false,
+          "derivative": null,
+          "descriptor": {
+            "source": "controller-owned assignment data",
+            "id": "mass-driver-bczy",
+            "title": "Mass Driver",
+            "sha256": "3f9d4daaf2051a1ca88494a77aafca185706150c2d1e3780b071bf16502eb1cd"
+          },
+          "baseCommit": "47ff444b50eaf06067024a43cb1a9c1272240e8a"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.715Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-bczy/",
+        "files": 5,
+        "reused": true
+      }
+    },
+    "descriptor": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.718Z",
+      "data": {
+        "path": "src/benchmark-levels/mass-driver-bczy/level.json",
+        "sha256": "3f9d4daaf2051a1ca88494a77aafca185706150c2d1e3780b071bf16502eb1cd",
+        "reused": true
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.752Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-bczy/",
+        "verifiedFiles": 6
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.758Z",
+      "data": {
+        "gallerySha256": "0d1bf0f59b37101c8e6fdfd191149bf312794b7db1afedeb69b60b3a55901df5",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 5.510843615999998,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "8e32697e6306fc6eac64257602bf921e71ae101ff49379359b6828370d1a04c9",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.5434315750000023,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "node scripts/check-benchmark-scope.mjs --level mass-driver-bczy",
+            "exitCode": 0,
+            "stdoutSha256": "8ca5b8c676fc8d997b7130213a23581e9f5af5dad6d879dc99940e057badb3c8",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.05056075899999996,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-bczy",
+            "exitCode": 0,
+            "stdoutSha256": "779f10fe15d6baf995c61c0a4d2b977063318e953cfa3c3932883f7efcab7ecb",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 10.543655927,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.795Z",
+      "data": {
+        "promotionCommit": "0891e8190fff17a64e2b0d32bbdcb3945b1fbfb0"
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-12T06:29:41.797Z",
+  "migration": true,
+  "migrationLevelIds": [
+    "hull-run-cvs3",
+    "hull-run-ns5n",
+    "mass-driver-7rkv",
+    "mass-driver-bczy",
+    "mass-driver-vyxj",
+    "mass-driver-wo4m",
+    "skyhook-81u5"
+  ],
+  "source": {
+    "runId": "run-5m77cl6rn5kd",
+    "slotId": "bczy",
+    "themeId": "mass-driver",
+    "levelId": "mass-driver-bczy",
+    "title": "Mass Driver",
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "evaluatedCommit": "a825ec0c207021cecc8de21ca9082e357c441994",
+    "payloadCommit": "3144127a6050187a94cd20431400d29a8d1b17c0",
+    "manifestSha256": "37f7e8f91e49f799b34e0c743514bc8f3fe4e31d9bad042c74219853c8dc6ad8",
+    "definitionSha256": "62e54cc764351ebb58230aa0930f48e80466c49e14fa388d9c227042e00a0ce7",
+    "evaluatedSha256": "58fd50ed31db0c90e8a301cb3099978ebeee152cab7c2a2cf345a07dedefe21d",
+    "payloadSha256": "eef109eb5a2feecc5616c69b58ba54fc913651f9266baae14d49a421def99932",
+    "payloadDiffSha256": "997f5459d26dda2c124752b751c465dec64db6b5c7c1c39de8d7f1f0957a946f",
+    "sourcePath": "src/levels/mass-driver-bczy/",
+    "destinationPath": "src/benchmark-levels/mass-driver-bczy/",
+    "legacySourcePresent": false,
+    "derivative": null,
+    "descriptor": {
+      "source": "controller-owned assignment data",
+      "id": "mass-driver-bczy",
+      "title": "Mass Driver",
+      "sha256": "3f9d4daaf2051a1ca88494a77aafca185706150c2d1e3780b071bf16502eb1cd"
+    },
+    "baseCommit": "47ff444b50eaf06067024a43cb1a9c1272240e8a"
+  },
+  "promotionCommit": "0891e8190fff17a64e2b0d32bbdcb3945b1fbfb0"
+}

@@ -1,0 +1,31 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-opus-4-8",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--settings",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/opus-b20-mdd-om6f/stages/solo/claude/budget/hook-settings.json",
+    "--session-id",
+    "5eb9c4d0-dbd4-4e78-b02d-6ebabdc71b10"
+  ],
+  "cliVersion": "2.1.214 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-opus-b20-mdd-om6f",
+  "startedAt": "2026-07-18T22:52:27.162Z",
+  "finishedAt": "2026-07-18T23:29:22.676Z",
+  "wallTimeSeconds": 2206.100906873,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

@@ -1,0 +1,114 @@
+{
+  "sessionId": "c1aeb643-7be7-437a-9e6f-fec0b7b4d939",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Strandline is complete** — a 60-second (24 bars at 96 BPM, exactly 60.0s) benchmark level at `src/benchmark-levels/strandline-s7ah/`, built to the theme: freeing a gigantic jellyfish from a parasite infestation, ending with the earned pull-back of the whole animal glowing clean.\n\n## What was verified in this environment\n\n- `npm run typecheck`, `npm run build`, `npm run check:benchmark-scope -- --base HEAD` — all pass (16 paths, gallery regenerated).\n- `npm run check:floor` — **all gates pass**: 0 occlusion warnings, 0 perf gate failures, audio config valid, full event coverage, no unintended dead-air. One soft warning remains (26.7% center kill concentration vs 25% threshold) — inherent to the centered crown finale, not a failure.\n- Simulation: perfect policy scores 12,435, rank A, kills the Matriarch and all 9 broods; imperfect rank A; the no-fire policy dies to venom at 54s. The only quiet stretch (53.5–59.5s) is the post-severance calm by design.\n- `trace:audio` confirms the arrangement: heartbeat from bar 0, kit arriving at bar 4, the reveal gong at 29.4s, crown dread at 42.6s, resolution chime at 59.1s.\n- SwiftShader snapshots confirm the two signature moments read on screen: the bell fills the frame at ~29.5s, and the boss fight sits framed upper-center from bar 18.\n\n## Design highlights\n\n- **Geometry-driven set pieces.** A spiral rail can never look at its own axis, so the reveal is a *radial strafe* — the rail swings wide, then flies straight at the animal while climbing, and the bell rises over the strand horizon on a struck glass gong — and the crown fight is one long straight ascent that keeps the Matriarch steady in frame for five bars. I verified both numerically (per-bar pitch/yaw vs. target elevation) before trusting snapshots.\n- **Boss without sim deadlocks.** The Matriarch is lockable from spawn but *sheds* volleys (crystal-warden `validateRelease` pattern, with `shielded` flares and a rubbery deny sound) until both brood waves die and its web starves — then two 3-hit stages with a convulsing flinch.\n- **The cleanse dial**: kills, brood clears, and the severance progressively turn the colony from sick teal to green-gold — strands, bell, nodules, post-grade, and the music (heartbeat + water bed that clears; kill-lane melodies per section; D dorian resolving to D major).\n- Perf discipline: merged strand groups with baked vertex tints, merged bell ribs/web/boss shells, instanced camera-wrapped snow/bubbles, and level-owned disposal of enemy/projectile geometry.\n\n## What still needs human eyes (WSL2 can't render WebGPU)\n\n1. The strafe + gong bell reveal at ~bar 11.75 — does it land as one held-breath moment at speed?\n2. Bloom-at-zero legibility of violet parasites against the teal forest, and the reticle/letters.\n3. The final mix — especially heartbeat/kick balance and whether the post-kill pull-back plus major-key peal resolves as serenely as intended.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 3355876,
+    "duration_api_ms": 3159638,
+    "ttft_ms": 2686,
+    "ttft_stream_ms": 1759,
+    "time_to_request_ms": 54,
+    "num_turns": 213,
+    "result": "**Strandline is complete** — a 60-second (24 bars at 96 BPM, exactly 60.0s) benchmark level at `src/benchmark-levels/strandline-s7ah/`, built to the theme: freeing a gigantic jellyfish from a parasite infestation, ending with the earned pull-back of the whole animal glowing clean.\n\n## What was verified in this environment\n\n- `npm run typecheck`, `npm run build`, `npm run check:benchmark-scope -- --base HEAD` — all pass (16 paths, gallery regenerated).\n- `npm run check:floor` — **all gates pass**: 0 occlusion warnings, 0 perf gate failures, audio config valid, full event coverage, no unintended dead-air. One soft warning remains (26.7% center kill concentration vs 25% threshold) — inherent to the centered crown finale, not a failure.\n- Simulation: perfect policy scores 12,435, rank A, kills the Matriarch and all 9 broods; imperfect rank A; the no-fire policy dies to venom at 54s. The only quiet stretch (53.5–59.5s) is the post-severance calm by design.\n- `trace:audio` confirms the arrangement: heartbeat from bar 0, kit arriving at bar 4, the reveal gong at 29.4s, crown dread at 42.6s, resolution chime at 59.1s.\n- SwiftShader snapshots confirm the two signature moments read on screen: the bell fills the frame at ~29.5s, and the boss fight sits framed upper-center from bar 18.\n\n## Design highlights\n\n- **Geometry-driven set pieces.** A spiral rail can never look at its own axis, so the reveal is a *radial strafe* — the rail swings wide, then flies straight at the animal while climbing, and the bell rises over the strand horizon on a struck glass gong — and the crown fight is one long straight ascent that keeps the Matriarch steady in frame for five bars. I verified both numerically (per-bar pitch/yaw vs. target elevation) before trusting snapshots.\n- **Boss without sim deadlocks.** The Matriarch is lockable from spawn but *sheds* volleys (crystal-warden `validateRelease` pattern, with `shielded` flares and a rubbery deny sound) until both brood waves die and its web starves — then two 3-hit stages with a convulsing flinch.\n- **The cleanse dial**: kills, brood clears, and the severance progressively turn the colony from sick teal to green-gold — strands, bell, nodules, post-grade, and the music (heartbeat + water bed that clears; kill-lane melodies per section; D dorian resolving to D major).\n- Perf discipline: merged strand groups with baked vertex tints, merged bell ribs/web/boss shells, instanced camera-wrapped snow/bubbles, and level-owned disposal of enemy/projectile geometry.\n\n## What still needs human eyes (WSL2 can't render WebGPU)\n\n1. The strafe + gong bell reveal at ~bar 11.75 — does it land as one held-breath moment at speed?\n2. Bloom-at-zero legibility of violet parasites against the teal forest, and the reticle/letters.\n3. The final mix — especially heartbeat/kick balance and whether the post-kill pull-back plus major-key peal resolves as serenely as intended.",
+    "stop_reason": "end_turn",
+    "session_id": "c1aeb643-7be7-437a-9e6f-fec0b7b4d939",
+    "total_cost_usd": 59.022363,
+    "usage": {
+      "input_tokens": 233,
+      "cache_creation_input_tokens": 474597,
+      "cache_read_input_tokens": 37513227,
+      "output_tokens": 240273,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 474597,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1126,
+          "cache_read_input_tokens": 489294,
+          "cache_creation_input_tokens": 633,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 633
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1141,
+        "outputTokens": 15,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001216,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-fable-5": {
+        "inputTokens": 233,
+        "outputTokens": 240273,
+        "cacheReadInputTokens": 37513227,
+        "cacheCreationInputTokens": 474597,
+        "webSearchRequests": 0,
+        "costUSD": 59.021147,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "60ab2cf5-ce86-4acc-b9dd-bf5bc3597ddc"
+  },
+  "normalized": {
+    "inputTokens": 37513460,
+    "outputTokens": 240273,
+    "cacheReadInputTokens": 37513227,
+    "cacheWriteInputTokens": 474597,
+    "vendorFields": {
+      "totalCostUsd": 59.022363,
+      "durationMs": 3355876,
+      "durationApiMs": 3159638,
+      "numTurns": 213,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1141,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001216,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-fable-5": {
+          "inputTokens": 233,
+          "outputTokens": 240273,
+          "cacheReadInputTokens": 37513227,
+          "cacheCreationInputTokens": 474597,
+          "webSearchRequests": 0,
+          "costUSD": 59.021147,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

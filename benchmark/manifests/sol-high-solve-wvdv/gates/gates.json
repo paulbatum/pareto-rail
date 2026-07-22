@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "912d7b8abd87ad903ee51674cc701fde117d2d3c",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.878856728,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-solve-wvdv/gates/typecheck.log",
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.116234401,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-solve-wvdv/gates/build.log",
+      "outputSha256": "b3fc022e3b9379ffb34c69b6ce90284b8d15ffcbb1ea152f7518fdf2d043ebee"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level speedsolve-wvdv --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.038173001000000116,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-solve-wvdv/gates/scope.log",
+      "outputSha256": "4d819287dd191c0fe6f2165d8d0c302d18af362f513f441ec167130407207e49"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level speedsolve-wvdv",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.126545472999999,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-solve-wvdv/gates/floor.log",
+      "outputSha256": "76c3400f0f44f8d3654570470291ac8153986a611cf9c6d9bb2597faa3c6f3e9"
+    }
+  ]
+}

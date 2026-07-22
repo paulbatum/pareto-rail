@@ -1,0 +1,114 @@
+{
+  "sessionId": "d43c1169-9b38-4c6e-a66d-b38bd7a7c0e4",
+  "initResolvedModel": "claude-opus-4-8",
+  "finalMessage": "**Mass Driver** is built at `src/benchmark-levels/mass-driver-detailed-om5e/` (13 files, directory-only contract — no registry edit).\n\n## The core idea, made structural\n\n128 BPM × 32 bars = exactly 60.000 s, so the run's 128 quarter notes are also its accelerator rings. Ring *k* is placed at the rail parameter the camera occupies at beat *k*, so **crossings land on the beat by construction**, not by a timer chasing the music. Because the speed curve is a normalized integral and only ever rises, ring spacing physically widens down the bore — the acceleration is real distance covered.\n\nThe one thing that could break that is transport phase: the audio transport free-runs during attract, so the run would start on an arbitrary phase. `onRunStart` re-zeroes the transport and score epoch at the run downbeat.\n\n## What I verified\n\n| Check | Result |\n|---|---|\n| `typecheck`, `build` | pass |\n| `check:floor` | **all pass** — 5 kinds, no missing events, 0 occlusion warnings, 0 perf failures, 0 centerness/distance warnings |\n| `check:benchmark-scope` (vs `5305d89`) | valid, 16 paths |\n| `simulate` | perfect 93/100, **S**; imperfect 70/100, **A**; no-fire detonates at 52.52 s |\n| `trace:audio` | **128 beat events** in 60 s; section boundaries land on their bars |\n| Visual | model snapshots per enemy + letters, gameplay sheets across the whole arc |\n\n## Bugs I found and fixed while building\n\nI ran a review pass and fixed all ten findings. The four that mattered most:\n\n- **The deadline was dodgeable.** A single `damagePlayer` at bar 28 could be swallowed by the engine's post-hit invulnerability window — take an arc bolt at 51.9 s and you'd survive with interlocks standing. Now the clamp is kept alive and hammered (parked behind the camera so it can't be locked), bounded to 1.2 s so it can't loop.\n- **Ring tubes weren't a ratio.** `TorusGeometry(1, 0.3)` scaled 12× gave 3.6-unit-thick donuts: 88 occlusion warnings, some targets 100% hidden.\n- **The muzzle field was past the camera far plane** (500 units), so the payoff section rendered black. It's now a camera-riding rig — which is also just the correct way to model an infinitely distant sky.\n- **Threaders flew outside the barrel wall.** Fixing it properly meant rotating each drone's crossing axis per wave, so a wave still fans across the whole frame from inside a 12-unit bore.\n\n## What needs human eyes\n\nWSL2 can't render WebGPU headless — the snapshot tool falls back to SwiftShader, so **the real frame and the entire mix are unconfirmed**. In priority order:\n\n1. **Do ring crossings feel exactly on the beat?** This is the level's one non-negotiable and the thing I could only verify structurally.\n2. **Does the bar-28 shot land as the biggest moment?** Speed spike, whiteout, FOV kick, hum cut, and E-major bloom all fire together; I can't hear whether they're balanced.\n3. **Mix balance** — particularly the climbing hum under the arrangement, and whether the per-section player timbres crossfade cleanly.\n4. Bloom at zero, and the interlocks against the charge glow in the last bar and a half.\n\nOne design note worth a second opinion: the imperfect sim policy clears the interlocks roughly 1 in 2 runs. I read that as correct tension for a hard deadline, but a playtester may find it harsh.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 2925537,
+    "duration_api_ms": 2545406,
+    "ttft_ms": 3622,
+    "ttft_stream_ms": 2099,
+    "time_to_request_ms": 70,
+    "num_turns": 152,
+    "result": "**Mass Driver** is built at `src/benchmark-levels/mass-driver-detailed-om5e/` (13 files, directory-only contract — no registry edit).\n\n## The core idea, made structural\n\n128 BPM × 32 bars = exactly 60.000 s, so the run's 128 quarter notes are also its accelerator rings. Ring *k* is placed at the rail parameter the camera occupies at beat *k*, so **crossings land on the beat by construction**, not by a timer chasing the music. Because the speed curve is a normalized integral and only ever rises, ring spacing physically widens down the bore — the acceleration is real distance covered.\n\nThe one thing that could break that is transport phase: the audio transport free-runs during attract, so the run would start on an arbitrary phase. `onRunStart` re-zeroes the transport and score epoch at the run downbeat.\n\n## What I verified\n\n| Check | Result |\n|---|---|\n| `typecheck`, `build` | pass |\n| `check:floor` | **all pass** — 5 kinds, no missing events, 0 occlusion warnings, 0 perf failures, 0 centerness/distance warnings |\n| `check:benchmark-scope` (vs `5305d89`) | valid, 16 paths |\n| `simulate` | perfect 93/100, **S**; imperfect 70/100, **A**; no-fire detonates at 52.52 s |\n| `trace:audio` | **128 beat events** in 60 s; section boundaries land on their bars |\n| Visual | model snapshots per enemy + letters, gameplay sheets across the whole arc |\n\n## Bugs I found and fixed while building\n\nI ran a review pass and fixed all ten findings. The four that mattered most:\n\n- **The deadline was dodgeable.** A single `damagePlayer` at bar 28 could be swallowed by the engine's post-hit invulnerability window — take an arc bolt at 51.9 s and you'd survive with interlocks standing. Now the clamp is kept alive and hammered (parked behind the camera so it can't be locked), bounded to 1.2 s so it can't loop.\n- **Ring tubes weren't a ratio.** `TorusGeometry(1, 0.3)` scaled 12× gave 3.6-unit-thick donuts: 88 occlusion warnings, some targets 100% hidden.\n- **The muzzle field was past the camera far plane** (500 units), so the payoff section rendered black. It's now a camera-riding rig — which is also just the correct way to model an infinitely distant sky.\n- **Threaders flew outside the barrel wall.** Fixing it properly meant rotating each drone's crossing axis per wave, so a wave still fans across the whole frame from inside a 12-unit bore.\n\n## What needs human eyes\n\nWSL2 can't render WebGPU headless — the snapshot tool falls back to SwiftShader, so **the real frame and the entire mix are unconfirmed**. In priority order:\n\n1. **Do ring crossings feel exactly on the beat?** This is the level's one non-negotiable and the thing I could only verify structurally.\n2. **Does the bar-28 shot land as the biggest moment?** Speed spike, whiteout, FOV kick, hum cut, and E-major bloom all fire together; I can't hear whether they're balanced.\n3. **Mix balance** — particularly the climbing hum under the arrangement, and whether the per-section player timbres crossfade cleanly.\n4. Bloom at zero, and the interlocks against the charge glow in the last bar and a half.\n\nOne design note worth a second opinion: the imperfect sim policy clears the interlocks roughly 1 in 2 runs. I read that as correct tension for a hard deadline, but a playtester may find it harsh.",
+    "stop_reason": "end_turn",
+    "session_id": "d43c1169-9b38-4c6e-a66d-b38bd7a7c0e4",
+    "total_cost_usd": 30.56870299999999,
+    "usage": {
+      "input_tokens": 8261,
+      "cache_creation_input_tokens": 490000,
+      "cache_read_input_tokens": 40189656,
+      "output_tokens": 221085,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 490000,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 1247,
+          "cache_read_input_tokens": 490140,
+          "cache_creation_input_tokens": 729,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 729
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 5380,
+        "outputTokens": 13,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.005445,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-opus-4-8": {
+        "inputTokens": 8261,
+        "outputTokens": 221085,
+        "cacheReadInputTokens": 40189656,
+        "cacheCreationInputTokens": 490000,
+        "webSearchRequests": 0,
+        "costUSD": 30.563257999999994,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "5960b4ec-d158-4497-b542-570b73761e64"
+  },
+  "normalized": {
+    "inputTokens": 40197917,
+    "outputTokens": 221085,
+    "cacheReadInputTokens": 40189656,
+    "cacheWriteInputTokens": 490000,
+    "vendorFields": {
+      "totalCostUsd": 30.56870299999999,
+      "durationMs": 2925537,
+      "durationApiMs": 2545406,
+      "numTurns": 152,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 5380,
+          "outputTokens": 13,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.005445,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 8261,
+          "outputTokens": 221085,
+          "cacheReadInputTokens": 40189656,
+          "cacheCreationInputTokens": 490000,
+          "webSearchRequests": 0,
+          "costUSD": 30.563257999999994,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "runId": "opus-high-purse-svok",
+  "slotId": "svok",
+  "levelId": "purse-pursuit-svok",
+  "themeId": "purse-pursuit",
+  "themePath": "benchmark/themes/purse-pursuit.md",
+  "configurationId": "claude-opus-4-8-high",
+  "recipePath": "benchmark/recipes/claude-opus-4-8-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-4-8",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Purse Pursuit"
+}

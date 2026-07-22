@@ -1,0 +1,23 @@
+{
+  "runId": "fable-b20-strandline-s2bq",
+  "slotId": "s2bq",
+  "levelId": "strandline-s2bq",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "claude-fable-5-high-b20",
+  "recipePath": "benchmark/recipes/claude-fable-5-high-b20.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-fable-5",
+    "effort": "high",
+    "timeoutSeconds": 43200,
+    "budget": {
+      "usd": 20
+    }
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Strandline"
+}

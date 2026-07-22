@@ -1,0 +1,23 @@
+{
+  "sessionId": "019f55b8-caeb-7ec2-b623-41e94e63e10d",
+  "turnId": null,
+  "eventType": "turn.completed",
+  "raw": {
+    "input_tokens": 2502913,
+    "cached_input_tokens": 2285568,
+    "output_tokens": 23852,
+    "reasoning_output_tokens": 3437
+  },
+  "normalized": {
+    "inputTokens": 2502913,
+    "outputTokens": 23852,
+    "cacheReadInputTokens": 2285568,
+    "reasoningTokens": 3437,
+    "vendorFields": {
+      "input_tokens": 2502913,
+      "cached_input_tokens": 2285568,
+      "output_tokens": 23852,
+      "reasoning_output_tokens": 3437
+    }
+  }
+}

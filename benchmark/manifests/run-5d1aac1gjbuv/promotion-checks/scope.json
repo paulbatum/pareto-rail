@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "0b0a2040f096e30c28abdc977a849890c9e8d42b6b81a346281c9952802a5209",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 0.05090728900022805,
+  "stdout": "benchmark scope valid (17 paths)\n",
+  "stderr": ""
+}

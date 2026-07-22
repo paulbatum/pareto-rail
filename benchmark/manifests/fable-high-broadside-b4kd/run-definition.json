@@ -1,0 +1,20 @@
+{
+  "runId": "fable-high-broadside-b4kd",
+  "slotId": "b4kd",
+  "levelId": "broadside-b4kd",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "claude-fable-5-high",
+  "recipePath": "benchmark/recipes/claude-fable-5-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-fable-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Broadside"
+}

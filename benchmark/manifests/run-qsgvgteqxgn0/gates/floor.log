@@ -1,0 +1,29 @@
+
+> raild@0.0.0 check:floor
+> node scripts/check-floor.mjs --level mass-driver-7rkv
+
+Mass Driver floor check
+duration 60.0s; spawned kinds 4: clamp, interlock, skimmer, weaver
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=1
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=1
+    maxGridSeconds=0.42
+  action SFX snap: overridden grid (enabled, 32nd grid)
+  lock radius: 0.155 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 2
+
+Warnings:
+- Average enemy destruction distance is slightly high (54.9m, warning threshold 45.0m). Consider spawning enemies closer.
+- Enemy destruction concentration in screen center is slightly high (58.9%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.

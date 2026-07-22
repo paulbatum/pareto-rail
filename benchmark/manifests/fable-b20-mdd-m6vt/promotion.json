@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "runId": "fable-b20-mdd-m6vt",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:43:17.273Z",
+      "data": {
+        "source": {
+          "runId": "fable-b20-mdd-m6vt",
+          "slotId": "m6vt",
+          "themeId": "mass-driver-detailed",
+          "levelId": "mass-driver-detailed-m6vt",
+          "title": "Mass Driver",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "251300fb3cb10f886356b3008eafd7ed6c859f19",
+          "payloadCommit": "b6d3ebc14dbb79d5b485ef40b752f47890229455",
+          "manifestSha256": "16b8729a67b01d7d15cba146b6635f48dd1213a957998ec0be5fe9ee15e5e1f8",
+          "definitionSha256": "01209cdb5cd90a736a2fb6f4288cb31ce0427eba9ea514f325cacf627a017f70",
+          "evaluatedSha256": "334fe15768bbe47261c4c52cc968efb0cb70f40720a8c5b87b3b0b702cec6046",
+          "payloadSha256": "ad362054630f6d65b2c0ee06f030fec734659bf7098620b46be468d4303988a2",
+          "payloadDiffSha256": "38bc368bd136a6ccc13b7ca6d9a70cca35a36aca9e8160aa0b4508ac2ba4ac46",
+          "sourcePath": "src/benchmark-levels/mass-driver-detailed-m6vt/",
+          "destinationPath": "src/benchmark-levels/mass-driver-detailed-m6vt/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/mass-driver-detailed-m6vt",
+              "promotedPath": "src/benchmark-levels/mass-driver-detailed-m6vt",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/mass-driver-detailed-m6vt",
+              "promotedPath": "public/level-content/mass-driver-detailed-m6vt",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "492d3414e19f62d113227d6d91bfd524fae7f188"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:43:17.403Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/mass-driver-detailed-m6vt/",
+            "files": 14,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:43:17.480Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-detailed-m6vt/",
+        "verifiedFiles": 14
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:43:43.828Z",
+      "data": {
+        "gallerySha256": "b3b8081bb81c0735e5a7f73faf319e28d8193310c6686567f9c6af16c4c36eda",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.319243195,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "c9fdb229b91ddd4b9efd6e9226f7f61ceb736597069ad0e5e34b03b98f132a8b",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 7.921279462,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m6vt --base 492d3414e19f62d113227d6d91bfd524fae7f188",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04221093600000131,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-detailed-m6vt",
+            "exitCode": 0,
+            "stdoutSha256": "ffda64a961da9b95937939fa6c29463196efb15985d231edf127952821de0bf2",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 14.740316899,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:43:43.887Z",
+      "data": {
+        "promotionCommit": "6bc4bfba01281f5c88e3d699aabc526d2d6e1bfb",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:43:43.888Z",
+  "source": {
+    "runId": "fable-b20-mdd-m6vt",
+    "slotId": "m6vt",
+    "themeId": "mass-driver-detailed",
+    "levelId": "mass-driver-detailed-m6vt",
+    "title": "Mass Driver",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "251300fb3cb10f886356b3008eafd7ed6c859f19",
+    "payloadCommit": "b6d3ebc14dbb79d5b485ef40b752f47890229455",
+    "manifestSha256": "16b8729a67b01d7d15cba146b6635f48dd1213a957998ec0be5fe9ee15e5e1f8",
+    "definitionSha256": "01209cdb5cd90a736a2fb6f4288cb31ce0427eba9ea514f325cacf627a017f70",
+    "evaluatedSha256": "334fe15768bbe47261c4c52cc968efb0cb70f40720a8c5b87b3b0b702cec6046",
+    "payloadSha256": "ad362054630f6d65b2c0ee06f030fec734659bf7098620b46be468d4303988a2",
+    "payloadDiffSha256": "38bc368bd136a6ccc13b7ca6d9a70cca35a36aca9e8160aa0b4508ac2ba4ac46",
+    "sourcePath": "src/benchmark-levels/mass-driver-detailed-m6vt/",
+    "destinationPath": "src/benchmark-levels/mass-driver-detailed-m6vt/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/mass-driver-detailed-m6vt",
+        "promotedPath": "src/benchmark-levels/mass-driver-detailed-m6vt",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/mass-driver-detailed-m6vt",
+        "promotedPath": "public/level-content/mass-driver-detailed-m6vt",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "492d3414e19f62d113227d6d91bfd524fae7f188"
+  },
+  "promotionCommit": "6bc4bfba01281f5c88e3d699aabc526d2d6e1bfb"
+}

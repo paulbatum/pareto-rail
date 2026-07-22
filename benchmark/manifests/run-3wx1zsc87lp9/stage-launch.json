@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/claude-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-3wx1zsc87lp9",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-3wx1zsc87lp9/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-3wx1zsc87lp9/stages/solo/claude",
+    "--model",
+    "claude-fable-5",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--budget-usd",
+    "20"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-07-21T22:01:57.720Z",
+  "finishedAt": "2026-07-21T22:40:15.796Z",
+  "wallTimeSeconds": 2262.205872127,
+  "stdoutSha256": "e83cb02f9fbe49fe3a65c82d0733ac8dd5295a5d6ccee11e6fc7a5c2cfcce05c",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"4ab20a7d-0d9c-41a1-8796-36bbb1ca005d\",\"usage\":{\"inputTokens\":15023774,\"outputTokens\":187514,\"cacheReadInputTokens\":15023657,\"cacheWriteInputTokens\":391925,\"vendorFields\":{\"totalCostUsd\":32.240434,\"durationMs\":2260115,\"durationApiMs\":2203579,\"numTurns\":101,\"stopReason\":\"end_turn\",\"subtype\":\"success\",\"modelUsage\":{\"claude-haiku-4-5-20251001\":{\"inputTokens\":1332,\"outputTokens\":15,\"cacheReadInputTokens\":0,\"cacheCreationInputTokens\":0,\"webSearchRequests\":0,\"costUSD\":0.001407,\"contextWindow\":200000,\"maxOutputTokens\":32000},\"claude-fable-5\":{\"inputTokens\":117,\"outputTokens\":187514,\"cacheReadInputTokens\":15023657,\"cacheCreationInputTokens\":391925,\"webSearchRequests\":0,\"costUSD\":32.239027,\"contextWindow\":1000000,\"maxOutputTokens\":64000}}}},\"wallTimeSeconds\":2261.45173995}\n",
+  "stderr": ""
+}

@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "6ff88ecd2875448afb7f00837f2bc4066f185aeae0229e59d0a9c58994ed3fd8",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 20.775960626,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level skyhook-ggl2\n\nSkyhook floor check\nduration 64.0s; spawned kinds 6: bolt, descender, grapnel, husk, kite, pod\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC; reticle visual 0.065 NDC = 0.76x lock radius, no reticle scaling\n  words: start \"ASCEND\" (6), replay \"REPLAY\" (6); MAX_LOCKS 6\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 0\nreticle warnings: 0\nstart/replay word warnings: 0\nAll floor checks passed.\n",
+  "stderr": ""
+}

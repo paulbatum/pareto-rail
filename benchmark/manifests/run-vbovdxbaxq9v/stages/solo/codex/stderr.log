@@ -1,0 +1,2 @@
+2026-07-11T07:02:11.886850Z ERROR codex_core::tools::router: error=Full-history forked agents inherit the parent agent type, model, and reasoning effort; omit agent_type, model, and reasoning_effort, or spawn without a full-history fork.
+2026-07-11T07:02:37.941345Z ERROR codex_core::tools::router: error=timeout_ms must be at least 10000

@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-770j1pokdphe",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T22:00:32.015Z",
+      "data": {
+        "source": {
+          "runId": "run-770j1pokdphe",
+          "slotId": "560p",
+          "themeId": "skyhook",
+          "levelId": "skyhook-560p",
+          "title": "Skyhook",
+          "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271",
+          "evaluatedCommit": "2125a1178208af1a36eff7ed02e9709748d3df21",
+          "payloadCommit": "8e53baf308d9ac53ca6cf9f1210c6b44a4b87798",
+          "manifestSha256": "eea3cc1b152d51b3b872401a9508d9f0f5ef6ad49b6c086c4d28085ebc3affa5",
+          "definitionSha256": "a4586d63ae77d95b437e21da8303bbf0770dbfcddaa6f69e823d67adc1965758",
+          "evaluatedSha256": "f781c8f74330fe1b6f15275e909269eef016dfb8c2fe9a702ed1fefe86ab2717",
+          "payloadSha256": "6c2529e40e0af0697ab8bfba009449a9119505c080ad466995887f9947641a6a",
+          "payloadDiffSha256": "44bf387502c27d7a528ea73e2b8c1914056149e33b87089e38b5ba93c2c66c84",
+          "sourcePath": "src/benchmark-levels/skyhook-560p/",
+          "destinationPath": "src/benchmark-levels/skyhook-560p/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/skyhook-560p",
+              "promotedPath": "src/benchmark-levels/skyhook-560p",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/skyhook-560p",
+              "promotedPath": "public/level-content/skyhook-560p",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "e0539c190f731fd533d7377ccac5418ec08fed62"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T22:00:32.158Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/skyhook-560p/",
+            "files": 15,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T22:00:32.160Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T22:00:32.259Z",
+      "data": {
+        "destination": "src/benchmark-levels/skyhook-560p/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T22:01:01.171Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 2.589440218,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "6fed722185a0cb5e0d65a68313cee8b901e865203751dee1f759986ae3265823",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 10.056726366000001,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-560p --base e0539c190f731fd533d7377ccac5418ec08fed62",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04444626499999867,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level skyhook-560p",
+            "exitCode": 0,
+            "stdoutSha256": "2438e7f3c2b80634b41d85fc99b90e00f7578ad784f603791e3463d3cbc4d538",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 16.203701934999998,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T22:01:01.236Z",
+      "data": {
+        "promotionCommit": "7c0f018fd6dc4aafda3d8ed5a9e0358ffae5db5e",
+        "reused": false
+      }
+    }
+  },
+  "failures": [
+    {
+      "failedAt": "2026-07-21T22:00:14.842Z",
+      "checkpoint": "validation",
+      "message": "Assigned level id is already a promoted benchmark level: skyhook-560p"
+    }
+  ],
+  "updatedAt": "2026-07-21T22:01:01.238Z",
+  "failure": {
+    "failedAt": "2026-07-21T22:00:14.842Z",
+    "checkpoint": "validation",
+    "message": "Assigned level id is already a promoted benchmark level: skyhook-560p"
+  },
+  "source": {
+    "runId": "run-770j1pokdphe",
+    "slotId": "560p",
+    "themeId": "skyhook",
+    "levelId": "skyhook-560p",
+    "title": "Skyhook",
+    "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271",
+    "evaluatedCommit": "2125a1178208af1a36eff7ed02e9709748d3df21",
+    "payloadCommit": "8e53baf308d9ac53ca6cf9f1210c6b44a4b87798",
+    "manifestSha256": "eea3cc1b152d51b3b872401a9508d9f0f5ef6ad49b6c086c4d28085ebc3affa5",
+    "definitionSha256": "a4586d63ae77d95b437e21da8303bbf0770dbfcddaa6f69e823d67adc1965758",
+    "evaluatedSha256": "f781c8f74330fe1b6f15275e909269eef016dfb8c2fe9a702ed1fefe86ab2717",
+    "payloadSha256": "6c2529e40e0af0697ab8bfba009449a9119505c080ad466995887f9947641a6a",
+    "payloadDiffSha256": "44bf387502c27d7a528ea73e2b8c1914056149e33b87089e38b5ba93c2c66c84",
+    "sourcePath": "src/benchmark-levels/skyhook-560p/",
+    "destinationPath": "src/benchmark-levels/skyhook-560p/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/skyhook-560p",
+        "promotedPath": "src/benchmark-levels/skyhook-560p",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/skyhook-560p",
+        "promotedPath": "public/level-content/skyhook-560p",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "e0539c190f731fd533d7377ccac5418ec08fed62"
+  },
+  "promotionCommit": "7c0f018fd6dc4aafda3d8ed5a9e0358ffae5db5e"
+}

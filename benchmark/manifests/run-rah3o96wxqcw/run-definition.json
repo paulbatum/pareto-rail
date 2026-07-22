@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "benchmarkVersion": "v1",
+  "mode": "eligible",
+  "assignment": {
+    "runId": "run-rah3o96wxqcw",
+    "slotId": "ns5n",
+    "configurationId": "codex-sol-high",
+    "recipe": {
+      "id": "recipe",
+      "path": "benchmark/recipes/codex-sol-high.md",
+      "sha256": "2d614de943e5ecfe7ed89f3c235f9c1030c60e8d5ac4324ea73d36aa8035a2eb"
+    },
+    "theme": {
+      "id": "hull-run",
+      "path": "benchmark/themes/hull-run.md",
+      "sha256": "b5545205ce956a0903b7c00eb3f32e026fbd863e35ee7e281da43bfdfd58f1b5"
+    },
+    "levelId": "hull-run-ns5n",
+    "levelTitle": "Hull Run"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
+    "configurationCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+  },
+  "release": {
+    "path": "benchmark/releases/v1/freeze.json",
+    "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "f317210e16f948f1c4ba245be383e51fcbe888801e7efee6f21276477228de29"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "70a7e48fbeddeceb5e9425aec20874252458f8c8f031346a9fbadc39fbc553bd"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/codex-cli.mjs",
+    "sha256": "1facba2cb1aedb6cec620064c9412b506903bfac2a97affeb9f07f0e34a90c85"
+  },
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "128da6eb067e60c41ea29a94c7f8b0af6456d77344ad01b575722c4e8f0384c5"
+  },
+  "failureTaxonomy": {
+    "path": "benchmark/controller/failure-taxonomy.md",
+    "sha256": "018fc9b7a198fb5187bcab2b50f661cc86c645108cac74fe943f09b0e7a2e6d0"
+  },
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 10800
+  },
+  "worktree": {
+    "path": "/tmp/raild-run-rah3o96wxqcw"
+  },
+  "payload": {
+    "path": "/tmp/raild-payload-run-rah3o96wxqcw",
+    "branch": "benchmark-payload-run-rah3o96wxqcw"
+  }
+}

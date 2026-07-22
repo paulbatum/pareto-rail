@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "81e5eca9bc2674be5ea576ea7e523379666e74924efe2e9ff2b855291842ddd6",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 18.040909064000004,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level purse-pursuit-svok\n\nPurse Pursuit floor check\nduration 60.0s; spawned kinds 7: bomb, boss, flyer, hauler, spike, swinger, weaver\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=1\n    maxGridSeconds=0.62\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: 0.095 NDC (engine default 0.085); reticle visual 0.070 NDC = 0.73x lock radius, no reticle scaling\n  words: start \"FLOOR!\" (6), replay \"AGAIN!\" (6); MAX_LOCKS 6\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateCameraEffects, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 1\nreticle warnings: 0\nstart/replay word warnings: 0\n\nWarnings:\n- Enemy destruction concentration in screen center is slightly high (37.4%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}

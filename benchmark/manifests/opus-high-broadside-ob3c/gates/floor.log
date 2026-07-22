@@ -1,0 +1,25 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level broadside-ob3c
+
+Broadside floor check
+duration 60.0s; spawned kinds 8: bolt, core, corsair, escort, generator, interceptor, lance, turret
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.28
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.

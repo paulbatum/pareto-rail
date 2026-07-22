@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "6972ad1b2a49900d50a04395d58b92df34cccf06dfe3c4ab1f849e32062a4169"
+  },
+  "theme": {
+    "path": "benchmark/themes/purse-pursuit.md",
+    "sha256": "2b54a5de880d7ac7c60a8643673e45b44e62417495583248c575302ee43ac3d9"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-opus-4-8-high.md",
+    "sha256": "60fdc8027c048a5b629572b22899f21a43e90b825d1887ed686dac3920137429"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/opus-high-purse-svok/rendered-assignment.md",
+    "sha256": "3a6748193abbf70cdb3df5283299fa067053efcd377c11add3ea89009ac79bab"
+  },
+  "baseRendering": {
+    "sha256": "3a6748193abbf70cdb3df5283299fa067053efcd377c11add3ea89009ac79bab"
+  }
+}

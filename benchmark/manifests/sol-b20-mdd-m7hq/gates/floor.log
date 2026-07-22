@@ -1,0 +1,25 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level mass-driver-detailed-m7hq
+
+Mass Driver floor check
+duration 60.0s; spawned kinds 5: arc, capacitor, coil, interlock, threader
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.19
+  action SFX snap: overridden grid (enabled, 2×32nd grid)
+  lock radius: 0.18 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.

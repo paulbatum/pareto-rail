@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-6m3dhz1loblr",
+  "slotId": "9uib",
+  "configuration": {
+    "id": "codex-sol-high"
+  },
+  "theme": {
+    "id": "skyhook",
+    "path": "benchmark/themes/skyhook.md",
+    "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "configurationCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "releaseRecord": {
+      "path": "benchmark/releases/v1/freeze.json",
+      "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+    },
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "a7acfa7f253926dab38f6620167dda9644cfa0be"
+    }
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "8e62157f29f675ceb75afa5dac3df81f9181b81e955d9e096175e20c8a3e0783"
+  },
+  "recipe": {
+    "id": "recipe",
+    "path": "benchmark/recipes/codex-sol-high.md",
+    "sha256": "2d614de943e5ecfe7ed89f3c235f9c1030c60e8d5ac4324ea73d36aa8035a2eb"
+  },
+  "controller": {
+    "path": "benchmark/controller/runbook.md",
+    "sha256": "5d1f370ec351e0a96b2d923250689a1b3e8d35c990748dd8b2f34e10786c8506"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "70a7e48fbeddeceb5e9425aec20874252458f8c8f031346a9fbadc39fbc553bd"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/codex-cli.mjs",
+    "sha256": "1facba2cb1aedb6cec620064c9412b506903bfac2a97affeb9f07f0e34a90c85"
+  },
+  "timing": {
+    "startedAt": "2026-07-12T09:46:36.314Z",
+    "finishedAt": "2026-07-12T09:56:20.505Z",
+    "wallTimeSeconds": 584.191
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "ef3bb534eed138525d1b51cfeaee86e4395704c83fbe655fb38f50b9859d9894",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.144.1"
+      },
+      "sessionId": "019f55b8-caeb-7ec2-b623-41e94e63e10d",
+      "rolloutArtifactSha256": "91cdb1d8b2bc8a91e47d459918a88fcf480367a44521c520c723a63909110886",
+      "outputArtifactSha256": "8c511b4471d66cb475e45a9a23db31388278ce9b361c37bd4132d89999699751",
+      "startedAt": "2026-07-12T09:46:39.924Z",
+      "finishedAt": "2026-07-12T09:56:10.053Z",
+      "wallTimeSeconds": 539.350720533,
+      "result": "completed",
+      "usage": {
+        "inputTokens": 217345,
+        "outputTokens": 23852,
+        "cacheReadInputTokens": 2285568,
+        "reasoningTokens": 3437
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 2.945069,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 2.945069,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json"
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 217345,
+        "outputTokens": 23852,
+        "cacheReadTokens": 2285568,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 3437
+      }
+    ],
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    }
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.096415514,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.8083134959999998,
+      "outputSha256": "efa454f840c6f2d7c71bdda91386f5e1e6f6babd490fd6a745c110de78ad1790"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- skyhook-9uib a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.09599258800000007,
+      "outputSha256": "e937da22febdcb542c7b4f4f0a6e67bd64a80083f5107d48befdf9bfcd6c02c2"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level skyhook-9uib",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.804087706000001,
+      "outputSha256": "8bb6a2e82684f480f7eaf0da1b771cb668d25e860371569c4732ad041aee30aa"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/levels",
+    "levelId": "skyhook-9uib",
+    "title": "Skyhook",
+    "evaluated": {
+      "commit": "d3b1adb7278d6d183d65bd116f9d3116760aa77c",
+      "branch": "benchmark-run-run-6m3dhz1loblr"
+    },
+    "payload": {
+      "commit": "dc879e720577412e434e10f7a69ae081365ec5cb",
+      "branch": "benchmark-payload-run-6m3dhz1loblr"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

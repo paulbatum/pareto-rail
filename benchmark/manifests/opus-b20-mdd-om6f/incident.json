@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "incident": "2026-07-baseline-contamination",
+  "note": "Entrant baseline contained prior benchmark levels and benchmark infrastructure; the intended baseline exposes built-in levels only.",
+  "auditVerdict": "listings-only"
+}

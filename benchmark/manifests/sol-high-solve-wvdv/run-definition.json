@@ -1,0 +1,21 @@
+{
+  "runId": "sol-high-solve-wvdv",
+  "slotId": "wvdv",
+  "levelId": "speedsolve-wvdv",
+  "themeId": "speedsolve",
+  "themePath": "benchmark/themes/speedsolve.md",
+  "configurationId": "codex-sol-high",
+  "recipePath": "benchmark/recipes/codex-sol-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Speedsolve"
+}

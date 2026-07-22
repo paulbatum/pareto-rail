@@ -1,0 +1,29 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level broadside-b6ej
+
+Broadside floor check
+duration 60.0s; spawned kinds 8: bomber, core, escort, flak, interceptor, shield, spiral, turret
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.135
+  action SFX snap: overridden grid (enabled, 2×32nd grid)
+  lock radius: 0.205 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 2
+
+Warnings:
+- Average enemy destruction distance is slightly high (46.1m, warning threshold 45.0m). Consider spawning enemies closer.
+- Enemy destruction concentration in screen center is slightly high (39.7%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.

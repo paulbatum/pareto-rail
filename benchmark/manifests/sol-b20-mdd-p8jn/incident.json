@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "incident": "2026-07-baseline-contamination",
+  "note": "Rerun baseline removed the prior mass-driver source directories but retained their entries in the generated level gallery, which the assignment directs entrants to read; the entrant saw design descriptions of seven prior mass-driver levels without access to their source.",
+  "auditVerdict": "cross-theme-and-gallery"
+}

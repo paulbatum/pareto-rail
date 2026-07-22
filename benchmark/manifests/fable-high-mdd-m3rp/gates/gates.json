@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "25780690e63d1651f886ed3298c652339d8eceae",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.828156294,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-high-mdd-m3rp/gates/typecheck.log",
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.1728178180000004,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-high-mdd-m3rp/gates/build.log",
+      "outputSha256": "ee2586a4abd306040f690e114a980bc2e879bf303bbd5e957b38c652ee6fa7e8"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m3rp --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03814315999999963,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-high-mdd-m3rp/gates/scope.log",
+      "outputSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-detailed-m3rp",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.861347489000001,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-high-mdd-m3rp/gates/floor.log",
+      "outputSha256": "2dfdf3fc77885fb2da61aa20a38bac4636cdf57553f631a97b1bcbd715435a20"
+    }
+  ]
+}

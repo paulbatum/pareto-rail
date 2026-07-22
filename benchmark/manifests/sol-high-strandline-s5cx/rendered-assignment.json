@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "f16adc5c3a6bcfe0ee0549bf5e58ddc5acc8554233fd2765612250c4bc65a4e4"
+  },
+  "theme": {
+    "path": "benchmark/themes/strandline.md",
+    "sha256": "31621cb405a2b293bf0f7026add0b462312e75c44dfcea3a8549b1fd9616bff1"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-sol-high.md",
+    "sha256": "a7c501267f4e7fe0d85ba06f2eb3fd60637d0790c47241740a2d5d8811584bb4"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-strandline-s5cx/rendered-assignment.md",
+    "sha256": "dc2b321538cc3c69fec3877a3a43857cfc3b8f4b4f61076a2c2acc214c18b083"
+  },
+  "baseRendering": {
+    "sha256": "dc2b321538cc3c69fec3877a3a43857cfc3b8f4b4f61076a2c2acc214c18b083"
+  }
+}

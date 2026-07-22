@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "f16adc5c3a6bcfe0ee0549bf5e58ddc5acc8554233fd2765612250c4bc65a4e4"
+  },
+  "theme": {
+    "path": "benchmark/themes/broadside.md",
+    "sha256": "26b45de49b732d66b6dd68c6d97c053519f755e0e7543cf97a368a31794e8376"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-fable-5-high.md",
+    "sha256": "114c3d7ef224546e8a3ce6d06398db5724e7f19c403943d246646e5adc5d3770"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-high-broadside-b4kd/rendered-assignment.md",
+    "sha256": "214188a068f510c7ec22a574eb5c601f38626e5694e7e51b0df898b766a1e8ab"
+  },
+  "baseRendering": {
+    "sha256": "214188a068f510c7ec22a574eb5c601f38626e5694e7e51b0df898b766a1e8ab"
+  }
+}

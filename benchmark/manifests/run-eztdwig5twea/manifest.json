@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-eztdwig5twea",
+  "slotId": "wo4m",
+  "configuration": {
+    "id": "claude-fable-5-opus-delegation"
+  },
+  "theme": {
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "configurationCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "releaseRecord": {
+      "path": "benchmark/releases/v1/freeze.json",
+      "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+    },
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "a7acfa7f253926dab38f6620167dda9644cfa0be"
+    }
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "8e62157f29f675ceb75afa5dac3df81f9181b81e955d9e096175e20c8a3e0783"
+  },
+  "recipe": {
+    "id": "recipe",
+    "path": "benchmark/recipes/claude-fable-5-opus-delegation.md",
+    "sha256": "bd20141f97ed865c844f9b0c05ce1360afd1201402b1cf26f7ba9171b537733d"
+  },
+  "controller": {
+    "path": "benchmark/controller/runbook.md",
+    "sha256": "5d1f370ec351e0a96b2d923250689a1b3e8d35c990748dd8b2f34e10786c8506"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "70a7e48fbeddeceb5e9425aec20874252458f8c8f031346a9fbadc39fbc553bd"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/claude-cli.mjs",
+    "sha256": "b334dce63466bf49cece64583950283223e1af73c97ef908326de65fa58aae07"
+  },
+  "timing": {
+    "startedAt": "2026-07-11T23:55:27.065Z",
+    "finishedAt": "2026-07-12T00:48:20.743Z",
+    "wallTimeSeconds": 3173.678
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5",
+      "role": "orchestrate",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5"
+      },
+      "promptSha256": "2a34499f2de18f3c8f4ba97366d3428f6cb2e8d10c56935524da5cd78d167663",
+      "delegationPromptSha256": "f00d6a48a77103f97eb55d73959883353daf7667dc74da547eb8ef4895978d5c",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.207 (Claude Code)"
+      },
+      "sessionId": "0b0bb5d9-8e37-476e-a85c-c0dff2b6289f",
+      "rolloutArtifactSha256": "cdd9fa6ed8e0ec696bdd7dd66e77655ebd9fb55ca0fe7a845197f287d33cee8f",
+      "outputArtifactSha256": "b4563b1ecf81443db9c061e63d6f64754fc70339b46ea79ff9b92dd9870b7012",
+      "startedAt": "2026-07-11T23:55:41.118Z",
+      "finishedAt": "2026-07-12T00:48:06.462Z",
+      "wallTimeSeconds": 3106.862721903,
+      "result": "completed",
+      "usage": {
+        "inputTokens": 174,
+        "outputTokens": 93774,
+        "cacheReadInputTokens": 23206399,
+        "cacheWriteInputTokens": 355497
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 35.00677900000001,
+        "source": "ccusage"
+      }
+    },
+    {
+      "id": "claude-opus-4-8",
+      "role": "implement",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-4-8"
+      },
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.207 (Claude Code)"
+      },
+      "sessionId": "0b0bb5d9-8e37-476e-a85c-c0dff2b6289f",
+      "rolloutArtifactSha256": "cdd9fa6ed8e0ec696bdd7dd66e77655ebd9fb55ca0fe7a845197f287d33cee8f",
+      "outputArtifactSha256": "b4563b1ecf81443db9c061e63d6f64754fc70339b46ea79ff9b92dd9870b7012",
+      "startedAt": "2026-07-11T23:55:41.118Z",
+      "finishedAt": "2026-07-12T00:48:06.462Z",
+      "wallTimeSeconds": 3106.862721903,
+      "result": "completed",
+      "usage": {
+        "inputTokens": 4377,
+        "outputTokens": 252399,
+        "cacheReadInputTokens": 16533123,
+        "cacheWriteInputTokens": 790072
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 19.5363715,
+        "source": "harness-counter"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 54.543150499999975,
+    "orchestrationTreatment": "included",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5",
+        "costUsd": 35.00677900000001,
+        "inputTokens": 174,
+        "outputTokens": 93774,
+        "cacheReadTokens": 23206399,
+        "cacheWriteTokens": 355497,
+        "usageSource": "agreed"
+      },
+      {
+        "modelName": "claude-opus-4-8",
+        "costUsd": 19.5363715,
+        "inputTokens": 4377,
+        "outputTokens": 252399,
+        "cacheReadTokens": 16533123,
+        "cacheWriteTokens": 790072,
+        "usageSource": "harness-counter"
+      }
+    ],
+    "reconciliation": {
+      "status": "adjusted",
+      "source": "harness result event modelUsage",
+      "adjustments": [
+        {
+          "modelName": "claude-opus-4-8",
+          "replayOutputTokens": 217400,
+          "counterOutputTokens": 252399,
+          "resolution": "took-counter",
+          "replayCostUsd": 18.661396499999995,
+          "counterCostUsd": 19.5363715
+        }
+      ]
+    }
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.8055054800000003,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.273920576,
+      "outputSha256": "907f1f05c16fd8c05fe6c7aec34a78f3637ec5e09dbaed1959ed5a2614bfabd5"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- mass-driver-wo4m a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.1301310430000003,
+      "outputSha256": "5895d0cb689b0c4174734000a9ae80d6049857a81b2ae62de9d02223026c5d0e"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-wo4m",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.321210109999999,
+      "outputSha256": "f5c969376debfd5fd8702c9ddcc55e18117821e7d173ebd361068356e02ffe6d"
+    }
+  ],
+  "output": {
+    "levelId": "mass-driver-wo4m",
+    "evaluated": {
+      "commit": "ebc45c1fa16cb250282f5ef4118ae00e5a14af58",
+      "branch": "benchmark-run-run-eztdwig5twea"
+    },
+    "payload": {
+      "commit": "b4afc6f900cce848917bf5b4eed056a23aa8efe5",
+      "branch": "benchmark-payload-run-eztdwig5twea"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

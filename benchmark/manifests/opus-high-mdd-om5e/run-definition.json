@@ -1,0 +1,20 @@
+{
+  "runId": "opus-high-mdd-om5e",
+  "slotId": "om5e",
+  "levelId": "mass-driver-detailed-om5e",
+  "themeId": "mass-driver-detailed",
+  "themePath": "benchmark/themes/mass-driver-detailed.md",
+  "configurationId": "claude-opus-4-8-high",
+  "recipePath": "benchmark/recipes/claude-opus-4-8-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-4-8",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Mass Driver"
+}

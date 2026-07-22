@@ -1,0 +1,114 @@
+{
+  "sessionId": "4ab20a7d-0d9c-41a1-8796-36bbb1ca005d",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Skyhook is complete and committed** at `eb896c4`, with all required checks passing on the final tree: `npm run typecheck` ✓, `npm run build` ✓, and `npm run check:floor -- --level skyhook-p46c` exits 0 (zero occlusion warnings, zero performance-gate failures, zero audio-config failures).\n\n## What was built\n\nA 60.0-second climb (128 BPM × 32 bars exactly) in `src/benchmark-levels/skyhook-p46c/`, per the directory-only contract — no registry edits, scaffolded with the benchmark scaffold command.\n\n- **The climb**: the world is built on a single straight axis pitched 62°, so the camera math stays stable while everything reads as vertical. Storm murk → cloud-break punch at bar 8 → sunlit blue → indigo → starfield black, all driven by an altitude-keyed sky dome. Rain thins into falling debris and then into vacuum stillness; tether collars with beat-synced strobes whip past; the station irises open and the car decelerates into it over the last four bars.\n- **Defending the car**: the 4-point hull *is* the climber. Grapplers swing up from below and latch onto visible deck pylons at the bottom of the frame, biting until shot off. Five enemy kinds with distinct silhouettes/motion (gusty kites, wheeling rotor vanes, three-phase strafing darts, armored bulwarks, grapplers) plus lockable rivets and the boss.\n- **Boss**: the Tetherjack latches 260 m up the tether at bar 18 and climbs down hand-over-hand, one lurch per bar, growing the whole fight, hurling rivets; two carapace stages; kill it or it rides the car and tears at the hull. Its carcass falls past you when cut loose.\n- **Music**: strips layers as the air thins — wide wind/pads/breakbeat in the storm down to heartbeat kick + sub + glass bells in vacuum, where the player's authored kill-melody lanes own the register. All player actions are transport-quantized and pitched from the live harmony; docking is a quiet chime figure and one soft clamp thump.\n\n## Verified headlessly\n\nSimulation: perfect policy clears **73/73, rank S, no deaths**; imperfect seed 1 gets 63/73, rank A, survives. No dead-air outside the intentional docking outro, no impossible moments, full event coverage. A real fix came out of this: grapplers originally latched just below the 62°-FOV frame edge (unavoidable damage) — latch points and deck were raised into view.\n\n## Needs human eyes\n\nWSL2 headless Chrome can't render WebGPU, so visual/audio quality is unverified by me. A playtester should check first: the sky-dome color arc and star fade-in, the cloud-break punch at bar 8, boss legibility while it's still far up the tether, the docking deceleration/iris moment, and the mix balance of the wind bed vs. the vacuum-act bells. Two soft (non-gating) warnings remain — average kill distance 46.8 m vs. a 45 m advisory, and center concentration — worth a tuning pass if playtesting agrees.\n\nOne environment note: `npm run check:scope` cannot run as written here (it diffs against a `main` ref that doesn't exist and only whitelists `src/levels/`); every change is contained in the mandated benchmark directory plus the regenerated gallery, which is the check's intent.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 2260115,
+    "duration_api_ms": 2203579,
+    "ttft_ms": 1508,
+    "ttft_stream_ms": 1050,
+    "time_to_request_ms": 48,
+    "num_turns": 101,
+    "result": "**Skyhook is complete and committed** at `eb896c4`, with all required checks passing on the final tree: `npm run typecheck` ✓, `npm run build` ✓, and `npm run check:floor -- --level skyhook-p46c` exits 0 (zero occlusion warnings, zero performance-gate failures, zero audio-config failures).\n\n## What was built\n\nA 60.0-second climb (128 BPM × 32 bars exactly) in `src/benchmark-levels/skyhook-p46c/`, per the directory-only contract — no registry edits, scaffolded with the benchmark scaffold command.\n\n- **The climb**: the world is built on a single straight axis pitched 62°, so the camera math stays stable while everything reads as vertical. Storm murk → cloud-break punch at bar 8 → sunlit blue → indigo → starfield black, all driven by an altitude-keyed sky dome. Rain thins into falling debris and then into vacuum stillness; tether collars with beat-synced strobes whip past; the station irises open and the car decelerates into it over the last four bars.\n- **Defending the car**: the 4-point hull *is* the climber. Grapplers swing up from below and latch onto visible deck pylons at the bottom of the frame, biting until shot off. Five enemy kinds with distinct silhouettes/motion (gusty kites, wheeling rotor vanes, three-phase strafing darts, armored bulwarks, grapplers) plus lockable rivets and the boss.\n- **Boss**: the Tetherjack latches 260 m up the tether at bar 18 and climbs down hand-over-hand, one lurch per bar, growing the whole fight, hurling rivets; two carapace stages; kill it or it rides the car and tears at the hull. Its carcass falls past you when cut loose.\n- **Music**: strips layers as the air thins — wide wind/pads/breakbeat in the storm down to heartbeat kick + sub + glass bells in vacuum, where the player's authored kill-melody lanes own the register. All player actions are transport-quantized and pitched from the live harmony; docking is a quiet chime figure and one soft clamp thump.\n\n## Verified headlessly\n\nSimulation: perfect policy clears **73/73, rank S, no deaths**; imperfect seed 1 gets 63/73, rank A, survives. No dead-air outside the intentional docking outro, no impossible moments, full event coverage. A real fix came out of this: grapplers originally latched just below the 62°-FOV frame edge (unavoidable damage) — latch points and deck were raised into view.\n\n## Needs human eyes\n\nWSL2 headless Chrome can't render WebGPU, so visual/audio quality is unverified by me. A playtester should check first: the sky-dome color arc and star fade-in, the cloud-break punch at bar 8, boss legibility while it's still far up the tether, the docking deceleration/iris moment, and the mix balance of the wind bed vs. the vacuum-act bells. Two soft (non-gating) warnings remain — average kill distance 46.8 m vs. a 45 m advisory, and center concentration — worth a tuning pass if playtesting agrees.\n\nOne environment note: `npm run check:scope` cannot run as written here (it diffs against a `main` ref that doesn't exist and only whitelists `src/levels/`); every change is contained in the mandated benchmark directory plus the regenerated gallery, which is the check's intent.",
+    "stop_reason": "end_turn",
+    "session_id": "4ab20a7d-0d9c-41a1-8796-36bbb1ca005d",
+    "total_cost_usd": 32.240434,
+    "usage": {
+      "input_tokens": 117,
+      "cache_creation_input_tokens": 391925,
+      "cache_read_input_tokens": 15023657,
+      "output_tokens": 187514,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 391925,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1151,
+          "cache_read_input_tokens": 407171,
+          "cache_creation_input_tokens": 88,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 88
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1332,
+        "outputTokens": 15,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001407,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-fable-5": {
+        "inputTokens": 117,
+        "outputTokens": 187514,
+        "cacheReadInputTokens": 15023657,
+        "cacheCreationInputTokens": 391925,
+        "webSearchRequests": 0,
+        "costUSD": 32.239027,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "17a5b296-c4ac-4023-9ba4-8fd4a0edd56d"
+  },
+  "normalized": {
+    "inputTokens": 15023774,
+    "outputTokens": 187514,
+    "cacheReadInputTokens": 15023657,
+    "cacheWriteInputTokens": 391925,
+    "vendorFields": {
+      "totalCostUsd": 32.240434,
+      "durationMs": 2260115,
+      "durationApiMs": 2203579,
+      "numTurns": 101,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1332,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001407,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-fable-5": {
+          "inputTokens": 117,
+          "outputTokens": 187514,
+          "cacheReadInputTokens": 15023657,
+          "cacheCreationInputTokens": 391925,
+          "webSearchRequests": 0,
+          "costUSD": 32.239027,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "ffda64a961da9b95937939fa6c29463196efb15985d231edf127952821de0bf2",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 14.740316899,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level mass-driver-detailed-m6vt\n\nMass Driver floor check\nduration 60.0s; spawned kinds 5: arc, capacitor, coil, interlock, threader\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=0.95\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 2\n\nWarnings:\n- Average enemy destruction distance is slightly high (50.9m, warning threshold 45.0m). Consider spawning enemies closer.\n- Enemy destruction concentration in screen center is slightly high (51.7%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}

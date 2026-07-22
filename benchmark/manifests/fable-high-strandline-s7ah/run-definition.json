@@ -1,0 +1,20 @@
+{
+  "runId": "fable-high-strandline-s7ah",
+  "slotId": "s7ah",
+  "levelId": "strandline-s7ah",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "claude-fable-5-high",
+  "recipePath": "benchmark/recipes/claude-fable-5-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-fable-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Strandline"
+}

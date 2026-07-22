@@ -1,0 +1,14 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "128da6eb067e60c41ea29a94c7f8b0af6456d77344ad01b575722c4e8f0384c5"
+  },
+  "theme": {
+    "path": "benchmark/themes/skyhook.md",
+    "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/run-xixwfev1c60s/rendered-assignment.md",
+    "sha256": "b292d5b7a65bc23fd217167e617d59dd7e903e7414c1a75ff5dbd943d12b97b6"
+  }
+}

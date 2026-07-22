@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f74e1-59ef-7f23-bb73-c82c713214f7",
+  "usageSha256": "69625153a4c82646d8862e54cbabe91e2458d146faddf7690b4df964964549cd",
+  "eventLogSha256": "811cb2f68e3a7c17aeb0f89c1aa83bbd8a7d406c04da17da5f6aa6aaa8dcf3c8",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-broadside-b6ej/harness-home/sessions/2026/07/18/rollout-2026-07-18T03-59-13-019f74e1-59ef-7f23-bb73-c82c713214f7.jsonl",
+    "sha256": "e6dd9613b1e8c00212326a7a7345ed6eeaaa069ef60b7b1297f54b43fd111484"
+  }
+}

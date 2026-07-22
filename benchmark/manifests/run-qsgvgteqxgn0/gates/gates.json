@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "fe155b4f1b75922f4d9a026b9902bda897239d73",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.783545412,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-qsgvgteqxgn0/gates/typecheck.log",
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.8996454799999997,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-qsgvgteqxgn0/gates/build.log",
+      "outputSha256": "b9ea687cd967fabd03f95172b7db244c9216b6d740a25e8664b7f5beb7331e02"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- mass-driver-7rkv a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.15122616500000002,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-qsgvgteqxgn0/gates/scope.log",
+      "outputSha256": "b84b9a4e8f396be0701a7bcdaae88c6f78b83141684f85ff43c74bf00ed28373"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-7rkv",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.903122753,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-qsgvgteqxgn0/gates/floor.log",
+      "outputSha256": "faeb899d8e92c7d52192ee7d242136f90c09519a62514b93d0a2fb7973085ae2"
+    }
+  ]
+}

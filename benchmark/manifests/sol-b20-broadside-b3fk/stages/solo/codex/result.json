@@ -1,0 +1,17 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f74f2-e4ad-7a33-895d-20397e4e6071",
+  "usageSha256": "0f2ad90c1198dac4099fcde8880d8d009cf95ffa7c1f5e1509fee1d7283d89e9",
+  "eventLogSha256": "a35b1538cf86421c5abadee1ab2f4ce6c696519e10eeb4395b1b4d58d1026525",
+  "stderrSha256": "6fef411e357ae45dadd11f96c62be0f13052ccf12da2ef0247fee3cee9e35376",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-b20-broadside-b3fk/harness-home/sessions/2026/07/18/rollout-2026-07-18T04-18-23-019f74f2-e4ad-7a33-895d-20397e4e6071.jsonl",
+    "sha256": "4d3c5f1831ea470795f4494f1d2155b0c409d6dd4f2981e05d322301fba46f29"
+  },
+  "budget": {
+    "path": "budget.json"
+  }
+}

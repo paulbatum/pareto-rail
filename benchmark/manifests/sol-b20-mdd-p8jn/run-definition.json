@@ -1,0 +1,24 @@
+{
+  "runId": "sol-b20-mdd-p8jn",
+  "slotId": "p8jn",
+  "levelId": "mass-driver-detailed-p8jn",
+  "themeId": "mass-driver-detailed",
+  "themePath": "benchmark/themes/mass-driver-detailed.md",
+  "configurationId": "codex-sol-high-b20",
+  "recipePath": "benchmark/recipes/codex-sol-high-b20.md",
+  "kind": "benchmark",
+  "entrantBaseline": "e036b4253f95b6c7b6f8077f05098b4f2df012e6",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200,
+    "budget": {
+      "usd": 20
+    }
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+  "levelTitle": "Mass Driver"
+}

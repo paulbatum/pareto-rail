@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "runId": "sol-high-broadside-b6ej",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:12.675Z",
+      "data": {
+        "source": {
+          "runId": "sol-high-broadside-b6ej",
+          "slotId": "b6ej",
+          "themeId": "broadside",
+          "levelId": "broadside-b6ej",
+          "title": "Broadside",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "bc0ac2483433e4026dc5b0e5a7743b8d58920c59",
+          "payloadCommit": "0168e02aac946bd068da2de75d760a2322d3f1e3",
+          "manifestSha256": "703a9e92a23693c96858449856be4de1a8d00b4b2404eeb6477adeb362ca5ebd",
+          "definitionSha256": "ac786cdffd7713c7752f72658c8a4fca0de27ac4a957905cbe54c78ece97a460",
+          "evaluatedSha256": "494906f5d8c05c9f837b82b5c209adf5b6d0b0c9d4a3baf13ecd49d60e79e175",
+          "payloadSha256": "974b6ecae99664cca2f4cdbb10c4234fe954e79f0f7d70a01246cad12344ba7b",
+          "payloadDiffSha256": "c9f332d9b878ba7c988e408ad9597c10ff5a35178ac0dfd0764302633799382a",
+          "sourcePath": "src/benchmark-levels/broadside-b6ej/",
+          "destinationPath": "src/benchmark-levels/broadside-b6ej/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/broadside-b6ej",
+              "promotedPath": "src/benchmark-levels/broadside-b6ej",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/broadside-b6ej",
+              "promotedPath": "public/level-content/broadside-b6ej",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "36461c76d09e4f24d762e0cca84bd255f20fd2a8"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:12.822Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/broadside-b6ej/",
+            "files": 10,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/broadside-b6ej/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:12.899Z",
+      "data": {
+        "destination": "src/benchmark-levels/broadside-b6ej/",
+        "verifiedFiles": 13
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:39.362Z",
+      "data": {
+        "gallerySha256": "6a9509903053a7940c8bf63a18f3a949252ad8e5de9d9cab841df6f8b2c3d9fb",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 2.924978576,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "dc40bd673dfa026fd966bf24fb38d2d0738004f496fde87c7b144fe3c1fb388d",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 7.839353184,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level broadside-b6ej --base 36461c76d09e4f24d762e0cca84bd255f20fd2a8",
+            "exitCode": 0,
+            "stdoutSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04231875200000104,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level broadside-b6ej",
+            "exitCode": 0,
+            "stdoutSha256": "cad7ab2c58791628958745ba3814f7d66d49d291b7c29879381b37ec4b60817b",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 15.333525555,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:39.429Z",
+      "data": {
+        "promotionCommit": "0691a45b1a72f97d9e2d02d34ef2fac1fe145c1c",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:44:39.430Z",
+  "source": {
+    "runId": "sol-high-broadside-b6ej",
+    "slotId": "b6ej",
+    "themeId": "broadside",
+    "levelId": "broadside-b6ej",
+    "title": "Broadside",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "bc0ac2483433e4026dc5b0e5a7743b8d58920c59",
+    "payloadCommit": "0168e02aac946bd068da2de75d760a2322d3f1e3",
+    "manifestSha256": "703a9e92a23693c96858449856be4de1a8d00b4b2404eeb6477adeb362ca5ebd",
+    "definitionSha256": "ac786cdffd7713c7752f72658c8a4fca0de27ac4a957905cbe54c78ece97a460",
+    "evaluatedSha256": "494906f5d8c05c9f837b82b5c209adf5b6d0b0c9d4a3baf13ecd49d60e79e175",
+    "payloadSha256": "974b6ecae99664cca2f4cdbb10c4234fe954e79f0f7d70a01246cad12344ba7b",
+    "payloadDiffSha256": "c9f332d9b878ba7c988e408ad9597c10ff5a35178ac0dfd0764302633799382a",
+    "sourcePath": "src/benchmark-levels/broadside-b6ej/",
+    "destinationPath": "src/benchmark-levels/broadside-b6ej/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/broadside-b6ej",
+        "promotedPath": "src/benchmark-levels/broadside-b6ej",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/broadside-b6ej",
+        "promotedPath": "public/level-content/broadside-b6ej",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "36461c76d09e4f24d762e0cca84bd255f20fd2a8"
+  },
+  "promotionCommit": "0691a45b1a72f97d9e2d02d34ef2fac1fe145c1c"
+}

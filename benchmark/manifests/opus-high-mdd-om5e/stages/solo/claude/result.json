@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "d43c1169-9b38-4c6e-a66d-b38bd7a7c0e4",
+  "usageSha256": "6bde6ae136a7f59bc1dcff9077fa6bd68b45433c5cc5881e06edd27c2d55df53",
+  "eventLogSha256": "2997b13bd5057c6ea69bb64b5f524a95c38f0325e4c7708bf326a06db4a15558",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/opus-high-mdd-om5e/harness-home/projects/-tmp-pareto-rail-opus-high-mdd-om5e/d43c1169-9b38-4c6e-a66d-b38bd7a7c0e4.jsonl",
+    "sha256": "a00141b4a3601869b781a416c34c953859e8580c709e38e8673b1dfd2a7c5064"
+  }
+}

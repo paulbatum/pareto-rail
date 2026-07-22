@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "benchmarkVersion": "v1",
+  "mode": "eligible",
+  "assignment": {
+    "runId": "run-c340azfgk0vd",
+    "slotId": "9281",
+    "configurationId": "codex-sol-high-b20",
+    "recipe": {
+      "id": "recipe",
+      "path": "benchmark/recipes/codex-sol-high-b20.md",
+      "sha256": "821683dcc219e07b4a06876bb9cb7f6ae1d05b6ddd3c65379009204525686813"
+    },
+    "theme": {
+      "id": "mass-driver",
+      "path": "benchmark/themes/mass-driver.md",
+      "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+    },
+    "levelId": "mass-driver-9281",
+    "levelTitle": "Mass Driver"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
+    "configurationCommit": "688cad8886afc5d50b212d03bd2a3b5029179b53"
+  },
+  "release": {
+    "path": "benchmark/releases/v1/freeze.json",
+    "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "6d0bea392de140d7b7efb7f608baeaef2040904ee7af35dce23f07d3889d6322"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "d031ceba502bcdb02c018cee639d6cd1e42c992a6bc14730f4fe6dd6e62e1e6a"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/codex-cli.mjs",
+    "sha256": "6fec9ee98861f589051e5c3cf735567e6c85131cab6fc5527d3fb3f2c7f65d65"
+  },
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "128da6eb067e60c41ea29a94c7f8b0af6456d77344ad01b575722c4e8f0384c5"
+  },
+  "failureTaxonomy": {
+    "path": "benchmark/controller/failure-taxonomy.md",
+    "sha256": "018fc9b7a198fb5187bcab2b50f661cc86c645108cac74fe943f09b0e7a2e6d0"
+  },
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200,
+    "budget": {
+      "usd": 20
+    }
+  },
+  "worktree": {
+    "path": "/tmp/raild-run-c340azfgk0vd"
+  },
+  "payload": {
+    "path": "/tmp/raild-payload-run-c340azfgk0vd",
+    "branch": "benchmark-payload-run-c340azfgk0vd"
+  }
+}

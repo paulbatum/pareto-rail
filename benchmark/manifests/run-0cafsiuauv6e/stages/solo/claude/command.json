@@ -1,0 +1,29 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-fable-5",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--session-id",
+    "10848e98-21aa-457f-a46f-9f36fddc2892"
+  ],
+  "cliVersion": "2.1.207 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/raild-run-0cafsiuauv6e",
+  "startedAt": "2026-07-11T18:33:09.591Z",
+  "finishedAt": "2026-07-11T21:33:28.632Z",
+  "wallTimeSeconds": 10801.023890406,
+  "timeoutSeconds": 10800,
+  "exitCode": 143,
+  "timedOut": true
+}

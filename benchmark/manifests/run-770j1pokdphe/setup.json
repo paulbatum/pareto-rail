@@ -1,0 +1,14 @@
+{
+  "command": [
+    "npm",
+    "ci"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-07-21T11:20:59.835Z",
+  "finishedAt": "2026-07-21T11:21:02.099Z",
+  "wallTimeSeconds": 2.264382387,
+  "stdoutSha256": "faf154ba23fc97dd81d50bf4babf772b4cb822f201fce3aa6d8dd8738274a010",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "\nadded 53 packages, and audited 54 packages in 2s\n\n18 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+  "stderr": ""
+}

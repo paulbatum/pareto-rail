@@ -1,0 +1,20 @@
+{
+  "runId": "sol-high-strandline-s5cx",
+  "slotId": "s5cx",
+  "levelId": "strandline-s5cx",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "codex-sol-high",
+  "recipePath": "benchmark/recipes/codex-sol-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Strandline"
+}

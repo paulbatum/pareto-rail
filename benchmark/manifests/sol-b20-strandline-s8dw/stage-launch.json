@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/codex-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-sol-b20-strandline-s8dw",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/sol-b20-strandline-s8dw/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/sol-b20-strandline-s8dw/stages/solo/codex",
+    "--model",
+    "gpt-5.6-sol",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--budget-usd",
+    "20"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-07-18T10:04:09.515Z",
+  "finishedAt": "2026-07-18T10:57:21.116Z",
+  "wallTimeSeconds": 3014.7391588459996,
+  "stdoutSha256": "efa215b08610e54cdccfdce04064be188c10d1e01be0ce77e6a0b49a04a0083e",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"019f74ae-f72d-7db1-ac96-6477fe36c095\",\"usage\":{\"inputTokens\":21284548,\"outputTokens\":93078,\"cacheReadInputTokens\":20603136,\"reasoningTokens\":29833,\"vendorFields\":{\"input_tokens\":21284548,\"cached_input_tokens\":20603136,\"output_tokens\":93078,\"reasoning_output_tokens\":29833}},\"wallTimeSeconds\":3014.088939788}\n",
+  "stderr": ""
+}

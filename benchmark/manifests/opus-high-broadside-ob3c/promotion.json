@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "runId": "opus-high-broadside-ob3c",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:47:00.021Z",
+      "data": {
+        "source": {
+          "runId": "opus-high-broadside-ob3c",
+          "slotId": "ob3c",
+          "themeId": "broadside",
+          "levelId": "broadside-ob3c",
+          "title": "Broadside",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "ee962d8db0b1d16cfced5e604ec45f4a6874c6f0",
+          "payloadCommit": "5d9fc450a59c95e04cfd50edff44f654ac5abee5",
+          "manifestSha256": "6967c5db80e6c1435ae75641f45a3a5cd6a4d1f3a0f190f15464a86823a8af03",
+          "definitionSha256": "f5403243fcb9448c43b3d91e8d52bf536cc8bcbcadc3db067dfbf296a4e6cc78",
+          "evaluatedSha256": "8b31c4bbf98ede1720f1a04f3f80ed403aaa45fa54aed2c16dc8d8ccb18709d3",
+          "payloadSha256": "4b71ae8816acac222cc0b000115f46d528c236280103f7341425576ae687e0a2",
+          "payloadDiffSha256": "d0d820e76234a148f2fdb72da147eb3ee76703c04d8348e755a96ff8ab1b3ca5",
+          "sourcePath": "src/benchmark-levels/broadside-ob3c/",
+          "destinationPath": "src/benchmark-levels/broadside-ob3c/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/broadside-ob3c",
+              "promotedPath": "src/benchmark-levels/broadside-ob3c",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/broadside-ob3c",
+              "promotedPath": "public/level-content/broadside-ob3c",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "4d694fca766058e5cfe427d040acc63af05a24bd"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:47:00.152Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/broadside-ob3c/",
+            "files": 15,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:47:00.228Z",
+      "data": {
+        "destination": "src/benchmark-levels/broadside-ob3c/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:47:29.174Z",
+      "data": {
+        "gallerySha256": "081c657ed7f2dd88c9b5f791ab81b810d946f463c974bbf99457394047cfc448",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.679387788,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "46958b50288c86e393ebbb055b5ca7c70022e7fe56918f48d0b02b8c638724cb",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 8.371898304999998,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level broadside-ob3c --base 4d694fca766058e5cfe427d040acc63af05a24bd",
+            "exitCode": 0,
+            "stdoutSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.041860221999999336,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level broadside-ob3c",
+            "exitCode": 0,
+            "stdoutSha256": "234721600751104c90eca3c7d0c0d47359bfbb8f9046837562e901a7e5883200",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 16.528388703000005,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:47:29.237Z",
+      "data": {
+        "promotionCommit": "de2e65bbb694abdda1a543361e157cd8fd256401",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:47:29.239Z",
+  "source": {
+    "runId": "opus-high-broadside-ob3c",
+    "slotId": "ob3c",
+    "themeId": "broadside",
+    "levelId": "broadside-ob3c",
+    "title": "Broadside",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "ee962d8db0b1d16cfced5e604ec45f4a6874c6f0",
+    "payloadCommit": "5d9fc450a59c95e04cfd50edff44f654ac5abee5",
+    "manifestSha256": "6967c5db80e6c1435ae75641f45a3a5cd6a4d1f3a0f190f15464a86823a8af03",
+    "definitionSha256": "f5403243fcb9448c43b3d91e8d52bf536cc8bcbcadc3db067dfbf296a4e6cc78",
+    "evaluatedSha256": "8b31c4bbf98ede1720f1a04f3f80ed403aaa45fa54aed2c16dc8d8ccb18709d3",
+    "payloadSha256": "4b71ae8816acac222cc0b000115f46d528c236280103f7341425576ae687e0a2",
+    "payloadDiffSha256": "d0d820e76234a148f2fdb72da147eb3ee76703c04d8348e755a96ff8ab1b3ca5",
+    "sourcePath": "src/benchmark-levels/broadside-ob3c/",
+    "destinationPath": "src/benchmark-levels/broadside-ob3c/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/broadside-ob3c",
+        "promotedPath": "src/benchmark-levels/broadside-ob3c",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/broadside-ob3c",
+        "promotedPath": "public/level-content/broadside-ob3c",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "4d694fca766058e5cfe427d040acc63af05a24bd"
+  },
+  "promotionCommit": "de2e65bbb694abdda1a543361e157cd8fd256401"
+}

@@ -1,0 +1,25 @@
+
+> raild@0.0.0 check:floor
+> node scripts/check-floor.mjs --level mass-driver-o9ok
+
+Mass Driver floor check
+duration 60.0s; spawned kinds 5: bulwark, darter, interlock, sentry, weaver
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=1
+    maxGridSeconds=0.72
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: 0.095 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateCameraEffects, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.

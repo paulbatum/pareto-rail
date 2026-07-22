@@ -1,0 +1,14 @@
+{
+  "command": [
+    "npm",
+    "ci"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-07-18T10:59:03.555Z",
+  "finishedAt": "2026-07-18T10:59:11.498Z",
+  "wallTimeSeconds": 7.94266052,
+  "stdoutSha256": "95af3a848697ad656fd6ab7bcb3b8e0fbe7b19a9a8a4bc7c137de331bc30723b",
+  "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+  "stdout": "\n> pareto-rail@0.0.0 postinstall\n> prisma generate\n\n\n✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 35ms\n\n\nadded 172 packages, and audited 173 packages in 8s\n\n32 packages are looking for funding\n  run `npm fund` for details\n\n3 moderate severity vulnerabilities\n\nTo address all issues (including breaking changes), run:\n  npm audit fix --force\n\nRun `npm audit` for details.\n",
+  "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma schema loaded from prisma/schema.prisma.\n"
+}

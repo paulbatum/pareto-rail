@@ -1,0 +1,114 @@
+{
+  "sessionId": "a6c08393-e3c9-465c-ba53-585bd6be09ff",
+  "initResolvedModel": "claude-opus-4-8",
+  "finalMessage": "**Strandline** is built — `src/benchmark-levels/strandline-os1a/`, ~4,600 lines across a timing/gameplay/crown/audio spine with visual and voice leaves.\n\n## The level\n\n96 BPM, 24 bars, exactly 60.0 seconds. Six sections: strands → openwater → thicket → rise → crown → adrift.\n\n**The two wide swings are structural, not decorative.** The strand forest is anchored to the *un-banked centreline* while the rail banks away from it, so swinging wide genuinely leaves the thicket behind and opens the bell. Both banks are placed by musical bar, not by eye — whatever the speed profile does, the lift lands where the arrangement opens.\n\n**Enemies** (six kinds, three grammars): clings ride strands, shiver a telegraph, then let go and swim at frame centre; larvae cross in chain-articulated undulating schools; spitters creep one strand and lob interceptable spores.\n\n**The boss puts its own health bar somewhere else on the screen.** The parent is untargetable behind three webbing panels, each fed by a brood it extrudes on a violet umbilical. Kill a brood → starve a panel. Clear all three → it rears out of the socket for six locks. Leave one and it cannot be killed at all.\n\n**Musically**, the bell contraction *is* the kick — a swell-then-body on half notes, and the environment squeezes the bell mesh on the same grid, so the metronome you hear and the one you see are the same organ. D minor throughout; the crown drags it flat with a detuned tritone groan; the last two bars are the level's first D major.\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope` (16 paths, clean), and `check:floor` — all pass: 6 enemy kinds, full event coverage, **0 occlusion warnings**, 0 perf gate failures, 0 centerness/distance warnings.\n\nThree things I found and fixed by measurement, not by eye:\n- A geometry leak (4.08× growth) — every enemy was allocating fresh geometries. Now cached per kind and merged by material.\n- Severe overexposure — the first contact sheet was a green-white haze at 0.71 luminance. Rebalanced to ~0.42.\n- **The hull system was inert.** Spores maxed at 12 u/s against a camera doing ~16, so they were always overtaken and `playerhit` never fired across any policy. Now 2 hits if you ignore them, 1 if you play well.\n\n## Needs human eyes\n\nWSL2 can't render WebGPU, so all stills above are SwiftShader fallback — the real frame and the entire mix are unverified. Check first:\n1. Whether both banks read as *leaving* the forest.\n2. Whether the bell's contraction lands audibly on the beat.\n3. Parasite legibility against green water **with bloom at zero** — I leaned hard on additive materials for the occlusion win, so this is the riskiest thing I can't confirm.\n4. Whether the bar-22 pull-back frames the whole animal. The headless stills suggest yes, and it's the shot the level is built around.\n\nOne honest caveat: the simulator's `perfect` policy only ever locks a target once, so it never kills multi-HP enemies efficiently and finishes at rank B with one panel alive. The `imperfect` policy does clear the parent, which is what tells me the fight is winnable — but a human should confirm the crown act isn't too tight.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 3099534,
+    "duration_api_ms": 2829105,
+    "ttft_ms": 2721,
+    "ttft_stream_ms": 1228,
+    "time_to_request_ms": 52,
+    "num_turns": 137,
+    "result": "**Strandline** is built — `src/benchmark-levels/strandline-os1a/`, ~4,600 lines across a timing/gameplay/crown/audio spine with visual and voice leaves.\n\n## The level\n\n96 BPM, 24 bars, exactly 60.0 seconds. Six sections: strands → openwater → thicket → rise → crown → adrift.\n\n**The two wide swings are structural, not decorative.** The strand forest is anchored to the *un-banked centreline* while the rail banks away from it, so swinging wide genuinely leaves the thicket behind and opens the bell. Both banks are placed by musical bar, not by eye — whatever the speed profile does, the lift lands where the arrangement opens.\n\n**Enemies** (six kinds, three grammars): clings ride strands, shiver a telegraph, then let go and swim at frame centre; larvae cross in chain-articulated undulating schools; spitters creep one strand and lob interceptable spores.\n\n**The boss puts its own health bar somewhere else on the screen.** The parent is untargetable behind three webbing panels, each fed by a brood it extrudes on a violet umbilical. Kill a brood → starve a panel. Clear all three → it rears out of the socket for six locks. Leave one and it cannot be killed at all.\n\n**Musically**, the bell contraction *is* the kick — a swell-then-body on half notes, and the environment squeezes the bell mesh on the same grid, so the metronome you hear and the one you see are the same organ. D minor throughout; the crown drags it flat with a detuned tritone groan; the last two bars are the level's first D major.\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope` (16 paths, clean), and `check:floor` — all pass: 6 enemy kinds, full event coverage, **0 occlusion warnings**, 0 perf gate failures, 0 centerness/distance warnings.\n\nThree things I found and fixed by measurement, not by eye:\n- A geometry leak (4.08× growth) — every enemy was allocating fresh geometries. Now cached per kind and merged by material.\n- Severe overexposure — the first contact sheet was a green-white haze at 0.71 luminance. Rebalanced to ~0.42.\n- **The hull system was inert.** Spores maxed at 12 u/s against a camera doing ~16, so they were always overtaken and `playerhit` never fired across any policy. Now 2 hits if you ignore them, 1 if you play well.\n\n## Needs human eyes\n\nWSL2 can't render WebGPU, so all stills above are SwiftShader fallback — the real frame and the entire mix are unverified. Check first:\n1. Whether both banks read as *leaving* the forest.\n2. Whether the bell's contraction lands audibly on the beat.\n3. Parasite legibility against green water **with bloom at zero** — I leaned hard on additive materials for the occlusion win, so this is the riskiest thing I can't confirm.\n4. Whether the bar-22 pull-back frames the whole animal. The headless stills suggest yes, and it's the shot the level is built around.\n\nOne honest caveat: the simulator's `perfect` policy only ever locks a target once, so it never kills multi-HP enemies efficiently and finishes at rank B with one panel alive. The `imperfect` policy does clear the parent, which is what tells me the fight is winnable — but a human should confirm the crown act isn't too tight.",
+    "stop_reason": "end_turn",
+    "session_id": "a6c08393-e3c9-465c-ba53-585bd6be09ff",
+    "total_cost_usd": 30.023956499999993,
+    "usage": {
+      "input_tokens": 224,
+      "cache_creation_input_tokens": 469652,
+      "cache_read_input_tokens": 38588501,
+      "output_tokens": 241234,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 469652,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1149,
+          "cache_read_input_tokens": 486176,
+          "cache_creation_input_tokens": 767,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 767
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1141,
+        "outputTokens": 15,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001216,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-opus-4-8": {
+        "inputTokens": 224,
+        "outputTokens": 241234,
+        "cacheReadInputTokens": 38588501,
+        "cacheCreationInputTokens": 469652,
+        "webSearchRequests": 0,
+        "costUSD": 30.022740499999987,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "ab299b08-4951-4e4a-aa79-f2a3cfdc026f"
+  },
+  "normalized": {
+    "inputTokens": 38588725,
+    "outputTokens": 241234,
+    "cacheReadInputTokens": 38588501,
+    "cacheWriteInputTokens": 469652,
+    "vendorFields": {
+      "totalCostUsd": 30.023956499999993,
+      "durationMs": 3099534,
+      "durationApiMs": 2829105,
+      "numTurns": 137,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1141,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001216,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 224,
+          "outputTokens": 241234,
+          "cacheReadInputTokens": 38588501,
+          "cacheCreationInputTokens": 469652,
+          "webSearchRequests": 0,
+          "costUSD": 30.022740499999987,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

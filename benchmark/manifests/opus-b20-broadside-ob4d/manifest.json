@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "opus-b20-broadside-ob4d",
+  "slotId": "ob4d",
+  "configuration": {
+    "id": "claude-opus-4-8-high-b20"
+  },
+  "theme": {
+    "id": "broadside",
+    "path": "benchmark/themes/broadside.md",
+    "sha256": "26b45de49b732d66b6dd68c6d97c053519f755e0e7543cf97a368a31794e8376"
+  },
+  "baseline": {
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-opus-4-8-high-b20.md",
+    "sha256": "c9141cd94ae83af3101956744f7b6777275d7fe50de17bb21854fb1e304a5901"
+  },
+  "controller": {
+    "commit": "7598ff6575b06c0e6a7fa17279fc73ad638b3b44"
+  },
+  "timing": {
+    "startedAt": "2026-07-18T21:14:12.394Z",
+    "finishedAt": "2026-07-18T22:02:00.383Z",
+    "wallTimeSeconds": 2867.989
+  },
+  "stages": [
+    {
+      "id": "claude-opus-4-8",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-4-8"
+      },
+      "promptSha256": "b54fc6c8c7682822c40d5222c30d286a4ff745c266ffe55aecdc212f00113957",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.214 (Claude Code)"
+      },
+      "sessionId": "0a734440-2b2a-42b6-8c83-19d7b6790b6c",
+      "rolloutArtifactSha256": "a10fde553f0ed318beddffedfb2f14829d859d7e1ce6a0a6358647eaadf25965",
+      "outputArtifactSha256": "7e8c067528df1587d8eb2e17db70dd645319d602ad27a3e1d160b7e22377c45c",
+      "startedAt": "2026-07-18T21:14:23.362Z",
+      "finishedAt": "2026-07-18T22:01:46.200Z",
+      "wallTimeSeconds": 2834.7588265490003,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 20,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.0837365000000005,
+            "at": "2026-07-18T21:29:10.863Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.342534500000003,
+            "at": "2026-07-18T21:44:14.730Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 15.401545000000004,
+            "at": "2026-07-18T21:51:31.698Z"
+          },
+          {
+            "pct": 100,
+            "spentUsd": 21.494842500000004,
+            "at": "2026-07-18T21:58:34.867Z"
+          }
+        ],
+        "resumes": [],
+        "finalSpendUsd": 24.6720075,
+        "finalFraction": 1.233600375
+      },
+      "usage": {
+        "inputTokens": 175,
+        "outputTokens": 231495,
+        "cacheReadInputTokens": 29195895,
+        "cacheWriteInputTokens": 428581
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 24.6720075,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 24.6720075,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-opus-4-8",
+        "usageSource": "agreed",
+        "costUsd": 24.6720075,
+        "inputTokens": 175,
+        "outputTokens": 231495,
+        "cacheReadTokens": 29195895,
+        "cacheWriteTokens": 428581
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.8500389289999999,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.2070279490000004,
+      "outputSha256": "778637058bd2d2ecacadfa946c58b954a16b26bd479f3234420cf9feb704516e"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level broadside-ob4d --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.040437879999999496,
+      "outputSha256": "e37e3c8ba738e90bdfd178309da95b3c676f42b1df6f7b121be71738cbdaccf7"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level broadside-ob4d",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.84267146,
+      "outputSha256": "e7f1c8e525aefaf72a39e36c22b24115b1d92d84ccff3f7a73a12f662abb4651"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "broadside-ob4d",
+    "title": "Broadside",
+    "evaluated": {
+      "commit": "9cb4f75b5e5ddac57dd4d292454af1a50e3430c8",
+      "branch": "benchmark-run-opus-b20-broadside-ob4d"
+    },
+    "payload": {
+      "commit": "dfa02b209309f50d367035519e995ea2278e7c7b",
+      "branch": "benchmark-payload-opus-b20-broadside-ob4d"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

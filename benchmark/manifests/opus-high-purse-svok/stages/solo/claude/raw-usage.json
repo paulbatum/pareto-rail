@@ -1,0 +1,114 @@
+{
+  "sessionId": "220c5c6d-54fc-4e16-9602-cb9b4665bb15",
+  "initResolvedModel": "claude-opus-4-8",
+  "finalMessage": "**Purse Pursuit** (`purse-pursuit-svok`) is built — ~4,600 lines under `src/benchmark-levels/purse-pursuit-svok/`, plus the regenerated `docs/level-gallery.md`. Nothing else in the repo is touched.\n\n## What it is\n\nA 60-second (32 bars @ 128 BPM, exactly) night chase down a six-lane city highway. You're hanging out the passenger window: the car's sill, roof rail, A-pillar and wing mirror frame the lower-left and **lag a beat behind your head**, so the bodywork leans after you do. Amber sodium lamps strobe overhead at a rate driven by real rail speed, not a timer.\n\n- **Four rider grammars, four silhouettes**: tucked sport bikes braiding the lane grid; raked choppers with ape-hangers arcing off the shoulder and pressing against your flank; slab-wide tourers pumping forward/back that kick spike clusters loose at close range; dirt bikes airborne off overpass abutments, rider standing on the pegs.\n- **Boss**: a chromed cruiser in four bolt-on plates with the purse on a chain strap. It alternates authored *exposure windows* (lockable) with *barrages* (untargetable, drops into your lane, lobs homing satchel bombs and scatters road-nailed spike clusters). 18 locks. Kill it and the purse arcs out of the fireball, you catch it, and the frame turns blue — the only blue in the level.\n- **The hook is the player's instrument**: the lead states an 8-bar topline once, in the chorus; after that the chorus kill lane *is* that contour in scale degrees, so a chained six-kill volley performs the tune. Verse/boss/payoff each get their own lane, timbre and register. Locks climb a pentatonic, one rung per blade on the rev-counter reticle.\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope` (22 paths, clean), `check:floor` — **all gates pass**: 7 enemy kinds, full event coverage, 0 occlusion warnings, 0 perf failures, 0 audio-config failures. Simulation: 103/105 kills / rank A under perfect play, 90/105 under seeded imperfect, no dead-air gaps, ~24 m average destruction distance. `trace:audio` confirms the arrangement structure (lead enters at 22.6 s = bar 12, snare at 41.8 s = bar 22, 128 beats).\n\nOne standing warning, not a failure: destruction concentration in the centre 0.25-NDC circle is 26.4% against a 25% advisory threshold. I pushed it down from 53% by widening lanes, shortening spawn distance and widening the weave; the residue is mostly homing bombs, which converge on the windscreen by design.\n\n## Needs a human\n\nWSL2 can't render WebGPU, so all stills above are the SwiftShader/WebGL fallback — the real frame and the entire mix are unverified by ear or eye. First things to check:\n\n1. Does the cockpit's lag read as leaning out of a moving car, or as a HUD overlay pasted on the lens? (I retuned its brightness three times against the fallback renderer; absolute values may sit differently under real bloom.)\n2. Is the overhead sodium strobe exciting or fatiguing at chorus speed?\n3. Does the purse read instantly as the only blue thing on screen — both on the shoulder and in the catch?\n4. Is a chained six-kill volley in the chorus audibly the song's hook?\n5. The purse catch and the boss fanfare are the one sequence no headless tool can reach (the snapshot policy never fires), so they are entirely unseen and unheard.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 2960872,
+    "duration_api_ms": 2693408,
+    "ttft_ms": 2277,
+    "ttft_stream_ms": 1363,
+    "time_to_request_ms": 44,
+    "num_turns": 168,
+    "result": "**Purse Pursuit** (`purse-pursuit-svok`) is built — ~4,600 lines under `src/benchmark-levels/purse-pursuit-svok/`, plus the regenerated `docs/level-gallery.md`. Nothing else in the repo is touched.\n\n## What it is\n\nA 60-second (32 bars @ 128 BPM, exactly) night chase down a six-lane city highway. You're hanging out the passenger window: the car's sill, roof rail, A-pillar and wing mirror frame the lower-left and **lag a beat behind your head**, so the bodywork leans after you do. Amber sodium lamps strobe overhead at a rate driven by real rail speed, not a timer.\n\n- **Four rider grammars, four silhouettes**: tucked sport bikes braiding the lane grid; raked choppers with ape-hangers arcing off the shoulder and pressing against your flank; slab-wide tourers pumping forward/back that kick spike clusters loose at close range; dirt bikes airborne off overpass abutments, rider standing on the pegs.\n- **Boss**: a chromed cruiser in four bolt-on plates with the purse on a chain strap. It alternates authored *exposure windows* (lockable) with *barrages* (untargetable, drops into your lane, lobs homing satchel bombs and scatters road-nailed spike clusters). 18 locks. Kill it and the purse arcs out of the fireball, you catch it, and the frame turns blue — the only blue in the level.\n- **The hook is the player's instrument**: the lead states an 8-bar topline once, in the chorus; after that the chorus kill lane *is* that contour in scale degrees, so a chained six-kill volley performs the tune. Verse/boss/payoff each get their own lane, timbre and register. Locks climb a pentatonic, one rung per blade on the rev-counter reticle.\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope` (22 paths, clean), `check:floor` — **all gates pass**: 7 enemy kinds, full event coverage, 0 occlusion warnings, 0 perf failures, 0 audio-config failures. Simulation: 103/105 kills / rank A under perfect play, 90/105 under seeded imperfect, no dead-air gaps, ~24 m average destruction distance. `trace:audio` confirms the arrangement structure (lead enters at 22.6 s = bar 12, snare at 41.8 s = bar 22, 128 beats).\n\nOne standing warning, not a failure: destruction concentration in the centre 0.25-NDC circle is 26.4% against a 25% advisory threshold. I pushed it down from 53% by widening lanes, shortening spawn distance and widening the weave; the residue is mostly homing bombs, which converge on the windscreen by design.\n\n## Needs a human\n\nWSL2 can't render WebGPU, so all stills above are the SwiftShader/WebGL fallback — the real frame and the entire mix are unverified by ear or eye. First things to check:\n\n1. Does the cockpit's lag read as leaning out of a moving car, or as a HUD overlay pasted on the lens? (I retuned its brightness three times against the fallback renderer; absolute values may sit differently under real bloom.)\n2. Is the overhead sodium strobe exciting or fatiguing at chorus speed?\n3. Does the purse read instantly as the only blue thing on screen — both on the shoulder and in the catch?\n4. Is a chained six-kill volley in the chorus audibly the song's hook?\n5. The purse catch and the boss fanfare are the one sequence no headless tool can reach (the snapshot policy never fires), so they are entirely unseen and unheard.",
+    "stop_reason": "end_turn",
+    "session_id": "220c5c6d-54fc-4e16-9602-cb9b4665bb15",
+    "total_cost_usd": 35.831283499999984,
+    "usage": {
+      "input_tokens": 2102,
+      "cache_creation_input_tokens": 498826,
+      "cache_read_input_tokens": 50604899,
+      "output_tokens": 221148,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 498826,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1247,
+          "cache_read_input_tokens": 504822,
+          "cache_creation_input_tokens": 945,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 945
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1284,
+        "outputTokens": 16,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001364,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-opus-4-8": {
+        "inputTokens": 2102,
+        "outputTokens": 221148,
+        "cacheReadInputTokens": 50604899,
+        "cacheCreationInputTokens": 498826,
+        "webSearchRequests": 0,
+        "costUSD": 35.82991949999998,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "71eab07c-b488-4695-ae80-8f39e1dcde92"
+  },
+  "normalized": {
+    "inputTokens": 50607001,
+    "outputTokens": 221148,
+    "cacheReadInputTokens": 50604899,
+    "cacheWriteInputTokens": 498826,
+    "vendorFields": {
+      "totalCostUsd": 35.831283499999984,
+      "durationMs": 2960872,
+      "durationApiMs": 2693408,
+      "numTurns": 168,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1284,
+          "outputTokens": 16,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001364,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 2102,
+          "outputTokens": 221148,
+          "cacheReadInputTokens": 50604899,
+          "cacheCreationInputTokens": 498826,
+          "webSearchRequests": 0,
+          "costUSD": 35.82991949999998,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

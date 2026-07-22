@@ -1,0 +1,40 @@
+{
+  "budgetUsd": 20,
+  "protocol": {
+    "noticeStepPct": 25,
+    "minimumSubmitFraction": 0.75,
+    "maxResumeRounds": 20,
+    "pollIntervalSeconds": 30,
+    "minimumResumeRemainingSeconds": 600
+  },
+  "noticeHistory": [
+    {
+      "pct": 25,
+      "spentUsd": 5.384073000000001,
+      "at": "2026-07-21T11:36:09.052Z"
+    },
+    {
+      "pct": 50,
+      "spentUsd": 10.058004000000004,
+      "at": "2026-07-21T11:47:46.462Z"
+    },
+    {
+      "pct": 75,
+      "spentUsd": 15.574080000000002,
+      "at": "2026-07-21T11:58:02.849Z"
+    },
+    {
+      "pct": 100,
+      "spentUsd": 20.399751000000002,
+      "at": "2026-07-21T12:03:37.666Z"
+    },
+    {
+      "pct": 125,
+      "spentUsd": 25.353798000000005,
+      "at": "2026-07-21T12:10:43.103Z"
+    }
+  ],
+  "resumes": [],
+  "finalSpendUsd": 26.461207500000004,
+  "finalFraction": 1.3230603750000003
+}

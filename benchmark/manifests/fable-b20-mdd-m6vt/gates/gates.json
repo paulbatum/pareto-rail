@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "251300fb3cb10f886356b3008eafd7ed6c859f19",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.780560933,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-b20-mdd-m6vt/gates/typecheck.log",
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.193767745,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-b20-mdd-m6vt/gates/build.log",
+      "outputSha256": "8c232957be315b98b3155d049df3c2452418de5c66ef204716885ecef1c6f31b"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m6vt --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03728627400000005,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-b20-mdd-m6vt/gates/scope.log",
+      "outputSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-detailed-m6vt",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.896067582,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-b20-mdd-m6vt/gates/floor.log",
+      "outputSha256": "ffda64a961da9b95937939fa6c29463196efb15985d231edf127952821de0bf2"
+    }
+  ]
+}

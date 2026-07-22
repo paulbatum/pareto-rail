@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-x58xikqvx62i",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:43.209Z",
+      "data": {
+        "source": {
+          "runId": "run-x58xikqvx62i",
+          "slotId": "cvs3",
+          "themeId": "hull-run",
+          "levelId": "hull-run-cvs3",
+          "title": "Hull Run",
+          "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+          "evaluatedCommit": "191a5b37169cb4eb0a48c57eb67088ad036e2626",
+          "payloadCommit": "e1dfa106ab9c1824f7b876f409db5cfe93696d48",
+          "manifestSha256": "4c92602ec19089ad93035ceb6b7cfcc2e88cec5e01f8d25e9d1ac7055e231ee7",
+          "definitionSha256": "bba2cce7c85095c3ba09a9570a6c1fff1809b0dd9bd790f2ade7ceaf0c8a21c9",
+          "evaluatedSha256": "1a9136dc0caf7559ae403fc32c35bce44b7c9a459414cba2db3e41f70a5dc5de",
+          "payloadSha256": "08ef457ad95205dec063bab0b4378f2f3c304ff6f8f71786eb89febe47bdd5ce",
+          "payloadDiffSha256": "8ba857ccea82e5c06f58a9b82f012f6f9b3391b622b05f5442a288bcef0e9954",
+          "sourcePath": "src/levels/hull-run-cvs3/",
+          "destinationPath": "src/benchmark-levels/hull-run-cvs3/",
+          "legacySourcePresent": false,
+          "derivative": null,
+          "descriptor": {
+            "source": "controller-owned assignment data",
+            "id": "hull-run-cvs3",
+            "title": "Hull Run",
+            "sha256": "04d068aea3f1e23c6715e885b6b020a228f96ba1eee6073a109a73af82dd78a9"
+          },
+          "baseCommit": "4063e8aa506fe060a8833b6f7e6f8a032812d11f"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:43.272Z",
+      "data": {
+        "destination": "src/benchmark-levels/hull-run-cvs3/",
+        "files": 9,
+        "reused": true
+      }
+    },
+    "descriptor": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:43.276Z",
+      "data": {
+        "path": "src/benchmark-levels/hull-run-cvs3/level.json",
+        "sha256": "04d068aea3f1e23c6715e885b6b020a228f96ba1eee6073a109a73af82dd78a9",
+        "reused": true
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:43.336Z",
+      "data": {
+        "destination": "src/benchmark-levels/hull-run-cvs3/",
+        "verifiedFiles": 10
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:43.344Z",
+      "data": {
+        "gallerySha256": "0d1bf0f59b37101c8e6fdfd191149bf312794b7db1afedeb69b60b3a55901df5",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 6.083839560999986,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "1f0d0a3c2ab09074a7c8986f64dceaebc7ca6e1c3590bdeb3e4344f8dc2017b1",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.841191067000007,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "node scripts/check-benchmark-scope.mjs --level hull-run-cvs3",
+            "exitCode": 0,
+            "stdoutSha256": "7c7366d9c083876e5da04515e6ac0a1fd34c717e780182ce60e04f643722cf09",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04890359200001694,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level hull-run-cvs3",
+            "exitCode": 0,
+            "stdoutSha256": "76f487e8c122f0db2749daa66fcaa8fc102c3647c6dfd3fe396e0a3980959919",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 9.674194884999975,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:43.381Z",
+      "data": {
+        "promotionCommit": "09dc48d5c92cef07d7ab0339fdb77e454f46dff1"
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-12T06:29:43.382Z",
+  "migration": true,
+  "migrationLevelIds": [
+    "hull-run-cvs3",
+    "hull-run-ns5n",
+    "mass-driver-7rkv",
+    "mass-driver-bczy",
+    "mass-driver-vyxj",
+    "mass-driver-wo4m",
+    "skyhook-81u5"
+  ],
+  "source": {
+    "runId": "run-x58xikqvx62i",
+    "slotId": "cvs3",
+    "themeId": "hull-run",
+    "levelId": "hull-run-cvs3",
+    "title": "Hull Run",
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "evaluatedCommit": "191a5b37169cb4eb0a48c57eb67088ad036e2626",
+    "payloadCommit": "e1dfa106ab9c1824f7b876f409db5cfe93696d48",
+    "manifestSha256": "4c92602ec19089ad93035ceb6b7cfcc2e88cec5e01f8d25e9d1ac7055e231ee7",
+    "definitionSha256": "bba2cce7c85095c3ba09a9570a6c1fff1809b0dd9bd790f2ade7ceaf0c8a21c9",
+    "evaluatedSha256": "1a9136dc0caf7559ae403fc32c35bce44b7c9a459414cba2db3e41f70a5dc5de",
+    "payloadSha256": "08ef457ad95205dec063bab0b4378f2f3c304ff6f8f71786eb89febe47bdd5ce",
+    "payloadDiffSha256": "8ba857ccea82e5c06f58a9b82f012f6f9b3391b622b05f5442a288bcef0e9954",
+    "sourcePath": "src/levels/hull-run-cvs3/",
+    "destinationPath": "src/benchmark-levels/hull-run-cvs3/",
+    "legacySourcePresent": false,
+    "derivative": null,
+    "descriptor": {
+      "source": "controller-owned assignment data",
+      "id": "hull-run-cvs3",
+      "title": "Hull Run",
+      "sha256": "04d068aea3f1e23c6715e885b6b020a228f96ba1eee6073a109a73af82dd78a9"
+    },
+    "baseCommit": "4063e8aa506fe060a8833b6f7e6f8a032812d11f"
+  },
+  "promotionCommit": "09dc48d5c92cef07d7ab0339fdb77e454f46dff1"
+}

@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "sol-b20-strandline-s8dw",
+  "slotId": "s8dw",
+  "configuration": {
+    "id": "codex-sol-high-b20"
+  },
+  "theme": {
+    "id": "strandline",
+    "path": "benchmark/themes/strandline.md",
+    "sha256": "31621cb405a2b293bf0f7026add0b462312e75c44dfcea3a8549b1fd9616bff1"
+  },
+  "baseline": {
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-sol-high-b20.md",
+    "sha256": "d9f149d2ec58acea458adf81221f3c7b4d6d33923f165c89bb42f861b42574a4"
+  },
+  "controller": {
+    "commit": "7598ff6575b06c0e6a7fa17279fc73ad638b3b44"
+  },
+  "timing": {
+    "startedAt": "2026-07-18T10:03:59.199Z",
+    "finishedAt": "2026-07-18T10:57:37.078Z",
+    "wallTimeSeconds": 3217.879
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "6a4c83902e0ff799e6b705f4715a298481fbdf89a70e50859ca60f504412ca3e",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.144.1"
+      },
+      "sessionId": "019f74ae-f72d-7db1-ac96-6477fe36c095",
+      "rolloutArtifactSha256": "a45914cd903c73aa19355ee22258c7d3f7c81585cf1c86f9a6a8a5c6181479cd",
+      "outputArtifactSha256": "df9410ff67de288ebb2b21dc5c704891f53a9186d114fdab86cf63de0005a067",
+      "startedAt": "2026-07-18T10:04:09.658Z",
+      "finishedAt": "2026-07-18T10:57:20.608Z",
+      "wallTimeSeconds": 3014.088939788,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 20,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.0601009999999995,
+            "at": "2026-07-18T10:24:54.547Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.00875,
+            "at": "2026-07-18T10:40:16.757Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 15.407392999999999,
+            "at": "2026-07-18T10:54:06.549Z"
+          }
+        ],
+        "resumes": [],
+        "finalSpendUsd": 16.500968,
+        "finalFraction": 0.8250484
+      },
+      "usage": {
+        "inputTokens": 681412,
+        "outputTokens": 93078,
+        "cacheReadInputTokens": 20603136,
+        "reasoningTokens": 29833
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 16.500968,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 16.500968,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 681412,
+        "outputTokens": 93078,
+        "cacheReadTokens": 20603136,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 29833
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7383794929999998,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.314935431,
+      "outputSha256": "e2728a528af4f04d6ee4a86dfc0ed24bccf8b5b637752aec872c416a26dcfca1"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-s8dw --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.047040312000000084,
+      "outputSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level strandline-s8dw",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.493695874000001,
+      "outputSha256": "5f1ec318d7695743dd4886830d3f04b24205db50488b3ba8a13efd77f99a7872"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "strandline-s8dw",
+    "title": "Strandline",
+    "evaluated": {
+      "commit": "52c4284d892d3ed3fc41c0342234743794ba825d",
+      "branch": "benchmark-run-sol-b20-strandline-s8dw"
+    },
+    "payload": {
+      "commit": "86635310da011696d6389abc68aa77fe94604ccb",
+      "branch": "benchmark-payload-sol-b20-strandline-s8dw"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

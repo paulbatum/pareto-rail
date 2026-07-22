@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-5m77cl6rn5kd",
+  "slotId": "bczy",
+  "configuration": {
+    "id": "codex-sol-terra-delegation"
+  },
+  "theme": {
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "configurationCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "releaseRecord": {
+      "path": "benchmark/releases/v1/freeze.json",
+      "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+    },
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "a7acfa7f253926dab38f6620167dda9644cfa0be"
+    }
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "f317210e16f948f1c4ba245be383e51fcbe888801e7efee6f21276477228de29"
+  },
+  "recipe": {
+    "id": "recipe",
+    "path": "benchmark/recipes/codex-sol-terra-delegation.md",
+    "sha256": "21dacdb86a5c04a2bedc25212d0c0cd79ad33fe678c258259509ff4a16ad07e6"
+  },
+  "controller": {
+    "path": "benchmark/controller/runbook.md",
+    "sha256": "5d1f370ec351e0a96b2d923250689a1b3e8d35c990748dd8b2f34e10786c8506"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "70a7e48fbeddeceb5e9425aec20874252458f8c8f031346a9fbadc39fbc553bd"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/codex-cli.mjs",
+    "sha256": "1facba2cb1aedb6cec620064c9412b506903bfac2a97affeb9f07f0e34a90c85"
+  },
+  "timing": {
+    "startedAt": "2026-07-11T07:19:08.854Z",
+    "finishedAt": "2026-07-11T07:39:23.753Z",
+    "wallTimeSeconds": 1214.899
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "orchestrate",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "4d87da8b4395a3740ff900175ac05501431de80a1969ae2787793013d0778279",
+      "delegationPromptSha256": "7cab2fc5d9cd38e29948d61dd152c74d2f92bc215be6b59b69bcbd1d9afab9e8",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.144.1"
+      },
+      "sessionId": "019f500b-721f-7000-bac9-39c7f14be8eb",
+      "rolloutArtifactSha256": "25e6e84e1c8e4ceadb150fbbb540fb610b070670fae9f2d2db38d603a9ce92c7",
+      "outputArtifactSha256": "bb1734463c9d38f25ea66b727bc925d42bee719969d07dd7c0d70cbfc61f9c1a",
+      "startedAt": "2026-07-11T07:19:13.277Z",
+      "finishedAt": "2026-07-11T07:39:15.041Z",
+      "wallTimeSeconds": 1141.861352918,
+      "result": "completed",
+      "usage": {
+        "inputTokens": 296417,
+        "outputTokens": 33314,
+        "cacheReadInputTokens": 5727232,
+        "reasoningTokens": 7425
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 4.454606500000001,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 4.454606500000001,
+    "orchestrationTreatment": "included",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json"
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 213256,
+        "outputTokens": 16342,
+        "cacheReadTokens": 4015104,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 5665
+      },
+      {
+        "modelName": "gpt-5.6-terra",
+        "inputTokens": 83161,
+        "outputTokens": 16972,
+        "cacheReadTokens": 1712128,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 1760
+      }
+    ],
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    }
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.0829691550000002,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.6270649520000002,
+      "outputSha256": "2798e4b744e7d166a36ba26bfbe56f970b972bcff077c8748e9b6a3eae75c142"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- mass-driver-bczy a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.09670826899999975,
+      "outputSha256": "976bf67544f65f61bd65734be60e92adfee53196f817f0da26a08b4a24304ef5"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-bczy",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 4.286407391,
+      "outputSha256": "779f10fe15d6baf995c61c0a4d2b977063318e953cfa3c3932883f7efcab7ecb"
+    }
+  ],
+  "output": {
+    "levelId": "mass-driver-bczy",
+    "evaluated": {
+      "commit": "a825ec0c207021cecc8de21ca9082e357c441994",
+      "branch": "benchmark-run-run-5m77cl6rn5kd"
+    },
+    "payload": {
+      "commit": "3144127a6050187a94cd20431400d29a8d1b17c0",
+      "branch": "benchmark-payload-run-5m77cl6rn5kd"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "349ba25fbc567a453bfad69c565ad2cd0f33cf25",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.581055804,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-gucf476jvkqr/gates/typecheck.log",
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.3723121679999999,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-gucf476jvkqr/gates/build.log",
+      "outputSha256": "c7c814a4842a52622de255e18605b0d44f4bf85486e8db1114ce3ddcf2c638a2"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- mass-driver-esvz a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.14612398799999937,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-gucf476jvkqr/gates/scope.log",
+      "outputSha256": "54e0bffed4951df167a43cd50b68bf2408e9287947d262119a1d7f27016061b6"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-esvz",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.500690527,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-gucf476jvkqr/gates/floor.log",
+      "outputSha256": "8a9e7fb8cbc5ddadecab23e1a4e0021d437509bc4e8daf4080da40cc4c851732"
+    }
+  ]
+}

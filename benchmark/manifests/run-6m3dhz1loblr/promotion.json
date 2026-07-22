@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-6m3dhz1loblr",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T09:56:20.586Z",
+      "data": {
+        "source": {
+          "runId": "run-6m3dhz1loblr",
+          "slotId": "9uib",
+          "themeId": "skyhook",
+          "levelId": "skyhook-9uib",
+          "title": "Skyhook",
+          "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+          "evaluatedCommit": "d3b1adb7278d6d183d65bd116f9d3116760aa77c",
+          "payloadCommit": "dc879e720577412e434e10f7a69ae081365ec5cb",
+          "manifestSha256": "448e40655d10a6ae5f5cd5eb6f5a1cef2f52e93169c055a6ac1381f402469178",
+          "definitionSha256": "998c33707b5821816ec68f7370b1110c1e448c12ea01c0cc6df9b69ecedac16c",
+          "evaluatedSha256": "c58d346429cedbf0f0bb5c74e179260fb2f257dbf88762755cdee47e468a8c4a",
+          "payloadSha256": "c52107a2900c6b171a8c60b72938fa133a95864e827c4bcfe885d7afdfc026c1",
+          "payloadDiffSha256": "316f2265694ea7f2a0d632fbd0c72e4ff81e1386c43c7d3b536ae9ebd6bfbcec",
+          "sourcePath": "src/levels/skyhook-9uib/",
+          "destinationPath": "src/benchmark-levels/skyhook-9uib/",
+          "legacySourcePresent": false,
+          "derivative": null,
+          "descriptor": {
+            "source": "controller-owned assignment data",
+            "id": "skyhook-9uib",
+            "title": "Skyhook",
+            "sha256": "f3cf445b31391e78f2604c12299f47c9c1bc151d366b665c3b4f09d829bd5762"
+          },
+          "baseCommit": "cad60faac2183a869cfb95422b6174483ca40914"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T09:56:20.625Z",
+      "data": {
+        "destination": "src/benchmark-levels/skyhook-9uib/",
+        "files": 5,
+        "reused": false
+      }
+    },
+    "descriptor": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T09:56:20.628Z",
+      "data": {
+        "path": "src/benchmark-levels/skyhook-9uib/level.json",
+        "sha256": "f3cf445b31391e78f2604c12299f47c9c1bc151d366b665c3b4f09d829bd5762",
+        "reused": false
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T09:56:20.655Z",
+      "data": {
+        "destination": "src/benchmark-levels/skyhook-9uib/",
+        "verifiedFiles": 6
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T09:56:39.384Z",
+      "data": {
+        "gallerySha256": "8905a7bbe48f58368792982c6af56eb75669b47879bce7a684dffb1b98b469cb",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.60882609499991,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "8292946acd840d63e1b5ebe99fad10930e4025437dc3b2ce2d28f536f38305b8",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.330308940000017,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-9uib --base cad60faac2183a869cfb95422b6174483ca40914",
+            "exitCode": 0,
+            "stdoutSha256": "8ca5b8c676fc8d997b7130213a23581e9f5af5dad6d879dc99940e057badb3c8",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.040216473000007684,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level skyhook-9uib",
+            "exitCode": 0,
+            "stdoutSha256": "8bb6a2e82684f480f7eaf0da1b771cb668d25e860371569c4732ad041aee30aa",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 8.887765919000026,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T09:56:39.428Z",
+      "data": {
+        "promotionCommit": "363fd7ada199a326ea8baa163efd5aadcbfd72af",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-12T09:56:39.429Z",
+  "migration": false,
+  "source": {
+    "runId": "run-6m3dhz1loblr",
+    "slotId": "9uib",
+    "themeId": "skyhook",
+    "levelId": "skyhook-9uib",
+    "title": "Skyhook",
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "evaluatedCommit": "d3b1adb7278d6d183d65bd116f9d3116760aa77c",
+    "payloadCommit": "dc879e720577412e434e10f7a69ae081365ec5cb",
+    "manifestSha256": "448e40655d10a6ae5f5cd5eb6f5a1cef2f52e93169c055a6ac1381f402469178",
+    "definitionSha256": "998c33707b5821816ec68f7370b1110c1e448c12ea01c0cc6df9b69ecedac16c",
+    "evaluatedSha256": "c58d346429cedbf0f0bb5c74e179260fb2f257dbf88762755cdee47e468a8c4a",
+    "payloadSha256": "c52107a2900c6b171a8c60b72938fa133a95864e827c4bcfe885d7afdfc026c1",
+    "payloadDiffSha256": "316f2265694ea7f2a0d632fbd0c72e4ff81e1386c43c7d3b536ae9ebd6bfbcec",
+    "sourcePath": "src/levels/skyhook-9uib/",
+    "destinationPath": "src/benchmark-levels/skyhook-9uib/",
+    "legacySourcePresent": false,
+    "derivative": null,
+    "descriptor": {
+      "source": "controller-owned assignment data",
+      "id": "skyhook-9uib",
+      "title": "Skyhook",
+      "sha256": "f3cf445b31391e78f2604c12299f47c9c1bc151d366b665c3b4f09d829bd5762"
+    },
+    "baseCommit": "cad60faac2183a869cfb95422b6174483ca40914"
+  },
+  "promotionCommit": "363fd7ada199a326ea8baa163efd5aadcbfd72af"
+}

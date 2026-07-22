@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "fable-high-strandline-s7ah",
+  "slotId": "s7ah",
+  "configuration": {
+    "id": "claude-fable-5-high"
+  },
+  "theme": {
+    "id": "strandline",
+    "path": "benchmark/themes/strandline.md",
+    "sha256": "31621cb405a2b293bf0f7026add0b462312e75c44dfcea3a8549b1fd9616bff1"
+  },
+  "baseline": {
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-fable-5-high.md",
+    "sha256": "114c3d7ef224546e8a3ce6d06398db5724e7f19c403943d246646e5adc5d3770"
+  },
+  "controller": {
+    "commit": "7598ff6575b06c0e6a7fa17279fc73ad638b3b44"
+  },
+  "timing": {
+    "startedAt": "2026-07-18T09:27:22.842Z",
+    "finishedAt": "2026-07-18T10:26:56.995Z",
+    "wallTimeSeconds": 3574.153
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5"
+      },
+      "promptSha256": "4f1bf457f42b0c8dca5f06d2993922270eb365a5017ad805b6d06445648755cc",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.214 (Claude Code)"
+      },
+      "sessionId": "c1aeb643-7be7-437a-9e6f-fec0b7b4d939",
+      "rolloutArtifactSha256": "83b0a826064c9e5e624c1418f35ac1a9810285c7c097acd4d8adeca88a4a7e5f",
+      "outputArtifactSha256": "2a0403dc81a29b7fe6606af709a142fb75e53291ea31b2dfadcfc2ac1d7699fe",
+      "startedAt": "2026-07-18T09:27:35.074Z",
+      "finishedAt": "2026-07-18T10:26:44.037Z",
+      "wallTimeSeconds": 3356.866424788,
+      "result": "completed",
+      "usage": {
+        "inputTokens": 233,
+        "outputTokens": 240273,
+        "cacheReadInputTokens": 37513227,
+        "cacheWriteInputTokens": 474597
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 59.021147,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 59.021147,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5",
+        "usageSource": "agreed",
+        "costUsd": 59.021147,
+        "inputTokens": 233,
+        "outputTokens": 240273,
+        "cacheReadTokens": 37513227,
+        "cacheWriteTokens": 474597
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.965070445,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.0212079620000005,
+      "outputSha256": "298dd949116a2319ee9b2ffe30de99a627a53e5e9fef9ca71f70ca6d88e6df98"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-s7ah --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.038062314999999215,
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level strandline-s7ah",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.852318781,
+      "outputSha256": "3ad843d7c73245d0db8e623a4a6064ade283a3b14b4c416365cf17b98af9aa14"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "strandline-s7ah",
+    "title": "Strandline",
+    "evaluated": {
+      "commit": "6f47b44880ee07542e1b39ade6793b7278a89819",
+      "branch": "benchmark-run-fable-high-strandline-s7ah"
+    },
+    "payload": {
+      "commit": "9c270b7dbc0c76ce905ce9e49ba315b96c1286d8",
+      "branch": "benchmark-payload-fable-high-strandline-s7ah"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

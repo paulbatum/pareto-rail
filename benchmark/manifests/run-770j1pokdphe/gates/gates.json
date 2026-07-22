@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "2125a1178208af1a36eff7ed02e9709748d3df21",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.15469893,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-770j1pokdphe/gates/typecheck.log",
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.6102995000000001,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-770j1pokdphe/gates/build.log",
+      "outputSha256": "5ae13f601d3cdaaebb73871284239adc89849a75443e334eb743c45f6036966d"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-560p --base 65172df10ae05cb49f7e60e6faa73b646417d854",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03360193900000013,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-770j1pokdphe/gates/scope.log",
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level skyhook-560p",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.152959719,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-770j1pokdphe/gates/floor.log",
+      "outputSha256": "241ac86d67b06be14248b2f3222aa1eaf4a471c925e2723599de3bcf1eb6b158"
+    }
+  ]
+}

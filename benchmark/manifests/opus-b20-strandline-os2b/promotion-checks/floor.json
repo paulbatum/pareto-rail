@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "ce851c995cd723c8825f1f29555ba952fbcdc7d1890593076bd0042de84c9adc",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 16.008955412000002,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level strandline-os2b\n\nStrandline floor check\nduration 60.0s; spawned kinds 6: borer, brood, cling, parent, spore, swarmer\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=1.25\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 0\nAll floor checks passed.\n",
+  "stderr": ""
+}

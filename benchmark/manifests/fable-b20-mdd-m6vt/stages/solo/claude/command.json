@@ -1,0 +1,31 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-fable-5",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--settings",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/fable-b20-mdd-m6vt/stages/solo/claude/budget/hook-settings.json",
+    "--session-id",
+    "4915b46b-043d-40fe-bbf5-4d4c3ad42e60"
+  ],
+  "cliVersion": "2.1.214 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-fable-b20-mdd-m6vt",
+  "startedAt": "2026-07-18T13:07:03.708Z",
+  "finishedAt": "2026-07-18T13:38:54.896Z",
+  "wallTimeSeconds": 1792.3195728310002,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

@@ -1,0 +1,25 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level speedsolve-wvdv
+
+Speedsolve floor check
+duration 60.0s; spawned kinds 7: bolt, core, octa, prism, tetra, tile, weakpoint
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.28
+  action SFX snap: overridden grid (enabled, 2×32nd grid)
+  lock radius: 0.17 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, updateCameraEffects, updateAttractCamera, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, easeRunProgress, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.

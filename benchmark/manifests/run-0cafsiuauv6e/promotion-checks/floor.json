@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "91a7f98ae6d17b631522e6f1dee1c7365988dcf749d8e20a2beb879508ba7e8d",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 13.214216852,
+  "stdout": "\n> raild@0.0.0 check:floor\n> node scripts/check-floor.mjs --level mass-driver-vyxj\n\nMass Driver floor check\nduration 60.0s; spawned kinds 5: bolt, interlock, sentinel, slider, weaver\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=1\n    maxGridSeconds=0.9375\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 2\n\nWarnings:\n- Average enemy destruction distance is slightly high (52.1m, warning threshold 45.0m). Consider spawning enemies closer.\n- Enemy destruction concentration in screen center is slightly high (44.4%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}

@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "sol-b20-broadside-b3fk",
+  "slotId": "b3fk",
+  "configuration": {
+    "id": "codex-sol-high-b20"
+  },
+  "theme": {
+    "id": "broadside",
+    "path": "benchmark/themes/broadside.md",
+    "sha256": "26b45de49b732d66b6dd68c6d97c053519f755e0e7543cf97a368a31794e8376"
+  },
+  "baseline": {
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-sol-high-b20.md",
+    "sha256": "d9f149d2ec58acea458adf81221f3c7b4d6d33923f165c89bb42f861b42574a4"
+  },
+  "controller": {
+    "commit": "7598ff6575b06c0e6a7fa17279fc73ad638b3b44"
+  },
+  "timing": {
+    "startedAt": "2026-07-18T11:18:10.884Z",
+    "finishedAt": "2026-07-18T12:04:23.324Z",
+    "wallTimeSeconds": 2772.44
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "c74d05df38f513edec0916112bec093b21c78fb709abdfd55ea47f237b1a75a2",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.144.1"
+      },
+      "sessionId": "019f74f2-e4ad-7a33-895d-20397e4e6071",
+      "rolloutArtifactSha256": "4d3c5f1831ea470795f4494f1d2155b0c409d6dd4f2981e05d322301fba46f29",
+      "outputArtifactSha256": "a35b1538cf86421c5abadee1ab2f4ce6c696519e10eeb4395b1b4d58d1026525",
+      "startedAt": "2026-07-18T11:18:21.301Z",
+      "finishedAt": "2026-07-18T12:04:08.290Z",
+      "wallTimeSeconds": 2585.7857409800004,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 20,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.014287,
+            "at": "2026-07-18T11:38:35.656Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.209532,
+            "at": "2026-07-18T11:51:49.103Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 15.223153,
+            "at": "2026-07-18T12:02:00.965Z"
+          }
+        ],
+        "resumes": [],
+        "finalSpendUsd": 16.416178000000002,
+        "finalFraction": 0.8208089000000001
+      },
+      "usage": {
+        "inputTokens": 737028,
+        "outputTokens": 86657,
+        "cacheReadInputTokens": 20262656,
+        "reasoningTokens": 23930
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 16.416178000000002,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 16.416178000000002,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 737028,
+        "outputTokens": 86657,
+        "cacheReadTokens": 20262656,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 23930
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.76686977,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.065895156,
+      "outputSha256": "0e6e9f918c9931756d11561ebe9cc96982c3f6aff4fead549eaf928d5e27c95c"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level broadside-b3fk --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03808305699999982,
+      "outputSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level broadside-b3fk",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.306993339000001,
+      "outputSha256": "defe81092552a78bd28bd55f8445a02ff75e25b30cbd6095c8dcf39b9209a8bc"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "broadside-b3fk",
+    "title": "Broadside",
+    "evaluated": {
+      "commit": "bf95c17dded0bd205c220b310a886d3d246af940",
+      "branch": "benchmark-run-sol-b20-broadside-b3fk"
+    },
+    "payload": {
+      "commit": "a71857306b357aa45261bbc8e1c49d4e38b0fcf7",
+      "branch": "benchmark-payload-sol-b20-broadside-b3fk"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

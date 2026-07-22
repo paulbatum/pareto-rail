@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "2b263716cb2a23a101b4e32a91dc87debc2279b32fd947a94b2210d21e0a3c38",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 15.646794083999998,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level broadside-b9mn\n\nBroadside floor check\nduration 60.0s; spawned kinds 7: bolt, core, dart, escort, lancer, shieldgen, turret\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=1.25\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 2\n\nWarnings:\n- Average enemy destruction distance is slightly high (52.2m, warning threshold 45.0m). Consider spawning enemies closer.\n- Enemy destruction concentration in screen center is slightly high (55.7%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}

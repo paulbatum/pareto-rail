@@ -1,0 +1,29 @@
+
+> raild@0.0.0 check:floor
+> node scripts/check-floor.mjs --level skyhook-81u5
+
+Skyhook floor check
+duration 60.0s; spawned kinds 5: boss, clamp, debris, kite, sentinel
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.42
+  action SFX snap: overridden grid (enabled, 2×32nd grid)
+  lock radius: 0.15 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: scoreForVolley, validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 2
+
+Warnings:
+- Average enemy destruction distance is slightly high (53.4m, warning threshold 45.0m). Consider spawning enemies closer.
+- Enemy destruction concentration in screen center is slightly high (41.1%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.

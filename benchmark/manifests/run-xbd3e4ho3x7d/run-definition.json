@@ -1,0 +1,21 @@
+{
+  "runId": "run-xbd3e4ho3x7d",
+  "slotId": "o9ok",
+  "levelId": "mass-driver-o9ok",
+  "themeId": "mass-driver",
+  "themePath": "benchmark/themes/mass-driver.md",
+  "configurationId": "claude-opus-4-8-high",
+  "recipePath": "benchmark/recipes/claude-opus-4-8-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-4-8",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v1",
+  "baselinePolicy": "open",
+  "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271",
+  "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+  "levelTitle": "Mass Driver"
+}

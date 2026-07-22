@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-2dzleoxfhatr",
+  "slotId": "rqki",
+  "configuration": {
+    "id": "claude-opus-4-8-high-b20"
+  },
+  "theme": {
+    "id": "mass-driver",
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "baseline": {
+    "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "65172df10ae05cb49f7e60e6faa73b646417d854"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-opus-4-8-high-b20.md",
+    "sha256": "c9141cd94ae83af3101956744f7b6777275d7fe50de17bb21854fb1e304a5901"
+  },
+  "controller": {
+    "commit": "c592d7c30af1c4fa526f131923d57f1a71d81f8a"
+  },
+  "timing": {
+    "startedAt": "2026-07-21T09:47:18.815Z",
+    "finishedAt": "2026-07-21T10:26:05.403Z",
+    "wallTimeSeconds": 2326.588
+  },
+  "stages": [
+    {
+      "id": "claude-opus-4-8",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-4-8"
+      },
+      "promptSha256": "11f7a38868e30eb2ced6d38f8827555a7be1dfe5dbd30730266c627d1afb5ee4",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.216 (Claude Code)"
+      },
+      "sessionId": "c3905b16-3a7b-4ced-bfe1-29991168b8fc",
+      "rolloutArtifactSha256": "8e3bdc9e80a2ad18c461e711a20992f179dd5258ef507d31f0c9ce0191736971",
+      "outputArtifactSha256": "1cf896ac701cbe31590d7761ed1bd2cee838f31e7dfa4f87b0d701d3472b45e2",
+      "startedAt": "2026-07-21T09:48:19.525Z",
+      "finishedAt": "2026-07-21T10:25:54.835Z",
+      "wallTimeSeconds": 2117.832905364,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 20,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.430225999999999,
+            "at": "2026-07-21T09:58:58.332Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.0463665,
+            "at": "2026-07-21T10:10:33.323Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 15.0758255,
+            "at": "2026-07-21T10:19:52.894Z"
+          },
+          {
+            "pct": 100,
+            "spentUsd": 20.289544999999997,
+            "at": "2026-07-21T10:25:06.649Z"
+          }
+        ],
+        "resumes": [],
+        "finalSpendUsd": 21.190755,
+        "finalFraction": 1.05953775
+      },
+      "usage": {
+        "inputTokens": 2903,
+        "outputTokens": 188241,
+        "cacheReadInputTokens": 24888570,
+        "cacheWriteInputTokens": 402593
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 21.190755,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 21.190755,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-opus-4-8",
+        "usageSource": "agreed",
+        "costUsd": 21.190755,
+        "inputTokens": 2903,
+        "outputTokens": 188241,
+        "cacheReadTokens": 24888570,
+        "cacheWriteTokens": 402593
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.9315845219999996,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.5908900750000002,
+      "outputSha256": "6736d660388cdd093929ebb09f94b36eaf5d921cfa3e13a14e89828bd62aad67"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-rqki --base 65172df10ae05cb49f7e60e6faa73b646417d854",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.030252804000000195,
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-rqki",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.741075541000001,
+      "outputSha256": "b6383283c6e09ab6ca430bb91f6cad7a3b9573780dee8b0b5bcbd55e26e506a1"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "mass-driver-rqki",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "4fb66562368957eb2128f6f610acbc4c50fbda81",
+      "branch": "benchmark-run-run-2dzleoxfhatr"
+    },
+    "payload": {
+      "commit": "cde15c8679fce2a3b116aa2fde062920e85fc963",
+      "branch": "benchmark-payload-run-2dzleoxfhatr"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

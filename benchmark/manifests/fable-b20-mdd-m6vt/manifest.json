@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "fable-b20-mdd-m6vt",
+  "slotId": "m6vt",
+  "configuration": {
+    "id": "claude-fable-5-high-b20"
+  },
+  "theme": {
+    "id": "mass-driver-detailed",
+    "path": "benchmark/themes/mass-driver-detailed.md",
+    "sha256": "03464c7183d4f591c5e6cb2b797adb01ab3f3eca1e38543b9c6e4e723d87a0f5"
+  },
+  "baseline": {
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-fable-5-high-b20.md",
+    "sha256": "a464fa220508efc2eb9bc7c29984aa6f588475930d37dec879797271c2f31de7"
+  },
+  "controller": {
+    "commit": "7598ff6575b06c0e6a7fa17279fc73ad638b3b44"
+  },
+  "timing": {
+    "startedAt": "2026-07-18T13:06:53.427Z",
+    "finishedAt": "2026-07-18T13:39:09.075Z",
+    "wallTimeSeconds": 1935.648
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5"
+      },
+      "promptSha256": "b0434b7ff79285b9c7264b9a74138e04bd69ba1b76d8dea4a988a35513ea7baf",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.214 (Claude Code)"
+      },
+      "sessionId": "4915b46b-043d-40fe-bbf5-4d4c3ad42e60",
+      "rolloutArtifactSha256": "6b652237dda520839701e4910996903517126823a73e393e8a6bb09e0aa7229f",
+      "outputArtifactSha256": "fd2d30b4774e72fd7d43df25b3168192ace38fc5da4664aa75e37bbdba89a3d0",
+      "startedAt": "2026-07-18T13:07:03.708Z",
+      "finishedAt": "2026-07-18T13:38:54.896Z",
+      "wallTimeSeconds": 1792.3195728310002,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 20,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.016660000000001,
+            "at": "2026-07-18T13:09:20.673Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.322776000000003,
+            "at": "2026-07-18T13:18:46.401Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 16.15979,
+            "at": "2026-07-18T13:25:22.073Z"
+          },
+          {
+            "pct": 100,
+            "spentUsd": 20.815230000000003,
+            "at": "2026-07-18T13:30:57.276Z"
+          },
+          {
+            "pct": 125,
+            "spentUsd": 25.993929,
+            "at": "2026-07-18T13:33:48.534Z"
+          },
+          {
+            "pct": 150,
+            "spentUsd": 30.461015000000003,
+            "at": "2026-07-18T13:36:42.050Z"
+          }
+        ],
+        "resumes": [],
+        "finalSpendUsd": 34.318339,
+        "finalFraction": 1.71591695
+      },
+      "usage": {
+        "inputTokens": 159,
+        "outputTokens": 149510,
+        "cacheReadInputTokens": 19944689,
+        "cacheWriteInputTokens": 344828
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 34.318339,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 34.318339,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5",
+        "usageSource": "agreed",
+        "costUsd": 34.318339,
+        "inputTokens": 159,
+        "outputTokens": 149510,
+        "cacheReadTokens": 19944689,
+        "cacheWriteTokens": 344828
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.780560933,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.193767745,
+      "outputSha256": "8c232957be315b98b3155d049df3c2452418de5c66ef204716885ecef1c6f31b"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m6vt --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03728627400000005,
+      "outputSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-detailed-m6vt",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.896067582,
+      "outputSha256": "ffda64a961da9b95937939fa6c29463196efb15985d231edf127952821de0bf2"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "mass-driver-detailed-m6vt",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "251300fb3cb10f886356b3008eafd7ed6c859f19",
+      "branch": "benchmark-run-fable-b20-mdd-m6vt"
+    },
+    "payload": {
+      "commit": "b6d3ebc14dbb79d5b485ef40b752f47890229455",
+      "branch": "benchmark-payload-fable-b20-mdd-m6vt"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

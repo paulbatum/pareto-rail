@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-c340azfgk0vd",
+  "slotId": "9281",
+  "configuration": {
+    "id": "codex-sol-high-b20"
+  },
+  "theme": {
+    "id": "mass-driver",
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "configurationCommit": "688cad8886afc5d50b212d03bd2a3b5029179b53",
+    "releaseRecord": {
+      "path": "benchmark/releases/v1/freeze.json",
+      "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+    },
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "a7acfa7f253926dab38f6620167dda9644cfa0be"
+    }
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "6d0bea392de140d7b7efb7f608baeaef2040904ee7af35dce23f07d3889d6322"
+  },
+  "recipe": {
+    "id": "recipe",
+    "path": "benchmark/recipes/codex-sol-high-b20.md",
+    "sha256": "821683dcc219e07b4a06876bb9cb7f6ae1d05b6ddd3c65379009204525686813"
+  },
+  "controller": {
+    "path": "benchmark/controller/runbook.md",
+    "sha256": "5d1f370ec351e0a96b2d923250689a1b3e8d35c990748dd8b2f34e10786c8506"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "d031ceba502bcdb02c018cee639d6cd1e42c992a6bc14730f4fe6dd6e62e1e6a"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/codex-cli.mjs",
+    "sha256": "6fec9ee98861f589051e5c3cf735567e6c85131cab6fc5527d3fb3f2c7f65d65"
+  },
+  "timing": {
+    "startedAt": "2026-07-13T19:32:58.243Z",
+    "finishedAt": "2026-07-13T20:07:13.717Z",
+    "wallTimeSeconds": 2055.474
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "26fbc4c97b220e5b35b7cf833e0fb47bf3b721044b31ff219080b0d884e9e6d4",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.144.1"
+      },
+      "sessionId": "019f5cf7-fecf-72b3-9143-6a0d977e7d9a",
+      "rolloutArtifactSha256": "77419eb719c550cea6f35b1ba8ce8dddca0be2ec156892f1e5dc65cb755360f1",
+      "outputArtifactSha256": "62bb83ef9fb90101f757cabcb74d0bb07bc60f5d29b41dcf0f65fba6e96e59ea",
+      "startedAt": "2026-07-13T19:33:02.481Z",
+      "finishedAt": "2026-07-13T20:06:57.410Z",
+      "wallTimeSeconds": 2034.929,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 3,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.279356,
+            "at": "2026-07-13T19:51:42.664Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.245223,
+            "at": "2026-07-13T20:05:26.406Z"
+          }
+        ],
+        "resumes": [
+          {
+            "round": 1,
+            "spentUsd": 4.08295,
+            "fraction": 0.2041475,
+            "startedAt": "2026-07-13T19:47:50.355Z",
+            "finishedAt": "2026-07-13T19:59:53.047Z",
+            "exitCode": 0
+          },
+          {
+            "round": 2,
+            "spentUsd": 8.511173,
+            "fraction": 0.42555865,
+            "startedAt": "2026-07-13T19:59:53.256Z",
+            "finishedAt": "2026-07-13T20:03:20.701Z",
+            "exitCode": 0
+          },
+          {
+            "round": 3,
+            "spentUsd": 9.912069,
+            "fraction": 0.49560345000000006,
+            "startedAt": "2026-07-13T20:03:20.900Z",
+            "finishedAt": "2026-07-13T20:06:57.410Z",
+            "exitCode": 0
+          }
+        ],
+        "finalSpendUsd": 11.221407,
+        "finalFraction": 0.5610703499999999
+      },
+      "usage": {
+        "inputTokens": 391769,
+        "outputTokens": 72063,
+        "cacheReadInputTokens": 14201344,
+        "reasoningTokens": 24926
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 11.221407,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 11.221407,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json"
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 391769,
+        "outputTokens": 72063,
+        "cacheReadTokens": 14201344,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 24926
+      }
+    ],
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    }
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.760930749,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.0096665450000004,
+      "outputSha256": "ee94482bd5a82ab95823e6859b46bf58f9082ec1aaf1a42d638cc630bf245f3e"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- mass-driver-9281 a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.10872936600000048,
+      "outputSha256": "1aee87c8f659d5e3def37261f79fe7621710226a8c509eb30119ff54ae9be5bd"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-9281",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.951516955,
+      "outputSha256": "efa08f5f15d458b85141fd9a64a0aca6ece9d83409b1de54a5310b620a43beef"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/levels",
+    "levelId": "mass-driver-9281",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "ae3cde42416f628d46308b1989d14702a56d7851",
+      "branch": "benchmark-run-run-c340azfgk0vd"
+    },
+    "payload": {
+      "commit": "a75b7877004368d36efff1d241badd3e2a608bf0",
+      "branch": "benchmark-payload-run-c340azfgk0vd"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

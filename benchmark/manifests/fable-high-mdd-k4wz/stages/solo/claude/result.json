@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "d0aa724a-b67b-4c00-a330-aa0bb06ff16e",
+  "usageSha256": "9cc13f48b5e529af65cb5fe221ecc67060ed4d492f25c8c93bf3793a44bc8cac",
+  "eventLogSha256": "b0e392213e8ecbb6d2be45fc5e3b76051dacba376180a36b9d64810fdcc03501",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-high-mdd-k4wz/harness-home/projects/-tmp-pareto-rail-fable-high-mdd-k4wz/d0aa724a-b67b-4c00-a330-aa0bb06ff16e.jsonl",
+    "sha256": "505165d00e11c5c758c364fb3077f6fb82a8df945a689ba0472aff9456e3694e"
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "sessionId": "3b92bab0-fe4e-41f0-8375-f412d2e7a464",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Skyhook is complete** — a 60-second climb up a space-elevator tether at `src/levels/skyhook-snxd/`, registered in the picker, with every automated gate green.\n\n## What was built\n\n**The climb (128 BPM × 32 bars = exactly 60 s).** The level is one straight 64° ribbon: launch in grey storm murk with rain and wind-riding enemies, punch the cloud deck on the bar-8 drop into sunlit blue, thin to indigo at bar 16, and fight the boss in starfield black before the station swallows the car for a near-silent A-major dock. The whole sky script (background, fog, stars, sun, planet drop-away, atmosphere rim) is keyed to rail progress computed from the musical bars, so the palette turns exactly on the phrase boundaries.\n\n**Defending the car.** The white/hazard-orange climber car rides the tether ahead of the camera and the 3-point hull is its integrity: sappers swoop in, latch onto its flanks, and drill on a visible strobing lamp timer unless pried off. Five enemy kinds with distinct motion grammars (swooping gliders, updraft-riding sprites that stall and fall, car-latching sappers, thruster-hopping vacuum spikers with telegraphed railgun bolts, a two-stage tether-crawling breaker), plus interceptable debris bolts.\n\n**The Lamprey.** It slams onto the tether at bar 19 — you hear the hull-shaking impact and see it the whole fight, hand-over-hand ratcheting down the line, growing from a speck to a house. Three grip claws gate its staged core (it flinches, swings wide, and comes back meaner); at bar 29 it reaches the car and tears a hull point off every 1.8 s until it dies or you do. Kill it and the carcass falls the whole height of the sky.\n\n**The score is an altimeter.** Wide wind-bedded pads and four-on-the-floor low, stripped half-time glass in the stratosphere, near-vacuum for the boss (sub pulses, hull ticks, a low dread motif over Am–B♭–Am–E), dock latch and chimes at the top. All player actions snap to the transport and read the live chord; kills walk hidden per-act melody lanes; boss chips escalate audibly; the maw kill ducks the mix and lands a cable-twang severance figure.\n\n## Verified\n- `typecheck`, `build`, `check:scope -- skyhook-snxd HEAD`, and **`check:floor` all pass with zero warnings** (occlusion 0, perf 0, audio 0, spread/distance 0, full event coverage).\n- Simulation: perfect policy 56/56 kills → rank S; seeded imperfect 51/56 → A; no-fire dies to the drills and the Lamprey deadline, as intended.\n- `trace:audio` confirms the layer-stripping arrangement and the 58.7 s dock latch; gameplay snapshots (SwiftShader) confirm the storm murk, the color arc, the tether/station composition, and the boss descent.\n\nIteration highlights: fixed a left-handed `makeBasis` that was silently mangling the tether/car orientation, worked around the shared post pipeline's swapped bloom threshold/radius parameters (which was blooming the whole day sky white), rescaled the boss descent so the fight starts at bar 22 rather than compressing into the last 10 seconds, and re-seated the camera *above* the tether after finding the car occluded the upper-left target lane.\n\n## Needs human eyes (WSL2 can't render WebGPU)\nFirst things to check in a real playtest: the cloud-deck punch at bar 8 (flash + surge + fog clearing), tether/car readability with **bloom at zero**, the Lamprey descent reading as \"it's getting closer,\" sapper drill-lamp urgency, the final mix balance (especially the near-silent boss act — it should feel tense, not empty), and the attract screen letters against the storm.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 3986306,
+    "duration_api_ms": 3733065,
+    "ttft_ms": 4796,
+    "ttft_stream_ms": 4376,
+    "time_to_request_ms": 55,
+    "num_turns": 185,
+    "result": "**Skyhook is complete** — a 60-second climb up a space-elevator tether at `src/levels/skyhook-snxd/`, registered in the picker, with every automated gate green.\n\n## What was built\n\n**The climb (128 BPM × 32 bars = exactly 60 s).** The level is one straight 64° ribbon: launch in grey storm murk with rain and wind-riding enemies, punch the cloud deck on the bar-8 drop into sunlit blue, thin to indigo at bar 16, and fight the boss in starfield black before the station swallows the car for a near-silent A-major dock. The whole sky script (background, fog, stars, sun, planet drop-away, atmosphere rim) is keyed to rail progress computed from the musical bars, so the palette turns exactly on the phrase boundaries.\n\n**Defending the car.** The white/hazard-orange climber car rides the tether ahead of the camera and the 3-point hull is its integrity: sappers swoop in, latch onto its flanks, and drill on a visible strobing lamp timer unless pried off. Five enemy kinds with distinct motion grammars (swooping gliders, updraft-riding sprites that stall and fall, car-latching sappers, thruster-hopping vacuum spikers with telegraphed railgun bolts, a two-stage tether-crawling breaker), plus interceptable debris bolts.\n\n**The Lamprey.** It slams onto the tether at bar 19 — you hear the hull-shaking impact and see it the whole fight, hand-over-hand ratcheting down the line, growing from a speck to a house. Three grip claws gate its staged core (it flinches, swings wide, and comes back meaner); at bar 29 it reaches the car and tears a hull point off every 1.8 s until it dies or you do. Kill it and the carcass falls the whole height of the sky.\n\n**The score is an altimeter.** Wide wind-bedded pads and four-on-the-floor low, stripped half-time glass in the stratosphere, near-vacuum for the boss (sub pulses, hull ticks, a low dread motif over Am–B♭–Am–E), dock latch and chimes at the top. All player actions snap to the transport and read the live chord; kills walk hidden per-act melody lanes; boss chips escalate audibly; the maw kill ducks the mix and lands a cable-twang severance figure.\n\n## Verified\n- `typecheck`, `build`, `check:scope -- skyhook-snxd HEAD`, and **`check:floor` all pass with zero warnings** (occlusion 0, perf 0, audio 0, spread/distance 0, full event coverage).\n- Simulation: perfect policy 56/56 kills → rank S; seeded imperfect 51/56 → A; no-fire dies to the drills and the Lamprey deadline, as intended.\n- `trace:audio` confirms the layer-stripping arrangement and the 58.7 s dock latch; gameplay snapshots (SwiftShader) confirm the storm murk, the color arc, the tether/station composition, and the boss descent.\n\nIteration highlights: fixed a left-handed `makeBasis` that was silently mangling the tether/car orientation, worked around the shared post pipeline's swapped bloom threshold/radius parameters (which was blooming the whole day sky white), rescaled the boss descent so the fight starts at bar 22 rather than compressing into the last 10 seconds, and re-seated the camera *above* the tether after finding the car occluded the upper-left target lane.\n\n## Needs human eyes (WSL2 can't render WebGPU)\nFirst things to check in a real playtest: the cloud-deck punch at bar 8 (flash + surge + fog clearing), tether/car readability with **bloom at zero**, the Lamprey descent reading as \"it's getting closer,\" sapper drill-lamp urgency, the final mix balance (especially the near-silent boss act — it should feel tense, not empty), and the attract screen letters against the storm.",
+    "stop_reason": "end_turn",
+    "session_id": "3b92bab0-fe4e-41f0-8375-f412d2e7a464",
+    "total_cost_usd": 71.36709499999996,
+    "usage": {
+      "input_tokens": 265,
+      "cache_creation_input_tokens": 492912,
+      "cache_read_input_tokens": 48741206,
+      "output_tokens": 255277,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 492912,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1357,
+          "cache_read_input_tokens": 507753,
+          "cache_creation_input_tokens": 336,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 336
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1069,
+        "outputTokens": 16,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001149,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-fable-5": {
+        "inputTokens": 265,
+        "outputTokens": 255277,
+        "cacheReadInputTokens": 48741206,
+        "cacheCreationInputTokens": 492912,
+        "webSearchRequests": 0,
+        "costUSD": 71.36594599999997,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "4de7b161-e726-4e0d-8ba1-454143d1a5e5"
+  },
+  "normalized": {
+    "inputTokens": 48741471,
+    "outputTokens": 255277,
+    "cacheReadInputTokens": 48741206,
+    "cacheWriteInputTokens": 492912,
+    "vendorFields": {
+      "totalCostUsd": 71.36709499999996,
+      "durationMs": 3986306,
+      "durationApiMs": 3733065,
+      "numTurns": 185,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1069,
+          "outputTokens": 16,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001149,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-fable-5": {
+          "inputTokens": 265,
+          "outputTokens": 255277,
+          "cacheReadInputTokens": 48741206,
+          "cacheCreationInputTokens": 492912,
+          "webSearchRequests": 0,
+          "costUSD": 71.36594599999997,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

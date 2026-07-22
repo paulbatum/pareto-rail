@@ -1,0 +1,20 @@
+{
+  "runId": "sol-high-broadside-b6ej",
+  "slotId": "b6ej",
+  "levelId": "broadside-b6ej",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "codex-sol-high",
+  "recipePath": "benchmark/recipes/codex-sol-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Broadside"
+}

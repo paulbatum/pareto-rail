@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "972f520ab0df378fa3f1917e0786e525e0ef4f287ed2323d38430659e825f79f",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 0.16957577199999999,
+  "stdout": "\n> pareto-rail@0.0.0 gallery\n> node scripts/collect-gallery.mjs\n\nWrote docs/level-gallery.md from built-in and discovered benchmark level cards\n",
+  "stderr": ""
+}

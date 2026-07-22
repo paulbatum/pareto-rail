@@ -1,0 +1,17 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "df16d067-7a96-4724-83d3-94f2afba19cc",
+  "usageSha256": "b9008ec594551fad0907ec97b8d3175d4483b54fefdb888ee557d2ea77ac91f8",
+  "eventLogSha256": "9cf09c2bf062ffdd988203b6c72240de1992aa3946209fbe8593bb6af0ce664c",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/opus-b20-strandline-os2b/harness-home/projects/-tmp-pareto-rail-opus-b20-strandline-os2b/df16d067-7a96-4724-83d3-94f2afba19cc.jsonl",
+    "sha256": "32dc656e5e27fb77807da4a19f0655fb185ce91a34e5b10d95fcfa9d8a594936"
+  },
+  "budget": {
+    "path": "budget.json"
+  }
+}

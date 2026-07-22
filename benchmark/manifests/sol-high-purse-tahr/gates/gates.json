@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "0f6f7170b04cf9d84dae2d6f0703c38729188c27",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.907739795,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-purse-tahr/gates/typecheck.log",
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.1311396479999996,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-purse-tahr/gates/build.log",
+      "outputSha256": "983e1ddda877d5401434b6777a777bb5c06f81be6318d56d44fe00e69fd263e7"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level purse-pursuit-tahr --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.036909983999999896,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-purse-tahr/gates/scope.log",
+      "outputSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level purse-pursuit-tahr",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 8.245256999999997,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-purse-tahr/gates/floor.log",
+      "outputSha256": "85322ccc484ce3731811e607ba1c870e6c34495a1d1599ddacea7413d5e815bb"
+    }
+  ]
+}

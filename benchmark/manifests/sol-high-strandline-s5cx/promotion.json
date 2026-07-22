@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "runId": "sol-high-strandline-s5cx",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:43:44.177Z",
+      "data": {
+        "source": {
+          "runId": "sol-high-strandline-s5cx",
+          "slotId": "s5cx",
+          "themeId": "strandline",
+          "levelId": "strandline-s5cx",
+          "title": "Strandline",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "4f89f28f5b21a019a6d7d7005aeea286930674a9",
+          "payloadCommit": "ac4691ad881abc0e5388b524bb16d496d4104a8a",
+          "manifestSha256": "c98b271beb2f92de308dc2f14168bd1734485d582e4b83fa9cad254face27db7",
+          "definitionSha256": "e11802bc647e8fe6e5262394bac34bded4501e45a77c28d3f0f270300a93f6a5",
+          "evaluatedSha256": "e2341f81013b68a0f490b84a3d814afb196200db51fd851eccaaba5bd0ddaa66",
+          "payloadSha256": "8ea3f7a31be5325f2fa7fb630a29a29e20313153e613058981909e0e682fa0c4",
+          "payloadDiffSha256": "3c1cdd7f26c1d244988f39a0b29ca121468553de30dca6e64e023ab23b3b3899",
+          "sourcePath": "src/benchmark-levels/strandline-s5cx/",
+          "destinationPath": "src/benchmark-levels/strandline-s5cx/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/strandline-s5cx",
+              "promotedPath": "src/benchmark-levels/strandline-s5cx",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/strandline-s5cx",
+              "promotedPath": "public/level-content/strandline-s5cx",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "6bc4bfba01281f5c88e3d699aabc526d2d6e1bfb"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:43:44.289Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/strandline-s5cx/",
+            "files": 6,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/strandline-s5cx/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:43:44.351Z",
+      "data": {
+        "destination": "src/benchmark-levels/strandline-s5cx/",
+        "verifiedFiles": 9
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:12.237Z",
+      "data": {
+        "gallerySha256": "5d81516f5e685258952b7f4c65d5a32276140df6a7670f282c1d07749dd32e4f",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 2.570670912,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "e6075f9f4e7cd41383d0d0148e6a47695bba409f9dfada75b09876e23a7d5c14",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 7.886624575999999,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-s5cx --base 6bc4bfba01281f5c88e3d699aabc526d2d6e1bfb",
+            "exitCode": 0,
+            "stdoutSha256": "0f3b9d12c8ae691efbeab215e87b8b1c88540e4f7de02c8769f4fe1a761bbdb3",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04356634200000008,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level strandline-s5cx",
+            "exitCode": 0,
+            "stdoutSha256": "bed2fee9a224d8fd659819bd1bbca0c9fdac6a42796fcf86b7be19807c187902",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 17.077715688000005,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:12.303Z",
+      "data": {
+        "promotionCommit": "36461c76d09e4f24d762e0cca84bd255f20fd2a8",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:44:12.305Z",
+  "source": {
+    "runId": "sol-high-strandline-s5cx",
+    "slotId": "s5cx",
+    "themeId": "strandline",
+    "levelId": "strandline-s5cx",
+    "title": "Strandline",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "4f89f28f5b21a019a6d7d7005aeea286930674a9",
+    "payloadCommit": "ac4691ad881abc0e5388b524bb16d496d4104a8a",
+    "manifestSha256": "c98b271beb2f92de308dc2f14168bd1734485d582e4b83fa9cad254face27db7",
+    "definitionSha256": "e11802bc647e8fe6e5262394bac34bded4501e45a77c28d3f0f270300a93f6a5",
+    "evaluatedSha256": "e2341f81013b68a0f490b84a3d814afb196200db51fd851eccaaba5bd0ddaa66",
+    "payloadSha256": "8ea3f7a31be5325f2fa7fb630a29a29e20313153e613058981909e0e682fa0c4",
+    "payloadDiffSha256": "3c1cdd7f26c1d244988f39a0b29ca121468553de30dca6e64e023ab23b3b3899",
+    "sourcePath": "src/benchmark-levels/strandline-s5cx/",
+    "destinationPath": "src/benchmark-levels/strandline-s5cx/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/strandline-s5cx",
+        "promotedPath": "src/benchmark-levels/strandline-s5cx",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/strandline-s5cx",
+        "promotedPath": "public/level-content/strandline-s5cx",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "6bc4bfba01281f5c88e3d699aabc526d2d6e1bfb"
+  },
+  "promotionCommit": "36461c76d09e4f24d762e0cca84bd255f20fd2a8"
+}

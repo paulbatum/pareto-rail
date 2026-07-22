@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "runId": "sol-high-purse-tahr",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:33:31.677Z",
+      "data": {
+        "source": {
+          "runId": "sol-high-purse-tahr",
+          "slotId": "tahr",
+          "themeId": "purse-pursuit",
+          "levelId": "purse-pursuit-tahr",
+          "title": "Purse Pursuit",
+          "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4",
+          "evaluatedCommit": "0f6f7170b04cf9d84dae2d6f0703c38729188c27",
+          "payloadCommit": "94adedefb04d1aafdc91a3c973e9cd6601112411",
+          "manifestSha256": "de77a9a27c0cde66cfbb57cecc27f3765c12fb9c8c4f15c6f461d9a15209d297",
+          "definitionSha256": "a30be30e461d9c573363dd42e9c58fcc7f6bc039e86619bb417d1e495d9dd84a",
+          "evaluatedSha256": "c9a8509f9f0ea307dc9173d173cd23555c11d57b65bd9e5869c4f8b48c28fbc3",
+          "payloadSha256": "b042f80557084febdb30ba6352a375c34e1db4ed2f02a68d2cbbec008bb7cbf8",
+          "payloadDiffSha256": "6c44fef46f8a6545dc78b547fd1f5f12c2c556b30c6f6231b8eaf6fa99e061a6",
+          "sourcePath": "src/benchmark-levels/purse-pursuit-tahr/",
+          "destinationPath": "src/benchmark-levels/purse-pursuit-tahr/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/purse-pursuit-tahr",
+              "promotedPath": "src/benchmark-levels/purse-pursuit-tahr",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/purse-pursuit-tahr",
+              "promotedPath": "public/level-content/purse-pursuit-tahr",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "fa2d2880d2e6af6589d458fa58cd58a3e4f561e1"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:33:31.789Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/purse-pursuit-tahr/",
+            "files": 10,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/purse-pursuit-tahr/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:33:47.776Z",
+      "data": {
+        "images": [
+          {
+            "path": "hero.png",
+            "avifPath": "hero.avif",
+            "pngSha256": "46d939af590702438c77672ff7e18e48820e545b2cf54dac533fda22f7693d74",
+            "avifSha256": "66573696e3d122f77070f3f76c0e8c189d7bae4a1dcd1ac80232929260e19f3f"
+          },
+          {
+            "path": "overview.png",
+            "avifPath": "overview.avif",
+            "pngSha256": "490ceaf47297dbc95464f79110e0c44d182cd816730c787762ccf13d9fefad1a",
+            "avifSha256": "289a617764d200ed4664868e9a4cfd6ae79aaa010324d4d9a638767d9489e486"
+          },
+          {
+            "path": "start.png",
+            "avifPath": "start.avif",
+            "pngSha256": "ab681b200f3aa1e9bffd4610e6966e8c0ea77d34556d696357280c9247813fb9",
+            "avifSha256": "8c5d57c39aa2f195b9a3e062bebc7fa16e346ec828ee77649c9f6505f3dbe75a"
+          }
+        ],
+        "descriptor": {
+          "path": "level.json",
+          "keys": [
+            "overview",
+            "start",
+            "hero"
+          ],
+          "sha256Before": "e2c2601a8f547e40b1b0b6b7fa4e75f67d30f8395f77b55583538cfa75048789",
+          "sha256After": "b893ca75c9ddcd23c40213d6de6681184948342e1345f12994de70c112b74386"
+        }
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:33:47.919Z",
+      "data": {
+        "destination": "src/benchmark-levels/purse-pursuit-tahr/",
+        "verifiedFiles": 13
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:34:19.440Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 2.995691429999999,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "328a6273802db7305df3c370fa2af8abd018e6916ad233d35f5f63e2cd3cfa70",
+            "stderrSha256": "1a45dfd76a4c59fb8407509b05f685e5c15f2433c49f71a152c412a3b5b9b847",
+            "wallTimeSeconds": 10.638822044999998,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level purse-pursuit-tahr --base fa2d2880d2e6af6589d458fa58cd58a3e4f561e1",
+            "exitCode": 0,
+            "stdoutSha256": "109ac033528a29e635a5e8ab91e3c822a6c53f6dcfb01eb194ccddf788f9809f",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04879700199999934,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level purse-pursuit-tahr",
+            "exitCode": 0,
+            "stdoutSha256": "1a29178258fac13ecf6eceeed4a716ca29fd44ec7d0e3f4a8bf774ccf52bcdd9",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 17.812267742,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:34:19.581Z",
+      "data": {
+        "promotionCommit": "e04f96e9850aaa4c6cf4183db97374adad7dfaaf",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-22T18:34:19.582Z",
+  "source": {
+    "runId": "sol-high-purse-tahr",
+    "slotId": "tahr",
+    "themeId": "purse-pursuit",
+    "levelId": "purse-pursuit-tahr",
+    "title": "Purse Pursuit",
+    "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4",
+    "evaluatedCommit": "0f6f7170b04cf9d84dae2d6f0703c38729188c27",
+    "payloadCommit": "94adedefb04d1aafdc91a3c973e9cd6601112411",
+    "manifestSha256": "de77a9a27c0cde66cfbb57cecc27f3765c12fb9c8c4f15c6f461d9a15209d297",
+    "definitionSha256": "a30be30e461d9c573363dd42e9c58fcc7f6bc039e86619bb417d1e495d9dd84a",
+    "evaluatedSha256": "c9a8509f9f0ea307dc9173d173cd23555c11d57b65bd9e5869c4f8b48c28fbc3",
+    "payloadSha256": "b042f80557084febdb30ba6352a375c34e1db4ed2f02a68d2cbbec008bb7cbf8",
+    "payloadDiffSha256": "6c44fef46f8a6545dc78b547fd1f5f12c2c556b30c6f6231b8eaf6fa99e061a6",
+    "sourcePath": "src/benchmark-levels/purse-pursuit-tahr/",
+    "destinationPath": "src/benchmark-levels/purse-pursuit-tahr/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/purse-pursuit-tahr",
+        "promotedPath": "src/benchmark-levels/purse-pursuit-tahr",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/purse-pursuit-tahr",
+        "promotedPath": "public/level-content/purse-pursuit-tahr",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "fa2d2880d2e6af6589d458fa58cd58a3e4f561e1"
+  },
+  "promotionCommit": "e04f96e9850aaa4c6cf4183db97374adad7dfaaf"
+}

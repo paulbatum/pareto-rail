@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "c1aeb643-7be7-437a-9e6f-fec0b7b4d939",
+  "usageSha256": "12fa681436fa2bddbb45623fa3662c97626e5c76df37c3da2acbda0f75834b8f",
+  "eventLogSha256": "2a0403dc81a29b7fe6606af709a142fb75e53291ea31b2dfadcfc2ac1d7699fe",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-high-strandline-s7ah/harness-home/projects/-tmp-pareto-rail-fable-high-strandline-s7ah/c1aeb643-7be7-437a-9e6f-fec0b7b4d939.jsonl",
+    "sha256": "83b0a826064c9e5e624c1418f35ac1a9810285c7c097acd4d8adeca88a4a7e5f"
+  }
+}

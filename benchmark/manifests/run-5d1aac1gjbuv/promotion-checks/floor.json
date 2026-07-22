@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "d495181226db12344175e7997d0ca4203419b72c114fbad4837e83742fb0e277",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 12.923092872999609,
+  "stdout": "\n> raild@0.0.0 check:floor\n> node scripts/check-floor.mjs --level skyhook-lkor\n\nSkyhook floor check\nduration 64.3s; spawned kinds 7: beacon, bolt, dart, kite, lamprey, leech, wasp\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=0.24\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateAttractCamera, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 0\nAll floor checks passed.\n",
+  "stderr": ""
+}

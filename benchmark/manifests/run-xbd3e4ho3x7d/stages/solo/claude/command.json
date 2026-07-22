@@ -1,0 +1,29 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-opus-4-8",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--session-id",
+    "689acbb5-8945-4a44-a1ab-4d8b4e249859"
+  ],
+  "cliVersion": "2.1.216 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-xbd3e4ho3x7d",
+  "startedAt": "2026-07-21T10:27:57.759Z",
+  "finishedAt": "2026-07-21T11:19:30.385Z",
+  "wallTimeSeconds": 2892.2239617679998,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

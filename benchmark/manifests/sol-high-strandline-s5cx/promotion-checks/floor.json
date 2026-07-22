@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "bed2fee9a224d8fd659819bd1bbca0c9fdac6a42796fcf86b7be19807c187902",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 17.077715688000005,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level strandline-s5cx\n\nStrandline floor check\nduration 60.0s; spawned kinds 5: brood, clasper, parent, ribbon, spore\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=0.4\n  action SFX snap: overridden grid (enabled, 32nd grid)\n  lock radius: 0.2 NDC (engine default 0.085)\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, playerHealth, detailsForRun\n  identity hooks [default]: easeRunProgress, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 2\n\nWarnings:\n- Average enemy destruction distance is slightly high (56.2m, warning threshold 45.0m). Consider spawning enemies closer.\n- Enemy destruction concentration in screen center is slightly high (31.8%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}

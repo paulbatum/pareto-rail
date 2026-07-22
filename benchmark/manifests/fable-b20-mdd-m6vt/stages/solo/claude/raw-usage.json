@@ -1,0 +1,114 @@
+{
+  "sessionId": "4915b46b-043d-40fe-bbf5-4d4c3ad42e60",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Mass Driver is complete and committed.** A full 60-second level lives in `src/benchmark-levels/mass-driver-detailed-m6vt/`, built to the assigned theme, and every required gate passes: `typecheck`, `build`, `check:benchmark-scope` (15 paths), and the full `check:floor` (5 enemy kinds, full event coverage, 0 occlusion warnings, 0 perf failures, audio config clean, gallery regenerated).\n\nWhat was built:\n\n- **Timing spine** (`timing.ts`): 128 BPM, 32 bars = exactly 60s, six sections (injection → stage-1 → stage-2 → interlock → THE SHOT at bar 28 → muzzle). The speed profile only ever rises and surges ~3× on the bar-28 downbeat; ring `k`'s rail position is computed from the speed integral so the camera crosses one accelerator ring per beat by construction.\n- **Gameplay**: 3-point hull, CHARGE/RELOAD words, five kinds — wall-riding coils in clock-position ranks, corkscrewing threader helices, two-stage capacitors, interceptable homing arcs, and six station-keeping interlocks (cowl + core) that hold the frame rim until the deadline. Any clamp alive at bar 28 detonates the barrel (total hull loss); clearing all six fires the gun into a silent 7.5s muzzle coda. S rank requires the gun to have fired.\n- **Audio**: E-minor techno (Em–Em–C–D; Em–F dread in the boss bars; E-major Picardy bloom after the shot), a persistent climbing hum that cuts dead on the shot, per-section player timbres, hidden kill-melody lanes, climbing interlock confirmations with pitch-dropping clanks, and a breaker-trip reject.\n- **Visuals**: 113 heat-ramp rings with downbeat lugs and crossing shockwaves, four conductor rails, wall ribs, camera-riding speed streaks, capped muzzle charge glow, post-shot starfield with a pulsing beacon, stencil-plate letters, a six-segment charge-gauge reticle, arc-lightning effects, and flash/charge/detonation screen overlays. Camera banks into the weave with a metallic rattle shake and a hard FOV kick on the shot.\n\nIssues found and fixed during verification: a shared-timeline `lockable` poisoning bug that made interlocks untargetable in later runs, undisposed per-enemy geometry failing the perf gate, and occlusion/distance failures fixed by keeping threaders inside the bore, pushing ribs outward, and tightening leads. Simulated perfect and imperfect players now clear all six interlocks and fire the gun (rank A, 0 misses); the no-fire run detonates on schedule.\n\n**What still needs human eyes** (WSL2 can't render WebGPU headless): whether ring crossings *feel* beat-locked, the bar-28 shot moment (speed spike + whiteout + hum cut + E-major bloom landing together), interlock legibility against the charge glow, bloom-at-zero readability, and the overall mix balance. Two advisory warnings remain (average kill distance 50.9m and center concentration slightly above the warning line — both under the failure limits); a playtest pass at the leads/radii would be the first tuning knob.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 1791273,
+    "duration_api_ms": 1738798,
+    "ttft_ms": 4715,
+    "ttft_stream_ms": 3338,
+    "time_to_request_ms": 42,
+    "num_turns": 133,
+    "result": "**Mass Driver is complete and committed.** A full 60-second level lives in `src/benchmark-levels/mass-driver-detailed-m6vt/`, built to the assigned theme, and every required gate passes: `typecheck`, `build`, `check:benchmark-scope` (15 paths), and the full `check:floor` (5 enemy kinds, full event coverage, 0 occlusion warnings, 0 perf failures, audio config clean, gallery regenerated).\n\nWhat was built:\n\n- **Timing spine** (`timing.ts`): 128 BPM, 32 bars = exactly 60s, six sections (injection → stage-1 → stage-2 → interlock → THE SHOT at bar 28 → muzzle). The speed profile only ever rises and surges ~3× on the bar-28 downbeat; ring `k`'s rail position is computed from the speed integral so the camera crosses one accelerator ring per beat by construction.\n- **Gameplay**: 3-point hull, CHARGE/RELOAD words, five kinds — wall-riding coils in clock-position ranks, corkscrewing threader helices, two-stage capacitors, interceptable homing arcs, and six station-keeping interlocks (cowl + core) that hold the frame rim until the deadline. Any clamp alive at bar 28 detonates the barrel (total hull loss); clearing all six fires the gun into a silent 7.5s muzzle coda. S rank requires the gun to have fired.\n- **Audio**: E-minor techno (Em–Em–C–D; Em–F dread in the boss bars; E-major Picardy bloom after the shot), a persistent climbing hum that cuts dead on the shot, per-section player timbres, hidden kill-melody lanes, climbing interlock confirmations with pitch-dropping clanks, and a breaker-trip reject.\n- **Visuals**: 113 heat-ramp rings with downbeat lugs and crossing shockwaves, four conductor rails, wall ribs, camera-riding speed streaks, capped muzzle charge glow, post-shot starfield with a pulsing beacon, stencil-plate letters, a six-segment charge-gauge reticle, arc-lightning effects, and flash/charge/detonation screen overlays. Camera banks into the weave with a metallic rattle shake and a hard FOV kick on the shot.\n\nIssues found and fixed during verification: a shared-timeline `lockable` poisoning bug that made interlocks untargetable in later runs, undisposed per-enemy geometry failing the perf gate, and occlusion/distance failures fixed by keeping threaders inside the bore, pushing ribs outward, and tightening leads. Simulated perfect and imperfect players now clear all six interlocks and fire the gun (rank A, 0 misses); the no-fire run detonates on schedule.\n\n**What still needs human eyes** (WSL2 can't render WebGPU headless): whether ring crossings *feel* beat-locked, the bar-28 shot moment (speed spike + whiteout + hum cut + E-major bloom landing together), interlock legibility against the charge glow, bloom-at-zero readability, and the overall mix balance. Two advisory warnings remain (average kill distance 50.9m and center concentration slightly above the warning line — both under the failure limits); a playtest pass at the leads/radii would be the first tuning knob.",
+    "stop_reason": "end_turn",
+    "session_id": "4915b46b-043d-40fe-bbf5-4d4c3ad42e60",
+    "total_cost_usd": 34.32391,
+    "usage": {
+      "input_tokens": 159,
+      "cache_creation_input_tokens": 344828,
+      "cache_read_input_tokens": 19944689,
+      "output_tokens": 149510,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 344828,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1142,
+          "cache_read_input_tokens": 359181,
+          "cache_creation_input_tokens": 977,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 977
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 5506,
+        "outputTokens": 13,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.0055709999999999996,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-fable-5": {
+        "inputTokens": 159,
+        "outputTokens": 149510,
+        "cacheReadInputTokens": 19944689,
+        "cacheCreationInputTokens": 344828,
+        "webSearchRequests": 0,
+        "costUSD": 34.318339,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "a03b43f9-e6cd-4151-bc4e-3cef6d8e592d"
+  },
+  "normalized": {
+    "inputTokens": 19944848,
+    "outputTokens": 149510,
+    "cacheReadInputTokens": 19944689,
+    "cacheWriteInputTokens": 344828,
+    "vendorFields": {
+      "totalCostUsd": 34.32391,
+      "durationMs": 1791273,
+      "durationApiMs": 1738798,
+      "numTurns": 133,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 5506,
+          "outputTokens": 13,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.0055709999999999996,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-fable-5": {
+          "inputTokens": 159,
+          "outputTokens": 149510,
+          "cacheReadInputTokens": 19944689,
+          "cacheCreationInputTokens": 344828,
+          "webSearchRequests": 0,
+          "costUSD": 34.318339,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

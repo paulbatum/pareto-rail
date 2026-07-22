@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-0cafsiuauv6e",
+  "slotId": "vyxj",
+  "configuration": {
+    "id": "claude-fable-5-high"
+  },
+  "theme": {
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "configurationCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "releaseRecord": {
+      "path": "benchmark/releases/v1/freeze.json",
+      "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+    },
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "a7acfa7f253926dab38f6620167dda9644cfa0be"
+    }
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "f317210e16f948f1c4ba245be383e51fcbe888801e7efee6f21276477228de29"
+  },
+  "recipe": {
+    "id": "recipe",
+    "path": "benchmark/recipes/claude-fable-5-high.md",
+    "sha256": "f8c9437ec844a1623fadb2dc2d4f0cefe8f22bbb659304836e26d78351682a65"
+  },
+  "controller": {
+    "path": "benchmark/controller/runbook.md",
+    "sha256": "5d1f370ec351e0a96b2d923250689a1b3e8d35c990748dd8b2f34e10786c8506"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "70a7e48fbeddeceb5e9425aec20874252458f8c8f031346a9fbadc39fbc553bd"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/claude-cli.mjs",
+    "sha256": "b334dce63466bf49cece64583950283223e1af73c97ef908326de65fa58aae07"
+  },
+  "timing": {
+    "startedAt": "2026-07-11T18:33:06.276Z",
+    "finishedAt": "2026-07-11T22:27:29.490Z",
+    "wallTimeSeconds": 14063.214
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5"
+      },
+      "promptSha256": "9f97bf9e69a0fe8479cd1d32dc94a8cec0fd82b452721e54ac9124eb63c35377",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.207 (Claude Code)"
+      },
+      "sessionId": "10848e98-21aa-457f-a46f-9f36fddc2892",
+      "outputArtifactSha256": "6b8f3f259fd301f046096595a55b11fb46a2d1dec95dbd01a5f87f8056d97e19",
+      "startedAt": "2026-07-11T18:33:09.591Z",
+      "finishedAt": "2026-07-11T21:33:28.632Z",
+      "wallTimeSeconds": 10801.023890406,
+      "result": "timed-out",
+      "usage": {
+        "inputTokens": 4367,
+        "outputTokens": 231850,
+        "cacheReadInputTokens": 44291336,
+        "cacheWriteInputTokens": 480079
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 65.52908600000002,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 65.52908600000002,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5",
+        "costUsd": 65.52908600000002,
+        "inputTokens": 4367,
+        "outputTokens": 231850,
+        "cacheReadTokens": 44291336,
+        "cacheWriteTokens": 480079
+      }
+    ],
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    }
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.9822338480000004,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.174576028,
+      "outputSha256": "8816a83a593e3cda1fe0c918a2c7c748791d5173925b1d4b4f8b0adddd7f677f"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- mass-driver-vyxj a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.1192127100000007,
+      "outputSha256": "3e486438b88580ae6ac0a24f8acece21082d3f3a8a0005a32ca5b03e7e792586"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-vyxj",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 10.449500043,
+      "outputSha256": "91a7f98ae6d17b631522e6f1dee1c7365988dcf749d8e20a2beb879508ba7e8d"
+    }
+  ],
+  "output": {
+    "levelId": "mass-driver-vyxj",
+    "evaluated": {
+      "commit": "0e07930b4001348f0100a21fd6319a662f8b047e",
+      "branch": "benchmark-run-run-0cafsiuauv6e"
+    },
+    "payload": {
+      "commit": "cca090978107eb5341779f1b856ca40f65a034eb",
+      "branch": "benchmark-payload-run-0cafsiuauv6e"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

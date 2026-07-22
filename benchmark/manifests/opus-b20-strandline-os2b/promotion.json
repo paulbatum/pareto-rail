@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "runId": "opus-b20-strandline-os2b",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:48:00.140Z",
+      "data": {
+        "source": {
+          "runId": "opus-b20-strandline-os2b",
+          "slotId": "os2b",
+          "themeId": "strandline",
+          "levelId": "strandline-os2b",
+          "title": "Strandline",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "15249f74186ce83403cb46b69b66c273b2a136ba",
+          "payloadCommit": "9510865e89f71f239fc709297f78a80cebb583ec",
+          "manifestSha256": "4c2fb48c5cc4fae81392275349b43b8143f6ec0c62a56d7d2b9aa21a6f876950",
+          "definitionSha256": "0038d97959ff29cd0a975f3ecc40e359625a0e1ec8e869a901e007504331ad6d",
+          "evaluatedSha256": "48b680d46d372cdb46f960e672910ba1f9e1537e221223e56c5703b4891e46ff",
+          "payloadSha256": "c6f71327f5d3e13d6b86602f9647a716476d01faedcbe1cec39f68bed90ea50c",
+          "payloadDiffSha256": "87dea243aa77e3252ccb6b12a4c11c9f97d5aa0a768deb18757cea21d66bbaf9",
+          "sourcePath": "src/benchmark-levels/strandline-os2b/",
+          "destinationPath": "src/benchmark-levels/strandline-os2b/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/strandline-os2b",
+              "promotedPath": "src/benchmark-levels/strandline-os2b",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/strandline-os2b",
+              "promotedPath": "public/level-content/strandline-os2b",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "e7fc991dc376f74803bc573b8e7756977e475b97"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:48:00.267Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/strandline-os2b/",
+            "files": 17,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:48:00.337Z",
+      "data": {
+        "destination": "src/benchmark-levels/strandline-os2b/",
+        "verifiedFiles": 17
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:48:29.090Z",
+      "data": {
+        "gallerySha256": "0f207761f1916119755aa6385dea62166b48ba4c6f5d904cf6f26fa5d2c10ec4",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.7412456549999997,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "4d6629ee7676c64e64a0725075c3a1b0edc0a792f706ae1062e2d65619e8be21",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 8.621214869,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-os2b --base e7fc991dc376f74803bc573b8e7756977e475b97",
+            "exitCode": 0,
+            "stdoutSha256": "20aa044c95ac3d702fd37180f09d755a4cf68496b068f6d8bac5c6acba73ff38",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04240779400000065,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level strandline-os2b",
+            "exitCode": 0,
+            "stdoutSha256": "ce851c995cd723c8825f1f29555ba952fbcdc7d1890593076bd0042de84c9adc",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 16.008955412000002,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:48:29.159Z",
+      "data": {
+        "promotionCommit": "9bd809999b7fbbb050914da2067090beef3331b8",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:48:29.160Z",
+  "source": {
+    "runId": "opus-b20-strandline-os2b",
+    "slotId": "os2b",
+    "themeId": "strandline",
+    "levelId": "strandline-os2b",
+    "title": "Strandline",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "15249f74186ce83403cb46b69b66c273b2a136ba",
+    "payloadCommit": "9510865e89f71f239fc709297f78a80cebb583ec",
+    "manifestSha256": "4c2fb48c5cc4fae81392275349b43b8143f6ec0c62a56d7d2b9aa21a6f876950",
+    "definitionSha256": "0038d97959ff29cd0a975f3ecc40e359625a0e1ec8e869a901e007504331ad6d",
+    "evaluatedSha256": "48b680d46d372cdb46f960e672910ba1f9e1537e221223e56c5703b4891e46ff",
+    "payloadSha256": "c6f71327f5d3e13d6b86602f9647a716476d01faedcbe1cec39f68bed90ea50c",
+    "payloadDiffSha256": "87dea243aa77e3252ccb6b12a4c11c9f97d5aa0a768deb18757cea21d66bbaf9",
+    "sourcePath": "src/benchmark-levels/strandline-os2b/",
+    "destinationPath": "src/benchmark-levels/strandline-os2b/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/strandline-os2b",
+        "promotedPath": "src/benchmark-levels/strandline-os2b",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/strandline-os2b",
+        "promotedPath": "public/level-content/strandline-os2b",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "e7fc991dc376f74803bc573b8e7756977e475b97"
+  },
+  "promotionCommit": "9bd809999b7fbbb050914da2067090beef3331b8"
+}

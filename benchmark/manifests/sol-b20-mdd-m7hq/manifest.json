@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "sol-b20-mdd-m7hq",
+  "slotId": "m7hq",
+  "configuration": {
+    "id": "codex-sol-high-b20"
+  },
+  "theme": {
+    "id": "mass-driver-detailed",
+    "path": "benchmark/themes/mass-driver-detailed.md",
+    "sha256": "03464c7183d4f591c5e6cb2b797adb01ab3f3eca1e38543b9c6e4e723d87a0f5"
+  },
+  "baseline": {
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-sol-high-b20.md",
+    "sha256": "d9f149d2ec58acea458adf81221f3c7b4d6d33923f165c89bb42f861b42574a4"
+  },
+  "controller": {
+    "commit": "7598ff6575b06c0e6a7fa17279fc73ad638b3b44"
+  },
+  "timing": {
+    "startedAt": "2026-07-18T12:48:17.174Z",
+    "finishedAt": "2026-07-18T13:48:02.277Z",
+    "wallTimeSeconds": 3585.103
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "a0c4660574a3671caa465a1befcec7644fcebd6296d48e1130df7c581795885d",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.144.1"
+      },
+      "sessionId": "019f7545-69e6-70e2-9e12-58f25bac48c3",
+      "rolloutArtifactSha256": "a36ff5bbb63f8ffd28a8c90f2ea6742108ea435e3a7454b7330481954ed1bdd7",
+      "outputArtifactSha256": "70dbcd1fee5b778e1b6cb3f6f67c2315fd51a11c9beb2ed13276bd32aefbe9d1",
+      "startedAt": "2026-07-18T12:48:29.434Z",
+      "finishedAt": "2026-07-18T13:47:48.906Z",
+      "wallTimeSeconds": 3559.472,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 20,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.201999,
+            "at": "2026-07-18T13:11:42.442Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.188184,
+            "at": "2026-07-18T13:26:06.462Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 15.177187,
+            "at": "2026-07-18T13:44:31.379Z"
+          }
+        ],
+        "resumes": [
+          {
+            "round": 1,
+            "spentUsd": 9.786017000000001,
+            "fraction": 0.48930085000000006,
+            "startedAt": "2026-07-18T13:22:58.625Z",
+            "finishedAt": "2026-07-18T13:47:48.906Z",
+            "exitCode": 0
+          }
+        ],
+        "finalSpendUsd": 16.643763,
+        "finalFraction": 0.83218815
+      },
+      "usage": {
+        "inputTokens": 758755,
+        "outputTokens": 108990,
+        "cacheReadInputTokens": 19160576,
+        "reasoningTokens": 29979
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 16.643763,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 16.643763,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 758755,
+        "outputTokens": 108990,
+        "cacheReadTokens": 19160576,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 29979
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7283470829999998,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.9389436339999997,
+      "outputSha256": "4b18d825c9c92580674c1c7485d243a972e2503b3602cb21f0d8e286b3ccd305"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m7hq --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03655575300000055,
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-detailed-m7hq",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.0466418520000005,
+      "outputSha256": "e87dc2b323a768898b69df8aee43b3dde7e1a763f732b87f9ad53179e5d06021"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "mass-driver-detailed-m7hq",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "4f37d59836983e2cba81e79422e1e053e9dc2196",
+      "branch": "benchmark-run-sol-b20-mdd-m7hq"
+    },
+    "payload": {
+      "commit": "2ca98385f1abee4b4a5277373d81065b6161fead",
+      "branch": "benchmark-payload-sol-b20-mdd-m7hq"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

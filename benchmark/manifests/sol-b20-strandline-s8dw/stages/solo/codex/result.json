@@ -1,0 +1,17 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f74ae-f72d-7db1-ac96-6477fe36c095",
+  "usageSha256": "a718ea26875a2ed656823d3d52a5890db0d14f8bd02da2195b5c1f94fbfb4688",
+  "eventLogSha256": "df9410ff67de288ebb2b21dc5c704891f53a9186d114fdab86cf63de0005a067",
+  "stderrSha256": "4bb4c1fad961efeac8692275cbf313d957ecd355e3d73d9c33cf73e6747f0b2b",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-b20-strandline-s8dw/harness-home/sessions/2026/07/18/rollout-2026-07-18T03-04-11-019f74ae-f72d-7db1-ac96-6477fe36c095.jsonl",
+    "sha256": "a45914cd903c73aa19355ee22258c7d3f7c81585cf1c86f9a6a8a5c6181479cd"
+  },
+  "budget": {
+    "path": "budget.json"
+  }
+}

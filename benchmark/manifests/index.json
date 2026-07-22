@@ -1,0 +1,269 @@
+{
+  "runs": [
+    {
+      "runId": "fable-b20-broadside-b9mn",
+      "levelId": "broadside-b9mn",
+      "themeId": "broadside",
+      "configurationId": "claude-fable-5-high-b20"
+    },
+    {
+      "runId": "fable-b20-mdd-m6vt",
+      "levelId": "mass-driver-detailed-m6vt",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-fable-5-high-b20"
+    },
+    {
+      "runId": "fable-b20-strandline-s2bq",
+      "levelId": "strandline-s2bq",
+      "themeId": "strandline",
+      "configurationId": "claude-fable-5-high-b20"
+    },
+    {
+      "runId": "fable-high-broadside-b4kd",
+      "levelId": "broadside-b4kd",
+      "themeId": "broadside",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
+      "runId": "fable-high-mdd-k4wz",
+      "levelId": "mass-driver-detailed-k4wz",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
+      "runId": "fable-high-mdd-m3rp",
+      "levelId": "mass-driver-detailed-m3rp",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-fable-5-high",
+      "retired": true
+    },
+    {
+      "runId": "fable-high-strandline-s7ah",
+      "levelId": "strandline-s7ah",
+      "themeId": "strandline",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
+      "runId": "opus-b20-broadside-ob4d",
+      "levelId": "broadside-ob4d",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-4-8-high-b20"
+    },
+    {
+      "runId": "opus-b20-mdd-om6f",
+      "levelId": "mass-driver-detailed-om6f",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-opus-4-8-high-b20"
+    },
+    {
+      "runId": "opus-b20-strandline-os2b",
+      "levelId": "strandline-os2b",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-4-8-high-b20"
+    },
+    {
+      "runId": "opus-high-broadside-ob3c",
+      "levelId": "broadside-ob3c",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-4-8-high"
+    },
+    {
+      "runId": "opus-high-mdd-om5e",
+      "levelId": "mass-driver-detailed-om5e",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "claude-opus-4-8-high"
+    },
+    {
+      "runId": "opus-high-purse-svok",
+      "levelId": "purse-pursuit-svok",
+      "themeId": "purse-pursuit",
+      "configurationId": "claude-opus-4-8-high"
+    },
+    {
+      "runId": "opus-high-solve-zq4n",
+      "levelId": "speedsolve-zq4n",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-4-8-high"
+    },
+    {
+      "runId": "opus-high-strandline-os1a",
+      "levelId": "strandline-os1a",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-4-8-high"
+    },
+    {
+      "runId": "run-0cafsiuauv6e",
+      "levelId": "mass-driver-vyxj",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
+      "runId": "run-2dzleoxfhatr",
+      "levelId": "mass-driver-rqki",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-4-8-high-b20"
+    },
+    {
+      "runId": "run-3wx1zsc87lp9",
+      "levelId": "skyhook-p46c",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-high-b20"
+    },
+    {
+      "runId": "run-5d1aac1gjbuv",
+      "levelId": "skyhook-lkor",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-opus-delegation",
+      "retired": true
+    },
+    {
+      "runId": "run-5m77cl6rn5kd",
+      "levelId": "mass-driver-bczy",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-terra-delegation",
+      "retired": true
+    },
+    {
+      "runId": "run-6m3dhz1loblr",
+      "levelId": "skyhook-9uib",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-high"
+    },
+    {
+      "runId": "run-770j1pokdphe",
+      "levelId": "skyhook-560p",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-4-8-high-b20"
+    },
+    {
+      "runId": "run-c340azfgk0vd",
+      "levelId": "mass-driver-9281",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-high-b20"
+    },
+    {
+      "runId": "run-eztdwig5twea",
+      "levelId": "mass-driver-wo4m",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-opus-delegation",
+      "retired": true
+    },
+    {
+      "runId": "run-gucf476jvkqr",
+      "levelId": "mass-driver-esvz",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-high-b20"
+    },
+    {
+      "runId": "run-pnpwjrxhz8uu",
+      "levelId": "skyhook-loyy",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-high-b20"
+    },
+    {
+      "runId": "run-qsgvgteqxgn0",
+      "levelId": "mass-driver-7rkv",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-high"
+    },
+    {
+      "runId": "run-rah3o96wxqcw",
+      "levelId": "hull-run-ns5n",
+      "themeId": "hull-run",
+      "configurationId": "codex-sol-high"
+    },
+    {
+      "runId": "run-uitiw02p99w9",
+      "levelId": "skyhook-ggl2",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-4-8-high"
+    },
+    {
+      "runId": "run-vbovdxbaxq9v",
+      "levelId": "skyhook-81u5",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-terra-delegation",
+      "retired": true
+    },
+    {
+      "runId": "run-x58xikqvx62i",
+      "levelId": "hull-run-cvs3",
+      "themeId": "hull-run",
+      "configurationId": "codex-sol-terra-delegation"
+    },
+    {
+      "runId": "run-xbd3e4ho3x7d",
+      "levelId": "mass-driver-o9ok",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-4-8-high"
+    },
+    {
+      "runId": "run-xixwfev1c60s",
+      "levelId": "skyhook-snxd",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
+      "runId": "sol-b20-broadside-b3fk",
+      "levelId": "broadside-b3fk",
+      "themeId": "broadside",
+      "configurationId": "codex-sol-high-b20"
+    },
+    {
+      "runId": "sol-b20-mdd-m7hq",
+      "levelId": "mass-driver-detailed-m7hq",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "codex-sol-high-b20",
+      "retired": true
+    },
+    {
+      "runId": "sol-b20-mdd-p8jn",
+      "levelId": "mass-driver-detailed-p8jn",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "codex-sol-high-b20"
+    },
+    {
+      "runId": "sol-b20-strandline-s8dw",
+      "levelId": "strandline-s8dw",
+      "themeId": "strandline",
+      "configurationId": "codex-sol-high-b20"
+    },
+    {
+      "runId": "sol-high-broadside-b6ej",
+      "levelId": "broadside-b6ej",
+      "themeId": "broadside",
+      "configurationId": "codex-sol-high"
+    },
+    {
+      "runId": "sol-high-mdd-m4gp",
+      "levelId": "mass-driver-detailed-m4gp",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "codex-sol-high",
+      "retired": true
+    },
+    {
+      "runId": "sol-high-mdd-uk78",
+      "levelId": "mass-driver-detailed-uk78",
+      "themeId": "mass-driver-detailed",
+      "configurationId": "codex-sol-high"
+    },
+    {
+      "runId": "sol-high-purse-tahr",
+      "levelId": "purse-pursuit-tahr",
+      "themeId": "purse-pursuit",
+      "configurationId": "codex-sol-high"
+    },
+    {
+      "runId": "sol-high-solve-wvdv",
+      "levelId": "speedsolve-wvdv",
+      "themeId": "speedsolve",
+      "configurationId": "codex-sol-high"
+    },
+    {
+      "runId": "sol-high-strandline-s5cx",
+      "levelId": "strandline-s5cx",
+      "themeId": "strandline",
+      "configurationId": "codex-sol-high"
+    }
+  ]
+}

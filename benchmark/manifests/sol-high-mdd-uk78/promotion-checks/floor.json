@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "db01e0c9136c3cf878d2c01d6ae0cfbb5f83b0670634b48c4835508ed6741f5c",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 16.832032218000002,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level mass-driver-detailed-uk78\n\nMass Driver floor check\nduration 60.0s; spawned kinds 5: arc, capacitor, coil, interlock, threader\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=1\n    maxGridSeconds=0.16\n  action SFX snap: overridden grid (enabled, 32nd grid)\n  lock radius: 0.145 NDC (engine default 0.085)\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateAttractCamera, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 0\nAll floor checks passed.\n",
+  "stderr": ""
+}

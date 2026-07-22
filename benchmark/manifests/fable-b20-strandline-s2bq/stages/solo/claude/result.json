@@ -1,0 +1,17 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "9e6f9578-1034-420c-8757-fb709675502c",
+  "usageSha256": "0e1a686791fadcf066f161768634d7d237029acc89c281e315e337b2a0e93ac7",
+  "eventLogSha256": "5ced216cb13ee56c084d5b3fc57e31b65ab940f77035b8c29250476cca1478c1",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-b20-strandline-s2bq/harness-home/projects/-tmp-pareto-rail-fable-b20-strandline-s2bq/9e6f9578-1034-420c-8757-fb709675502c.jsonl",
+    "sha256": "0933fa8b4a6b5d43c6e9a97a786a60c522bfd09effdaf676bf298a3546a8c5d4"
+  },
+  "budget": {
+    "path": "budget.json"
+  }
+}

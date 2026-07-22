@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-770j1pokdphe",
+  "slotId": "560p",
+  "configuration": {
+    "id": "claude-opus-4-8-high-b20"
+  },
+  "theme": {
+    "id": "skyhook",
+    "path": "benchmark/themes/skyhook.md",
+    "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+  },
+  "baseline": {
+    "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "65172df10ae05cb49f7e60e6faa73b646417d854"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-opus-4-8-high-b20.md",
+    "sha256": "c9141cd94ae83af3101956744f7b6777275d7fe50de17bb21854fb1e304a5901"
+  },
+  "controller": {
+    "commit": "8990b17323a4dec3fa833a978ffe8ead36ab8f40"
+  },
+  "timing": {
+    "startedAt": "2026-07-21T11:20:59.549Z",
+    "finishedAt": "2026-07-21T12:12:24.500Z",
+    "wallTimeSeconds": 3084.951
+  },
+  "stages": [
+    {
+      "id": "claude-opus-4-8",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-4-8"
+      },
+      "promptSha256": "48eca8d8ab7ad8b3ddbabbbe1976f920733675ba308cffe849592bfd13e384be",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.216 (Claude Code)"
+      },
+      "sessionId": "7a50c91f-4b24-4c7a-8f0a-e5a5805ceacf",
+      "rolloutArtifactSha256": "2d45259836b8b9ea07b1501227ead46f567598fe062a96815729c09af94220c7",
+      "outputArtifactSha256": "c1bcfb1d804c9516e11a7d3113228409ccc40d24dc23a470c65e4142ec35f836",
+      "startedAt": "2026-07-21T11:21:02.258Z",
+      "finishedAt": "2026-07-21T12:12:11.433Z",
+      "wallTimeSeconds": 2862.7918190719997,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 20,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.384073000000001,
+            "at": "2026-07-21T11:36:09.052Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.058004000000004,
+            "at": "2026-07-21T11:47:46.462Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 15.574080000000002,
+            "at": "2026-07-21T11:58:02.849Z"
+          },
+          {
+            "pct": 100,
+            "spentUsd": 20.399751000000002,
+            "at": "2026-07-21T12:03:37.666Z"
+          },
+          {
+            "pct": 125,
+            "spentUsd": 25.353798000000005,
+            "at": "2026-07-21T12:10:43.103Z"
+          }
+        ],
+        "resumes": [],
+        "finalSpendUsd": 26.461207500000004,
+        "finalFraction": 1.3230603750000003
+      },
+      "usage": {
+        "inputTokens": 9286,
+        "outputTokens": 242383,
+        "cacheReadInputTokens": 31641325,
+        "cacheWriteInputTokens": 453454
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 26.461207500000004,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 26.461207500000004,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-opus-4-8",
+        "usageSource": "agreed",
+        "costUsd": 26.461207500000004,
+        "inputTokens": 9286,
+        "outputTokens": 242383,
+        "cacheReadTokens": 31641325,
+        "cacheWriteTokens": 453454
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.15469893,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.6102995000000001,
+      "outputSha256": "5ae13f601d3cdaaebb73871284239adc89849a75443e334eb743c45f6036966d"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-560p --base 65172df10ae05cb49f7e60e6faa73b646417d854",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03360193900000013,
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level skyhook-560p",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.152959719,
+      "outputSha256": "241ac86d67b06be14248b2f3222aa1eaf4a471c925e2723599de3bcf1eb6b158"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "skyhook-560p",
+    "title": "Skyhook",
+    "evaluated": {
+      "commit": "2125a1178208af1a36eff7ed02e9709748d3df21",
+      "branch": "benchmark-run-run-770j1pokdphe"
+    },
+    "payload": {
+      "commit": "8e53baf308d9ac53ca6cf9f1210c6b44a4b87798",
+      "branch": "benchmark-payload-run-770j1pokdphe"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

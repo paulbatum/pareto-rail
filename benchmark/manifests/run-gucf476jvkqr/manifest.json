@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-gucf476jvkqr",
+  "slotId": "esvz",
+  "configuration": {
+    "id": "claude-fable-5-high-b20"
+  },
+  "theme": {
+    "id": "mass-driver",
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "baseline": {
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "configurationCommit": "688cad8886afc5d50b212d03bd2a3b5029179b53",
+    "releaseRecord": {
+      "path": "benchmark/releases/v1/freeze.json",
+      "sha256": "687d324c3861b1e24e1cb86366563c6b05f17ec6d3ead1e68978ff9ccc6709e7"
+    },
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "a7acfa7f253926dab38f6620167dda9644cfa0be"
+    }
+  },
+  "schedule": {
+    "path": "benchmark/private/run-schedule.json",
+    "sha256": "6d0bea392de140d7b7efb7f608baeaef2040904ee7af35dce23f07d3889d6322"
+  },
+  "recipe": {
+    "id": "recipe",
+    "path": "benchmark/recipes/claude-fable-5-high-b20.md",
+    "sha256": "f56bd1ce30bb4bbe7f04b729c58eaf71edd17e46f52b69dd051465e6ddc5391d"
+  },
+  "controller": {
+    "path": "benchmark/controller/runbook.md",
+    "sha256": "5d1f370ec351e0a96b2d923250689a1b3e8d35c990748dd8b2f34e10786c8506"
+  },
+  "runner": {
+    "id": "runner",
+    "path": "scripts/benchmark/run.mjs",
+    "sha256": "d031ceba502bcdb02c018cee639d6cd1e42c992a6bc14730f4fe6dd6e62e1e6a"
+  },
+  "executor": {
+    "id": "executor",
+    "path": "scripts/benchmark/claude-cli.mjs",
+    "sha256": "df3fe2641d9982da6f0013b5976d3238805f80526bfe12fbdd1b4e1991f82f1d"
+  },
+  "timing": {
+    "startedAt": "2026-07-13T19:32:58.260Z",
+    "finishedAt": "2026-07-13T20:01:01.700Z",
+    "wallTimeSeconds": 1683.44
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5"
+      },
+      "promptSha256": "25ffc16e76567fcd20c61ac32024ba56159f8833274682f2d4783aaf7c560e92",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.207 (Claude Code)"
+      },
+      "sessionId": "2bedfc74-ced6-4862-b56e-02af5ac6803f",
+      "rolloutArtifactSha256": "8921a1d459027a464377e56c77a2654df6518bb4f4f315bdb22b610cc46586c8",
+      "outputArtifactSha256": "df8a8206446471ccd24b4c94be98d517c9645f7e14da60bd9fff6d31df022266",
+      "startedAt": "2026-07-13T19:33:02.626Z",
+      "finishedAt": "2026-07-13T20:00:45.512Z",
+      "wallTimeSeconds": 1496.178909708,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 3,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 6.156528,
+            "at": "2026-07-13T19:41:17.379Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.045836,
+            "at": "2026-07-13T19:46:23.552Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 16.056193,
+            "at": "2026-07-13T19:54:55.944Z"
+          },
+          {
+            "pct": 100,
+            "spentUsd": 20.409458999999995,
+            "at": "2026-07-13T19:58:06.227Z"
+          }
+        ],
+        "resumes": [],
+        "finalSpendUsd": 23.398332999999997,
+        "finalFraction": 1.1699166499999998
+      },
+      "usage": {
+        "inputTokens": 110,
+        "outputTokens": 117302,
+        "cacheReadInputTokens": 11926273,
+        "cacheWriteInputTokens": 280293
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 23.398332999999997,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 23.398332999999997,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5",
+        "costUsd": 23.398332999999997,
+        "inputTokens": 110,
+        "outputTokens": 117302,
+        "cacheReadTokens": 11926273,
+        "cacheWriteTokens": 280293,
+        "usageSource": "agreed"
+      }
+    ],
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    }
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.581055804,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.3723121679999999,
+      "outputSha256": "c7c814a4842a52622de255e18605b0d44f4bf85486e8db1114ce3ddcf2c638a2"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- mass-driver-esvz a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.14612398799999937,
+      "outputSha256": "54e0bffed4951df167a43cd50b68bf2408e9287947d262119a1d7f27016061b6"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-esvz",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.500690527,
+      "outputSha256": "8a9e7fb8cbc5ddadecab23e1a4e0021d437509bc4e8daf4080da40cc4c851732"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/levels",
+    "levelId": "mass-driver-esvz",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "349ba25fbc567a453bfad69c565ad2cd0f33cf25",
+      "branch": "benchmark-run-run-gucf476jvkqr"
+    },
+    "payload": {
+      "commit": "9eade9611c8f7cf53c042f436fb292af7e49e00c",
+      "branch": "benchmark-payload-run-gucf476jvkqr"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

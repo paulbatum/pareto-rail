@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "55cdb7e3c75a4f2691b52809d8fd178efab067896d64636ce239aad4f3916299",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 10.709249907999999,
+  "stdout": "\n> raild@0.0.0 check:floor\n> node scripts/check-floor.mjs --level skyhook-81u5\n\nSkyhook floor check\nduration 60.0s; spawned kinds 5: boss, clamp, debris, kite, sentinel\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=0.42\n  action SFX snap: overridden grid (enabled, 2×32nd grid)\n  lock radius: 0.15 NDC (engine default 0.085)\n  identity hooks declared: scoreForHit, scoreForKill, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: scoreForVolley, validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 2\n\nWarnings:\n- Average enemy destruction distance is slightly high (53.4m, warning threshold 45.0m). Consider spawning enemies closer.\n- Enemy destruction concentration in screen center is slightly high (41.1%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}

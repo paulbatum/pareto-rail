@@ -1,0 +1,20 @@
+{
+  "runId": "opus-high-broadside-ob3c",
+  "slotId": "ob3c",
+  "levelId": "broadside-ob3c",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "claude-opus-4-8-high",
+  "recipePath": "benchmark/recipes/claude-opus-4-8-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-4-8",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Broadside"
+}

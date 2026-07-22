@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "e7f1c8e525aefaf72a39e36c22b24115b1d92d84ccff3f7a73a12f662abb4651",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 16.868281147,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level broadside-ob4d\n\nBroadside floor check\nduration 60.0s; spawned kinds 7: core, escort, generator, interceptor, shell, turret, wasp\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=0.13\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 1\n\nWarnings:\n- Average enemy destruction distance is slightly high (52.1m, warning threshold 45.0m). Consider spawning enemies closer.\nAll floor checks passed.\n",
+  "stderr": ""
+}

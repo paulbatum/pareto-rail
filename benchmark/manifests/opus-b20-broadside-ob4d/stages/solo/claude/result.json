@@ -1,0 +1,17 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "0a734440-2b2a-42b6-8c83-19d7b6790b6c",
+  "usageSha256": "5c96cc8c4faeadf058864a46840c6b3018ef159768ccf84338bcb72d2dbe32eb",
+  "eventLogSha256": "7e8c067528df1587d8eb2e17db70dd645319d602ad27a3e1d160b7e22377c45c",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/opus-b20-broadside-ob4d/harness-home/projects/-tmp-pareto-rail-opus-b20-broadside-ob4d/0a734440-2b2a-42b6-8c83-19d7b6790b6c.jsonl",
+    "sha256": "a10fde553f0ed318beddffedfb2f14829d859d7e1ce6a0a6358647eaadf25965"
+  },
+  "budget": {
+    "path": "budget.json"
+  }
+}

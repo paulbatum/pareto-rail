@@ -1,0 +1,23 @@
+
+> raild@0.0.0 check:floor
+> node scripts/check-floor.mjs --level mass-driver-wo4m
+
+Mass Driver floor check
+duration 60.0s; spawned kinds 5: arc, capacitor, coil, interlock, threader
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 1
+
+Warnings:
+- Enemy destruction concentration in screen center is slightly high (34.7%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.

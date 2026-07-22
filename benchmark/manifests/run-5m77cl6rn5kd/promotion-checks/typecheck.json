@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 5.510843615999998,
+  "stdout": "\n> raild@0.0.0 typecheck\n> tsc --noEmit\n\n",
+  "stderr": ""
+}

@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "5f374e99ced0e8b8bc28f9778b94561e6d21e20ca483ae605087a43bdaab1539",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 15.300306961,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level mass-driver-detailed-m4gp\n\nMass Driver floor check\nduration 60.0s; spawned kinds 5: arc, capacitor, coil, interlock, threader\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 1\n\nWarnings:\n- Enemy destruction concentration in screen center is slightly high (34.7%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}

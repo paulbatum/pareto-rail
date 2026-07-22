@@ -1,0 +1,24 @@
+{
+  "runId": "run-3wx1zsc87lp9",
+  "slotId": "p46c",
+  "levelId": "skyhook-p46c",
+  "themeId": "skyhook",
+  "themePath": "benchmark/themes/skyhook.md",
+  "configurationId": "claude-fable-5-high-b20",
+  "recipePath": "benchmark/recipes/claude-fable-5-high-b20.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-fable-5",
+    "effort": "high",
+    "timeoutSeconds": 43200,
+    "budget": {
+      "usd": 20
+    }
+  },
+  "benchmarkVersion": "v1",
+  "baselinePolicy": "open",
+  "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271",
+  "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+  "levelTitle": "Skyhook"
+}

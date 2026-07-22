@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "runId": "fable-high-mdd-k4wz",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:19.676Z",
+      "data": {
+        "source": {
+          "runId": "fable-high-mdd-k4wz",
+          "slotId": "k4wz",
+          "themeId": "mass-driver-detailed",
+          "levelId": "mass-driver-detailed-k4wz",
+          "title": "Mass Driver",
+          "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+          "evaluatedCommit": "e00dd630289228b2d26f6bc60859e3d75e9faaa7",
+          "payloadCommit": "6159e9acbd5b895e01e367524694b2d4a41c2c02",
+          "manifestSha256": "4dd33a4c461ebb846bba1f72623c063766fae1cb7399750be6dbbddf6a817705",
+          "definitionSha256": "3a4d04bccda71c16b5582a47f905768adec44fce6aa5793fcbc99676c067f912",
+          "evaluatedSha256": "cfd9032b8dd30a7fd4593620947c5eb53be8b718ca132fd5ed4f5c6f42ddabfd",
+          "payloadSha256": "14faf52d687a3df3ac99b0a8f8b5919a90fbd58d47e57c4fefdee68f39e4f1f3",
+          "payloadDiffSha256": "e10c0112ea78e2e55307ccafcaaf9d0cd45ed6da7ba64e4c4b72ebda8979c87f",
+          "sourcePath": "src/benchmark-levels/mass-driver-detailed-k4wz/",
+          "destinationPath": "src/benchmark-levels/mass-driver-detailed-k4wz/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/mass-driver-detailed-k4wz",
+              "promotedPath": "src/benchmark-levels/mass-driver-detailed-k4wz",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/mass-driver-detailed-k4wz",
+              "promotedPath": "public/level-content/mass-driver-detailed-k4wz",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "41ac7db8b3f596a70ad76d6565cf22193083cdc9"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:19.730Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/mass-driver-detailed-k4wz/",
+            "files": 14,
+            "reused": true
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/mass-driver-detailed-k4wz/",
+            "files": 3,
+            "reused": true
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:19.734Z",
+      "data": {
+        "images": [
+          {
+            "path": "hero.png",
+            "avifPath": "hero.avif",
+            "pngSha256": "cc40ee81dca714f7655018fdedaa7505090c33971cc837f76197426b175e4db5",
+            "avifSha256": "cbd6bc6f67a1461a94ce221bb570469517b580fd2da5adcd078a6ddf33a38392"
+          },
+          {
+            "path": "overview.png",
+            "avifPath": "overview.avif",
+            "pngSha256": "43af5f785bd031e78ed7216e5987e85c226781bf2286279d4f8fd8264af846b5",
+            "avifSha256": "b291692d259ff42730723a1b4b70c44b143dd141bc424711979beba71f53fd70"
+          },
+          {
+            "path": "start.png",
+            "avifPath": "start.avif",
+            "pngSha256": "673ff887d1a3770831aefd7f3be8684b36ff129dc6a7ab81dd421c23bc92928b",
+            "avifSha256": "4a8b4fe27d647e9530c3cfe16cfa5aac561a2e773b2c2d2519a414e6a6164c3e"
+          }
+        ],
+        "descriptor": {
+          "path": "level.json",
+          "keys": [
+            "overview",
+            "start",
+            "hero"
+          ],
+          "sha256Before": "e95a0a7fda74e4e37526fb3d1919ec72c186c886a826ea7b2dfd54d941e5e895",
+          "sha256After": "551ca727fd3891d1a9f7db057b71bd5942e389e02e59315456566e30eb98405d"
+        }
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:19.800Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-detailed-k4wz/",
+        "verifiedFiles": 17
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:19.814Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 2.6147992140000023,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "57fdb5d4f5ee299179b9e325c2128d8efd32dcc16eb880cd1fac9fde479d52ae",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 8.382978203999999,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-k4wz --base 41ac7db8b3f596a70ad76d6565cf22193083cdc9",
+            "exitCode": 0,
+            "stdoutSha256": "0b0a2040f096e30c28abdc977a849890c9e8d42b6b81a346281c9952802a5209",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.051629862000001595,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-detailed-k4wz",
+            "exitCode": 0,
+            "stdoutSha256": "062850c739384db5c16416be48c242c7588a79ecd5597dd75a22c0d0ecfba82a",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 15.596601509,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:19.849Z",
+      "data": {
+        "promotionCommit": "30a8cc117ef65d1ae711b383232e79b904a03edd"
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-20T22:08:19.850Z",
+  "source": {
+    "runId": "fable-high-mdd-k4wz",
+    "slotId": "k4wz",
+    "themeId": "mass-driver-detailed",
+    "levelId": "mass-driver-detailed-k4wz",
+    "title": "Mass Driver",
+    "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+    "evaluatedCommit": "e00dd630289228b2d26f6bc60859e3d75e9faaa7",
+    "payloadCommit": "6159e9acbd5b895e01e367524694b2d4a41c2c02",
+    "manifestSha256": "4dd33a4c461ebb846bba1f72623c063766fae1cb7399750be6dbbddf6a817705",
+    "definitionSha256": "3a4d04bccda71c16b5582a47f905768adec44fce6aa5793fcbc99676c067f912",
+    "evaluatedSha256": "cfd9032b8dd30a7fd4593620947c5eb53be8b718ca132fd5ed4f5c6f42ddabfd",
+    "payloadSha256": "14faf52d687a3df3ac99b0a8f8b5919a90fbd58d47e57c4fefdee68f39e4f1f3",
+    "payloadDiffSha256": "e10c0112ea78e2e55307ccafcaaf9d0cd45ed6da7ba64e4c4b72ebda8979c87f",
+    "sourcePath": "src/benchmark-levels/mass-driver-detailed-k4wz/",
+    "destinationPath": "src/benchmark-levels/mass-driver-detailed-k4wz/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/mass-driver-detailed-k4wz",
+        "promotedPath": "src/benchmark-levels/mass-driver-detailed-k4wz",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/mass-driver-detailed-k4wz",
+        "promotedPath": "public/level-content/mass-driver-detailed-k4wz",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "41ac7db8b3f596a70ad76d6565cf22193083cdc9"
+  },
+  "promotionCommit": "30a8cc117ef65d1ae711b383232e79b904a03edd"
+}

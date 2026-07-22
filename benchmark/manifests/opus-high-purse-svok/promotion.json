@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "opus-high-purse-svok",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:32:50.840Z",
+      "data": {
+        "source": {
+          "runId": "opus-high-purse-svok",
+          "slotId": "svok",
+          "themeId": "purse-pursuit",
+          "levelId": "purse-pursuit-svok",
+          "title": "Purse Pursuit",
+          "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4",
+          "evaluatedCommit": "97bd3692f40bb9796f6639456273c24a66e582a6",
+          "payloadCommit": "be7311f5d17c6533452eec196b947ab694ed0209",
+          "manifestSha256": "0a4585b60b98d64ed89516f0132dc8c88319cdd8894d9e3efba80b7b3771f083",
+          "definitionSha256": "27c9807ce1d23778ace2be83c8ee22e3f42d89cac6dde6e7428080684ab5aa74",
+          "evaluatedSha256": "dfc15ad4e18a172fd057208627b5599366e91d3268a18871576d1964ad53982b",
+          "payloadSha256": "2be658a353976d82186f45792bd600f3ac63a720ad6057e2eea26f6d6fcb4cdf",
+          "payloadDiffSha256": "49cfdc1c194e43668170ee6c61cec1c205d4fb0287f5b9e0224dc0d0a0d63fc7",
+          "sourcePath": "src/benchmark-levels/purse-pursuit-svok/",
+          "destinationPath": "src/benchmark-levels/purse-pursuit-svok/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/purse-pursuit-svok",
+              "promotedPath": "src/benchmark-levels/purse-pursuit-svok",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/purse-pursuit-svok",
+              "promotedPath": "public/level-content/purse-pursuit-svok",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:32:51.002Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/purse-pursuit-svok/",
+            "files": 21,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:32:51.004Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:32:51.093Z",
+      "data": {
+        "destination": "src/benchmark-levels/purse-pursuit-svok/",
+        "verifiedFiles": 21
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:33:24.736Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.187857927,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "463cf1c4b187d9df77cdb219d149b594fb3fe3a2a42b4ffe8ec8e770b3845b19",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 11.355274270999999,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level purse-pursuit-svok --base 6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4",
+            "exitCode": 0,
+            "stdoutSha256": "da0a88bce178c8c645baa06f739f20f57436bcfd912a409156f93bb72265a33c",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04048095699999976,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level purse-pursuit-svok",
+            "exitCode": 0,
+            "stdoutSha256": "81e5eca9bc2674be5ea576ea7e523379666e74924efe2e9ff2b855291842ddd6",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 18.040909064000004,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-22T18:33:24.792Z",
+      "data": {
+        "promotionCommit": "fa2d2880d2e6af6589d458fa58cd58a3e4f561e1",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-22T18:33:24.793Z",
+  "source": {
+    "runId": "opus-high-purse-svok",
+    "slotId": "svok",
+    "themeId": "purse-pursuit",
+    "levelId": "purse-pursuit-svok",
+    "title": "Purse Pursuit",
+    "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4",
+    "evaluatedCommit": "97bd3692f40bb9796f6639456273c24a66e582a6",
+    "payloadCommit": "be7311f5d17c6533452eec196b947ab694ed0209",
+    "manifestSha256": "0a4585b60b98d64ed89516f0132dc8c88319cdd8894d9e3efba80b7b3771f083",
+    "definitionSha256": "27c9807ce1d23778ace2be83c8ee22e3f42d89cac6dde6e7428080684ab5aa74",
+    "evaluatedSha256": "dfc15ad4e18a172fd057208627b5599366e91d3268a18871576d1964ad53982b",
+    "payloadSha256": "2be658a353976d82186f45792bd600f3ac63a720ad6057e2eea26f6d6fcb4cdf",
+    "payloadDiffSha256": "49cfdc1c194e43668170ee6c61cec1c205d4fb0287f5b9e0224dc0d0a0d63fc7",
+    "sourcePath": "src/benchmark-levels/purse-pursuit-svok/",
+    "destinationPath": "src/benchmark-levels/purse-pursuit-svok/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/purse-pursuit-svok",
+        "promotedPath": "src/benchmark-levels/purse-pursuit-svok",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/purse-pursuit-svok",
+        "promotedPath": "public/level-content/purse-pursuit-svok",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+  },
+  "promotionCommit": "fa2d2880d2e6af6589d458fa58cd58a3e4f561e1"
+}

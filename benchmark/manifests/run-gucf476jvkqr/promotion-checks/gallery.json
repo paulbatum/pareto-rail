@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "f30a5e3e1407092702ff1a84581ca90b6428519c3b4f59966fa143911237b001",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 0.15602168700005858,
+  "stdout": "\n> raild@0.0.0 gallery\n> node scripts/collect-gallery.mjs\n\nWrote docs/level-gallery.md from built-in and discovered benchmark level cards\n",
+  "stderr": ""
+}

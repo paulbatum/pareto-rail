@@ -1,0 +1,30 @@
+
+> raild@0.0.0 build
+> vite build
+
+vite v8.1.3 building client environment for production...
+[2Ktransforming...✓ 115 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                1.82 kB │ gzip:   0.90 kB
+dist/assets/index-CdxIYldy.css                15.14 kB │ gzip:   4.11 kB
+dist/assets/spawn-patterns-Cq7vLtQX.js         0.22 kB │ gzip:   0.16 kB
+dist/assets/audio-trace-GtutyGgA.js            0.40 kB │ gzip:   0.27 kB
+dist/assets/speed-profile-W-oLAii7.js          0.70 kB │ gzip:   0.43 kB
+dist/assets/hostile-shot-DZ3-pOce.js           1.68 kB │ gzip:   0.74 kB
+dist/assets/arrangement-RKGsRhWr.js            3.44 kB │ gzip:   1.44 kB
+dist/assets/glyphs-CuR8hODU.js                 3.58 kB │ gzip:   0.97 kB
+dist/assets/BufferGeometryUtils-CQmzoknL.js    3.77 kB │ gzip:   1.10 kB
+dist/assets/perf-overlay-C2NutT9n.js           5.73 kB │ gzip:   2.26 kB
+dist/assets/environment-kit-B1HTL9bt.js       11.57 kB │ gzip:   4.57 kB
+dist/assets/prism-Dt6p_Hqi.js                 14.49 kB │ gzip:   5.81 kB
+dist/assets/rezdle-BeBpQyeh.js                17.48 kB │ gzip:   6.99 kB
+dist/assets/rush-C_9yJqFm.js                  25.61 kB │ gzip:   9.36 kB
+dist/assets/audio-kit-BQxUV9DQ.js             30.45 kB │ gzip:  10.38 kB
+dist/assets/crystal-d8ee13c0.js               52.11 kB │ gzip:  17.32 kB
+dist/assets/mass-driver-vyxj-Boz7JwRQ.js      59.09 kB │ gzip:  20.33 kB
+dist/assets/helios-BytAoSsP.js                73.20 kB │ gzip:  23.95 kB
+dist/assets/word-data-bEQzhfW8.js            622.40 kB │ gzip: 206.10 kB
+dist/assets/index-BrCx63fb.js                916.86 kB │ gzip: 254.19 kB
+
+✓ built in 830ms

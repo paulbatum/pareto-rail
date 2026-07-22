@@ -1,0 +1,31 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-fable-5",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--settings",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/fable-b20-strandline-s2bq/stages/solo/claude/budget/hook-settings.json",
+    "--session-id",
+    "9e6f9578-1034-420c-8757-fb709675502c"
+  ],
+  "cliVersion": "2.1.214 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-fable-b20-strandline-s2bq",
+  "startedAt": "2026-07-18T10:33:27.581Z",
+  "finishedAt": "2026-07-18T11:03:21.556Z",
+  "wallTimeSeconds": 1691.624271014,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

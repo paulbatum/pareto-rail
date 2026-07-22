@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f8afc-8222-7841-b984-a3f14c0a8652",
+  "usageSha256": "5fad6eac1fa680e6cbdefe6bb619089a34942d74d058e365a6149a8f128523f0",
+  "eventLogSha256": "4fd5cb3e98741725c3c36d4a14d8cdda2594e17caf5c07f15ca376e66b267142",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-solve-wvdv/harness-home/sessions/2026/07/22/rollout-2026-07-22T11-00-32-019f8afc-8222-7841-b984-a3f14c0a8652.jsonl",
+    "sha256": "641d2c592ce9f055ee72086b0521f47953f331ca715f8e73b618993b3c27d081"
+  }
+}

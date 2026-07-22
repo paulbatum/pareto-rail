@@ -1,0 +1,20 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "128da6eb067e60c41ea29a94c7f8b0af6456d77344ad01b575722c4e8f0384c5"
+  },
+  "theme": {
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/run-eztdwig5twea/rendered-assignment.md",
+    "sha256": "2a34499f2de18f3c8f4ba97366d3428f6cb2e8d10c56935524da5cd78d167663"
+  },
+  "delegation": {
+    "path": "benchmark/prompts/flexible-delegation.md",
+    "delegateModel": "opus",
+    "delegateEffort": "high",
+    "sha256": "f00d6a48a77103f97eb55d73959883353daf7667dc74da547eb8ef4895978d5c"
+  }
+}

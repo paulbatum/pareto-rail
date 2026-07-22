@@ -1,0 +1,20 @@
+{
+  "runId": "sol-high-mdd-m4gp",
+  "slotId": "m4gp",
+  "levelId": "mass-driver-detailed-m4gp",
+  "themeId": "mass-driver-detailed",
+  "themePath": "benchmark/themes/mass-driver-detailed.md",
+  "configurationId": "codex-sol-high",
+  "recipePath": "benchmark/recipes/codex-sol-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Mass Driver"
+}

@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f749d-e2ad-71e0-9b53-a1edfe9fb810",
+  "usageSha256": "acc793ea3aaca7c0952e159d5acc4aee94df07738e57519c42221558c47f7114",
+  "eventLogSha256": "692362158072b86fe6c4ec1277c6df9ab944dfc6cc455be3fb5d12075964ab78",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-strandline-s5cx/harness-home/sessions/2026/07/18/rollout-2026-07-18T02-45-32-019f749d-e2ad-71e0-9b53-a1edfe9fb810.jsonl",
+    "sha256": "8946bd927706dd6491b84ad344e0cabab531e0deb73c2b16bc1a07547fbda5b9"
+  }
+}

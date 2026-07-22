@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "3ad843d7c73245d0db8e623a4a6064ade283a3b14b4c416365cf17b98af9aa14",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 15.519002634,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level strandline-s7ah\n\nStrandline floor check\nduration 60.0s; spawned kinds 6: brood, cyst, lasher, matriarch, spitter, venom\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 1\n\nWarnings:\n- Enemy destruction concentration in screen center is slightly high (26.7%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}

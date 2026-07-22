@@ -1,0 +1,114 @@
+{
+  "sessionId": "e00fa2fa-8952-4549-a591-7b1d0a824f3d",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Broadside is complete: all gates pass** — typecheck, production build, benchmark scope (19 paths, all inside the allowed footprint), and the full floor check (7 enemy kinds, complete event coverage, zero occlusion warnings, zero performance failures, valid audio config). The perfect-policy simulation clears all 95 targets, destroys the flagship, and earns the S rank at exactly 60.0 seconds.\n\n## What was built\n\nA 60-second crossing of a fleet engagement at 140 BPM (35 bars = exactly 60s), under `src/benchmark-levels/broadside-b4kd/`:\n\n**The run**: catapult slam off your flagship's deck → hard S-banks through the melee → a surging straight down a friendly cruiser's flank while her broadside fires overhead on the downbeats → a near-stall through the silent eye of the battle → under an enemy warship's keel raking its two-stage turrets → the enemy flagship's shield generators under point-defense fire → escort swarm as the rail banks around the bow → trench dive to three power cores, with a victory peal and a climb away when the last one blows. Words are ENGAGE/SORTIE; hull is 3 points.\n\n**The boss contract**: four 2-lock generators must *all* die or the trench cores stay caged (`lockable` flips live when the shield falls, with `bossphase` events driving audio, visuals, and callouts). The run summary reports how far you got.\n\n**The music**: synthesized orchestra — brass/strings over timpani in D minor, the launch fanfare returning as the full broadside theme, one horn alone in the eye, staccato cellos under the keel, a climbing brass line in the trench. Timpani doubles as the fleet's guns. Locks are pizzicato plucks off the live chord, kills walk six per-act hidden melody lanes, boss chips ring an escalating anvil, and the flagship's death ducks everything for a scheduled D-major fanfare.\n\n**The look**: a camera-riding magenta-and-gold nebula dome backlights every hull as a rimmed silhouette; sides read by color (ice/cyan vs obsidian/molten/crimson); 110 tracer lanes stream both directions the whole run; kills shatter into wreckage that tumbles and cools to black (no gravity).\n\n## Iteration that mattered\n\n- Destruction distance/center-spread tuning: leads cut from ~4.5s to ~2.5s and formations widened (64.6m avg → 45m, center 60.6% → 45.7%, mid-pack vs. other entrants; Crystal sits at 19%).\n- Fixed a real GPU leak (runner doesn't dispose meshes; at this density it tripped the geometry-growth gate 9×).\n- Point defense retuned so shells can actually catch a 25 u/s camera (hull threat was silently dead).\n- Visual debugging via SwiftShader snapshots: sky was silently far-plane-clipped (now a camera-riding dome), the flagship's 300m additive seam and shield-collapse beams were whiting out frames, escort darts clipped through trench walls.\n\n## What still needs human eyes (WSL2 can't render WebGPU)\n\n1. **Broadside salvos on the downbeats** beside the cruiser — beams fire off `beat` events, which headless snapshots can't exercise.\n2. **The eye's near-silence** landing as a held breath, and the shield-fall → trench-dive → victory-peal chain having enough contrast.\n3. **Bloom-at-zero legibility** of locked targets and the ENGAGE/SORTIE plaques, and the final mix balance (reverb depth, timpani-as-cannon weight).\n\nGallery card, `level.md`, and self-produced hero/overview/start images are in place; `docs/level-gallery.md` regenerated.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 3259328,
+    "duration_api_ms": 2964281,
+    "ttft_ms": 5502,
+    "ttft_stream_ms": 4535,
+    "time_to_request_ms": 63,
+    "num_turns": 156,
+    "result": "**Broadside is complete: all gates pass** — typecheck, production build, benchmark scope (19 paths, all inside the allowed footprint), and the full floor check (7 enemy kinds, complete event coverage, zero occlusion warnings, zero performance failures, valid audio config). The perfect-policy simulation clears all 95 targets, destroys the flagship, and earns the S rank at exactly 60.0 seconds.\n\n## What was built\n\nA 60-second crossing of a fleet engagement at 140 BPM (35 bars = exactly 60s), under `src/benchmark-levels/broadside-b4kd/`:\n\n**The run**: catapult slam off your flagship's deck → hard S-banks through the melee → a surging straight down a friendly cruiser's flank while her broadside fires overhead on the downbeats → a near-stall through the silent eye of the battle → under an enemy warship's keel raking its two-stage turrets → the enemy flagship's shield generators under point-defense fire → escort swarm as the rail banks around the bow → trench dive to three power cores, with a victory peal and a climb away when the last one blows. Words are ENGAGE/SORTIE; hull is 3 points.\n\n**The boss contract**: four 2-lock generators must *all* die or the trench cores stay caged (`lockable` flips live when the shield falls, with `bossphase` events driving audio, visuals, and callouts). The run summary reports how far you got.\n\n**The music**: synthesized orchestra — brass/strings over timpani in D minor, the launch fanfare returning as the full broadside theme, one horn alone in the eye, staccato cellos under the keel, a climbing brass line in the trench. Timpani doubles as the fleet's guns. Locks are pizzicato plucks off the live chord, kills walk six per-act hidden melody lanes, boss chips ring an escalating anvil, and the flagship's death ducks everything for a scheduled D-major fanfare.\n\n**The look**: a camera-riding magenta-and-gold nebula dome backlights every hull as a rimmed silhouette; sides read by color (ice/cyan vs obsidian/molten/crimson); 110 tracer lanes stream both directions the whole run; kills shatter into wreckage that tumbles and cools to black (no gravity).\n\n## Iteration that mattered\n\n- Destruction distance/center-spread tuning: leads cut from ~4.5s to ~2.5s and formations widened (64.6m avg → 45m, center 60.6% → 45.7%, mid-pack vs. other entrants; Crystal sits at 19%).\n- Fixed a real GPU leak (runner doesn't dispose meshes; at this density it tripped the geometry-growth gate 9×).\n- Point defense retuned so shells can actually catch a 25 u/s camera (hull threat was silently dead).\n- Visual debugging via SwiftShader snapshots: sky was silently far-plane-clipped (now a camera-riding dome), the flagship's 300m additive seam and shield-collapse beams were whiting out frames, escort darts clipped through trench walls.\n\n## What still needs human eyes (WSL2 can't render WebGPU)\n\n1. **Broadside salvos on the downbeats** beside the cruiser — beams fire off `beat` events, which headless snapshots can't exercise.\n2. **The eye's near-silence** landing as a held breath, and the shield-fall → trench-dive → victory-peal chain having enough contrast.\n3. **Bloom-at-zero legibility** of locked targets and the ENGAGE/SORTIE plaques, and the final mix balance (reverb depth, timpani-as-cannon weight).\n\nGallery card, `level.md`, and self-produced hero/overview/start images are in place; `docs/level-gallery.md` regenerated.",
+    "stop_reason": "end_turn",
+    "session_id": "e00fa2fa-8952-4549-a591-7b1d0a824f3d",
+    "total_cost_usd": 61.16731099999996,
+    "usage": {
+      "input_tokens": 240,
+      "cache_creation_input_tokens": 459403,
+      "cache_read_input_tokens": 40799015,
+      "output_tokens": 223531,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 459403,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1316,
+          "cache_read_input_tokens": 474645,
+          "cache_creation_input_tokens": 88,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 88
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1216,
+        "outputTokens": 14,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001286,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-fable-5": {
+        "inputTokens": 240,
+        "outputTokens": 223531,
+        "cacheReadInputTokens": 40799015,
+        "cacheCreationInputTokens": 459403,
+        "webSearchRequests": 0,
+        "costUSD": 61.16602499999996,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "ce968ac9-3e32-4580-81e5-2880e3a81978"
+  },
+  "normalized": {
+    "inputTokens": 40799255,
+    "outputTokens": 223531,
+    "cacheReadInputTokens": 40799015,
+    "cacheWriteInputTokens": 459403,
+    "vendorFields": {
+      "totalCostUsd": 61.16731099999996,
+      "durationMs": 3259328,
+      "durationApiMs": 2964281,
+      "numTurns": 156,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1216,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001286,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-fable-5": {
+          "inputTokens": 240,
+          "outputTokens": 223531,
+          "cacheReadInputTokens": 40799015,
+          "cacheCreationInputTokens": 459403,
+          "webSearchRequests": 0,
+          "costUSD": 61.16602499999996,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

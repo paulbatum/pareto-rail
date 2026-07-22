@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-pnpwjrxhz8uu",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T23:31:39.925Z",
+      "data": {
+        "source": {
+          "runId": "run-pnpwjrxhz8uu",
+          "slotId": "loyy",
+          "themeId": "skyhook",
+          "levelId": "skyhook-loyy",
+          "title": "Skyhook",
+          "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271",
+          "evaluatedCommit": "3dc6951833ec2b7aa77e127d83f40da3ba28df18",
+          "payloadCommit": "2604159046ab74ba3b83bd3c33fa3e3b769e03d3",
+          "manifestSha256": "7af005d260fbbda06bb0573000303175c37a3faaafe37ae12a25c4b03550c2b9",
+          "definitionSha256": "5b5ce09eed6ddc922b54e8718fdf27e61df3eacb7fca48a74fc2e00f0e210326",
+          "evaluatedSha256": "5ac48e6cd148dc03b2f5112af50d15fe05f912a3c1f5f1a2a5b9100d0c9d188d",
+          "payloadSha256": "e97a053948c79e883eb496bb4000af6591bbef3e4f45b3d605565972922f6e35",
+          "payloadDiffSha256": "6c41abc17cbc5f55fd4ba41ebaa2d5d2a63447b777972a629fb961836dba60ee",
+          "sourcePath": "src/benchmark-levels/skyhook-loyy/",
+          "destinationPath": "src/benchmark-levels/skyhook-loyy/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/skyhook-loyy",
+              "promotedPath": "src/benchmark-levels/skyhook-loyy",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/skyhook-loyy",
+              "promotedPath": "public/level-content/skyhook-loyy",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "e9a8a09075d89464afae49c98764c0e164209c2f"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T23:31:40.043Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/skyhook-loyy/",
+            "files": 15,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T23:31:40.045Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T23:31:40.121Z",
+      "data": {
+        "destination": "src/benchmark-levels/skyhook-loyy/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T23:32:14.975Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.700852799,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "3e71eca48e7f49c8e9869e26b3ff0b2b95688bdd665fc04ce2afa73ebc53c3c2",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 11.746082177999998,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-loyy --base e9a8a09075d89464afae49c98764c0e164209c2f",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04147523900000124,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level skyhook-loyy",
+            "exitCode": 0,
+            "stdoutSha256": "4c6bf366b08c477807cb985a460ca34c0cf2e83e90afeb55a98e9213bc1dab53",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 18.536352393,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-21T23:32:15.045Z",
+      "data": {
+        "promotionCommit": "9fd007691d0f0116ed15407166858591cf0be728",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-21T23:32:15.047Z",
+  "source": {
+    "runId": "run-pnpwjrxhz8uu",
+    "slotId": "loyy",
+    "themeId": "skyhook",
+    "levelId": "skyhook-loyy",
+    "title": "Skyhook",
+    "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271",
+    "evaluatedCommit": "3dc6951833ec2b7aa77e127d83f40da3ba28df18",
+    "payloadCommit": "2604159046ab74ba3b83bd3c33fa3e3b769e03d3",
+    "manifestSha256": "7af005d260fbbda06bb0573000303175c37a3faaafe37ae12a25c4b03550c2b9",
+    "definitionSha256": "5b5ce09eed6ddc922b54e8718fdf27e61df3eacb7fca48a74fc2e00f0e210326",
+    "evaluatedSha256": "5ac48e6cd148dc03b2f5112af50d15fe05f912a3c1f5f1a2a5b9100d0c9d188d",
+    "payloadSha256": "e97a053948c79e883eb496bb4000af6591bbef3e4f45b3d605565972922f6e35",
+    "payloadDiffSha256": "6c41abc17cbc5f55fd4ba41ebaa2d5d2a63447b777972a629fb961836dba60ee",
+    "sourcePath": "src/benchmark-levels/skyhook-loyy/",
+    "destinationPath": "src/benchmark-levels/skyhook-loyy/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/skyhook-loyy",
+        "promotedPath": "src/benchmark-levels/skyhook-loyy",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/skyhook-loyy",
+        "promotedPath": "public/level-content/skyhook-loyy",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "e9a8a09075d89464afae49c98764c0e164209c2f"
+  },
+  "promotionCommit": "9fd007691d0f0116ed15407166858591cf0be728"
+}

@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "runId": "fable-high-mdd-m3rp",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:41:52.085Z",
+      "data": {
+        "source": {
+          "runId": "fable-high-mdd-m3rp",
+          "slotId": "m3rp",
+          "themeId": "mass-driver-detailed",
+          "levelId": "mass-driver-detailed-m3rp",
+          "title": "Mass Driver",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "25780690e63d1651f886ed3298c652339d8eceae",
+          "payloadCommit": "c21cb701fe4120693f570b1d456ed16dfab73951",
+          "manifestSha256": "bca48915514895e1331d6ceda6294de964c141e7f0b29925806937644122353a",
+          "definitionSha256": "44da7af0f96568ca4c97b38062a874ee9fa7d6c5532ea2315c61bdaf7005e5f0",
+          "evaluatedSha256": "9c0e51c4090e13a77d9b19d3f9a55fc121d31a95f85a964464801b5b84f1039a",
+          "payloadSha256": "cebe282ac2f668296b4fe101985235f3acee2154bb1942338b3f029463cdd8c9",
+          "payloadDiffSha256": "549caa7af3a7c3d085680ede1ab92a47be70d2c532f725fb0f6291b6761a8c43",
+          "sourcePath": "src/benchmark-levels/mass-driver-detailed-m3rp/",
+          "destinationPath": "src/benchmark-levels/mass-driver-detailed-m3rp/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/mass-driver-detailed-m3rp",
+              "promotedPath": "src/benchmark-levels/mass-driver-detailed-m3rp",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/mass-driver-detailed-m3rp",
+              "promotedPath": "public/level-content/mass-driver-detailed-m3rp",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "b5a23e6c862c6f2f4d34ecf1a67e8e046b493859"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:41:52.197Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/mass-driver-detailed-m3rp/",
+            "files": 14,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:41:52.251Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-detailed-m3rp/",
+        "verifiedFiles": 14
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:42:20.471Z",
+      "data": {
+        "gallerySha256": "4bfa9f1aef5ddf147c1897d3a7e53abe49e73ad74c4f001de56415daa4682201",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.3504070960000005,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "d685f85b7cbdccb6ef264e9bcb178eee021cf0b9e5260288b064da1cba3acbf2",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 7.596197376999998,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m3rp --base b5a23e6c862c6f2f4d34ecf1a67e8e046b493859",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04149980200000027,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-detailed-m3rp",
+            "exitCode": 0,
+            "stdoutSha256": "2dfdf3fc77885fb2da61aa20a38bac4636cdf57553f631a97b1bcbd715435a20",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 16.936801372999998,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:42:20.526Z",
+      "data": {
+        "promotionCommit": "208d4c5afee9a6e1815c1ff8828179bf0111d9f9",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:42:20.528Z",
+  "source": {
+    "runId": "fable-high-mdd-m3rp",
+    "slotId": "m3rp",
+    "themeId": "mass-driver-detailed",
+    "levelId": "mass-driver-detailed-m3rp",
+    "title": "Mass Driver",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "25780690e63d1651f886ed3298c652339d8eceae",
+    "payloadCommit": "c21cb701fe4120693f570b1d456ed16dfab73951",
+    "manifestSha256": "bca48915514895e1331d6ceda6294de964c141e7f0b29925806937644122353a",
+    "definitionSha256": "44da7af0f96568ca4c97b38062a874ee9fa7d6c5532ea2315c61bdaf7005e5f0",
+    "evaluatedSha256": "9c0e51c4090e13a77d9b19d3f9a55fc121d31a95f85a964464801b5b84f1039a",
+    "payloadSha256": "cebe282ac2f668296b4fe101985235f3acee2154bb1942338b3f029463cdd8c9",
+    "payloadDiffSha256": "549caa7af3a7c3d085680ede1ab92a47be70d2c532f725fb0f6291b6761a8c43",
+    "sourcePath": "src/benchmark-levels/mass-driver-detailed-m3rp/",
+    "destinationPath": "src/benchmark-levels/mass-driver-detailed-m3rp/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/mass-driver-detailed-m3rp",
+        "promotedPath": "src/benchmark-levels/mass-driver-detailed-m3rp",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/mass-driver-detailed-m3rp",
+        "promotedPath": "public/level-content/mass-driver-detailed-m3rp",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "b5a23e6c862c6f2f4d34ecf1a67e8e046b493859"
+  },
+  "promotionCommit": "208d4c5afee9a6e1815c1ff8828179bf0111d9f9"
+}

@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "runId": "sol-b20-mdd-m7hq",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:46:03.506Z",
+      "data": {
+        "source": {
+          "runId": "sol-b20-mdd-m7hq",
+          "slotId": "m7hq",
+          "themeId": "mass-driver-detailed",
+          "levelId": "mass-driver-detailed-m7hq",
+          "title": "Mass Driver",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "4f37d59836983e2cba81e79422e1e053e9dc2196",
+          "payloadCommit": "2ca98385f1abee4b4a5277373d81065b6161fead",
+          "manifestSha256": "7ffdbce36d963bdf8b1644cccef94140529bf9e85dcc4d513184aa0e25036ff1",
+          "definitionSha256": "a405b0ef6838c54dbff65d356d1eb228e63ca3eda4c7be976349bf8091649c0f",
+          "evaluatedSha256": "3fdcbf5ca9b62b16e4c094b6f440f01d54f47a6b009553e2ba49f3ae9d8f7fa2",
+          "payloadSha256": "7d3496e5d087e6961bf4b998b4c1fdd06f92949e39940238d08b59444cb7a14f",
+          "payloadDiffSha256": "b523bdfa2635f7bfcfccfaff028f50bcc77f90c3497ee2471cb90237e675ad53",
+          "sourcePath": "src/benchmark-levels/mass-driver-detailed-m7hq/",
+          "destinationPath": "src/benchmark-levels/mass-driver-detailed-m7hq/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/mass-driver-detailed-m7hq",
+              "promotedPath": "src/benchmark-levels/mass-driver-detailed-m7hq",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/mass-driver-detailed-m7hq",
+              "promotedPath": "public/level-content/mass-driver-detailed-m7hq",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "6181c11c4cb82e07057af00cc3593dd4bf92e97e"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:46:03.659Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/mass-driver-detailed-m7hq/",
+            "files": 12,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/mass-driver-detailed-m7hq/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:46:03.749Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-detailed-m7hq/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:46:31.628Z",
+      "data": {
+        "gallerySha256": "f629cc518697ef1ffa9c9f84f7d609ca8d1c844c8056de51474af6a4623ce136",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 2.96522939,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "a27351bc21596832f23d631fb29837804d90b2104609284d0d89fe80b5e08acb",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 8.129135027,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m7hq --base 6181c11c4cb82e07057af00cc3593dd4bf92e97e",
+            "exitCode": 0,
+            "stdoutSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.040443393999999896,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-detailed-m7hq",
+            "exitCode": 0,
+            "stdoutSha256": "e87dc2b323a768898b69df8aee43b3dde7e1a763f732b87f9ad53179e5d06021",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 16.402518961,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:46:31.696Z",
+      "data": {
+        "promotionCommit": "a962679f63f301577d43051d01de3f679e7c8cd4",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:46:31.697Z",
+  "source": {
+    "runId": "sol-b20-mdd-m7hq",
+    "slotId": "m7hq",
+    "themeId": "mass-driver-detailed",
+    "levelId": "mass-driver-detailed-m7hq",
+    "title": "Mass Driver",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "4f37d59836983e2cba81e79422e1e053e9dc2196",
+    "payloadCommit": "2ca98385f1abee4b4a5277373d81065b6161fead",
+    "manifestSha256": "7ffdbce36d963bdf8b1644cccef94140529bf9e85dcc4d513184aa0e25036ff1",
+    "definitionSha256": "a405b0ef6838c54dbff65d356d1eb228e63ca3eda4c7be976349bf8091649c0f",
+    "evaluatedSha256": "3fdcbf5ca9b62b16e4c094b6f440f01d54f47a6b009553e2ba49f3ae9d8f7fa2",
+    "payloadSha256": "7d3496e5d087e6961bf4b998b4c1fdd06f92949e39940238d08b59444cb7a14f",
+    "payloadDiffSha256": "b523bdfa2635f7bfcfccfaff028f50bcc77f90c3497ee2471cb90237e675ad53",
+    "sourcePath": "src/benchmark-levels/mass-driver-detailed-m7hq/",
+    "destinationPath": "src/benchmark-levels/mass-driver-detailed-m7hq/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/mass-driver-detailed-m7hq",
+        "promotedPath": "src/benchmark-levels/mass-driver-detailed-m7hq",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/mass-driver-detailed-m7hq",
+        "promotedPath": "public/level-content/mass-driver-detailed-m7hq",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "6181c11c4cb82e07057af00cc3593dd4bf92e97e"
+  },
+  "promotionCommit": "a962679f63f301577d43051d01de3f679e7c8cd4"
+}

@@ -1,0 +1,17 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f7545-69e6-70e2-9e12-58f25bac48c3",
+  "usageSha256": "2dec6756ccc6675dbbaffec37ea75590e6957cc5dbc4631cfd014e340eda1361",
+  "eventLogSha256": "d3282390c9cc26859d534330bc01b7b945bbd29882b4b11f11ff0e0e4f91a7f0",
+  "stderrSha256": "5d0f47bb2cfc416cfa88134c093eb3812a57978a590e8a011ceec2ce993b94ad",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-b20-mdd-m7hq/harness-home/sessions/2026/07/18/rollout-2026-07-18T05-48-31-019f7545-69e6-70e2-9e12-58f25bac48c3.jsonl",
+    "sha256": "a36ff5bbb63f8ffd28a8c90f2ea6742108ea435e3a7454b7330481954ed1bdd7"
+  },
+  "budget": {
+    "path": "budget.json"
+  }
+}

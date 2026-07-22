@@ -1,0 +1,114 @@
+{
+  "sessionId": "502ca13f-2578-4d2b-9db1-e9129e1901b1",
+  "initResolvedModel": "claude-opus-4-8",
+  "finalMessage": "**Speedsolve** (`src/benchmark-levels/speedsolve-zq4n/`) is built — ~4,600 lines across timing, cube, gameplay, audio, and visuals.\n\n## What it is\n\nSixty seconds (144 BPM, exactly 36 bars), one opponent: a colossal graphite puzzle cube in a pale studio void while the rail orbits it. Six identical five-bar face blocks — quarter-turn → scramble → five solve pips → the cube's bow → the face falls in a shower of cubies → weakpoint exposed → socket shutters — then bars 31–36 unfold the shell into an exploded view around a three-stage core whose gimbal cage shuts between salvos. Candy tetrahedra/octahedra/prisms orbit the whole fight and throw interceptable homing cubes.\n\n**The cube is a real cube.** 26 cubies, 54 sticker plates, integer lattice, exact quarter turns. Presentation turns are pre-multiplied in the *camera's* frame; the front normal, the face's screen axes, and the twist axis are all derived from that turn stack rather than tabulated. Twists only ever grab the front layer, the back layer, or both caps — the one family under which a front sticker stays a front sticker and no center piece ever leaves its axis.\n\n**The cube is the percussion section.** `clack` is written into the drum pattern *and* played by the machine on every layer rotation. Rotations release on `beat` events; audio schedules the knock on the next quarter note of the same transport. A motor hum gains a layer per conquered face. Kills walk per-section lanes over live harmony.\n\n## Bugs I hit and fixed (all were live defects, not polish)\n\n1. **Camera/clock lived in visuals** — the simulator drives `gameplay.ts` directly, so the face clock and look-at never ran headless. Moved both into gameplay; the cube is now a headless model with a view bolted on.\n2. **Dropped stickers migrated onto later faces**, gutting them — face 5 lost all five pips. Fixed by tracking conquered *faces*, not dead plates, and banning slice moves.\n3. **The cube model never reset between runs** — REPLAY would have started on a half-eaten machine.\n4. **The core boss and the START/REPLAY plates never scaled in** from their 0.001 spawn scale — both were invisible.\n5. Enemy/projectile geometries were never disposed (~350 leaked per run).\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope` (19 paths — level dir, its `public/level-content/`, regenerated gallery), and `check:floor`: 7 enemy kinds, full event coverage, **0 occlusion warnings, 0 perf failures, 0 centerness/distance warnings**, 183 peak draw calls. Perfect sim: 66/72, 101 locks, rank A, core destroyed, avg destruction distance 32.5 m, 0% off-screen, well spread. `trace:audio` shows 144 beats, five sections, 136 clacks.\n\n## What needs human eyes\n\nWSL2 can't render WebGPU — everything above is SwiftShader. Check first:\n- **Do the layer snaps feel locked to the beat?** That's the whole level; it's the one thing I could only verify in code.\n- **Bloom at zero** — the pale void has almost no headroom, so I ran bloom strength at 0.42 with an effective threshold of 0.92. Wrong squares should still be obvious.\n- **Point-blank bolts.** The shared impact model brakes them to ~0.65 m; I shrank the halo twice and it still smears the frame briefly.\n- **The exploded finale is monochrome** by design (naked machinery), and it's the dimmest part of the run.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 4153983,
+    "duration_api_ms": 3842270,
+    "ttft_ms": 2551,
+    "ttft_stream_ms": 1179,
+    "time_to_request_ms": 36,
+    "num_turns": 160,
+    "result": "**Speedsolve** (`src/benchmark-levels/speedsolve-zq4n/`) is built — ~4,600 lines across timing, cube, gameplay, audio, and visuals.\n\n## What it is\n\nSixty seconds (144 BPM, exactly 36 bars), one opponent: a colossal graphite puzzle cube in a pale studio void while the rail orbits it. Six identical five-bar face blocks — quarter-turn → scramble → five solve pips → the cube's bow → the face falls in a shower of cubies → weakpoint exposed → socket shutters — then bars 31–36 unfold the shell into an exploded view around a three-stage core whose gimbal cage shuts between salvos. Candy tetrahedra/octahedra/prisms orbit the whole fight and throw interceptable homing cubes.\n\n**The cube is a real cube.** 26 cubies, 54 sticker plates, integer lattice, exact quarter turns. Presentation turns are pre-multiplied in the *camera's* frame; the front normal, the face's screen axes, and the twist axis are all derived from that turn stack rather than tabulated. Twists only ever grab the front layer, the back layer, or both caps — the one family under which a front sticker stays a front sticker and no center piece ever leaves its axis.\n\n**The cube is the percussion section.** `clack` is written into the drum pattern *and* played by the machine on every layer rotation. Rotations release on `beat` events; audio schedules the knock on the next quarter note of the same transport. A motor hum gains a layer per conquered face. Kills walk per-section lanes over live harmony.\n\n## Bugs I hit and fixed (all were live defects, not polish)\n\n1. **Camera/clock lived in visuals** — the simulator drives `gameplay.ts` directly, so the face clock and look-at never ran headless. Moved both into gameplay; the cube is now a headless model with a view bolted on.\n2. **Dropped stickers migrated onto later faces**, gutting them — face 5 lost all five pips. Fixed by tracking conquered *faces*, not dead plates, and banning slice moves.\n3. **The cube model never reset between runs** — REPLAY would have started on a half-eaten machine.\n4. **The core boss and the START/REPLAY plates never scaled in** from their 0.001 spawn scale — both were invisible.\n5. Enemy/projectile geometries were never disposed (~350 leaked per run).\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope` (19 paths — level dir, its `public/level-content/`, regenerated gallery), and `check:floor`: 7 enemy kinds, full event coverage, **0 occlusion warnings, 0 perf failures, 0 centerness/distance warnings**, 183 peak draw calls. Perfect sim: 66/72, 101 locks, rank A, core destroyed, avg destruction distance 32.5 m, 0% off-screen, well spread. `trace:audio` shows 144 beats, five sections, 136 clacks.\n\n## What needs human eyes\n\nWSL2 can't render WebGPU — everything above is SwiftShader. Check first:\n- **Do the layer snaps feel locked to the beat?** That's the whole level; it's the one thing I could only verify in code.\n- **Bloom at zero** — the pale void has almost no headroom, so I ran bloom strength at 0.42 with an effective threshold of 0.92. Wrong squares should still be obvious.\n- **Point-blank bolts.** The shared impact model brakes them to ~0.65 m; I shrank the halo twice and it still smears the frame briefly.\n- **The exploded finale is monochrome** by design (naked machinery), and it's the dimmest part of the run.",
+    "stop_reason": "end_turn",
+    "session_id": "502ca13f-2578-4d2b-9db1-e9129e1901b1",
+    "total_cost_usd": 45.21529900000001,
+    "usage": {
+      "input_tokens": 5978,
+      "cache_creation_input_tokens": 616071,
+      "cache_read_input_tokens": 61214410,
+      "output_tokens": 336647,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 616071,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 1258,
+          "cache_read_input_tokens": 631573,
+          "cache_creation_input_tokens": 1810,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 1810
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1244,
+        "outputTokens": 15,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001319,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-opus-4-8": {
+        "inputTokens": 5978,
+        "outputTokens": 336647,
+        "cacheReadInputTokens": 61214410,
+        "cacheCreationInputTokens": 616071,
+        "webSearchRequests": 0,
+        "costUSD": 45.21398000000001,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "ad77f074-50ad-40cc-a987-f9e9af72123c"
+  },
+  "normalized": {
+    "inputTokens": 61220388,
+    "outputTokens": 336647,
+    "cacheReadInputTokens": 61214410,
+    "cacheWriteInputTokens": 616071,
+    "vendorFields": {
+      "totalCostUsd": 45.21529900000001,
+      "durationMs": 4153983,
+      "durationApiMs": 3842270,
+      "numTurns": 160,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1244,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001319,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 5978,
+          "outputTokens": 336647,
+          "cacheReadInputTokens": 61214410,
+          "cacheCreationInputTokens": 616071,
+          "webSearchRequests": 0,
+          "costUSD": 45.21398000000001,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

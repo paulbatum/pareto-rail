@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "567d415376591aedbcfbb8794f318428346f9b56",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.197712297,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-xixwfev1c60s/gates/typecheck.log",
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.7133389479999996,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-xixwfev1c60s/gates/build.log",
+      "outputSha256": "acd15ce9d6a813caabce41f7bcdbb322dd8f0bd429cb321c0f2d12b0f7c3fc6a"
+    },
+    {
+      "id": "scope",
+      "command": "npm run check:scope -- skyhook-snxd a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.09294363999999997,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-xixwfev1c60s/gates/scope.log",
+      "outputSha256": "6d246e4986bfb16ba24e243fff26d530dba0654d91345e1b8ca8d01f36f0a33e"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level skyhook-snxd",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.978056928000001,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-xixwfev1c60s/gates/floor.log",
+      "outputSha256": "fa447ed2d525f91308f7531954ec9cedf521a9bbfe44989c8303a05376af2a30"
+    }
+  ]
+}

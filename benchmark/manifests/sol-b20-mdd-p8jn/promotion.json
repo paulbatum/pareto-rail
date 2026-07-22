@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "runId": "sol-b20-mdd-p8jn",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:20.215Z",
+      "data": {
+        "source": {
+          "runId": "sol-b20-mdd-p8jn",
+          "slotId": "p8jn",
+          "themeId": "mass-driver-detailed",
+          "levelId": "mass-driver-detailed-p8jn",
+          "title": "Mass Driver",
+          "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+          "evaluatedCommit": "5d571b87d88b6548c1b8610c6be7bed8c71f52b1",
+          "payloadCommit": "32e20bb67158b6f61907e40be6e66a73051c3a25",
+          "manifestSha256": "b94323811aa8acad0413b941d9579afb3d1e5036fe0c9294d7fafff2978fdfed",
+          "definitionSha256": "8b07b794dad1cdc97c0283d24e7d185c6cca7e47a26a4e8eb36f7b215937f207",
+          "evaluatedSha256": "2b71d6e343d63e3fc529b43753d7539193ae2d41b4e5a39959058251c295edfb",
+          "payloadSha256": "9f4b3c12ed494ab2f46642947a6ea3f9c86bbe06c8cb51c42f33a6a6f393a5cb",
+          "payloadDiffSha256": "dd8e4c93c5518d14a9a6abbdcfd453f7395b278ca3dd396336c1e5dd344b354c",
+          "sourcePath": "src/benchmark-levels/mass-driver-detailed-p8jn/",
+          "destinationPath": "src/benchmark-levels/mass-driver-detailed-p8jn/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/mass-driver-detailed-p8jn",
+              "promotedPath": "src/benchmark-levels/mass-driver-detailed-p8jn",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/mass-driver-detailed-p8jn",
+              "promotedPath": "public/level-content/mass-driver-detailed-p8jn",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "30a8cc117ef65d1ae711b383232e79b904a03edd"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:20.267Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/mass-driver-detailed-p8jn/",
+            "files": 12,
+            "reused": true
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/mass-driver-detailed-p8jn/",
+            "files": 3,
+            "reused": true
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:20.271Z",
+      "data": {
+        "images": [
+          {
+            "path": "hero.png",
+            "avifPath": "hero.avif",
+            "pngSha256": "fa2b4bbebae820d0e363f3e95e582b42572e7ec2663236df7de99fa3920ea80b",
+            "avifSha256": "3164e7d5ec90330b3090a3425254dd71d65169d0aeb1be162420b999d3268ae2"
+          },
+          {
+            "path": "overview.png",
+            "avifPath": "overview.avif",
+            "pngSha256": "95f845327b162179daf40add0092b78745a1a7f6ab5570d21863a02fc32027d0",
+            "avifSha256": "64d1f8bc04c8cca42a08d8ad79698ddcaf64a5d054075e1e13c655473e3f605d"
+          },
+          {
+            "path": "start.png",
+            "avifPath": "start.avif",
+            "pngSha256": "b3b1b615b32c0ff39817319da97d2c893e34356a89e7fd49e286ab431f010407",
+            "avifSha256": "4540cb0b3c61f27e1f413ea74fe38bea02cbfa0f97b92fa44d4e893e327c2f18"
+          }
+        ],
+        "descriptor": {
+          "path": "level.json",
+          "keys": [
+            "overview",
+            "start",
+            "hero"
+          ],
+          "sha256Before": "ef9a490372907daf22e5200d0bdbdd8ac912020a24e2566755d0641a74a4ac3b",
+          "sha256After": "03d333af68c82283096d4b81a31496877a9c67cdd2ab7ba2379979c89e584a24"
+        }
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:20.332Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-detailed-p8jn/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:20.345Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.3990759639999997,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "8893d3c01cd8523a59664639c54c58c56190f1c9b2a8c5e54b445cf533eba2dc",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 8.347578258999999,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-p8jn --base 30a8cc117ef65d1ae711b383232e79b904a03edd",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.053647488999995406,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-detailed-p8jn",
+            "exitCode": 0,
+            "stdoutSha256": "fae8fe5a22ff779335850acf3c904663509315727f8bcd115f76080380244264",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 17.345358646,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-20T22:08:20.383Z",
+      "data": {
+        "promotionCommit": "c67aba1b8fa39f7b4e3a15dd708e312b88517a02"
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-20T22:08:20.384Z",
+  "source": {
+    "runId": "sol-b20-mdd-p8jn",
+    "slotId": "p8jn",
+    "themeId": "mass-driver-detailed",
+    "levelId": "mass-driver-detailed-p8jn",
+    "title": "Mass Driver",
+    "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+    "evaluatedCommit": "5d571b87d88b6548c1b8610c6be7bed8c71f52b1",
+    "payloadCommit": "32e20bb67158b6f61907e40be6e66a73051c3a25",
+    "manifestSha256": "b94323811aa8acad0413b941d9579afb3d1e5036fe0c9294d7fafff2978fdfed",
+    "definitionSha256": "8b07b794dad1cdc97c0283d24e7d185c6cca7e47a26a4e8eb36f7b215937f207",
+    "evaluatedSha256": "2b71d6e343d63e3fc529b43753d7539193ae2d41b4e5a39959058251c295edfb",
+    "payloadSha256": "9f4b3c12ed494ab2f46642947a6ea3f9c86bbe06c8cb51c42f33a6a6f393a5cb",
+    "payloadDiffSha256": "dd8e4c93c5518d14a9a6abbdcfd453f7395b278ca3dd396336c1e5dd344b354c",
+    "sourcePath": "src/benchmark-levels/mass-driver-detailed-p8jn/",
+    "destinationPath": "src/benchmark-levels/mass-driver-detailed-p8jn/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/mass-driver-detailed-p8jn",
+        "promotedPath": "src/benchmark-levels/mass-driver-detailed-p8jn",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/mass-driver-detailed-p8jn",
+        "promotedPath": "public/level-content/mass-driver-detailed-p8jn",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "30a8cc117ef65d1ae711b383232e79b904a03edd"
+  },
+  "promotionCommit": "c67aba1b8fa39f7b4e3a15dd708e312b88517a02"
+}

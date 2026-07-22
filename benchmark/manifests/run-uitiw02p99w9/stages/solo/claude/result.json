@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "3ba29fb9-774e-40bc-b9bc-1729d4dfc42a",
+  "usageSha256": "992208c6e4ec7d1d4416ac069c04d988888402743f8a591a621631563efb8c61",
+  "eventLogSha256": "6a01dbf321d4b97693f4be7095c7d21725e4f5f67154e367364bce79d97c6b2a",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-uitiw02p99w9/harness-home/projects/-tmp-pareto-rail-run-uitiw02p99w9/3ba29fb9-774e-40bc-b9bc-1729d4dfc42a.jsonl",
+    "sha256": "411004dc835094ed7f9b6697c00da9ec9cbf1f94bc7ee368b36c6326537e6dd1"
+  }
+}

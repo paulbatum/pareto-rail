@@ -1,0 +1,114 @@
+{
+  "sessionId": "931e064c-c731-4120-9994-d7a0ba25e799",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Mass Driver is built and passes every gate.** The level lives entirely in `src/benchmark-levels/mass-driver-detailed-m3rp/` (~3,900 lines across 12 files), plus the regenerated `docs/level-gallery.md` — the only two paths in the working tree, and `check:benchmark-scope` confirms the footprint is valid.\n\n**What was built, per the theme:**\n\n- **Gameplay** (`timing.ts`, `gameplay.ts`): 128 BPM, 32 bars = exactly 60 s, sections at bars 0/4/12/20/28. A strictly-accelerating speed profile whose normalized integral is the rail easing, so the 112 accelerator rings — placed on the beat grid by construction — cross the camera one per beat, and the bar-28 downbeat lands a ~3× surge. Five enemy kinds: wall-sliding coils (firing ones telegraph with a rear-back and a hot eye before loosing arc bolts), corkscrewing threaders in counter-rotating helix pairs, two-stage capacitors, interceptable homing arcs, and six station-keeping interlock clamps on the hard deadline — any clamp standing at the shot deals a 99-point detonation. Authored waves follow the brief's cadence, with the deliberate breath before the klaxon and empty muzzle bars. START/REPLAY are CHARGE/RELOAD, hull is 3, perfect-six volleys pay 520, and S rank requires the gun to actually fire.\n- **Audio** (`audio.ts`, `audio-voices.ts`): E minor Em–Em–C–D, Em–F Phrygian boss bars, E-major Picardy bloom after the shot. The climbing hum rises E1→A1→E2 then accelerates to E3 and is cut dead on the downbeat of bar 28. A struck-coil tick sounds on every ring crossing (the audible half of the one non-negotiable). All player actions are transport-quantized and pitched from live harmony with per-section timbres and hidden kill lanes; each interlock kill plays a climbing confirmation one note longer than the last, and the sixth ducks the mix for a conclusive descent. Reject is a breaker-trip minor-second clunk; detonation collapses to sub rumble.\n- **Visuals** (`visuals/`): heat-ramp rings with downbeat lugs and per-crossing shockwaves, four beat-pulsing conductor rails, recycling barrel-wall ribs that stop at the muzzle, camera-riding speed streaks slammed by the shot surge, a size-capped charge glow, starfield/beacon muzzle field, facet-vocabulary enemies with a single tint pass (closeness, lock-white, denial-red, hit-flash), stencil-plate letters, the six-segment charge-gauge reticle, arc-lightning/spark/ring/glint/flash effect pools, three post overlays (flash/charge/detonation), and a metallic barrel-rattle camera with downbeat FOV kicks.\n\n**Verified headless:** typecheck, build, `check:benchmark-scope`, `check:floor` (5 kinds spawned, full event coverage, 0 occlusion warnings, 0 perf failures, audio config valid, gallery current), catalog validation, and domain tests all pass. Simulation: perfect play clears 69/69 for rank S; seeded imperfect (66/69) lands A as the brief calibrates; no-fire dies to the detonation at 52.5 s. The audio trace shows 112 coil ticks, klaxon at bar 20, the bar-27 snare roll, and the hum cut at 52.6 s. Snapshot review confirmed the blue→violet→white ramp, a legible bloom-zero CHARGE screen, interlocks readable against the capped charge glow, the whiteout, and a clean starfield coast (that pass caught and fixed one real bug — wall panels leaking past the muzzle). One remaining soft warning: 33.3% of kills land center-screen (threshold 25%), on par with the promoted same-theme entrant at 34.7% — inherent to threaders crossing the bore.\n\n**Needs human eyes** (WSL2 can't render WebGPU headless): whether ring crossings *feel* beat-locked, the hum/mix balance, bloom discipline through the charge bars, and whether the bar-28 shot — speed spike, whiteout, FOV punch, hum cut, E-major bloom at once — lands as the run's biggest moment.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 1392488,
+    "duration_api_ms": 1273335,
+    "ttft_ms": 2100,
+    "ttft_stream_ms": 1199,
+    "time_to_request_ms": 48,
+    "num_turns": 114,
+    "result": "**Mass Driver is built and passes every gate.** The level lives entirely in `src/benchmark-levels/mass-driver-detailed-m3rp/` (~3,900 lines across 12 files), plus the regenerated `docs/level-gallery.md` — the only two paths in the working tree, and `check:benchmark-scope` confirms the footprint is valid.\n\n**What was built, per the theme:**\n\n- **Gameplay** (`timing.ts`, `gameplay.ts`): 128 BPM, 32 bars = exactly 60 s, sections at bars 0/4/12/20/28. A strictly-accelerating speed profile whose normalized integral is the rail easing, so the 112 accelerator rings — placed on the beat grid by construction — cross the camera one per beat, and the bar-28 downbeat lands a ~3× surge. Five enemy kinds: wall-sliding coils (firing ones telegraph with a rear-back and a hot eye before loosing arc bolts), corkscrewing threaders in counter-rotating helix pairs, two-stage capacitors, interceptable homing arcs, and six station-keeping interlock clamps on the hard deadline — any clamp standing at the shot deals a 99-point detonation. Authored waves follow the brief's cadence, with the deliberate breath before the klaxon and empty muzzle bars. START/REPLAY are CHARGE/RELOAD, hull is 3, perfect-six volleys pay 520, and S rank requires the gun to actually fire.\n- **Audio** (`audio.ts`, `audio-voices.ts`): E minor Em–Em–C–D, Em–F Phrygian boss bars, E-major Picardy bloom after the shot. The climbing hum rises E1→A1→E2 then accelerates to E3 and is cut dead on the downbeat of bar 28. A struck-coil tick sounds on every ring crossing (the audible half of the one non-negotiable). All player actions are transport-quantized and pitched from live harmony with per-section timbres and hidden kill lanes; each interlock kill plays a climbing confirmation one note longer than the last, and the sixth ducks the mix for a conclusive descent. Reject is a breaker-trip minor-second clunk; detonation collapses to sub rumble.\n- **Visuals** (`visuals/`): heat-ramp rings with downbeat lugs and per-crossing shockwaves, four beat-pulsing conductor rails, recycling barrel-wall ribs that stop at the muzzle, camera-riding speed streaks slammed by the shot surge, a size-capped charge glow, starfield/beacon muzzle field, facet-vocabulary enemies with a single tint pass (closeness, lock-white, denial-red, hit-flash), stencil-plate letters, the six-segment charge-gauge reticle, arc-lightning/spark/ring/glint/flash effect pools, three post overlays (flash/charge/detonation), and a metallic barrel-rattle camera with downbeat FOV kicks.\n\n**Verified headless:** typecheck, build, `check:benchmark-scope`, `check:floor` (5 kinds spawned, full event coverage, 0 occlusion warnings, 0 perf failures, audio config valid, gallery current), catalog validation, and domain tests all pass. Simulation: perfect play clears 69/69 for rank S; seeded imperfect (66/69) lands A as the brief calibrates; no-fire dies to the detonation at 52.5 s. The audio trace shows 112 coil ticks, klaxon at bar 20, the bar-27 snare roll, and the hum cut at 52.6 s. Snapshot review confirmed the blue→violet→white ramp, a legible bloom-zero CHARGE screen, interlocks readable against the capped charge glow, the whiteout, and a clean starfield coast (that pass caught and fixed one real bug — wall panels leaking past the muzzle). One remaining soft warning: 33.3% of kills land center-screen (threshold 25%), on par with the promoted same-theme entrant at 34.7% — inherent to threaders crossing the bore.\n\n**Needs human eyes** (WSL2 can't render WebGPU headless): whether ring crossings *feel* beat-locked, the hum/mix balance, bloom discipline through the charge bars, and whether the bar-28 shot — speed spike, whiteout, FOV punch, hum cut, E-major bloom at once — lands as the run's biggest moment.",
+    "stop_reason": "end_turn",
+    "session_id": "931e064c-c731-4120-9994-d7a0ba25e799",
+    "total_cost_usd": 30.549318999999997,
+    "usage": {
+      "input_tokens": 139,
+      "cache_creation_input_tokens": 355689,
+      "cache_read_input_tokens": 17486601,
+      "output_tokens": 118842,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 355689,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1543,
+          "cache_read_input_tokens": 370792,
+          "cache_creation_input_tokens": 227,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 227
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 5383,
+        "outputTokens": 13,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.005448,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-fable-5": {
+        "inputTokens": 139,
+        "outputTokens": 118842,
+        "cacheReadInputTokens": 17486601,
+        "cacheCreationInputTokens": 355689,
+        "webSearchRequests": 0,
+        "costUSD": 30.543871,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "33c2bc8b-7a84-4a85-a905-d6200acf4479"
+  },
+  "normalized": {
+    "inputTokens": 17486740,
+    "outputTokens": 118842,
+    "cacheReadInputTokens": 17486601,
+    "cacheWriteInputTokens": 355689,
+    "vendorFields": {
+      "totalCostUsd": 30.549318999999997,
+      "durationMs": 1392488,
+      "durationApiMs": 1273335,
+      "numTurns": 114,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 5383,
+          "outputTokens": 13,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.005448,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-fable-5": {
+          "inputTokens": 139,
+          "outputTokens": 118842,
+          "cacheReadInputTokens": 17486601,
+          "cacheCreationInputTokens": 355689,
+          "webSearchRequests": 0,
+          "costUSD": 30.543871,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

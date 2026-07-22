@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "6972ad1b2a49900d50a04395d58b92df34cccf06dfe3c4ab1f849e32062a4169"
+  },
+  "theme": {
+    "path": "benchmark/themes/purse-pursuit.md",
+    "sha256": "2b54a5de880d7ac7c60a8643673e45b44e62417495583248c575302ee43ac3d9"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-sol-high.md",
+    "sha256": "a7c501267f4e7fe0d85ba06f2eb3fd60637d0790c47241740a2d5d8811584bb4"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-purse-tahr/rendered-assignment.md",
+    "sha256": "76144209436d0df528ecd030a1e8201b656b60950001eab2f62c4638e31dedd3"
+  },
+  "baseRendering": {
+    "sha256": "76144209436d0df528ecd030a1e8201b656b60950001eab2f62c4638e31dedd3"
+  }
+}

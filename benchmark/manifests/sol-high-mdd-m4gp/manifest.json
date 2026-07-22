@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "sol-high-mdd-m4gp",
+  "slotId": "m4gp",
+  "configuration": {
+    "id": "codex-sol-high"
+  },
+  "theme": {
+    "id": "mass-driver-detailed",
+    "path": "benchmark/themes/mass-driver-detailed.md",
+    "sha256": "03464c7183d4f591c5e6cb2b797adb01ab3f3eca1e38543b9c6e4e723d87a0f5"
+  },
+  "baseline": {
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-sol-high.md",
+    "sha256": "a7c501267f4e7fe0d85ba06f2eb3fd60637d0790c47241740a2d5d8811584bb4"
+  },
+  "controller": {
+    "commit": "7598ff6575b06c0e6a7fa17279fc73ad638b3b44"
+  },
+  "timing": {
+    "startedAt": "2026-07-18T12:41:56.181Z",
+    "finishedAt": "2026-07-18T12:47:41.367Z",
+    "wallTimeSeconds": 345.186
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "201ec77e5bcf02a56a5b06decafaf017e1155c15eba460b3abe48725779b0e05",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.144.1"
+      },
+      "sessionId": "019f753f-9c17-7312-9c6c-b804b8c272a2",
+      "rolloutArtifactSha256": "1d30b48abc10ae02196c5786034474a3026e6baa7cad131e312fefff753102a9",
+      "outputArtifactSha256": "32ee46f81e50f26d0839f412a6deabd1be65584da86cc4880075307a058370ff",
+      "startedAt": "2026-07-18T12:42:09.063Z",
+      "finishedAt": "2026-07-18T12:47:29.344Z",
+      "wallTimeSeconds": 300.860135581,
+      "result": "completed",
+      "usage": {
+        "inputTokens": 161071,
+        "outputTokens": 8676,
+        "cacheReadInputTokens": 1439488,
+        "reasoningTokens": 3131
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 1.785379,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 1.785379,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 161071,
+        "outputTokens": 8676,
+        "cacheReadTokens": 1439488,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 3131
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7578841299999999,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.006998162,
+      "outputSha256": "a8c6151d411a97e9bc930401b8b08939d55d8f5319faa4d7680b99bc88fe01f8"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m4gp --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.036897955999999794,
+      "outputSha256": "20aa044c95ac3d702fd37180f09d755a4cf68496b068f6d8bac5c6acba73ff38"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-detailed-m4gp",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.084441455,
+      "outputSha256": "5f374e99ced0e8b8bc28f9778b94561e6d21e20ca483ae605087a43bdaab1539"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "mass-driver-detailed-m4gp",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "bed74c76e4771435d987936efeb19949e8d8387d",
+      "branch": "benchmark-run-sol-high-mdd-m4gp"
+    },
+    "payload": {
+      "commit": "eff679ee28f2cb39c5e3eafed5191ab68e5355a3",
+      "branch": "benchmark-payload-sol-high-mdd-m4gp"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

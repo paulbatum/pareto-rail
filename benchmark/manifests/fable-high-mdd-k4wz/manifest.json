@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "fable-high-mdd-k4wz",
+  "slotId": "k4wz",
+  "configuration": {
+    "id": "claude-fable-5-high"
+  },
+  "theme": {
+    "id": "mass-driver-detailed",
+    "path": "benchmark/themes/mass-driver-detailed.md",
+    "sha256": "03464c7183d4f591c5e6cb2b797adb01ab3f3eca1e38543b9c6e4e723d87a0f5"
+  },
+  "baseline": {
+    "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "e036b4253f95b6c7b6f8077f05098b4f2df012e6"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-fable-5-high.md",
+    "sha256": "114c3d7ef224546e8a3ce6d06398db5724e7f19c403943d246646e5adc5d3770"
+  },
+  "controller": {
+    "commit": "a995df63cb0586e843fd1159382b649d676e4879"
+  },
+  "timing": {
+    "startedAt": "2026-07-20T07:05:47.489Z",
+    "finishedAt": "2026-07-20T07:57:58.482Z",
+    "wallTimeSeconds": 3130.993
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5"
+      },
+      "promptSha256": "fcb8ec45d1d32a2ddee5151f7d47c307ac68748f12eee9ea169c9fa4f36cc274",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.215 (Claude Code)"
+      },
+      "sessionId": "d0aa724a-b67b-4c00-a330-aa0bb06ff16e",
+      "rolloutArtifactSha256": "505165d00e11c5c758c364fb3077f6fb82a8df945a689ba0472aff9456e3694e",
+      "outputArtifactSha256": "b0e392213e8ecbb6d2be45fc5e3b76051dacba376180a36b9d64810fdcc03501",
+      "startedAt": "2026-07-20T07:05:57.713Z",
+      "finishedAt": "2026-07-20T07:57:44.963Z",
+      "wallTimeSeconds": 2961.128810877,
+      "result": "completed",
+      "usage": {
+        "inputTokens": 233,
+        "outputTokens": 212527,
+        "cacheReadInputTokens": 38132269,
+        "cacheWriteInputTokens": 465231
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 58.065569000000025,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 58.065569000000025,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5",
+        "usageSource": "agreed",
+        "costUsd": 58.065569000000025,
+        "inputTokens": 233,
+        "outputTokens": 212527,
+        "cacheReadTokens": 38132269,
+        "cacheWriteTokens": 465231
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.377392135,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.954792546,
+      "outputSha256": "7f865008ad0a9a5f0a845c573e325ddd05998ffb92ce7cf44f6271722290b47b"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-k4wz --base e036b4253f95b6c7b6f8077f05098b4f2df012e6",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.04957993700000043,
+      "outputSha256": "20aa044c95ac3d702fd37180f09d755a4cf68496b068f6d8bac5c6acba73ff38"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-detailed-k4wz",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.952461838000001,
+      "outputSha256": "18887dec607ea6aafb4dc469c443a61e4a03cf662f7ef4e6be938dd47b8394a2"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "mass-driver-detailed-k4wz",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "e00dd630289228b2d26f6bc60859e3d75e9faaa7",
+      "branch": "benchmark-run-fable-high-mdd-k4wz"
+    },
+    "payload": {
+      "commit": "6159e9acbd5b895e01e367524694b2d4a41c2c02",
+      "branch": "benchmark-payload-fable-high-mdd-k4wz"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

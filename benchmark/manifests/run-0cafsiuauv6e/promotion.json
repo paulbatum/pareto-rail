@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-0cafsiuauv6e",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.337Z",
+      "data": {
+        "source": {
+          "runId": "run-0cafsiuauv6e",
+          "slotId": "vyxj",
+          "themeId": "mass-driver",
+          "levelId": "mass-driver-vyxj",
+          "title": "Mass Driver",
+          "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+          "evaluatedCommit": "0e07930b4001348f0100a21fd6319a662f8b047e",
+          "payloadCommit": "cca090978107eb5341779f1b856ca40f65a034eb",
+          "manifestSha256": "3a4f735f9f640ee356b4a142a879820d03a346ddf0172f7e51ebede5b0cd2fcd",
+          "definitionSha256": "39f084775d1f6d34012d321838287f0245e8aca9d7fbbbdb184f371adc426b36",
+          "evaluatedSha256": "f4eb8ac21e62ef27ca5e7f90149761c16d70e68cbd10ea9e12e7e623c8f1d336",
+          "payloadSha256": "b0d7d4dc84d4bf9089eb445b5fe7fa2eaa5fa385084b0cfddc63b87f4d1b261e",
+          "payloadDiffSha256": "5d51e39437e6a7653d29d987386da1762764dbb35faaf71cbae5a7d48a25c1de",
+          "sourcePath": "src/levels/mass-driver-vyxj/",
+          "destinationPath": "src/benchmark-levels/mass-driver-vyxj/",
+          "legacySourcePresent": true,
+          "derivative": null,
+          "descriptor": {
+            "source": "controller-owned assignment data",
+            "id": "mass-driver-vyxj",
+            "title": "Mass Driver",
+            "sha256": "60d31faedb08c4195b01d2ff813e4314ce890ecf8f2f2ca6ed22a51197a03493"
+          },
+          "baseCommit": "901f4111f1b1589f9e2876344408da15212f47b3"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.403Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-vyxj/",
+        "files": 13,
+        "reused": true
+      }
+    },
+    "descriptor": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.406Z",
+      "data": {
+        "path": "src/benchmark-levels/mass-driver-vyxj/level.json",
+        "sha256": "60d31faedb08c4195b01d2ff813e4314ce890ecf8f2f2ca6ed22a51197a03493",
+        "reused": true
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.477Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-vyxj/",
+        "verifiedFiles": 14
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.483Z",
+      "data": {
+        "gallerySha256": "0d1bf0f59b37101c8e6fdfd191149bf312794b7db1afedeb69b60b3a55901df5",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 5.619812796,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "7b002b7db5e36910c7b98607b856468555ddd358648934fb0ac88edf2696e277",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.499444152,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "node scripts/check-benchmark-scope.mjs --level mass-driver-vyxj",
+            "exitCode": 0,
+            "stdoutSha256": "0d69f5ac267112376fa69c1601c5ed153575df1cc57b576dabf9631bf153742a",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04853003700000045,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-vyxj",
+            "exitCode": 0,
+            "stdoutSha256": "91a7f98ae6d17b631522e6f1dee1c7365988dcf749d8e20a2beb879508ba7e8d",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 13.214216852,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-12T06:29:41.518Z",
+      "data": {
+        "promotionCommit": "47ff444b50eaf06067024a43cb1a9c1272240e8a"
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-12T06:29:41.520Z",
+  "migration": true,
+  "migrationLevelIds": [
+    "hull-run-cvs3",
+    "hull-run-ns5n",
+    "mass-driver-7rkv",
+    "mass-driver-bczy",
+    "mass-driver-vyxj",
+    "mass-driver-wo4m",
+    "skyhook-81u5"
+  ],
+  "source": {
+    "runId": "run-0cafsiuauv6e",
+    "slotId": "vyxj",
+    "themeId": "mass-driver",
+    "levelId": "mass-driver-vyxj",
+    "title": "Mass Driver",
+    "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0",
+    "evaluatedCommit": "0e07930b4001348f0100a21fd6319a662f8b047e",
+    "payloadCommit": "cca090978107eb5341779f1b856ca40f65a034eb",
+    "manifestSha256": "3a4f735f9f640ee356b4a142a879820d03a346ddf0172f7e51ebede5b0cd2fcd",
+    "definitionSha256": "39f084775d1f6d34012d321838287f0245e8aca9d7fbbbdb184f371adc426b36",
+    "evaluatedSha256": "f4eb8ac21e62ef27ca5e7f90149761c16d70e68cbd10ea9e12e7e623c8f1d336",
+    "payloadSha256": "b0d7d4dc84d4bf9089eb445b5fe7fa2eaa5fa385084b0cfddc63b87f4d1b261e",
+    "payloadDiffSha256": "5d51e39437e6a7653d29d987386da1762764dbb35faaf71cbae5a7d48a25c1de",
+    "sourcePath": "src/levels/mass-driver-vyxj/",
+    "destinationPath": "src/benchmark-levels/mass-driver-vyxj/",
+    "legacySourcePresent": true,
+    "derivative": null,
+    "descriptor": {
+      "source": "controller-owned assignment data",
+      "id": "mass-driver-vyxj",
+      "title": "Mass Driver",
+      "sha256": "60d31faedb08c4195b01d2ff813e4314ce890ecf8f2f2ca6ed22a51197a03493"
+    },
+    "baseCommit": "901f4111f1b1589f9e2876344408da15212f47b3"
+  },
+  "promotionCommit": "47ff444b50eaf06067024a43cb1a9c1272240e8a"
+}

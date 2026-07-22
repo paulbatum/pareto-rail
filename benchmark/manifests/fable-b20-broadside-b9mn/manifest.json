@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "fable-b20-broadside-b9mn",
+  "slotId": "b9mn",
+  "configuration": {
+    "id": "claude-fable-5-high-b20"
+  },
+  "theme": {
+    "id": "broadside",
+    "path": "benchmark/themes/broadside.md",
+    "sha256": "26b45de49b732d66b6dd68c6d97c053519f755e0e7543cf97a368a31794e8376"
+  },
+  "baseline": {
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-fable-5-high-b20.md",
+    "sha256": "a464fa220508efc2eb9bc7c29984aa6f588475930d37dec879797271c2f31de7"
+  },
+  "controller": {
+    "commit": "7598ff6575b06c0e6a7fa17279fc73ad638b3b44"
+  },
+  "timing": {
+    "startedAt": "2026-07-18T12:02:44.805Z",
+    "finishedAt": "2026-07-18T12:40:54.161Z",
+    "wallTimeSeconds": 2289.356
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5"
+      },
+      "promptSha256": "114b415fc969c93c5da32886fa592a8ad7b152a1d0b282d4fbe18de64166a3d6",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.214 (Claude Code)"
+      },
+      "sessionId": "053e36c4-2273-4a6a-8238-191e2cd45cf3",
+      "rolloutArtifactSha256": "7e35aae11fb044f15749b43749f26e77d9c13396502167f1e72b68854c7f2dfb",
+      "outputArtifactSha256": "6e8c96a9d99264671a39c97d822f5052fb052291842ed4761d0e79e6cf9447f8",
+      "startedAt": "2026-07-18T12:02:55.309Z",
+      "finishedAt": "2026-07-18T12:40:40.698Z",
+      "wallTimeSeconds": 2129.0621201510003,
+      "result": "completed",
+      "budget": {
+        "budgetUsd": 20,
+        "protocol": {
+          "noticeStepPct": 25,
+          "minimumSubmitFraction": 0.75,
+          "maxResumeRounds": 20,
+          "pollIntervalSeconds": 30,
+          "minimumResumeRemainingSeconds": 600
+        },
+        "noticeHistory": [
+          {
+            "pct": 25,
+            "spentUsd": 5.190467,
+            "at": "2026-07-18T12:05:03.130Z"
+          },
+          {
+            "pct": 50,
+            "spentUsd": 10.655808000000002,
+            "at": "2026-07-18T12:15:35.207Z"
+          },
+          {
+            "pct": 75,
+            "spentUsd": 15.425925000000003,
+            "at": "2026-07-18T12:23:14.303Z"
+          },
+          {
+            "pct": 100,
+            "spentUsd": 20.123271000000003,
+            "at": "2026-07-18T12:28:47.204Z"
+          },
+          {
+            "pct": 125,
+            "spentUsd": 26.211865,
+            "at": "2026-07-18T12:34:51.249Z"
+          },
+          {
+            "pct": 150,
+            "spentUsd": 31.168937999999997,
+            "at": "2026-07-18T12:40:11.896Z"
+          }
+        ],
+        "resumes": [],
+        "finalSpendUsd": 32.097500999999994,
+        "finalFraction": 1.6048750499999997
+      },
+      "usage": {
+        "inputTokens": 121,
+        "outputTokens": 179966,
+        "cacheReadInputTokens": 15198051,
+        "cacheWriteInputTokens": 394997
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 32.097500999999994,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 32.097500999999994,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5",
+        "usageSource": "agreed",
+        "costUsd": 32.097500999999994,
+        "inputTokens": 121,
+        "outputTokens": 179966,
+        "cacheReadTokens": 15198051,
+        "cacheWriteTokens": 394997
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.764843491,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.0158023970000003,
+      "outputSha256": "9262db43ffef75429e9ebb9b57a28dece4f0d76c2a2297860bd3e36c4b521934"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level broadside-b9mn --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03811627000000044,
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level broadside-b9mn",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.339039525,
+      "outputSha256": "2b263716cb2a23a101b4e32a91dc87debc2279b32fd947a94b2210d21e0a3c38"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "broadside-b9mn",
+    "title": "Broadside",
+    "evaluated": {
+      "commit": "a94d1dd2f0c9e300d3bf1d7e20313218e4153de1",
+      "branch": "benchmark-run-fable-b20-broadside-b9mn"
+    },
+    "payload": {
+      "commit": "dfe1fbab523dfee487a79dad56295930d79b7a2e",
+      "branch": "benchmark-payload-fable-b20-broadside-b9mn"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

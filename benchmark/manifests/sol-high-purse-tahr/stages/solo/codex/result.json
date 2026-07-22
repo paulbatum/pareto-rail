@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f8afb-e7c2-7be3-ae23-5d8177099dc2",
+  "usageSha256": "efa1faecd1d563ede5664c6b32dc0b680c82fbdb1918b5db2d0f72500c8e6894",
+  "eventLogSha256": "82548ddea01be07fc634995690fa63a7e24743e6a57fe6a191e66b620056864c",
+  "stderrSha256": "f4c1c84affe9306e87d07a8a6a3cb2fc32df7b5ef25045097624f547d456b6e0",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/sol-high-purse-tahr/harness-home/sessions/2026/07/22/rollout-2026-07-22T10-59-52-019f8afb-e7c2-7be3-ae23-5d8177099dc2.jsonl",
+    "sha256": "e5011f9bef38375c23dcbce0cf37f07f6c6de7127542fe79e5cb0e803139a93a"
+  }
+}

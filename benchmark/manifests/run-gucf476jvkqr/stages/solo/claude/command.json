@@ -1,0 +1,31 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-fable-5",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--settings",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-gucf476jvkqr/stages/solo/claude/budget/hook-settings.json",
+    "--session-id",
+    "2bedfc74-ced6-4862-b56e-02af5ac6803f"
+  ],
+  "cliVersion": "2.1.207 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/raild-run-gucf476jvkqr",
+  "startedAt": "2026-07-13T19:33:02.626Z",
+  "finishedAt": "2026-07-13T20:00:45.512Z",
+  "wallTimeSeconds": 1496.178909708,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

@@ -1,0 +1,23 @@
+{
+  "runId": "sol-b20-strandline-s8dw",
+  "slotId": "s8dw",
+  "levelId": "strandline-s8dw",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "codex-sol-high-b20",
+  "recipePath": "benchmark/recipes/codex-sol-high-b20.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200,
+    "budget": {
+      "usd": 20
+    }
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Strandline"
+}

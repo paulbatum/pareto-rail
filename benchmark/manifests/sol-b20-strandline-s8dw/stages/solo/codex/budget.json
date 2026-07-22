@@ -1,0 +1,30 @@
+{
+  "budgetUsd": 20,
+  "protocol": {
+    "noticeStepPct": 25,
+    "minimumSubmitFraction": 0.75,
+    "maxResumeRounds": 20,
+    "pollIntervalSeconds": 30,
+    "minimumResumeRemainingSeconds": 600
+  },
+  "noticeHistory": [
+    {
+      "pct": 25,
+      "spentUsd": 5.0601009999999995,
+      "at": "2026-07-18T10:24:54.547Z"
+    },
+    {
+      "pct": 50,
+      "spentUsd": 10.00875,
+      "at": "2026-07-18T10:40:16.757Z"
+    },
+    {
+      "pct": 75,
+      "spentUsd": 15.407392999999999,
+      "at": "2026-07-18T10:54:06.549Z"
+    }
+  ],
+  "resumes": [],
+  "finalSpendUsd": 16.500968,
+  "finalFraction": 0.8250484
+}

@@ -1,0 +1,31 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-opus-4-8",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--settings",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-770j1pokdphe/stages/solo/claude/budget/hook-settings.json",
+    "--session-id",
+    "7a50c91f-4b24-4c7a-8f0a-e5a5805ceacf"
+  ],
+  "cliVersion": "2.1.216 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-770j1pokdphe",
+  "startedAt": "2026-07-21T11:21:02.258Z",
+  "finishedAt": "2026-07-21T12:12:11.433Z",
+  "wallTimeSeconds": 2862.7918190719997,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "runId": "sol-high-mdd-m4gp",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:39.681Z",
+      "data": {
+        "source": {
+          "runId": "sol-high-mdd-m4gp",
+          "slotId": "m4gp",
+          "themeId": "mass-driver-detailed",
+          "levelId": "mass-driver-detailed-m4gp",
+          "title": "Mass Driver",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "bed74c76e4771435d987936efeb19949e8d8387d",
+          "payloadCommit": "eff679ee28f2cb39c5e3eafed5191ab68e5355a3",
+          "manifestSha256": "4c2c784175636d952a22e78a25e7ccdf75989e17e9860394d011e62a8a0a898b",
+          "definitionSha256": "704d7ebc64ac8f513bfb9d9791455b5febf602794480127aee008dee6a68bf8c",
+          "evaluatedSha256": "340f9b486101caf5b39444a6ff5bfe099f8b39fc8d0699d8652a904bdb7f0dde",
+          "payloadSha256": "60f4b74d382eaaae23cb71360b157840ba1e508f9cfbe58a1c7230deaaf6de42",
+          "payloadDiffSha256": "137472a60f8bfd72ef4d2e273be761f4b4571235a40437c4d33f06a8a64cf850",
+          "sourcePath": "src/benchmark-levels/mass-driver-detailed-m4gp/",
+          "destinationPath": "src/benchmark-levels/mass-driver-detailed-m4gp/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/mass-driver-detailed-m4gp",
+              "promotedPath": "src/benchmark-levels/mass-driver-detailed-m4gp",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/mass-driver-detailed-m4gp",
+              "promotedPath": "public/level-content/mass-driver-detailed-m4gp",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "0691a45b1a72f97d9e2d02d34ef2fac1fe145c1c"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:39.863Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/mass-driver-detailed-m4gp/",
+            "files": 14,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/mass-driver-detailed-m4gp/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:44:39.968Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-detailed-m4gp/",
+        "verifiedFiles": 17
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:45:07.694Z",
+      "data": {
+        "gallerySha256": "d4b1a362a3f284db2a917ce22efb7104a08ccdb5cc99975dfdd6d3e6f4665599",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.451505275,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "9bd15a89644008ecec7cc855c72c7e199f33a88d0116b2708b2d804c934113dc",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 8.611832708,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-detailed-m4gp --base 0691a45b1a72f97d9e2d02d34ef2fac1fe145c1c",
+            "exitCode": 0,
+            "stdoutSha256": "20aa044c95ac3d702fd37180f09d755a4cf68496b068f6d8bac5c6acba73ff38",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04262763099999938,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-detailed-m4gp",
+            "exitCode": 0,
+            "stdoutSha256": "5f374e99ced0e8b8bc28f9778b94561e6d21e20ca483ae605087a43bdaab1539",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 15.300306961,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:45:07.772Z",
+      "data": {
+        "promotionCommit": "4c3e49360065e9e9be3191b7b2372d91ba737298",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:45:07.774Z",
+  "source": {
+    "runId": "sol-high-mdd-m4gp",
+    "slotId": "m4gp",
+    "themeId": "mass-driver-detailed",
+    "levelId": "mass-driver-detailed-m4gp",
+    "title": "Mass Driver",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "bed74c76e4771435d987936efeb19949e8d8387d",
+    "payloadCommit": "eff679ee28f2cb39c5e3eafed5191ab68e5355a3",
+    "manifestSha256": "4c2c784175636d952a22e78a25e7ccdf75989e17e9860394d011e62a8a0a898b",
+    "definitionSha256": "704d7ebc64ac8f513bfb9d9791455b5febf602794480127aee008dee6a68bf8c",
+    "evaluatedSha256": "340f9b486101caf5b39444a6ff5bfe099f8b39fc8d0699d8652a904bdb7f0dde",
+    "payloadSha256": "60f4b74d382eaaae23cb71360b157840ba1e508f9cfbe58a1c7230deaaf6de42",
+    "payloadDiffSha256": "137472a60f8bfd72ef4d2e273be761f4b4571235a40437c4d33f06a8a64cf850",
+    "sourcePath": "src/benchmark-levels/mass-driver-detailed-m4gp/",
+    "destinationPath": "src/benchmark-levels/mass-driver-detailed-m4gp/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/mass-driver-detailed-m4gp",
+        "promotedPath": "src/benchmark-levels/mass-driver-detailed-m4gp",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/mass-driver-detailed-m4gp",
+        "promotedPath": "public/level-content/mass-driver-detailed-m4gp",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "0691a45b1a72f97d9e2d02d34ef2fac1fe145c1c"
+  },
+  "promotionCommit": "4c3e49360065e9e9be3191b7b2372d91ba737298"
+}

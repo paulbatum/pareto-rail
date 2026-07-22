@@ -1,0 +1,25 @@
+
+> raild@0.0.0 check:floor
+> node scripts/check-floor.mjs --level mass-driver-bczy
+
+Mass Driver floor check
+duration 60.0s; spawned kinds 3: coilguard, interlock, skimmer
+event coverage missing: playerhit
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=1
+    maxGridSeconds=0.62
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: 0.105 NDC (engine default 0.085)
+  identity hooks declared: scoreForKill, rankForRun, easeRunProgress, updateCameraEffects, detailsForRun
+  identity hooks [default]: scoreForHit, scoreForVolley, validateRelease, updateAttractCamera, playerHealth, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.

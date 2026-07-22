@@ -1,0 +1,114 @@
+{
+  "sessionId": "9e6f9578-1034-420c-8757-fb709675502c",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Strandline is complete and committed** (`b0151a2` + `cb695f7`), with every required gate passing on the final tree: `typecheck`, `build`, `check:benchmark-scope`, and `check:floor` (simulation, occlusion, perf, audio config, spawn spread — zero failures, zero warnings).\n\n## What was built\n\nA 60-second run (96 BPM, 24 bars = exactly 60 s) in `src/benchmark-levels/strandline-s2bq/`, freeing a gigantic jellyfish from its infestation:\n\n- **Arc**: Drift (bars 0–4) → Bloom (4–8) → **bell reveal** (8–10, rail swings wide, callout \"THE BELL\", music swells) → Deep strands (10–15) → **Crown boss** (15–22) → Serene pull-back coda (22–24, harmony turns over to open D major).\n- **Enemies (7 kinds)**: leeches that clamp strands then swim across the view, jittery darting mites, station-keeping spitters lobbing slow interceptable venom bolts, two-hit armored cysts that visibly crack, larval broods, the Matriarch, plus the bolts. 54 counted targets, 3-point hull.\n- **Boss**: the Matriarch grips the crown behind six violet webbing curtains, one per brood; each brood kill starves its curtain (and adds a music layer). All six dead → she's bared for a 3+3 staged kill with flinch recoveries; her death triggers a duck / sub-drop / rising-major-peal finale and the camera pulls back to frame the whole animal.\n- **Audio**: full Crystal-style musical action layer — transport-quantized locks/fire, per-section hidden kill-melody lanes from the live chord, escalating boss gong, brood webbing-fall glissandi, watery reject/hull sounds. Audio trace confirms the arrangement builds section by section with the swell at bar 8 and the undertow drone at bar 15.\n- **Visuals**: sunlit teal-to-deep-blue water with caustic dome, god rays, marine snow, a pulsing strand forest whose bioluminescence brightens as you cleanse it, the breathing bell with trailing ribbons, violet-only parasite palette, plankton-colony letter glyphs, gold diatom reticle, and underwater effects (drifting sparks, ink clouds, sinking husks).\n\nSimulation: perfect policy clears 54/54 including the boss (rank S); the snapshot sheet confirms the strand forest, the parasites' sour violet, the webbed boss, and the bell arcing over the crown all read on screen.\n\n## What needs human eyes\n\nWSL2 can't render WebGPU, so the real frame and mix are unverified. A playtester should check, in order: (1) the bar-8 bell reveal — the bell sits high in frame; judge whether it \"fills the view\" enough, (2) the serene pull-back — the headless snapshot harness appears to script its own camera, so the coda's turn-toward-the-bell slerp needs confirming in a real run, (3) webbing curtains visibly dying back per brood kill, (4) bloom-at-zero legibility of violet targets against the strand glow, and (5) the crown-section mix — whether the brood-kill brightness layers land audibly.",
+  "eventType": "result",
+  "raw": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 1690651,
+    "duration_api_ms": 1596901,
+    "ttft_ms": 2198,
+    "ttft_stream_ms": 893,
+    "time_to_request_ms": 48,
+    "num_turns": 111,
+    "result": "**Strandline is complete and committed** (`b0151a2` + `cb695f7`), with every required gate passing on the final tree: `typecheck`, `build`, `check:benchmark-scope`, and `check:floor` (simulation, occlusion, perf, audio config, spawn spread — zero failures, zero warnings).\n\n## What was built\n\nA 60-second run (96 BPM, 24 bars = exactly 60 s) in `src/benchmark-levels/strandline-s2bq/`, freeing a gigantic jellyfish from its infestation:\n\n- **Arc**: Drift (bars 0–4) → Bloom (4–8) → **bell reveal** (8–10, rail swings wide, callout \"THE BELL\", music swells) → Deep strands (10–15) → **Crown boss** (15–22) → Serene pull-back coda (22–24, harmony turns over to open D major).\n- **Enemies (7 kinds)**: leeches that clamp strands then swim across the view, jittery darting mites, station-keeping spitters lobbing slow interceptable venom bolts, two-hit armored cysts that visibly crack, larval broods, the Matriarch, plus the bolts. 54 counted targets, 3-point hull.\n- **Boss**: the Matriarch grips the crown behind six violet webbing curtains, one per brood; each brood kill starves its curtain (and adds a music layer). All six dead → she's bared for a 3+3 staged kill with flinch recoveries; her death triggers a duck / sub-drop / rising-major-peal finale and the camera pulls back to frame the whole animal.\n- **Audio**: full Crystal-style musical action layer — transport-quantized locks/fire, per-section hidden kill-melody lanes from the live chord, escalating boss gong, brood webbing-fall glissandi, watery reject/hull sounds. Audio trace confirms the arrangement builds section by section with the swell at bar 8 and the undertow drone at bar 15.\n- **Visuals**: sunlit teal-to-deep-blue water with caustic dome, god rays, marine snow, a pulsing strand forest whose bioluminescence brightens as you cleanse it, the breathing bell with trailing ribbons, violet-only parasite palette, plankton-colony letter glyphs, gold diatom reticle, and underwater effects (drifting sparks, ink clouds, sinking husks).\n\nSimulation: perfect policy clears 54/54 including the boss (rank S); the snapshot sheet confirms the strand forest, the parasites' sour violet, the webbed boss, and the bell arcing over the crown all read on screen.\n\n## What needs human eyes\n\nWSL2 can't render WebGPU, so the real frame and mix are unverified. A playtester should check, in order: (1) the bar-8 bell reveal — the bell sits high in frame; judge whether it \"fills the view\" enough, (2) the serene pull-back — the headless snapshot harness appears to script its own camera, so the coda's turn-toward-the-bell slerp needs confirming in a real run, (3) webbing curtains visibly dying back per brood kill, (4) bloom-at-zero legibility of violet targets against the strand glow, and (5) the crown-section mix — whether the brood-kill brightness layers land audibly.",
+    "stop_reason": "end_turn",
+    "session_id": "9e6f9578-1034-420c-8757-fb709675502c",
+    "total_cost_usd": 29.407176999999997,
+    "usage": {
+      "input_tokens": 133,
+      "cache_creation_input_tokens": 323878,
+      "cache_read_input_tokens": 15959195,
+      "output_tokens": 139355,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 323878,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1100,
+          "cache_read_input_tokens": 348791,
+          "cache_creation_input_tokens": 336,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 336
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1267,
+        "outputTokens": 15,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.0013419999999999999,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-fable-5": {
+        "inputTokens": 133,
+        "outputTokens": 139355,
+        "cacheReadInputTokens": 15959195,
+        "cacheCreationInputTokens": 323878,
+        "webSearchRequests": 0,
+        "costUSD": 29.405835000000003,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "cf8116b3-1661-4fef-821c-be317a904555"
+  },
+  "normalized": {
+    "inputTokens": 15959328,
+    "outputTokens": 139355,
+    "cacheReadInputTokens": 15959195,
+    "cacheWriteInputTokens": 323878,
+    "vendorFields": {
+      "totalCostUsd": 29.407176999999997,
+      "durationMs": 1690651,
+      "durationApiMs": 1596901,
+      "numTurns": 111,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1267,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.0013419999999999999,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        },
+        "claude-fable-5": {
+          "inputTokens": 133,
+          "outputTokens": 139355,
+          "cacheReadInputTokens": 15959195,
+          "cacheCreationInputTokens": 323878,
+          "webSearchRequests": 0,
+          "costUSD": 29.405835000000003,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000
+        }
+      }
+    }
+  }
+}

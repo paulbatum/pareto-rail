@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "4c6bf366b08c477807cb985a460ca34c0cf2e83e90afeb55a98e9213bc1dab53",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 18.536352393,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level skyhook-loyy\n\nSkyhook floor check\nduration 60.0s; spawned kinds 7: claw, crawler, kite, raider, saboteur, shard, skimmer\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=1\n    maxGridSeconds=0.72\n  action SFX snap: overridden grid (enabled, 32nd grid)\n  lock radius: 0.175 NDC (engine default 0.085); reticle visual 0.050 NDC = 0.29x lock radius, engine scales reticle 1.75x\n  words: start \"ASCEND\" (6), replay \"AGAIN\" (5); MAX_LOCKS 6\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, easeRunProgress, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 1\nreticle warnings: 1\nstart/replay word warnings: 0\n\nWarnings:\n- Average enemy destruction distance is slightly high (45.8m, warning threshold 45.0m). Consider spawning enemies closer.\n- Reticle visual radius (0.050 NDC) is below half the lock radius (lockRadiusNdc 0.175); the engine renders it scaled 1.75x. Draw the reticle to match the lock radius.\nAll floor checks passed.\n",
+  "stderr": ""
+}

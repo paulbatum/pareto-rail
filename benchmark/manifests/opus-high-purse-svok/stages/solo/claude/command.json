@@ -1,0 +1,29 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-opus-4-8",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--session-id",
+    "220c5c6d-54fc-4e16-9602-cb9b4665bb15"
+  ],
+  "cliVersion": "2.1.217 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-opus-high-purse-svok",
+  "startedAt": "2026-07-22T07:55:17.026Z",
+  "finishedAt": "2026-07-22T08:47:21.155Z",
+  "wallTimeSeconds": 2962.053211516,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

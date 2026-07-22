@@ -1,0 +1,21 @@
+{
+  "runId": "sol-high-mdd-uk78",
+  "slotId": "uk78",
+  "levelId": "mass-driver-detailed-uk78",
+  "themeId": "mass-driver-detailed",
+  "themePath": "benchmark/themes/mass-driver-detailed.md",
+  "configurationId": "codex-sol-high",
+  "recipePath": "benchmark/recipes/codex-sol-high.md",
+  "kind": "benchmark",
+  "entrantBaseline": "4bc00a921882971dc6dbc8467b5dc35a0a18f3c1",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+  "levelTitle": "Mass Driver"
+}

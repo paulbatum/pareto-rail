@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "3b53f9cc09dc64c4dd06209bd6cced512e3752001cd27d8f8196c549f6a048ff",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 20.050591528,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level skyhook-p46c\n\nSkyhook floor check\nduration 60.0s; spawned kinds 7: bulwark, dart, grappler, kite, ripper, rivet, vane\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: [default] 0.085 NDC; reticle visual 0.062 NDC = 0.73x lock radius, no reticle scaling\n  words: start \"CLIMB\" (5), replay \"REPLAY\" (6); MAX_LOCKS 6\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun\n  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 2\nreticle warnings: 0\nstart/replay word warnings: 0\n\nWarnings:\n- Average enemy destruction distance is slightly high (45.2m, warning threshold 45.0m). Consider spawning enemies closer.\n- Enemy destruction concentration in screen center is slightly high (49.4%, warning threshold 25.0%). Consider spreading spawns away from the center.\nAll floor checks passed.\n",
+  "stderr": ""
+}
