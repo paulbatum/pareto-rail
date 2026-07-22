@@ -41,7 +41,9 @@ Start from `npm run scaffold -- --id <id> [--title <Title>] [--bpm <n>]` for a b
 4. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`.
 5. Add the level to `src/levels/index.ts`.
 
-A built-in level task should only touch `src/levels/<id>/`, one registry line in `src/levels/index.ts`, the regenerated `docs/level-gallery.md`, and its own gallery content directory `public/level-content/<id>/`. Public level imagery is AVIF; the build rejects tracked PNGs. Use `npm run check:scope -- <level-id>` to verify that boundary.
+A built-in level task should only touch `src/levels/<id>/`, one registry line in `src/levels/index.ts`, the regenerated `docs/level-gallery.md` and `src/app/generated/built-in-notes.ts`, and its own gallery content directory `public/level-content/<id>/`. Public level imagery is AVIF; the build rejects tracked PNGs. Use `npm run check:scope -- <level-id>` to verify that boundary.
+
+`npm run gallery` regenerates both derived files from the `level.md` cards. Two card sections are player-visible: the intro paragraph under the title becomes the level's blurb, and "What to study here" renders on the public levels page as "Notes for level builders" — candid, and read by visitors, not just future authors. The remaining sections (What to read, Status & notes) stay agent-only. Never hand-edit `built-in-notes.ts`; edit the card and re-run the script.
 
 ### Authoring a benchmark output
 

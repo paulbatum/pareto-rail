@@ -4,7 +4,8 @@ import { entrantLabel } from '../../benchmark/identity';
 import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type RankCatalogTheme } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog, selectableLevelGroups } from '../../levels';
 import { BenchmarkLocalStore } from '../../benchmark/storage';
-import { builtInLevelBlurbs, levelsCopy, levelsSplashCopy } from '../content';
+import { levelsCopy, levelsSplashCopy } from '../content';
+import { builtInLevelNotes } from '../generated/built-in-notes';
 import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
 import { ModelUsage, totalInputTokens } from '../components/ModelUsage';
@@ -19,6 +20,7 @@ type BuiltInRecord = {
   reference: boolean;
   thumbnailPath?: string;
   blurb?: string;
+  builderNotes?: readonly string[];
 };
 
 type BenchmarkRecord = {
@@ -34,7 +36,7 @@ type LevelRecord = BuiltInRecord | BenchmarkRecord;
 type ThemeBand = { key: string; theme: RankCatalogTheme; records: BenchmarkRecord[] };
 type Navigate = (path: string) => void;
 
-const REFERENCE_LEVEL_ID = 'crystal-corridor';
+const REFERENCE_LEVEL_IDS = new Set(['crystal-corridor', 'helios']);
 
 /** User-facing name for themes and entrants retired from active matchup
  * scheduling (the catalog's internal `retired` flag). Kept jargon-free per the
@@ -288,7 +290,7 @@ function GalleryCardMark({ record, onNavigate }: { record: BenchmarkRecord; onNa
 
 function galleryMeta(record: LevelRecord) {
   if (record.kind === 'built-in') {
-    return record.reference ? <span className="ref">Reference run</span> : <span>Built-in level</span>;
+    return record.reference ? <span className="ref">Reference level</span> : <span>Built-in level</span>;
   }
   return <><span>{entrantLabel({ modelName: record.entrant.modelName, workflowName: record.entrant.workflowName })}</span><span>{formatCost(record.entrant.generationCost)}</span></>;
 }
@@ -362,17 +364,35 @@ function BuiltInRecordDetail({ record, onNavigate }: { record: BuiltInRecord; on
         <span className="spacer" />
         <RouteLink className="button primary" href={playPath(record.levelId)} onNavigate={onNavigate}>▸ Play this level</RouteLink>
       </header>
-      <p className="catalog-identity">{record.reference ? 'Built-in level · reference run' : 'Built-in level'} · {record.levelId}</p>
+      <p className="catalog-identity">{record.reference ? 'Built-in level · reference level' : 'Built-in level'} · {record.levelId}</p>
       <div className="catalog-record-body">
         <RecordThumbnail record={record} onNavigate={onNavigate} />
         <div className="catalog-about">
           <p className="catalog-about-label">About this level</p>
           <p className="catalog-blurb">{record.blurb}</p>
-          <p className="catalog-note">Built-in levels are hand-made, so they carry no generation record.</p>
+          {record.builderNotes && record.builderNotes.length > 0 && (
+            <div className="catalog-builder-notes">
+              <p className="catalog-about-label">Notes for level builders</p>
+              {record.builderNotes.map((paragraph, index) => (
+                <p key={index}>{renderInlineCode(paragraph)}</p>
+              ))}
+            </div>
+          )}
+          <p className="catalog-note">Built-in levels were made outside benchmark conditions, so they carry no generation record.</p>
         </div>
       </div>
     </>
   );
+}
+
+/** The builder notes are drawn verbatim from the level card, where source-file
+ * references are written as markdown code spans. Render those spans as inline
+ * code and leave the rest as prose. */
+function renderInlineCode(text: string): React.ReactNode {
+  return text.split(/(`[^`]+`)/g).map((part, index) =>
+    part.startsWith('`') && part.endsWith('`')
+      ? <code key={index}>{part.slice(1, -1)}</code>
+      : <Fragment key={index}>{part}</Fragment>);
 }
 
 function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: BenchmarkRecord; themeTarget: string | null; onNavigate: Navigate }) {
@@ -551,14 +571,18 @@ function useLocationHash(): string {
 /* ---------- Records ---------- */
 
 function builtInRecords(): BuiltInRecord[] {
-  return selectableLevelGroups().builtIn.map((level) => ({
-    kind: 'built-in',
-    levelId: level.id,
-    title: level.title,
-    reference: level.id === REFERENCE_LEVEL_ID,
-    thumbnailPath: level.contentImages?.hero,
-    blurb: builtInLevelBlurbs[level.id],
-  }));
+  return selectableLevelGroups().builtIn.map((level) => {
+    const notes = builtInLevelNotes[level.id];
+    return {
+      kind: 'built-in',
+      levelId: level.id,
+      title: level.title,
+      reference: REFERENCE_LEVEL_IDS.has(level.id),
+      thumbnailPath: level.contentImages?.hero,
+      blurb: notes?.intro,
+      builderNotes: notes?.builderNotes,
+    };
+  });
 }
 
 /** Benchmark browsing is catalog-driven: an entrant appears once it is

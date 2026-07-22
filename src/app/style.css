@@ -597,9 +597,18 @@ html:fullscreen .perf-overlay { display: none; }
 .catalog-raw-copy { min-height: 30px; margin-bottom: 12px; padding: 6px 10px; color: var(--muted); background: transparent; border: 1px dashed var(--ghost); font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
 .catalog-raw-copy:hover, .catalog-raw-copy:focus-visible { color: var(--ink); border-color: var(--ink); }
 
-/* Built-in levels have no run data: thumbnail, play button, and blurb only. */
+/* Built-in levels have no run data: thumbnail, play button, blurb, and the
+   candid builder notes drawn from the level card. */
 .catalog-blurb { max-width: 620px; margin: 0 0 16px; color: var(--body-text); font-size: 13.5px; line-height: 1.6; }
 .catalog-note { max-width: 620px; margin: 0; color: var(--muted); font: 11px/1.6 var(--mono); }
+
+/* The builder notes sit below the blurb as a quieter, secondary read: same
+   label styling as the section headers, prose dimmed a step from the blurb. */
+.catalog-builder-notes { margin: 0 0 16px; padding: 16px 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.catalog-builder-notes .catalog-about-label { color: var(--accent); }
+.catalog-builder-notes p:not(.catalog-about-label) { max-width: 620px; margin: 0 0 10px; color: var(--muted); font-size: 12.5px; line-height: 1.6; }
+.catalog-builder-notes p:last-child { margin-bottom: 0; }
+.catalog-builder-notes code { padding: 0 3px; color: var(--body-text); font: 11.5px var(--mono); overflow-wrap: anywhere; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1080px) {

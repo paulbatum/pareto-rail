@@ -11,6 +11,10 @@ export const BENCHMARK_SOURCE_ROOT = 'src/benchmark-levels';
 export const LEVEL_GALLERY_PATH = 'docs/level-gallery.md';
 export const LEVEL_CONTENT_ROOT = 'public/level-content';
 export const BUILT_IN_LEVEL_REGISTRY_PATH = 'src/levels/index.ts';
+// Player-facing notes the website renders, regenerated from the built-in cards
+// alongside the gallery doc. Derives only from built-in level.md sources, so it
+// is shared-derived for the built-in footprint but untouched by benchmark work.
+export const BUILT_IN_NOTES_PATH = 'src/app/generated/built-in-notes.ts';
 
 // The built-in registry imports these files even when no promoted benchmark
 // level is present. The cut-baseline tool keeps this minimum discovery seam so
@@ -72,6 +76,6 @@ export function builtInLevelFootprint(levelId) {
         required: false,
       },
     ],
-    sharedDerived: [LEVEL_GALLERY_PATH, BUILT_IN_LEVEL_REGISTRY_PATH],
+    sharedDerived: [LEVEL_GALLERY_PATH, BUILT_IN_LEVEL_REGISTRY_PATH, BUILT_IN_NOTES_PATH],
   };
 }
