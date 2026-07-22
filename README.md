@@ -27,6 +27,8 @@ Some entrants run under a budget, shown in their label as an amount, for example
 
 Judging is blind pairwise play. You get two levels built from the same theme. I use Bradley-Terry for scoring, plotted against what each level cost to build.
 
+The full agent transcript of every published run is available in the [pareto-rail-rollouts](https://huggingface.co/datasets/paulbatum/pareto-rail-rollouts) dataset on Hugging Face, and each run's provenance record is [checked into the repository](https://github.com/paulbatum/pareto-rail/tree/main/benchmark/manifests).
+
 More details are available in the [benchmark readme](https://github.com/paulbatum/pareto-rail/blob/main/benchmark/README.md).
 <!-- site:end -->
 

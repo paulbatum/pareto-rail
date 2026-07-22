@@ -120,8 +120,7 @@ function gzipTo(destAbs, buffer) {
   fs.writeFileSync(destAbs, zlib.gzipSync(buffer, { level: 9 }));
 }
 
-function datasetCard(index) {
-  const totalMb = (index.runs.reduce((s, r) => s + r.files.reduce((t, f) => t + f.rawBytes, 0), 0) / 1048576).toFixed(0);
+function datasetCard() {
   return `---
 license: mit
 pretty_name: Pareto Rail benchmark rollouts
@@ -129,7 +128,7 @@ pretty_name: Pareto Rail benchmark rollouts
 
 # Pareto Rail benchmark rollouts
 
-Full agent transcripts for every published run of the [Pareto Rail](https://paretorail.com) level-generation benchmark: models one-shot a browser rail-shooter level from a written theme, and visitors rank the results blind on the public site. The benchmark's methodology, per-run provenance manifests (rendered prompt, sealed commits, gate results, measured cost), and the level source produced by each of these transcripts live in the main repository.
+Full agent transcripts for every published run of the [Pareto Rail](https://paretorail.com) level-generation benchmark: models one-shot a browser rail-shooter level from a written theme, and visitors rank the results blind on the public site. The benchmark's methodology, per-run provenance manifests (rendered prompt, sealed commits, gate results, measured cost), and the level source produced by each of these transcripts live in the main repository: [github.com/paulbatum/pareto-rail](https://github.com/paulbatum/pareto-rail).
 
 ## Layout
 
@@ -139,12 +138,6 @@ runs/<run-id>/stages/<stage>/<harness>/events.jsonl.gz    # the normalized event
 \`\`\`
 
 Transcripts are exactly as captured, gzipped: agent screenshots taken during the run are embedded as base64. \`rollouts.json\` here (also committed in the main repository under \`benchmark/manifests/\`) maps each run to its level, theme, and configuration and records the size and sha256 of every transcript's uncompressed bytes, so a download can be verified after gunzip.
-
-This export covers ${index.runs.length} runs, ${totalMb} MB uncompressed.
-
-## Caution for voters
-
-The Pareto Rail site asks visitors to compare levels blind; model identities are revealed only after a vote. These transcripts are keyed to level ids, so reading them before voting deanonymizes the entrants.
 `;
 }
 
@@ -194,7 +187,7 @@ function main() {
   const indexText = `${JSON.stringify(index, null, 2)}\n`;
   fs.writeFileSync(indexPath, indexText);
   fs.writeFileSync(path.join(stagingRoot, 'rollouts.json'), indexText);
-  fs.writeFileSync(path.join(stagingRoot, 'README.md'), datasetCard(index));
+  fs.writeFileSync(path.join(stagingRoot, 'README.md'), datasetCard());
 
   const rawTotal = index.runs.reduce((s, r) => s + r.files.reduce((t, f) => t + f.rawBytes, 0), 0);
   console.log(`Staged transcripts for ${index.runs.length} runs into ${path.relative(root, stagingRoot)} (${(rawTotal / 1048576).toFixed(0)} MB raw, both secret scans clean).`);
