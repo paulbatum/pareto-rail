@@ -45,7 +45,7 @@ try {
   await write('public/level-content/anchor/hero.png', 'built-in content\n');
   await write('public/level-content/entrant/hero.png', 'entrant content\n');
   await write('docs/level-gallery.md', '# Level gallery\n\n## Benchmark levels\n');
-  await write('src/benchmark/rank-catalog.json', JSON.stringify({ versions: [{ entrants: [{ levelId: 'entrant' }] }] }));
+  await write('src/benchmark/rank-catalog.json', JSON.stringify({ themes: [{ id: 'entrant' }], entrants: [{ levelId: 'entrant' }] }));
   await fs.mkdir(path.join(repository, 'scripts'), { recursive: true });
   await fs.copyFile(path.join(root, 'scripts/collect-gallery.mjs'), path.join(repository, 'scripts/collect-gallery.mjs'));
   await fs.copyFile(path.join(root, 'scripts/level-gallery.mjs'), path.join(repository, 'scripts/level-gallery.mjs'));
@@ -72,7 +72,7 @@ try {
   assert.match(gallery, /# Anchor/);
   assert.doesNotMatch(gallery, /Benchmark levels/);
   const catalog = JSON.parse(await git(['show', `${result.scrubbedCommit}:src/benchmark/rank-catalog.json` ]));
-  assert.deepEqual(catalog.versions, []);
+  assert.deepEqual(catalog.entrants, []);
   assert.equal((await git(['show', `${result.scrubbedCommit}:public/level-content/anchor/hero.png`])).trim(), 'built-in content');
 
   console.log('Benchmark baseline tests passed.');

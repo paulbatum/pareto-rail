@@ -1,5 +1,5 @@
 import { mapVerdict, type BenchmarkApi, type MatchupAssignment, type MatchupVote, type NextMatchupRequest, type PlayCounts, type RecordPlayRequest, type RevealPayload, type SubmitVoteRequest } from './types';
-import { allCatalogEntrants, findCatalogVersionForLevels, schedulingPool, type RankCatalog, type RankCatalogEntrant } from './catalog';
+import { findCatalogTheme, schedulingPool, type RankCatalog, type RankCatalogEntrant } from './catalog';
 import { nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { BenchmarkLocalStore, type LevelRun } from './storage';
 
@@ -31,19 +31,15 @@ export function exposureCountsFromVotes(catalog: RankCatalog, votes: readonly Ma
 
 export function assignmentFromVote(catalog: RankCatalog, vote: MatchupVote): MatchupAssignment | null {
   const parsed = parsePairId(vote.matchupId);
-  const parsedA = parsed ? findCatalogEntrant(catalog, parsed.levelA) : undefined;
-  const parsedB = parsed ? findCatalogEntrant(catalog, parsed.levelB) : undefined;
-  const a = findCatalogEntrant(catalog, vote.aEntrantId);
-  const b = findCatalogEntrant(catalog, vote.bEntrantId);
+  const a = parsed ? findCatalogEntrant(catalog, vote.aEntrantId) : undefined;
+  const b = parsed ? findCatalogEntrant(catalog, vote.bEntrantId) : undefined;
+  const theme = parsed ? findCatalogTheme(catalog, parsed.themeId) : undefined;
   const pairLevels = parsed ? new Set([parsed.levelA, parsed.levelB]) : new Set<string>();
   const sideOrderIsValid = !!a && !!b && a.levelId !== b.levelId && pairLevels.has(a.levelId) && pairLevels.has(b.levelId);
-  const version = parsed && parsedA && parsedB ? findCatalogVersionForLevels(catalog, parsedA.levelId, parsedB.levelId) : undefined;
-  const theme = version && parsed ? version.themes.find((candidate) => candidate.id === parsed.themeId) : undefined;
-  if (!parsed || !parsedA || !parsedB || !a || !b || !sideOrderIsValid || !version || !theme
-    || parsedA.themeId !== parsed.themeId || parsedB.themeId !== parsed.themeId) return null;
+  if (!parsed || !a || !b || !theme || !sideOrderIsValid
+    || a.themeId !== parsed.themeId || b.themeId !== parsed.themeId) return null;
   return {
     matchupId: vote.matchupId,
-    benchmarkVersion: version.benchmarkVersion,
     theme,
     a: { playableRef: a.levelId, ...(a.thumbnailPath ? { thumbnailPath: a.thumbnailPath } : {}) },
     b: { playableRef: b.levelId, ...(b.thumbnailPath ? { thumbnailPath: b.thumbnailPath } : {}) },
@@ -80,8 +76,8 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
   async nextMatchup(request: NextMatchupRequest): Promise<MatchupAssignment | null> {
     this.requireParticipant(request.participantId);
     const data = this.store.snapshot;
-    // Schedule against the union of every slice's scheduled themes, not just the
-    // active slice, so returning series live alongside the latest one.
+    // Schedule against every non-retired entrant of every non-retired theme, so
+    // returning series live alongside the latest ones.
     const pool = schedulingPool(this.catalog);
     if (pool.themes.length === 0) return null;
     const judged = completedMatchupsFromVotes(this.catalog, data.history).map(({ vote }) => ({ matchupId: vote.matchupId, relative: vote.relative, aLevelId: vote.aEntrantId }));
@@ -91,13 +87,8 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
     const a = findCatalogEntrant(this.catalog, scheduled.levelIdA);
     const b = findCatalogEntrant(this.catalog, scheduled.levelIdB);
     if (!theme || !a || !b) return null;
-    // The vote must record against the pair's owning slice version, since the
-    // server validates entrants within the named version's slice.
-    const owningVersion = findCatalogVersionForLevels(this.catalog, a.levelId, b.levelId);
-    if (!owningVersion) return null;
     const assignment: MatchupAssignment = {
       matchupId: pairId(theme.id, a.levelId, b.levelId),
-      benchmarkVersion: owningVersion.benchmarkVersion,
       theme,
       a: { playableRef: a.levelId, ...(a.thumbnailPath ? { thumbnailPath: a.thumbnailPath } : {}) },
       b: { playableRef: b.levelId, ...(b.thumbnailPath ? { thumbnailPath: b.thumbnailPath } : {}) },
@@ -181,7 +172,7 @@ export function playCountsFor(assignment: MatchupAssignment, levelRuns: readonly
 }
 
 function findCatalogEntrant(catalog: RankCatalog, levelId: string): RankCatalogEntrant | undefined {
-  return allCatalogEntrants(catalog).find((candidate) => candidate.levelId === levelId);
+  return catalog.entrants.find((candidate) => candidate.levelId === levelId);
 }
 
 function voteForCatalog(vote: MatchupVote, a: RankCatalogEntrant, b: RankCatalogEntrant): MatchupVote {

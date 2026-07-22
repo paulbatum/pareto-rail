@@ -3,7 +3,7 @@ import {
   personalHistoryFromReveals,
   type PersonalHistoryEntry,
 } from '../benchmark/personal-curve';
-import { activeCatalogVersion, allCatalogEntrants, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
+import { allCatalogEntrants, schedulingPool, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
 import { assignmentFromVote, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, type CompletedMatchup } from '../benchmark/catalog-api';
 import { ComparisonStateMachine } from '../benchmark/state';
 import { BenchmarkLocalStore } from '../benchmark/storage';
@@ -21,7 +21,7 @@ export type RankLaunch = { side: MatchupSide; levelId: string };
 type Listener = () => void;
 
 export function selectPersonalCurveCatalog(catalog: RankCatalog, history: readonly PersonalHistoryEntry[]): readonly RankCatalogEntrant[] {
-  const configurationIds = new Set(activeCatalogVersion(catalog)?.entrants.map((entrant) => entrant.configurationId));
+  const configurationIds = new Set(schedulingPool(catalog).entrants.map((entrant) => entrant.configurationId));
   for (const entry of history) {
     if (entry.a.configurationId) configurationIds.add(entry.a.configurationId);
     if (entry.b.configurationId) configurationIds.add(entry.b.configurationId);
@@ -199,7 +199,6 @@ function remotePayload(assignment: MatchupAssignment, vote: MatchupVote, store: 
   return {
     matchupId: assignment.matchupId,
     participantId: store.participantId,
-    benchmarkVersion: assignment.benchmarkVersion,
     themeId: assignment.theme.id,
     aLevelId: assignment.a.playableRef,
     bLevelId: assignment.b.playableRef,

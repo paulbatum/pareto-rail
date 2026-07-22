@@ -8,7 +8,6 @@ const MAX_OUTBOX_ENTRIES = 50;
 export interface RemoteVotePayload {
   matchupId: string;
   participantId: string;
-  benchmarkVersion: string;
   themeId: string;
   aLevelId: string;
   bLevelId: string;
@@ -139,7 +138,6 @@ function isPayload(value: unknown): value is RemoteVotePayload {
   const candidate = value as Partial<RemoteVotePayload>;
   return typeof candidate.matchupId === 'string'
     && typeof candidate.participantId === 'string'
-    && typeof candidate.benchmarkVersion === 'string'
     && typeof candidate.themeId === 'string'
     && typeof candidate.aLevelId === 'string'
     && typeof candidate.bLevelId === 'string'

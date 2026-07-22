@@ -1,4 +1,4 @@
-import type { RankCatalogEntrant, RankCatalogVersion } from './catalog';
+import type { RankCatalogEntrant, SchedulingPool } from './catalog';
 import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve.js';
 import type { MatchupVote, RelativeOutcome } from './types';
 
@@ -44,7 +44,7 @@ interface PairCandidate {
 }
 
 /** Choose the next anonymous comparison without mutable or wall-clock state. */
-export function nextScheduledMatchup(catalog: RankCatalogVersion, participantId: string, history: SchedulerHistory = {}): ScheduledMatchup | null {
+export function nextScheduledMatchup(catalog: SchedulingPool, participantId: string, history: SchedulerHistory = {}): ScheduledMatchup | null {
   if (!participantId || catalog.themes.length === 0) return null;
   const entrantsByTheme = new Map(catalog.themes.map((theme) => [theme.id, catalog.entrants.filter((entrant) => entrant.themeId === theme.id && !entrant.retired)]));
   const judged = history.judged ?? [];
@@ -67,7 +67,7 @@ export function nextScheduledMatchup(catalog: RankCatalogVersion, participantId:
 }
 
 function selectCoveragePhase(
-  catalog: RankCatalogVersion,
+  catalog: SchedulingPool,
   entrantsByTheme: ReadonlyMap<string, readonly RankCatalogEntrant[]>,
   candidates: readonly PairCandidate[],
   exposureCounts: ReadonlyMap<string, number>,
@@ -123,7 +123,7 @@ function selectCoveragePhase(
 }
 
 function selectPlayoffPhase(
-  catalog: RankCatalogVersion,
+  catalog: SchedulingPool,
   candidates: readonly PairCandidate[],
   judged: readonly SchedulerJudgedVote[],
   lastThemeId: string | undefined,
@@ -213,7 +213,7 @@ function pairsForTheme(
   return candidates;
 }
 
-function countJudgedPairs(catalog: RankCatalogVersion, judged: readonly SchedulerJudgedVote[]): Map<string, number> {
+function countJudgedPairs(catalog: SchedulingPool, judged: readonly SchedulerJudgedVote[]): Map<string, number> {
   const knownIds = new Set(catalog.entrants.map((entrant) => entrant.levelId));
   const counts = new Map<string, number>();
   for (const item of judged) {
@@ -225,7 +225,7 @@ function countJudgedPairs(catalog: RankCatalogVersion, judged: readonly Schedule
   return counts;
 }
 
-function countJudgedConfigurationPairs(catalog: RankCatalogVersion, judged: readonly SchedulerJudgedVote[]): Map<string, number> {
+function countJudgedConfigurationPairs(catalog: SchedulingPool, judged: readonly SchedulerJudgedVote[]): Map<string, number> {
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const counts = new Map<string, number>();
   for (const item of judged) {
@@ -240,7 +240,7 @@ function countJudgedConfigurationPairs(catalog: RankCatalogVersion, judged: read
 }
 
 function exposureMap(
-  catalog: RankCatalogVersion,
+  catalog: SchedulingPool,
   judged: readonly SchedulerJudgedVote[],
 ): Map<string, number> {
   const counts = new Map<string, number>();
@@ -254,7 +254,7 @@ function exposureMap(
   return counts;
 }
 
-function schedulerCurve(catalog: RankCatalogVersion, judged: readonly SchedulerJudgedVote[]) {
+function schedulerCurve(catalog: SchedulingPool, judged: readonly SchedulerJudgedVote[]) {
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const history: PersonalHistoryEntry[] = [];
   for (const item of judged) {

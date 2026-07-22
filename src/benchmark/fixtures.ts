@@ -36,7 +36,6 @@ export const DOWNPOUR_FIXTURE_ENTRANTS: readonly FixtureEntrant[] = [
 })) as readonly FixtureEntrant[];
 
 export interface FixtureCatalog {
-  benchmarkVersion: string;
   themes: readonly BenchmarkTheme[];
   entrants: readonly FixtureEntrant[];
 }
@@ -45,8 +44,8 @@ export interface FixtureCatalog {
  * development explicitly, making leakage into an eligible pool impossible. */
 export function createFixtureCatalog(mode: 'development' | 'production' = 'production'): FixtureCatalog {
   return mode === 'development'
-    ? { benchmarkVersion: 'fixture-downpour-v1', themes: [DOWNPOUR_THEME], entrants: DOWNPOUR_FIXTURE_ENTRANTS }
-    : { benchmarkVersion: 'fixture-downpour-v1', themes: [], entrants: [] };
+    ? { themes: [DOWNPOUR_THEME], entrants: DOWNPOUR_FIXTURE_ENTRANTS }
+    : { themes: [], entrants: [] };
 }
 
 export function validateFixtureCatalog(catalog: FixtureCatalog, mode: 'development' | 'production'): void {
@@ -83,7 +82,6 @@ export class FixtureBenchmarkApi implements BenchmarkApi {
     const matchupId = pairId(theme.id, a.entrantId, b.entrantId);
     const assignment: MatchupAssignment = {
       matchupId,
-      benchmarkVersion: this.catalog.benchmarkVersion,
       theme,
       a: { playableRef: a.playableRef, thumbnailPath: a.thumbnailPath },
       b: { playableRef: b.playableRef, thumbnailPath: b.thumbnailPath },

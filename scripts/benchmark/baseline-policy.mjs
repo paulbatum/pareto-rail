@@ -73,7 +73,7 @@ export async function scrubbedBaselineViolations({ repo = process.cwd(), baselin
       violations.push({ path: RANK_CATALOG_PATH, reason: `is not valid JSON: ${error.message}` });
       catalog = undefined;
     }
-    const entrants = catalog?.versions?.flatMap((version) => Array.isArray(version?.entrants) ? version.entrants : []) ?? [];
+    const entrants = Array.isArray(catalog?.entrants) ? catalog.entrants : [];
     if (entrants.length > 0) {
       violations.push({
         path: RANK_CATALOG_PATH,

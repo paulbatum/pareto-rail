@@ -451,7 +451,7 @@ function debugCurrentMatchup(controller: RankController): string[] {
   };
 
   return [
-    `state=${state.kind} | matchupId=${assignment.matchupId} | benchmarkVersion=${assignment.benchmarkVersion} | assignedAt=${assignment.assignedAt}`,
+    `state=${state.kind} | matchupId=${assignment.matchupId} | assignedAt=${assignment.assignedAt}`,
     `themeId=${assignment.theme.id} | themeTitle=${JSON.stringify(assignment.theme.title)}`,
     levelLine('a'),
     levelLine('b'),

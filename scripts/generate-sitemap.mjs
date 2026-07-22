@@ -58,15 +58,13 @@ function rankCatalogPlayableIds() {
   } catch (error) {
     fail(`Could not read rank catalog ${path.relative(root, catalogPath)}: ${error instanceof Error ? error.message : String(error)}`);
   }
-  if (!Array.isArray(catalog.versions)) fail('Rank catalog has no versions array.');
+  if (!Array.isArray(catalog.entrants)) fail('Rank catalog has no entrants array.');
   const ids = new Set();
-  for (const version of catalog.versions) {
-    for (const entrant of version.entrants ?? []) {
-      // Retired entrants keep a catalog record for historical results but their
-      // level module is deleted, so /play/<id> no longer renders them.
-      if (entrant.retired) continue;
-      if (typeof entrant.levelId === 'string' && entrant.levelId) ids.add(entrant.levelId);
-    }
+  for (const entrant of catalog.entrants) {
+    // Retired entrants keep a catalog record for historical results but their
+    // level module is deleted, so /play/<id> no longer renders them.
+    if (entrant.retired) continue;
+    if (typeof entrant.levelId === 'string' && entrant.levelId) ids.add(entrant.levelId);
   }
   if (ids.size === 0) fail('Rank catalog produced zero playable entrant ids.');
   return [...ids];

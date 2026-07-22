@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const privateRoot = path.join(root, 'benchmark/private');
-const themesRoot = path.join(root, 'benchmark/themes');
 const levelsRoot = path.join(root, 'src/benchmark-levels');
 const outputPath = path.join(levelsRoot, '..', 'benchmark', 'rank-catalog.json');
+const publicationPath = path.join(privateRoot, 'publication.json');
 
 const configurationLabels = {
   'claude-fable-5-high': {
@@ -81,33 +81,22 @@ const configurationLabels = {
   },
 };
 
-// Per-version publication scope. `configurationLabels` above is global identity;
-// this declares which of those configurations actually appear in each version's
-// catalog slice. Keeping the two separate means labeling a configuration for a
-// later version never reaches back and republishes a finished version — v1 stays
-// exactly as it was published even though its budgeted runs now carry labels.
-const publishedConfigurations = {
-  v1: [
-    'claude-fable-5-high',
-    'claude-fable-5-opus-delegation',
-    'codex-sol-high',
-    'codex-sol-terra-delegation',
-  ],
-  v2: [
-    'claude-fable-5-high',
-    'claude-fable-5-high-b20',
-    'claude-opus-4-8-high',
-    'claude-opus-4-8-high-b20',
-    'codex-sol-high',
-    'codex-sol-high-b20',
-    // Kimi is withheld from the pool until its full level set is generated; its levels,
-    // run records, and label stay. Restore the id here to republish.
-  ],
-};
-
-// Themes retired from scheduling: their levels stay in the gallery and past
-// votes on them still count, but the site never draws them into new matchups.
-const unscheduledThemeIds = new Set(['hull-run', 'mass-driver-detailed']);
+// Publication scope: a configuration is published only when it carries a public
+// label above and is listed here. The two gates stay separate so labeling a
+// configuration (its identity) never republishes it on its own. A configuration
+// missing from this set is warned and withheld; its entrants never enter the pool.
+// Kimi is withheld until its full level set exists — its label stays; add its id
+// here to publish it.
+export const PUBLISHED_CONFIGURATIONS = new Set([
+  'claude-fable-5-high',
+  'claude-fable-5-opus-delegation',
+  'codex-sol-high',
+  'codex-sol-terra-delegation',
+  'claude-fable-5-high-b20',
+  'claude-opus-4-8-high',
+  'claude-opus-4-8-high-b20',
+  'codex-sol-high-b20',
+]);
 
 const delegationIntroduction = 'Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.';
 const delegationResponsibility = 'You remain fully responsible for the quality of the final product. Take an active role in refining the outputs from the subagent, not just passive review.';
@@ -120,20 +109,20 @@ function readJson(filePath) {
   }
 }
 
-function parseTheme(themeId) {
-  const filePath = path.join(themesRoot, `${themeId}.md`);
+function parseTheme(theme) {
+  const filePath = path.join(root, theme.path);
   let source;
   try {
     source = fs.readFileSync(filePath, 'utf8');
   } catch (error) {
-    throw new Error(`Could not read theme ${themeId}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Could not read theme ${theme.id}: ${error instanceof Error ? error.message : String(error)}`);
   }
   const heading = source.match(/^# ([^\n]+)\s*\n/m);
-  if (!heading) throw new Error(`Theme ${themeId} does not contain a level-one heading.`);
+  if (!heading) throw new Error(`Theme ${theme.id} does not contain a level-one heading.`);
   const prompt = source.slice(heading.index + heading[0].length).trim();
-  if (!prompt) throw new Error(`Theme ${themeId} has no prompt body below its heading.`);
+  if (!prompt) throw new Error(`Theme ${theme.id} has no prompt body below its heading.`);
   const sentence = prompt.match(/^([\s\S]*?[.!?])(?:\s|$)/)?.[1] ?? prompt;
-  return { id: themeId, title: heading[1].trim(), summary: sentence, prompt };
+  return { id: theme.id, title: heading[1].trim(), summary: sentence, prompt };
 }
 
 function promotedDirectory(levelId) {
@@ -141,38 +130,42 @@ function promotedDirectory(levelId) {
   return fs.existsSync(directory) && fs.statSync(directory).isDirectory();
 }
 
-function runManifest(assignment) {
-  const manifestPath = path.join(root, 'benchmark/private/runs', assignment.runId, 'manifest.json');
+function manifestPathFor(entrant) {
+  return path.join(privateRoot, 'runs', entrant.runId, 'manifest.json');
+}
+
+function runManifest(entrant) {
+  const manifestPath = manifestPathFor(entrant);
   if (!fs.existsSync(manifestPath)) {
-    throw new Error(`Promoted level ${assignment.levelId} is missing its run manifest: ${path.relative(root, manifestPath)}`);
+    throw new Error(`Entrant ${entrant.levelId} is missing its run manifest: ${path.relative(root, manifestPath)}`);
   }
   const manifest = readJson(manifestPath);
   if (!Array.isArray(manifest.stages) || manifest.stages.length === 0) {
-    throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} has no stages with pricing.`);
+    throw new Error(`Run ${entrant.runId} for entrant ${entrant.levelId} has no stages with pricing.`);
   }
   if (!Array.isArray(manifest.cost?.models) || manifest.cost.models.length === 0) {
-    throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} has no per-model usage.`);
+    throw new Error(`Run ${entrant.runId} for entrant ${entrant.levelId} has no per-model usage.`);
   }
   return manifest;
 }
 
-function generationCost(assignment, manifest) {
+function generationCost(entrant, manifest) {
   let total = 0;
   for (const [index, stage] of manifest.stages.entries()) {
     const cost = stage?.pricing?.costUsd;
     if (typeof cost !== 'number' || !Number.isFinite(cost)) {
-      throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} is missing stages[${index}].pricing.costUsd.`);
+      throw new Error(`Run ${entrant.runId} for entrant ${entrant.levelId} is missing stages[${index}].pricing.costUsd.`);
     }
     total += cost;
   }
   return total;
 }
 
-function runMetrics(assignment, manifest, labels) {
+function runMetrics(entrant, manifest, labels) {
   const generationWallTimeSeconds = Math.max(...manifest.stages.map((stage) => stage.wallTimeSeconds ?? 0));
   const totalWallTimeSeconds = manifest.timing?.wallTimeSeconds;
   if (!Number.isFinite(generationWallTimeSeconds) || !Number.isFinite(totalWallTimeSeconds)) {
-    throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} is missing timing data.`);
+    throw new Error(`Run ${entrant.runId} for entrant ${entrant.levelId} is missing timing data.`);
   }
   const firstModel = manifest.cost.models[0]?.modelName;
   const models = manifest.cost.models.map((model) => ({
@@ -192,7 +185,7 @@ function runMetrics(assignment, manifest, labels) {
     totalWallTimeSeconds: Number(totalWallTimeSeconds.toFixed(3)),
     result: incomplete?.result ?? 'completed',
     orchestrationTreatment: manifest.cost.orchestrationTreatment,
-    harness: runHarness(assignment, manifest),
+    harness: runHarness(entrant, manifest),
     models,
   };
 }
@@ -200,19 +193,19 @@ function runMetrics(assignment, manifest, labels) {
 // A run is driven by exactly one CLI, so every stage must agree on it. Each CLI reports its
 // version in its own shape (`2.1.207 (Claude Code)`, `codex-cli 0.144.1`); strip the harness
 // restatement so the published field is a bare version.
-function runHarness(assignment, manifest) {
+function runHarness(entrant, manifest) {
   const harnesses = manifest.stages.map((stage, index) => {
     const name = stage?.harness?.name;
     const version = stage?.harness?.version;
     if (typeof name !== 'string' || typeof version !== 'string') {
-      throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} is missing stages[${index}].harness.`);
+      throw new Error(`Run ${entrant.runId} for entrant ${entrant.levelId} is missing stages[${index}].harness.`);
     }
     return { name, version: bareVersion(version) };
   });
   const [first] = harnesses;
   const disagreeing = harnesses.find((harness) => harness.name !== first.name || harness.version !== first.version);
   if (disagreeing) {
-    throw new Error(`Run ${assignment.runId} for promoted level ${assignment.levelId} reports more than one harness: ${first.name} ${first.version} and ${disagreeing.name} ${disagreeing.version}.`);
+    throw new Error(`Run ${entrant.runId} for entrant ${entrant.levelId} reports more than one harness: ${first.name} ${first.version} and ${disagreeing.name} ${disagreeing.version}.`);
   }
   return first;
 }
@@ -221,28 +214,23 @@ function bareVersion(version) {
   return version.replace(/\s*\(.*\)\s*$/, '').replace(/^\S+\s+(?=\d)/, '').trim();
 }
 
-function historicalEntrantFor(assignment) {
-  const catalog = readJson(outputPath);
-  const entrant = (catalog.versions ?? [])
-    .flatMap((version) => version.entrants ?? [])
-    .find((candidate) => candidate.levelId === assignment.levelId);
-  if (!entrant) {
-    throw new Error(`Retired entrant ${assignment.levelId} has no retained catalog record.`);
-  }
-  if (entrant.themeId !== assignment.theme.id || entrant.configurationId !== assignment.configurationId) {
-    throw new Error(`Retired entrant ${assignment.levelId} does not match its plan identity.`);
-  }
-  // The retired level's content images are deleted with it, so drop the
-  // reference; the site renders its thumbnail fallback for retired entrants.
-  const { thumbnailPath, ...retained } = entrant;
-  return { ...retained, retired: true };
+// Provenance copied verbatim from the run manifest: which entrant baseline the
+// level was generated on, and the materials commit it was handed. Omitted when a
+// field is absent (a retired run predating the field).
+function baselineFields(manifest) {
+  const entrantBaseline = manifest.baseline?.entrantBaseline?.identifier;
+  const materialsCommit = manifest.baseline?.materialsCommit;
+  return {
+    ...(typeof entrantBaseline === 'string' ? { entrantBaseline } : {}),
+    ...(typeof materialsCommit === 'string' ? { materialsCommit } : {}),
+  };
 }
 
-function entrantFor(assignment, cost, manifest) {
-  const descriptorPath = path.join(levelsRoot, assignment.levelId, 'level.json');
+function readDescriptor(entrant) {
+  const descriptorPath = path.join(levelsRoot, entrant.levelId, 'level.json');
   const descriptor = readJson(descriptorPath);
-  if (descriptor.id !== assignment.levelId) {
-    throw new Error(`Benchmark descriptor ${path.relative(root, descriptorPath)} declares id ${descriptor.id}, expected ${assignment.levelId}.`);
+  if (descriptor.id !== entrant.levelId) {
+    throw new Error(`Benchmark descriptor ${path.relative(root, descriptorPath)} declares id ${descriptor.id}, expected ${entrant.levelId}.`);
   }
   if (typeof descriptor.title !== 'string' || descriptor.title.length === 0) {
     throw new Error(`Benchmark descriptor ${path.relative(root, descriptorPath)} is missing a title.`);
@@ -250,155 +238,104 @@ function entrantFor(assignment, cost, manifest) {
   if (!descriptor.contentImages?.hero) {
     throw new Error(`Benchmark descriptor ${path.relative(root, descriptorPath)} is missing contentImages.hero.`);
   }
-  const labels = configurationLabels[assignment.configurationId] ?? {
-    modelName: assignment.configurationId,
-    workflowName: assignment.configurationId,
+  return descriptor;
+}
+
+// Build one entrant record from its run manifest. A live entrant also carries a
+// thumbnail from its promoted level descriptor; a retired one has no level module
+// on disk, so it drops the descriptor and the site renders a thumbnail fallback.
+export function buildEntrant(entrant, { includeThumbnail }) {
+  const manifest = runManifest(entrant);
+  const cost = generationCost(entrant, manifest);
+  const labels = configurationLabels[entrant.configurationId] ?? {
+    modelName: entrant.configurationId,
+    workflowName: entrant.configurationId,
   };
+  const descriptor = includeThumbnail ? readDescriptor(entrant) : null;
   return {
-    levelId: assignment.levelId,
-    themeId: assignment.theme.id,
-    configurationId: assignment.configurationId,
+    levelId: entrant.levelId,
+    themeId: entrant.themeId,
+    configurationId: entrant.configurationId,
     modelName: labels.modelName,
     workflowName: labels.workflowName,
     generationCost: Number(cost.toFixed(8)),
-    run: runMetrics(assignment, manifest, labels),
-    thumbnailPath: descriptor.contentImages.hero,
+    run: runMetrics(entrant, manifest, labels),
+    ...(descriptor ? { thumbnailPath: descriptor.contentImages.hero } : {}),
     ...(labels.featured ? { featured: true } : {}),
+    ...(entrant.retired ? { retired: true } : {}),
+    ...baselineFields(manifest),
   };
 }
 
-function scheduleVersionNumber(benchmarkVersion) {
-  const match = /^v([1-9][0-9]*)$/.exec(benchmarkVersion);
-  if (!match) throw new Error(`Schedule benchmarkVersion must use v<number>, received ${benchmarkVersion}.`);
-  return Number(match[1]);
-}
-
-function scheduleFiles() {
-  return fs.readdirSync(privateRoot)
-    .filter((fileName) => /^run-schedule.*\.json$/.test(fileName))
-    .map((fileName) => path.join(privateRoot, fileName))
-    .sort((left, right) => left.localeCompare(right));
-}
-
-// A level is published only when its configuration carries a global label (its
-// identity) and is listed in this version's publication scope. The two gates are
-// separate so onboarding a configuration for a later version never disturbs a
-// finished version's slice. A configuration missing from the version's scope is
-// warned and withheld; its levels never enter the pool.
-export function selectConfigurations(assignments, benchmarkVersion) {
-  const scope = publishedConfigurations[benchmarkVersion];
-  if (!scope) throw new Error(`No publication scope declared for ${benchmarkVersion} in publishedConfigurations.`);
-  const publishedScope = new Set(scope);
-  const isPublished = (assignment) => Boolean(configurationLabels[assignment.configurationId]) && publishedScope.has(assignment.configurationId);
-  for (const assignment of assignments) {
-    if (isPublished(assignment)) continue;
-    const reason = !configurationLabels[assignment.configurationId]
-      ? 'has no public label'
-      : `is not in the ${benchmarkVersion} publication scope`;
-    console.warn(`Withholding ${assignment.levelId} from ${benchmarkVersion}: configuration ${assignment.configurationId} ${reason}.`);
+// Retained fallback for a retired entrant whose run predates current tooling and
+// has no manifest: reuse the last published record so the gallery keeps its
+// history. The retired level's content images are deleted with it, so the
+// thumbnail reference is dropped and no provenance is available.
+function historicalEntrantFor(entrant) {
+  const catalog = readJson(outputPath);
+  const record = (catalog.entrants ?? []).find((candidate) => candidate.levelId === entrant.levelId);
+  if (!record) {
+    throw new Error(`Retired entrant ${entrant.levelId} has no run manifest and no retained catalog record.`);
   }
-  return assignments.filter(isPublished);
-}
-
-// Normalize a v2 plan's flat run rows onto the per-assignment shape buildVersion
-// consumes, dropping rehearsals so they never reach the results pool or the site.
-export function planAssignments(plan) {
-  if (!Array.isArray(plan.runs)) throw new Error(`Plan ${plan.benchmarkVersion} has no runs array.`);
-  return plan.runs
-    .filter((row) => row.kind !== 'rehearsal')
-    .map((row) => ({ ...row, theme: { id: row.themeId } }));
-}
-
-export function buildVersion(benchmarkVersion, assignments, generatedAt) {
-  const publicAssignments = selectConfigurations(assignments, benchmarkVersion);
-
-  // Validate every already-promoted non-retired assignment before applying theme
-  // completeness. This prevents a bad promoted entry from being silently hidden by
-  // an incomplete theme while allowing retired rows to use retained catalog data
-  // and not-yet-promoted assignments to remain unpublished.
-  const runData = new Map();
-  for (const assignment of publicAssignments) {
-    if (assignment.retired || !promotedDirectory(assignment.levelId)) continue;
-    const manifest = runManifest(assignment);
-    runData.set(assignment.levelId, { manifest, cost: generationCost(assignment, manifest) });
+  if (record.themeId !== entrant.themeId || record.configurationId !== entrant.configurationId) {
+    throw new Error(`Retired entrant ${entrant.levelId} does not match its publication identity.`);
   }
+  const { thumbnailPath, ...retained } = record;
+  return { ...retained, retired: true };
+}
 
-  const assignmentsByTheme = new Map();
-  for (const assignment of publicAssignments) {
-    const themeId = assignment.theme?.id;
-    if (!themeId) throw new Error(`Scheduled assignment ${assignment.levelId} has no theme id.`);
-    const assignments = assignmentsByTheme.get(themeId) ?? [];
-    assignments.push(assignment);
-    assignmentsByTheme.set(themeId, assignments);
+// A configuration publishes only when it carries a global label (its identity)
+// and sits in the publication scope. A configuration failing either gate is
+// warned and withheld, so its entrants never enter the pool.
+function isPublishedConfiguration(entrant) {
+  const labeled = Boolean(configurationLabels[entrant.configurationId]);
+  const scoped = PUBLISHED_CONFIGURATIONS.has(entrant.configurationId);
+  if (labeled && scoped) return true;
+  const reason = !labeled ? 'has no public label' : 'is not in the publication scope';
+  console.warn(`Withholding ${entrant.levelId}: configuration ${entrant.configurationId} ${reason}.`);
+  return false;
+}
+
+export function buildCatalog(publication, generatedAt) {
+  if (!Array.isArray(publication.themes)) throw new Error('Publication has no themes array.');
+  if (!Array.isArray(publication.entrants)) throw new Error('Publication has no entrants array.');
+  const entrantsByTheme = new Map();
+  for (const entrant of publication.entrants) {
+    const list = entrantsByTheme.get(entrant.themeId) ?? [];
+    list.push(entrant);
+    entrantsByTheme.set(entrant.themeId, list);
   }
 
   const themes = [];
   const entrants = [];
-  const allowPartialThemes = benchmarkVersion === 'v2';
-  for (const themeId of [...assignmentsByTheme.keys()].sort()) {
-    const assignments = assignmentsByTheme.get(themeId);
-    const completenessAssignments = allowPartialThemes
-      ? assignments.filter((assignment) => !assignment.retired && promotedDirectory(assignment.levelId))
-      : assignments;
-    const publishedAssignments = allowPartialThemes
-      ? assignments.filter((assignment) => assignment.retired || promotedDirectory(assignment.levelId))
-      : assignments;
-    if (completenessAssignments.length === 0 || completenessAssignments.some((assignment) => !promotedDirectory(assignment.levelId))) continue;
-    const theme = parseTheme(themeId);
-    themes.push(unscheduledThemeIds.has(themeId) ? { ...theme, unscheduled: true } : theme);
-    for (const assignment of [...publishedAssignments]
-      .sort((left, right) => left.levelId.localeCompare(right.levelId))) {
-      if (assignment.retired) {
-        entrants.push(historicalEntrantFor(assignment));
+  for (const theme of publication.themes) {
+    const themeEntrants = (entrantsByTheme.get(theme.id) ?? []).filter(isPublishedConfiguration);
+    // A theme publishes once it has at least one live (non-retired, promoted)
+    // entrant. A not-yet-promoted entrant simply stays unpublished without hiding
+    // the rest of its theme; a theme with no live entrant is not published at all.
+    const hasLive = themeEntrants.some((entrant) => !entrant.retired && promotedDirectory(entrant.levelId));
+    if (!hasLive) continue;
+
+    const parsed = parseTheme(theme);
+    themes.push({ ...parsed, ...(theme.retired ? { retired: true } : {}) });
+    const accepted = new Set(theme.acceptedBaselines ?? []);
+    for (const entrant of [...themeEntrants].sort((left, right) => left.levelId.localeCompare(right.levelId))) {
+      if (entrant.retired) {
+        entrants.push(fs.existsSync(manifestPathFor(entrant))
+          ? buildEntrant(entrant, { includeThumbnail: false })
+          : historicalEntrantFor(entrant));
         continue;
       }
-      const data = runData.get(assignment.levelId);
-      entrants.push(entrantFor(assignment, data.cost, data.manifest));
+      if (!promotedDirectory(entrant.levelId)) {
+        console.warn(`Withholding ${entrant.levelId}: its level module is not promoted yet.`);
+        continue;
+      }
+      const record = buildEntrant(entrant, { includeThumbnail: true });
+      if (!accepted.has(record.entrantBaseline)) {
+        throw new Error(`Entrant ${entrant.levelId} was generated on baseline ${record.entrantBaseline ?? '<none>'}, which is not an accepted baseline for theme ${theme.id} (accepted: ${[...accepted].join(', ') || '<none>'}).`);
+      }
+      entrants.push(record);
     }
-  }
-
-  return {
-    benchmarkVersion: `rank-catalog-${benchmarkVersion}`,
-    generatedAt,
-    themes,
-    entrants,
-  };
-}
-
-function main() {
-  const files = scheduleFiles();
-  if (files.length === 0) throw new Error(`No benchmark schedules found in ${path.relative(root, privateRoot)} matching run-schedule*.json.`);
-
-  const schedules = files.map((filePath) => ({ filePath, schedule: readJson(filePath) }));
-  const seenVersions = new Set();
-  for (const { filePath, schedule } of schedules) {
-    if (!schedule || typeof schedule !== 'object' || typeof schedule.benchmarkVersion !== 'string' || schedule.benchmarkVersion.length === 0) {
-      throw new Error(`Schedule ${path.relative(root, filePath)} is missing benchmarkVersion.`);
-    }
-    if (seenVersions.has(schedule.benchmarkVersion)) {
-      throw new Error(`Duplicate schedule benchmarkVersion ${schedule.benchmarkVersion}.`);
-    }
-    seenVersions.add(schedule.benchmarkVersion);
-    schedule.versionNumber = scheduleVersionNumber(schedule.benchmarkVersion);
-  }
-  schedules.sort((left, right) => left.schedule.versionNumber - right.schedule.versionNumber || left.schedule.benchmarkVersion.localeCompare(right.schedule.benchmarkVersion));
-
-  const generatedAt = new Date().toISOString();
-  const versions = schedules.map(({ schedule }) => {
-    if (!Array.isArray(schedule.assignments)) throw new Error(`Schedule ${schedule.benchmarkVersion} has no assignments array.`);
-    return buildVersion(schedule.benchmarkVersion, schedule.assignments, generatedAt);
-  });
-
-  // The v2 slice comes from a single hand-editable plan instead of a private
-  // schedule. Its absence is not an error: without it the catalog is v1-only.
-  const planPath = path.join(privateRoot, 'v2-plan.json');
-  if (fs.existsSync(planPath)) {
-    const plan = readJson(planPath);
-    const planVersion = buildVersion(plan.benchmarkVersion, planAssignments(plan), generatedAt);
-    // A plan with no promoted public entrants yet (rehearsals only, or runs not
-    // yet promoted) must not publish an empty slice or claim the active pool.
-    if (planVersion.entrants.length > 0) versions.push(planVersion);
-    else console.warn(`Plan ${plan.benchmarkVersion} has no promoted public entrants yet; keeping the catalog on the previous version.`);
   }
 
   const configurations = Object.entries(configurationLabels).map(([id, labels]) => ({
@@ -408,16 +345,18 @@ function main() {
       delegationGuidance: `${delegationIntroduction}\n\nDelegate to model: ${labels.delegateModel} with reasoning level ${labels.delegateEffort}\n\n${delegationResponsibility}`,
     } : {}),
   }));
-  const catalog = {
-    generatedAt,
-    activeBenchmarkVersion: versions.at(-1).benchmarkVersion,
-    configurations,
-    versions,
-  };
+
+  return { generatedAt, configurations, themes, entrants };
+}
+
+function main() {
+  if (!fs.existsSync(publicationPath)) {
+    throw new Error(`No publication manifest found at ${path.relative(root, publicationPath)}.`);
+  }
+  const publication = readJson(publicationPath);
+  const catalog = buildCatalog(publication, new Date().toISOString());
   fs.writeFileSync(outputPath, `${JSON.stringify(catalog, null, 2)}\n`);
-  const entrants = versions.reduce((total, version) => total + version.entrants.length, 0);
-  const themes = versions.reduce((total, version) => total + version.themes.length, 0);
-  console.log(`Wrote ${path.relative(root, outputPath)} with ${entrants} entrants across ${themes} themes in ${versions.length} benchmark versions.`);
+  console.log(`Wrote ${path.relative(root, outputPath)} with ${catalog.entrants.length} entrants across ${catalog.themes.length} themes.`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

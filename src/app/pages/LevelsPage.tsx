@@ -36,9 +36,9 @@ type Navigate = (path: string) => void;
 
 const REFERENCE_LEVEL_ID = 'crystal-corridor';
 
-/** User-facing name for themes retired from active matchup scheduling (the
- * catalog's internal `unscheduled` flag). Kept jargon-free per the levels-page
- * copy rules. */
+/** User-facing name for themes and entrants retired from active matchup
+ * scheduling (the catalog's internal `retired` flag). Kept jargon-free per the
+ * levels-page copy rules. */
 const RETIRED_LABEL = 'Retired';
 
 const EMPTY_BUILT_IN: BuiltInRecord[] = [];
@@ -52,7 +52,7 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
   const [showRetired, setShowRetired] = useState(false);
   const [selectedConfigs, setSelectedConfigs] = useState<ReadonlySet<string>>(() => new Set());
   const configOptions = useMemo(() => configOptionsFrom(bands), [bands]);
-  const hasRetired = useMemo(() => bands.some((band) => band.theme.unscheduled === true), [bands]);
+  const hasRetired = useMemo(() => bands.some((band) => band.theme.retired === true || band.records.some((record) => record.entrant.retired === true)), [bands]);
 
   const toggleConfig = useCallback((id: string) => {
     setSelectedConfigs((current) => {
@@ -242,7 +242,7 @@ function GalleryView({ builtIn, bands, onClearConfigs, onNavigate }: { builtIn: 
       {bands.map((band) => (
         <section className="levels-band" key={band.key}>
           <div className="levels-band-head">
-            <h2>Benchmark — {band.theme.title}{band.theme.unscheduled && <span className="retired-tag">{RETIRED_LABEL}</span>} — {band.records.length} run{band.records.length === 1 ? '' : 's'}</h2>
+            <h2>Benchmark — {band.theme.title}{band.theme.retired && <span className="retired-tag">{RETIRED_LABEL}</span>} — {band.records.length} run{band.records.length === 1 ? '' : 's'}</h2>
             <RouteLink href={`${levelsViewPath.data}#theme-${band.theme.id}`} onNavigate={onNavigate}>Theme prompt ▸</RouteLink>
           </div>
           <div className="levels-grid">
@@ -323,7 +323,7 @@ function DataView({ builtIn, bands, benchmarkCount, onClearConfigs, onNavigate }
           <h2>Benchmark — {benchmarkCount}</h2>
           {bands.map((band) => (
             <Fragment key={band.key}>
-              <p className="catalog-rail-group">{band.theme.title}{band.theme.unscheduled && <span className="retired-tag">{RETIRED_LABEL}</span>}</p>
+              <p className="catalog-rail-group">{band.theme.title}{band.theme.retired && <span className="retired-tag">{RETIRED_LABEL}</span>}</p>
               {band.records.map((record) => (
                 <RailItem key={record.levelId} record={record} selected={record.levelId === selected.levelId}>
                   {record.entrant.featured === true && <b className="featured-mark" title="Featured">◆</b>}
@@ -383,7 +383,7 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
     <>
       <header className="catalog-record-header">
         <h2>{entrant.levelId}</h2>
-        {theme.unscheduled && <span className="result-tag">{RETIRED_LABEL}</span>}
+        {(theme.retired || entrant.retired) && <span className="result-tag">{RETIRED_LABEL}</span>}
         {run && <span className={completed ? 'result-tag' : 'result-tag timed-out'}>{formatResult(run.result)}</span>}
         <span className="spacer" />
         <RouteLink className="button primary" href={playPath(entrant.levelId)} onNavigate={onNavigate}>▸ Play this level</RouteLink>
@@ -518,7 +518,7 @@ function CatalogDownload() {
 }
 
 function CatalogStamp() {
-  return <span>{rankCatalog.activeBenchmarkVersion} · {formatStamp(rankCatalog.generatedAt)}</span>;
+  return <span>{formatStamp(rankCatalog.generatedAt)}</span>;
 }
 
 function Thumbnail({ path }: { path?: string }) {
@@ -568,22 +568,20 @@ function themeBands(): ThemeBand[] {
   const configurations = new Map((rankCatalog.configurations ?? []).map((configuration) => [configuration.id, configuration]));
   const bands: ThemeBand[] = [];
 
-  for (const version of rankCatalog.versions) {
-    for (const theme of version.themes) {
-      const records = version.entrants
-        .map((entrant, entrantIndex) => ({ entrant, entrantIndex }))
-        .filter(({ entrant }) => entrant.themeId === theme.id && playable.has(entrant.levelId))
-        .sort((first, second) => first.entrant.generationCost - second.entrant.generationCost)
-        .map(({ entrant, entrantIndex }): BenchmarkRecord => ({
-          kind: 'benchmark',
-          levelId: entrant.levelId,
-          entrant,
-          theme,
-          configuration: configurations.get(entrant.configurationId),
-          entrantIndex,
-        }));
-      if (records.length > 0) bands.push({ key: `${version.benchmarkVersion}:${theme.id}`, theme, records });
-    }
+  for (const theme of rankCatalog.themes) {
+    const records = rankCatalog.entrants
+      .map((entrant, entrantIndex) => ({ entrant, entrantIndex }))
+      .filter(({ entrant }) => entrant.themeId === theme.id && playable.has(entrant.levelId))
+      .sort((first, second) => first.entrant.generationCost - second.entrant.generationCost)
+      .map(({ entrant, entrantIndex }): BenchmarkRecord => ({
+        kind: 'benchmark',
+        levelId: entrant.levelId,
+        entrant,
+        theme,
+        configuration: configurations.get(entrant.configurationId),
+        entrantIndex,
+      }));
+    if (records.length > 0) bands.push({ key: theme.id, theme, records });
   }
 
   return bands;
@@ -604,19 +602,18 @@ function configOptionsFrom(bands: ThemeBand[]): ConfigOption[] {
     }));
 }
 
-/** Apply the levels-page filters. Retired themes stay hidden until asked for;
- * a non-empty configuration selection keeps only runs from those configurations
- * and drops any theme band left empty. */
+/** Apply the levels-page filters. Retired themes and retired entrants stay
+ * hidden until asked for; a non-empty configuration selection keeps only runs
+ * from those configurations and drops any theme band left empty. */
 function filterBands(bands: ThemeBand[], showRetired: boolean, configs: ReadonlySet<string>): ThemeBand[] {
   const result: ThemeBand[] = [];
   for (const band of bands) {
-    if (band.theme.unscheduled === true && !showRetired) continue;
-    if (configs.size === 0) {
-      result.push(band);
-      continue;
-    }
-    const records = band.records.filter((record) => configs.has(record.entrant.configurationId));
-    if (records.length > 0) result.push({ ...band, records });
+    if (band.theme.retired === true && !showRetired) continue;
+    const visible = band.records.filter((record) => {
+      if (record.entrant.retired === true && !showRetired) return false;
+      return configs.size === 0 || configs.has(record.entrant.configurationId);
+    });
+    if (visible.length > 0) result.push({ ...band, records: visible });
   }
   return result;
 }

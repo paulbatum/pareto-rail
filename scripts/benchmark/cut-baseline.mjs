@@ -85,9 +85,9 @@ async function reduceRankCatalog(worktree) {
   if (!await pathExists(catalogPath)) return;
   await fs.writeFile(catalogPath, `${JSON.stringify({
     generatedAt: new Date().toISOString(),
-    activeBenchmarkVersion: 'rank-catalog-scrubbed',
     configurations: [],
-    versions: [],
+    themes: [],
+    entrants: [],
   }, null, 2)}\n`, 'utf8');
 }
 

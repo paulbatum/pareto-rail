@@ -65,7 +65,6 @@ export interface RevealEntrant extends PreVoteEntrant {
 
 export interface MatchupAssignment {
   matchupId: string;
-  benchmarkVersion: string;
   theme: BenchmarkTheme;
   a: PreVoteEntrant;
   b: PreVoteEntrant;

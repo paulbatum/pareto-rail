@@ -4,13 +4,13 @@ import { randomUUID } from 'node:crypto';
 import { getPrismaClient } from '../../server/prisma.ts';
 import { handleRankStatsRequest, handleRankVotesRequest } from '../../server/rank-http.ts';
 import { hashIdempotencyKey, hashParticipant } from '../../server/rank-votes.ts';
-import { activeCatalogVersion, rankCatalog } from '../../src/benchmark/catalog.ts';
+import { rankCatalog, schedulingPool } from '../../src/benchmark/catalog.ts';
 import { pairId } from '../../src/benchmark/scheduler.ts';
 
 const prisma = getPrismaClient();
-const version = activeCatalogVersion(rankCatalog);
-const theme = version?.themes[0];
-const entrants = version?.entrants.filter((entrant) => entrant.themeId === theme?.id).slice(0, 2) ?? [];
+const pool = schedulingPool(rankCatalog);
+const theme = pool.themes[0];
+const entrants = pool.entrants.filter((entrant) => entrant.themeId === theme?.id).slice(0, 2);
 assert.ok(theme && entrants.length === 2, 'the published catalog needs two entrants for a vote test');
 
 const [a, b] = entrants;
@@ -19,7 +19,7 @@ const matchupId = pairId(theme.id, a.levelId, b.levelId);
 const payload = {
   matchupId,
   participantId,
-  benchmarkVersion: rankCatalog.activeBenchmarkVersion,
+  benchmarkVersion: 'rank-catalog-v2',
   themeId: theme.id,
   aLevelId: a.levelId,
   bLevelId: b.levelId,
@@ -72,8 +72,8 @@ assert.equal(emptyVersion.status, 400, 'a present-but-empty benchmarkVersion was
 const forged = await vote({ ...payload, matchupId: `${theme.id}:forged__pair` });
 assert.equal(forged.status, 422);
 
-const otherTheme = version?.themes.find((candidate) => candidate.id !== theme?.id);
-const otherEntrant = version?.entrants.find((entrant) => entrant.themeId === otherTheme?.id);
+const otherTheme = pool.themes.find((candidate) => candidate.id !== theme?.id);
+const otherEntrant = pool.entrants.find((entrant) => entrant.themeId === otherTheme?.id);
 assert.ok(otherTheme && otherEntrant);
 const wrongTheme = await vote({ ...payload, bLevelId: otherEntrant.levelId });
 assert.equal(wrongTheme.status, 422);
