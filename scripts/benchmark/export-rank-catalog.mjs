@@ -241,9 +241,9 @@ function readDescriptor(entrant) {
   return descriptor;
 }
 
-// Build one entrant record from its run manifest. A live entrant also carries a
-// thumbnail from its promoted level descriptor; a retired one has no level module
-// on disk, so it drops the descriptor and the site renders a thumbnail fallback.
+// Build one entrant record from its run manifest. An entrant with a promoted
+// level module also carries a thumbnail from its descriptor; without one the
+// descriptor is skipped and the site renders a thumbnail fallback.
 export function buildEntrant(entrant, { includeThumbnail }) {
   const manifest = runManifest(entrant);
   const cost = generationCost(entrant, manifest);
@@ -321,8 +321,11 @@ export function buildCatalog(publication, generatedAt) {
     const accepted = new Set(theme.acceptedBaselines ?? []);
     for (const entrant of [...themeEntrants].sort((left, right) => left.levelId.localeCompare(right.levelId))) {
       if (entrant.retired) {
+        // A retired entrant whose level module is still promoted keeps its
+        // thumbnail and stays playable; one whose module was deleted publishes
+        // without a thumbnail and the site renders its fallback.
         entrants.push(fs.existsSync(manifestPathFor(entrant))
-          ? buildEntrant(entrant, { includeThumbnail: false })
+          ? buildEntrant(entrant, { includeThumbnail: promotedDirectory(entrant.levelId) })
           : historicalEntrantFor(entrant));
         continue;
       }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T00:53:47.237Z",
+  "generatedAt": "2026-07-22T00:58:36.418Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -231,6 +231,38 @@
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
     {
+      "levelId": "mass-driver-9281",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-high-b20",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo, $20 budget",
+      "generationCost": 11.221407,
+      "run": {
+        "generationWallTimeSeconds": 2034.929,
+        "totalWallTimeSeconds": 2055.474,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.144.1"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "orchestrate",
+            "inputTokens": 391769,
+            "outputTokens": 72063,
+            "cacheReadTokens": 14201344,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 24926
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/mass-driver-9281/hero.avif",
+      "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
       "levelId": "mass-driver-bczy",
       "themeId": "mass-driver",
       "configurationId": "codex-sol-terra-delegation",
@@ -268,8 +300,108 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-bczy/hero.avif",
+      "retired": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "mass-driver-esvz",
+      "themeId": "mass-driver",
+      "configurationId": "claude-fable-5-high-b20",
+      "modelName": "Claude Fable 5",
+      "workflowName": "solo, $20 budget",
+      "generationCost": 23.398333,
+      "run": {
+        "generationWallTimeSeconds": 1496.179,
+        "totalWallTimeSeconds": 1683.44,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.207"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "orchestrate",
+            "inputTokens": 110,
+            "outputTokens": 117302,
+            "cacheReadTokens": 11926273,
+            "cacheWriteTokens": 280293,
+            "usageSource": "agreed",
+            "costUsd": 23.398333
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/mass-driver-esvz/hero.avif",
+      "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
+      "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "mass-driver-o9ok",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-4-8-high",
+      "modelName": "Claude Opus 4.8",
+      "workflowName": "solo",
+      "generationCost": 30.4074865,
+      "run": {
+        "generationWallTimeSeconds": 2892.224,
+        "totalWallTimeSeconds": 3106.11,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.216"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-4-8",
+            "role": "solo",
+            "inputTokens": 6177,
+            "outputTokens": 235732,
+            "cacheReadTokens": 39857943,
+            "cacheWriteTokens": 455433,
+            "usageSource": "agreed",
+            "costUsd": 30.4074865
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/mass-driver-o9ok/hero.avif",
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271"
+    },
+    {
+      "levelId": "mass-driver-rqki",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-4-8-high-b20",
+      "modelName": "Claude Opus 4.8",
+      "workflowName": "solo, $20 budget",
+      "generationCost": 21.190755,
+      "run": {
+        "generationWallTimeSeconds": 2117.833,
+        "totalWallTimeSeconds": 2326.588,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.216"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-4-8",
+            "role": "orchestrate",
+            "inputTokens": 2903,
+            "outputTokens": 188241,
+            "cacheReadTokens": 24888570,
+            "cacheWriteTokens": 402593,
+            "usageSource": "agreed",
+            "costUsd": 21.190755
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/mass-driver-rqki/hero.avif",
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271"
     },
     {
       "levelId": "mass-driver-vyxj",
@@ -344,8 +476,42 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-wo4m/hero.avif",
+      "retired": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "skyhook-560p",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-4-8-high-b20",
+      "modelName": "Claude Opus 4.8",
+      "workflowName": "solo, $20 budget",
+      "generationCost": 26.4612075,
+      "run": {
+        "generationWallTimeSeconds": 2862.792,
+        "totalWallTimeSeconds": 3084.951,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.216"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-4-8",
+            "role": "orchestrate",
+            "inputTokens": 9286,
+            "outputTokens": 242383,
+            "cacheReadTokens": 31641325,
+            "cacheWriteTokens": 453454,
+            "usageSource": "agreed",
+            "costUsd": 26.4612075
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-560p/hero.avif",
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271"
     },
     {
       "levelId": "skyhook-81u5",
@@ -385,6 +551,7 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-81u5/hero.avif",
+      "retired": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -420,6 +587,39 @@
       "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "skyhook-ggl2",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-4-8-high",
+      "modelName": "Claude Opus 4.8",
+      "workflowName": "solo",
+      "generationCost": 29.769308,
+      "run": {
+        "generationWallTimeSeconds": 2902.74,
+        "totalWallTimeSeconds": 2977.256,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.217"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-4-8",
+            "role": "solo",
+            "inputTokens": 253,
+            "outputTokens": 200131,
+            "cacheReadTokens": 41310036,
+            "cacheWriteTokens": 410975,
+            "usageSource": "agreed",
+            "costUsd": 29.769308
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-ggl2/hero.avif",
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271"
     },
     {
       "levelId": "skyhook-lkor",
@@ -461,8 +661,74 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-lkor/hero.avif",
+      "retired": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "skyhook-loyy",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-high-b20",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo, $20 budget",
+      "generationCost": 18.012915,
+      "run": {
+        "generationWallTimeSeconds": 2794.419,
+        "totalWallTimeSeconds": 2855.27,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.144.1"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "orchestrate",
+            "inputTokens": 734409,
+            "outputTokens": 97677,
+            "cacheReadTokens": 22821120,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 30301
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-loyy/hero.avif",
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271"
+    },
+    {
+      "levelId": "skyhook-p46c",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-high-b20",
+      "modelName": "Claude Fable 5",
+      "workflowName": "solo, $20 budget",
+      "generationCost": 32.239027,
+      "run": {
+        "generationWallTimeSeconds": 2261.452,
+        "totalWallTimeSeconds": 2312.562,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.217"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "orchestrate",
+            "inputTokens": 117,
+            "outputTokens": 187514,
+            "cacheReadTokens": 15023657,
+            "cacheWriteTokens": 391925,
+            "usageSource": "agreed",
+            "costUsd": 32.239027
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-p46c/hero.avif",
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271"
     },
     {
       "levelId": "skyhook-snxd",

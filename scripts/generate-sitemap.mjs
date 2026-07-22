@@ -61,9 +61,9 @@ function rankCatalogPlayableIds() {
   if (!Array.isArray(catalog.entrants)) fail('Rank catalog has no entrants array.');
   const ids = new Set();
   for (const entrant of catalog.entrants) {
-    // Retired entrants keep a catalog record for historical results but their
-    // level module is deleted, so /play/<id> no longer renders them.
-    if (entrant.retired) continue;
+    // A retired entrant whose level module was deleted no longer renders at
+    // /play/<id>; one still promoted keeps its thumbnail and stays playable.
+    if (entrant.retired && !entrant.thumbnailPath) continue;
     if (typeof entrant.levelId === 'string' && entrant.levelId) ids.add(entrant.levelId);
   }
   if (ids.size === 0) fail('Rank catalog produced zero playable entrant ids.');

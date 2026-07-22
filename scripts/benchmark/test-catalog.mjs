@@ -90,17 +90,18 @@ const liveTheme = tampered.themes.find((theme) => !theme.retired && tampered.ent
 liveTheme.acceptedBaselines = ['0'.repeat(40)];
 assert.throws(() => buildCatalog(tampered, new Date().toISOString()), /not an accepted baseline/, 'an unaccepted entrant baseline fails the export');
 
-// Every live (non-retired) catalog entrant must resolve to a promoted level module on disk;
-// retired rows are gallery-only and intentionally have no directory. If a retired flag is flipped
-// (or a row is promoted without its payload), this bites here instead of at level-load time.
+// Every live (non-retired) catalog entrant must resolve to a promoted level module on disk.
+// A retired row may keep its module (still playable history) or have none (gallery-only,
+// published without a thumbnail). If a module-less row is flipped live (or a row is promoted
+// without its payload), this bites here instead of at level-load time.
 assert.deepEqual(
   await benchmarkModuleErrors(rankCatalog),
   [],
   'every live catalog entrant resolves to a promoted level module',
 );
 const flippedRetired = structuredClone(rankCatalog);
-const retiredEntrant = (flippedRetired.entrants ?? []).find((entrant) => entrant.retired);
-assert.ok(retiredEntrant, 'catalog fixture retains at least one retired entrant to exercise the negative path');
+const retiredEntrant = (flippedRetired.entrants ?? []).find((entrant) => entrant.retired && !entrant.thumbnailPath);
+assert.ok(retiredEntrant, 'catalog fixture retains at least one module-less retired entrant to exercise the negative path');
 retiredEntrant.retired = false;
 assert.ok(
   (await benchmarkModuleErrors(flippedRetired)).some((error) => error.includes(retiredEntrant.levelId)),
