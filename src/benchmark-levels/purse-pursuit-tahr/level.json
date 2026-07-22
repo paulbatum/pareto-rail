@@ -1,0 +1,9 @@
+{
+  "id": "purse-pursuit-tahr",
+  "title": "Purse Pursuit",
+  "contentImages": {
+    "overview": "/level-content/purse-pursuit-tahr/overview.avif",
+    "start": "/level-content/purse-pursuit-tahr/start.avif",
+    "hero": "/level-content/purse-pursuit-tahr/hero.avif"
+  }
+}
