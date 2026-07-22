@@ -50,6 +50,10 @@ A shared `/match?a=<id>&b=<id>` link unfurls on social platforms with a composit
 
 To see a card while working on it, `node scripts/render-match-card.mjs [<id-a> <id-b>]` renders the composite to `tmp/match-card.png` without a deploy (needs the generated hero JPEGs in `dist/`).
 
+## Default social card
+
+`public/social/card.jpg` is the committed 1200×630 image every page without its own card unfurls with, including the homepage (`index.html`) and the match card's fallback. It uses the match layout — two heroes and a VS badge — plus a caption bar, since it is not blind. Regenerate it from any two levels with `node scripts/render-site-card.mjs <id-a> <id-b>`; the script reads the committed AVIF heroes directly, so no build is needed, and `--out <path>` renders a preview elsewhere instead of overwriting the card. Changing the card's dimensions means updating the `og:image:width`/`og:image:height` tags in `index.html`.
+
 ## Homepage bundle budget
 
 `scripts/check-bundle-budget.mjs` runs at the end of `npm run build` and measures the gzip size of the eager homepage graph — the entry chunk plus everything it *statically* imports (JS and CSS), i.e. what a first visitor downloads before any lazy route or `LazyGameFrame` loads. Small growth is allowed; a jump past `MAX_GROWTH_RATIO` (15%) over the seeded baseline fails the build, which is what catches a heavy feature accidentally reaching the shell instead of sitting behind `React.lazy`. When growth is intentional, re-seed `BASELINE_GZIP_BYTES` to the size the failure message reports. The check relies on `build.manifest` being enabled in `vite.config.ts`.
