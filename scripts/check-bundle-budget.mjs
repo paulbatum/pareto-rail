@@ -19,7 +19,7 @@ const manifestPath = path.join(root, 'dist', '.vite', 'manifest.json');
 
 // Seed: measured eager gzip size of the homepage graph. Bump this when a real
 // feature legitimately grows the shell (the failure message prints the value).
-const BASELINE_GZIP_BYTES = 118_081;
+const BASELINE_GZIP_BYTES = 135_304;
 
 // How much drift is tolerated before the build fails. "A little" growth passes;
 // big jumps do not.

@@ -218,6 +218,18 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .match-theme { margin: 0 0 12px; }
 .match-theme .match-theme-title { color: var(--ink); font-size: 13px; font-weight: 600; }
 .match-theme .prompt-details { margin: 8px 0 0; }
+.match-pick-error { max-width: 700px; margin: 0 0 20px; padding: 12px 16px; color: var(--soft-text); background: var(--card); border: 1px solid var(--hairline); border-left: 3px solid var(--accent); font-size: 14px; line-height: 1.55; }
+.match-picker { margin-top: 8px; }
+.match-picker .levels-band:first-child { border-top: 0; }
+.match-pick-card { appearance: none; width: 100%; padding: 0; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.match-pick-card.is-selected { border-color: var(--accent); box-shadow: 4px 4px 0 var(--accent-tint); }
+.match-pick-badge { position: absolute; top: 10px; left: 10px; display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; color: var(--paper); background: var(--accent); font: 700 12px var(--mono); }
+.match-pick-bar { position: sticky; bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-top: 24px; padding: 14px 18px; background: var(--card); border: 1px solid var(--accent); box-shadow: 4px 4px 0 var(--accent-tint); }
+.match-pick-summary { margin: 0; color: var(--body-text); font-size: 13px; }
+.match-pick-summary .run-id { color: var(--ink); font: 600 12px var(--mono); }
+.match-pick-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.match-url-hint { margin: 24px 0 0; color: var(--muted); font-size: 12px; }
+.match-url-hint code { font-family: var(--mono); }
 .vote-heading { margin: 28px 0 14px; color: var(--ink); font-size: 22px; }
 .vote-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .vote-grid .button { justify-content: space-between; min-height: 56px; font-size: 11px; padding: 0 20px; }

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RunSummary } from '../../engine/scoring';
 import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, VoteVerdict } from '../../benchmark/types';
-import type { RankCatalogTheme } from '../../benchmark/catalog';
+import { rankCatalog, type RankCatalogTheme } from '../../benchmark/catalog';
+import { benchmarkLevelCatalog } from '../../levels';
 import { CustomMatchController, type MatchError, type MatchLaunch } from '../match';
 import { copyText } from '../clipboard';
 import { absoluteUrl } from '../seo';
@@ -41,7 +42,7 @@ export function MatchPage({ route, onNavigate }: MatchPageProps) {
     controller.completeRun(side, summary.score);
   }, [controller, route.playSide]);
 
-  if (!controller.valid) return <MatchErrorPanel error={controller.error!} onNavigate={onNavigate} />;
+  if (!controller.valid) return <MatchSetupPage error={controller.error!} onNavigate={onNavigate} />;
   if (launch) return <MatchGame launch={launch} backPath={matchPath(route.a!, route.b!)} onNavigate={onNavigate} onRunEnd={handleRunEnd} />;
   return <MatchContent controller={controller} state={controller.state!} onNavigate={onNavigate} />;
 }
@@ -125,25 +126,119 @@ function MatchRevealActions({ controller, onNavigate }: { controller: CustomMatc
   </div>;
 }
 
-function MatchErrorPanel({ error, onNavigate }: { error: MatchError; onNavigate: (path: string) => void }) {
-  const detail = error.kind === 'missing'
-    ? 'Add both levels to the address: /match?a=<level-id>&b=<level-id>.'
+function MatchSetupPage({ error, onNavigate }: { error: MatchError; onNavigate: (path: string) => void }) {
+  // `missing` is the bare /match landing; `same`/`unknown` came from a bad link,
+  // so they get a short notice above the same picker.
+  const notice = error.kind === 'missing'
+    ? null
     : error.kind === 'same'
       ? `A match needs two different levels, but both sides point at “${error.id}”.`
       : `These level ids aren’t in the catalog: ${error.ids.join(', ')}.`;
   return (
     <section className="page-panel rank-panel">
       <p className="eyebrow">Custom match</p>
-      <h1>Set up a custom match</h1>
-      <p className="lede">A custom match plays two levels head-to-head, then reveals which model built each. Nothing you do here is recorded.</p>
-      <div className="empty-state">
-        <span className="empty-glyph">◌</span>
-        <h2>Check the link</h2>
-        <p>{detail}</p>
-        <p>Browse valid level ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>.</p>
-      </div>
+      <h1>Build a custom match</h1>
+      <p className="lede">Pick two levels to play head-to-head, then reveal which model built each. Nothing here is recorded — it’s just for fun.</p>
+      {notice && <p className="match-pick-error" role="alert">{notice}</p>}
+      <MatchPicker onNavigate={onNavigate} />
+      <p className="match-url-hint">Prefer a link? Use <code>/match?a=&lt;level-id&gt;&amp;b=&lt;level-id&gt;</code> — browse ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>.</p>
     </section>
   );
+}
+
+type PickerEntry = { levelId: string; thumbnailPath?: string };
+type PickerBand = { theme: RankCatalogTheme; entries: PickerEntry[] };
+
+/** Playable catalog entrants grouped into theme bands, mirroring the levels
+ * gallery's `themeBands`: only entrants whose level module is present appear, so
+ * module-less retired entrants are excluded. Retired and experimental themes all
+ * show — the picker has no category filter. */
+function pickerBands(): PickerBand[] {
+  const playable = new Set(benchmarkLevelCatalog.map((level) => level.id));
+  const bands: PickerBand[] = [];
+  for (const theme of rankCatalog.themes) {
+    const entries = rankCatalog.entrants
+      .filter((entrant) => entrant.themeId === theme.id && playable.has(entrant.levelId))
+      .sort((first, second) => first.generationCost - second.generationCost)
+      .map((entrant): PickerEntry => ({ levelId: entrant.levelId, ...(entrant.thumbnailPath ? { thumbnailPath: entrant.thumbnailPath } : {}) }));
+    if (entries.length > 0) bands.push({ theme, entries });
+  }
+  return bands;
+}
+
+/** Blind, transient level picker. Cards show only the thumbnail and level id —
+ * never model or cost — so the person can still play the match blind. First pick
+ * is side A, second is side B; picking a third replaces side B. */
+function MatchPicker({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const bands = useMemo(pickerBands, []);
+  const [selected, setSelected] = useState<readonly string[]>([]);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
+
+  const toggle = (levelId: string) => {
+    setCopyStatus('idle');
+    setSelected((current) => {
+      if (current.includes(levelId)) return current.filter((id) => id !== levelId);
+      if (current.length < 2) return [...current, levelId];
+      return [current[0], levelId];
+    });
+  };
+
+  const [a, b] = selected;
+  const ready = selected.length === 2;
+  const copy = async () => {
+    try {
+      await copyText(absoluteUrl(matchPath(a, b)));
+      setCopyStatus('copied');
+    } catch {
+      setCopyStatus('failed');
+    }
+  };
+
+  return (
+    <div className="match-picker">
+      {bands.map((band) => (
+        <section className="levels-band" key={band.theme.id}>
+          <div className="levels-band-head"><h2>{band.theme.title}<PickerThemeTag theme={band.theme} /> — {band.entries.length} level{band.entries.length === 1 ? '' : 's'}</h2></div>
+          <div className="levels-grid">
+            {band.entries.map((entry) => {
+              const index = selected.indexOf(entry.levelId);
+              return (
+                <button key={entry.levelId} type="button" className={`gallery-card match-pick-card${index >= 0 ? ' is-selected' : ''}`} aria-pressed={index >= 0} onClick={() => toggle(entry.levelId)}>
+                  <span className="gallery-thumb">
+                    <PickerThumbnail path={entry.thumbnailPath} />
+                    {index >= 0 && <b className="match-pick-badge">{index === 0 ? 'A' : 'B'}</b>}
+                  </span>
+                  <span className="gallery-copy"><span className="name run-id">{entry.levelId}</span></span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+      {ready && (
+        <div className="match-pick-bar">
+          <p className="match-pick-summary">Level A: <span className="run-id">{a}</span> · Level B: <span className="run-id">{b}</span></p>
+          <div className="match-pick-actions">
+            <button className="button primary" type="button" onClick={() => onNavigate(matchPath(a, b))}>Start match</button>
+            <button className="button" type="button" onClick={() => void copy()}>{copyStatus === 'copied' ? 'Link copied' : copyStatus === 'failed' ? 'Copy failed — try again' : 'Copy share link'}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PickerThemeTag({ theme }: { theme: RankCatalogTheme }) {
+  if (theme.retired === true) return <span className="retired-tag">Retired</span>;
+  if (theme.experimental === true) return <span className="experimental-tag">Experimental</span>;
+  return null;
+}
+
+function PickerThumbnail({ path }: { path?: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [path]);
+  if (!path || failed) return <span className="thumbnail-fallback"><span>No thumbnail</span></span>;
+  return <img src={path} alt="" loading="lazy" onError={() => setFailed(true)} />;
 }
 
 function MatchGame({ launch, backPath, onNavigate, onRunEnd }: { launch: MatchLaunch; backPath: string; onNavigate: (path: string) => void; onRunEnd: (summary: RunSummary, frame: HTMLElement, context?: GameLaunchContext) => void | Promise<void> }) {
