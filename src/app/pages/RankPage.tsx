@@ -5,12 +5,12 @@ import type { ComparisonState, MatchupSide, RevealPayload, VoteVerdict } from '.
 import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { entrantLabel, workflowQualifier } from '../../benchmark/identity';
 import { CatalogBenchmarkApi, type CompletedMatchup } from '../../benchmark/catalog-api';
-import { allCatalogEntrants, findCatalogTheme, rankCatalog, type RankCatalogConfiguration } from '../../benchmark/catalog';
+import { findCatalogTheme, rankCatalog } from '../../benchmark/catalog';
 import { BenchmarkLocalStore } from '../../benchmark/storage';
 import { RankController, type RankLaunch } from '../rank';
 import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
-import { ModelUsage } from '../components/ModelUsage';
+import { CompareCard, GenerationDetails, RevealStage, VersusGrid, VoteButtons } from '../components/matchup';
 import type { AppRoute } from '../router';
 import { GameFrame } from '../components/LazyGameFrame';
 import { loadRankLevel } from '../rank-level';
@@ -118,71 +118,21 @@ function RankStage({ controller, state, lastUndoneVerdict, onLaunch, onVote, onN
     const priorRun = side === 'a' ? runA : runB;
     const completedRuns = state.playCounts[side] > 0;
     const label = completedRuns ? 'Replay' : 'Play';
-    const emphasized = nextSide === side ? ' is-next' : '';
-    return <article className={`compare-card${emphasized}`}>
-      <h2>Level {side.toUpperCase()}</h2>
-      <LevelThumbnail side={side} path={state.assignment[side].thumbnailPath} />
+    return <CompareCard side={side} thumbnailPath={state.assignment[side].thumbnailPath}
+      className={nextSide === side ? 'is-next' : undefined}
+      primary={nextSide === side || freshAssignment}
+      buttonLabel={`${label} Level ${side.toUpperCase()}`}
+      onLaunch={() => onLaunch(side)}>
       <p className="compare-stats">{completedRuns && <span>Completed run</span>}{priorRun?.score !== undefined && <span className="run-score">Best score: {priorRun.score.toLocaleString('en-US')}</span>}{recentSide === side && <span className="run-recent">Played most recently</span>}</p>
-      <button className={`button${nextSide === side || freshAssignment ? ' primary' : ''}`} type="button" onClick={() => onLaunch(side)}>{label} Level {side.toUpperCase()}</button>
-    </article>;
+    </CompareCard>;
   };
-  const versusLayout = <div className="compare-grid">{card('a')}<div className="versus-divider" aria-label="Versus"><span>VS</span></div>{card('b')}</div>;
+  const versusLayout = <VersusGrid a={card('a')} b={card('b')} />;
 
   if (state.kind === 'assignment') return versusLayout;
   if (state.kind === 'playing-a' || state.kind === 'playing-b') return <div className="assignment-card"><h2>Level {state.kind === 'playing-a' ? 'A' : 'B'} is in progress</h2><p>Your run will be counted when it ends. Refreshing returns here without counting it.</p></div>;
-  if (state.kind === 'ready-to-vote') return <>{versusLayout}{import.meta.env.DEV && lastUndoneVerdict && <p className="debug-undo-notice" role="status">Last verdict undone: <strong>{verdictText(lastUndoneVerdict)}</strong></p>}<h2 className="vote-heading">Which run felt better?</h2><div className="vote-grid" role="group" aria-label="Choose a verdict"><button className="button primary" type="button" onClick={() => onVote('a-better')}>A is better</button><button className="button primary" type="button" onClick={() => onVote('b-better')}>B is better</button><button className="button" type="button" onClick={() => onVote('both-good')}>Both are good</button><button className="button" type="button" onClick={() => onVote('both-bad')}>Both are bad</button></div></>;
+  if (state.kind === 'ready-to-vote') return <>{versusLayout}{import.meta.env.DEV && lastUndoneVerdict && <p className="debug-undo-notice" role="status">Last verdict undone: <strong>{verdictText(lastUndoneVerdict)}</strong></p>}<h2 className="vote-heading">Which run felt better?</h2><VoteButtons onVote={onVote} /></>;
   if (state.kind === 'reveal') return <RevealStage reveal={state.reveal} onNext={onNext} />;
   return <div className="assignment-card"><h2>Saving your vote…</h2></div>;
-}
-
-function RevealStage({ reveal, onNext }: { reveal: RevealPayload; onNext: () => void }) {
-  const card = (side: MatchupSide) => {
-    const entrant = reveal[side];
-    const marker = revealMarker(reveal.vote.verdict, side);
-    return <article className={`reveal-card${marker.className}`}>
-      {marker.label && <span className="reveal-tag">{marker.label}</span>}
-      <LevelThumbnail side={side} path={entrant.thumbnailPath} />
-      <h2>Level {side.toUpperCase()}</h2>
-      <p className="identity">{entrantLabel({ modelName: entrant.modelName, snapshotLabel: entrant.snapshotLabel, workflowName: entrant.workflowName })}</p>
-      <p className="cost"><strong className="cost-value">${entrant.generationCost.toFixed(2)}</strong><span className="cost-label">measured generation cost</span></p>
-      <GenerationDetails entrant={entrant} />
-    </article>;
-  };
-  return <><div className="reveal-grid">{card('a')}{card('b')}</div><div className="reveal-actions"><button className="button primary" type="button" onClick={onNext}>Next matchup</button></div></>;
-}
-
-function GenerationDetails({ entrant, expanded = false }: { entrant: RevealPayload['a']; expanded?: boolean }) {
-  const published = allCatalogEntrants(rankCatalog).find((candidate) => candidate.levelId === entrant.levelId);
-  const run = entrant.run ?? published?.run;
-  if (!run) return null;
-  const configuration = configurationFor(entrant.configurationId);
-  const Shell = expanded ? 'div' : 'details';
-  return <Shell className={`run-details${expanded ? ' expanded' : ''}`}>
-    {!expanded && <summary><span>Generation details</span><span>{formatDuration(run.generationWallTimeSeconds)} · {run.models.length} model{run.models.length === 1 ? '' : 's'}</span></summary>}
-    <div className="run-details-body">
-      <dl className="run-facts">
-        <div><dt>Level ID</dt><dd>{entrant.levelId}</dd></div>
-        <div><dt>Generation</dt><dd title={`${run.generationWallTimeSeconds.toLocaleString('en-US')} seconds`}>{formatDuration(run.generationWallTimeSeconds)}</dd></div>
-        <div><dt>Full run</dt><dd title={`${run.totalWallTimeSeconds.toLocaleString('en-US')} seconds`}>{formatDuration(run.totalWallTimeSeconds)}</dd></div>
-        <div><dt>Result</dt><dd>{formatRunResult(run.result)}</dd></div>
-        {run.harness && <div><dt>Harness</dt><dd>{run.harness.name} {run.harness.version}</dd></div>}
-      </dl>
-      <div className="model-usage-list" aria-label="Token usage by model">
-        <p>Token usage by model</p>
-        {run.models.map((model) => <ModelUsage key={`${model.modelName}-${model.role}`} model={model} showRole={run.models.length > 1} />)}
-      </div>
-      {configuration && <WorkflowDetails configuration={configuration} />}
-      <p className="run-data-note">Generation time covers the model session. Full run time also includes deterministic setup, sealing, and verification. Total input counts every token the model read, cached or not, since each harness bills first-sight tokens differently. Output includes reasoning tokens.</p>
-    </div>
-  </Shell>;
-}
-
-function WorkflowDetails({ configuration }: { configuration: RankCatalogConfiguration }) {
-  return <div className="workflow-details">
-    <p><strong>{entrantLabel({ modelName: configuration.modelName, workflowName: configuration.workflowName })}</strong> {configuration.workflowSummary}</p>
-    <dl><div><dt>Primary</dt><dd>{configuration.primaryModel} · {configuration.effort} effort</dd></div>{configuration.delegateModel && <div><dt>Requested delegate</dt><dd>{configuration.delegateModel} · {configuration.delegateEffort} effort</dd></div>}</dl>
-    {configuration.delegationGuidance && <blockquote><span>Delegation guidance</span>{configuration.delegationGuidance}</blockquote>}
-  </div>;
 }
 
 const CURVE_CHART = { width: 720, height: 410, left: 72, right: 24, top: 42, bottom: 68 } as const;
@@ -395,26 +345,6 @@ function PersonalCurveTable({ points, showFrontier }: { points: readonly Persona
   })}</tbody></table></div>;
 }
 
-function configurationFor(configurationId?: string): RankCatalogConfiguration | undefined {
-  return configurationId ? rankCatalog.configurations?.find((configuration) => configuration.id === configurationId) : undefined;
-}
-
-function formatDuration(seconds: number): string {
-  const rounded = Math.round(seconds);
-  const hours = Math.floor(rounded / 3600);
-  const minutes = Math.floor((rounded % 3600) / 60);
-  const remainingSeconds = rounded % 60;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${remainingSeconds}s`;
-  return `${remainingSeconds}s`;
-}
-
-function formatRunResult(result: string): string {
-  if (result === 'completed') return 'Completed';
-  if (result === 'timed-out') return 'Timed out · playable output retained';
-  return result.replaceAll('-', ' ');
-}
-
 function curveStatusNarrative(curve: PersonalCurve): string {
   if (curve.points.every((point) => point.status === 'stable')) return 'All settled';
   const pending = curve.points.filter((point) => point.status === 'pending').length;
@@ -509,12 +439,6 @@ function spreadCurveLabels<T extends PlottedCurvePoint>(points: T[]): T[] {
   const overflow = Math.max(0, prior - (CURVE_CHART.height - CURVE_CHART.bottom - 12));
   if (overflow) for (const point of ordered) point.labelY -= overflow;
   return points;
-}
-
-function LevelThumbnail({ side, path }: { side: MatchupSide; path?: string }) {
-  const [failed, setFailed] = useState(false);
-  if (!path || failed) return <div className="thumbnail-fallback" aria-label={`Level ${side.toUpperCase()} thumbnail unavailable`}><span>Level {side.toUpperCase()}</span></div>;
-  return <img className="level-thumbnail" src={path} alt={`Anonymous Level ${side.toUpperCase()}`} onError={() => setFailed(true)} />;
 }
 
 function CompletedRankPage({ controller }: { controller: RankController }) {
@@ -626,13 +550,5 @@ function InterludeGame({ onNavigate, onReturn }: { onNavigate: (path: string) =>
     runEndContent={<section className="benchmark-invitation"><p>That was Helios. Back to the matchups when you’re ready.</p><div className="invitation-actions"><button className="button primary" type="button" onClick={onReturn}>Back to ranking</button></div></section>}
   />;
 }
-
-function revealMarker(verdict: VoteVerdict, side: MatchupSide): { className: string; label: string | null } {
-  if (verdict === 'both-good') return { className: ' is-picked', label: 'Your pick' };
-  if (verdict === 'both-bad') return { className: ' is-rejected', label: 'Not preferred' };
-  const picked = verdict === 'a-better' ? 'a' : 'b';
-  return picked === side ? { className: ' is-picked', label: 'Your pick' } : { className: '', label: null };
-}
-
 
 function verdictText(verdict: VoteVerdict) { return verdict === 'a-better' ? 'A is better' : verdict === 'b-better' ? 'B is better' : verdict === 'both-good' ? 'Both are good' : 'Both are bad'; }

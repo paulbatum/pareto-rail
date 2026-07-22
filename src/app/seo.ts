@@ -57,6 +57,13 @@ export function metaForRoute(route: AppRoute): RouteMeta {
       canonical: path,
     };
   }
+  if (route.kind === 'match') {
+    return {
+      title: 'Pareto Rail — Custom match',
+      description: `Play two Pareto Rail levels head-to-head and vote which felt better. ${FALLBACK_DESCRIPTION}`,
+      canonical: '/match',
+    };
+  }
   if (route.kind === 'notFound') {
     return { title: 'Pareto Rail — Not found', description: FALLBACK_DESCRIPTION, canonical: path };
   }
@@ -83,7 +90,8 @@ export function applyRouteHead(route: AppRoute): void {
   setMetaByProperty('og:description', meta.description);
   setMetaByName('twitter:title', meta.title);
   setMetaByName('twitter:description', meta.description);
-  setNoindex(route.kind === 'notFound');
+  // `/match` is an ephemeral, parameterized share link, not an indexable page.
+  setNoindex(route.kind === 'notFound' || route.kind === 'match');
 }
 
 function setMetaByName(name: string, content: string): void {

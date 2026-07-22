@@ -11,7 +11,7 @@ import { createPauseMenu } from '../ui/pause';
 import type { LevelDefinition } from '../engine/types';
 
 export type GameLaunchContext = {
-  source?: 'home' | 'play' | 'rank';
+  source?: 'home' | 'play' | 'rank' | 'match';
   levelId?: string;
   mode?: 'reference' | 'benchmark';
 };

@@ -5,9 +5,11 @@ import assert from 'node:assert/strict';
 import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
 import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, revealFromVote } from './catalog-api';
 import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
-import { mapVerdict, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
+import { mapVerdict, type ComparisonState, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
 import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogEntrant, type RankCatalogTheme, type SchedulingPool } from './catalog';
 import { selectPersonalCurveCatalog } from '../app/rank';
+import { CustomMatchController } from '../app/match';
+import { parseRoute, routePath } from '../app/router';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import { ComparisonStateMachine } from './state';
 import { BENCHMARK_PARTICIPANT_ID_KEY, BENCHMARK_STORAGE_VERSION, BenchmarkLocalStore, createMemoryStorage, type StorageEnvelope } from './storage';
@@ -60,6 +62,68 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   await testCatalogChangesRefreshReveals();
   testVoteValidationIsCatalogWide();
   await testApisAndStateMachine();
+  testMatchRouteParsing();
+  testCustomMatchController();
+}
+
+function testMatchRouteParsing(): void {
+  const parse = (search: string) => parseRoute({ pathname: '/match', search } as Location);
+  assert.deepEqual(parse('?a=lv-x&b=lv-y'), { kind: 'match', a: 'lv-x', b: 'lv-y', playSide: undefined });
+  assert.deepEqual(parse('?a=lv-x&b=lv-y&play=b'), { kind: 'match', a: 'lv-x', b: 'lv-y', playSide: 'b' });
+  // `play` is only honoured for the two sides; anything else is dropped.
+  const droppedPlay = parse('?a=lv-x&b=lv-y&play=c');
+  assert.equal(droppedPlay.kind === 'match' ? droppedPlay.playSide : 'unreachable', undefined);
+  // Missing params still resolve to the match route so the page can explain the shape.
+  assert.deepEqual(parse(''), { kind: 'match', a: undefined, b: undefined, playSide: undefined });
+  assert.equal(routePath({ kind: 'match', a: 'lv-x', b: 'lv-y' }), '/match');
+}
+
+function testCustomMatchController(): void {
+  const catalog: RankCatalog = {
+    generatedAt: 'test',
+    themes: [
+      { id: 'th', title: 'Theme', summary: 'S', prompt: 'P' },
+      { id: 'th2', title: 'Theme two', summary: 'S2', prompt: 'P2' },
+    ],
+    entrants: [
+      { levelId: 'lv-a', themeId: 'th', configurationId: 'c1', modelName: 'M1', workflowName: 'solo', generationCost: 1 },
+      { levelId: 'lv-b', themeId: 'th', configurationId: 'c2', modelName: 'M2', workflowName: 'solo', generationCost: 2 },
+      { levelId: 'lv-c', themeId: 'th2', configurationId: 'c3', modelName: 'M3', workflowName: 'solo', generationCost: 3 },
+    ],
+  };
+
+  assert.deepEqual(new CustomMatchController(undefined, 'lv-a', catalog).error, { kind: 'missing' });
+  assert.deepEqual(new CustomMatchController('lv-a', 'lv-a', catalog).error, { kind: 'same', id: 'lv-a' });
+  assert.deepEqual(new CustomMatchController('lv-a', 'nope', catalog).error, { kind: 'unknown', ids: ['nope'] });
+
+  const shared = new CustomMatchController('lv-a', 'lv-b', catalog);
+  assert.equal(shared.valid, true);
+  assert.equal(shared.sharedTheme?.id, 'th');
+  assert.equal(shared.assignment?.theme.id, 'th');
+  assert.equal(shared.assignment?.matchupId, 'custom:lv-a:lv-b');
+
+  // A full match runs entirely in memory: play both, vote, reveal.
+  shared.launch('a');
+  shared.completeRun('a', 100);
+  shared.launch('b');
+  shared.completeRun('b', 250);
+  const readyState: ComparisonState | null = shared.state;
+  assert.equal(readyState?.kind, 'ready-to-vote');
+  assert.equal(shared.bestScore('lv-a'), 100);
+  shared.submit('a-better');
+  const revealState: ComparisonState | null = shared.state;
+  assert.ok(revealState && revealState.kind === 'reveal');
+  assert.equal(revealState.reveal.vote.verdict, 'a-better');
+  assert.equal(revealState.reveal.a.levelId, 'lv-a');
+  assert.equal(revealState.reveal.b.generationCost, 2);
+
+  // Cross-theme falls back to the synthetic placeholder but keeps each side's real theme available.
+  const cross = new CustomMatchController('lv-a', 'lv-c', catalog);
+  assert.equal(cross.valid, true);
+  assert.equal(cross.sharedTheme, null);
+  assert.equal(cross.assignment?.theme.id, 'custom');
+  assert.equal(cross.themeForSide('a')?.id, 'th');
+  assert.equal(cross.themeForSide('b')?.id, 'th2');
 }
 
 function testPersonalCurve(): void {

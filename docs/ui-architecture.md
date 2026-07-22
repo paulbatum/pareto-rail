@@ -10,6 +10,14 @@ Client-side via the History API (`src/app/router.ts`). An unrecognized path reso
 
 `/levels` browses every level as a thumbnail gallery; `/levels/data` shows the catalog tree and full run records. Both are driven by the rank catalog and the built-in registry, so a benchmark level reaches these pages by being published to the catalog.
 
+## The `/match` page
+
+`/match?a=<level-id>&b=<level-id>` is a casual, shareable head-to-head. It mirrors the `/rank` flow — play both anonymous levels, vote which felt better, then the identities, cost, and run details are revealed — but **persists nothing**: no vote is recorded locally or remotely, no `localStorage` is written, and the personal curve is untouched. State lives only in memory (`CustomMatchController` in `src/app/match.ts`), so a refresh restarts the match by design. The page states the casual, unrecorded nature before the vote and again on the reveal.
+
+Eligibility is deliberately broader than the ranked scheduler: any entrant in the rank catalog resolves via `findCatalogEntrant`, including retired entrants and entrants of retired or experimental themes (which `schedulingPool` excludes). When both sides share a theme the header shows it; when they differ, each card shows its own theme title and prompt. Missing or invalid parameters render a friendly panel explaining the URL shape.
+
+The route is `robots: noindex` (see `applyRouteHead` in `src/app/seo.ts`) because each link is an ephemeral, parameterized share URL; it is intentionally absent from the sitemap and prerender scripts, which only enumerate the listed static routes. The compare cards, vote buttons, reveal cards, and generation details are shared with `/rank` through `src/app/components/matchup.tsx`.
+
 ## The `/analysis` pages
 
 `/analysis` lists every rollout analysis package committed under `benchmark/analysis/<level-id>/` (auto-discovered via Vite glob imports — no registry edit); `/analysis/<level-id>` is the explorer. The module lives in `src/app/analysis/`: `data.ts` loads a package's JSON lazily and resolves snapshot PNG URLs, `model.ts` builds the cross-file joins (agent lanes, event index, annotation attachment, the merged chronological stream), and five views render it — Story (narrative + chapters), Timeline (overview strip + virtualized event stream via `@tanstack/react-virtual`), Files (edit map + per-file history), Snapshots (reconstructed renders + provenance), and Run data (full mechanical record plus raw package JSON). The active view and focused event deep-link via `?view=` and `?event=`. Package format: `docs/analysis-package-format.md`.

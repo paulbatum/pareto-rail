@@ -6,6 +6,7 @@ import { AboutPage, HomePage, LeaderboardPage, NotFoundPage } from './pages/Publ
 import { LevelsPage } from './pages/LevelsPage';
 import { PlayRoute } from './pages/GamePage';
 import { RankPage } from './pages/RankPage';
+import { MatchPage } from './pages/MatchPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const AnalysisRoute = lazy(() => import('./analysis/AnalysisRoute').then((module) => ({ default: module.AnalysisRoute })));
@@ -45,6 +46,7 @@ function renderPage(route: AppRoute, onNavigate: (path: string) => void) {
   if (route.kind === 'play') return <PlayRoute route={route} onNavigate={onNavigate} />;
   if (route.kind === 'levels') return <LevelsPage route={route} onNavigate={onNavigate} />;
   if (route.kind === 'rank') return <RankPage route={route} onNavigate={onNavigate} />;
+  if (route.kind === 'match') return <MatchPage route={route} onNavigate={onNavigate} />;
   if (route.kind === 'analysis') return (
     <Suspense fallback={<section className="page-panel"><p className="eyebrow">Loading</p><h1>Preparing analysis…</h1></section>}>
       <AnalysisRoute route={route} onNavigate={onNavigate} />

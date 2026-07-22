@@ -5,6 +5,7 @@ export type AppRoute =
   | { kind: 'play'; levelId: string }
   | { kind: 'levels'; view: LevelsView }
   | { kind: 'rank'; playSide?: 'a' | 'b' }
+  | { kind: 'match'; a?: string; b?: string; playSide?: 'a' | 'b' }
   | { kind: 'analysis'; levelId?: string }
   | { kind: 'leaderboard' }
   | { kind: 'about' }
@@ -24,6 +25,16 @@ export function parseRoute(location: Location = window.location): AppRoute {
   if (path === '/rank') {
     const play = new URLSearchParams(location.search).get('play');
     return { kind: 'rank', playSide: play === 'a' || play === 'b' ? play : undefined };
+  }
+  if (path === '/match') {
+    const params = new URLSearchParams(location.search);
+    const play = params.get('play');
+    return {
+      kind: 'match',
+      a: params.get('a') ?? undefined,
+      b: params.get('b') ?? undefined,
+      playSide: play === 'a' || play === 'b' ? play : undefined,
+    };
   }
   if (path === '/analysis') return { kind: 'analysis' };
   if (path.startsWith('/analysis/')) return { kind: 'analysis', levelId: decodeURIComponent(path.slice('/analysis/'.length)) };
