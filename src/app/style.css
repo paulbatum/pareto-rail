@@ -354,6 +354,8 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-table tbody th strong, .curve-table tbody th span { display: block; }
 .curve-table tbody th strong { color: var(--ink); font-family: var(--sans); font-size: 14.5px; font-weight: 600; }
 .curve-table tbody th span { margin-top: 3px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
+.curve-table tbody th span.has-explainer { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; cursor: help; }
+.curve-table tbody th span.explainer-bubble, .explainer-bubble { position: fixed; z-index: 6; display: block; width: 290px; margin: 0; padding: 14px; color: var(--ink); font: 12.5px/1.55 var(--sans); letter-spacing: normal; text-transform: none; white-space: normal; background: var(--card); border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--hairline); pointer-events: none; }
 .curve-table tbody td { color: var(--body-text); }
 .curve-table .frontier-status { color: var(--accent); }
 

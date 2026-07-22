@@ -23,6 +23,8 @@ Before a level enters the pool it has to clear four mechanical gates: it must ty
 
 Cost is measured after each run by replaying the agent's full transcript - including any subagents it spawned - against per-model pricing. Some entrants bill real metered API spend; others run on subscription plans and are priced the same way for comparability.
 
+Some entrants run under a budget, shown in their label as an amount, for example "$20 budget". Those agents are told a budget exists and are informed of their spend as they work. If one submits a level having used less than 75% of the budget, it is sent back into the same session to keep improving what it built. The point is to see what a model does when it is pushed to use the room it has, so the budget is guidance rather than a cap - going over it doesn't end a run. Entrants without a budget label were left to decide on their own when the level was done.
+
 Judging is blind pairwise play. You get two levels built from the same theme. I use Bradley-Terry for scoring, plotted against what each level cost to build.
 
 More details are available in the [benchmark readme](https://github.com/paulbatum/pareto-rail/blob/main/benchmark/README.md).

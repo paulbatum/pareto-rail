@@ -343,6 +343,27 @@ function CopyDebugButton({ status, onCopy }: { status: 'idle' | 'copied' | 'fail
   </button>;
 }
 
+const BUDGET_EXPLAINER = 'This entrant was told how much of its budget it had spent as it worked. If it submitted a level having used less than 75%, it was sent back to keep improving it.';
+
+/** The workflow half of a configuration label, with a hover explainer when the
+ *  workflow is one of the budgeted ones. The bubble is fixed-positioned so the
+ *  scrollable table wrapper can't clip it. */
+function WorkflowQualifier({ workflowName }: { workflowName: string }) {
+  const trigger = useRef<HTMLSpanElement>(null);
+  const [anchor, setAnchor] = useState<{ left: number; top: number } | null>(null);
+  const qualifier = workflowQualifier(workflowName);
+  if (!qualifier) return null;
+  if (!/budget/i.test(qualifier)) return <span>{qualifier}</span>;
+  const show = () => {
+    const box = trigger.current?.getBoundingClientRect();
+    if (box) setAnchor({ left: Math.min(box.left, window.innerWidth - 300), top: box.bottom + 8 });
+  };
+  return <span ref={trigger} className="has-explainer" tabIndex={0} onMouseEnter={show} onMouseLeave={() => setAnchor(null)} onFocus={show} onBlur={() => setAnchor(null)}>
+    {qualifier}
+    {anchor && <span className="explainer-bubble" role="tooltip" style={{ left: `${anchor.left}px`, top: `${anchor.top}px` }}>{BUDGET_EXPLAINER}</span>}
+  </span>;
+}
+
 function PersonalCurveTable({ points, showFrontier }: { points: readonly PersonalRatingPoint[]; showFrontier: boolean }) {
   const ordered = [...points].sort((left, right) => (right.rating ?? -Infinity) - (left.rating ?? -Infinity) || left.configurationId.localeCompare(right.configurationId));
   return <div className="curve-table-wrap"><table className="curve-table"><caption>Every configuration you have judged</caption><thead><tr><th scope="col">Model</th><th scope="col">Record</th><th scope="col">Preference</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
@@ -350,9 +371,8 @@ function PersonalCurveTable({ points, showFrontier }: { points: readonly Persona
     const record = point.comparisons === 0
       ? <span aria-label="No comparisons yet">—</span>
       : <span aria-label={recordAriaLabel(point)}>{point.wins}–{point.ties}–{point.losses}</span>;
-    const qualifier = workflowQualifier(point.workflowName);
     const effort = effortSuffix(point.configurationId);
-    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong>{qualifier && <span>{qualifier}</span>}</th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
+    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
   })}</tbody></table></div>;
 }
 
