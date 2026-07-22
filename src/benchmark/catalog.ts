@@ -28,6 +28,11 @@ export interface RankCatalogEntrant {
   modelName: string;
   workflowName: string;
   generationCost: number;
+  /** Non-blank lines of authored TypeScript in the level's promoted source tree.
+   * A deterministic size proxy derived from committed source (not measured during
+   * the run), recomputed on every catalog export. Absent for module-less retired
+   * entrants whose source is no longer on disk. */
+  linesOfCode?: number;
   run?: BenchmarkRunMetrics;
   thumbnailPath?: string;
   featured?: boolean;

@@ -21,6 +21,7 @@ type BuiltInRecord = {
   thumbnailPath?: string;
   blurb?: string;
   builderNotes?: readonly string[];
+  linesOfCode?: number;
 };
 
 type BenchmarkRecord = {
@@ -364,7 +365,7 @@ function BuiltInRecordDetail({ record, onNavigate }: { record: BuiltInRecord; on
         <span className="spacer" />
         <RouteLink className="button primary" href={playPath(record.levelId)} onNavigate={onNavigate}>▸ Play this level</RouteLink>
       </header>
-      <p className="catalog-identity">{record.reference ? 'Built-in level · reference level' : 'Built-in level'} · {record.levelId}</p>
+      <p className="catalog-identity">{record.reference ? 'Built-in level · reference level' : 'Built-in level'} · {record.levelId}{record.linesOfCode !== undefined && <> · <span title="Non-blank lines of authored TypeScript in the level's source">{count(record.linesOfCode)} lines</span></>}</p>
       <div className="catalog-record-body">
         <RecordThumbnail record={record} onNavigate={onNavigate} />
         <div className="catalog-about">
@@ -415,6 +416,9 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
           <div className="stat-cost"><dt>Generation cost</dt><dd>{formatCost(entrant.generationCost)}</dd></div>
           <div><dt>Gen wall time</dt><dd title={`${count(Math.round(run.generationWallTimeSeconds))} seconds`}>{formatWallTime(run.generationWallTimeSeconds)}</dd></div>
           <TokenTotals models={run.models} />
+          {entrant.linesOfCode !== undefined && (
+            <div><dt>Lines of code</dt><dd title="Non-blank lines of authored TypeScript in the level's source">{count(entrant.linesOfCode)}</dd></div>
+          )}
         </dl>
       )}
 
@@ -581,6 +585,7 @@ function builtInRecords(): BuiltInRecord[] {
       thumbnailPath: level.contentImages?.hero,
       blurb: notes?.intro,
       builderNotes: notes?.builderNotes,
+      linesOfCode: notes?.linesOfCode,
     };
   });
 }

@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { countSourceLines } from '../count-source-lines.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const privateRoot = path.join(root, 'benchmark/private');
@@ -259,6 +260,7 @@ export function buildEntrant(entrant, { includeThumbnail }) {
     modelName: labels.modelName,
     workflowName: labels.workflowName,
     generationCost: Number(cost.toFixed(8)),
+    ...(promotedDirectory(entrant.levelId) ? { linesOfCode: countSourceLines(path.join(levelsRoot, entrant.levelId)) } : {}),
     run: runMetrics(entrant, manifest, labels),
     ...(descriptor ? { thumbnailPath: descriptor.contentImages.hero } : {}),
     ...(labels.featured ? { featured: true } : {}),

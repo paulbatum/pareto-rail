@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { countSourceLines } from './count-source-lines.mjs';
 
 export async function buildGallery(root) {
   const cards = await collectBuiltInCards(root);
@@ -14,7 +15,11 @@ export async function buildGallery(root) {
  * What to read, Status & notes — are agent-only and left out. */
 export async function buildBuiltInNotes(root) {
   const cards = await collectBuiltInCards(root);
-  return cards.map((card) => ({ id: card.id, ...parseCard(card.raw) }));
+  return cards.map((card) => ({
+    id: card.id,
+    ...parseCard(card.raw),
+    linesOfCode: countSourceLines(path.join(root, 'src', 'levels', card.dir)),
+  }));
 }
 
 /** Emit the notes as a committed TS module. Same discipline as the rank
@@ -27,11 +32,14 @@ export function renderBuiltInNotesModule(records) {
     + '  readonly intro: string;\n'
     + '  /** Candid builder\'s-eye notes, from the card\'s "What to study here" section. */\n'
     + '  readonly builderNotes: readonly string[];\n'
+    + '  /** Non-blank lines of authored TypeScript in the level\'s source tree. */\n'
+    + '  readonly linesOfCode: number;\n'
     + '}\n\n';
   const entries = records.map((record) =>
     `  ${JSON.stringify(record.id)}: {\n`
     + `    intro: ${JSON.stringify(record.intro)},\n`
     + `    builderNotes: ${JSON.stringify(record.builderNotes)},\n`
+    + `    linesOfCode: ${JSON.stringify(record.linesOfCode)},\n`
     + '  },').join('\n');
   return `${banner}${type}export const builtInLevelNotes: Record<string, BuiltInLevelNotes> = {\n${entries}\n};\n`;
 }

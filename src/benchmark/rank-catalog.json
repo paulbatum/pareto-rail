@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T00:58:36.418Z",
+  "generatedAt": "2026-07-22T03:59:38.724Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -130,6 +130,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "delegated",
       "generationCost": 4.8857775,
+      "linesOfCode": 654,
       "run": {
         "generationWallTimeSeconds": 824.882,
         "totalWallTimeSeconds": 840.869,
@@ -171,6 +172,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 3.449194,
+      "linesOfCode": 749,
       "run": {
         "generationWallTimeSeconds": 673.914,
         "totalWallTimeSeconds": 723.271,
@@ -204,6 +206,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 2.99751,
+      "linesOfCode": 848,
       "run": {
         "generationWallTimeSeconds": 638.06,
         "totalWallTimeSeconds": 655.293,
@@ -237,6 +240,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo, $20 budget",
       "generationCost": 11.221407,
+      "linesOfCode": 1703,
       "run": {
         "generationWallTimeSeconds": 2034.929,
         "totalWallTimeSeconds": 2055.474,
@@ -269,6 +273,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "delegated",
       "generationCost": 4.4546065,
+      "linesOfCode": 405,
       "run": {
         "generationWallTimeSeconds": 1141.861,
         "totalWallTimeSeconds": 1214.899,
@@ -311,6 +316,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo, $20 budget",
       "generationCost": 23.398333,
+      "linesOfCode": 2994,
       "run": {
         "generationWallTimeSeconds": 1496.179,
         "totalWallTimeSeconds": 1683.44,
@@ -344,6 +350,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo",
       "generationCost": 30.4074865,
+      "linesOfCode": 4072,
       "run": {
         "generationWallTimeSeconds": 2892.224,
         "totalWallTimeSeconds": 3106.11,
@@ -377,6 +384,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo, $20 budget",
       "generationCost": 21.190755,
+      "linesOfCode": 3500,
       "run": {
         "generationWallTimeSeconds": 2117.833,
         "totalWallTimeSeconds": 2326.588,
@@ -410,6 +418,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 65.529086,
+      "linesOfCode": 3715,
       "run": {
         "generationWallTimeSeconds": 10801.024,
         "totalWallTimeSeconds": 14063.214,
@@ -443,6 +452,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "delegated",
       "generationCost": 54.5431505,
+      "linesOfCode": 3900,
       "run": {
         "generationWallTimeSeconds": 3106.863,
         "totalWallTimeSeconds": 3173.678,
@@ -487,6 +497,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo, $20 budget",
       "generationCost": 26.4612075,
+      "linesOfCode": 4199,
       "run": {
         "generationWallTimeSeconds": 2862.792,
         "totalWallTimeSeconds": 3084.951,
@@ -520,6 +531,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "delegated",
       "generationCost": 5.137225,
+      "linesOfCode": 1155,
       "run": {
         "generationWallTimeSeconds": 915.773,
         "totalWallTimeSeconds": 975.275,
@@ -562,6 +574,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 2.945069,
+      "linesOfCode": 934,
       "run": {
         "generationWallTimeSeconds": 539.351,
         "totalWallTimeSeconds": 584.191,
@@ -595,6 +608,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo",
       "generationCost": 29.769308,
+      "linesOfCode": 3260,
       "run": {
         "generationWallTimeSeconds": 2902.74,
         "totalWallTimeSeconds": 2977.256,
@@ -628,6 +642,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "delegated",
       "generationCost": 84.0147425,
+      "linesOfCode": 4622,
       "run": {
         "generationWallTimeSeconds": 4465.95,
         "totalWallTimeSeconds": 4826.032,
@@ -672,6 +687,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo, $20 budget",
       "generationCost": 18.012915,
+      "linesOfCode": 2500,
       "run": {
         "generationWallTimeSeconds": 2794.419,
         "totalWallTimeSeconds": 2855.27,
@@ -704,6 +720,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo, $20 budget",
       "generationCost": 32.239027,
+      "linesOfCode": 4161,
       "run": {
         "generationWallTimeSeconds": 2261.452,
         "totalWallTimeSeconds": 2312.562,
@@ -737,6 +754,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 71.365946,
+      "linesOfCode": 4245,
       "run": {
         "generationWallTimeSeconds": 3987.595,
         "totalWallTimeSeconds": 4238.032,
@@ -771,6 +789,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo, $20 budget",
       "generationCost": 16.416178,
+      "linesOfCode": 2196,
       "run": {
         "generationWallTimeSeconds": 2585.786,
         "totalWallTimeSeconds": 2772.44,
@@ -803,6 +822,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 61.166025,
+      "linesOfCode": 4044,
       "run": {
         "generationWallTimeSeconds": 3260.289,
         "totalWallTimeSeconds": 3491.055,
@@ -837,6 +857,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 4.450111,
+      "linesOfCode": 980,
       "run": {
         "generationWallTimeSeconds": 1040.101,
         "totalWallTimeSeconds": 1126.882,
@@ -870,6 +891,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo, $20 budget",
       "generationCost": 32.097501,
+      "linesOfCode": 4185,
       "run": {
         "generationWallTimeSeconds": 2129.062,
         "totalWallTimeSeconds": 2289.356,
@@ -903,6 +925,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo",
       "generationCost": 35.914623,
+      "linesOfCode": 4653,
       "run": {
         "generationWallTimeSeconds": 3868.191,
         "totalWallTimeSeconds": 3902.097,
@@ -936,6 +959,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo, $20 budget",
       "generationCost": 24.6720075,
+      "linesOfCode": 4905,
       "run": {
         "generationWallTimeSeconds": 2834.759,
         "totalWallTimeSeconds": 2867.989,
@@ -969,6 +993,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 58.065569,
+      "linesOfCode": 4003,
       "run": {
         "generationWallTimeSeconds": 2961.129,
         "totalWallTimeSeconds": 3130.993,
@@ -1070,6 +1095,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo, $20 budget",
       "generationCost": 34.318339,
+      "linesOfCode": 3328,
       "run": {
         "generationWallTimeSeconds": 1792.32,
         "totalWallTimeSeconds": 1935.648,
@@ -1135,6 +1161,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo",
       "generationCost": 30.563258,
+      "linesOfCode": 3994,
       "run": {
         "generationWallTimeSeconds": 2926.597,
         "totalWallTimeSeconds": 2963.658,
@@ -1168,6 +1195,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo, $20 budget",
       "generationCost": 20.9485945,
+      "linesOfCode": 4258,
       "run": {
         "generationWallTimeSeconds": 2206.101,
         "totalWallTimeSeconds": 2240.167,
@@ -1201,6 +1229,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo, $20 budget",
       "generationCost": 15.763852,
+      "linesOfCode": 1224,
       "run": {
         "generationWallTimeSeconds": 3012.616,
         "totalWallTimeSeconds": 3185.549,
@@ -1233,6 +1262,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 6.57154,
+      "linesOfCode": 1959,
       "run": {
         "generationWallTimeSeconds": 1235.325,
         "totalWallTimeSeconds": 1495.987,
@@ -1266,6 +1296,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo",
       "generationCost": 30.0227405,
+      "linesOfCode": 4140,
       "run": {
         "generationWallTimeSeconds": 3100.621,
         "totalWallTimeSeconds": 3127.247,
@@ -1299,6 +1330,7 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo, $20 budget",
       "generationCost": 24.843674,
+      "linesOfCode": 3956,
       "run": {
         "generationWallTimeSeconds": 2603.032,
         "totalWallTimeSeconds": 2632.581,
@@ -1332,6 +1364,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo, $20 budget",
       "generationCost": 29.405835,
+      "linesOfCode": 3892,
       "run": {
         "generationWallTimeSeconds": 1691.624,
         "totalWallTimeSeconds": 1817.363,
@@ -1365,6 +1398,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "generationCost": 4.540445,
+      "linesOfCode": 1268,
       "run": {
         "generationWallTimeSeconds": 990.5,
         "totalWallTimeSeconds": 1072.391,
@@ -1398,6 +1432,7 @@
       "modelName": "Claude Fable 5",
       "workflowName": "solo",
       "generationCost": 59.021147,
+      "linesOfCode": 4045,
       "run": {
         "generationWallTimeSeconds": 3356.866,
         "totalWallTimeSeconds": 3574.153,
@@ -1432,6 +1467,7 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo, $20 budget",
       "generationCost": 16.500968,
+      "linesOfCode": 2162,
       "run": {
         "generationWallTimeSeconds": 3014.089,
         "totalWallTimeSeconds": 3217.879,
