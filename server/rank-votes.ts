@@ -58,7 +58,7 @@ export async function recordRankVote(input: ValidatedRankVote, prisma: PrismaCli
       update: {},
       create: {
         id: input.matchupId,
-        benchmarkVersion: input.benchmarkVersion,
+        benchmarkVersion: input.benchmarkVersion ?? null,
         themeId: input.themeId,
         levelIdFirst,
         levelIdSecond,

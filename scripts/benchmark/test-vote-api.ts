@@ -57,6 +57,18 @@ assert.equal(nullOrigin.status, 403, 'opaque null Origin was not rejected');
 const sameOrigin = await vote({ ...payload, participantId: `vote-api-${randomUUID()}` }, { origin: 'http://localhost' });
 assert.equal(sameOrigin.status, 200, 'same-origin POST was rejected');
 
+// benchmarkVersion is now optional and ignored: absent is accepted, any string is accepted.
+const payloadWithoutVersion: Record<string, unknown> = { ...payload, participantId: `vote-api-${randomUUID()}` };
+delete payloadWithoutVersion.benchmarkVersion;
+const noVersion = await vote(payloadWithoutVersion);
+assert.equal(noVersion.status, 200, 'vote without benchmarkVersion was rejected');
+
+const staleVersion = await vote({ ...payload, participantId: `vote-api-${randomUUID()}`, benchmarkVersion: 'rank-catalog-v9' });
+assert.equal(staleVersion.status, 200, 'vote with an ignored benchmarkVersion string was rejected');
+
+const emptyVersion = await vote({ ...payload, participantId: `vote-api-${randomUUID()}`, benchmarkVersion: '' });
+assert.equal(emptyVersion.status, 400, 'a present-but-empty benchmarkVersion was accepted');
+
 const forged = await vote({ ...payload, matchupId: `${theme.id}:forged__pair` });
 assert.equal(forged.status, 422);
 
@@ -70,7 +82,7 @@ const zeroPlay = await vote({ ...payload, participantId: `vote-api-${randomUUID(
 assert.equal(zeroPlay.status, 422);
 
 const statsAfter = await stats();
-assert.equal(statsAfter.votes, statsBefore.votes + 2, 'stats did not count the new votes');
+assert.equal(statsAfter.votes, statsBefore.votes + 4, 'stats did not count the new votes');
 assert.ok(statsAfter.matchups >= statsBefore.matchups && statsAfter.matchups > 0, 'stats did not expose matchup count');
 assert.ok(statsAfter.latestVoteAt, 'stats did not expose the latest vote timestamp');
 

@@ -35,7 +35,7 @@ enum RankDataClass {
 
 model RankMatchup {
   id               String     @id
-  benchmarkVersion String
+  benchmarkVersion String?
   themeId          String
   levelIdFirst     String
   levelIdSecond    String

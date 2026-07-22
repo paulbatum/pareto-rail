@@ -712,10 +712,15 @@ function testVersionedVoteValidation(): void {
   const oldTheme = inactive.themes[0]!;
   const oldA = inactive.entrants[0]!;
   const oldB = inactive.entrants[1]!;
-  const base = { matchupId: pairId(oldTheme.id, oldA.levelId, oldB.levelId), participantId: 'participant', benchmarkVersion: inactive.benchmarkVersion, themeId: oldTheme.id, aLevelId: oldA.levelId, bLevelId: oldB.levelId, verdict: 'both-good', playCounts: { a: 1, b: 1 } };
-  assert.equal(validateRankVoteBody(base, catalog).ok, true, 'valid inactive-version vote was rejected');
-  assert.equal(validateRankVoteBody({ ...base, benchmarkVersion: 'rank-catalog-v9' }, catalog).ok, false, 'unknown benchmark version was accepted');
-  assert.equal(validateRankVoteBody({ ...base, benchmarkVersion: active.benchmarkVersion }, catalog).ok, false, 'version/entrant mismatch was accepted');
+  const otherTheme = active.themes[0]!;
+  const otherEntrant = active.entrants.find((entrant) => entrant.themeId === otherTheme.id)!;
+  const base = { matchupId: pairId(oldTheme.id, oldA.levelId, oldB.levelId), participantId: 'participant', themeId: oldTheme.id, aLevelId: oldA.levelId, bLevelId: oldB.levelId, verdict: 'both-good', playCounts: { a: 1, b: 1 } };
+  // benchmarkVersion is now ignored: absent is valid, any string is valid, and resolution is catalog-wide.
+  assert.equal(validateRankVoteBody(base, catalog).ok, true, 'vote without benchmarkVersion was rejected');
+  assert.equal(validateRankVoteBody({ ...base, benchmarkVersion: inactive.benchmarkVersion }, catalog).ok, true, 'vote with a matching benchmarkVersion was rejected');
+  assert.equal(validateRankVoteBody({ ...base, benchmarkVersion: 'rank-catalog-v9' }, catalog).ok, true, 'benchmarkVersion is ignored but a stale value was rejected');
+  assert.equal(validateRankVoteBody({ ...base, benchmarkVersion: '' }, catalog).ok, false, 'a present-but-empty benchmarkVersion was accepted');
+  assert.equal(validateRankVoteBody({ ...base, bLevelId: otherEntrant.levelId }, catalog).ok, false, 'a cross-theme entrant pairing was accepted');
 }
 
 async function testApisAndStateMachine(): Promise<void> {

@@ -1,8 +1,8 @@
-import { catalogVersion, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../src/benchmark/catalog.js';
+import { allCatalogEntrants, allCatalogThemes, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../src/benchmark/catalog.js';
 import { pairId } from '../src/benchmark/scheduler.js';
 import type { BenchmarkDataClass, VoteVerdict } from '../src/benchmark/types.js';
 
-export const RANK_VOTE_SCHEMA_VERSION = 1;
+export const RANK_VOTE_SCHEMA_VERSION = 2;
 export const MAX_RANK_VOTE_BODY_BYTES = 8 * 1024;
 
 const MAX_STRING_LENGTH = 200;
@@ -26,7 +26,7 @@ const TOP_LEVEL_KEYS = [
 type RankVoteBody = {
   matchupId: string;
   participantId: string;
-  benchmarkVersion: string;
+  benchmarkVersion?: string;
   themeId: string;
   aLevelId: string;
   bLevelId: string;
@@ -54,11 +54,15 @@ export function validateRankVoteBody(value: unknown, catalog: RankCatalog = rank
 
   const matchupId = stringField(value.matchupId);
   const participantId = stringField(value.participantId);
-  const benchmarkVersion = stringField(value.benchmarkVersion);
   const themeId = stringField(value.themeId);
   const aLevelId = stringField(value.aLevelId);
   const bLevelId = stringField(value.bLevelId);
-  if (!matchupId || !participantId || !benchmarkVersion || !themeId || !aLevelId || !bLevelId) {
+  if (!matchupId || !participantId || !themeId || !aLevelId || !bLevelId) {
+    return invalid(400, 'Malformed vote payload');
+  }
+
+  const benchmarkVersion = value.benchmarkVersion === undefined ? undefined : stringField(value.benchmarkVersion);
+  if (value.benchmarkVersion !== undefined && !benchmarkVersion) {
     return invalid(400, 'Malformed vote payload');
   }
 
@@ -82,11 +86,9 @@ export function validateRankVoteBody(value: unknown, catalog: RankCatalog = rank
   const idempotencyKey = optionalString(value.idempotencyKey);
   if (value.idempotencyKey !== undefined && !idempotencyKey) return invalid(400, 'Malformed idempotencyKey');
 
-  const version = catalogVersion(catalog, benchmarkVersion);
-  if (!version) return invalid(422, 'Unsupported benchmark version');
-  const theme = version.themes.find((candidate) => candidate.id === themeId);
-  const aEntrant = version.entrants.find((entrant) => entrant.levelId === aLevelId);
-  const bEntrant = version.entrants.find((entrant) => entrant.levelId === bLevelId);
+  const theme = allCatalogThemes(catalog).find((candidate) => candidate.id === themeId);
+  const aEntrant = allCatalogEntrants(catalog).find((entrant) => entrant.levelId === aLevelId);
+  const bEntrant = allCatalogEntrants(catalog).find((entrant) => entrant.levelId === bLevelId);
   if (!theme || !aEntrant || !bEntrant || aEntrant.themeId !== themeId || bEntrant.themeId !== themeId || aLevelId === bLevelId) {
     return invalid(422, 'Matchup is not in the published catalog');
   }
@@ -102,12 +104,12 @@ export function validateRankVoteBody(value: unknown, catalog: RankCatalog = rank
     value: {
       matchupId,
       participantId,
-      benchmarkVersion,
       themeId,
       aLevelId,
       bLevelId,
       verdict: verdict as VoteVerdict,
       playCounts,
+      ...(benchmarkVersion ? { benchmarkVersion } : {}),
       ...(bestScores ? { bestScores } : {}),
       ...(assignedAt ? { assignedAt } : {}),
       ...(clientSubmittedAt ? { clientSubmittedAt } : {}),
