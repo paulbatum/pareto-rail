@@ -9,7 +9,7 @@
       "configurationId": "claude-fable-5-high-b20",
       "files": [
         {
-          "path": "runs/fable-b20-broadside-b9mn/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/fable-b20-broadside-b9mn/stages/solo/claude/rollout.jsonl",
           "rawBytes": 2106749,
           "sha256": "7e35aae11fb044f15749b43749f26e77d9c13396502167f1e72b68854c7f2dfb"
         },
@@ -27,7 +27,7 @@
       "configurationId": "claude-fable-5-high-b20",
       "files": [
         {
-          "path": "runs/fable-b20-mdd-m6vt/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/fable-b20-mdd-m6vt/stages/solo/claude/rollout.jsonl",
           "rawBytes": 1889604,
           "sha256": "6b652237dda520839701e4910996903517126823a73e393e8a6bb09e0aa7229f"
         },
@@ -45,7 +45,7 @@
       "configurationId": "claude-fable-5-high-b20",
       "files": [
         {
-          "path": "runs/fable-b20-strandline-s2bq/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/fable-b20-strandline-s2bq/stages/solo/claude/rollout.jsonl",
           "rawBytes": 3725432,
           "sha256": "0933fa8b4a6b5d43c6e9a97a786a60c522bfd09effdaf676bf298a3546a8c5d4"
         },
@@ -63,7 +63,7 @@
       "configurationId": "claude-fable-5-high",
       "files": [
         {
-          "path": "runs/fable-high-broadside-b4kd/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/fable-high-broadside-b4kd/stages/solo/claude/rollout.jsonl",
           "rawBytes": 11797667,
           "sha256": "3d3ac5b848e1a6aaf53ca33d839a1fa22923a10154a1519f1e60e669306704d5"
         },
@@ -81,7 +81,7 @@
       "configurationId": "claude-fable-5-high",
       "files": [
         {
-          "path": "runs/fable-high-mdd-k4wz/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/fable-high-mdd-k4wz/stages/solo/claude/rollout.jsonl",
           "rawBytes": 8217264,
           "sha256": "505165d00e11c5c758c364fb3077f6fb82a8df945a689ba0472aff9456e3694e"
         },
@@ -100,7 +100,7 @@
       "retired": true,
       "files": [
         {
-          "path": "runs/fable-high-mdd-m3rp/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/fable-high-mdd-m3rp/stages/solo/claude/rollout.jsonl",
           "rawBytes": 5728006,
           "sha256": "a3f05b0586fd4937831be99d68573f79d729b5d19d15c1375c8b9f4acfa4baa9"
         },
@@ -118,7 +118,7 @@
       "configurationId": "claude-fable-5-high",
       "files": [
         {
-          "path": "runs/fable-high-strandline-s7ah/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/fable-high-strandline-s7ah/stages/solo/claude/rollout.jsonl",
           "rawBytes": 6486022,
           "sha256": "83b0a826064c9e5e624c1418f35ac1a9810285c7c097acd4d8adeca88a4a7e5f"
         },
@@ -136,7 +136,7 @@
       "configurationId": "claude-opus-4-8-high-b20",
       "files": [
         {
-          "path": "runs/opus-b20-broadside-ob4d/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/opus-b20-broadside-ob4d/stages/solo/claude/rollout.jsonl",
           "rawBytes": 2079929,
           "sha256": "a10fde553f0ed318beddffedfb2f14829d859d7e1ce6a0a6358647eaadf25965"
         },
@@ -154,7 +154,7 @@
       "configurationId": "claude-opus-4-8-high-b20",
       "files": [
         {
-          "path": "runs/opus-b20-mdd-om6f/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/opus-b20-mdd-om6f/stages/solo/claude/rollout.jsonl",
           "rawBytes": 5937903,
           "sha256": "fbbc6b774b15981a073c6c55d9c8f0ea214f6b9b108ce47eac148e401e368be1"
         },
@@ -172,7 +172,7 @@
       "configurationId": "claude-opus-4-8-high-b20",
       "files": [
         {
-          "path": "runs/opus-b20-strandline-os2b/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/opus-b20-strandline-os2b/stages/solo/claude/rollout.jsonl",
           "rawBytes": 5423860,
           "sha256": "32dc656e5e27fb77807da4a19f0655fb185ce91a34e5b10d95fcfa9d8a594936"
         },
@@ -190,7 +190,7 @@
       "configurationId": "claude-opus-4-8-high",
       "files": [
         {
-          "path": "runs/opus-high-broadside-ob3c/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/opus-high-broadside-ob3c/stages/solo/claude/rollout.jsonl",
           "rawBytes": 11545280,
           "sha256": "94fbe8e04bcc06b2b4feae5962ba3eb420fb8c8ad8bea7271415df10d333d7a7"
         },
@@ -208,7 +208,7 @@
       "configurationId": "claude-opus-4-8-high",
       "files": [
         {
-          "path": "runs/opus-high-mdd-om5e/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/opus-high-mdd-om5e/stages/solo/claude/rollout.jsonl",
           "rawBytes": 11563753,
           "sha256": "a00141b4a3601869b781a416c34c953859e8580c709e38e8673b1dfd2a7c5064"
         },
@@ -226,7 +226,7 @@
       "configurationId": "claude-opus-4-8-high",
       "files": [
         {
-          "path": "runs/opus-high-purse-svok/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/opus-high-purse-svok/stages/solo/claude/rollout.jsonl",
           "rawBytes": 12010991,
           "sha256": "4f6bd919eb30a51f7445f91a904cb9e11144f0376901c10186678969fd8664ab"
         },
@@ -244,7 +244,7 @@
       "configurationId": "claude-opus-4-8-high",
       "files": [
         {
-          "path": "runs/opus-high-solve-zq4n/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/opus-high-solve-zq4n/stages/solo/claude/rollout.jsonl",
           "rawBytes": 15097094,
           "sha256": "c92549c125734057277c13e8160fbf0288d2826a04aad1673bbc6a3c77c65626"
         },
@@ -262,7 +262,7 @@
       "configurationId": "claude-opus-4-8-high",
       "files": [
         {
-          "path": "runs/opus-high-strandline-os1a/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/opus-high-strandline-os1a/stages/solo/claude/rollout.jsonl",
           "rawBytes": 8447636,
           "sha256": "11d7abfbc25482381adb26cd61d99064fe436ae323955913d0be3ce5561886cd"
         },
@@ -293,7 +293,7 @@
       "configurationId": "claude-opus-4-8-high-b20",
       "files": [
         {
-          "path": "runs/run-2dzleoxfhatr/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-2dzleoxfhatr/stages/solo/claude/rollout.jsonl",
           "rawBytes": 2796040,
           "sha256": "8e3bdc9e80a2ad18c461e711a20992f179dd5258ef507d31f0c9ce0191736971"
         },
@@ -311,7 +311,7 @@
       "configurationId": "claude-fable-5-high-b20",
       "files": [
         {
-          "path": "runs/run-3wx1zsc87lp9/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-3wx1zsc87lp9/stages/solo/claude/rollout.jsonl",
           "rawBytes": 1864983,
           "sha256": "aa5616045c864bbbdbfef54891e56006b53fb29262172a06bcd0afc7c0e9156d"
         },
@@ -330,7 +330,7 @@
       "retired": true,
       "files": [
         {
-          "path": "runs/run-5d1aac1gjbuv/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-5d1aac1gjbuv/stages/solo/claude/rollout.jsonl",
           "rawBytes": 8204668,
           "sha256": "11191aacfd0122f56ccbf4d3f45c9167f1da7229fa1ace6b8b2ba769782fbbc2"
         },
@@ -349,7 +349,7 @@
       "retired": true,
       "files": [
         {
-          "path": "runs/run-5m77cl6rn5kd/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/run-5m77cl6rn5kd/stages/solo/codex/rollout.jsonl",
           "rawBytes": 1136203,
           "sha256": "25e6e84e1c8e4ceadb150fbbb540fb610b070670fae9f2d2db38d603a9ce92c7"
         },
@@ -367,7 +367,7 @@
       "configurationId": "codex-sol-high",
       "files": [
         {
-          "path": "runs/run-6m3dhz1loblr/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/run-6m3dhz1loblr/stages/solo/codex/rollout.jsonl",
           "rawBytes": 892146,
           "sha256": "91cdb1d8b2bc8a91e47d459918a88fcf480367a44521c520c723a63909110886"
         },
@@ -385,7 +385,7 @@
       "configurationId": "claude-opus-4-8-high-b20",
       "files": [
         {
-          "path": "runs/run-770j1pokdphe/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-770j1pokdphe/stages/solo/claude/rollout.jsonl",
           "rawBytes": 4996471,
           "sha256": "2d45259836b8b9ea07b1501227ead46f567598fe062a96815729c09af94220c7"
         },
@@ -403,7 +403,7 @@
       "configurationId": "codex-sol-high-b20",
       "files": [
         {
-          "path": "runs/run-c340azfgk0vd/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/run-c340azfgk0vd/stages/solo/codex/rollout.jsonl",
           "rawBytes": 2845004,
           "sha256": "77419eb719c550cea6f35b1ba8ce8dddca0be2ec156892f1e5dc65cb755360f1"
         },
@@ -422,7 +422,7 @@
       "retired": true,
       "files": [
         {
-          "path": "runs/run-eztdwig5twea/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-eztdwig5twea/stages/solo/claude/rollout.jsonl",
           "rawBytes": 5133234,
           "sha256": "cdd9fa6ed8e0ec696bdd7dd66e77655ebd9fb55ca0fe7a845197f287d33cee8f"
         },
@@ -440,7 +440,7 @@
       "configurationId": "claude-fable-5-high-b20",
       "files": [
         {
-          "path": "runs/run-gucf476jvkqr/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-gucf476jvkqr/stages/solo/claude/rollout.jsonl",
           "rawBytes": 1486594,
           "sha256": "8921a1d459027a464377e56c77a2654df6518bb4f4f315bdb22b610cc46586c8"
         },
@@ -458,7 +458,7 @@
       "configurationId": "codex-sol-high-b20",
       "files": [
         {
-          "path": "runs/run-pnpwjrxhz8uu/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/run-pnpwjrxhz8uu/stages/solo/codex/rollout.jsonl",
           "rawBytes": 12957661,
           "sha256": "35ea260abad548878f6b11628f4e6a4e420f7de0d3d554cca156ea315d90263f"
         },
@@ -476,7 +476,7 @@
       "configurationId": "codex-sol-high",
       "files": [
         {
-          "path": "runs/run-qsgvgteqxgn0/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/run-qsgvgteqxgn0/stages/solo/codex/rollout.jsonl",
           "rawBytes": 976816,
           "sha256": "f09a84ba1dde17234ed61f551b3e0183199dc6aa53783a3e75ff13fca384845b"
         },
@@ -494,7 +494,7 @@
       "configurationId": "codex-sol-high",
       "files": [
         {
-          "path": "runs/run-rah3o96wxqcw/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/run-rah3o96wxqcw/stages/solo/codex/rollout.jsonl",
           "rawBytes": 560000,
           "sha256": "73dd3a20fa6a3a6ac146a3c6562ec06fa86db1bb6dc34083aa7b22cb9e93a326"
         },
@@ -512,7 +512,7 @@
       "configurationId": "claude-opus-4-8-high",
       "files": [
         {
-          "path": "runs/run-uitiw02p99w9/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-uitiw02p99w9/stages/solo/claude/rollout.jsonl",
           "rawBytes": 7864922,
           "sha256": "411004dc835094ed7f9b6697c00da9ec9cbf1f94bc7ee368b36c6326537e6dd1"
         },
@@ -531,7 +531,7 @@
       "retired": true,
       "files": [
         {
-          "path": "runs/run-vbovdxbaxq9v/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/run-vbovdxbaxq9v/stages/solo/codex/rollout.jsonl",
           "rawBytes": 1207213,
           "sha256": "479b6ca22cd439044178074522fe327fc464f2c1a3beb02fcf44f1dad08dcd1f"
         },
@@ -549,7 +549,7 @@
       "configurationId": "codex-sol-terra-delegation",
       "files": [
         {
-          "path": "runs/run-x58xikqvx62i/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/run-x58xikqvx62i/stages/solo/codex/rollout.jsonl",
           "rawBytes": 1139790,
           "sha256": "3c16517d8fa18209beaa239ae0250f3df201e74157ff13355e38d28f0a072f36"
         },
@@ -567,7 +567,7 @@
       "configurationId": "claude-opus-4-8-high",
       "files": [
         {
-          "path": "runs/run-xbd3e4ho3x7d/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-xbd3e4ho3x7d/stages/solo/claude/rollout.jsonl",
           "rawBytes": 6067051,
           "sha256": "ead471123f8f1896ac23690b2b33e92d2d89bfca5421e57bbbb7018f790cab1f"
         },
@@ -585,7 +585,7 @@
       "configurationId": "claude-fable-5-high",
       "files": [
         {
-          "path": "runs/run-xixwfev1c60s/stages/solo/claude/rollout.jsonl.gz",
+          "path": "runs/run-xixwfev1c60s/stages/solo/claude/rollout.jsonl",
           "rawBytes": 10989913,
           "sha256": "9c1b18a0e21f43ebffbe8ef8614daf1bf640b8cf0e8c0edacdfb6176a471b22f"
         },
@@ -603,7 +603,7 @@
       "configurationId": "codex-sol-high-b20",
       "files": [
         {
-          "path": "runs/sol-b20-broadside-b3fk/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-b20-broadside-b3fk/stages/solo/codex/rollout.jsonl",
           "rawBytes": 21498289,
           "sha256": "4d3c5f1831ea470795f4494f1d2155b0c409d6dd4f2981e05d322301fba46f29"
         },
@@ -622,7 +622,7 @@
       "retired": true,
       "files": [
         {
-          "path": "runs/sol-b20-mdd-m7hq/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-b20-mdd-m7hq/stages/solo/codex/rollout.jsonl",
           "rawBytes": 21082518,
           "sha256": "a36ff5bbb63f8ffd28a8c90f2ea6742108ea435e3a7454b7330481954ed1bdd7"
         },
@@ -640,7 +640,7 @@
       "configurationId": "codex-sol-high-b20",
       "files": [
         {
-          "path": "runs/sol-b20-mdd-p8jn/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-b20-mdd-p8jn/stages/solo/codex/rollout.jsonl",
           "rawBytes": 16436283,
           "sha256": "893cbd07b991daa3641a007b6282f83f45f1073c2d360a051c6d1538d4cd458e"
         },
@@ -658,7 +658,7 @@
       "configurationId": "codex-sol-high-b20",
       "files": [
         {
-          "path": "runs/sol-b20-strandline-s8dw/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-b20-strandline-s8dw/stages/solo/codex/rollout.jsonl",
           "rawBytes": 18723792,
           "sha256": "a45914cd903c73aa19355ee22258c7d3f7c81585cf1c86f9a6a8a5c6181479cd"
         },
@@ -676,7 +676,7 @@
       "configurationId": "codex-sol-high",
       "files": [
         {
-          "path": "runs/sol-high-broadside-b6ej/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-high-broadside-b6ej/stages/solo/codex/rollout.jsonl",
           "rawBytes": 4270911,
           "sha256": "e6dd9613b1e8c00212326a7a7345ed6eeaaa069ef60b7b1297f54b43fd111484"
         },
@@ -695,7 +695,7 @@
       "retired": true,
       "files": [
         {
-          "path": "runs/sol-high-mdd-m4gp/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-high-mdd-m4gp/stages/solo/codex/rollout.jsonl",
           "rawBytes": 6791039,
           "sha256": "1d30b48abc10ae02196c5786034474a3026e6baa7cad131e312fefff753102a9"
         },
@@ -713,7 +713,7 @@
       "configurationId": "codex-sol-high",
       "files": [
         {
-          "path": "runs/sol-high-mdd-uk78/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-high-mdd-uk78/stages/solo/codex/rollout.jsonl",
           "rawBytes": 7385866,
           "sha256": "33e0f09bf8ed566e707ffc1d21394b1bbc84dc2f707f29ce8819a2623a05e260"
         },
@@ -731,7 +731,7 @@
       "configurationId": "codex-sol-high",
       "files": [
         {
-          "path": "runs/sol-high-purse-tahr/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-high-purse-tahr/stages/solo/codex/rollout.jsonl",
           "rawBytes": 6041839,
           "sha256": "e5011f9bef38375c23dcbce0cf37f07f6c6de7127542fe79e5cb0e803139a93a"
         },
@@ -749,7 +749,7 @@
       "configurationId": "codex-sol-high",
       "files": [
         {
-          "path": "runs/sol-high-solve-wvdv/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-high-solve-wvdv/stages/solo/codex/rollout.jsonl",
           "rawBytes": 4328884,
           "sha256": "641d2c592ce9f055ee72086b0521f47953f331ca715f8e73b618993b3c27d081"
         },
@@ -767,7 +767,7 @@
       "configurationId": "codex-sol-high",
       "files": [
         {
-          "path": "runs/sol-high-strandline-s5cx/stages/solo/codex/rollout.jsonl.gz",
+          "path": "runs/sol-high-strandline-s5cx/stages/solo/codex/rollout.jsonl",
           "rawBytes": 8960713,
           "sha256": "8946bd927706dd6491b84ad344e0cabab531e0deb73c2b16bc1a07547fbda5b9"
         },

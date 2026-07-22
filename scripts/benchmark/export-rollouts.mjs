@@ -163,12 +163,12 @@ Full agent transcripts for every published run of the [Pareto Rail](https://pare
 
 \`\`\`
 runs/<run-id>/assignment.md                               # the rendered prompt the agent received
-runs/<run-id>/stages/<stage>/<harness>/rollout.jsonl.gz   # the harness-native transcript
-runs/<run-id>/stages/<stage>/<harness>/events.jsonl.gz    # the normalized event stream
+runs/<run-id>/stages/<stage>/<harness>/rollout.jsonl      # the harness-native session, opens in the trace viewer
+runs/<run-id>/stages/<stage>/<harness>/events.jsonl.gz    # the harness's emitted event stream
 runs/<run-id>/stages/<stage>/<harness>/final-message.md   # the agent's closing message
 \`\`\`
 
-\`assignment.md\` and \`final-message.md\` are plain markdown, readable in the file viewer without downloading anything. Transcripts are exactly as captured, gzipped: agent screenshots taken during the run are embedded as base64. \`rollouts.json\` here (also committed in the main repository under \`benchmark/manifests/\`) maps each run to its level, theme, and configuration and records the size and sha256 of every transcript's uncompressed bytes, so a download can be verified after gunzip.
+Each \`rollout.jsonl\` is a raw Claude Code, Codex, or Pi session file, so it opens directly in the Hub's [agent trace viewer](https://huggingface.co/docs/hub/agent-traces); \`assignment.md\` and \`final-message.md\` are plain markdown. Transcripts are exactly as captured: agent screenshots taken during the run are embedded as base64. \`rollouts.json\` here (also committed in the main repository under \`benchmark/manifests/\`) maps each run to its level, theme, and configuration and records the size and sha256 of every transcript's uncompressed bytes, so a download can be verified (after gunzip, for the gzipped event streams).
 
 ## Runs
 
@@ -195,10 +195,20 @@ function main() {
     const files = [];
     for (const { rel, abs } of transcripts) {
       const buffer = fs.readFileSync(abs);
-      const datasetPath = path.join('runs', entrant.runId, `${rel}.gz`);
       allHits.push(...scanLines(buffer.toString('utf8'), path.join(entrant.runId, rel)));
       leakScan(scanner, buffer, path.join(entrant.runId, rel));
-      gzipTo(path.join(stagingRoot, datasetPath), buffer);
+      // rollout.jsonl is the harness-native session file, which the Hub's
+      // agent-trace viewer renders as long as it stays a raw .jsonl; the
+      // supplementary event stream ships gzipped.
+      const isRollout = path.basename(rel) === 'rollout.jsonl';
+      const datasetPath = path.join('runs', entrant.runId, isRollout ? rel : `${rel}.gz`);
+      if (isRollout) {
+        const dest = path.join(stagingRoot, datasetPath);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, buffer);
+      } else {
+        gzipTo(path.join(stagingRoot, datasetPath), buffer);
+      }
       files.push({
         path: datasetPath,
         rawBytes: buffer.length,
