@@ -2,7 +2,7 @@ export const homeCopy = {
   eyebrow: 'A playable benchmark',
   title: 'Tired of being told which model is best?',
   titleAccent: 'Decide for yourself.',
-  lede: 'Play 60-second rail-shooter levels built by models. Rank them blind, then see your own personalized pareto chart.',
+  lede: 'Play 60-second rail-shooter levels built by models. Rank them blind, then see your own personalized quality vs cost chart.',
   reference: {
     eyebrow: 'Recommended first',
     title: 'Play the reference level',

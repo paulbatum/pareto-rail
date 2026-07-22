@@ -1,7 +1,7 @@
 {
   "/": {
     "title": "Pareto Rail",
-    "description": "Play 60-second rail-shooter levels built by AI models. Rank them blind, then see your own personalized pareto chart of level quality against generation cost.",
+    "description": "Play 60-second rail-shooter levels built by AI models. Rank them blind, then see your own personalized quality vs cost chart.",
     "canonical": "/"
   },
   "/levels": {

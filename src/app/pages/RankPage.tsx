@@ -247,7 +247,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
       <div><h2 id="personal-curve-title">Your verdicts</h2></div>
       <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('verdicts')} />
     </div>
-    <p className="curve-progress">Your Pareto chart unlocks as verdicts accumulate.</p>
+    <p className="curve-progress">Your quality vs cost chart unlocks as verdicts accumulate.</p>
     <VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} />
   </section>;
 
