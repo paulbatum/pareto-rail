@@ -113,6 +113,25 @@ function collectTranscripts(runDir) {
   return files;
 }
 
+function collectPreviews(runDir) {
+  const files = [];
+  const assignment = path.join(runDir, 'rendered-assignment.md');
+  if (fs.existsSync(assignment)) files.push({ rel: 'assignment.md', abs: assignment });
+  const stagesDir = path.join(runDir, 'stages');
+  if (!fs.existsSync(stagesDir)) return files;
+  for (const stage of fs.readdirSync(stagesDir).sort()) {
+    const stagePath = path.join(stagesDir, stage);
+    if (!fs.statSync(stagePath).isDirectory()) continue;
+    for (const harness of fs.readdirSync(stagePath).sort()) {
+      const abs = path.join(stagePath, harness, 'final-message.md');
+      if (fs.existsSync(abs) && fs.statSync(abs).isFile()) {
+        files.push({ rel: path.join('stages', stage, harness, 'final-message.md'), abs });
+      }
+    }
+  }
+  return files;
+}
+
 // Deterministic gzip: fixed level, and node's zlib leaves the header mtime at
 // zero, so identical input bytes produce identical archive bytes across runs.
 function gzipTo(destAbs, buffer) {
@@ -120,7 +139,17 @@ function gzipTo(destAbs, buffer) {
   fs.writeFileSync(destAbs, zlib.gzipSync(buffer, { level: 9 }));
 }
 
-function datasetCard() {
+function datasetCard(index) {
+  const rows = index.runs.map((run) => {
+    const mb = (run.files.reduce((s, f) => s + f.rawBytes, 0) / 1048576).toFixed(1);
+    const link = `[\`${run.runId}\`](https://huggingface.co/datasets/${DATASET}/tree/main/runs/${run.runId})`;
+    return `| ${link} | ${run.themeId} | ${run.configurationId}${run.retired ? ' (retired)' : ''} | ${mb} |`;
+  });
+  const runTable = [
+    '| run | theme | configuration | transcript MB |',
+    '| :-- | :-- | :-- | --: |',
+    ...rows,
+  ].join('\n');
   return `---
 license: mit
 pretty_name: Pareto Rail benchmark rollouts
@@ -133,11 +162,17 @@ Full agent transcripts for every published run of the [Pareto Rail](https://pare
 ## Layout
 
 \`\`\`
+runs/<run-id>/assignment.md                               # the rendered prompt the agent received
 runs/<run-id>/stages/<stage>/<harness>/rollout.jsonl.gz   # the harness-native transcript
 runs/<run-id>/stages/<stage>/<harness>/events.jsonl.gz    # the normalized event stream
+runs/<run-id>/stages/<stage>/<harness>/final-message.md   # the agent's closing message
 \`\`\`
 
-Transcripts are exactly as captured, gzipped: agent screenshots taken during the run are embedded as base64. \`rollouts.json\` here (also committed in the main repository under \`benchmark/manifests/\`) maps each run to its level, theme, and configuration and records the size and sha256 of every transcript's uncompressed bytes, so a download can be verified after gunzip.
+\`assignment.md\` and \`final-message.md\` are plain markdown, readable in the file viewer without downloading anything. Transcripts are exactly as captured, gzipped: agent screenshots taken during the run are embedded as base64. \`rollouts.json\` here (also committed in the main repository under \`benchmark/manifests/\`) maps each run to its level, theme, and configuration and records the size and sha256 of every transcript's uncompressed bytes, so a download can be verified after gunzip.
+
+## Runs
+
+${runTable}
 `;
 }
 
@@ -170,6 +205,17 @@ function main() {
         sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
       });
     }
+    // Small browsable plaintext next to the archives, so the dataset can be
+    // judged in the Hugging Face file viewer without downloading anything:
+    // the rendered assignment (the prompt) and each stage's final message.
+    for (const { rel, abs } of collectPreviews(runDir)) {
+      const buffer = fs.readFileSync(abs);
+      allHits.push(...scanLines(buffer.toString('utf8'), path.join(entrant.runId, rel)));
+      leakScan(scanner, buffer, path.join(entrant.runId, rel));
+      const dest = path.join(stagingRoot, 'runs', entrant.runId, rel);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.writeFileSync(dest, buffer);
+    }
     index.runs.push({
       runId: entrant.runId,
       levelId: entrant.levelId,
@@ -187,7 +233,7 @@ function main() {
   const indexText = `${JSON.stringify(index, null, 2)}\n`;
   fs.writeFileSync(indexPath, indexText);
   fs.writeFileSync(path.join(stagingRoot, 'rollouts.json'), indexText);
-  fs.writeFileSync(path.join(stagingRoot, 'README.md'), datasetCard());
+  fs.writeFileSync(path.join(stagingRoot, 'README.md'), datasetCard(index));
 
   const rawTotal = index.runs.reduce((s, r) => s + r.files.reduce((t, f) => t + f.rawBytes, 0), 0);
   console.log(`Staged transcripts for ${index.runs.length} runs into ${path.relative(root, stagingRoot)} (${(rawTotal / 1048576).toFixed(0)} MB raw, both secret scans clean).`);
