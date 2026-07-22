@@ -1,0 +1,9 @@
+{
+  "id": "speedsolve-wvdv",
+  "title": "Speedsolve",
+  "contentImages": {
+    "overview": "/level-content/speedsolve-wvdv/overview.avif",
+    "start": "/level-content/speedsolve-wvdv/start.avif",
+    "hero": "/level-content/speedsolve-wvdv/hero.avif"
+  }
+}
