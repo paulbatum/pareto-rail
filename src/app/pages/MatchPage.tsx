@@ -6,7 +6,6 @@ import { rankCatalog, type RankCatalogTheme } from '../../benchmark/catalog';
 import { benchmarkLevelCatalog } from '../../levels';
 import { CustomMatchController, type MatchError, type MatchLaunch } from '../match';
 import { copyText } from '../clipboard';
-import { absoluteUrl } from '../seo';
 import { RouteLink } from '../components/RouteLink';
 import { CompareCard, RevealCards, VersusGrid, VoteButtons } from '../components/matchup';
 import type { AppRoute } from '../router';
@@ -111,7 +110,7 @@ function ThemeAnnotation({ theme }: { theme: RankCatalogTheme }) {
 
 function MatchRevealActions({ controller, onNavigate }: { controller: CustomMatchController; onNavigate: (path: string) => void }) {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const shareUrl = absoluteUrl(matchPath(controller.a!.levelId, controller.b!.levelId));
+  const shareUrl = `${window.location.origin}${matchPath(controller.a!.levelId, controller.b!.levelId)}`;
   const copy = async () => {
     try {
       await copyText(shareUrl);
@@ -187,7 +186,7 @@ function MatchPicker({ onNavigate }: { onNavigate: (path: string) => void }) {
   const ready = selected.length === 2;
   const copy = async () => {
     try {
-      await copyText(absoluteUrl(matchPath(a, b)));
+      await copyText(`${window.location.origin}${matchPath(a, b)}`);
       setCopyStatus('copied');
     } catch {
       setCopyStatus('failed');
