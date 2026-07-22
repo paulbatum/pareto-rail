@@ -18,5 +18,5 @@
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/.cache/pareto-rail.tsbuildinfo"
   },
-  "include": ["src", "dev", "server", "api", "vite.config.ts"]
+  "include": ["src", "dev", "server", "api", "middleware.ts", "vite.config.ts"]
 }
