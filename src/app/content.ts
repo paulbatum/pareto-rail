@@ -12,7 +12,7 @@ export const homeCopy = {
   benchmark: {
     eyebrow: 'Ready to compare?',
     title: 'Jump straight to the benchmark',
-    body: 'Play two anonymous model-built levels, then choose the one you prefer. Model names stay hidden until after you vote.',
+    body: 'Play two anonymous model-built levels, then vote for the one you prefer.',
     action: 'Start ranking',
   },
 } as const;
