@@ -468,6 +468,7 @@ html:fullscreen .perf-overlay { display: none; }
 .filter-chip[aria-pressed="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
 
 .retired-tag { margin: 0 8px; padding: 2px 6px; color: var(--accent); border: 1px solid var(--accent); font: 8px var(--mono); letter-spacing: .12em; text-transform: uppercase; vertical-align: middle; }
+.experimental-tag { margin: 0 8px; padding: 2px 6px; color: var(--cta); background: var(--cta-tint); border: 1px solid var(--cta); font: 8px var(--mono); letter-spacing: .12em; text-transform: uppercase; vertical-align: middle; }
 
 .levels-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 48px 0; border-top: 1px solid var(--hairline); color: var(--muted); font: 12px var(--mono); letter-spacing: .04em; }
 
@@ -551,6 +552,7 @@ html:fullscreen .perf-overlay { display: none; }
 .catalog-record-header .spacer { flex: 1; }
 .result-tag { padding: 4px 9px; color: var(--muted); border: 1px solid var(--hairline); font: 9.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 .result-tag.timed-out { color: var(--accent); border-color: var(--accent); }
+.result-tag.experimental { color: var(--cta); border-color: var(--cta); background: var(--cta-tint); }
 .catalog-identity { margin: 0 0 24px; color: var(--body-text); font: 11.5px var(--mono); letter-spacing: .06em; }
 
 .catalog-stats { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 24px; }

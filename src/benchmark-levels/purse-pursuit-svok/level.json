@@ -1,4 +1,9 @@
 {
   "id": "purse-pursuit-svok",
-  "title": "Purse Pursuit"
+  "title": "Purse Pursuit",
+  "contentImages": {
+    "overview": "/level-content/purse-pursuit-svok/overview.avif",
+    "start": "/level-content/purse-pursuit-svok/start.avif",
+    "hero": "/level-content/purse-pursuit-svok/hero.avif"
+  }
 }

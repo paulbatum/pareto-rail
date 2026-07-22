@@ -319,7 +319,7 @@ export function buildCatalog(publication, generatedAt) {
     if (!hasLive) continue;
 
     const parsed = parseTheme(theme);
-    themes.push({ ...parsed, ...(theme.retired ? { retired: true } : {}) });
+    themes.push({ ...parsed, ...(theme.retired ? { retired: true } : {}), ...(theme.experimental ? { experimental: true } : {}) });
     const accepted = new Set(theme.acceptedBaselines ?? []);
     for (const entrant of [...themeEntrants].sort((left, right) => left.levelId.localeCompare(right.levelId))) {
       if (entrant.retired) {

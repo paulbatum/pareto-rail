@@ -1,11 +1,14 @@
 import rawCatalog from './rank-catalog.json' with { type: 'json' };
 import type { BenchmarkDataClass, BenchmarkRunMetrics, BenchmarkTheme } from './types';
 
-/** A catalog theme carries one extra scheduling flag beyond the wire contract:
- * a `retired` theme stays in the gallery and keeps counting past votes, but is
- * never drawn into new matchups. The flag is client-only; the vote API ignores it. */
+/** A catalog theme carries two client-only scheduling flags beyond the wire
+ * contract, both of which keep a theme out of new matchups while leaving it in
+ * the gallery. A `retired` theme is finished history that still counts its past
+ * votes; an `experimental` theme is a new arrival being shown off before it is
+ * admitted to ranking. Neither flag is seen by the vote API. */
 export interface RankCatalogTheme extends BenchmarkTheme {
   retired?: boolean;
+  experimental?: boolean;
 }
 
 export interface RankCatalogConfiguration {
@@ -68,10 +71,10 @@ export function allCatalogThemes(catalog: RankCatalog): readonly RankCatalogThem
 }
 
 /** The pool the scheduler draws matchups from: every non-retired entrant of
- * every non-retired theme. Retired themes and retired entrants stay in the
- * catalog (gallery, past votes) but never enter a new matchup. */
+ * every rankable theme. Retired and experimental themes, and retired entrants,
+ * stay in the catalog (gallery, past votes) but never enter a new matchup. */
 export function schedulingPool(catalog: RankCatalog): SchedulingPool {
-  const themes = catalog.themes.filter((theme) => !theme.retired);
+  const themes = catalog.themes.filter((theme) => !theme.retired && !theme.experimental);
   const scheduledThemeIds = new Set(themes.map((theme) => theme.id));
   const entrants = catalog.entrants.filter((entrant) => !entrant.retired && scheduledThemeIds.has(entrant.themeId));
   return { themes, entrants };

@@ -39,10 +39,33 @@ type Navigate = (path: string) => void;
 
 const REFERENCE_LEVEL_IDS = new Set(['crystal-corridor', 'helios']);
 
-/** User-facing name for themes and entrants retired from active matchup
- * scheduling (the catalog's internal `retired` flag). Kept jargon-free per the
- * levels-page copy rules. */
-const RETIRED_LABEL = 'Retired';
+/** The catalog groups levels into four browsing categories. Built-ins are the
+ * hand-made levels; the other three name a benchmark theme's scheduling state —
+ * `ranked` is live in matchups, `retired` is finished history, `experimental` is
+ * a new theme being shown off before it enters ranking. The default view shows
+ * built-ins and ranked levels; retired and experimental are opt-in. */
+type LevelCategory = 'built-in' | 'ranked' | 'retired' | 'experimental';
+
+const CATEGORY_ORDER: readonly LevelCategory[] = ['built-in', 'ranked', 'retired', 'experimental'];
+const DEFAULT_CATEGORIES: readonly LevelCategory[] = ['built-in', 'ranked'];
+
+/** User-facing category names, kept jargon-free per the levels-page copy rules. */
+const CATEGORY_LABEL: Record<LevelCategory, string> = {
+  'built-in': 'Built in',
+  ranked: 'Ranked',
+  retired: 'Retired',
+  experimental: 'Experimental',
+};
+
+/** The scheduling category a benchmark entrant belongs to. A retired entrant (or
+ * any entrant of a retired theme) reads as retired even inside an otherwise live
+ * theme; an experimental theme's entrants read as experimental; everything else
+ * is ranked. */
+function benchmarkCategory(record: BenchmarkRecord): Exclude<LevelCategory, 'built-in'> {
+  if (record.theme.retired === true || record.entrant.retired === true) return 'retired';
+  if (record.theme.experimental === true) return 'experimental';
+  return 'ranked';
+}
 
 const EMPTY_BUILT_IN: BuiltInRecord[] = [];
 
@@ -50,12 +73,12 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
   const builtIn = useMemo(builtInRecords, []);
   const bands = useMemo(themeBands, []);
 
-  // Filter state is transient: a fresh visit starts from the default view of
-  // built-ins plus the levels still in rotation, with every configuration shown.
-  const [showRetired, setShowRetired] = useState(false);
+  // Filter state is transient: a fresh visit starts from the default categories
+  // (built-in plus ranked), with every configuration shown.
+  const [selectedCategories, setSelectedCategories] = useState<ReadonlySet<LevelCategory>>(() => new Set(DEFAULT_CATEGORIES));
   const [selectedConfigs, setSelectedConfigs] = useState<ReadonlySet<string>>(() => new Set());
   const configOptions = useMemo(() => configOptionsFrom(bands), [bands]);
-  const hasRetired = useMemo(() => bands.some((band) => band.theme.retired === true || band.records.some((record) => record.entrant.retired === true)), [bands]);
+  const categoryOptions = useMemo(() => categoryOptionsFrom(builtIn, bands), [builtIn, bands]);
 
   const toggleConfig = useCallback((id: string) => {
     setSelectedConfigs((current) => {
@@ -65,15 +88,20 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
     });
   }, []);
   const clearConfigs = useCallback(() => setSelectedConfigs(new Set()), []);
-  const toggleRetired = useCallback(() => setShowRetired((current) => !current), []);
+  const toggleCategory = useCallback((id: LevelCategory) => {
+    setSelectedCategories((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
 
-  // Narrowing to specific configurations hides the built-ins: they carry no
-  // generation record, so they can never match a configuration.
-  const configFiltering = selectedConfigs.size > 0;
-  const filteredBuiltIn = configFiltering ? EMPTY_BUILT_IN : builtIn;
+  // Built-ins are governed by their own category chip; the configuration filter
+  // narrows only the benchmark bands (built-ins carry no generation record).
+  const filteredBuiltIn = selectedCategories.has('built-in') ? builtIn : EMPTY_BUILT_IN;
   const filteredBands = useMemo(
-    () => filterBands(bands, showRetired, selectedConfigs),
-    [bands, showRetired, selectedConfigs],
+    () => filterBands(bands, selectedCategories, selectedConfigs),
+    [bands, selectedCategories, selectedConfigs],
   );
   const benchmarkCount = filteredBands.reduce((total, band) => total + band.records.length, 0);
 
@@ -121,9 +149,9 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
               selectedConfigs={selectedConfigs}
               onToggleConfig={toggleConfig}
               onClearConfigs={clearConfigs}
-              hasRetired={hasRetired}
-              showRetired={showRetired}
-              onToggleRetired={toggleRetired}
+              categoryOptions={categoryOptions}
+              selectedCategories={selectedCategories}
+              onToggleCategory={toggleCategory}
             />
             {route.view === 'data'
               ? <DataView builtIn={filteredBuiltIn} bands={filteredBands} benchmarkCount={benchmarkCount} onClearConfigs={clearConfigs} onNavigate={onNavigate} />
@@ -134,23 +162,41 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
 }
 
 type ConfigOption = { id: string; label: string };
+type CategoryOption = { id: LevelCategory; label: string };
 
-/** Filter bar shared by both views. Configuration is a multi-select: with no
- * chip pressed every configuration shows and the built-ins are included; press
- * one or more and the list narrows to those runs, built-ins dropping out. The
- * retired toggle only appears when there is something retired to reveal. */
-function LevelsFilters({ configOptions, selectedConfigs, onToggleConfig, onClearConfigs, hasRetired, showRetired, onToggleRetired }: {
+/** Filter bar shared by both views. Category is a set of independent toggles —
+ * built-in and ranked are pressed by default, retired and experimental are
+ * opt-in — and a chip only appears when that category has something to show.
+ * Configuration is a separate multi-select over the benchmark bands: with no
+ * chip pressed every configuration shows; press one or more to narrow to those
+ * runs. The two filters compose — category picks the bands, configuration picks
+ * the runs within them. */
+function LevelsFilters({ configOptions, selectedConfigs, onToggleConfig, onClearConfigs, categoryOptions, selectedCategories, onToggleCategory }: {
   configOptions: ConfigOption[];
   selectedConfigs: ReadonlySet<string>;
   onToggleConfig: (id: string) => void;
   onClearConfigs: () => void;
-  hasRetired: boolean;
-  showRetired: boolean;
-  onToggleRetired: () => void;
+  categoryOptions: CategoryOption[];
+  selectedCategories: ReadonlySet<LevelCategory>;
+  onToggleCategory: (id: LevelCategory) => void;
 }) {
   const allConfigs = selectedConfigs.size === 0;
   return (
     <div className="levels-filters">
+      <div className="levels-filter-group" role="group" aria-label="Filter by category">
+        <span className="levels-filter-label">Category</span>
+        <div className="levels-filter-chips">
+          {categoryOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className="filter-chip"
+              aria-pressed={selectedCategories.has(option.id)}
+              onClick={() => onToggleCategory(option.id)}
+            >{option.label}</button>
+          ))}
+        </div>
+      </div>
       <div className="levels-filter-group" role="group" aria-label="Filter by configuration">
         <span className="levels-filter-label" id="levels-filter-config">Configuration</span>
         <div className="levels-filter-chips">
@@ -166,16 +212,17 @@ function LevelsFilters({ configOptions, selectedConfigs, onToggleConfig, onClear
           ))}
         </div>
       </div>
-      {hasRetired && (
-        <div className="levels-filter-group">
-          <span className="levels-filter-label">Themes</span>
-          <button type="button" className="filter-chip" aria-pressed={showRetired} onClick={onToggleRetired}>
-            {RETIRED_LABEL}
-          </button>
-        </div>
-      )}
     </div>
   );
+}
+
+/** The scheduling badge shown beside a theme title in the band heads and rail.
+ * Retired and experimental themes are out of matchups; ranked themes carry no
+ * badge. Retired takes precedence when a theme is somehow both. */
+function ThemeTag({ theme }: { theme: RankCatalogTheme }) {
+  if (theme.retired === true) return <span className="retired-tag">{CATEGORY_LABEL.retired}</span>;
+  if (theme.experimental === true) return <span className="experimental-tag">{CATEGORY_LABEL.experimental}</span>;
+  return null;
 }
 
 function LevelsEmpty({ onClearConfigs }: { onClearConfigs: () => void }) {
@@ -245,7 +292,7 @@ function GalleryView({ builtIn, bands, onClearConfigs, onNavigate }: { builtIn: 
       {bands.map((band) => (
         <section className="levels-band" key={band.key}>
           <div className="levels-band-head">
-            <h2>Benchmark — {band.theme.title}{band.theme.retired && <span className="retired-tag">{RETIRED_LABEL}</span>} — {band.records.length} run{band.records.length === 1 ? '' : 's'}</h2>
+            <h2>Benchmark — {band.theme.title}<ThemeTag theme={band.theme} /> — {band.records.length} run{band.records.length === 1 ? '' : 's'}</h2>
             <RouteLink href={`${levelsViewPath.data}#theme-${band.theme.id}`} onNavigate={onNavigate}>Theme prompt ▸</RouteLink>
           </div>
           <div className="levels-grid">
@@ -326,7 +373,7 @@ function DataView({ builtIn, bands, benchmarkCount, onClearConfigs, onNavigate }
           <h2>Benchmark — {benchmarkCount}</h2>
           {bands.map((band) => (
             <Fragment key={band.key}>
-              <p className="catalog-rail-group">{band.theme.title}{band.theme.retired && <span className="retired-tag">{RETIRED_LABEL}</span>}</p>
+              <p className="catalog-rail-group">{band.theme.title}<ThemeTag theme={band.theme} /></p>
               {band.records.map((record) => (
                 <RailItem key={record.levelId} record={record} selected={record.levelId === selected.levelId}>
                   {record.entrant.featured === true && <b className="featured-mark" title="Featured">◆</b>}
@@ -404,7 +451,9 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
     <>
       <header className="catalog-record-header">
         <h2>{entrant.levelId}</h2>
-        {(theme.retired || entrant.retired) && <span className="result-tag">{RETIRED_LABEL}</span>}
+        {(theme.retired || entrant.retired)
+          ? <span className="result-tag">{CATEGORY_LABEL.retired}</span>
+          : theme.experimental && <span className="result-tag experimental">{CATEGORY_LABEL.experimental}</span>}
         {run && <span className={completed ? 'result-tag' : 'result-tag timed-out'}>{formatResult(run.result)}</span>}
         <span className="spacer" />
         <RouteLink className="button primary" href={playPath(entrant.levelId)} onNavigate={onNavigate}>▸ Play this level</RouteLink>
@@ -631,15 +680,27 @@ function configOptionsFrom(bands: ThemeBand[]): ConfigOption[] {
     }));
 }
 
-/** Apply the levels-page filters. Retired themes and retired entrants stay
- * hidden until asked for; a non-empty configuration selection keeps only runs
- * from those configurations and drops any theme band left empty. */
-function filterBands(bands: ThemeBand[], showRetired: boolean, configs: ReadonlySet<string>): ThemeBand[] {
+/** The categories that actually have levels to show, in fixed display order.
+ * A chip appears only when its category is non-empty, so the bar never offers a
+ * filter that would reveal nothing. */
+function categoryOptionsFrom(builtIn: BuiltInRecord[], bands: ThemeBand[]): CategoryOption[] {
+  const present = new Set<LevelCategory>();
+  if (builtIn.length > 0) present.add('built-in');
+  for (const band of bands) {
+    for (const record of band.records) present.add(benchmarkCategory(record));
+  }
+  return CATEGORY_ORDER.filter((category) => present.has(category)).map((category) => ({ id: category, label: CATEGORY_LABEL[category] }));
+}
+
+/** Apply the levels-page filters. A record shows only when its category is
+ * selected; retired and experimental are opt-in, so they stay hidden until their
+ * chip is pressed. A non-empty configuration selection then keeps only runs from
+ * those configurations, and any theme band left empty is dropped. */
+function filterBands(bands: ThemeBand[], categories: ReadonlySet<LevelCategory>, configs: ReadonlySet<string>): ThemeBand[] {
   const result: ThemeBand[] = [];
   for (const band of bands) {
-    if (band.theme.retired === true && !showRetired) continue;
     const visible = band.records.filter((record) => {
-      if (record.entrant.retired === true && !showRetired) return false;
+      if (!categories.has(benchmarkCategory(record))) return false;
       return configs.size === 0 || configs.has(record.entrant.configurationId);
     });
     if (visible.length > 0) result.push({ ...band, records: visible });

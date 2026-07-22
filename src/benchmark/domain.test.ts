@@ -439,6 +439,12 @@ function testSchedulingPoolExcludesRetired(): void {
     assert.equal(poolThemeIds.has(themeId), false, `${themeId} is retired and must not be in the pool`);
     assert.equal(pool.entrants.some((entrant) => entrant.themeId === themeId), false, `${themeId} entrants must not be in the pool`);
   }
+  // Experimental themes stay in the catalog for browsing but are never scheduled.
+  for (const themeId of ['purse-pursuit', 'speedsolve']) {
+    assert.ok(findCatalogTheme(rankCatalog, themeId)?.experimental, `${themeId} carries the experimental flag`);
+    assert.equal(poolThemeIds.has(themeId), false, `${themeId} is experimental and must not be in the pool`);
+    assert.equal(pool.entrants.some((entrant) => entrant.themeId === themeId), false, `${themeId} entrants must not be in the pool`);
+  }
   // Every pooled entrant belongs to a pooled, non-retired theme, and is not itself retired.
   const poolLevelIds = pool.entrants.map((entrant) => entrant.levelId);
   assert.equal(new Set(poolLevelIds).size, poolLevelIds.length, 'the pool must not duplicate entrants');

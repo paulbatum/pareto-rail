@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T03:59:38.724Z",
+  "generatedAt": "2026-07-22T18:47:50.924Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -120,6 +120,20 @@
       "title": "Strandline",
       "summary": "Build a level where you're freeing a gigantic jellyfish from an infestation.",
       "prompt": "Build a level where you're freeing a gigantic jellyfish from an infestation. The rail winds through its trailing tentacles and you're in the strands - banking around them, threading between them. Most of the time the world is a forest of glowing strands in sunlit water, then a curve swings you wide and for a few seconds you can see much more of the animal, the bell filling the view like a green moon, before the rail dives back in. The water is clear blue/green shading into deep blue with distance, lit through from somewhere above, and the jelly's own bioluminescence layers green-gold on top of it; the only sour note is the sickly violet of the parasites clamped onto it. The music is slow at start, gaining brightness and layers as more of it comes back to life.\n\nEnemies are the parasites, latched onto the strands ahead and detaching to defend the colony as you close in.\n\nBoss: the parent organism, dug in at the crown where the strands root into the bell. It hides behind a lattice of its own webbing and pumps out fresh broods; kill each brood and the webbing it fed dies back, until the parent is bare and you can tear it loose. When it dies the camera pulls back, and back, and back - the whole animal in frame for the first time, every strand glowing clean - the pulse resolves into something serene, the jellyfish drifts on, level ends."
+    },
+    {
+      "id": "purse-pursuit",
+      "title": "Purse Pursuit",
+      "summary": "Build a level where a motorcycle gang just snatched your purse and you want it back.",
+      "prompt": "Build a level where a motorcycle gang just snatched your purse and you want it back. Your buddy drives; you're hanging out the passenger window shooting, and the whole level is the chase - a city highway at night, lanes and guardrails, overpasses, taillights streaming past, working forward through the gang toward the boss who has your purse. Sell the lean-out-the-window feel: the car's flank and mirror in frame, the road surface tearing by close underneath, the camera swaying with lane changes. This one runs fun, not gritty - streetlight amber strobing overhead, the city skyline glowing past the barriers, chrome flash off the bikes - a pop music video, not a crime drama. The purse itself is a vivid blue, and that blue is the level's signature color: keep it rare in the world so it reads instantly whenever the purse is on screen. The music is fast, glossy electropop with a big hook, and it should feel like the chase soundtrack, hitting harder as you get deeper into the gang.\n\nEnemies are the gang riders - weaving between cars, swinging in close, dropping back to harass you - with distinct rider flavors as the chase escalates.\n\nBoss: the gang boss on a heavy bike, purse strap flapping from a shoulder. The boss doesn't just ride - they fight back with thrown weapons: bombs lobbed onto the road, spike clusters scattered across lanes, whatever forces your buddy to swerve and you to shoot things down before they land. Wear the bike down through the barrage, and when it finally blows, the purse sails out of the fireball in glorious slow arc, you catch it, the music peaks, and the car pulls away triumphant - level ends.",
+      "experimental": true
+    },
+    {
+      "id": "speedsolve",
+      "title": "Speedsolve",
+      "summary": "Build a level that is one continuous boss fight against a colossal twisting puzzle cube - six faces of nine colored squares, hanging in the middle of the arena while the rail orbits it.",
+      "prompt": "Build a level that is one continuous boss fight against a colossal twisting puzzle cube - six faces of nine colored squares, hanging in the middle of the arena while the rail orbits it. Shooting it solves it: a handful of squares glow as active targets, and destroying one snaps a layer rotation that leaves the face closer to a single color - order doesn't matter, any target advances the solve. Every rotation lands exactly on the beat; the cube is the percussion section, and the music should be built so that clicks, snaps, and rotations read as one instrument. Keep the score precise and mechanical - tight, quantized, all clean attacks - gaining a layer each time a face is conquered. When a face reaches a single color, the whole face falls away in a shower of loose cubies, exposing a weakpoint in the machinery underneath; destroy it and the rail swings you around to the next face. Six faces down and the core hangs fully exposed for the finish.\n\nYou're never left alone with the puzzle: small colorful polyhedra - tetrahedra, octahedra, prisms in the same candy colors - spawn in orbiting waves and shoot back, forcing you to defend yourself mid-solve.\n\nPalette: the cube owns the six bright solve colors, and everything else stays out of their way - a pale, softly lit void, white-and-grey machinery inside the cube, enemy fire in the cube's own colors. Ending: the naked core spins up, takes your last barrage, and bursts into a confetti storm of tiny cubes as the music resolves - level ends.",
+      "experimental": true
     }
   ],
   "entrants": [
@@ -1492,6 +1506,142 @@
       "thumbnailPath": "/level-content/strandline-s8dw/hero.avif",
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    },
+    {
+      "levelId": "purse-pursuit-svok",
+      "themeId": "purse-pursuit",
+      "configurationId": "claude-opus-4-8-high",
+      "modelName": "Claude Opus 4.8",
+      "workflowName": "solo",
+      "generationCost": 35.8299195,
+      "linesOfCode": 4187,
+      "run": {
+        "generationWallTimeSeconds": 2962.053,
+        "totalWallTimeSeconds": 3144.582,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.217"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-4-8",
+            "role": "solo",
+            "inputTokens": 2102,
+            "outputTokens": 221148,
+            "cacheReadTokens": 50604899,
+            "cacheWriteTokens": 498826,
+            "usageSource": "agreed",
+            "costUsd": 35.8299195
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/purse-pursuit-svok/hero.avif",
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+    },
+    {
+      "levelId": "purse-pursuit-tahr",
+      "themeId": "purse-pursuit",
+      "configurationId": "codex-sol-high",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 5.712324,
+      "linesOfCode": 1505,
+      "run": {
+        "generationWallTimeSeconds": 1073.489,
+        "totalWallTimeSeconds": 1098.108,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.144.1"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 352668,
+            "outputTokens": 48292,
+            "cacheReadTokens": 5000448,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 12255
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/purse-pursuit-tahr/hero.avif",
+      "featured": true,
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+    },
+    {
+      "levelId": "speedsolve-wvdv",
+      "themeId": "speedsolve",
+      "configurationId": "codex-sol-high",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 6.954514,
+      "linesOfCode": 1370,
+      "run": {
+        "generationWallTimeSeconds": 1120.249,
+        "totalWallTimeSeconds": 1141.833,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.144.1"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 332924,
+            "outputTokens": 45949,
+            "cacheReadTokens": 7822848,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 13261
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/speedsolve-wvdv/hero.avif",
+      "featured": true,
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+    },
+    {
+      "levelId": "speedsolve-zq4n",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-4-8-high",
+      "modelName": "Claude Opus 4.8",
+      "workflowName": "solo",
+      "generationCost": 45.21398,
+      "linesOfCode": 4168,
+      "run": {
+        "generationWallTimeSeconds": 4154.851,
+        "totalWallTimeSeconds": 4417.813,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.217"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-4-8",
+            "role": "solo",
+            "inputTokens": 5978,
+            "outputTokens": 336647,
+            "cacheReadTokens": 61214410,
+            "cacheWriteTokens": 616071,
+            "usageSource": "agreed",
+            "costUsd": 45.21398
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/speedsolve-zq4n/hero.avif",
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
     }
   ]
 }
