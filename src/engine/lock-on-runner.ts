@@ -318,7 +318,15 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   function updateInstructionPrompt() {
     const prompt = letterPrompt();
-    if (!prompt) return;
+    if (!prompt) {
+      // Off the start screen nothing else writes the tip, so the prompt owns
+      // hiding it: the running HUD and the end card both want the space back.
+      if (promptStage === undefined) return;
+      promptStage = undefined;
+      promptReleaseRejected = false;
+      hud.hideTip();
+      return;
+    }
     // A completed word is launching the run/replay; leave the prompt frozen on
     // its last stage until the state change hides the tip.
     if (startWhenLettersClear || replayWhenLettersClear) return;
@@ -383,7 +391,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     replayWhenLettersClear = false;
     startDelay = -1;
     hud.hideEnd();
-    hud.hideTip();
     hud.setStartNudgesVisible(false);
     hud.setCallout('');
     hud.setHudActive(true);
@@ -398,6 +405,8 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     if (state === 'attract') updateAttract(dt);
     else if (state === 'running') updateRunning(dt);
     else updateEnded(dt);
+
+    updateInstructionPrompt();
   }
 
   function updateAttract(dt: number) {
@@ -409,7 +418,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     updatePendingShots();
     updateProjectiles(dt);
     updateLetterStartDelay(dt);
-    updateInstructionPrompt();
     hud.update({ score, elapsedTime: 0, health: readyHealthForHud() });
   }
 
