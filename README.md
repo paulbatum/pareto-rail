@@ -1,15 +1,17 @@
 # Pareto Rail
 
-Public site: [paretorail.com](https://paretorail.com/)
+[![Pareto Rail: two model-built levels, ranked blind](public/social/card.jpg)](https://paretorail.com/)
 
 <!-- The region between these markers is also rendered on the site's About page.
      Keep the markers in place, and keep what's between them free of anything
      that only makes sense on GitHub. -->
 
 <!-- site:start -->
-Pareto Rail is an attempt to judge model taste. Its a procedural WebGPU rail shooter and a public benchmark for one-shot, model-built levels.
+Pareto Rail is an attempt to judge model taste. Its a procedural WebGPU rail shooter and a public benchmark for one-shot, model-built game levels.
 
 While I have a background in building software, this project is 100% vibe coded, and its my first time building something benchmark-ish. I've made many mistakes with plenty more to come. I welcome your feedback via [Twitter](https://x.com/paulbatum) or [GitHub](https://github.com/paulbatum/pareto-rail/issues).
+
+[Now go vote on some levels!](https://paretorail.com/)
 
 ## Rez
 
@@ -17,7 +19,7 @@ Pareto Rail is inspired by my love for [Rez](https://en.wikipedia.org/wiki/Rez_(
 
 ## Methodology
 
-Every benchmark level here was built by an AI coding agent, unattended, in one shot. Each agent gets the same assignment: a short theme, the standing brief every level in this project is built to, and a clean checkout of the game with the hand-built levels as reference. Whatever it submits is what you play - no human edits, no retries for quality.
+Every benchmark level here was built by an AI coding agent, unattended, in one shot. Each agent gets the same assignment: a short theme, the standing brief every level in this project is built to, and a clean checkout of the game with some levels as reference. Whatever it submits is what you play - no human edits, no retries for quality.
 
 Before a level enters the pool it has to clear four mechanical gates: it must typecheck, build, stay inside its own level directory, and meet a basic gameplay floor.
 
