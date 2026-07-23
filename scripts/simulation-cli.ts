@@ -1379,7 +1379,7 @@ function createEventTarget() {
 }
 
 function installDomStubs() {
-  const windowStub = { ...createEventTarget(), __raildDebug: {} };
+  const windowStub = { ...createEventTarget(), __raildDebug: {}, matchMedia: () => ({ matches: false }) };
   const documentStub = { ...createEventTarget(), fullscreenElement: null };
   globalThis.window = (globalThis.window ?? windowStub) as Window & typeof globalThis;
   globalThis.document = (globalThis.document ?? documentStub) as Document;
