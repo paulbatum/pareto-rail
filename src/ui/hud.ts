@@ -38,6 +38,10 @@ export function createHud(options: HudOptions = {}) {
   const endDeath = requireElement<HTMLElement>('[data-end="death"]');
   let hullMax = -1;
   let hullCurrent = -1;
+  let nudgesVisible = false;
+  let soundActive = false;
+
+  const applySoundTip = () => soundTip.classList.toggle('hidden', !nudgesVisible || !soundActive);
 
   timeCell.classList.toggle('hidden', options.showTimer !== true);
 
@@ -144,9 +148,18 @@ export function createHud(options: HudOptions = {}) {
        portrait-touch query for rotate; a fine-pointer query plus setFullscreenOffered for
        fullscreen), so each only appears where its suggestion applies. */
     setStartNudgesVisible(visible: boolean) {
-      soundTip.classList.toggle('hidden', !visible);
+      nudgesVisible = visible;
+      applySoundTip();
       rotateTip.classList.toggle('hidden', !visible);
       fullscreenTip.classList.toggle('hidden', !visible);
+    },
+
+    /* The sound nudge asks the player to turn their device volume up, which is only honest
+       advice once audio is actually playing — before the browser's autoplay unlock it would
+       point at silence. */
+    setSoundActive(active: boolean) {
+      soundActive = active;
+      applySoundTip();
     },
 
     /* Whether the fullscreen nudge is eligible at all: only when fullscreen is available and

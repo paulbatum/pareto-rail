@@ -5,7 +5,7 @@ import type { Hud } from '../ui/hud';
 
 export type LevelAudio = {
   start(): Promise<void>;
-  installGestureStart(): void;
+  installGestureStart(onStarted?: () => void): void;
   setMasterVolume(volume: number): void;
   getMasterVolume(): number;
   setMusicVolume(volume: number): void;

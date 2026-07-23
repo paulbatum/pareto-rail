@@ -690,6 +690,7 @@ function createSnapshotHud(): Hud {
     showTip: () => {},
     hideTip: () => {},
     setStartNudgesVisible: () => {},
+    setSoundActive: () => {},
     setFullscreenOffered: () => {},
   };
 }

@@ -163,7 +163,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     audio.setSfxVolume(readStoredPercent('pareto-rail-sfx-volume', legacyVolume) / 100);
     setBloomLevel(readStoredPercent('pareto-rail-bloom', 100) / 100);
     setMotionBlurLevel(readStoredPercent('pareto-rail-motion-blur', 100) / 100);
-    audio.installGestureStart();
+    audio.installGestureStart(() => hud.setSoundActive(true));
     const post = createPost(renderer, scene, camera, level.post);
     const perfParam = urlParams.get('perf');
     const perfEnabled = perfParam === '1' || (import.meta.env.DEV && perfParam !== '0');

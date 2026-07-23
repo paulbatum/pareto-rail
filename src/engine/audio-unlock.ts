@@ -30,7 +30,6 @@ export function createBrowserAudioContext() {
 }
 
 export function installAudioUnlock(start: () => Promise<void>) {
-  let starting = false;
   let disposed = false;
 
   const removeListeners = () => {
@@ -39,19 +38,19 @@ export function installAudioUnlock(start: () => Promise<void>) {
     }
   };
 
+  /* Deliberately re-entrant: on iOS, resume() outside a valid activation window can pend
+     forever, so a single in-flight attempt must never block later gestures. resume() is
+     idempotent, and start() only resolves once the context is actually running. */
   const wake = () => {
-    if (starting || disposed) return;
-    starting = true;
+    if (disposed) return;
     void start()
       .then(() => {
+        if (disposed) return;
         disposed = true;
         removeListeners();
       })
-      .catch((error: unknown) => {
-        console.warn('Audio unlock failed', error);
-      })
-      .finally(() => {
-        starting = false;
+      .catch(() => {
+        /* Autoplay policy refused this attempt; keep listening for the next gesture. */
       });
   };
 

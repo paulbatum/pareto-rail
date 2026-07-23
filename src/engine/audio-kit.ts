@@ -669,12 +669,36 @@ export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
         }, options.schedulerMs);
       }
     }
-    if (ctx.state === 'suspended') await ctx.resume();
+    /* Not strict equality with 'suspended': iOS also reports a non-standard 'interrupted'
+       state, and resume() is the correct call for both. */
+    if (ctx.state !== 'running') await ctx.resume();
+    if ((ctx.state as string) !== 'running') throw new Error(`Audio context is ${ctx.state} after resume`);
   };
 
-  const installGestureStart = () => {
+  const installGestureStart = (onStarted?: () => void) => {
     unlockGestureStart?.();
-    unlockGestureStart = installAudioUnlock(start);
+    let notified = false;
+    const startAndNotify = async () => {
+      await start();
+      if (!notified) {
+        notified = true;
+        onStarted?.();
+      }
+    };
+    const removeUnlock = installAudioUnlock(startAndNotify);
+    unlockGestureStart = removeUnlock;
+    /* Eager attempt: a visitor who click-navigated here already gave the page user
+       activation, so audio can legally start now — no reason to sit silent on the
+       attract screen waiting for another tap. Fresh deep links reject and fall back
+       to the gesture listeners above. */
+    void startAndNotify()
+      .then(() => {
+        if (unlockGestureStart === removeUnlock) {
+          removeUnlock();
+          unlockGestureStart = null;
+        }
+      })
+      .catch(() => {});
   };
 
   return {
