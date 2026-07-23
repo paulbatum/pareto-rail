@@ -149,7 +149,7 @@ type PlottedCurvePoint = {
   ties: number;
   losses: number;
   frontier: boolean;
-  status: 'pending' | 'provisional' | 'stable';
+  status: 'pending' | 'contested' | 'stable';
   x: number;
   y: number;
   labelY: number;
@@ -256,7 +256,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
       </div>
     </div>
     <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels. The best trade-offs move toward the <strong>upper left</strong>: higher personal preference at lower generation cost.</p>
-    <div className="curve-legend" aria-label="Chart legend"><span><i className="legend-point frontier" />Pareto frontier</span><span><i className="legend-point" />Other configuration</span><span><i className="legend-point early-estimate" />Early estimate</span><span className="best-direction">↖ Better value</span></div>
+    <div className="curve-legend" aria-label="Chart legend"><span><i className="legend-point frontier" />Pareto frontier</span><span><i className="legend-point" />Other configuration</span><span><i className="legend-point contested" />Too close to call</span><span className="best-direction">↖ Better value</span></div>
     <div className="curve-chart-wrap">
       <svg className="curve-chart" viewBox={`0 0 ${CURVE_CHART.width} ${CURVE_CHART.height}`} role="img" aria-label="Scatter plot of your preference rating by measured generation cost. Higher ratings are better and lower costs are better.">
         <g className="chart-grid">
@@ -282,7 +282,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
             const labelX = point.x + (labelOnLeft ? -14 : 14);
             const qualifier = workflowQualifier(point.workflowName);
             const effort = effortSuffix(point.configurationId);
-            return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${point.comparisons} comparisons. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
+            return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'contested' ? ' contested' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${point.comparisons} comparisons. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
               <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
               <circle cx={point.x} cy={point.y} r={point.frontier ? 8 : 6} />
               <text className="point-label" x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{effort ? `${point.modelName} ${effort}` : point.modelName}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>
@@ -383,7 +383,7 @@ function curveStatusNarrative(curve: PersonalCurve): string {
 }
 
 function statusLabel(status: PersonalRatingPoint['status']): string {
-  return status === 'pending' ? 'Needs matchups' : status === 'provisional' ? 'Early estimate' : 'Settled';
+  return status === 'pending' ? 'Needs matchups' : status === 'contested' ? 'Too close to call' : 'Settled';
 }
 
 function recordAriaLabel(point: PersonalRatingPoint): string {

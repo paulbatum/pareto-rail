@@ -22,7 +22,7 @@ export interface PersonalHistoryEntry {
   b: PersonalHistoryEntrant;
 }
 
-export type PersonalPointStatus = 'pending' | 'provisional' | 'stable';
+export type PersonalPointStatus = 'pending' | 'contested' | 'stable';
 
 export interface PersonalRatingPoint {
   configurationId: string;
@@ -199,7 +199,7 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   for (const point of points) {
     if (!placedIds.has(point.configurationId)) continue;
     if (!mainComponent.has(point.configurationId)) {
-      point.status = 'provisional';
+      point.status = 'contested';
       continue;
     }
     const blocker = cheaperHighestRatedPoint(point, placedPoints);
@@ -219,7 +219,7 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
     }));
     const syntheticFrontier = new Set(paretoFrontier(reratedPlaced).map((candidate) => candidate.configurationId));
     const membershipChanged = syntheticFrontier.has(point.configurationId) !== point.frontier;
-    point.status = membershipChanged ? 'provisional' : 'stable';
+    point.status = membershipChanged ? 'contested' : 'stable';
   }
 
   return {

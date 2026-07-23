@@ -317,7 +317,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend-point { display: inline-block; width: 9px; height: 9px; background: var(--ink); border: none; border-radius: 50%; box-shadow: none; }
 .legend-point.frontier { width: 9px; height: 9px; background: var(--accent); box-shadow: none; }
-.legend-point.early-estimate { background: transparent; border: 1.5px dashed var(--muted); opacity: 1; }
+.legend-point.contested { background: transparent; border: 1.5px dashed var(--muted); opacity: 1; }
 .curve-legend .best-direction { margin-left: auto; color: var(--accent); }
 .curve-chart-wrap { position: relative; width: 100%; margin: 12px 0 0; }
 .curve-chart { display: block; width: 100%; height: auto; overflow: visible; }
@@ -329,7 +329,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-point { cursor: help; outline: none; }
 .curve-point circle { fill: var(--ink); stroke: var(--paper); stroke-width: 2; transition: r 140ms ease, stroke 140ms ease; }
 .curve-point.frontier circle { fill: var(--accent); filter: none; }
-.curve-point.provisional circle { fill: transparent; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.curve-point.contested circle { fill: transparent; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 3; }
 .curve-point:hover circle, .curve-point:focus circle, .curve-point.active circle { r: 10px; stroke: var(--ink); filter: none; }
 .curve-point.frontier:hover circle, .curve-point.frontier:focus circle, .curve-point.frontier.active circle { r: 11px; stroke: var(--accent-tint); filter: none; }
 .point-label { fill: var(--ink); font: 600 12px var(--sans); pointer-events: none; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }

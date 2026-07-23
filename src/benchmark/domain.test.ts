@@ -200,8 +200,8 @@ function testIslandPlacement(): void {
   const curve = recomputePersonalCurve(coldStartHistory(), { catalog: catalog.entrants });
   assert.equal(curve.placedCount, 4);
   assert.equal(curve.points.filter((point) => point.status !== 'pending').length, 4, 'every twice-compared configuration is placed');
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'provisional');
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-3')?.status, 'provisional');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'contested');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-3')?.status, 'contested');
 }
 
 function testFeaturedIslandIsMain(): void {
@@ -214,8 +214,8 @@ function testFeaturedIslandIsMain(): void {
     historyEntry('theme-a-other', 'configuration-0', 'configuration-1', 'a'),
     historyEntry('theme-b-other', 'configuration-0', 'configuration-1', 'a'),
   ], { catalog: catalog.entrants });
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-0')?.status, 'provisional', 'the unfeatured island is capped at provisional');
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-1')?.status, 'provisional', 'the unfeatured island is capped at provisional');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-0')?.status, 'contested', 'the unfeatured island is capped at contested');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-1')?.status, 'contested', 'the unfeatured island is capped at contested');
 }
 
 function testConnectionPromotes(): void {
@@ -498,7 +498,7 @@ function testConvergenceAndStability(): void {
     historyEntry('fresh-d', 'configuration-2', 'configuration-3', 'a'),
     historyEntry('fresh-e', 'configuration-0', 'configuration-3', 'b'),
   ], { catalog: catalog.entrants });
-  assert.ok(fresh.points.some((point) => point.status === 'provisional'), 'a one-vote frontier flip is provisional');
+  assert.ok(fresh.points.some((point) => point.status === 'contested'), 'a one-vote frontier flip is contested');
 }
 
 function testSameConfigurationPairs(): void {
