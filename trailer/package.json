@@ -1,0 +1,20 @@
+{
+  "name": "pareto-rail-trailer",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render Trailer ../tmp/trailer/pareto-rail-trailer.mp4",
+    "still": "remotion still Trailer"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/google-fonts": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.6.0"
+  }
+}

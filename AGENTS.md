@@ -24,6 +24,7 @@ Stack: Vite + strict TypeScript + three.js **WebGPU only** (`WebGPURenderer` fro
 - `/dev` (dev server only) — enemy tuning gallery for `crystal-corridor`.
 - See `docs/level-authoring.md` before adding or reshaping levels, and build new levels to the standing brief in `docs/level-brief.md`. Authoring covers the *how* — module layout, runner contract, conventions; the brief is the *assignment* handed to an implementing agent — the effort bar, the floor, and what gets judged.
 - For any benchmark work — status, runs, promotion, publishing — start at `benchmark/README.md`, which documents the level-generation benchmark's methodology, protocol, and operations. Its canonical level footprints (built-in and benchmark; owned per-id roots and shared derived files) live in `scripts/benchmark/protocol.mjs`; scope, payload, and promotion code must consume that model rather than hardcode owned paths.
+- `trailer/` — standalone Remotion project for the promo trailer (own `package.json`, not part of the site build). See `trailer/README.md`.
 - Public compatibility contracts (identifier immutability, localStorage evolution, vote API rollout rules) are documented in `docs/compat.md`. Read it before renaming ids, changing stored data shapes, or touching the vote API.
 
 ## Verification
