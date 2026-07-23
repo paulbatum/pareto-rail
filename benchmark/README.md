@@ -12,7 +12,14 @@ Codex entrant shells run under an allowlist filesystem sandbox (a Codex permissi
 
 ## Design principles
 
-These bound any change to the benchmark system. Honesty comes from captured artifacts, not pre-verification: any fairness question is answerable after the fact by diffing what was kept, so pre-launch checking is limited to what prevents wasting an expensive run. Strictness is reserved for what an entrant sees or is judged by — generation runs are expensive and unrepeatable, while gates, bookkeeping, and publishing are deterministic and replayable, deserving at most a recorded commit hash. Where a worry can be eliminated by construction (the isolated entrant checkout), do that and write no policy; where it cannot, the operator decides and records a free-text note — no pre-declared taxonomies. Blindness is enforced only where it is load-bearing: the voter's, mechanically on the site; the owner's, by discipline and blind-by-default tooling. The controller is a program, not a supervised agent, and its documentation is one page telling an operator what to run and what to do when it fails.
+A few rules keep this system small and honest:
+
+- **Prefer simple.** Every record, gate, and policy has to earn its keep. If a git commit already pins something, don't write a freeze file on top of it; if a question can be answered by looking at what was kept, don't build a process to pre-answer it. Machinery that stops being used gets deleted — git history remembers.
+- **Honesty comes from keeping the evidence, not from checking up front.** Any fairness question should be answerable after the fact from what was captured: the rendered prompt, the sealed commit, the transcript, the measured cost. Pre-launch checks exist only to avoid wasting an expensive run.
+- **Be strict only where it matters.** What an entrant sees or is judged by can't be redone — generation runs are expensive and unrepeatable. Everything else (gates, bookkeeping, publishing) is deterministic and replayable, so a recorded commit hash is enough.
+- **Fix worries by construction where possible; use judgment otherwise.** The isolated entrant checkout removes a whole class of contamination concerns with zero policy text. Where construction can't help, the operator decides and writes a plain note — no pre-declared taxonomies.
+- **Blindness only where it's load-bearing.** Voters are kept blind mechanically by the site. The owner stays blind by discipline, helped by tooling that hides identities by default.
+- **The controller is a program, not a process.** Its documentation is one page: what to run, and what to do when it fails.
 
 ## Cost
 
@@ -52,7 +59,7 @@ Scheduling state is a `retired` flag at two grains. A retired theme stays in the
 
 ## Versions
 
-"v1" and "v2" name eras of the benchmark's machinery and configuration roster, not divisions of the published catalog. Version 1 is finished; its machinery is retrievable at the `benchmark-v1` git tag, while its published runs remain live provenance under `manifests/`. Current runs are pinned by the private plan's materials and baseline commits rather than by a freeze record. See `benchmark/releases/README.md`.
+"v1" and "v2" name eras of the benchmark's machinery and configuration roster, not divisions of the published catalog. Version 1 is finished; its machinery and its freeze record are retrievable at the `benchmark-v1` git tag, while its published runs remain live provenance under `manifests/`. Current runs are pinned by the private plan's materials and baseline commits.
 
 ## Directory map
 
@@ -62,7 +69,6 @@ Scheduling state is a `retired` flag at two grains. A retired theme stays in the
 - `examples/` — exemplar theme texts used by rehearsal and smoke runs.
 - `recipes/` — verbatim configuration recipes and their template. The recipe is the intervention being measured.
 - `schemas/` — the run-manifest record format written by the runner.
-- `releases/` — the v1 freeze record, hash-referenced by published v1 run manifests, so still part of the provenance chain.
 - `manifests/` — public per-run provenance for every published entrant, written by `benchmark:export-provenance`.
 - `analysis/` — committed rollout analysis packages that drive the site's `/analysis` view.
 - `private/` (ignored) — the plan, run records, raw logs, archives, and retired outputs.

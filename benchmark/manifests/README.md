@@ -8,4 +8,4 @@ The transcripts themselves are too large for the repository and live on the [`pa
 
 `benchmark:export-provenance` and `benchmark:export-rollouts` are documented alongside catalog export on the operations page (`benchmark/controller/README.md`).
 
-The `benchmark-v1` git tag holds the v1-era published manifests and the machinery that produced them.
+The `benchmark-v1` git tag holds the v1-era published manifests and the machinery that produced them. v1 run records reference their era's freeze record by path and hash; it resolves at that tag (`git show benchmark-v1:benchmark/releases/v1/freeze.json`).
