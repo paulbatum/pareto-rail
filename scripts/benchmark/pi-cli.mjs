@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initializeBudgetDirectory, POLL_INTERVAL_MS, resumeMessage, shouldResume } from './budget.mjs';
 import { parseBudgetUsd, startBudgetPoller, writeBudgetSummary } from './budget-runtime.mjs';
+import { assertSandboxDependencies, findHeadlessShell, PRIMARY_REPOSITORY_ROOT, piSandboxConfig } from './entrant-sandbox.mjs';
 import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
@@ -64,6 +65,7 @@ async function main() {
     --model <pi-model-id> \\
     --effort <off|minimal|low|medium|high|xhigh|max> \\
     [--provider <pi-provider>] \\
+    [--sandbox <true|false>] \\
     [--timeout-seconds <positive-integer>] \\
     [--budget-usd <positive-number>] \\
     [--resume-round <integer-at-least-1>] \\
@@ -71,7 +73,7 @@ async function main() {
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'provider', 'timeout-seconds', 'budget-usd', 'resume-round', 'pi-bin']));
+  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'provider', 'sandbox', 'timeout-seconds', 'budget-usd', 'resume-round', 'pi-bin']));
   if (options['resume-round'] !== undefined && options['budget-usd'] !== undefined) {
     fail('--resume-round cannot be combined with --budget-usd.');
   }
@@ -83,6 +85,7 @@ async function main() {
   const effort = requireOption(options, 'effort');
   if (!THINKING.has(effort)) fail(`Unsupported --effort: ${effort}. pi thinking levels are: ${[...THINKING].join(', ')}.`);
   const provider = options.provider;
+  const sandbox = options.sandbox === undefined ? false : parseBoolean(options.sandbox, '--sandbox');
   const timeoutSeconds = parseTimeout(options['timeout-seconds']);
   const budgetUsd = parseBudgetUsd(options['budget-usd']);
   const piBin = options['pi-bin'] ?? 'pi';
@@ -144,6 +147,34 @@ async function main() {
     source: credential.source,
   });
 
+  // Entrant sandbox: sandbox-runtime wraps every bash command, and the controller-owned extension also
+  // enforces the filesystem boundary on pi's native file tools (which run in the harness process,
+  // outside the bash sandbox). full Chrome cannot start under the sandbox seccomp filter, so the
+  // self-check floor and snapshot tooling are steered to chrome-headless-shell.
+  let sandboxExtensionPath;
+  let sandboxConfigPath;
+  let headlessShellPath;
+  if (sandbox) {
+    assertSandboxDependencies();
+    headlessShellPath = await findHeadlessShell();
+    // The deny root is the controller's primary repository, not the git-derived parent of the
+    // standalone worktree (which would be the worktree itself).
+    const policy = await piSandboxConfig({ worktree, repositoryRoot: PRIMARY_REPOSITORY_ROOT });
+    sandboxConfigPath = path.join(outputDirectory, 'sandbox-config.json');
+    await writeJson(sandboxConfigPath, {
+      mode: 'sandbox-runtime',
+      worktree,
+      repositoryRoot: PRIMARY_REPOSITORY_ROOT,
+      denyReadRoots: policy.filesystem.denyRead,
+      allowWrite: policy.filesystem.allowWrite,
+      allowRead: policy.filesystem.allowRead,
+      network: policy.network,
+      chromeHeadlessShell: headlessShellPath,
+      runtime: policy,
+    });
+    sandboxExtensionPath = fileURLToPath(new URL('./pi-sandbox-extension.js', import.meta.url));
+  }
+
   const sharedArgs = [
     '--print',
     '--mode', 'json',
@@ -160,12 +191,17 @@ async function main() {
     ...(provider ? ['--provider', provider] : []),
     ...(providerExtension ? ['--extension', providerExtension] : []),
     ...(quotaWait ? ['--extension', quotaWait.extensionPath] : []),
+    ...(sandboxExtensionPath ? ['--extension', sandboxExtensionPath] : []),
   ];
 
   let budgetDirectory;
   let poller;
   let deadline = Infinity;
   const childEnv = { ...(credential.env ?? {}) };
+  if (sandbox) {
+    childEnv.PARETO_RAIL_SANDBOX_CONFIG = sandboxConfigPath;
+    childEnv.PUPPETEER_EXECUTABLE_PATH = headlessShellPath;
+  }
   if (quotaWait) {
     childEnv.PARETO_RAIL_QUOTA_WAIT_DIRECTORY = quotaWait.directory;
     childEnv.PARETO_RAIL_QUOTA_WAIT_MS = String(quotaWait.waitMs);
@@ -517,6 +553,12 @@ function parseTimeout(value) {
   if (value === undefined) return undefined;
   if (!/^\d+$/.test(value) || Number(value) === 0) fail('--timeout-seconds must be a positive integer.');
   return Number(value);
+}
+
+function parseBoolean(value, label) {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  fail(`${label} must be true or false.`);
 }
 
 async function primaryRepository(worktree) {

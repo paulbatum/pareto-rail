@@ -19,6 +19,7 @@ import { ccusageVersion, harnessCountersForRounds, measureRunCost, reconcileCost
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
+import { assertSandboxDependencies, entrantSandboxEnabled } from './entrant-sandbox.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -66,6 +67,7 @@ const ADAPTERS = {
     modelProvider: () => 'Anthropic Claude Code subscription',
     homeEnvVar: 'CLAUDE_CONFIG_DIR',
     credential: { sourceRelative: '.claude/.credentials.json', dest: '.credentials.json' },
+    stageArgs: (definition) => ['--sandbox', String(entrantSandboxEnabled(definition))],
   },
   'pi-cli': {
     scriptPath: path.join(ROOT, 'scripts/benchmark/pi-cli.mjs'),
@@ -80,7 +82,10 @@ const ADAPTERS = {
     credential: { sourceRelative: '.pi/agent/auth.json', dest: 'auth.json' },
     // pi takes the provider per invocation rather than from the home's config, and a benchmark stage
     // must pin it rather than inherit whatever the operator last selected.
-    stageArgs: (definition) => (definition.stage.provider ? ['--provider', definition.stage.provider] : []),
+    stageArgs: (definition) => [
+      ...(definition.stage.provider ? ['--provider', definition.stage.provider] : []),
+      '--sandbox', String(entrantSandboxEnabled(definition)),
+    ],
   },
 };
 
@@ -143,6 +148,11 @@ async function main() {
     const entrantBaseline = await gitCommit(definition.entrantBaseline);
     const baselineGuard = await validateEntrantBaseline({ baselinePolicy: definition.baselinePolicy, entrantBaseline, repo: ROOT });
     reportBaselineGuard(baselineGuard);
+
+    // A scrubbed claude/pi row runs its entrant under an OS-level sandbox; abort before the expensive
+    // stage if its dependencies are missing rather than launching an unisolated run. Mirrors the
+    // scrubbed-baseline guard above: evaluated for every row, consequential only where it applies.
+    if (entrantSandboxEnabled(definition)) assertSandboxDependencies();
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
@@ -479,6 +489,7 @@ function validateStage(value, label, errors) {
   if (!Number.isInteger(value.timeoutSeconds) || value.timeoutSeconds < 1) errors.push(`${label}.timeoutSeconds must be a positive integer.`);
   if (value.provider !== undefined) validateString(value.provider, `${label}.provider`, errors);
   if (value.networkAccess !== undefined && typeof value.networkAccess !== 'boolean') errors.push(`${label}.networkAccess must be a boolean.`);
+  if (value.sandbox !== undefined && typeof value.sandbox !== 'boolean') errors.push(`${label}.sandbox must be a boolean.`);
   if (value.budget !== undefined) {
     if (!isPlainObject(value.budget)) errors.push(`${label}.budget must be an object.`);
     else if (!(typeof value.budget.usd === 'number' && Number.isFinite(value.budget.usd) && value.budget.usd > 0)) errors.push(`${label}.budget.usd must be a positive finite number.`);
@@ -754,7 +765,7 @@ function buildStages({ definition, adapter, cost, commandRecords, usage, rendere
   };
   const promptSha256 = renderedMeta.rendering.sha256;
   const delegationPromptSha256 = renderedMeta.delegation?.sha256;
-  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, ...(continuationRounds > 0 ? { continuationRounds } : {}), ...(budget ? { budget } : {}) };
+  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, entrantSandbox: entrantSandboxEnabled(definition), ...(continuationRounds > 0 ? { continuationRounds } : {}), ...(budget ? { budget } : {}) };
   const delegated = Boolean(definition.delegation) && cost.models.length > 1;
 
   if (cost.perModelCostAvailable && cost.models.length >= 1) {

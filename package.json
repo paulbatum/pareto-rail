@@ -71,6 +71,7 @@
     "three": "latest"
   },
   "devDependencies": {
+    "@anthropic-ai/sandbox-runtime": "0.0.67",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.17",

@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initializeBudgetDirectory, POLL_INTERVAL_MS, resumeMessage, shouldResume } from './budget.mjs';
 import { parseBudgetUsd, shellQuote, startBudgetPoller, writeBudgetSummary } from './budget-runtime.mjs';
+import { assertSandboxDependencies, findHeadlessShell, PRIMARY_REPOSITORY_ROOT } from './entrant-sandbox.mjs';
 import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
@@ -35,19 +36,21 @@ async function main() {
     --out <private-stage-directory> \\
     --model <model-alias-or-full-name> \\
     --effort <low|medium|high|xhigh|max> \\
+    [--sandbox <true|false>] \\
     [--timeout-seconds <positive-integer>] \\
     [--budget-usd <positive-number>] \\
     [--claude-bin <path-or-command>]`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'timeout-seconds', 'budget-usd', 'claude-bin']));
+  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'sandbox', 'timeout-seconds', 'budget-usd', 'claude-bin']));
 
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const promptPath = path.resolve(requireOption(options, 'prompt'));
   const model = requireOption(options, 'model');
   const effort = requireOption(options, 'effort');
   if (!EFFORTS.has(effort)) fail(`Unsupported --effort: ${effort}.`);
+  const sandbox = options.sandbox === undefined ? false : parseBoolean(options.sandbox, '--sandbox');
   const timeoutSeconds = parseTimeout(options['timeout-seconds']);
   const budgetUsd = parseBudgetUsd(options['budget-usd']);
   const claudeBin = options['claude-bin'] ?? 'claude';
@@ -58,6 +61,17 @@ async function main() {
   const prompt = await readFile(promptPath, 'prompt');
   await assertAbsent(outputDirectory, 'stage output directory');
   await fs.mkdir(outputDirectory, { recursive: true });
+
+  // Entrant sandbox: Claude Code's built-in bubblewrap sandbox enforces the filesystem and network
+  // boundary under --print/bypassPermissions. full Chrome cannot start under its seccomp filter, so the
+  // self-check floor and snapshot tooling are steered to chrome-headless-shell, and statsig/Sentry
+  // chatter is silenced since the deny-all domain list would block it noisily.
+  if (sandbox) {
+    assertSandboxDependencies();
+    await assertNoEntrantSettingsOverride(worktree);
+    process.env.PUPPETEER_EXECUTABLE_PATH = await findHeadlessShell();
+    process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = '1';
+  }
 
   const cliVersion = await runCommand(claudeBin, ['--version'], { cwd: worktree });
 
@@ -70,24 +84,40 @@ async function main() {
     '--permission-mode', 'bypassPermissions',
     '--setting-sources', 'project',
     '--strict-mcp-config',
+    // WebFetch and WebSearch run in the harness process, outside the bash sandbox — the one egress path
+    // the OS network boundary cannot see — so a sandboxed run disables them at the tool level.
+    ...(sandbox ? ['--disallowedTools', 'WebFetch,WebSearch'] : []),
   ];
 
   let budgetDirectory;
   let poller;
   let deadline = Infinity;
+  // Claude Code merges one --settings file over its other sources. The budget hooks and the sandbox
+  // policy both live here so a single file carries both when a run is budgeted and sandboxed.
+  const settings = {};
   if (budgetUsd !== undefined) {
     budgetDirectory = path.join(outputDirectory, 'budget');
     await initializeBudgetDirectory(budgetDirectory, budgetUsd);
     const hookPath = fileURLToPath(new URL('./budget-hook.mjs', import.meta.url));
-    const settingsPath = path.join(budgetDirectory, 'hook-settings.json');
-    await writeJson(settingsPath, {
-      hooks: {
-        PostToolUse: [{ matcher: '', hooks: [{ type: 'command', command: `node ${shellQuote(hookPath)} ${shellQuote(budgetDirectory)}` }] }],
-      },
-    });
-    sharedArgs.push('--settings', settingsPath);
+    settings.hooks = {
+      PostToolUse: [{ matcher: '', hooks: [{ type: 'command', command: `node ${shellQuote(hookPath)} ${shellQuote(budgetDirectory)}` }] }],
+    };
     const claudeHome = process.env.CLAUDE_CONFIG_DIR ? path.resolve(process.env.CLAUDE_CONFIG_DIR) : path.join(os.homedir(), '.claude');
     poller = startBudgetPoller({ adapter: 'claude-cli', home: claudeHome, budgetDirectory, budgetUsd, intervalMs: POLL_INTERVAL_MS });
+  }
+  if (sandbox) {
+    // Deny the controller's primary repository, not the git-derived parent of the standalone worktree
+    // (which resolves to the worktree itself).
+    settings.sandbox = buildSandboxSettings({ repositoryRoot: PRIMARY_REPOSITORY_ROOT, worktree, budgetDirectory });
+  }
+  if (Object.keys(settings).length > 0) {
+    // Keep the historical budget-only path (budget/hook-settings.json) so open-policy recipes stay
+    // verbatim; a sandbox-only run gets its own settings file under the stage output directory.
+    const settingsPath = budgetDirectory
+      ? path.join(budgetDirectory, 'hook-settings.json')
+      : path.join(outputDirectory, 'sandbox-settings.json');
+    await writeJson(settingsPath, settings);
+    sharedArgs.push('--settings', settingsPath);
   }
 
   const firstArgs = [...printArgs, ...sharedArgs, '--session-id', sessionId];
@@ -206,6 +236,56 @@ function parseTimeout(value) {
   if (value === undefined) return undefined;
   if (!/^\d+$/.test(value) || Number(value) === 0) fail('--timeout-seconds must be a positive integer.');
   return Number(value);
+}
+
+function parseBoolean(value, label) {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  fail(`${label} must be true or false.`);
+}
+
+// Claude Code's built-in sandbox policy. Reads are allow-by-default minus denyRead; the primary
+// repository (its .git, the tracked benchmark tree, every promoted level, and — since the run output
+// lives under benchmark/private — this run's harness home and its copied operator credential) and the
+// host /tmp are denied, then the worktree is carved back in (it lives under /tmp). Writes are
+// deny-by-default: only the worktree is writable. Network egress is empty. When the run is budgeted the
+// budget directory is granted read and write too, so the PostToolUse hook can claim notices whether or
+// not Claude runs hook subprocesses inside the sandbox; that directory holds only this run's own spend
+// state (never the sibling harness home), so the grant does not widen what the entrant can reach.
+//
+// Claude merges sandbox settings from the entrant-controlled project source (the worktree's
+// .claude/settings.json) regardless of --setting-sources, and allowRead/allowedDomains union across
+// sources — so a planted settings file could widen the boundary or flip allowUnsandboxedCommands. The
+// scrubbed baseline ships no such file (asserted before launch), and denyWrite on those two paths
+// keeps the entrant from creating one mid-run or across a budget resume, so no project settings file
+// ever exists to weaken the policy.
+function buildSandboxSettings({ repositoryRoot, worktree, budgetDirectory }) {
+  const resolvedWorktree = path.resolve(worktree);
+  const worktreeGrants = [resolvedWorktree, ...(budgetDirectory ? [path.resolve(budgetDirectory)] : [])];
+  return {
+    enabled: true,
+    failIfUnavailable: true,
+    allowUnsandboxedCommands: false,
+    filesystem: {
+      denyRead: [path.resolve(repositoryRoot), '/tmp'],
+      allowRead: worktreeGrants,
+      allowWrite: worktreeGrants,
+      denyWrite: ENTRANT_SETTINGS_FILES.map((name) => path.join(resolvedWorktree, name)),
+    },
+    network: { allowedDomains: [] },
+  };
+}
+
+// The project settings files Claude would read from the worktree. A sandboxed run refuses to launch if
+// one is present at startup and denies writing them during the run.
+const ENTRANT_SETTINGS_FILES = ['.claude/settings.json', '.claude/settings.local.json'];
+
+async function assertNoEntrantSettingsOverride(worktree) {
+  for (const name of ENTRANT_SETTINGS_FILES) {
+    const target = path.join(path.resolve(worktree), name);
+    const present = await fs.lstat(target).then(() => true, () => false);
+    if (present) fail(`Refusing to launch a sandboxed run: the entrant worktree already contains ${name}, which could widen or disable the sandbox. Investigate the baseline before running.`);
+  }
 }
 
 async function primaryRepository(worktree) {
