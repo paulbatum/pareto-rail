@@ -4,6 +4,7 @@
   "scripts": {
     "studio": "remotion studio",
     "render": "remotion render Trailer ../tmp/trailer/pareto-rail-trailer.mp4",
+    "render2": "remotion render Trailer2 ../tmp/trailer/pareto-rail-trailer2.mp4",
     "still": "remotion still Trailer"
   },
   "dependencies": {
