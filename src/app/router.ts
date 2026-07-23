@@ -1,3 +1,5 @@
+import { isUpdateAvailable } from './update-check';
+
 export type LevelsView = 'gallery' | 'data';
 
 export type AppRoute =
@@ -64,6 +66,13 @@ export function routePath(route: AppRoute): string {
 
 export function navigate(path: string, replace = false) {
   if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+  // A stale tab picks up a new deploy here: on a genuine user push navigation (not a
+  // replaceState canonicalization, which must stay SPA-internal), do a full document load
+  // of the target route so the browser fetches the fresh bundle. See update-check.ts.
+  if (!replace && isUpdateAvailable()) {
+    window.location.assign(path);
+    return;
+  }
   if (replace) window.history.replaceState({}, '', path);
   else window.history.pushState({}, '', path);
   window.dispatchEvent(new PopStateEvent('popstate'));

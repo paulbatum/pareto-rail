@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { SiteLayout } from './layout/SiteLayout';
 import { parseRoute, navigate, levelsViewPath, type AppRoute } from './router';
 import { applyRouteHead } from './seo';
+import { installUpdateCheck } from './update-check';
 import { AboutPage, HomePage, LeaderboardPage, NotFoundPage } from './pages/PublicPages';
 import { LevelsPage } from './pages/LevelsPage';
 import { PlayRoute } from './pages/GamePage';
@@ -19,6 +20,11 @@ export function App() {
     const handlePopState = () => setRoute(parseRoute());
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Start watching for new deploys so a long-open tab upgrades on the next navigation.
+  useEffect(() => {
+    installUpdateCheck();
   }, []);
 
   // /play predates /levels and still resolves there; canonicalize the address bar.

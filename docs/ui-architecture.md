@@ -6,6 +6,8 @@ The website shell — everything outside the WebGPU game runtime — lives under
 
 Client-side via the History API (`src/app/router.ts`). An unrecognized path resolves to `{ kind: 'notFound' }` and renders a 404 view.
 
+**Upgrade on navigation** — a long-open tab silently picks up new deploys. `src/app/update-check.ts` polls the build-emitted `/version.json` (on tab-visible and a slow interval) and flags when its commit differs from the one baked into the bundle; on the next genuine user push navigation (not a `replace` canonicalization), `navigate()` does a full document load instead of a pushState so the browser fetches the fresh bundle. No UI or prompt. Disabled in dev, where HMR keeps the bundle current.
+
 ## The `/levels` pages
 
 `/levels` browses every level as a thumbnail gallery; `/levels/data` shows the catalog tree and full run records. Both are driven by the rank catalog and the built-in registry, so a benchmark level reaches these pages by being published to the catalog.

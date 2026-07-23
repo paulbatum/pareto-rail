@@ -21,10 +21,12 @@ function resolveCommitHash(): string {
   }
 }
 
+const commitHash = resolveCommitHash();
+
 export default defineConfig({
-  plugins: [react(), crystalTemplateDevPlugin(), rankApiDevPlugin(), adminApiDevPlugin()],
+  plugins: [react(), crystalTemplateDevPlugin(), versionMarkerPlugin(commitHash), rankApiDevPlugin(), adminApiDevPlugin()],
   define: {
-    __COMMIT_HASH__: JSON.stringify(resolveCommitHash()),
+    __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   server: {
     /* Reaching the dev server from a phone needs HTTPS, since WebGPU is secure-context only.
@@ -36,6 +38,24 @@ export default defineConfig({
     manifest: true,
   },
 });
+
+/* Emits a tiny /version.json holding the deployed commit SHA so a long-open tab can
+   detect a newer build (see src/app/update-check.ts). Build-only: it's written into the
+   output, never tracked in public/. The staleness check is disabled in dev (HMR covers it),
+   so there's no dev-server route for it. */
+function versionMarkerPlugin(commit: string): Plugin {
+  return {
+    name: 'pareto-rail-version-marker',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: `${JSON.stringify({ commit })}\n`,
+      });
+    },
+  };
+}
 
 function crystalTemplateDevPlugin(): Plugin {
   return {
