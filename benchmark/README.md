@@ -10,6 +10,8 @@ One deterministic command takes a plan row from an isolated entrant checkout thr
 
 Codex entrant shells run under an allowlist filesystem sandbox (a Codex permission profile, built in `scripts/benchmark/codex-cli.mjs`): the entrant's checkout is the only writable root, and concurrent runs' checkouts, the primary repository, and the host `/tmp` are absent from the mount namespace entirely. This closes by construction the cross-run read that disqualified `sol-high-mdd-v3qf` (`benchmark/incidents/2026-07-baseline-contamination.md`). Claude and pi entrants do not yet have an equivalent boundary; for them the contamination audit remains the control.
 
+All of this sandboxing runs on the operator's Ubuntu 22.04 WSL2 host, which allows unprivileged user namespaces. On Ubuntu 24.04+ an AppArmor restriction (`kernel.apparmor_restrict_unprivileged_userns=1`) breaks bubblewrap-based sandboxes — including their loopback setup (`bwrap: loopback: Failed RTM_NEWADDR`) — until an AppArmor profile granting bwrap `userns` is installed; if the host is ever upgraded, fix it with that profile rather than the global sysctl.
+
 ## Design principles
 
 A few rules keep this system small and honest:
