@@ -53,7 +53,11 @@ function rewriteOne(html: string, pattern: RegExp, replacement: string, label: s
   return out;
 }
 
-function rewriteHead(html: string, cardUrl: string, matchUrl: string): string {
+// `canonicalUrl` is the bare `/match` (the route's canonical, indexable-facing
+// identity); `shareUrl` carries the a/b params. They differ on purpose: social
+// crawlers cache a card against `og:url`, so a bare `og:url` would make every
+// matchup share whichever card was scraped first.
+function rewriteHead(html: string, cardUrl: string, canonicalUrl: string, shareUrl: string): string {
   let out = html;
   out = rewriteOne(out, /<title>[\s\S]*?<\/title>/, `<title>${escapeText(MATCH_TITLE)}</title>`, '<title>');
   out = rewriteOne(
@@ -62,7 +66,7 @@ function rewriteHead(html: string, cardUrl: string, matchUrl: string): string {
     `<meta name="description" content="${escapeAttr(MATCH_DESCRIPTION)}" />`,
     'meta[name=description]',
   );
-  out = rewriteOne(out, /<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${escapeAttr(matchUrl)}" />`, 'link[rel=canonical]');
+  out = rewriteOne(out, /<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${escapeAttr(canonicalUrl)}" />`, 'link[rel=canonical]');
   const metaProperty = (property: string, content: string) =>
     rewriteOne(
       out,
@@ -79,7 +83,7 @@ function rewriteHead(html: string, cardUrl: string, matchUrl: string): string {
     );
   out = metaProperty('og:title', MATCH_TITLE);
   out = metaProperty('og:description', MATCH_DESCRIPTION);
-  out = metaProperty('og:url', matchUrl);
+  out = metaProperty('og:url', shareUrl);
   out = metaProperty('og:image', cardUrl);
   out = metaProperty('og:image:width', String(CARD_WIDTH));
   out = metaProperty('og:image:height', String(CARD_HEIGHT));
@@ -101,8 +105,9 @@ export default async function middleware(request: Request): Promise<Response> {
     const html = await indexRes.text();
 
     const cardUrl = `${SITE_ORIGIN}/api/og/match?a=${a}&b=${b}`;
-    const matchUrl = `${SITE_ORIGIN}/match`;
-    const rewritten = rewriteHead(html, cardUrl, matchUrl);
+    const canonicalUrl = `${SITE_ORIGIN}/match`;
+    const shareUrl = `${canonicalUrl}?a=${a}&b=${b}`;
+    const rewritten = rewriteHead(html, cardUrl, canonicalUrl, shareUrl);
 
     return new Response(rewritten, {
       status: 200,
