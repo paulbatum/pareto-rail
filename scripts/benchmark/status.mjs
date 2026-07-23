@@ -13,17 +13,21 @@ const FORMATS = new Set(['table', 'json']);
 
 async function loadPlannedRuns() {
   const planned = new Map();
-  const v2Plan = await optionalJson(path.join(PRIVATE_DIR, 'v2-plan.json'));
-  for (const run of v2Plan?.runs ?? []) {
-    planned.set(run.runId, {
-      runId: run.runId,
-      slotId: run.slotId ?? null,
-      levelId: run.levelId ?? null,
-      themeId: run.themeId ?? null,
-      configurationId: run.configurationId ?? null,
-      kind: run.kind ?? 'benchmark',
-      benchmarkVersion: v2Plan.benchmarkVersion ?? null,
-    });
+  for (const planFile of await planFiles()) {
+    const plan = await optionalJson(planFile);
+    if (!Array.isArray(plan?.runs)) continue;
+    for (const run of plan.runs) {
+      if (planned.has(run.runId)) continue;
+      planned.set(run.runId, {
+        runId: run.runId,
+        slotId: run.slotId ?? null,
+        levelId: run.levelId ?? null,
+        themeId: run.themeId ?? null,
+        configurationId: run.configurationId ?? null,
+        kind: run.kind ?? 'benchmark',
+        benchmarkVersion: plan.benchmarkVersion ?? null,
+      });
+    }
   }
   for (const scheduleFile of await scheduleFiles()) {
     const schedule = await optionalJson(scheduleFile);
@@ -47,6 +51,17 @@ async function scheduleFiles() {
   const entries = await fs.readdir(PRIVATE_DIR);
   return entries
     .filter((name) => /^run-schedule.*\.json$/.test(name))
+    .sort()
+    .map((name) => path.join(PRIVATE_DIR, name));
+}
+
+// Every plan file in benchmark/private participates, so a new series (or a side
+// plan like fun-ideas) is visible without re-wiring status. A plan is any
+// *plan*.json whose top level carries a runs array.
+async function planFiles() {
+  const entries = await fs.readdir(PRIVATE_DIR);
+  return entries
+    .filter((name) => name.includes('plan') && name.endsWith('.json'))
     .sort()
     .map((name) => path.join(PRIVATE_DIR, name));
 }
@@ -241,7 +256,7 @@ async function main() {
   const { options } = parseArgs(process.argv.slice(2), { booleans: ['unblind'] });
   assertOnlyOptions(options, new Set(['help', 'format', 'unblind']));
   if (options.help) {
-    console.log(`Usage: npm run benchmark:status -- [options]\n\nOptions:\n  --format <format>   table or json (default: table)\n  --unblind           Reveal configuration and model identities (default: blind)\n\nMerges planned runs (the private plan and any run schedule) with executed run\nartifacts (live and archived) into one pending / needs-promotion / ran view.\nBlind by default: run ids and dispositions only. Pass --unblind after voting.`);
+    console.log(`Usage: npm run benchmark:status -- [options]\n\nOptions:\n  --format <format>   table or json (default: table)\n  --unblind           Reveal configuration and model identities (default: blind)\n\nMerges planned runs (every private plan file and any run schedule) with executed run\nartifacts (live and archived) into one pending / needs-promotion / ran view.\nBlind by default: run ids and dispositions only. Pass --unblind after voting.`);
     return;
   }
   const format = options.format ?? 'table';

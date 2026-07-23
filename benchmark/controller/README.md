@@ -103,7 +103,7 @@ npm run benchmark:results
 npm run benchmark:manage -- status
 ```
 
-`benchmark:status` is the first stop: it joins the plan and any run schedule to the executed artifacts (live and archived) and answers what is left, splitting runs into pending, needs-promotion, and ran. `benchmark:results` then gives the per-run-artifact detail for the live directory — lifecycle state, gates, timing, cost, manifest completeness — with run ids and dispositions only. All three take `--unblind` to reveal configuration and model identities; use it only after you have voted. `benchmark:manage` also offers `archive-dnf`, `unarchive`, and `prune` (a strictly verified, doubly confirmed removal of a run's temporary worktrees that preserves every branch and commit).
+`benchmark:status` is the first stop: it joins every plan file under `benchmark/private/` and any run schedule to the executed artifacts (live and archived) and answers what is left, splitting runs into pending, needs-promotion, and ran. `benchmark:results` then gives the per-run-artifact detail for the live directory — lifecycle state, gates, timing, cost, manifest completeness — with run ids and dispositions only. All three take `--unblind` to reveal configuration and model identities; use it only after you have voted. `benchmark:manage` also offers `archive-dnf`, `unarchive`, and `prune` (a strictly verified, doubly confirmed removal of a run's temporary worktrees that preserves every branch and commit).
 
 ## Promotion
 
