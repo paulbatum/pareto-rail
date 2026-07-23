@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BenchmarkModelUsage, BenchmarkTheme } from '../../benchmark/types';
 import { entrantLabel } from '../../benchmark/identity';
 import { rankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type RankCatalogTheme } from '../../benchmark/catalog';
@@ -130,7 +130,7 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
   }, [route.view]);
 
   return (
-    <>
+    <PlayOrigin.Provider value={route.view}>
       <header className="levels-header">
         <div>
           <p className="eyebrow">{levelsCopy.eyebrow}</p>
@@ -157,7 +157,7 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
               ? <DataView builtIn={filteredBuiltIn} bands={filteredBands} benchmarkCount={benchmarkCount} onClearConfigs={clearConfigs} onNavigate={onNavigate} />
               : <GalleryView builtIn={filteredBuiltIn} bands={filteredBands} onClearConfigs={clearConfigs} onNavigate={onNavigate} />}
           </>}
-    </>
+    </PlayOrigin.Provider>
   );
 }
 
@@ -308,6 +308,7 @@ function GalleryView({ builtIn, bands, onClearConfigs, onNavigate }: { builtIn: 
 }
 
 function GalleryCard({ record, onNavigate }: { record: LevelRecord; onNavigate: Navigate }) {
+  const playPath = usePlayPath();
   const featured = record.kind === 'benchmark' && record.entrant.featured === true;
   return (
     <div className="gallery-card">
@@ -408,6 +409,7 @@ function RailItem({ record, selected, children }: { record: LevelRecord; selecte
 }
 
 function BuiltInRecordDetail({ record, onNavigate }: { record: BuiltInRecord; onNavigate: Navigate }) {
+  const playPath = usePlayPath();
   return (
     <>
       <header className="catalog-record-header">
@@ -447,6 +449,7 @@ function renderInlineCode(text: string): React.ReactNode {
 }
 
 function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: BenchmarkRecord; themeTarget: string | null; onNavigate: Navigate }) {
+  const playPath = usePlayPath();
   const { entrant, configuration, theme } = record;
   const run = entrant.run;
   const completed = run === undefined || run.result === 'completed';
@@ -570,6 +573,7 @@ function RawRecord({ entrant, index }: { entrant: RankCatalogEntrant; index: num
 }
 
 function RecordThumbnail({ record, onNavigate }: { record: LevelRecord; onNavigate: Navigate }) {
+  const playPath = usePlayPath();
   return (
     <RouteLink className="catalog-thumb" href={playPath(record.levelId)} onNavigate={onNavigate} aria-label={`Play ${record.levelId}`}>
       <Thumbnail path={thumbnailPathOf(record)} />
@@ -715,8 +719,13 @@ function thumbnailPathOf(record: LevelRecord): string | undefined {
   return record.kind === 'built-in' ? record.thumbnailPath : record.entrant.thumbnailPath;
 }
 
-function playPath(levelId: string): string {
-  return `/play/${encodeURIComponent(levelId)}`;
+/** Which levels view a play link was opened from, so the level's end card can
+ * offer a way back to the page the visitor actually left. */
+const PlayOrigin = createContext<LevelsView>('gallery');
+
+function usePlayPath(): (levelId: string) => string {
+  const from = useContext(PlayOrigin);
+  return (levelId) => `/play/${encodeURIComponent(levelId)}?from=${from}`;
 }
 
 function entrantPath(levelId: string): string {

@@ -67,7 +67,7 @@ export function RankPage({ route, onNavigate }: RankPageProps) {
 
   if (!controller || !prepared) return <section className="page-panel"><p className="eyebrow">Rank</p><h1>Preparing a matchup…</h1></section>;
   if (launch) return <RankGame launch={launch} onNavigate={onNavigate} onRunEnd={handleRunEnd} />;
-  if (interlude === 'playing') return <InterludeGame onNavigate={onNavigate} onReturn={() => setInterlude('idle')} />;
+  if (interlude === 'playing') return <InterludeGame onReturn={() => setInterlude('idle')} />;
   if (!controller.state) return controller.judgedMatchups.length > 0 ? <CompletedRankPage controller={controller} /> : <ProductionRankPage />;
   const state = controller.state;
   // A one-time Helios detour, offered only between matchups so it never
@@ -521,7 +521,7 @@ function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavi
     </section>
   );
   if (!level) return <section className="page-panel"><p className="eyebrow">Rank</p><h1>Loading anonymous level…</h1></section>;
-  return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} launchContext={{ source: 'rank', levelId: launch.levelId, mode: 'benchmark' }} onNavigate={onNavigate} onRunEnd={onRunEnd} runEndContent={<BenchmarkInvitation side={launch.side} onNavigate={onNavigate} />} />;
+  return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} launchContext={{ source: 'rank', levelId: launch.levelId, mode: 'benchmark' }} onRunEnd={onRunEnd} runEndContent={<BenchmarkInvitation side={launch.side} onNavigate={onNavigate} />} />;
 }
 
 function createRankController(): RankController {
@@ -549,7 +549,7 @@ function InterludeOffer({ onPlay, onDismiss }: { onPlay: () => void; onDismiss: 
   </section>;
 }
 
-function InterludeGame({ onNavigate, onReturn }: { onNavigate: (path: string) => void; onReturn: () => void }) {
+function InterludeGame({ onReturn }: { onReturn: () => void }) {
   const [level, setLevel] = useState<LevelDefinition | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
@@ -577,7 +577,6 @@ function InterludeGame({ onNavigate, onReturn }: { onNavigate: (path: string) =>
     level={level}
     title="Helios"
     launchContext={{ source: 'play', levelId: 'helios' }}
-    onNavigate={onNavigate}
     runEndContent={<section className="benchmark-invitation"><p>That was Helios. Back to the matchups when you’re ready.</p><div className="invitation-actions"><button className="button primary" type="button" onClick={onReturn}>Back to ranking</button></div></section>}
   />;
 }

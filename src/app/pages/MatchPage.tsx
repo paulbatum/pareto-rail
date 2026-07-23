@@ -280,7 +280,7 @@ function MatchGame({ launch, backPath, onNavigate, onRunEnd }: { launch: MatchLa
     </section>
   );
   if (!level) return <section className="page-panel"><p className="eyebrow">Custom match</p><h1>Loading level…</h1></section>;
-  return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} launchContext={{ source: 'match', levelId: launch.levelId, mode: 'benchmark' }} onNavigate={onNavigate} onRunEnd={onRunEnd} runEndContent={<MatchInvitation side={launch.side} backPath={backPath} onNavigate={onNavigate} />} />;
+  return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} launchContext={{ source: 'match', levelId: launch.levelId, mode: 'benchmark' }} onRunEnd={onRunEnd} runEndContent={<MatchInvitation side={launch.side} backPath={backPath} onNavigate={onNavigate} />} />;
 }
 
 function MatchInvitation({ side, backPath, onNavigate }: { side: MatchupSide; backPath: string; onNavigate: (path: string) => void }) {

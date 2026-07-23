@@ -2,7 +2,7 @@ export type LevelsView = 'gallery' | 'data';
 
 export type AppRoute =
   | { kind: 'home' }
-  | { kind: 'play'; levelId: string }
+  | { kind: 'play'; levelId: string; from?: LevelsView }
   | { kind: 'levels'; view: LevelsView }
   | { kind: 'rank'; playSide?: 'a' | 'b' }
   | { kind: 'match'; a?: string; b?: string; playSide?: 'a' | 'b' }
@@ -18,7 +18,16 @@ export function parseRoute(location: Location = window.location): AppRoute {
   // Keep old ?level= links working while giving new links a canonical shape.
   const legacyLevel = new URLSearchParams(location.search).get('level');
   if (legacyLevel && (path === '/' || path === '/play')) return { kind: 'play', levelId: legacyLevel };
-  if (path.startsWith('/play/')) return { kind: 'play', levelId: decodeURIComponent(path.slice('/play/'.length)) };
+  if (path.startsWith('/play/')) {
+    // `from` marks a launch off the Levels page so the end card can offer the
+    // way back; a bare /play/<id> link (home, a shared URL) carries no origin.
+    const from = new URLSearchParams(location.search).get('from');
+    return {
+      kind: 'play',
+      levelId: decodeURIComponent(path.slice('/play/'.length)),
+      from: from === 'gallery' || from === 'data' ? from : undefined,
+    };
+  }
   // /play was the level picker before /levels existed; it stays a working alias.
   if (path === '/play' || path === '/levels') return { kind: 'levels', view: 'gallery' };
   if (path === '/levels/data') return { kind: 'levels', view: 'data' };
