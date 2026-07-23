@@ -74,13 +74,6 @@ const PROJECTILE_HIT_RADIUS = 1.15;
 const WORD_DISTANCE = 20;
 export const START_WORD = 'START!';
 export const REPLAY_WORD = 'REPLAY';
-// The tip teaches the sweep on the start screen, so it counts that screen's
-// letters rather than a fixed six.
-const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
-function controlTip(targetCount: number) {
-  const count = COUNT_WORDS[targetCount] ?? String(targetCount);
-  return `HOLD to charge — SWEEP across all ${count} targets — RELEASE to fire`;
-}
 const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 const REPEAT_LOCK_DELAY = 0.18;
 const EDGE_LOOK_EXPONENT = 1.35;
@@ -95,6 +88,12 @@ function impactContractSpeed(distance: number, remainingSeconds: number) {
   return Math.min(PROJECTILE_MAX_SPEED, distance / Math.max(0.05, remainingSeconds));
 }
 
+// Matches how the client-tip helper distinguishes touch from mouse, so the
+// instruction prompt speaks the right verb on each device.
+function isCoarsePointer() {
+  return window.matchMedia('(pointer: coarse)').matches;
+}
+
 declare global {
   interface Window {
     __raildDebug?: {
@@ -104,6 +103,11 @@ declare global {
 }
 
 type RunState = 'attract' | 'running' | 'ended';
+// The letter screens (START! on attract, REPLAY on the end screen) teach the
+// hold-sweep-release control with a single prompt that follows live input:
+// hold, then sweep every letter, then release; an early release asks for the
+// whole word before letting go.
+type PromptStage = 'hold' | 'sweep' | 'release' | 'rejected';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
 type ReleaseRejectReason = 'incomplete-word' | 'level-rule';
 type ReleaseValidation<TKind extends string, TData> =
@@ -167,7 +171,10 @@ type Volley<TKind extends string, TData> = {
 export function createLockOnRunner<TKind extends string = string, TData = unknown>(
   options: LockOnRunnerOptions<TKind, TData>,
 ) {
-  const { scene, camera, canvas, bus, hud, visuals, onPause, onFullscreen, startTip, level } = options;
+  // `startTip` is intentionally not destructured: the staged instruction prompt
+  // below supersedes it. The option is retained on the type for compatibility
+  // with levels that still pass one (see lock-on-runner-types.ts).
+  const { scene, camera, canvas, bus, hud, visuals, onPause, onFullscreen, level } = options;
   const duration = level.duration;
   if (!Number.isFinite(level.bpm) || level.bpm <= 0) throw new Error('Lock-on runner level bpm must be a positive number');
   const beatSeconds = 60 / level.bpm;
@@ -192,7 +199,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     onRestart: () => startRun(),
     onPause,
     onFullscreen,
-    onPointerDown: () => recordAttractPointerDown(),
     onUndoLock: () => {
       if (level.allowLockUndo) undoLastLock();
     },
@@ -236,14 +242,14 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   let nextEnemyId = 1;
   let nextProjectileId = 1;
   let nextVolleyId = 1;
-  let failedAttractReleases = 0;
-  let attractPointerDowns = 0;
-  let attractReachedFullLocks = false;
   let startWhenLettersClear = false;
   let replayWhenLettersClear = false;
   let startDelay = -1;
   let runEase = 0;
-  let showingStartTip = false;
+  let promptStage: PromptStage | undefined;
+  // Latched when a letter word is released before every letter is locked; the
+  // prompt asks for the whole word until the next hold begins.
+  let promptReleaseRejected = false;
   const easeFromPosition = new Vector3();
   const easeFromLook = new Vector3(0, 0, -1);
   const cameraBaseQuaternion = new Quaternion();
@@ -267,31 +273,57 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   };
 
   scene.add(reticleRoot);
-  document.addEventListener('fullscreenchange', updateStartTipVisibility);
 
-  function showStartTip() {
-    if (startTip && !document.fullscreenElement) {
-      hud.setTip(startTip);
-      hud.showTip();
-      showingStartTip = true;
-    } else {
-      hud.hideTip();
-      showingStartTip = false;
+  // The staged instruction prompt for the START!/REPLAY letter screens. It
+  // shows in the HUD tip element and advances with live input: hold, sweep,
+  // release, and a rejection notice after an early release. The tip is only
+  // rewritten when the stage changes, not every frame.
+  function letterPrompt(): { purpose: TargetPurpose; wordLength: number } | undefined {
+    if (state === 'attract') return { purpose: 'start-letter', wordLength: startWord.length };
+    if (state === 'ended') return { purpose: 'replay-letter', wordLength: replayWord.length };
+    return undefined;
+  }
+
+  function currentPromptStage(prompt: { purpose: TargetPurpose; wordLength: number }): PromptStage {
+    if (promptReleaseRejected) return 'rejected';
+    if (!input.state.pointerDown) return 'hold';
+    if (countLockedLetters(prompt.purpose) >= prompt.wordLength) return 'release';
+    return 'sweep';
+  }
+
+  function promptText(stage: PromptStage): string {
+    switch (stage) {
+      case 'hold':
+        return isCoarsePointer() ? 'TOUCH and hold' : 'HOLD the mouse button';
+      case 'sweep':
+        return 'SWEEP across all the letters';
+      case 'release':
+        return 'RELEASE!';
+      case 'rejected':
+        return 'Lock every letter before letting go';
     }
   }
 
-  function updateStartTipVisibility() {
-    if (state !== 'attract' || !showingStartTip) return;
-    showStartTip();
+  function updateInstructionPrompt() {
+    const prompt = letterPrompt();
+    if (!prompt) return;
+    // A completed word is launching the run/replay; leave the prompt frozen on
+    // its last stage until the state change hides the tip.
+    if (startWhenLettersClear || replayWhenLettersClear) return;
+    if (input.state.pointerDown) promptReleaseRejected = false;
+    const stage = currentPromptStage(prompt);
+    if (stage === promptStage) return;
+    promptStage = stage;
+    hud.setTip(promptText(stage), { preserveCase: true });
+    hud.showTip();
   }
 
   function enterAttract() {
     clearRunObjects();
     state = 'attract';
     modeTime = 0;
-    failedAttractReleases = 0;
-    attractPointerDowns = 0;
-    attractReachedFullLocks = false;
+    promptStage = undefined;
+    promptReleaseRejected = false;
     startWhenLettersClear = false;
     replayWhenLettersClear = false;
     startDelay = -1;
@@ -305,15 +337,15 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     spawnIndex = 0;
     hud.hideEnd();
     hud.setCallout('');
-    showStartTip();
-    /* The sound nudge is its own element: unlike the start tip it stays up in fullscreen and
-       alongside the control tip, for as long as the player is on the attract screen. */
+    /* The start nudges (sound, rotate, fullscreen) are their own elements, shown for as long
+       as the player is on the attract screen alongside the staged instruction prompt. */
     hud.setStartNudgesVisible(true);
     hud.setHudActive(false);
     hud.update({ score, elapsedTime: 0, lockCount: 0, health: readyHealthForHud() });
     updateAttractCamera(0);
     updateReticle();
     spawnWord(startWord, 'start-letter');
+    updateInstructionPrompt();
   }
 
   function startRun() {
@@ -365,6 +397,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     updatePendingShots();
     updateProjectiles(dt);
     updateLetterStartDelay(dt);
+    updateInstructionPrompt();
     hud.update({ score, elapsedTime: 0, lockCount: locks.length, health: readyHealthForHud() });
   }
 
@@ -402,6 +435,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     updatePendingShots();
     updateProjectiles(dt);
     updateLetterStartDelay(dt);
+    updateInstructionPrompt();
     hud.update({ score, elapsedTime: runTime, lockCount: locks.length, health: readyHealthForHud() });
   }
 
@@ -644,12 +678,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       const dy = projected.y - input.state.pointerNdc.y;
       if (Math.hypot(dx, dy) <= lockRadiusNdc) lockEnemy(enemy);
     }
-
-    if (state === 'attract' && countLockedLetters('start-letter') === startWord.length) {
-      attractReachedFullLocks = true;
-      hud.hideTip();
-      hud.setStartNudgesVisible(false);
-    }
   }
 
   function lockPriorityTargets() {
@@ -777,16 +805,10 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       missingEnemyIds: rejection.missing.map((enemy) => enemy.id),
     });
 
-    if (rejection.reason === 'incomplete-word' && state === 'attract') {
-      failedAttractReleases += 1;
-      if (failedAttractReleases >= 2) {
-        showingStartTip = false;
-        hud.setTip(controlTip(startWord.length));
-        hud.showTip();
-        /* The player is fumbling the controls: clear the nudges so the help has the stage
-           (and room — the control tip wraps tall on portrait phones). */
-        hud.setStartNudgesVisible(false);
-      }
+    if (rejection.reason === 'incomplete-word' && (state === 'attract' || state === 'ended')) {
+      // The staged prompt picks this up on the next frame and asks for the
+      // whole word until the player holds again.
+      promptReleaseRejected = true;
     }
   }
 
@@ -1185,17 +1207,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     return count;
   }
 
-  function recordAttractPointerDown() {
-    if (state !== 'attract' || attractReachedFullLocks) return;
-    attractPointerDowns += 1;
-    if (attractPointerDowns >= 3) {
-      showingStartTip = false;
-      hud.setTip(controlTip(startWord.length));
-      hud.showTip();
-      hud.setStartNudgesVisible(false);
-    }
-  }
-
   function countsEntryTowardTotal(entry: LockOnSpawnEntry<TKind, TData>) {
     return entry.countsTowardTotal !== false;
   }
@@ -1273,6 +1284,9 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     hud.showEnd(summary);
     bus.emit('runend', summary);
     spawnWord(replayWord, 'replay-letter');
+    promptStage = undefined;
+    promptReleaseRejected = false;
+    updateInstructionPrompt();
   }
 
   const offEndRunRequest = bus.on('runendrequest', () => {
@@ -1295,7 +1309,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     start: startRun,
     update,
     dispose() {
-      document.removeEventListener('fullscreenchange', updateStartTipVisibility);
       offBeat();
       offEndRunRequest();
       input.dispose();

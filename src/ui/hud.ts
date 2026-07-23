@@ -30,6 +30,7 @@ export function createHud(options: HudOptions = {}) {
   const tip = requireElement<HTMLElement>('#tip');
   const soundTip = requireElement<HTMLElement>('#sound-tip');
   const rotateTip = requireElement<HTMLElement>('#rotate-tip');
+  const fullscreenTip = requireElement<HTMLElement>('#fullscreen-tip');
   const endScore = requireElement<HTMLElement>('[data-end="score"]');
   const endKills = requireElement<HTMLElement>('[data-end="kills"]');
   const endRank = requireElement<HTMLElement>('[data-end="rank"]');
@@ -121,10 +122,13 @@ export function createHud(options: HudOptions = {}) {
       }
     },
 
-    setTip(message: string) {
+    setTip(message: string, options?: { preserveCase?: boolean }) {
       /* Levels compose their instructions onto the client tip with ' • ', which can leave a
          dangling separator when the client tip is empty on their platform. */
       tip.textContent = message.replace(/^[\s•]+|[\s•]+$/g, '');
+      /* The staged instruction prompt authors its own casing (HOLD, SWEEP…); everything else
+         keeps the HUD's uppercase treatment. */
+      tip.classList.toggle('tip-prompt', options?.preserveCase === true);
     },
 
     showTip() {
@@ -135,11 +139,20 @@ export function createHud(options: HudOptions = {}) {
       tip.classList.add('hidden');
     },
 
-    /* Sound and landscape encouragement. The landscape nudge is additionally gated by a
-       portrait-touch media query in CSS, so it only ever shows where rotating would help. */
+    /* Sound, landscape, and fullscreen encouragement, all shown while the player is on a
+       start screen. The landscape and fullscreen nudges are additionally gated in CSS (a
+       portrait-touch query for rotate; a fine-pointer query plus setFullscreenOffered for
+       fullscreen), so each only appears where its suggestion applies. */
     setStartNudgesVisible(visible: boolean) {
       soundTip.classList.toggle('hidden', !visible);
       rotateTip.classList.toggle('hidden', !visible);
+      fullscreenTip.classList.toggle('hidden', !visible);
+    },
+
+    /* Whether the fullscreen nudge is eligible at all: only when fullscreen is available and
+       we are not already in it. Combined in CSS with the start-screen and fine-pointer gates. */
+    setFullscreenOffered(offered: boolean) {
+      fullscreenTip.classList.toggle('fullscreen-offered', offered);
     },
   };
 }

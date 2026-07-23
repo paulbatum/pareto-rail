@@ -1,8 +1,9 @@
-/* The sound and landscape encouragements live in their own start-screen banners (see
-   hud.setStartNudgesVisible), so the client tip only carries guidance that varies by platform. */
-export function getStartScreenTip(fullscreenAvailable: boolean) {
-  if (isCoarsePointer()) return '';
-  return fullscreenAvailable ? 'Fullscreen: press F' : '';
+/* The runner now teaches the controls with its own staged instruction prompt, and the
+   sound/landscape/fullscreen encouragements are their own start-screen banners (see
+   hud.setStartNudgesVisible / hud.setFullscreenOffered). Levels still receive a start tip
+   they may compose onto, but the runner no longer displays it. */
+export function getStartScreenTip() {
+  return '';
 }
 
 export function getLockUndoTip(): string {

@@ -55,6 +55,14 @@ body.game-active {
   inset: 0;
 }
 
+/* Touch aiming is a drag over text-bearing overlays, so Safari would otherwise
+   turn it into a text selection (and a long press into a callout). */
+.game-runtime {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 canvas {
   display: block;
   width: 100%;
@@ -173,6 +181,9 @@ canvas {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: auto;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .perf-overlay-embedded + .debug-panel-details {
@@ -466,12 +477,45 @@ canvas {
   padding: 14px 20px;
   color: #fff;
   background: rgb(3 8 18 / 82%);
-  border: 1px solid var(--cyan-dim);
+  border: 1px solid rgb(150 224 158 / 55%);
+  border-radius: 999px;
   letter-spacing: 0.12em;
   text-align: center;
   text-transform: uppercase;
   pointer-events: none;
-  text-shadow: 0 0 12px rgb(70 232 255 / 65%);
+  text-shadow: 0 0 12px rgb(150 224 158 / 65%);
+  box-shadow: 0 0 22px rgb(150 224 158 / 24%);
+}
+
+/* The staged instruction prompt authors its own casing (HOLD, SWEEP…). */
+.tip.tip-prompt {
+  text-transform: none;
+}
+
+/* The sound and fullscreen nudges float above the START letters so the bottom of the
+   screen stays clear for the rotate nudge and the instruction tip. Smaller than the
+   bottom nudges so they defer to the letters below them. */
+.top-nudge-stack {
+  position: fixed;
+  left: 50%;
+  top: 16vh;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+/* Sized and cased to whisper: smaller than the bottom nudges, and no all-caps, matching
+   the instruction tip's authored casing. */
+.top-nudge-stack .start-nudge {
+  padding: 7px 14px;
+  gap: 9px;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0.14em;
 }
 
 /* Warm hues against the game's cyan so the start nudges read as invitations, not controls.
@@ -536,6 +580,33 @@ canvas {
   0%, 18% { transform: rotate(0deg); }
   45%, 78% { transform: rotate(-90deg); }
   100% { transform: rotate(0deg); }
+}
+
+/* Fullscreen is a desktop suggestion, so this nudge only shows on a fine pointer, and only
+   while fullscreen is both available and not yet entered (.fullscreen-offered, set in JS).
+   Cool cyan against the amber sound pill so the pair never reads as one message. */
+.fullscreen-tip {
+  --nudge-rgb: 70 232 255;
+  display: none;
+}
+
+@media (pointer: fine) {
+  .fullscreen-tip.fullscreen-offered:not(.hidden) { display: inline-flex; }
+}
+
+.fullscreen-tip-icon {
+  width: 1.2em;
+  height: 1.2em;
+  filter: drop-shadow(0 0 6px rgb(var(--nudge-rgb) / 70%));
+}
+
+.nudge-key {
+  font: inherit;
+  padding: 1px 7px;
+  border: 1px solid rgb(var(--nudge-rgb) / 60%);
+  border-radius: 5px;
+  background: rgb(var(--nudge-rgb) / 12%);
+  letter-spacing: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

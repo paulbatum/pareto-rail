@@ -416,7 +416,7 @@ html:fullscreen .perf-overlay { display: none; }
    position:fixed overlays (HUD, end screen, pause menu), so they inset with it. */
 /* `touch-action: none` claims touch drags for aiming; without it Safari reads
    them as scroll gestures and slides its minimized chrome back in. */
-.game-frame { position: fixed; inset: var(--nav-h, 0px) 0 0 0; background: #02040a; transform: translateZ(0); touch-action: none; }
+.game-frame { position: fixed; inset: var(--nav-h, 0px) 0 0 0; background: #02040a; transform: translateZ(0); touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .game-mount { position: absolute; inset: 0; }
 .app-shell .game-frame { font-family: var(--mono); }
 

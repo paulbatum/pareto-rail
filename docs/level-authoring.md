@@ -137,7 +137,7 @@ Pass `VisualFactories` to `createLockOnRunner`:
 - `createReticle()`: returns the reticle object.
 - `setReticleActive(reticle, active, lockCount)`: updates reticle state each frame.
 
-Levels that opt into right-click undo-lock should advertise it only in their own start tip.
+The runner teaches its controls on the START/REPLAY screens with a built-in staged instruction prompt (hold, sweep, release), so the `startTip` a level passes to `createLockOnRunner` is no longer displayed. The option remains for compatibility; levels may still set it, but it has no on-screen effect.
 
 Every level must render legible procedural glyphs for at least the characters in its start/replay words. The defaults require S, T, A, R, E, P, L, and Y. A reader must be able to tell the letters apart at gameplay distance. `src/levels/crystal/visuals/letters.ts` shows the reference approach: 5×7 pixel-grid glyphs. Levels may use `src/engine/glyphs.ts` for neutral grid data, but rendering and style stay with the level. Avoid 7-segment-style approximations; they cannot render R, T, and Y distinctly enough.
 

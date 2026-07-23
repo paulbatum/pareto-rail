@@ -95,6 +95,11 @@ export type LockOnRunnerOptions<TKind extends string = string, TData = unknown> 
   visuals: VisualFactories;
   onPause: () => void;
   onFullscreen: () => void;
+  /**
+   * Superseded by the runner's staged instruction prompt and no longer
+   * displayed. Retained so levels that still compose and pass a start tip
+   * keep type-checking; the runner ignores its value.
+   */
   startTip: string;
   level: LockOnRunnerLevel<TKind, TData>;
 };

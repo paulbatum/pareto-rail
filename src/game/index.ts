@@ -203,8 +203,16 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       last = performance.now();
     };
 
-    const runtime = level.createRuntime({ scene, camera, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(fullscreenAvailable), debugValue });
+    const runtime = level.createRuntime({ scene, camera, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(), debugValue });
     stack.add(() => runtime.dispose());
+    /* The desktop "press F for fullscreen" nudge only makes sense when fullscreen is available
+       and we are not already in it, so gate it here and keep it in sync as fullscreen toggles. */
+    if (fullscreenAvailable) {
+      const syncFullscreenNudge = () => hud.setFullscreenOffered(!document.fullscreenElement);
+      syncFullscreenNudge();
+      document.addEventListener('fullscreenchange', syncFullscreenNudge);
+      stack.add(() => document.removeEventListener('fullscreenchange', syncFullscreenNudge));
+    }
     const offRunEnd = bus.on('runend', (summary) => {
       document.body.classList.add('run-ended');
       onRunEnd?.(summary, launchContext);

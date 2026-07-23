@@ -53,12 +53,20 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
       <div id="damage-flash" data-game-ui className="damage-flash" aria-hidden="true" />
       <div id="max-lock-flash" data-game-ui className="max-lock-flash hidden" aria-hidden="true">MAX</div>
       <div id="callout" data-game-ui className="callout hidden" aria-live="polite" />
-      <div id="nudge-stack" data-game-ui className="nudge-stack">
+      <div id="top-nudge-stack" data-game-ui className="top-nudge-stack">
         <div id="sound-tip" className="start-nudge hidden">
           <span className="sound-tip-note" aria-hidden="true">♪</span>
           <span>Turn sound on</span>
           <span className="sound-tip-note sound-tip-note-alt" aria-hidden="true">♫</span>
         </div>
+        <div id="fullscreen-tip" className="start-nudge fullscreen-tip hidden">
+          <svg className="fullscreen-tip-icon" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3 7V3h4M17 7V3h-4M3 13v4h4M17 13v4h-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>Press <kbd className="nudge-key">F</kbd> for fullscreen</span>
+        </div>
+      </div>
+      <div id="nudge-stack" data-game-ui className="nudge-stack">
         <div id="rotate-tip" className="start-nudge rotate-tip hidden">
           <svg className="rotate-tip-phone" viewBox="0 0 20 20" aria-hidden="true">
             <rect x="6.2" y="2.8" width="7.6" height="14.4" rx="1.8" fill="none" stroke="currentColor" strokeWidth="1.5" />
@@ -67,7 +75,7 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
           <span>Rotate your device</span>
         </div>
       </div>
-      <div id="tip" data-game-ui className="tip hidden">HOLD to charge — SWEEP across all six targets — RELEASE to fire</div>
+      <div id="tip" data-game-ui className="tip hidden">HOLD the mouse button</div>
 
       <div
         id="pause"
