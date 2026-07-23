@@ -25,7 +25,7 @@
 }
 
 /* Data-dense route: claim the wide viewport like /levels does. */
-[data-route="analysis"] .app-content { width: min(1560px, calc(100% - 64px)); }
+[data-route="analysis"] .app-content { width: min(1640px, 100%); }
 
 .analysis-loading { padding: 60px 0; color: var(--muted); font: 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; text-align: center; }
 .analysis-label { margin: 34px 0 10px; color: var(--muted); font: 10px var(--mono); letter-spacing: .16em; text-transform: uppercase; }

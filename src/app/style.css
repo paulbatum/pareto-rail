@@ -14,7 +14,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
    black-translucent style in index.html), so the safe-area insets are what keep
    the header clear of the notch or dynamic island. They are zero in a normal
    browser tab, where the chrome already reserves that space. */
-.site-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 0; padding: calc(13px + env(safe-area-inset-top, 0px)) calc(clamp(20px, 5vw, 72px) + env(safe-area-inset-right, 0px)) 7px calc(clamp(20px, 5vw, 72px) + env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--paper) 92%, transparent); border-bottom: 1px solid var(--hairline); backdrop-filter: blur(10px); }
+.site-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 0; padding: calc(13px + env(safe-area-inset-top, 0px)) calc(clamp(24px, 5vw, 72px) + env(safe-area-inset-right, 0px)) 7px calc(clamp(24px, 5vw, 72px) + env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--paper) 92%, transparent); border-bottom: 1px solid var(--hairline); backdrop-filter: blur(10px); }
 .nav-cluster, .site-nav nav, .nav-actions { display: flex; gap: clamp(12px, 3vw, 30px); min-width: 0; }
 .site-nav a { color: var(--muted); text-decoration: none; letter-spacing: .12em; text-transform: uppercase; font-size: 11px; padding-bottom: 3px; border-bottom: 1px solid transparent; }
 .site-nav a:hover { color: var(--ink); }
@@ -31,9 +31,10 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 /* ---------- Shell / hero ---------- */
 /* Pages open straight onto their content, so the top padding stays tight. The
    home hero zeroes it below; the play route is fixed-position and ignores it. */
-/* The insets shrink the column rather than pad it, so it stays centred and
-   clear of a landscape notch. They are zero everywhere but an installed app. */
-.app-content { width: min(1080px, calc(100% - 40px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); max-width: 100%; min-width: 0; margin: 0 auto; padding: clamp(28px, 3vw, 40px) 0 80px; }
+/* The gutter is padding, not a narrower centred column: a landscape notch sits
+   on one side only, so each inset has to widen its own side. Widths below are
+   the reading width plus both maximum gutters. */
+.app-content { --content-gutter: clamp(24px, 5vw, 40px); width: min(1160px, 100%); max-width: 100%; min-width: 0; margin: 0 auto; padding: clamp(28px, 3vw, 40px) calc(var(--content-gutter) + env(safe-area-inset-right, 0px)) 80px calc(var(--content-gutter) + env(safe-area-inset-left, 0px)); }
 .page-panel { width: 100%; max-width: 880px; min-width: 0; margin: 0 auto; }
 .hero { padding: clamp(22px, 5vw, 64px) 0; }
 
@@ -49,8 +50,8 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
   flex-direction: column;
   width: 100%;
   padding-top: 0;
-  padding-right: calc(clamp(20px, 5vw, 87px) + env(safe-area-inset-right, 0px));
-  padding-left: calc(clamp(20px, 5vw, 87px) + env(safe-area-inset-left, 0px));
+  padding-right: max(clamp(20px, 5vw, 87px), calc(env(safe-area-inset-right, 0px) + 12px));
+  padding-left: max(clamp(20px, 5vw, 87px), calc(env(safe-area-inset-left, 0px) + 12px));
 }
 .hero-with-graphic {
   display: grid;
@@ -69,7 +70,10 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(12px, 1.6vw, 18px) clamp(20px, 5vw, 87px);
+  /* The hero band runs full-bleed, so its copy carries the insets itself. The
+     gutter is already generous here, so an inset widens it only where it would
+     otherwise be too narrow rather than stacking on top. */
+  padding: clamp(12px, 1.6vw, 18px) max(clamp(20px, 5vw, 87px), calc(env(safe-area-inset-right, 0px) + 12px)) clamp(12px, 1.6vw, 18px) max(clamp(20px, 5vw, 87px), calc(env(safe-area-inset-left, 0px) + 12px));
 }
 .app-shell[data-route="home"] .hero-copy h1 { margin-bottom: 12px; font-size: clamp(40px, 5.6vw, 55px); }
 .hero-copy .eyebrow { margin-bottom: 6px; }
@@ -180,7 +184,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 /* ---------- Rank: assignment + compare ---------- */
 /* Matchup thumbnails and the curve chart both read better big, so the rank
    route claims more of the viewport than the editorial pages do. */
-[data-route="rank"] .app-content { width: min(1280px, calc(100% - 64px)); }
+[data-route="rank"] .app-content { width: min(1360px, 100%); }
 .rank-panel { max-width: 1180px; }
 .rank-panel > .lede { max-width: none; }
 .rank-note { max-width: 700px; padding: 13px 0; color: var(--soft-text); border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); border-left: none; line-height: 1.55; font-size: 14px; }
@@ -426,7 +430,7 @@ html:fullscreen .perf-overlay { display: none; }
   /* Row one is the wordmark and the icons; the links wrap to their own row. */
   /* Keep the safe-area insets from the base rule (line 17) so an installed app's
      header still clears the status bar; only the flat 7px/20px would otherwise win. */
-  .site-nav { flex-wrap: wrap; padding: calc(7px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-right, 0px)) 7px calc(20px + env(safe-area-inset-left, 0px)); gap: 10px; }
+  .site-nav { flex-wrap: wrap; padding: calc(7px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-right, 0px)) 7px calc(24px + env(safe-area-inset-left, 0px)); gap: 10px; }
   .nav-cluster { display: contents; }
   .site-nav nav { order: 1; width: 100%; justify-content: space-between; flex-wrap: wrap; }
   .nav-actions { gap: 18px; }
@@ -442,6 +446,10 @@ html:fullscreen .perf-overlay { display: none; }
   .compare-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .versus-divider { flex-direction: row; min-height: 20px; }
   .versus-divider::before, .versus-divider::after { width: auto; height: 1px; background: var(--hairline); }
+  /* The rank page has to get a visitor to the two play buttons without a
+     scroll, so its title and theme summary give up size to the cards. */
+  .rank-panel h1 { margin-bottom: 14px; font-size: clamp(24px, 7vw, 34px); }
+  .rank-panel > .lede { margin-bottom: 18px; font-size: 15px; }
   .compare-card { padding: 12px; }
   .compare-card h2 { font-size: 16px; }
   .vote-grid { grid-template-columns: 1fr; }
@@ -452,13 +460,29 @@ html:fullscreen .perf-overlay { display: none; }
   .curve-table { min-width: 580px; }
 }
 
+/* A landscape phone is wide but very short, so the width query above never
+   reaches it. Here the rank page's problem is vertical: the title, the summary
+   and the two thumbnails have to leave room for the play buttons. */
+@media (max-height: 620px) and (orientation: landscape) {
+  .app-content { padding-top: 18px; padding-bottom: 32px; }
+  /* Sized off the short axis, not the wide one: type set in vw jumps a size
+     when a phone turns sideways, which is backwards for the space available. */
+  .rank-panel h1 { margin-bottom: 10px; font-size: clamp(24px, 3vw, 28px); }
+  .rank-panel > .lede { margin-bottom: 14px; font-size: 15px; }
+  .prompt-details { margin: 14px 0; }
+  .prompt-details summary { padding: 10px 0; }
+  .compare-grid { margin: 16px 0 12px; }
+  .compare-card { padding: 12px; }
+  .compare-card h2 { margin-bottom: 8px; font-size: 16px; }
+}
+
 /* ============================================================
    Levels page — gallery and data views (route /levels).
    ============================================================ */
 
 /* The levels page browses/inspects data-dense content, so it claims more of
    the viewport than the editorial pages that use .page-panel. */
-[data-route="levels"] .app-content { width: min(1560px, calc(100% - 64px)); }
+[data-route="levels"] .app-content { width: min(1640px, 100%); }
 
 /* ---------- Page header + view toggle ---------- */
 .levels-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-bottom: 24px; }
