@@ -68,7 +68,7 @@
       "startedAt": "2026-07-11T18:33:09.591Z",
       "finishedAt": "2026-07-11T21:33:28.632Z",
       "wallTimeSeconds": 10801.023890406,
-      "result": "timed-out",
+      "result": "completed",
       "usage": {
         "inputTokens": 4367,
         "outputTokens": 231850,

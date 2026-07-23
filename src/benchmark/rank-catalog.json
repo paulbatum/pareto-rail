@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T18:47:50.924Z",
+  "generatedAt": "2026-07-23T00:10:43.718Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -436,7 +436,7 @@
       "run": {
         "generationWallTimeSeconds": 10801.024,
         "totalWallTimeSeconds": 14063.214,
-        "result": "timed-out",
+        "result": "completed",
         "orchestrationTreatment": "none",
         "harness": {
           "name": "Claude Code CLI",

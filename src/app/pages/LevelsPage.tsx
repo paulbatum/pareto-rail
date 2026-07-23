@@ -318,7 +318,10 @@ function GalleryCard({ record, onNavigate }: { record: LevelRecord; onNavigate: 
       </span>
       <span className="gallery-copy">
         {record.kind === 'built-in'
-          ? <RouteLink className="gallery-open name" href={playPath(record.levelId)} onNavigate={onNavigate}>{record.title}</RouteLink>
+          ? <span className="name-row">
+              <RouteLink className="gallery-open name" href={playPath(record.levelId)} onNavigate={onNavigate}>{record.title}</RouteLink>
+              <RouteLink className="gallery-details-link" href={entrantPath(record.levelId)} onNavigate={onNavigate}>Details ▸</RouteLink>
+            </span>
           : <span className="name-row">
               <RouteLink className="gallery-open name run-id" href={playPath(record.levelId)} onNavigate={onNavigate}>{record.levelId}</RouteLink>
               <GalleryCardMark record={record} onNavigate={onNavigate} />
