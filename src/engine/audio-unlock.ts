@@ -6,7 +6,12 @@ type AudioSessionNavigator = Navigator & {
   audioSession?: { type?: string };
 };
 
-const AUDIO_UNLOCK_EVENTS = ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'click', 'keydown'] as const;
+/* Only events that grant user activation. Crucially NOT pointerdown/touchstart: for touch
+   input those fire without granting activation, and a resume() issued there pends forever
+   on iOS and poisons the context for every later attempt — the first thing a touch-drag on
+   a fresh page would do. Touch gains activation on release (pointerup/touchend), mouse on
+   mousedown, keyboard on keydown. */
+const AUDIO_UNLOCK_EVENTS = ['pointerup', 'mousedown', 'touchend', 'click', 'keydown'] as const;
 
 // iOS treats Web Audio as ambient by default, so the hardware silent switch mutes
 // the whole game. Declaring the session as playback opts into primary-content

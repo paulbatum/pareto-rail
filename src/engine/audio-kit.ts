@@ -4,6 +4,9 @@ import type { AudioTraceSink, AudioTraceValue } from './audio-trace';
 import { createBrowserAudioContext, installAudioUnlock } from './audio-unlock';
 import { emitBeatAt } from './music';
 
+/* How long an unsettled resume() may be outstanding before we treat the context as stuck. */
+const STUCK_RESUME_MS = 400;
+
 export type StepTransportStep = {
   index: number;
   time: number;
@@ -654,25 +657,53 @@ export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
   let ctx: AudioContext | null = null;
   let intervalId = 0;
   let unlockGestureStart: (() => void) | null = null;
+  let resumeStartedAt: number | null = null;
 
   const scaledVolume = () => playerVolume * volumeScale;
   const scaledMusicVolume = () => musicVolume * volumeScale;
   const scaledSfxVolume = () => sfxVolume * volumeScale;
 
+  const openContext = () => {
+    const opened = createBrowserAudioContext();
+    ctx = opened;
+    options.onCreateContext(opened, scaledMusicVolume(), scaledSfxVolume());
+    if (options.schedulerMs !== undefined && options.onSchedule) {
+      intervalId = window.setInterval(() => {
+        if (ctx) options.onSchedule?.(ctx);
+      }, options.schedulerMs);
+    }
+    return opened;
+  };
+
+  const closeContext = (closing: AudioContext) => {
+    if (ctx === closing) ctx = null;
+    if (intervalId) {
+      window.clearInterval(intervalId);
+      intervalId = 0;
+    }
+    options.onDispose?.(closing);
+    void closing.close();
+  };
+
   const start = async () => {
-    if (!ctx) {
-      ctx = createBrowserAudioContext();
-      options.onCreateContext(ctx, scaledMusicVolume(), scaledSfxVolume());
-      if (options.schedulerMs !== undefined && options.onSchedule) {
-        intervalId = window.setInterval(() => {
-          if (ctx) options.onSchedule?.(ctx);
-        }, options.schedulerMs);
-      }
+    let context = ctx ?? openContext();
+    /* Safari can leave a resume() pending forever when it was issued outside a user
+       activation, and every later resume() on that context joins the same stuck promise —
+       the context is unusable. Once one has been outstanding this long, throw it away and
+       open a fresh one so the gesture in hand can actually start audio. */
+    if (resumeStartedAt !== null && context.state !== 'running' && performance.now() - resumeStartedAt > STUCK_RESUME_MS) {
+      resumeStartedAt = null;
+      closeContext(context);
+      context = openContext();
     }
     /* Not strict equality with 'suspended': iOS also reports a non-standard 'interrupted'
        state, and resume() is the correct call for both. */
-    if (ctx.state !== 'running') await ctx.resume();
-    if ((ctx.state as string) !== 'running') throw new Error(`Audio context is ${ctx.state} after resume`);
+    if (context.state !== 'running') {
+      if (resumeStartedAt === null) resumeStartedAt = performance.now();
+      await context.resume();
+      resumeStartedAt = null;
+    }
+    if ((context.state as string) !== 'running') throw new Error(`Audio context is ${context.state} after resume`);
   };
 
   const installGestureStart = (onStarted?: () => void) => {
@@ -689,8 +720,10 @@ export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
     unlockGestureStart = removeUnlock;
     /* Eager attempt: a visitor who click-navigated here already gave the page user
        activation, so audio can legally start now — no reason to sit silent on the
-       attract screen waiting for another tap. Fresh deep links reject and fall back
-       to the gesture listeners above. */
+       attract screen waiting for another tap. A freshly loaded page (deep link, refresh)
+       has no activation, and resuming there is worse than useless: Safari leaves that
+       resume pending forever and poisons the context, so wait for the gesture instead. */
+    if (navigator.userActivation?.hasBeenActive === false) return;
     void startAndNotify()
       .then(() => {
         if (unlockGestureStart === removeUnlock) {

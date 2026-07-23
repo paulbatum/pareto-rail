@@ -106,7 +106,7 @@ type RunState = 'attract' | 'running' | 'ended';
 // The START! screen teaches the hold-sweep-release control with a single
 // prompt that follows live input: hold, then sweep every letter, then
 // release; an early release asks for the whole word before letting go.
-type PromptStage = 'hold' | 'sweep' | 'release' | 'rejected';
+type PromptStage = 'tap' | 'hold' | 'sweep' | 'release' | 'rejected';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
 type ReleaseRejectReason = 'incomplete-word' | 'level-rule';
 type ReleaseValidation<TKind extends string, TData> =
@@ -284,15 +284,27 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     return undefined;
   }
 
+  /* iOS only grants user activation for a *tap* — never at touch-down, and never at the
+     end of a touch that moved. Every game gesture is a drag, so on a fresh deep link none
+     of them can ever legally start audio; the browser needs one plain tap first. The tap
+     stage asks for it, and the window-level unlock listeners turn it into sound. Once a
+     click-navigated page unlocks eagerly (or the tap lands), the stage never shows. */
+  function needsSoundTap() {
+    if (!isCoarsePointer() || hud.isSoundActive()) return false;
+    return navigator.userActivation?.hasBeenActive !== true;
+  }
+
   function currentPromptStage(prompt: { purpose: TargetPurpose; wordLength: number }): PromptStage {
     if (promptReleaseRejected) return 'rejected';
-    if (!input.state.pointerDown) return 'hold';
+    if (!input.state.pointerDown) return needsSoundTap() ? 'tap' : 'hold';
     if (countLockedLetters(prompt.purpose) >= prompt.wordLength) return 'release';
     return 'sweep';
   }
 
   function promptText(stage: PromptStage): string {
     switch (stage) {
+      case 'tap':
+        return 'TAP to turn on sound';
       case 'hold':
         return isCoarsePointer() ? 'TOUCH and hold' : 'HOLD the mouse button';
       case 'sweep':

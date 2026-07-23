@@ -160,6 +160,10 @@ export function createHud(options: HudOptions = {}) {
       applySoundTip();
     },
 
+    isSoundActive() {
+      return soundActive;
+    },
+
     /* Whether the fullscreen nudge is eligible at all: only when fullscreen is available and
        we are not already in it. Combined in CSS with the start-screen and fine-pointer gates. */
     setFullscreenOffered(offered: boolean) {
