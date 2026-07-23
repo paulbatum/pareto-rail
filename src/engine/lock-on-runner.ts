@@ -103,10 +103,9 @@ declare global {
 }
 
 type RunState = 'attract' | 'running' | 'ended';
-// The letter screens (START! on attract, REPLAY on the end screen) teach the
-// hold-sweep-release control with a single prompt that follows live input:
-// hold, then sweep every letter, then release; an early release asks for the
-// whole word before letting go.
+// The START! screen teaches the hold-sweep-release control with a single
+// prompt that follows live input: hold, then sweep every letter, then
+// release; an early release asks for the whole word before letting go.
 type PromptStage = 'hold' | 'sweep' | 'release' | 'rejected';
 type TargetPurpose = 'enemy' | 'start-letter' | 'replay-letter';
 type ReleaseRejectReason = 'incomplete-word' | 'level-rule';
@@ -274,13 +273,14 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
 
   scene.add(reticleRoot);
 
-  // The staged instruction prompt for the START!/REPLAY letter screens. It
-  // shows in the HUD tip element and advances with live input: hold, sweep,
-  // release, and a rejection notice after an early release. The tip is only
-  // rewritten when the stage changes, not every frame.
+  // The staged instruction prompt for the START! letter screen. It shows in
+  // the HUD tip element and advances with live input: hold, sweep, release,
+  // and a rejection notice after an early release. The tip is only rewritten
+  // when the stage changes, not every frame. The end screen gets no prompt:
+  // its card already fills the bottom of the screen, and the player has done
+  // the gesture once by then.
   function letterPrompt(): { purpose: TargetPurpose; wordLength: number } | undefined {
     if (state === 'attract') return { purpose: 'start-letter', wordLength: startWord.length };
-    if (state === 'ended') return { purpose: 'replay-letter', wordLength: replayWord.length };
     return undefined;
   }
 
@@ -435,7 +435,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     updatePendingShots();
     updateProjectiles(dt);
     updateLetterStartDelay(dt);
-    updateInstructionPrompt();
     hud.update({ score, elapsedTime: runTime, lockCount: locks.length, health: readyHealthForHud() });
   }
 
@@ -805,7 +804,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       missingEnemyIds: rejection.missing.map((enemy) => enemy.id),
     });
 
-    if (rejection.reason === 'incomplete-word' && (state === 'attract' || state === 'ended')) {
+    if (rejection.reason === 'incomplete-word' && state === 'attract') {
       // The staged prompt picks this up on the next frame and asks for the
       // whole word until the player holds again.
       promptReleaseRejected = true;
@@ -1284,9 +1283,6 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     hud.showEnd(summary);
     bus.emit('runend', summary);
     spawnWord(replayWord, 'replay-letter');
-    promptStage = undefined;
-    promptReleaseRejected = false;
-    updateInstructionPrompt();
   }
 
   const offEndRunRequest = bus.on('runendrequest', () => {

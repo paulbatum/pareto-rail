@@ -337,8 +337,7 @@ canvas {
   margin: 0;
 }
 
-.label,
-.replay {
+.label {
   color: #948B75;
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 10px;
@@ -382,14 +381,6 @@ canvas {
   color: #E85D93;
 }
 
-.replay {
-  animation: replay-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes replay-pulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
-}
 
 .max-lock-flash {
   position: fixed;

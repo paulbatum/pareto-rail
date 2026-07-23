@@ -46,7 +46,6 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
           <div className="end-detail" data-end="kills">Kills 0/0</div>
           <div className="rank" data-end="rank">D</div>
           <div className="end-extra hidden" data-end="details" />
-          <div className="replay">Lock all six to replay</div>
         </div>
       </div>
 
