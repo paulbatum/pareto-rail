@@ -104,7 +104,7 @@ reviewer's ad-hoc capture:
 
 ```sh
 npm run benchmark:thumbnails -- \
-  --level downpour-hlht --entrant entrant-a --dry-run
+  --level mass-driver-wo4m --entrant entrant-a --dry-run
 ```
 
 Remove `--dry-run` to render. The command delegates to `gameplay-snapshot` with
@@ -115,19 +115,7 @@ the `auto` fidelity policy (falling back through `full`, `postless`, then
 aggregate fidelity. The command writes `<opaque-entrant-id>.png` plus a JSON
 manifest containing the resolved times, output dimensions, SHA-256, and the
 snapshot-script hash. The filename intentionally contains no model or
-workflow identity. If Chrome/WebGPU is unavailable, keep a development
-fixture's thumbnail status as `placeholder`; never claim a placeholder is an
-actual production asset.
-
-Catalog projections and hard production checks are built separately:
-
-```sh
-npm run benchmark:catalog -- build --source benchmark/public/fixtures/downpour-rehearsal.json \
-  --out /tmp/pareto-rail-catalog --mode development --fixture
-```
-
-See `benchmark/public/README.md` for the pre-vote/reveal boundary and the
-production rejection rules.
+workflow identity.
 
 ## Target occlusion check
 

@@ -65,7 +65,6 @@ Scheduling state is a `retired` flag at two grains. A retired theme stays in the
 - `releases/` — the v1 freeze record, hash-referenced by published v1 run manifests, so still part of the provenance chain.
 - `manifests/` — public per-run provenance for every published entrant, written by `benchmark:export-provenance`.
 - `analysis/` — committed rollout analysis packages that drive the site's `/analysis` view.
-- `public/` — reviewed input seam for generated website catalog artifacts.
 - `private/` (ignored) — the plan, run records, raw logs, archives, and retired outputs.
 
 Each directory's README is the authoritative contract for the artifacts it holds.

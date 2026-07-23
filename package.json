@@ -39,7 +39,6 @@
     "benchmark:manage": "node scripts/benchmark/manage-run.mjs",
     "benchmark:promote": "node scripts/benchmark/promote.mjs",
     "benchmark:restore-src": "node scripts/benchmark/restore-src.mjs",
-    "benchmark:catalog": "node scripts/benchmark/catalog.mjs",
     "benchmark:thumbnails": "node scripts/benchmark/generate-thumbnails.mjs",
     "benchmark:export-rank-catalog": "node scripts/benchmark/export-rank-catalog.mjs",
     "benchmark:export-provenance": "node scripts/benchmark/export-provenance.mjs",
