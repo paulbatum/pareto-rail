@@ -25,10 +25,8 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
         <div className="hud-cell hud-time" data-hud="time-cell">
           <span className="hud-value hud-time-value" data-hud="time">0.0</span>
         </div>
-        <div className="hud-cell hud-right">
-          <span className="hud-label">Lock</span>
-          <span className="hud-value"><span data-hud="locks">0</span>/6</span>
-        </div>
+        {/* Empty counterweight so the timer stays centred in the HUD row. */}
+        <div className="hud-cell hud-right" aria-hidden="true" />
       </div>
 
       <button type="button" data-game-ui data-pause="open" className="touch-pause" aria-label="Pause">

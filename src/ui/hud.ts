@@ -19,7 +19,6 @@ export function createHud(options: HudOptions = {}) {
   const score = requireElement<HTMLElement>('[data-hud="score"]');
   const timeCell = requireElement<HTMLElement>('[data-hud="time-cell"]');
   const time = requireElement<HTMLElement>('[data-hud="time"]');
-  const locks = requireElement<HTMLElement>('[data-hud="locks"]');
   const hullCell = requireElement<HTMLElement>('[data-hud="hull-cell"]');
   const hullPips = requireElement<HTMLElement>('[data-hud="hull-pips"]');
   const damageFlash = requireElement<HTMLElement>('#damage-flash');
@@ -73,10 +72,9 @@ export function createHud(options: HudOptions = {}) {
   }
 
   return {
-    update(values: { score: number; elapsedTime: number; lockCount: number; health?: HudHealth }) {
+    update(values: { score: number; elapsedTime: number; health?: HudHealth }) {
       score.textContent = `${values.score}`;
       time.textContent = values.elapsedTime.toFixed(1);
-      locks.textContent = `${values.lockCount}`;
       updateHull(values.health);
     },
 

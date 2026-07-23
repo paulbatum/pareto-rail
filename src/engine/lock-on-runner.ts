@@ -341,7 +341,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
        as the player is on the attract screen alongside the staged instruction prompt. */
     hud.setStartNudgesVisible(true);
     hud.setHudActive(false);
-    hud.update({ score, elapsedTime: 0, lockCount: 0, health: readyHealthForHud() });
+    hud.update({ score, elapsedTime: 0, health: readyHealthForHud() });
     updateAttractCamera(0);
     updateReticle();
     spawnWord(startWord, 'start-letter');
@@ -375,7 +375,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     hud.setStartNudgesVisible(false);
     hud.setCallout('');
     hud.setHudActive(true);
-    hud.update({ score, elapsedTime: 0, lockCount: 0, health: currentHealthForHud() });
+    hud.update({ score, elapsedTime: 0, health: currentHealthForHud() });
     bus.emit('runstart', { runNumber, duration, totalEnemies: timelineTotalEnemies });
   }
 
@@ -398,7 +398,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     updateProjectiles(dt);
     updateLetterStartDelay(dt);
     updateInstructionPrompt();
-    hud.update({ score, elapsedTime: 0, lockCount: locks.length, health: readyHealthForHud() });
+    hud.update({ score, elapsedTime: 0, health: readyHealthForHud() });
   }
 
   function updateRunning(dt: number) {
@@ -416,12 +416,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     updatePendingShots();
     updateProjectiles(dt);
 
-    hud.update({
-      score,
-      elapsedTime: runTime,
-      lockCount: locks.length,
-      health: currentHealthForHud(),
-    });
+    hud.update({ score, elapsedTime: runTime, health: currentHealthForHud() });
 
     if (runTime >= duration) endRun();
   }
@@ -435,7 +430,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     updatePendingShots();
     updateProjectiles(dt);
     updateLetterStartDelay(dt);
-    hud.update({ score, elapsedTime: runTime, lockCount: locks.length, health: readyHealthForHud() });
+    hud.update({ score, elapsedTime: runTime, health: readyHealthForHud() });
   }
 
   function updateAttractCamera(dt: number) {
@@ -1279,7 +1274,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     };
     hud.setHudActive(false);
     hud.setStartNudgesVisible(false);
-    hud.update({ score, elapsedTime: runTime, lockCount: 0, health: readyHealthForHud() });
+    hud.update({ score, elapsedTime: runTime, health: readyHealthForHud() });
     hud.showEnd(summary);
     bus.emit('runend', summary);
     spawnWord(replayWord, 'replay-letter');

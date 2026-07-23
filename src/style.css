@@ -101,7 +101,7 @@ canvas {
 }
 
 /* Escape is the pause key everywhere else; touch screens get a corner button.
-   The HUD's lock readout steps left to clear it. */
+   The HUD steps left to clear it. */
 .touch-pause {
   position: fixed;
   top: 12px;
