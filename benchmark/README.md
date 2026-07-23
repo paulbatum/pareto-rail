@@ -52,7 +52,7 @@ Scheduling state is a `retired` flag at two grains. A retired theme stays in the
 
 ## Versions
 
-"v1" and "v2" name eras of the benchmark's machinery and configuration roster, not divisions of the published catalog. Version 1 is finished; its records are history and its machinery is retrievable at the `benchmark-v1` git tag. Current runs are pinned by the private plan's materials and baseline commits rather than by a freeze record. See `benchmark/releases/README.md`.
+"v1" and "v2" name eras of the benchmark's machinery and configuration roster, not divisions of the published catalog. Version 1 is finished; its machinery is retrievable at the `benchmark-v1` git tag, while its published runs remain live provenance under `manifests/`. Current runs are pinned by the private plan's materials and baseline commits rather than by a freeze record. See `benchmark/releases/README.md`.
 
 ## Directory map
 
@@ -62,8 +62,9 @@ Scheduling state is a `retired` flag at two grains. A retired theme stays in the
 - `examples/` — exemplar theme texts used by rehearsal and smoke runs.
 - `recipes/` — verbatim configuration recipes and their template. The recipe is the intervention being measured.
 - `schemas/` — the run-manifest record format written by the runner.
-- `releases/` — the v1 freeze record, kept as history.
-- `rankings/`, `manifests/`, `analysis/` — v1-era records kept as history.
+- `releases/` — the v1 freeze record, hash-referenced by published v1 run manifests, so still part of the provenance chain.
+- `manifests/` — public per-run provenance for every published entrant, written by `benchmark:export-provenance`.
+- `analysis/` — committed rollout analysis packages that drive the site's `/analysis` view.
 - `public/` — reviewed input seam for generated website catalog artifacts.
 - `private/` (ignored) — the plan, run records, raw logs, archives, and retired outputs.
 

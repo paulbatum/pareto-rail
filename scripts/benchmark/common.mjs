@@ -3,7 +3,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 export const SHA256_PATTERN = /^[a-f0-9]{64}$/;
-export const SLOT_PATTERN = /^[a-z0-9]{4}$/;
 export const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const RUN_ID_PATTERN = /^[a-z0-9][a-z0-9-]{3,63}$/;
 

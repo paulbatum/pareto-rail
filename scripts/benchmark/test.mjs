@@ -6,7 +6,6 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
-import { createPairSchedule, createSetSchedule, extendPairSchedule, validatePairSchedule, validateRankings, validateSetRankings, validateSetSchedule } from './ranking.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { assertSiblingSharedInputs, codexNetworkAccess, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
@@ -21,57 +20,6 @@ import { sha256 } from './common.mjs';
 const exec = promisify(execFile);
 
 const hash = (character) => character.repeat(64);
-
-const projection = {
-  benchmarkVersion: 'v1',
-  themes: [
-    { id: 'cinder', slotIds: ['a1b2', 'c3d4', 'e5f6'] },
-    { id: 'tide', slotIds: ['g7h8', 'i9j0', 'k1l2'] },
-    { id: 'vault', slotIds: ['m3n4', 'o5p6', 'q7r8'] },
-  ],
-};
-const pairSchedule = createPairSchedule(projection);
-assert.equal(pairSchedule.pairs.length, 9);
-assert.deepEqual(validatePairSchedule(pairSchedule, projection), []);
-const rankings = pairSchedule.pairs.map((pair, index) => ({
-  schemaVersion: 1,
-  benchmarkVersion: 'v1',
-  rankingId: pair.rankingId,
-  themeId: pair.themeId,
-  pairSlotIds: pair.pairSlotIds,
-  presentationOrder: pair.presentationOrder,
-  playCounts: pair.pairSlotIds.map((slotId) => ({ slotId, count: 1 })),
-  verdict: index % 2 === 0 ? 'tie' : 'preference',
-  ...(index % 2 === 0 ? {} : { winnerSlotId: pair.pairSlotIds[0] }),
-  recordedAt: new Date().toISOString(),
-}));
-assert.deepEqual(validateRankings(rankings, pairSchedule, projection), []);
-rankings[0].playCounts[1].slotId = rankings[0].playCounts[0].slotId;
-assert.ok(validateRankings(rankings, pairSchedule, projection).some((error) => error.includes('playCounts')));
-
-const expandedProjection = structuredClone(projection);
-expandedProjection.themes[0].slotIds.push('s9t0');
-const extendedPairs = extendPairSchedule(pairSchedule, expandedProjection);
-assert.equal(extendedPairs.pairs.length, 12);
-assert.deepEqual(extendedPairs.pairs.slice(0, pairSchedule.pairs.length), pairSchedule.pairs);
-
-const setSchedule = createSetSchedule(projection);
-assert.equal(setSchedule.sets.length, 3);
-assert.deepEqual(validateSetSchedule(setSchedule, projection), []);
-const setRankings = setSchedule.sets.map((set) => ({
-  schemaVersion: 1,
-  benchmarkVersion: 'v1',
-  rankingId: set.rankingId,
-  themeId: set.themeId,
-  slotIds: set.slotIds,
-  presentationOrder: set.presentationOrder,
-  playCounts: set.slotIds.map((slotId) => ({ slotId, count: 1 })),
-  tiers: [[set.slotIds[0]], set.slotIds.slice(1)],
-  recordedAt: new Date().toISOString(),
-}));
-assert.deepEqual(validateSetRankings(setRankings, setSchedule, projection), []);
-setRankings[0].tiers[1].push(setRankings[0].tiers[0][0]);
-assert.ok(validateSetRankings(setRankings, setSchedule, projection).some((error) => error.includes('invalid or repeated')));
 
 const rendered = renderAssignment('id={{LEVEL_ID}} title={{LEVEL_TITLE}} theme={{THEME}}', {
   levelId: 'cinder-a1b2',
