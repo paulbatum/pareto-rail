@@ -7,13 +7,13 @@ Public site: [paretorail.com](https://paretorail.com/)
      that only makes sense on GitHub. -->
 
 <!-- site:start -->
-Pareto Rail is inspired by my love for [Rez](https://en.wikipedia.org/wiki/Rez_(video_game)) and distrust of my own bias on which models are best. Its a procedural WebGPU rail shooter and a public benchmark for one-shot, model-built levels.
+Pareto Rail is an attempt to judge model taste. Its a procedural WebGPU rail shooter and a public benchmark for one-shot, model-built levels.
 
 While I have a background in building software, this project is 100% vibe coded, and its my first time building something benchmark-ish. I've made many mistakes with plenty more to come. I welcome your feedback via [Twitter](https://x.com/paulbatum) or [GitHub](https://github.com/paulbatum/pareto-rail/issues).
 
 ## Rez
 
-Rez is a brilliant example of the human creative spirit and the levels you can play on this site do not hold a candle to its beauty. At least, not yet. Rez is available on [Steam](https://store.steampowered.com/app/636450/Rez_Infinite/).
+Pareto Rail is inspired by my love for [Rez](https://en.wikipedia.org/wiki/Rez_(video_game)). Rez is a brilliant example of the human creative spirit and LLMs are nowhere near close to matching it. At least, not yet. Rez is available on [Steam](https://store.steampowered.com/app/636450/Rez_Infinite/).
 
 ## Methodology
 
