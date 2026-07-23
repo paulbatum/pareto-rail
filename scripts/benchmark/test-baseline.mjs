@@ -49,6 +49,7 @@ try {
   await fs.mkdir(path.join(repository, 'scripts'), { recursive: true });
   await fs.copyFile(path.join(root, 'scripts/collect-gallery.mjs'), path.join(repository, 'scripts/collect-gallery.mjs'));
   await fs.copyFile(path.join(root, 'scripts/level-gallery.mjs'), path.join(repository, 'scripts/level-gallery.mjs'));
+  await fs.copyFile(path.join(root, 'scripts/count-source-lines.mjs'), path.join(repository, 'scripts/count-source-lines.mjs'));
 
   await git(['add', '.']);
   await git(['commit', '-qm', 'synthetic contaminated baseline']);
