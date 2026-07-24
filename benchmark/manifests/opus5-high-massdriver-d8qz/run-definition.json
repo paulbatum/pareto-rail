@@ -1,0 +1,21 @@
+{
+  "runId": "opus5-high-massdriver-d8qz",
+  "slotId": "d8qz",
+  "levelId": "mass-driver-d8qz",
+  "themeId": "mass-driver",
+  "themePath": "benchmark/themes/mass-driver.md",
+  "configurationId": "claude-opus-5-high",
+  "recipePath": "benchmark/recipes/claude-opus-5-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v1",
+  "baselinePolicy": "open",
+  "materialsCommit": "d5ad9b92060a4a1be619bc4cd3d67d86a678877b",
+  "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+  "levelTitle": "Mass Driver"
+}

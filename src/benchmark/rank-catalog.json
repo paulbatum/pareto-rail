@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-24T21:36:13.056Z",
+  "generatedAt": "2026-07-24T21:46:15.674Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -330,6 +330,41 @@
       "retired": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "mass-driver-d8qz",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "generationCost": 40.4168825,
+      "linesOfCode": 3863,
+      "run": {
+        "generationWallTimeSeconds": 3539.746,
+        "totalWallTimeSeconds": 3567.19,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.219"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 3007,
+            "outputTokens": 276777,
+            "cacheReadTokens": 56012985,
+            "cacheWriteTokens": 547593,
+            "usageSource": "agreed",
+            "costUsd": 40.4168825
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/mass-driver-d8qz/hero.avif",
+      "featured": true,
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "d5ad9b92060a4a1be619bc4cd3d67d86a678877b"
     },
     {
       "levelId": "mass-driver-esvz",
