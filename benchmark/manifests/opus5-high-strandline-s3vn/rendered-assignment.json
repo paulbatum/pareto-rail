@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "f16adc5c3a6bcfe0ee0549bf5e58ddc5acc8554233fd2765612250c4bc65a4e4"
+  },
+  "theme": {
+    "path": "benchmark/themes/strandline.md",
+    "sha256": "31621cb405a2b293bf0f7026add0b462312e75c44dfcea3a8549b1fd9616bff1"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-opus-5-high.md",
+    "sha256": "7649b65c91194950766771fdae91ff390505d05b7aaf817f51502b8845b677c4"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/opus5-high-strandline-s3vn/rendered-assignment.md",
+    "sha256": "790e1947cc8782d2eba2c7c324f37f99b3ba59c71bfce3178960a28bf7af7d65"
+  },
+  "baseRendering": {
+    "sha256": "790e1947cc8782d2eba2c7c324f37f99b3ba59c71bfce3178960a28bf7af7d65"
+  }
+}

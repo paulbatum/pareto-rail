@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "5f484de5-3d1a-460f-976c-d245ca7e889b",
+  "usageSha256": "cee93705f7950df7852552880e4bfc539eb775313fef97795a8774e772aef73a",
+  "eventLogSha256": "3a782ac93017ffbf1a42d8255f64be9c13a1fed80ddf19b76d8c2616e0249046",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/opus5-high-strandline-s3vn/harness-home/projects/-tmp-pareto-rail-opus5-high-strandline-s3vn/5f484de5-3d1a-460f-976c-d245ca7e889b.jsonl",
+    "sha256": "6728def454373554c19beb9548660faf3397f3e3013eabe5d50a95241934fbae"
+  }
+}

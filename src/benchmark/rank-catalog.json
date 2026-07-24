@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-23T00:10:43.718Z",
+  "generatedAt": "2026-07-24T21:21:59.715Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -46,6 +46,14 @@
       "modelName": "Claude Opus 4.8",
       "workflowName": "solo",
       "primaryModel": "claude-opus-4-8",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+    },
+    {
+      "id": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "primaryModel": "claude-opus-5",
       "effort": "high",
       "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
@@ -648,6 +656,40 @@
       "thumbnailPath": "/level-content/skyhook-ggl2/hero.avif",
       "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
       "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271"
+    },
+    {
+      "levelId": "skyhook-k5rw",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "generationCost": 53.726819,
+      "linesOfCode": 4386,
+      "run": {
+        "generationWallTimeSeconds": 5274.854,
+        "totalWallTimeSeconds": 5302.068,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.219"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 6264,
+            "outputTokens": 362274,
+            "cacheReadTokens": 75772398,
+            "cacheWriteTokens": 675245,
+            "usageSource": "agreed",
+            "costUsd": 53.726819
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-k5rw/hero.avif",
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "d5ad9b92060a4a1be619bc4cd3d67d86a678877b"
     },
     {
       "levelId": "skyhook-lkor",
@@ -1404,6 +1446,40 @@
       "thumbnailPath": "/level-content/strandline-s2bq/hero.avif",
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    },
+    {
+      "levelId": "strandline-s3vn",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "generationCost": 42.623314,
+      "linesOfCode": 4548,
+      "run": {
+        "generationWallTimeSeconds": 4360.004,
+        "totalWallTimeSeconds": 4389.567,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.219"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 15304,
+            "outputTokens": 307110,
+            "cacheReadTokens": 58082348,
+            "cacheWriteTokens": 582787,
+            "usageSource": "agreed",
+            "costUsd": 42.623314
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-s3vn/hero.avif",
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "dbd1bded34a1293e08a4bb765b0bae870866df4c"
     },
     {
       "levelId": "strandline-s5cx",

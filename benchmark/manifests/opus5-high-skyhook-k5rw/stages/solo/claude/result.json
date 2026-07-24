@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "fb1491fe-40df-4dde-adc8-801263c88b64",
+  "usageSha256": "76e183c37f6bf1ce540deafbed916e9f5ba6b98e7b7e9c0082274b58f23b021c",
+  "eventLogSha256": "f8689cb7dbe1d25fd026c272d40bd905fdc6446a0b0f5e25fa0d422abf1239e4",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/opus5-high-skyhook-k5rw/harness-home/projects/-tmp-pareto-rail-opus5-high-skyhook-k5rw/fb1491fe-40df-4dde-adc8-801263c88b64.jsonl",
+    "sha256": "444202c2785069a30dd6a883d4096113371a4dc1e52c8e079f586d97e037cb7c"
+  }
+}

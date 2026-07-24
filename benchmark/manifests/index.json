@@ -92,6 +92,18 @@
       "configurationId": "claude-opus-4-8-high"
     },
     {
+      "runId": "opus5-high-skyhook-k5rw",
+      "levelId": "skyhook-k5rw",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-5-high"
+    },
+    {
+      "runId": "opus5-high-strandline-s3vn",
+      "levelId": "strandline-s3vn",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-5-high"
+    },
+    {
       "runId": "run-0cafsiuauv6e",
       "levelId": "mass-driver-vyxj",
       "themeId": "mass-driver",
