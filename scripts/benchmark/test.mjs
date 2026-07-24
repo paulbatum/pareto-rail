@@ -9,7 +9,7 @@ import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from 
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { assertSiblingSharedInputs, codexNetworkAccess, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
-import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
+import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import { BENCHMARK_SOURCE_ROOT, BUILT_IN_SOURCE_ROOT } from './protocol.mjs';
@@ -515,8 +515,81 @@ try {
   await fs.rm(snapshotRun, { recursive: true, force: true });
 }
 
+await assertPeriodicRecoverySnapshots();
 await assertIsolatedEntrantRoundTrips();
 await assertPruneLayouts();
+
+// The controller snapshots a long-running stage's worktree on an interval, so a host death without the
+// failure handler still leaves a recent durable recovery point. This proves the loop fires during a
+// running stage, dedupes an unchanged worktree, and never mutates the entrant's own index or files.
+async function assertPeriodicRecoverySnapshots() {
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const repo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-periodic-repo-'));
+  const worktree = `${repo}-worktree`;
+  const runDirectory = `${repo}-run`;
+  const runId = 'run-periodic';
+  const refPattern = `refs/benchmark-recovery/${runId}`;
+  const listRefs = async () => (await exec('git', ['for-each-ref', '--format=%(refname)', refPattern], { cwd: repo })).stdout.trim().split('\n').filter(Boolean);
+  try {
+    await exec('git', ['init', '-q'], { cwd: repo });
+    await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: repo });
+    await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: repo });
+    await fs.writeFile(path.join(repo, 'tracked.txt'), 'base\n');
+    await exec('git', ['add', 'tracked.txt'], { cwd: repo });
+    await exec('git', ['commit', '-qm', 'base'], { cwd: repo });
+    await exec('git', ['worktree', 'add', '-qb', 'benchmark-run-periodic', worktree], { cwd: repo });
+    await fs.mkdir(runDirectory, { recursive: true });
+
+    // (a) A short-interval loop stands in for the timer during a "stage" that keeps editing the worktree;
+    // several distinct snapshots must land while it runs.
+    const workFile = path.join(worktree, 'work.txt');
+    const snapshots = startPeriodicRecoverySnapshots({ repo, runDirectory, runId, worktree, intervalMs: 25 });
+    for (let i = 0; i < 4; i += 1) {
+      await fs.writeFile(workFile, `progress ${i}\n`);
+      await delay(60);
+    }
+    await snapshots.stop();
+    const refsDuringStage = await listRefs();
+    assert.ok(refsDuringStage.length >= 2, `expected multiple periodic snapshots during the stage, saw ${refsDuringStage.length}`);
+    // stop() must halt the timer: no further refs appear after it resolves.
+    await delay(80);
+    assert.equal((await listRefs()).length, refsDuringStage.length, 'stop() must clear the periodic timer');
+
+    // (b) A deduped snapshotter over an unchanged worktree creates one ref, then skips.
+    const dedupeRun = `${repo}-dedupe-run`;
+    await fs.mkdir(dedupeRun, { recursive: true });
+    const snapshotOnce = makePeriodicSnapshotter({ repo, runDirectory: dedupeRun, runId, worktree });
+    const first = await snapshotOnce();
+    assert.ok(first?.ref, 'first snapshot of a changed worktree must create a ref');
+    const second = await snapshotOnce();
+    assert.equal(second?.deduped, true, 'an unchanged worktree must dedupe rather than create a second ref');
+    assert.equal(second.snapshotTree, first.snapshotTree);
+    // A real change lifts the dedupe and writes a fresh ref.
+    await fs.writeFile(workFile, 'changed again\n');
+    const third = await snapshotOnce();
+    assert.ok(third?.ref && third.snapshotTree !== first.snapshotTree, 'a changed worktree must create a new ref');
+
+    // (c) The entrant's own index and working files are untouched by a snapshot. Stage a file into the
+    // real index, capture the index bytes and status, snapshot, and prove nothing moved.
+    await fs.writeFile(path.join(worktree, 'entrant-staged.txt'), 'entrant staged this\n');
+    await exec('git', ['add', 'entrant-staged.txt'], { cwd: worktree });
+    // Settle the entrant's index stat cache first: an ordinary `git status` may rewrite it, and that is
+    // the entrant's own doing, not the snapshot's. Capture the baseline bytes only after it has settled.
+    const statusBefore = (await exec('git', ['status', '--porcelain=v1'], { cwd: worktree })).stdout;
+    const indexPath = path.resolve(worktree, (await exec('git', ['rev-parse', '--git-path', 'index'], { cwd: worktree })).stdout.trim());
+    const indexBefore = await fs.readFile(indexPath);
+    const workBefore = await fs.readFile(workFile, 'utf8');
+    await createRecoverySnapshot({ repo, runDirectory, runId, worktree, checkpoint: 'stage', reason: 'non-interference check' });
+    assert.deepEqual(await fs.readFile(indexPath), indexBefore, 'snapshot must not rewrite the entrant index');
+    assert.equal((await exec('git', ['status', '--porcelain=v1'], { cwd: worktree })).stdout, statusBefore, 'snapshot must not change the entrant staged state');
+    assert.equal(await fs.readFile(workFile, 'utf8'), workBefore, 'snapshot must not touch entrant working files');
+  } finally {
+    await exec('git', ['worktree', 'remove', '--force', worktree], { cwd: repo }).catch(() => {});
+    await fs.rm(repo, { recursive: true, force: true });
+    await fs.rm(runDirectory, { recursive: true, force: true });
+    await fs.rm(`${repo}-dedupe-run`, { recursive: true, force: true });
+  }
+}
 
 async function assertIsolatedEntrantRoundTrips() {
   const repo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-isolated-main-'));

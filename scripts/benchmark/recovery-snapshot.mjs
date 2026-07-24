@@ -12,20 +12,27 @@ async function writeJson(filePath, value) {
   await fs.rename(temporaryPath, filePath);
 }
 
-export async function createRecoverySnapshot({ repo, runDirectory, runId, worktree, checkpoint, reason }) {
+export async function createRecoverySnapshot({ repo, runDirectory, runId, worktree, checkpoint, reason, previousTree }) {
   if (!worktree || !await pathExists(worktree)) return null;
   const inside = await git(worktree, ['rev-parse', '--is-inside-work-tree'], { allowFailure: true });
   if (inside.code !== 0 || inside.stdout.trim() !== 'true') return null;
 
   const head = (await git(worktree, ['rev-parse', 'HEAD'])).stdout.trim();
   const branch = (await git(worktree, ['symbolic-ref', '--quiet', '--short', 'HEAD'], { allowFailure: true })).stdout.trim() || null;
-  const status = (await git(worktree, ['status', '--porcelain=v1', '--untracked-files=all'])).stdout;
+  // The entrant edits this worktree concurrently and runs its own git. GIT_OPTIONAL_LOCKS=0 keeps this
+  // read from taking index.lock, so it never races the entrant's `git add`; the staging below stages
+  // into a private GIT_INDEX_FILE, so the entrant's own index and working files are never mutated.
+  const status = (await git(worktree, ['status', '--porcelain=v1', '--untracked-files=all'], { env: { GIT_OPTIONAL_LOCKS: '0' } })).stdout;
   const temporaryIndex = path.join(os.tmpdir(), `pareto-rail-recovery-index-${runId}-${process.pid}-${Date.now()}`);
   const env = { GIT_INDEX_FILE: temporaryIndex };
   try {
     await git(worktree, ['read-tree', 'HEAD'], { env });
     await git(worktree, ['add', '--all'], { env });
     const tree = (await git(worktree, ['write-tree'], { env })).stdout.trim();
+    // A periodic caller passes the tree of its last snapshot; an unchanged worktree writes an identical
+    // tree, so skip the commit/ref/record work rather than pile up duplicate refs. The identity is the
+    // tree git just computed here, not a re-derived one.
+    if (previousTree && tree === previousTree) return { deduped: true, snapshotTree: tree };
     const commit = (await git(worktree, ['commit-tree', tree, '-p', head, '-m', `Preserve benchmark recovery snapshot ${runId}`])).stdout.trim();
     const attempt = `${new Date().toISOString().replace(/[:.]/g, '-')}-${commit.slice(0, 8)}`;
     const ref = `refs/benchmark-recovery/${runId}/${attempt}`;
@@ -59,6 +66,62 @@ export async function createRecoverySnapshot({ repo, runDirectory, runId, worktr
   } finally {
     await fs.rm(temporaryIndex, { force: true });
   }
+}
+
+// A long stage (up to twelve hours, including in-process quota waits) is snapshotted on this cadence so
+// a host that dies without the controller's failure handling — a reboot, a kill during a wait — loses at
+// most one interval of entrant work rather than everything since the last checkpoint failure.
+export const RECOVERY_SNAPSHOT_INTERVAL_MS = 12 * 60 * 1000;
+
+// The dedup-carrying single shot behind the periodic loop, exported so tests can drive it deterministically
+// without waiting on the timer. Failures never propagate: they are recorded and swallowed so a snapshot
+// problem can never fail or stall the stage it is protecting.
+export function makePeriodicSnapshotter({ repo, runDirectory, runId, worktree, checkpoint = 'stage', reason = 'periodic snapshot while the stage runs' }) {
+  let previousTree = null;
+  return async function snapshotOnce() {
+    try {
+      const result = await createRecoverySnapshot({ repo, runDirectory, runId, worktree, checkpoint, reason, previousTree });
+      if (result?.snapshotTree) previousTree = result.snapshotTree;
+      return result;
+    } catch (error) {
+      await recordSnapshotError(runDirectory, error);
+      return { error: error instanceof Error ? error.message : String(error) };
+    }
+  };
+}
+
+// Start snapshotting the worktree on an interval and return a handle whose stop() clears the timer and
+// awaits any in-flight snapshot. Ticks never overlap (an in-flight snapshot skips the next tick) and the
+// timer is unref'd so it never keeps the process alive on its own.
+export function startPeriodicRecoverySnapshots({ repo, runDirectory, runId, worktree, checkpoint, reason, intervalMs = RECOVERY_SNAPSHOT_INTERVAL_MS }) {
+  const snapshotOnce = makePeriodicSnapshotter({ repo, runDirectory, runId, worktree, checkpoint, reason });
+  let stopped = false;
+  let inFlight = null;
+  const timer = setInterval(() => {
+    if (stopped || inFlight) return;
+    inFlight = snapshotOnce().finally(() => { inFlight = null; });
+  }, intervalMs);
+  if (typeof timer.unref === 'function') timer.unref();
+  return {
+    async stop() {
+      stopped = true;
+      clearInterval(timer);
+      if (inFlight) await inFlight;
+    },
+  };
+}
+
+async function recordSnapshotError(runDirectory, error) {
+  const message = error instanceof Error ? error.message : String(error);
+  try {
+    const logPath = path.join(runDirectory, 'recovery-snapshots', 'periodic-errors.json');
+    const log = await readOptionalJson(logPath) ?? { schemaVersion: 1, errors: [] };
+    log.errors.push({ at: new Date().toISOString(), message });
+    await writeJson(logPath, log);
+  } catch {
+    // Durability is best-effort; the snapshot loop must never throw.
+  }
+  console.warn(`Recovery snapshot failed (continuing): ${message}`);
 }
 
 export async function restoreRecoverySnapshot({ repo, runDirectory, worktreeRecord }) {

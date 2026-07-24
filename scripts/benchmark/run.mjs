@@ -17,7 +17,7 @@ import {
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { manifestErrors } from './results.mjs';
-import { createRecoverySnapshot, restoreRecoverySnapshot } from './recovery-snapshot.mjs';
+import { createRecoverySnapshot, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 import { assertSandboxDependencies, entrantSandboxEnabled } from './entrant-sandbox.mjs';
 
@@ -208,7 +208,7 @@ async function main() {
           await assertAbsent(roundLaunchPath, `stage launch round ${round} record`);
           await prepareHarnessHome(adapter, outputDirectory);
           const stageArgs = buildStageArgs({ adapter, definition, worktree, inputs, stageDirectory, resumeRound: round });
-          const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
+          const stage = await withPeriodicRecoverySnapshots({ outputDirectory, runId: definition.runId, worktree }, () => command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } }));
           await writeCommandRecord(roundLaunchPath, [process.execPath, ...stageArgs], stage);
           await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
           if (stage.code !== 0) fail(`${adapter.harnessName} continuation stage failed; its worktree and artifacts were preserved for the next resumption.`);
@@ -223,7 +223,7 @@ async function main() {
       if (continueStage) fail('--continue-stage requires a previously recorded stage launch.');
       await prepareHarnessHome(adapter, outputDirectory);
       const stageArgs = buildStageArgs({ adapter, definition, worktree, inputs, stageDirectory });
-      const stage = await command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } });
+      const stage = await withPeriodicRecoverySnapshots({ outputDirectory, runId: definition.runId, worktree }, () => command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } }));
       await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
       if (stage.code !== 0) fail(`${adapter.harnessName} stage failed; its worktree and artifacts were preserved for resumption.`);
       return { exitCode: 0 };
@@ -586,6 +586,18 @@ function buildStageArgs({ adapter, definition, worktree, inputs, stageDirectory,
   if (adapter.stageArgs) stageArgs.push(...adapter.stageArgs(definition));
   if (resumeRound !== undefined) stageArgs.push('--resume-round', String(resumeRound));
   return stageArgs;
+}
+
+// Run an entrant stage while periodically snapshotting its worktree to the durable recovery machinery,
+// so a host death during the stage (a reboot, a kill mid quota-wait) loses at most one interval of work.
+// The timer is always cleared on exit — success, failure, or throw — before the caller proceeds.
+async function withPeriodicRecoverySnapshots({ outputDirectory, runId, worktree }, launch) {
+  const snapshots = startPeriodicRecoverySnapshots({ repo: ROOT, runDirectory: outputDirectory, runId, worktree: worktree.worktree, checkpoint: 'stage' });
+  try {
+    return await launch();
+  } finally {
+    await snapshots.stop();
+  }
 }
 
 // Open-policy rows retain v2's historical network behavior. Scrubbed series
