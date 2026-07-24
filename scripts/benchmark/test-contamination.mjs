@@ -221,4 +221,37 @@ function paths(findings) {
   assert.equal(verdictFor(result.findings, result.webEvents), 'needs-web-review');
 }
 
+// A scrubbed baseline holds no other entrant's work, so surveying the monitored roots — or a
+// wildcard that can only expand within them — reveals nothing and is not a finding.
+{
+  const scrubbed = { ...options, baselinePolicy: 'scrubbed' };
+  const surveys = [
+    'find src/benchmark-levels -maxdepth 2 -type f -print',
+    'rg -n "LevelDefinition" src/benchmark-levels',
+    'ls public/level-content',
+    'cat src/benchmark-levels/*/level.json',
+  ];
+  for (const command of surveys) {
+    assert.deepEqual(classifyToolCall({ name: 'bash', input: { command } }, scrubbed), [], command);
+    assert.notDeepEqual(classifyToolCall({ name: 'bash', input: { command } }, options), [], command);
+  }
+
+  // Naming another level is still evidence of intent, whether or not the path resolves.
+  assert.deepEqual(
+    classes(classifyToolCall({ name: 'bash', input: { command: 'cat src/benchmark-levels/other-zz99/gameplay.ts' } }, scrubbed)),
+    ['content-read'],
+  );
+}
+
+// Built-in level content is shared reference material the brief points every entrant at.
+{
+  const withBuiltIns = { ...options, builtInLevelIds: ['prism-bloom', 'crystal-corridor'] };
+  const command = 'cat public/level-content/prism-bloom/level.json';
+  assert.deepEqual(classifyToolCall({ name: 'bash', input: { command } }, withBuiltIns), []);
+  assert.deepEqual(
+    classes(classifyToolCall({ name: 'bash', input: { command: 'cat public/level-content/other-zz99/level.json' } }, withBuiltIns)),
+    ['content-read'],
+  );
+}
+
 console.log('Benchmark contamination tests passed.');

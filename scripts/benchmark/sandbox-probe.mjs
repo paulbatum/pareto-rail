@@ -53,13 +53,33 @@ async function main() {
   ];
 
   const results = [];
+  // wrapWithSandbox derives the dotfiles it shields from process.cwd(), not from the spawn cwd, so
+  // the probe has to stand where the harness stands — inside the worktree — for the mount-point
+  // check below to exercise anything.
+  const probeCwd = process.cwd();
+  process.chdir(worktree);
   for (const probe of probes) {
     const wrapped = await SandboxManager.wrapWithSandbox(probe.command);
     const outcome = await run('bash', ['-c', wrapped], worktree);
+    // Mirrors the pi extension: every wrapWithSandbox needs its matching cleanup once the command
+    // exits, or bwrap's mount points for the dotfiles it shields stay behind in the worktree.
+    SandboxManager.cleanupAfterCommand();
     const succeeded = outcome.code === 0;
     const ok = probe.expect === 'pass' ? succeeded : !succeeded;
     results.push({ ...probe, code: outcome.code, ok, detail: (outcome.stderr || outcome.stdout).trim().split('\n').slice(-2).join(' ') });
   }
+
+  // Checked before reset(), which force-cleans: this asserts the per-command cleanup above, so a
+  // stage killed before its process-exit sweep still leaves the worktree free of mount-point files.
+  const ghosts = (await fs.readdir(worktree)).filter((entry) => entry.startsWith('.'));
+  results.push({
+    name: 'no sandbox mount points left in the worktree',
+    expect: 'pass',
+    code: ghosts.length ? 1 : 0,
+    ok: ghosts.length === 0,
+    detail: ghosts.join(', '),
+  });
+  process.chdir(probeCwd);
 
   await SandboxManager.reset();
 

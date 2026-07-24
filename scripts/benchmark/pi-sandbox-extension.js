@@ -68,6 +68,19 @@ function sandboxedBashOperations() {
     async exec(command, cwd, { onData, signal, timeout }) {
       if (!fs.existsSync(cwd)) throw new Error(`Working directory does not exist: ${cwd}`);
       const wrapped = await SandboxManager.wrapWithSandbox(command);
+      // bwrap materializes an empty mount point on the host for every protected path that does not
+      // exist, including the dotfiles it shields relative to the working directory — the worktree.
+      // wrapWithSandbox registers them and requires this matching cleanup once the command exits;
+      // without it they survive the stage as untracked files the controller's scope gate would see.
+      // (Inside the namespace they are live mounts regardless — writeSandboxGitExclude() in
+      // entrant-sandbox.mjs is what keeps them out of the entrant's own git-based self-checks.)
+      const cleanup = () => {
+        try {
+          SandboxManager.cleanupAfterCommand();
+        } catch {
+          // Cleanup is best effort; the runtime also sweeps on process exit.
+        }
+      };
       return new Promise((resolve, reject) => {
         const child = spawn('bash', ['-c', wrapped], { cwd, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
         let timedOut = false;
@@ -80,12 +93,13 @@ function sandboxedBashOperations() {
         }
         child.stdout?.on('data', onData);
         child.stderr?.on('data', onData);
-        child.on('error', (error) => { if (timer) clearTimeout(timer); reject(error); });
+        child.on('error', (error) => { if (timer) clearTimeout(timer); cleanup(); reject(error); });
         const onAbort = () => killGroup(child);
         signal?.addEventListener('abort', onAbort, { once: true });
         child.on('close', (code) => {
           if (timer) clearTimeout(timer);
           signal?.removeEventListener('abort', onAbort);
+          cleanup();
           if (signal?.aborted) reject(new Error('aborted'));
           else if (timedOut) reject(new Error(`timeout:${timeout}`));
           else resolve({ exitCode: code });

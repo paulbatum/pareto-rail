@@ -36,19 +36,28 @@ async function main() {
   await SandboxManager.initialize(config);
 
   const results = [];
+  // The dotfiles sandbox-runtime shields are resolved against process.cwd(), not the spawn cwd, so
+  // stand in the worktree the way the pi harness does — otherwise the gates run under a subtly
+  // different policy from the one a real entrant stage sees.
+  const callerCwd = process.cwd();
+  process.chdir(worktree);
   for (const gate of gates) {
     // Inside the sandbox /tmp is a fresh writable tmpfs, so point TMPDIR at it (an inherited TMPDIR
     // under the now-hidden host /tmp would not exist); unset DISPLAY so Chrome's GPU probe does not
     // hang on the WSLg X socket; and steer Puppeteer to the headless shell (full Chrome cannot start
-    // under the seccomp AF_UNIX block). The floor check takes a level id.
-    const suffix = gate === 'check:floor' ? ` -- --level ${quote(level)}` : '';
+    // under the seccomp AF_UNIX block). The floor and scope checks take a level id.
+    const suffix = gate === 'check:floor' || gate === 'check:scope' ? ` -- --level ${quote(level)}` : '';
     const command = `export TMPDIR=/tmp; unset DISPLAY; export PUPPETEER_EXECUTABLE_PATH=${quote(headlessShell)}; npm run ${gate}${suffix}`;
     const wrapped = await SandboxManager.wrapWithSandbox(command);
     process.stdout.write(`\n=== ${gate} (sandboxed) ===\n`);
     const outcome = await run('bash', ['-c', wrapped], worktree);
+    // bwrap leaves an empty mount point behind for every shielded path that does not exist; without
+    // this, the next gate's `check:scope` sees them in the worktree as untracked files.
+    SandboxManager.cleanupAfterCommand();
     results.push({ gate, code: outcome.code });
     process.stdout.write(`--- ${gate}: exit ${outcome.code} ---\n`);
   }
+  process.chdir(callerCwd);
   await SandboxManager.reset();
 
   let failed = 0;

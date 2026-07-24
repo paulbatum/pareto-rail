@@ -13,6 +13,11 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Deep import: sandbox-runtime does not re-export these from its entry point, and the benchmark needs
+// the exact set it shields rather than a copy that can drift. A version bump that moves them fails the
+// stage at launch, which is the outcome we want — a silent stale list would quietly reintroduce the
+// untracked-file noise that writeSandboxGitExclude() exists to remove.
+import { DANGEROUS_FILES, getDangerousDirectories } from '@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js';
 import { fail } from './common.mjs';
 
 // The controller's primary repository — the tree that must be unreadable inside the entrant sandbox
@@ -92,6 +97,38 @@ export async function findHeadlessShell({ required = true } = {}) {
 // always under /tmp.
 export function piDenyReadRoots({ repositoryRoot = PRIMARY_REPOSITORY_ROOT } = {}) {
   return [path.resolve(repositoryRoot), '/tmp'];
+}
+
+// sandbox-runtime shields a fixed set of dotfiles and tool directories relative to the working
+// directory, which for an entrant stage is the worktree. Any of them that does not already exist is
+// mounted from /dev/null (or an empty directory), so inside the sandbox they are real, empty, and
+// untracked — and the entrant's own `npm run check:scope` self-check reports them as out-of-scope
+// noise it cannot clear. They exist only inside the namespace and vanish with it, so the controller's
+// authoritative scope gate never sees them; only the entrant does.
+export function sandboxShieldedEntries() {
+  return [...DANGEROUS_FILES, ...getDangerousDirectories()];
+}
+
+// Record the shielded names in the worktree's own git exclude file so every git-based self-check the
+// entrant runs ignores them. This cannot hide entrant work: the same mounts make those paths
+// read-only inside the sandbox, so the entrant cannot write them in the first place.
+export async function writeSandboxGitExclude(worktree) {
+  const gitDir = path.resolve(worktree, gitDirectory(worktree));
+  const excludePath = path.join(gitDir, 'info', 'exclude');
+  const existing = await fs.readFile(excludePath, 'utf8').catch(() => '');
+  const block = ['# Entrant sandbox mount points (see scripts/benchmark/entrant-sandbox.mjs).', ...sandboxShieldedEntries().map((entry) => `/${entry}`)].join('\n');
+  if (existing.includes(block)) return excludePath;
+  await fs.mkdir(path.dirname(excludePath), { recursive: true });
+  await fs.writeFile(excludePath, `${existing}${existing.endsWith('\n') || existing === '' ? '' : '\n'}${block}\n`, 'utf8');
+  return excludePath;
+}
+
+function gitDirectory(worktree) {
+  try {
+    return execFileSync('git', ['rev-parse', '--git-dir'], { cwd: worktree, encoding: 'utf8' }).trim();
+  } catch (error) {
+    fail(`Could not resolve the git directory of the entrant worktree ${worktree}: ${error.message}`);
+  }
 }
 
 // The sandbox-runtime package directory. sandbox-runtime enforces its AF_UNIX block by exec'ing its

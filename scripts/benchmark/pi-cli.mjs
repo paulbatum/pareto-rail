@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initializeBudgetDirectory, POLL_INTERVAL_MS, resumeMessage, shouldResume } from './budget.mjs';
 import { parseBudgetUsd, startBudgetPoller, writeBudgetSummary } from './budget-runtime.mjs';
-import { assertSandboxDependencies, findHeadlessShell, PRIMARY_REPOSITORY_ROOT, piSandboxConfig } from './entrant-sandbox.mjs';
+import { assertSandboxDependencies, findHeadlessShell, PRIMARY_REPOSITORY_ROOT, piSandboxConfig, sandboxShieldedEntries, writeSandboxGitExclude } from './entrant-sandbox.mjs';
 import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
@@ -160,11 +160,16 @@ async function main() {
     // The deny root is the controller's primary repository, not the git-derived parent of the
     // standalone worktree (which would be the worktree itself).
     const policy = await piSandboxConfig({ worktree, repositoryRoot: PRIMARY_REPOSITORY_ROOT });
+    // The sandbox materializes its shielded dotfiles inside the worktree; excluding them keeps the
+    // entrant's own git-based self-checks readable.
+    const gitExcludePath = await writeSandboxGitExclude(worktree);
     sandboxConfigPath = path.join(outputDirectory, 'sandbox-config.json');
     await writeJson(sandboxConfigPath, {
       mode: 'sandbox-runtime',
       worktree,
       repositoryRoot: PRIMARY_REPOSITORY_ROOT,
+      shieldedEntries: sandboxShieldedEntries(),
+      gitExcludePath,
       denyReadRoots: policy.filesystem.denyRead,
       allowWrite: policy.filesystem.allowWrite,
       allowRead: policy.filesystem.allowRead,

@@ -226,6 +226,7 @@ export async function loadSelfLookupContext({ root = ROOT } = {}) {
   const terms = new Set(['pareto rail']);
   const levelIds = new Set();
   const themeIds = new Set();
+  const builtInLevelIds = new Set();
 
   try {
     const config = await fsp.readFile(path.join(root, '.git/config'), 'utf8');
@@ -250,8 +251,15 @@ export async function loadSelfLookupContext({ root = ROOT } = {}) {
   } catch {
     // Keep the other checks when the private benchmark inputs are unavailable.
   }
+  try {
+    for (const entry of await fsp.readdir(path.join(root, 'src/levels'), { withFileTypes: true })) {
+      if (entry.isDirectory()) builtInLevelIds.add(entry.name);
+    }
+  } catch {
+    // Without the built-in list, their content directories stay monitored — noisier, never quieter.
+  }
 
-  return { terms: [...terms], levelIds: [...levelIds], themeIds: [...themeIds] };
+  return { terms: [...terms], levelIds: [...levelIds], themeIds: [...themeIds], builtInLevelIds: [...builtInLevelIds] };
 }
 
 function remoteIdentityTerms(remote) {
@@ -310,7 +318,7 @@ function escapeRegExp(value) {
  * Classify one normalized tool call. The returned findings have no transcript
  * source or line number; auditTranscriptRecords adds those fields.
  */
-export function classifyToolCall(call, { worktree, assignedLevelId, cwd = worktree, ownRunDirectory } = {}) {
+export function classifyToolCall(call, { worktree, assignedLevelId, cwd = worktree, ownRunDirectory, baselinePolicy, builtInLevelIds } = {}) {
   if (!call || typeof call !== 'object') return [];
   const worktreeRoot = worktree ? path.resolve(worktree) : null;
   const ownRunRoot = ownRunDirectory ? path.resolve(ownRunDirectory) : null;
@@ -342,7 +350,7 @@ export function classifyToolCall(call, { worktree, assignedLevelId, cwd = worktr
       continue;
     }
 
-    const monitored = monitoredPath(info.relativePath, assignedLevelId);
+    const monitored = monitoredPath(info.relativePath, assignedLevelId, { baselinePolicy, builtInLevelIds });
     if (!monitored) continue;
     if (monitored.kind === 'ignored') continue;
 
@@ -574,10 +582,16 @@ function inspectPath(rawPath, { worktree, cwd, source }) {
   return { outside, absolutePath, relativePath: relativePath || '.', homePath: false, source };
 }
 
-function monitoredPath(relativePath, assignedLevelId) {
+function monitoredPath(relativePath, assignedLevelId, { baselinePolicy, builtInLevelIds } = {}) {
   if (!relativePath || relativePath === '.') return null;
   const normalized = relativePath.replace(/^\.\//, '').replaceAll('\\', '/');
   const segments = normalized.split('/');
+  // On a scrubbed baseline the entrant tree holds no other entrant's work at all: only the shared
+  // benchmark-levels scaffold, the built-in levels, and the run's own level. A read of a monitored
+  // root, or of a wildcard that expands within it, therefore reveals nothing and is not evidence.
+  // Naming another level explicitly still is — the intent is the finding, whether or not it resolved.
+  const scrubbed = baselinePolicy === 'scrubbed';
+  const builtIn = builtInLevelIds instanceof Set ? builtInLevelIds : new Set(builtInLevelIds ?? []);
 
   if (segments[0] === 'benchmark') {
     return { kind: 'contaminating' };
@@ -585,22 +599,30 @@ function monitoredPath(relativePath, assignedLevelId) {
 
   if (segments[0] === 'src' && segments[1] === 'benchmark-levels') {
     const remainder = segments.slice(2);
-    if (remainder.length === 0) return { kind: 'contaminating' };
+    if (remainder.length === 0) return scrubbed ? null : { kind: 'contaminating' };
     const first = remainder[0];
     if (first === 'test-fixtures') return { kind: 'ignored' };
     if (remainder.length === 1 && SHARED_BENCHMARK_ROOT_FILES.has(first)) return null;
     if (first === assignedLevelId) return null;
+    if (scrubbed && hasWildcard(first)) return null;
     return { kind: 'contaminating' };
   }
 
   if (segments[0] === 'public' && segments[1] === 'level-content') {
     const remainder = segments.slice(2);
-    if (remainder.length === 0) return { kind: 'contaminating' };
+    if (remainder.length === 0) return scrubbed ? null : { kind: 'contaminating' };
     if (remainder[0] === assignedLevelId) return null;
+    // Built-in level content is shared reference material every entrant is pointed at by the brief.
+    if (builtIn.has(remainder[0])) return null;
+    if (scrubbed && hasWildcard(remainder[0])) return null;
     return { kind: 'contaminating' };
   }
 
   return null;
+}
+
+function hasWildcard(segment) {
+  return /[*?{}\[\]]/.test(segment);
 }
 
 function shellOperation(source, candidate, toolName) {
@@ -1002,8 +1024,17 @@ export async function auditRun(runDirectory, { selfLookupContext } = {}) {
   const levelId = definition.levelId ?? definition.assignment?.levelId ?? null;
   const adapter = normalizeAdapter(definition.stage?.adapter ?? definition.assignment?.stage?.adapter);
   const transcriptFiles = await findTranscriptFiles(runDirectory);
-  const identity = selfLookupContextForRun(selfLookupContext ?? await loadSelfLookupContext(), definition);
-  const options = { worktree, assignedLevelId: levelId, adapter, selfLookupContext: identity, ownRunDirectory: runDirectory };
+  const base = selfLookupContext ?? await loadSelfLookupContext();
+  const identity = selfLookupContextForRun(base, definition);
+  const options = {
+    worktree,
+    assignedLevelId: levelId,
+    adapter,
+    selfLookupContext: identity,
+    ownRunDirectory: runDirectory,
+    baselinePolicy: definition.baselinePolicy ?? null,
+    builtInLevelIds: base.builtInLevelIds ?? [],
+  };
   let scanned = { calls: 0, findings: [], webEvents: [] };
 
   for (const file of transcriptFiles) {
