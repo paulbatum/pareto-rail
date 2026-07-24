@@ -76,18 +76,32 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
   padding: clamp(12px, 1.6vw, 18px) max(clamp(20px, 5vw, 87px), calc(env(safe-area-inset-right, 0px) + 12px)) clamp(12px, 1.6vw, 18px) max(clamp(20px, 5vw, 87px), calc(env(safe-area-inset-left, 0px) + 12px));
 }
 .app-shell[data-route="home"] .hero-copy h1 { margin-bottom: 12px; font-size: clamp(40px, 5.6vw, 55px); }
-.hero-copy .eyebrow { margin-bottom: 6px; }
+.hero-copy .eyebrow { margin-top: auto; margin-bottom: 6px; }
 .hero-copy .lede { margin-bottom: 0; max-width: none; font-size: clamp(12px, 1.2vw, 14px); }
 /* Who is currently in the benchmark, closing the hero copy. Two columns keep it
    a compact block beside the lede rather than a list that pushes the hero taller. */
-/* The copy is centred in the band as a whole, so the block needs more space above
-   than it leaves below to read as centred in the gap between the lede and the rule. */
-.hero-models { margin-top: clamp(26px, 2.6vw, 38px); }
-.hero-models h2 { margin: 0 0 10px; color: var(--accent); font-size: 11.5px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; }
-.hero-models ul { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 5px 28px; margin: 0; padding: 0; list-style: none; }
-.hero-models li { display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--soft-text); font: 12px var(--mono); letter-spacing: .04em; }
-.hero-models li.is-new { color: var(--ink); }
-.hero-models .new-tag { color: var(--accent); font-size: 8.5px; letter-spacing: .16em; text-transform: uppercase; }
+/* It sits low in the hero band. On a band with height to spare, the two auto
+   margins — here and on the eyebrow above — split the slack, so the title keeps
+   its distance from the nav instead of every spare pixel opening up under the
+   lede. The padding holds a floor under the lede on a band with no slack at all. */
+.hero-models { margin-top: auto; padding-top: clamp(16px, 1.5vw, 21px); }
+.hero-models h2 { margin: 0 0 10px; color: var(--flag); font-size: 13px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; }
+/* Every entry carries the boxed entry's padding so the rows stay aligned whether
+   or not one of them is flagged; the negative inset keeps the names flush with
+   the heading above them. */
+.hero-models ul { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 6px 20px; margin: 0 0 0 -12px; padding: 0; list-style: none; }
+.hero-models li { display: flex; align-items: baseline; gap: 12px; min-width: 0; padding: 7px 12px; color: var(--soft-text); font: 15px var(--mono); letter-spacing: .04em; }
+/* The new arrival is the one thing here worth a second look, so it gets the whole
+   treatment: a flagged box, a full-contrast name, a filled badge, and a slow halo. */
+.hero-models li.is-new { color: var(--ink); background: var(--flag-tint); border: 1px solid var(--flag); }
+.hero-models .new-tag { padding: 3px 8px 4px; color: var(--flag-ink); background: var(--flag); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-models li.is-new { animation: new-flag-pulse 2.8s ease-in-out infinite; }
+}
+@keyframes new-flag-pulse {
+  0%, 62%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--flag) 42%, transparent); }
+  31% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--flag) 0%, transparent); }
+}
 
 .hero-graphic {
   position: relative;
@@ -449,8 +463,16 @@ html:fullscreen .perf-overlay { display: none; }
   .home-choice-grid { grid-template-columns: 1fr; margin-top: 36px; }
   .protocol-grid, .data-dictionary, .verdict-run-grid { grid-template-columns: 1fr; }
   .run-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .hero-with-graphic { grid-template-columns: 1fr; min-height: 0; }
-  .hero-copy { padding-top: 48px; padding-bottom: 48px; }
+  /* Stacked, the band is copy only, so it is sized by that copy rather than capped. */
+  .hero-with-graphic { grid-template-columns: 1fr; min-height: 0; max-height: none; }
+  /* The stacked hero keeps its generous run-in below the nav, but the featured
+     models close it, so the foot only needs the clearance they get on desktop. */
+  .hero-copy { padding-top: 48px; padding-bottom: 22px; }
+  /* Smaller type so both columns still fit a phone without breaking a name. */
+  .hero-models h2 { margin-bottom: 8px; font-size: 12px; }
+  .hero-models ul { gap: 4px 14px; margin-left: -10px; }
+  .hero-models li { gap: 10px; padding: 6px 10px; font-size: 13px; white-space: nowrap; }
+  .hero-models .new-tag { padding: 2px 6px 3px; font-size: 9px; }
   /* Vertical space is scarce on phones, so the decorative tunnel steps aside. */
   .hero-graphic { display: none; }
   .info-grid, .reveal-grid { grid-template-columns: 1fr; }

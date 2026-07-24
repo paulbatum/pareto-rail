@@ -29,6 +29,14 @@
   --pr-cta-ink:       #171410;  /* text on CTA fills */
   --pr-cta-soft:      #2E331C;  /* CTA-tinted surface (hover shadows) */
 
+  /* ---- Flag ---- */
+  /* Amber, for marking one thing as newly arrived. It stays off raspberry so a
+     flag reads as its own signal on pages already dense with the accent, and off
+     lime so it is never mistaken for something you can click. */
+  --pr-flag:          #F0873C;
+  --pr-flag-ink:      #171410;  /* text on flag fills */
+  --pr-flag-soft:     #3A2717;  /* flag-tinted surface */
+
   /* ---- Line-work / etching graphics ---- */
   --pr-etch-faint:    #3A3425;  /* far tunnel rings (was #DCD5C4) */
   --pr-etch-mid:      #5C543D;  /* near tunnel rings, stray marks (was #B8AF9A) */
@@ -63,6 +71,9 @@
   --pr-cta: #8FAE2A;
   --pr-cta-ink: #1B1813;
   --pr-cta-soft: #E4ECC8;
+  --pr-flag: #C4590E;
+  --pr-flag-ink: #FFFFFF;
+  --pr-flag-soft: #FBE7D3;
   --pr-etch-faint: #DCD5C4;
   --pr-etch-mid: #B8AF9A;
   --pr-stripe-a: #F2EEE3;
@@ -120,6 +131,9 @@ input:focus, select:focus, textarea:focus {
   --cta: var(--pr-cta);
   --cta-ink: var(--pr-cta-ink);
   --cta-tint: var(--pr-cta-soft);
+  --flag: var(--pr-flag);
+  --flag-ink: var(--pr-flag-ink);
+  --flag-tint: var(--pr-flag-soft);
   --sans: var(--pr-font-display);
   --mono: var(--pr-font-mono);
 }
