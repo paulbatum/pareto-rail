@@ -274,6 +274,78 @@
       ]
     },
     {
+      "runId": "opus5-high-broadside-b7tm",
+      "levelId": "broadside-b7tm",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-5-high",
+      "files": [
+        {
+          "path": "runs/opus5-high-broadside-b7tm/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 13929915,
+          "sha256": "8fdf8708512b3a50637e65e352af1e948f2d5de0632257f1b0bd97e5c301b7e6"
+        },
+        {
+          "path": "runs/opus5-high-broadside-b7tm/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 14034061,
+          "sha256": "05ea5f9e2055ac40b06de3a46c6986add5089aceae24de7636068a92672bb1df"
+        }
+      ]
+    },
+    {
+      "runId": "opus5-high-massdriver-d8qz",
+      "levelId": "mass-driver-d8qz",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-5-high",
+      "files": [
+        {
+          "path": "runs/opus5-high-massdriver-d8qz/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 8732528,
+          "sha256": "7df1f7bef6e4641a910cdd27606c9c081f799c2e33e5f117c6ef8b23e0163148"
+        },
+        {
+          "path": "runs/opus5-high-massdriver-d8qz/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 9052799,
+          "sha256": "2aa69b4b7dea8905371c4ac795a60fe0b9b3726883ff717392d1df42170b39b8"
+        }
+      ]
+    },
+    {
+      "runId": "opus5-high-skyhook-k5rw",
+      "levelId": "skyhook-k5rw",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-5-high",
+      "files": [
+        {
+          "path": "runs/opus5-high-skyhook-k5rw/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 21737454,
+          "sha256": "444202c2785069a30dd6a883d4096113371a4dc1e52c8e079f586d97e037cb7c"
+        },
+        {
+          "path": "runs/opus5-high-skyhook-k5rw/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 21850007,
+          "sha256": "f8689cb7dbe1d25fd026c272d40bd905fdc6446a0b0f5e25fa0d422abf1239e4"
+        }
+      ]
+    },
+    {
+      "runId": "opus5-high-strandline-s3vn",
+      "levelId": "strandline-s3vn",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-5-high",
+      "files": [
+        {
+          "path": "runs/opus5-high-strandline-s3vn/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 13387834,
+          "sha256": "6728def454373554c19beb9548660faf3397f3e3013eabe5d50a95241934fbae"
+        },
+        {
+          "path": "runs/opus5-high-strandline-s3vn/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 13732303,
+          "sha256": "3a782ac93017ffbf1a42d8255f64be9c13a1fed80ddf19b76d8c2616e0249046"
+        }
+      ]
+    },
+    {
       "runId": "run-0cafsiuauv6e",
       "levelId": "mass-driver-vyxj",
       "themeId": "mass-driver",
