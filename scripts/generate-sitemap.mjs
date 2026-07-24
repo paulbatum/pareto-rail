@@ -59,6 +59,9 @@ function rankCatalogPlayableIds() {
     fail(`Could not read rank catalog ${path.relative(root, catalogPath)}: ${error instanceof Error ? error.message : String(error)}`);
   }
   if (!Array.isArray(catalog.entrants)) fail('Rank catalog has no entrants array.');
+  // An empty catalog is a legitimate state (a scrubbed entrant baseline ships one);
+  // the zero-playable failure below guards the case where entrants exist but none resolve.
+  if (catalog.entrants.length === 0) return [];
   const ids = new Set();
   for (const entrant of catalog.entrants) {
     // A retired entrant whose level module was deleted no longer renders at
