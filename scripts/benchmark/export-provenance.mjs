@@ -252,11 +252,13 @@ function main() {
   }
 
   // Prune: any exported file no longer desired (a run dropped from publication,
-  // or an artifact removed from the allowlist). README.md and index.json are
-  // export-owned and never pruned as run content.
+  // or an artifact removed from the allowlist). Only run directories are pruned —
+  // files sitting directly in benchmark/manifests belong to other commands
+  // (index.json, rollouts.json) or to the repository (README.md), so anything at
+  // the root is left alone.
   const prunedRuns = new Set();
   for (const rel of listFiles(manifestsRoot)) {
-    if (rel === 'README.md' || rel === 'index.json') continue;
+    if (!rel.includes(path.sep)) continue;
     if (desired.has(rel)) continue;
     fs.rmSync(path.join(manifestsRoot, rel));
     counts.pruned += 1;

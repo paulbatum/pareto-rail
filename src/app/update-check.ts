@@ -9,7 +9,10 @@
    an empty baked-in hash (local builds have no SHA) never set the flag or log. We only ever
    flag when both the baked-in and fetched commits are non-empty and differ. */
 
-const BAKED_COMMIT = __COMMIT_HASH__;
+/* Vite's define substitutes the literal at build time; the typeof guard only matters outside a
+   bundle (tests importing this module under plain Node), where an unsubstituted identifier would
+   throw. An empty hash is already the "never flag" case. */
+const BAKED_COMMIT = typeof __COMMIT_HASH__ === 'string' ? __COMMIT_HASH__ : '';
 const CHECK_INTERVAL_MS = 15 * 60 * 1000; // slow background poll
 const MIN_FETCH_GAP_MS = 60 * 1000; // throttle so visibility flaps don't spam requests
 
