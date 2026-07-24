@@ -139,4 +139,31 @@ This copies each published run's public provenance from the gitignored `benchmar
 npm run benchmark:export-rollouts -- --upload
 ```
 
-This publishes each published run's full transcripts — every stage's `rollout.jsonl` and `events.jsonl` — to the [`paulbatum/pareto-rail-rollouts`](https://huggingface.co/datasets/paulbatum/pareto-rail-rollouts) Hugging Face dataset, which holds what the git repository cannot: hundreds of megabytes of raw agent transcript, screenshots embedded as base64. Driven by the same publication manifest, it stages gzipped copies plus the dataset card under the repository's `tmp/rollouts-export/`, and writes `benchmark/manifests/rollouts.json`, the checked-in index recording each transcript's size and sha256 so a download can be verified after gunzip; commit that index alongside the provenance manifests. Before anything is staged, every transcript must pass two scans: the script's own credential-shape regexes, and a betterleaks sweep (gitleaks accepted as a fallback; install either single binary on PATH or in `~/.local/bin`) configured by `scripts/benchmark/betterleaks.toml`, which documents the known transcript false positives it filters. Any hit fails the export before upload — inspect it, and only extend the filter config once the finding is confirmed benign. Uploading needs `hf` authenticated with write access (`hf auth login`); without `--upload` the command stages and scans only. Publishing a new run is therefore: promote, edit the publication manifest, `benchmark:export-rank-catalog`, `benchmark:export-provenance`, `benchmark:export-rollouts -- --upload`, then commit.
+This publishes each published run's full transcripts — every stage's `rollout.jsonl` and `events.jsonl` — to the [`paulbatum/pareto-rail-rollouts`](https://huggingface.co/datasets/paulbatum/pareto-rail-rollouts) Hugging Face dataset, which holds what the git repository cannot: hundreds of megabytes of raw agent transcript, screenshots embedded as base64. Driven by the same publication manifest, it stages gzipped copies plus the dataset card under the repository's `tmp/rollouts-export/`, and writes `benchmark/manifests/rollouts.json`, the checked-in index recording each transcript's size and sha256 so a download can be verified after gunzip; commit that index alongside the provenance manifests. Before anything is staged, every transcript must pass two scans: the script's own credential-shape regexes, and a betterleaks sweep (gitleaks accepted as a fallback; install either single binary on PATH or in `~/.local/bin`) configured by `scripts/benchmark/betterleaks.toml`, which documents the known transcript false positives it filters. Any hit fails the export before upload — inspect it, and only extend the filter config once the finding is confirmed benign. Uploading needs `hf` authenticated with write access (`hf auth login`); without `--upload` the command stages and scans only. Publishing a new run is therefore: promote, edit the publication manifest, `benchmark:export-rank-catalog`, `benchmark:export-provenance`, `benchmark:export-rollouts -- --upload`, commit, then mirror the run's refs as below.
+
+## Mirroring refs to the remote
+
+A run's history hangs off refs that mainline never reaches: its `benchmark-run-*` and `benchmark-payload-*` branches, its entrant baseline, and the materials commit its prompt was rendered from. Nothing pushes those, so until they are mirrored they exist in the operator's clone only, and losing the clone loses every commit a published entrant is pinned to.
+
+The habit that keeps the bookkeeping at zero is one ref per off-mainline materials commit, named for the configuration set that uses it:
+
+```sh
+git update-ref refs/benchmark-materials/<name> <commit>
+```
+
+Everything else is already a branch, so mirroring is two wildcard pushes. Both are idempotent — rerun them after any run, and they carry whatever is new:
+
+```sh
+git push origin 'refs/benchmark-materials/*:refs/benchmark/materials/*'
+git push origin 'refs/heads/benchmark-*:refs/benchmark/heads/benchmark-*'
+```
+
+Pushing into `refs/benchmark/` rather than `refs/heads/` or `refs/tags/` keeps a few hundred machine-named refs out of GitHub's branch and tag pickers while the objects are still fully hosted. GitHub advertises the namespace, so it fetches back by wildcard or by exact name, but `git clone` takes only branches and tags — a fresh clone has to ask for the rest:
+
+```sh
+git fetch origin '+refs/benchmark/*:refs/benchmark/*'
+```
+
+To list what arrived, glob with `refs/benchmark/**`; a single `*` does not cross a slash and reports nothing.
+
+Branch names are load-bearing here, not just the commits they point at. `assertRecordedBranch` in `scripts/benchmark/promote.mjs` re-resolves the `refs/heads/` branch a manifest names and fails if it no longer points at the recorded commit, so renaming or deleting a run's branch blocks any later promotion of that run — including a regate-and-repromote.
