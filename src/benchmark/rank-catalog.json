@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-24T21:21:59.715Z",
+  "generatedAt": "2026-07-24T21:36:13.056Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -7,8 +7,7 @@
       "workflowName": "solo",
       "primaryModel": "claude-fable-5",
       "effort": "high",
-      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
-      "featured": true
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "claude-fable-5-opus-delegation",
@@ -55,7 +54,8 @@
       "workflowName": "solo",
       "primaryModel": "claude-opus-5",
       "effort": "high",
-      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
+      "featured": true
     },
     {
       "id": "claude-fable-5-high-b20",
@@ -463,7 +463,6 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-vyxj/hero.avif",
-      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -688,6 +687,7 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-k5rw/hero.avif",
+      "featured": true,
       "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
       "materialsCommit": "d5ad9b92060a4a1be619bc4cd3d67d86a678877b"
     },
@@ -834,7 +834,6 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-snxd/hero.avif",
-      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -902,7 +901,6 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-b4kd/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
@@ -1073,7 +1071,6 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-detailed-k4wz/hero.avif",
-      "featured": true,
       "entrantBaseline": "e036b4253f95b6c7b6f8077f05098b4f2df012e6",
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
     },
@@ -1106,7 +1103,6 @@
           }
         ]
       },
-      "featured": true,
       "retired": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
@@ -1478,6 +1474,7 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-s3vn/hero.avif",
+      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "dbd1bded34a1293e08a4bb765b0bae870866df4c"
     },
@@ -1546,7 +1543,6 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-s7ah/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },

@@ -52,7 +52,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testSchedulingPoolExcludesRetired();
   testRetiredThemesNeverScheduledButRevealable();
   testHistoricalVoteJudgedNeverReserved();
-  testFeaturedOpenerStaysBroadside();
+  testFeaturedOpener();
   await testPoolMatchupServesValidPair();
   testSchedulerIgnoresUnknownHistory();
   testCatalogDerivedHistory();
@@ -615,17 +615,18 @@ function testHistoricalVoteJudgedNeverReserved(): void {
   }
 }
 
-function testFeaturedOpenerStaysBroadside(): void {
+function testFeaturedOpener(): void {
   const pool = schedulingPool(rankCatalog);
   // The featured opener is participant-salted across all featured pairs, but for
-  // a given participant it stays anchored to its theme as the pool grows.
-  // participant-1 lands on the broadside Fable-solo vs Sol-solo pairing.
+  // a given participant it is deterministic: the same visitor always opens on the
+  // same pair, so a reload never reshuffles their first impression.
   const opener = nextScheduledMatchup(pool, 'participant-1', { judged: [] });
   assert.ok(opener);
+  const again = nextScheduledMatchup(pool, 'participant-1', { judged: [] });
   assert.equal(
     pairId(opener!.themeId, opener!.levelIdA, opener!.levelIdB),
-    pairId('broadside', 'broadside-b4kd', 'broadside-b6ej'),
-    'a fresh participant still opens on the broadside featured pair',
+    pairId(again!.themeId, again!.levelIdA, again!.levelIdB),
+    'a fresh participant opens on the same featured pair every time',
   );
 
   // Whatever theme hosts a participant's opener, it is always a featured pair and
@@ -658,8 +659,11 @@ async function testPoolMatchupServesValidPair(): Promise<void> {
   assert.ok(a && b, 'both served levels resolve in the catalog');
   assert.equal(a!.themeId, matchup!.theme.id);
   assert.equal(b!.themeId, matchup!.theme.id);
-  // participant-1 opens on the broadside featured pair.
-  assert.equal(matchup!.theme.id, 'broadside', 'participant-1 opens on a broadside pair');
+  // The API serves exactly what the scheduler chose for this participant.
+  const scheduled = nextScheduledMatchup(schedulingPool(rankCatalog), 'participant-1', { judged: [] });
+  assert.ok(scheduled);
+  assert.equal(matchup!.theme.id, scheduled!.themeId, 'the served theme is the scheduled one');
+  assert.equal(matchup!.matchupId, pairId(scheduled!.themeId, scheduled!.levelIdA, scheduled!.levelIdB), 'the served pair is the scheduled one');
 }
 
 function testSchedulerIgnoresUnknownHistory(): void {
