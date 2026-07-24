@@ -1,0 +1,123 @@
+{
+  "sessionId": "24b5d2b0-999d-4b5d-ab42-a9628ef84390",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Speedsolve is built and passes every gate.** The level lives entirely in `src/benchmark-levels/speedsolve-q7ld/` (plus the regenerated `docs/level-gallery.md`), and `check:benchmark-scope` confirms the footprint is valid.\n\n## What the level is\n\nOne continuous boss fight against a colossal corner-up puzzle cube in a softly lit pale void, at 128 BPM where 32 bars = exactly 60.0 seconds:\n\n- **Six identical 4-bar face rituals** (bars 0–24): four glowing solve squares arm on the face; destroying one snaps a real layer rotation onto the next beat — the eight outer tiles physically ratchet 90° while changing tiles flip like reversi chips. The color states are generated *backwards from uniform*, so any kill order provably walks the face toward a single color. A solved face sheds all nine tiles in a shower; an unsolved one has its hatch forced at the beat-10 deadline. Either way a two-lock weakpoint emerges from the machinery, and the rail then snaps 90° around an edge in exactly two beats.\n- **Waves** of candy tetrahedra (diving runs), octahedra (beat-quantized hop gunners firing interceptable bolts in the cube's own colors), and prisms (full-width strafers) keep pressure on a 3-point hull.\n- **Finale** (bars 24–30): the six shells blast off, the naked core (3 hit stages, flinch gates) spins up inside a gyro ring cage, and killing it bursts 400+ six-color confetti cubes with a music-box resolution; failing, it seals itself away for a powered-down coda.\n- **Music**: the cube *is* the percussion — every drum is a click, snap, or ratchet, and the arrangement adds one layer per face (clock → kick → hats/snap → sequencer → lead → full machine), turns minor for the core, and resolves conditionally. All player actions are transport-quantized notes on the live chord with per-section kill-melody lanes. Start word is `SOLVE!`, letters are sticker-cubie plates, one solve color per glyph.\n\n## Verified headless\n\n- `typecheck`, `build`, `check:scope` — pass.\n- `check:floor` — **all gates green, zero warnings**: 7 enemy kinds, full event coverage, occlusion 0 warnings, perf gates clean, no centerness/distance warnings (avg kill distance 27 m, wide heatmap spread).\n- `simulate` — perfect policy: 53/56 kills, 13 838 pts, **rank S**; imperfect: rank A; no-fire dies at 28.5 s. `trace:audio` confirms the per-face layer build and section structure.\n\nTwo notable bugs found and fixed along the way: face frames were originally derived from world-up, rotating tile grids ~45° off the cube's true edges (chassis corners physically poked through neighboring faces and occluded corner targets); and the original panel design camouflaged exactly onto the tile's own ink frame — it's now an unmistakable diamond designator with a white-hot lens.\n\n## Needs human eyes (WSL2 can't render WebGPU)\n\n1. **Ratchet feel** — kills should land their snap audibly *on* the next beat, with the tile rotation visually seating at the same instant.\n2. **Payoff moments** — the face fall-away shower, the bar-24 shell blast, and the confetti finale + music resolution.\n3. **Bloom-zero legibility** on the pale void (targets are ink/saturated by design, but the mix of HDR lenses and pale ground needs a real frame), and the overall music mix balance.",
+  "eventType": "result",
+  "raw": {
+    "is_error": false,
+    "duration_api_ms": 3388483,
+    "num_turns": 150,
+    "stop_reason": "end_turn",
+    "session_id": "24b5d2b0-999d-4b5d-ab42-a9628ef84390",
+    "total_cost_usd": 56.449177000000006,
+    "usage": {
+      "input_tokens": 15196,
+      "cache_creation_input_tokens": 605267,
+      "cache_read_input_tokens": 31798558,
+      "output_tokens": 247840,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 605267,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1261,
+          "cache_read_input_tokens": 519435,
+          "cache_creation_input_tokens": 227,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 227
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1244,
+        "outputTokens": 15,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001319,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000,
+        "canonicalModel": "claude-haiku-4-5",
+        "provider": "firstParty"
+      },
+      "claude-fable-5": {
+        "inputTokens": 15196,
+        "outputTokens": 247840,
+        "cacheReadInputTokens": 31798558,
+        "cacheCreationInputTokens": 605267,
+        "webSearchRequests": 0,
+        "costUSD": 56.447858000000004,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-fable-5",
+        "provider": "firstParty"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Speedsolve is built and passes every gate.** The level lives entirely in `src/benchmark-levels/speedsolve-q7ld/` (plus the regenerated `docs/level-gallery.md`), and `check:benchmark-scope` confirms the footprint is valid.\n\n## What the level is\n\nOne continuous boss fight against a colossal corner-up puzzle cube in a softly lit pale void, at 128 BPM where 32 bars = exactly 60.0 seconds:\n\n- **Six identical 4-bar face rituals** (bars 0–24): four glowing solve squares arm on the face; destroying one snaps a real layer rotation onto the next beat — the eight outer tiles physically ratchet 90° while changing tiles flip like reversi chips. The color states are generated *backwards from uniform*, so any kill order provably walks the face toward a single color. A solved face sheds all nine tiles in a shower; an unsolved one has its hatch forced at the beat-10 deadline. Either way a two-lock weakpoint emerges from the machinery, and the rail then snaps 90° around an edge in exactly two beats.\n- **Waves** of candy tetrahedra (diving runs), octahedra (beat-quantized hop gunners firing interceptable bolts in the cube's own colors), and prisms (full-width strafers) keep pressure on a 3-point hull.\n- **Finale** (bars 24–30): the six shells blast off, the naked core (3 hit stages, flinch gates) spins up inside a gyro ring cage, and killing it bursts 400+ six-color confetti cubes with a music-box resolution; failing, it seals itself away for a powered-down coda.\n- **Music**: the cube *is* the percussion — every drum is a click, snap, or ratchet, and the arrangement adds one layer per face (clock → kick → hats/snap → sequencer → lead → full machine), turns minor for the core, and resolves conditionally. All player actions are transport-quantized notes on the live chord with per-section kill-melody lanes. Start word is `SOLVE!`, letters are sticker-cubie plates, one solve color per glyph.\n\n## Verified headless\n\n- `typecheck`, `build`, `check:scope` — pass.\n- `check:floor` — **all gates green, zero warnings**: 7 enemy kinds, full event coverage, occlusion 0 warnings, perf gates clean, no centerness/distance warnings (avg kill distance 27 m, wide heatmap spread).\n- `simulate` — perfect policy: 53/56 kills, 13 838 pts, **rank S**; imperfect: rank A; no-fire dies at 28.5 s. `trace:audio` confirms the per-face layer build and section structure.\n\nTwo notable bugs found and fixed along the way: face frames were originally derived from world-up, rotating tile grids ~45° off the cube's true edges (chassis corners physically poked through neighboring faces and occluded corner targets); and the original panel design camouflaged exactly onto the tile's own ink frame — it's now an unmistakable diamond designator with a white-hot lens.\n\n## Needs human eyes (WSL2 can't render WebGPU)\n\n1. **Ratchet feel** — kills should land their snap audibly *on* the next beat, with the tile rotation visually seating at the same instant.\n2. **Payoff moments** — the face fall-away shower, the bar-24 shell blast, and the confetti finale + music resolution.\n3. **Bloom-zero legibility** on the pale void (targets are ink/saturated by design, but the mix of HDR lenses and pale ground needs a real frame), and the overall music mix balance.",
+    "ttft_ms": 3435,
+    "ttft_stream_ms": 2452,
+    "time_to_request_ms": 85,
+    "type": "result",
+    "duration_ms": 3547352,
+    "uuid": "3a48a130-5220-4418-889b-e9c912d9f4ea"
+  },
+  "normalized": {
+    "inputTokens": 31813754,
+    "outputTokens": 247840,
+    "cacheReadInputTokens": 31798558,
+    "cacheWriteInputTokens": 605267,
+    "vendorFields": {
+      "totalCostUsd": 56.449177000000006,
+      "durationMs": 3547352,
+      "durationApiMs": 3388483,
+      "numTurns": 150,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1244,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001319,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty"
+        },
+        "claude-fable-5": {
+          "inputTokens": 15196,
+          "outputTokens": 247840,
+          "cacheReadInputTokens": 31798558,
+          "cacheCreationInputTokens": 605267,
+          "webSearchRequests": 0,
+          "costUSD": 56.447858000000004,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-fable-5",
+          "provider": "firstParty"
+        }
+      }
+    }
+  }
+}

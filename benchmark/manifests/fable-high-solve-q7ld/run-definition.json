@@ -1,0 +1,21 @@
+{
+  "runId": "fable-high-solve-q7ld",
+  "slotId": "q7ld",
+  "levelId": "speedsolve-q7ld",
+  "themeId": "speedsolve",
+  "themePath": "benchmark/themes/speedsolve.md",
+  "configurationId": "claude-fable-5-high",
+  "recipePath": "benchmark/recipes/claude-fable-5-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-fable-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "4673765e0155cd1052d163becfc70fa2845ee195",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Speedsolve"
+}

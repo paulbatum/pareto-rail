@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "6972ad1b2a49900d50a04395d58b92df34cccf06dfe3c4ab1f849e32062a4169"
+  },
+  "theme": {
+    "path": "benchmark/themes/speedsolve.md",
+    "sha256": "5ab6f77afe7eadd9fa61c9f0218516a16967cf4aa526698060344154261c8b0b"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-fable-5-high.md",
+    "sha256": "114c3d7ef224546e8a3ce6d06398db5724e7f19c403943d246646e5adc5d3770"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/fable-high-solve-q7ld/rendered-assignment.md",
+    "sha256": "f1241f903ce9992076e17f70d1d9f17ab9b69418c4712cc6d36268cd07ac56f4"
+  },
+  "baseRendering": {
+    "sha256": "f1241f903ce9992076e17f70d1d9f17ab9b69418c4712cc6d36268cd07ac56f4"
+  }
+}

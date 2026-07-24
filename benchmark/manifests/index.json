@@ -38,6 +38,12 @@
       "retired": true
     },
     {
+      "runId": "fable-high-solve-q7ld",
+      "levelId": "speedsolve-q7ld",
+      "themeId": "speedsolve",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
       "runId": "fable-high-strandline-s7ah",
       "levelId": "strandline-s7ah",
       "themeId": "strandline",
