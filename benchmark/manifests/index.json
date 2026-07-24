@@ -92,6 +92,12 @@
       "configurationId": "claude-opus-4-8-high"
     },
     {
+      "runId": "opus5-high-broadside-b7tm",
+      "levelId": "broadside-b7tm",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-5-high"
+    },
+    {
       "runId": "opus5-high-massdriver-d8qz",
       "levelId": "mass-driver-d8qz",
       "themeId": "mass-driver",

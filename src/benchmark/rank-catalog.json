@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-24T21:46:15.674Z",
+  "generatedAt": "2026-07-24T21:52:35.764Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -972,6 +972,41 @@
       "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    },
+    {
+      "levelId": "broadside-b7tm",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "generationCost": 48.114347,
+      "linesOfCode": 4875,
+      "run": {
+        "generationWallTimeSeconds": 4394.694,
+        "totalWallTimeSeconds": 4431.658,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.219"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 18628,
+            "outputTokens": 316560,
+            "cacheReadTokens": 68212754,
+            "cacheWriteTokens": 600083,
+            "usageSource": "agreed",
+            "costUsd": 48.114347
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-b7tm/hero.avif",
+      "featured": true,
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "dbd1bded34a1293e08a4bb765b0bae870866df4c"
     },
     {
       "levelId": "broadside-b9mn",

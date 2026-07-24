@@ -1,0 +1,9 @@
+{
+  "requestedModel": "claude-opus-5",
+  "initResolvedModel": "claude-opus-5",
+  "modelUsageKeys": [
+    "claude-haiku-4-5-20251001",
+    "claude-opus-5"
+  ],
+  "selectedReasoningEffort": "high"
+}

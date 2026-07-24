@@ -1,0 +1,21 @@
+{
+  "runId": "opus5-high-broadside-b7tm",
+  "slotId": "b7tm",
+  "levelId": "broadside-b7tm",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "claude-opus-5-high",
+  "recipePath": "benchmark/recipes/claude-opus-5-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "dbd1bded34a1293e08a4bb765b0bae870866df4c",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Broadside"
+}

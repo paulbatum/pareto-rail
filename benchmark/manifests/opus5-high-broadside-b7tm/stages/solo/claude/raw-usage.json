@@ -1,0 +1,123 @@
+{
+  "sessionId": "e9808646-37b8-4669-a1f3-ce6435e982c9",
+  "initResolvedModel": "claude-opus-5",
+  "finalMessage": "**Broadside** is built at `src/benchmark-levels/broadside-b7tm/` — 5,356 lines across a spine/leaf split, exactly 60.0 s (36 bars @ 144 BPM).\n\n## What's there\n\n**The run** — launch off your own flagship's catapult trough (bars 0–4), thread the crossfire in hard banks (4–11), a full authored 360° corkscrew in the one deliberately empty window (11–12), a flat-out run down a friendly cruiser's flank while its broadside fires overhead (12–18), under an enemy warship raking its turret line (18–23), the enemy flagship's dorsal spine and six shield generators (23–28), the hangars emptying (28–30), the trench dive to three power cores (30–34), and a pull-out into the whole battle in frame (34–36).\n\n**The rail is generated from the score.** Control point *i* is authored at run time *tᵢ* and placed at the distance the speed profile puts the camera at that moment, so set pieces are addressed in bars and the speed curve physically re-spaces the battle. Camera roll is a second authored curve on the same clock.\n\n**Boss** — two phases with a real stake: six two-hit generators on a zigzag of pylons, then three two-stage cores. Cores stay lockable throughout, but until every generator is dead the shield eats those shots via `validateRelease`, emitting the engine's `shielded` event so the block gets its own violet language instead of a generic rejection.\n\n**Score** — full synthesised orchestra in D minor: detuned saw strings, a brass stack with a filter blat and pitch scoop, tuned timpani, gran cassa, snare, tam-tam, choir, cymbal swells. Dynamics carry the arc, including the drop to near silence under the warship at bar 18. Locks/volleys/chips/kills are transport-quantised and pitched from the live chord; each kill plays its step's note from a per-act horn lane, and the orchestra's own horns start doubling the player's line from the third kill in a chain.\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope`, and the full `check:floor` (simulation across all four policies, target occlusion, headless performance, audio config, gallery) all pass. Simulation: perfect 106/108 rank A with zero hull hits; imperfect 79/108 rank B; the no-fire policy dies at 46 s, so intercepting flak is load-bearing. Kill spread covers the full frame, 44.5 m average destruction distance, 6.8 % off-screen. `trace:audio` shows 1,004 scheduled events across 8 sections; `trace:spawns` reports 108 authored entries.\n\nThree things I found and fixed via the tools that a reader should know about: the engine's camera far plane is 500, so the sky and the whole fleet had to live inside that shell; `hostileShotAimPoint`'s 62 %-of-depth lead never converges at this camera speed, so flak uses a level-owned near-canopy aim with the shared steering and impact model around it; and incoming rounds whited out the frame at impact until they were given proximity scaling.\n\n## Needs a human\n\nWSL2 can't render WebGPU, so the snapshots above are SwiftShader/WebGL — colour, bloom and the mix are unconfirmed. First things to check by eye and ear: the bar-12 corkscrew reading as a roll rather than a glitch; the friendly broadside landing on the downbeat (the gunnery is entirely `beat`-driven and never appears in headless snapshots, since the snapshot harness doesn't create audio); the bar-18 drop to near silence feeling like the eye of the battle; and the violet shield block being unmistakably different from an ordinary rejection.",
+  "eventType": "result",
+  "raw": {
+    "is_error": false,
+    "duration_api_ms": 3910450,
+    "num_turns": 173,
+    "stop_reason": "end_turn",
+    "session_id": "e9808646-37b8-4669-a1f3-ce6435e982c9",
+    "total_cost_usd": 48.11562999999999,
+    "usage": {
+      "input_tokens": 18628,
+      "cache_creation_input_tokens": 600083,
+      "cache_read_input_tokens": 68212754,
+      "output_tokens": 316560,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 600083,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1242,
+          "cache_read_input_tokens": 614863,
+          "cache_creation_input_tokens": 713,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 713
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1213,
+        "outputTokens": 14,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001283,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000,
+        "canonicalModel": "claude-haiku-4-5",
+        "provider": "firstParty"
+      },
+      "claude-opus-5": {
+        "inputTokens": 18628,
+        "outputTokens": 316560,
+        "cacheReadInputTokens": 68212754,
+        "cacheCreationInputTokens": 600083,
+        "webSearchRequests": 0,
+        "costUSD": 48.11434699999999,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-opus-5",
+        "provider": "firstParty"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Broadside** is built at `src/benchmark-levels/broadside-b7tm/` — 5,356 lines across a spine/leaf split, exactly 60.0 s (36 bars @ 144 BPM).\n\n## What's there\n\n**The run** — launch off your own flagship's catapult trough (bars 0–4), thread the crossfire in hard banks (4–11), a full authored 360° corkscrew in the one deliberately empty window (11–12), a flat-out run down a friendly cruiser's flank while its broadside fires overhead (12–18), under an enemy warship raking its turret line (18–23), the enemy flagship's dorsal spine and six shield generators (23–28), the hangars emptying (28–30), the trench dive to three power cores (30–34), and a pull-out into the whole battle in frame (34–36).\n\n**The rail is generated from the score.** Control point *i* is authored at run time *tᵢ* and placed at the distance the speed profile puts the camera at that moment, so set pieces are addressed in bars and the speed curve physically re-spaces the battle. Camera roll is a second authored curve on the same clock.\n\n**Boss** — two phases with a real stake: six two-hit generators on a zigzag of pylons, then three two-stage cores. Cores stay lockable throughout, but until every generator is dead the shield eats those shots via `validateRelease`, emitting the engine's `shielded` event so the block gets its own violet language instead of a generic rejection.\n\n**Score** — full synthesised orchestra in D minor: detuned saw strings, a brass stack with a filter blat and pitch scoop, tuned timpani, gran cassa, snare, tam-tam, choir, cymbal swells. Dynamics carry the arc, including the drop to near silence under the warship at bar 18. Locks/volleys/chips/kills are transport-quantised and pitched from the live chord; each kill plays its step's note from a per-act horn lane, and the orchestra's own horns start doubling the player's line from the third kill in a chain.\n\n## Verified headless\n\n`typecheck`, `build`, `check:benchmark-scope`, and the full `check:floor` (simulation across all four policies, target occlusion, headless performance, audio config, gallery) all pass. Simulation: perfect 106/108 rank A with zero hull hits; imperfect 79/108 rank B; the no-fire policy dies at 46 s, so intercepting flak is load-bearing. Kill spread covers the full frame, 44.5 m average destruction distance, 6.8 % off-screen. `trace:audio` shows 1,004 scheduled events across 8 sections; `trace:spawns` reports 108 authored entries.\n\nThree things I found and fixed via the tools that a reader should know about: the engine's camera far plane is 500, so the sky and the whole fleet had to live inside that shell; `hostileShotAimPoint`'s 62 %-of-depth lead never converges at this camera speed, so flak uses a level-owned near-canopy aim with the shared steering and impact model around it; and incoming rounds whited out the frame at impact until they were given proximity scaling.\n\n## Needs a human\n\nWSL2 can't render WebGPU, so the snapshots above are SwiftShader/WebGL — colour, bloom and the mix are unconfirmed. First things to check by eye and ear: the bar-12 corkscrew reading as a roll rather than a glitch; the friendly broadside landing on the downbeat (the gunnery is entirely `beat`-driven and never appears in headless snapshots, since the snapshot harness doesn't create audio); the bar-18 drop to near silence feeling like the eye of the battle; and the violet shield block being unmistakably different from an ordinary rejection.",
+    "ttft_ms": 1427,
+    "ttft_stream_ms": 901,
+    "time_to_request_ms": 57,
+    "type": "result",
+    "duration_ms": 4393749,
+    "uuid": "973edb04-fc52-4968-b7ce-b280c430fd70"
+  },
+  "normalized": {
+    "inputTokens": 68231382,
+    "outputTokens": 316560,
+    "cacheReadInputTokens": 68212754,
+    "cacheWriteInputTokens": 600083,
+    "vendorFields": {
+      "totalCostUsd": 48.11562999999999,
+      "durationMs": 4393749,
+      "durationApiMs": 3910450,
+      "numTurns": 173,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1213,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001283,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty"
+        },
+        "claude-opus-5": {
+          "inputTokens": 18628,
+          "outputTokens": 316560,
+          "cacheReadInputTokens": 68212754,
+          "cacheCreationInputTokens": 600083,
+          "webSearchRequests": 0,
+          "costUSD": 48.11434699999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-opus-5",
+          "provider": "firstParty"
+        }
+      }
+    }
+  }
+}
