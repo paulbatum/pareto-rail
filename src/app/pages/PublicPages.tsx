@@ -5,6 +5,7 @@ import readme from '../../../README.md?raw';
 import { levelMetadatas } from '../../levels';
 import { allCatalogEntrants, rankCatalog } from '../../benchmark/catalog';
 import { homeCopy } from '../content';
+import { featuredModels } from '../featured-models';
 import { RouteLink } from '../components/RouteLink';
 import { Markdown, markdownRegion } from '../components/Markdown';
 
@@ -22,6 +23,19 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
           <p className="eyebrow">{homeCopy.eyebrow}</p>
           <h1>{homeCopy.title}<br /><span>{homeCopy.titleAccent}</span></h1>
           <p className="lede">{homeCopy.lede}</p>
+          {featuredModels.length > 0 && (
+            <div className="hero-models">
+              <h2>{homeCopy.models.heading}</h2>
+              <ul>
+                {featuredModels.map((model) => (
+                  <li key={model.name} className={model.isNew ? 'is-new' : undefined}>
+                    {model.name}
+                    {model.isNew && <span className="new-tag">{homeCopy.models.newTag}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <div className="hero-graphic">
           <HeroTunnel />

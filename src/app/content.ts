@@ -3,6 +3,10 @@ export const homeCopy = {
   title: 'Tired of being told which model is best?',
   titleAccent: 'Decide for yourself.',
   lede: 'Play 60-second rail-shooter levels built by models. Rank them blind, then see your own personalized quality vs cost chart.',
+  models: {
+    heading: 'Featuring',
+    newTag: 'New',
+  },
   reference: {
     eyebrow: 'Recommended first',
     title: 'Play the reference level',

@@ -9,6 +9,7 @@ const privateRoot = path.join(root, 'benchmark/private');
 const levelsRoot = path.join(root, 'src/benchmark-levels');
 const outputPath = path.join(levelsRoot, '..', 'benchmark', 'rank-catalog.json');
 const publicationPath = path.join(privateRoot, 'publication.json');
+const featuredModelsPath = path.join(root, 'src/app/featured-models.md');
 
 const configurationLabels = {
   'claude-fable-5-high': {
@@ -354,6 +355,28 @@ export function buildCatalog(publication, generatedAt) {
   return { generatedAt, configurations, themes, entrants };
 }
 
+// The home page names its models from hand-maintained copy, so a model can be
+// announced while it is still running and stay named after a retirement. Export
+// reports the drift and leaves the decision with the operator rather than
+// projecting the catalog into the copy.
+function reportFeaturedModelDrift(catalog) {
+  const named = fs.readFileSync(featuredModelsPath, 'utf8').split('\n')
+    .map((line) => /^-\s+(.*\S)\s*$/.exec(line.trim())?.[1])
+    .filter((entry) => entry !== undefined)
+    .map((entry) => entry.replace(/\s*\(new\)$/i, ''));
+  const publishing = new Set(catalog.entrants
+    .filter((entrant) => !entrant.retired)
+    .map((entrant) => configurationLabels[entrant.configurationId]?.modelName)
+    .filter(Boolean));
+  const unnamed = [...publishing].filter((modelName) => !named.includes(modelName));
+  const unpublished = named.filter((modelName) => !publishing.has(modelName));
+  if (unnamed.length === 0 && unpublished.length === 0) return;
+  console.warn(`\nFeatured models in ${path.relative(root, featuredModelsPath)} differ from the catalog just written:`);
+  for (const modelName of unnamed) console.warn(`  publishing levels, not named on the home page: ${modelName}`);
+  for (const modelName of unpublished) console.warn(`  named on the home page, publishing no live level: ${modelName}`);
+  console.warn('  That list is deliberately hand-maintained — decide whether the home page should change. This export is already complete.\n');
+}
+
 function main() {
   if (!fs.existsSync(publicationPath)) {
     throw new Error(`No publication manifest found at ${path.relative(root, publicationPath)}.`);
@@ -362,6 +385,7 @@ function main() {
   const catalog = buildCatalog(publication, new Date().toISOString());
   fs.writeFileSync(outputPath, `${JSON.stringify(catalog, null, 2)}\n`);
   console.log(`Wrote ${path.relative(root, outputPath)} with ${catalog.entrants.length} entrants across ${catalog.themes.length} themes.`);
+  reportFeaturedModelDrift(catalog);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

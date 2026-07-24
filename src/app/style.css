@@ -61,7 +61,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
   width: 100vw;
   max-width: none;
   min-height: min(180px, calc(22svh - 32px));
-  max-height: 400px;
+  max-height: 440px;
   margin-left: calc((100% - 100vw) / 2);
   padding: 0;
   border-bottom: 1px solid var(--hairline);
@@ -78,6 +78,17 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .app-shell[data-route="home"] .hero-copy h1 { margin-bottom: 12px; font-size: clamp(40px, 5.6vw, 55px); }
 .hero-copy .eyebrow { margin-bottom: 6px; }
 .hero-copy .lede { margin-bottom: 0; max-width: none; font-size: clamp(12px, 1.2vw, 14px); }
+/* Who is currently in the benchmark, closing the hero copy. Two columns keep it
+   a compact block beside the lede rather than a list that pushes the hero taller. */
+/* The copy is centred in the band as a whole, so the block needs more space above
+   than it leaves below to read as centred in the gap between the lede and the rule. */
+.hero-models { margin-top: clamp(26px, 2.6vw, 38px); }
+.hero-models h2 { margin: 0 0 10px; color: var(--accent); font-size: 11.5px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; }
+.hero-models ul { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 5px 28px; margin: 0; padding: 0; list-style: none; }
+.hero-models li { display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--soft-text); font: 12px var(--mono); letter-spacing: .04em; }
+.hero-models li.is-new { color: var(--ink); }
+.hero-models .new-tag { color: var(--accent); font-size: 8.5px; letter-spacing: .16em; text-transform: uppercase; }
+
 .hero-graphic {
   position: relative;
   min-height: 170px;
