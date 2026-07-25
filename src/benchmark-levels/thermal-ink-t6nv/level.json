@@ -1,4 +1,9 @@
 {
   "id": "thermal-ink-t6nv",
-  "title": "Thermal Ink"
+  "title": "Thermal Ink",
+  "contentImages": {
+    "overview": "/level-content/thermal-ink-t6nv/overview.avif",
+    "start": "/level-content/thermal-ink-t6nv/start.avif",
+    "hero": "/level-content/thermal-ink-t6nv/hero.avif"
+  }
 }
