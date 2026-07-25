@@ -40,6 +40,8 @@ npm run db:import-votes -- benchmark/private/votes/prod-2026-01-01T00-00-00Z.jso
 
 The import only ever writes to the local environment and refuses to run unless the local `DATABASE_URL` points at a loopback host. Participant and IP hashes carry the source environment's salt, so hashes in an imported production snapshot will not match locally computed ones.
 
+Importing rows does not make votes appear in the local app. The client never reads votes back from the server: ranking history, the personal curve, and reveals all come from browser localStorage (`pareto-rail-benchmark` and `pareto-rail-participant-id`, see `src/benchmark/storage.ts`), which is per-origin. To see a production history on `localhost`, copy those two keys from the production tab's console into the local one.
+
 ## Vote data admin page
 
 While the Vite dev server is running, `/dev/admin` provides a local-only page for inspecting vote rows, computing participant hashes, and resetting local or production vote data. The page and its API are mounted by dev-server middleware and are not included in production builds; its environment switcher reads local values from `.env` and production values from `.env.prod`. Treat the production delete controls as destructive and use them only when explicitly intended.
