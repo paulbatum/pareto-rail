@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Antigravity CLI (`agy`) stage runner. Unlike the Claude, Codex, and pi adapters, agy exposes no
-// machine-readable event stream: `--print` emits the final assistant text and nothing else, and its
-// only persisted transcript is a per-conversation SQLite database whose every payload column is an
-// opaque protobuf blob. So this adapter captures what the harness actually offers — the final
-// message, the conversation database, and wall time — and reports usage as unavailable rather than
+// Antigravity CLI (`agy`) stage runner. agy streams no machine-readable events — `--print` emits the
+// final assistant text — but it does write a readable per-conversation transcript under its `brain`
+// directory: one JSON line per step with the planner's thinking, its tool calls, and each result.
+// That file is this stage's rollout artifact and what the contamination audit reads. What agy still
+// publishes nowhere is token usage, so this adapter reports usage as unavailable rather than
 // inventing numbers. The manifest carries that gap explicitly; see the recipe for the consequences.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
@@ -35,6 +35,8 @@ const EFFORT_TIERS = new Set(['low', 'medium', 'high']);
 const AGY_STATE = '.gemini/antigravity-cli';
 const CONVERSATION_POINTER = `${AGY_STATE}/cache/last_conversations.json`;
 const CONVERSATIONS_DIR = `${AGY_STATE}/conversations`;
+// agy's readable per-conversation transcript lives here, keyed by the same conversation id.
+const BRAIN_DIR = `${AGY_STATE}/brain`;
 
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
@@ -148,10 +150,9 @@ async function main() {
   const sessionId = await resolveConversationId(harnessHome, worktree);
   const rollout = await captureRollout(harnessHome, sessionId, outputDirectory);
 
-  // The controller requires an event log per stage. agy produces no event stream, so this is a
-  // synthesized single-record log standing in for one: it carries what the harness did report, and
-  // its hash becomes the stage's output artifact hash. It is not a transcript — the conversation
-  // database captured alongside it is the closest thing agy offers, and it is not human-readable.
+  // The controller requires an event log per stage. agy streams no events, so this is a synthesized
+  // single-record log standing in for one: it carries what the process itself reported, and its hash
+  // becomes the stage's output artifact hash. The run's transcript is the captured rollout, not this.
   const eventLog = `${JSON.stringify({
     type: 'agy.print.result',
     sessionId,
@@ -161,7 +162,7 @@ async function main() {
     wallTimeSeconds: result.wallTimeSeconds,
     finalMessageSha256: sha256(result.stdout),
     usage: null,
-    usageUnavailableReason: 'agy exposes no per-request usage; its only transcript is an opaque protobuf-in-SQLite conversation database.',
+    usageUnavailableReason: 'agy exposes no per-request usage through any documented interface, including its own transcript.',
   })}\n`;
   await fs.writeFile(path.join(outputDirectory, 'events.jsonl'), eventLog, 'utf8');
 
@@ -212,18 +213,30 @@ async function resolveConversationId(harnessHome, worktree) {
   return conversationId;
 }
 
-// The conversation database is agy's transcript. It is copied verbatim as `rollout.db` rather than
-// `rollout.jsonl` because it is SQLite, not JSON lines — the controller's rollout hashing looks for
-// the JSONL name and correctly finds none, so the manifest does not claim a replayable transcript.
+// agy writes a readable transcript per conversation under its `brain` directory: one JSON line per
+// step, carrying the planner's thinking, its tool calls as `{name, args}`, and each result with its
+// exit code. That is the run's rollout artifact and what the contamination audit reads. The
+// conversation database is captured alongside it as the harness's own record, but it is protobuf in
+// SQLite and nothing reads it today.
 async function captureRollout(harnessHome, sessionId, outputDirectory) {
-  const sourcePath = path.join(harnessHome, CONVERSATIONS_DIR, `${sessionId}.db`);
+  const transcriptPath = path.join(harnessHome, BRAIN_DIR, sessionId, '.system_generated/logs/transcript_full.jsonl');
+  const conversationPath = path.join(harnessHome, CONVERSATIONS_DIR, `${sessionId}.db`);
+  const captured = {};
   try {
-    const content = await fs.readFile(sourcePath);
-    await fs.writeFile(path.join(outputDirectory, 'rollout.db'), content);
-    return { captured: true, format: 'sqlite', sourcePath, sha256: sha256(content), replayable: false };
+    const transcript = await fs.readFile(transcriptPath, 'utf8');
+    await fs.writeFile(path.join(outputDirectory, 'rollout.jsonl'), transcript, 'utf8');
+    captured.transcript = { captured: true, format: 'jsonl', sourcePath: transcriptPath, sha256: sha256(transcript), steps: transcript.split('\n').filter(Boolean).length };
   } catch (error) {
-    return { captured: false, reason: `Could not capture the agy conversation database at ${sourcePath}: ${error instanceof Error ? error.message : String(error)}` };
+    captured.transcript = { captured: false, reason: `Could not capture the agy transcript at ${transcriptPath}: ${error instanceof Error ? error.message : String(error)}` };
   }
+  try {
+    const conversation = await fs.readFile(conversationPath);
+    await fs.writeFile(path.join(outputDirectory, 'conversation.db'), conversation);
+    captured.conversation = { captured: true, format: 'sqlite', sourcePath: conversationPath, sha256: sha256(conversation), replayable: false };
+  } catch (error) {
+    captured.conversation = { captured: false, reason: `Could not capture the agy conversation database at ${conversationPath}: ${error instanceof Error ? error.message : String(error)}` };
+  }
+  return captured;
 }
 
 function parseTimeout(value) {

@@ -98,6 +98,23 @@ function paths(findings) {
   assert.deepEqual(classes(result.findings), ['content-read', 'listing', 'outside-worktree']);
 }
 
+// agy: tool calls hang off a PLANNER_RESPONSE step as {name, args}, with capitalized
+// argument keys. The same three cases are recognized through that shape.
+{
+  const records = [{
+    type: 'PLANNER_RESPONSE',
+    source: 'MODEL',
+    created_at: '2026-07-25T04:16:51Z',
+    tool_calls: [
+      { name: 'view_file', args: { AbsolutePath: 'public/level-content/other-zz99/hero.png' } },
+      { name: 'list_dir', args: { DirectoryPath: 'benchmark/themes' } },
+      { name: 'view_file', args: { AbsolutePath: '/home/entrant/secrets.txt' } },
+    ],
+  }];
+  const result = auditTranscriptRecords(records, options);
+  assert.deepEqual(classes(result.findings), ['content-read', 'listing', 'outside-worktree']);
+}
+
 // Shared benchmark root files, test fixtures, URLs, and harness scratch files do
 // not produce a finding.
 {

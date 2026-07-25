@@ -57,26 +57,29 @@ A third detail is not a deviation but a hazard worth recording: the working dire
 
 **This configuration records no cost, and that is a property of the harness, not an omission.**
 
-agy exposes no machine-readable output: `--print` emits the final assistant text and nothing else, with no JSON or streaming format. Its only persisted transcript is a per-conversation SQLite database under the harness home, in which every payload column (`step_payload`, `gen_metadata.data`, and the rest) is an opaque protobuf blob. ccusage, which prices every other configuration in this benchmark, has no agy view; its `gemini` view covers the Gemini CLI, a different tool that individual subscriptions can no longer authenticate against at all.
+agy reports token counts nowhere the controller can reach them. Its `--print` output is prose, its readable transcript records steps and tool calls but carries no usage fields, and ccusage — which prices every other configuration in this benchmark — has no agy view; its `gemini` view covers the Gemini CLI, a different tool that individual subscriptions can no longer authenticate against at all. What remains unexplored is the conversation database's `gen_metadata` blob, an undocumented protobuf that may or may not hold generation counts.
 
-Recovering token counts would therefore mean reverse-engineering an undocumented protobuf schema and then choosing a rate table by hand for a subscription that bills no per-token price. None of that was undertaken, so the manifest states the gap rather than estimating around it: `cost.status` is `unavailable` with a reason, no `totalUsd` key is written, and each stage carries `usage: { available: false }` and `pricing: { status: 'unavailable' }`. The manifest schema was extended to express this, so an absent count can never be read as a zero.
+Until that is settled the manifest states the gap rather than estimating around it: `cost.status` is `unavailable` with a reason, no `totalUsd` key is written, and each stage carries `usage: { available: false }` and `pricing: { status: 'unavailable' }`. The manifest schema was extended to express this, so an absent count can never be read as a zero. Note too that a subscription bills no per-token price, so even recovered counts would need a rate table chosen by hand, exactly as the Claude and Codex subscription configurations already do through ccusage.
 
 The consequence is that **this configuration cannot be placed on the benchmark's quality-versus-cost curve.** Wall time is the only measured quantity. Any eligible agy configuration would need a real usage path first.
 
 ## What is captured
 
 - `final-message.md` — agy's printed final response.
-- `rollout.db` — the conversation database, copied verbatim. It is recorded as `format: sqlite, replayable: false` and is deliberately *not* named `rollout.jsonl`, so the controller's rollout hashing correctly finds no replayable transcript and the manifest claims none.
+- `rollout.jsonl` — agy's own step transcript, copied verbatim from its `brain` directory. This is the run's transcript and the audit's input.
+- `conversation.db` — agy's conversation database, copied verbatim. Recorded as `format: sqlite, replayable: false`; nothing reads it today.
 - `events.jsonl` — a synthesized single-record log standing in for the event stream the controller requires. It carries the session id, resolved model, exit status, wall time, and the final message hash. It is not a transcript.
 - `command.json`, `selected-model.json`, `model-catalog.txt`, `credential-source.json`, `result.json` — the same launch and identity provenance the other adapters record.
 
 ## Contamination audit
 
-`npm run benchmark:contamination` cannot audit this run: its per-adapter parsers read recorded tool calls from a harness transcript, and agy publishes none in any readable form.
+`npm run benchmark:contamination` audits this run normally. agy writes a readable transcript per conversation at `<home>/.gemini/antigravity-cli/brain/<conversation-id>/.system_generated/logs/transcript_full.jsonl` — one JSON line per step carrying the planner's thinking, its tool calls as `{name, args}`, and each result with its exit code. The adapter captures that file as the stage's `rollout.jsonl`, and the audit has a parser for it.
 
-Before this adapter existed, an adapter the audit did not recognize simply produced no findings and was reported **clean** — an absence of evidence presented as a statement of innocence. The audit now recognizes `agy-cli` as transcriptless and returns the verdict `unauditable` with a reason instead. A run on this harness therefore has no tool-call evidence to review, which is a second blocker on promotion independent of the cost gap.
+Two adjustments were needed to read agy's calls rather than to work around them. Its tool names are its own (`view_file`, `list_dir`, `grep_search`, `run_command`), and its argument keys are capitalized (`AbsolutePath`, `DirectoryPath`, `SearchPath`, `CommandLine`) where the other harnesses use lowercase, so path and command field lookup is now case-insensitive.
 
-What agy prints on stdout is worth recording so it is not mistaken for a transcript: alongside the final response it emits fragments of its internal task protocol (`<call_id>`, `<output_payload>`, `<message_notification>` blocks) for background tasks that happen to settle near the end of the run. In the rehearsal that amounted to 85 lines covering three tasks, with no token counts and no coverage of the run's actual tool calls. It is incidental output, not a record.
+The rehearsal audited to `listings-only`: 37 tool calls, of which the only cross-level access was one directory listing of `src/benchmark-levels`. A `grep_search` result mentioned other levels' paths, but the entrant opened none of them.
+
+Two records are worth distinguishing from the transcript. The conversation database (`conversation.db`) is agy's own store, protobuf in SQLite, captured for completeness and read by nothing. And agy's stdout carries, alongside the final response, fragments of its internal task protocol (`<call_id>`, `<output_payload>`, `<message_notification>`) for background tasks that settle near the end of the run — incidental output, not a record.
 
 ## Completion
 

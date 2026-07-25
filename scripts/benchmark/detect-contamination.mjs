@@ -51,6 +51,10 @@ const READ_TOOL_NAMES = new Set([
   'read_file',
   'sed',
   'tail',
+  // agy names its file reader `view_file`, which matches none of the substring
+  // fallbacks below.
+  'view_file',
+  'view_code_item',
 ]);
 const COPY_TOOL_NAMES = new Set([
   'copy',
@@ -65,8 +69,24 @@ const SHELL_TOOL_NAMES = new Set([
   'cells',
   'exec',
   'exec_command',
+  'run_command',
   'shell',
 ]);
+
+// Field names that carry a shell command, matched case-insensitively: agy uses
+// `CommandLine` where the other harnesses use `command`.
+const COMMAND_FIELD_KEYS = ['command', 'cmd', 'commandline', 'script', 'code'];
+
+// Case-insensitive lookup of the first string-valued field among `keys`.
+function stringField(input, keys) {
+  if (!input || typeof input !== 'object') return undefined;
+  const byLowercaseKey = new Map(Object.entries(input).map(([key, value]) => [key.toLowerCase(), value]));
+  for (const key of keys) {
+    const value = byLowercaseKey.get(key);
+    if (typeof value === 'string') return value;
+  }
+  return undefined;
+}
 const WEB_SEARCH_TOOL_NAMES = new Set([
   'browser_search',
   'internet_search',
@@ -142,6 +162,21 @@ export function extractToolCalls(record, { adapter } = {}) {
         name: content.name,
         input: content.arguments,
         timestamp: timestamp ?? content.timestamp ?? null,
+      });
+    }
+  }
+
+  // agy records a planner turn per step, with its tool calls attached as `{name, args}`. The args are
+  // already an object (agy uses capitalized keys such as `AbsolutePath`), so they pass through
+  // unparsed; the path-bearing key names are matched case-insensitively downstream.
+  if (record.type === 'PLANNER_RESPONSE' && Array.isArray(record.tool_calls)) {
+    for (const toolCall of record.tool_calls) {
+      if (typeof toolCall?.name !== 'string') continue;
+      calls.push({
+        adapter: normalizedAdapter ?? 'agy-cli',
+        name: toolCall.name,
+        input: toolCall.args,
+        timestamp,
       });
     }
   }
@@ -429,6 +464,7 @@ function inferAdapter(record) {
   if (record?.type === 'response_item') return 'codex-cli';
   if (record?.type === 'assistant') return 'claude-cli';
   if (record?.type === 'message') return 'pi-cli';
+  if (record?.type === 'PLANNER_RESPONSE') return 'agy-cli';
   return null;
 }
 
@@ -441,13 +477,13 @@ function directToolOperation(name, input) {
   if (LIST_TOOL_NAMES.has(normalized)) return 'listing';
   if (READ_TOOL_NAMES.has(normalized)) return 'content-read';
   if (COPY_TOOL_NAMES.has(normalized)) return 'copy';
-  if (normalized === 'bash' || normalized === 'shell' || normalized === 'exec' || normalized === 'exec_command' || normalized === 'cells') return null;
+  if (SHELL_TOOL_NAMES.has(normalized)) return null;
   if (normalized.includes('list') || normalized.includes('glob')) return 'listing';
   if (normalized.includes('read') || normalized.includes('grep')) return 'content-read';
   if (normalized.includes('copy') || normalized.includes('rsync')) return 'copy';
   // A tool with a command-shaped argument is treated as shell activity even if a
   // provider gives the tool a new name. This keeps adapter additions conservative.
-  if (input && typeof input === 'object' && ['command', 'cmd', 'script', 'code'].some((key) => typeof input[key] === 'string')) return null;
+  if (stringField(input, COMMAND_FIELD_KEYS) !== undefined) return null;
   return null;
 }
 
@@ -463,15 +499,21 @@ function toolSource(call) {
   }
   if (!input || typeof input !== 'object') return '';
 
-  for (const key of ['command', 'cmd', 'script', 'code']) {
-    if (typeof input[key] === 'string') return input[key];
-  }
+  const commandField = stringField(input, COMMAND_FIELD_KEYS);
+  if (commandField !== undefined) return commandField;
   if (typeof input.input === 'string' && SHELL_TOOL_NAMES.has(name)) return input.input;
 
   // Dedicated file tools should contribute path-bearing fields, not a Grep
-  // pattern that merely mentions a path as text.
-  const keys = name.includes('glob') ? ['pattern', 'path', 'file_path'] : name.includes('grep') ? ['path', 'file_path', 'include'] : ['file_path', 'path', 'target', 'source', 'destination'];
-  const values = keys.filter((key) => typeof input[key] === 'string').map((key) => input[key]);
+  // pattern that merely mentions a path as text. Field names are matched
+  // case-insensitively because harnesses disagree on casing for the same idea:
+  // agy names them `AbsolutePath`, `DirectoryPath`, and `TargetFile`.
+  const keys = name.includes('glob')
+    ? ['pattern', 'path', 'file_path', 'absolutepath']
+    : name.includes('grep')
+      ? ['path', 'file_path', 'include', 'searchdirectory', 'searchpath']
+      : ['file_path', 'path', 'target', 'source', 'destination', 'absolutepath', 'directorypath', 'targetfile'];
+  const byLowercaseKey = new Map(Object.entries(input).map(([key, value]) => [key.toLowerCase(), value]));
+  const values = keys.filter((key) => typeof byLowercaseKey.get(key) === 'string').map((key) => byLowercaseKey.get(key));
   if (values.length > 0) return values.join(' ');
   return JSON.stringify(input);
 }
@@ -922,7 +964,11 @@ function dedupeFindings(findings) {
 // read on such a run, so it must say so: reporting `clean` would turn an absence of evidence into a
 // statement of innocence, which is the one thing this tool must never do. A run on one of these
 // adapters is unauditable by construction and cannot clear the promotion precondition.
-export const TRANSCRIPTLESS_ADAPTERS = new Set(['agy-cli']);
+//
+// Empty today. It exists because the audit is parser-driven: an adapter with no parser silently
+// yields no findings, so any future harness whose transcript this tool cannot read belongs here
+// rather than being left to report clean.
+export const TRANSCRIPTLESS_ADAPTERS = new Set();
 
 export function verdictFor(findings, webEvents = []) {
   if (findings.some((finding) => !['listing', 'web'].includes(finding.classification))) return 'CONTAMINATED';
