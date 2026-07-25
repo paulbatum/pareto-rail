@@ -421,6 +421,7 @@ function normalizeAdapter(adapter) {
   if (adapter === 'codex-cli' || adapter === 'codex') return 'codex-cli';
   if (adapter === 'claude-cli' || adapter === 'claude') return 'claude-cli';
   if (adapter === 'pi-cli' || adapter === 'pi') return 'pi-cli';
+  if (adapter === 'agy-cli' || adapter === 'agy') return 'agy-cli';
   return null;
 }
 
@@ -917,6 +918,12 @@ function dedupeFindings(findings) {
   return result;
 }
 
+// Harnesses that record no machine-readable tool-call transcript. There is nothing for this audit to
+// read on such a run, so it must say so: reporting `clean` would turn an absence of evidence into a
+// statement of innocence, which is the one thing this tool must never do. A run on one of these
+// adapters is unauditable by construction and cannot clear the promotion precondition.
+export const TRANSCRIPTLESS_ADAPTERS = new Set(['agy-cli']);
+
 export function verdictFor(findings, webEvents = []) {
   if (findings.some((finding) => !['listing', 'web'].includes(finding.classification))) return 'CONTAMINATED';
   if (webEvents.length > 0) return 'needs-web-review';
@@ -1058,6 +1065,7 @@ export async function auditRun(runDirectory, { selfLookupContext } = {}) {
   }
 
   const findings = dedupeFindings(scanned.findings);
+  const unauditable = TRANSCRIPTLESS_ADAPTERS.has(adapter);
   return {
     runId: definition.runId ?? path.basename(runDirectory),
     levelId,
@@ -1065,7 +1073,8 @@ export async function auditRun(runDirectory, { selfLookupContext } = {}) {
     worktree,
     transcripts: transcriptFiles.map((file) => path.relative(ROOT, file).replaceAll(path.sep, '/')),
     toolCalls: scanned.calls,
-    verdict: verdictFor(findings, scanned.webEvents),
+    verdict: unauditable ? 'unauditable' : verdictFor(findings, scanned.webEvents),
+    ...(unauditable ? { unauditableReason: `${adapter} records no machine-readable tool-call transcript, so this run has no evidence to audit. This is not a clean result.` } : {}),
     findings,
     webEvents: scanned.webEvents,
   };
@@ -1098,6 +1107,7 @@ function printHuman(results) {
   for (const result of results) {
     const identity = [result.runId, result.levelId ? `level=${result.levelId}` : null, result.adapter ? `adapter=${result.adapter}` : null].filter(Boolean).join(' ');
     console.log(`${identity}: ${result.verdict}`);
+    if (result.unauditableReason) console.log(`  ${result.unauditableReason}`);
     for (const finding of result.findings) {
       const timestamp = finding.timestamp ? ` ${finding.timestamp}` : '';
       const paths = finding.paths.join(', ');
@@ -1105,9 +1115,9 @@ function printHuman(results) {
       console.log(`    ${finding.excerpt}`);
     }
   }
-  const counts = { clean: 0, 'listings-only': 0, 'needs-web-review': 0, CONTAMINATED: 0 };
+  const counts = { clean: 0, 'listings-only': 0, 'needs-web-review': 0, unauditable: 0, CONTAMINATED: 0 };
   for (const result of results) counts[result.verdict] = (counts[result.verdict] ?? 0) + 1;
-  console.log(`Scanned ${results.length} run(s): ${counts.CONTAMINATED ?? 0} contaminated, ${counts['needs-web-review'] ?? 0} needs-web-review, ${counts['listings-only'] ?? 0} listings-only, ${counts.clean ?? 0} clean.`);
+  console.log(`Scanned ${results.length} run(s): ${counts.CONTAMINATED ?? 0} contaminated, ${counts['needs-web-review'] ?? 0} needs-web-review, ${counts['listings-only'] ?? 0} listings-only, ${counts.unauditable ?? 0} unauditable, ${counts.clean ?? 0} clean.`);
 }
 
 function parseCli(argv) {

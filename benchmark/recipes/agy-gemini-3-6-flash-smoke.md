@@ -72,7 +72,11 @@ The consequence is that **this configuration cannot be placed on the benchmark's
 
 ## Contamination audit
 
-`npm run benchmark:contamination` cannot audit this run. Its per-adapter parsers read recorded tool calls from a harness transcript, and agy publishes none in any readable form. A run on this harness therefore has no tool-call evidence to review, which is a second blocker on promotion independent of the cost gap.
+`npm run benchmark:contamination` cannot audit this run: its per-adapter parsers read recorded tool calls from a harness transcript, and agy publishes none in any readable form.
+
+Before this adapter existed, an adapter the audit did not recognize simply produced no findings and was reported **clean** — an absence of evidence presented as a statement of innocence. The audit now recognizes `agy-cli` as transcriptless and returns the verdict `unauditable` with a reason instead. A run on this harness therefore has no tool-call evidence to review, which is a second blocker on promotion independent of the cost gap.
+
+What agy prints on stdout is worth recording so it is not mistaken for a transcript: alongside the final response it emits fragments of its internal task protocol (`<call_id>`, `<output_payload>`, `<message_notification>` blocks) for background tasks that happen to settle near the end of the run. In the rehearsal that amounted to 85 lines covering three tasks, with no token counts and no coverage of the run's actual tool calls. It is incidental output, not a record.
 
 ## Completion
 
