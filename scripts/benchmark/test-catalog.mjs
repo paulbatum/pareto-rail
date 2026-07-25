@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateThumbnail } from './generate-thumbnails.mjs';
 import { buildCatalog, PUBLISHED_CONFIGURATIONS } from './export-rank-catalog.mjs';
-import { benchmarkLevelFootprint } from './protocol.mjs';
+import { benchmarkLevelFootprint } from '../level-footprint.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const rankCatalog = JSON.parse(await fs.readFile(path.join(root, 'src/benchmark/rank-catalog.json'), 'utf8'));

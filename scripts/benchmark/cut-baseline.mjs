@@ -9,13 +9,15 @@ import { promisify } from 'node:util';
 import { assertOnlyOptions, parseArgs, requireOption } from './common.mjs';
 import { assertScrubbedBaseline, parseBuiltInLevelIds } from './baseline-policy.mjs';
 import {
+  SCRUBBED_BENCHMARK_SCAFFOLD_PATHS,
+  SCRUBBED_REMOVED_PATHS,
+} from './protocol.mjs';
+import {
   BENCHMARK_SOURCE_ROOT,
   BUILT_IN_LEVEL_REGISTRY_PATH,
   LEVEL_CONTENT_ROOT,
   LEVEL_GALLERY_PATH,
-  SCRUBBED_BENCHMARK_SCAFFOLD_PATHS,
-  SCRUBBED_REMOVED_PATHS,
-} from './protocol.mjs';
+} from '../level-footprint.mjs';
 
 const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -79,7 +81,10 @@ async function scrubWorktree(worktree, builtInIds) {
   for (const removed of SCRUBBED_REMOVED_PATHS) {
     await fs.rm(path.join(worktree, removed), { recursive: true, force: true });
   }
-  await pruneDanglingScripts(worktree);
+  // Against the pre-scrub index, so a target that is merely generated later —
+  // the Prisma client the build imports — is not read as a scrub casualty.
+  const tracked = new Set((await git(worktree, ['ls-files'])).split('\n').filter(Boolean).map((name) => path.join(worktree, name)));
+  await pruneDanglingScripts(worktree, tracked);
   await pruneDanglingDocReferences(worktree);
 
   // The gallery is built-in only by construction; regenerating it here writes
@@ -88,22 +93,73 @@ async function scrubWorktree(worktree, builtInIds) {
   await reduceRankCatalog(worktree);
 }
 
-// A scrubbed checkout must not advertise commands it can no longer run. Every
-// package.json script naming a local path that the scrub removed is dropped,
-// which is what the entrant sees when it reads the manifest for its workflow.
-async function pruneDanglingScripts(worktree) {
+// A scrubbed checkout must not advertise commands it can no longer run. A command
+// dangles through its imports as readily as through the path it names — a v3 baseline
+// kept `check:scope` whose checker imported a scrubbed module, and every entrant that
+// ran it hit ERR_MODULE_NOT_FOUND — so each entry point is followed through its local
+// imports before the script is kept.
+async function pruneDanglingScripts(worktree, tracked) {
   const manifestPath = path.join(worktree, 'package.json');
   const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
   const kept = {};
   for (const [name, command] of Object.entries(manifest.scripts ?? {})) {
-    const missing = [...command.matchAll(/(?:^|[\s'"=])((?:\.\/)?(?:scripts|src)\/[\w./-]+\.(?:mjs|js|ts|tsx))/g)]
-      .map((match) => match[1].replace(/^\.\//, ''))
-      .filter((candidate, index, all) => all.indexOf(candidate) === index)
-      .filter((candidate) => !existsSyncish(path.join(worktree, candidate)));
-    if (missing.length === 0) kept[name] = command;
+    if (commandEntryPoints(worktree, command).every((entry) => moduleGraphIsIntact(entry, tracked))) kept[name] = command;
   }
   manifest.scripts = kept;
   await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}
+
+export function commandEntryPoints(worktree, command) {
+  return [...command.matchAll(/(?:^|[\s'"=])((?:\.\/)?(?:scripts|src)\/[\w./-]+\.(?:mjs|js|ts|tsx))/g)]
+    .map((match) => path.join(worktree, match[1].replace(/^\.\//, '')))
+    .filter((candidate, index, all) => all.indexOf(candidate) === index);
+}
+
+// Walks the relative import/export specifiers reachable from an entry point. Bare
+// specifiers are node_modules and out of scope for the scrub.
+export function moduleGraphIsIntact(entryPath, tracked) {
+  const pending = [entryPath];
+  const visited = new Set();
+  let intact = true;
+  while (pending.length) {
+    const file = pending.pop();
+    if (visited.has(file)) continue;
+    visited.add(file);
+    if (!isFileSyncish(file)) { intact = false; continue; }
+    for (const specifier of localSpecifiers(fsSync.readFileSync(file, 'utf8'))) {
+      const { resolved, candidates } = resolveLocalSpecifier(file, specifier);
+      if (resolved) pending.push(resolved);
+      else if (candidates.some((candidate) => tracked.has(candidate))) intact = false;
+    }
+  }
+  return intact;
+}
+
+// Statement-anchored on purpose: scaffold-level.mjs and the contamination fixtures carry
+// import lines inside string literals, and a loose scan takes those for real edges.
+function localSpecifiers(source) {
+  const patterns = [
+    /^[ \t]*(?:import|export)\b[^\n]*?\bfrom\s*['"](\.[^'"]*)['"]/gm,
+    /^[ \t]*import\s*['"](\.[^'"]*)['"]/gm,
+    /\bimport\s*\(\s*['"](\.[^'"]*)['"]\s*\)/g,
+  ];
+  const specifiers = new Set();
+  for (const pattern of patterns) {
+    // An interpolated specifier is computed at runtime; nothing static to resolve.
+    for (const [, specifier] of source.matchAll(pattern)) if (!specifier.includes('${')) specifiers.add(specifier);
+  }
+  return specifiers;
+}
+
+// Node and TypeScript accept different spellings of the same file, so a specifier is
+// resolved against what either of them would take. The candidates come back with the
+// answer: an unresolved specifier only dangles if one of them was tracked before the scrub.
+function resolveLocalSpecifier(fromFile, specifier) {
+  const base = path.resolve(path.dirname(fromFile), specifier.replace(/\?.*$/, ''));
+  const candidates = [base, ...['.mjs', '.js', '.ts', '.tsx'].map((extension) => `${base}${extension}`)];
+  if (base.endsWith('.js')) candidates.push(base.replace(/\.js$/, '.ts'), base.replace(/\.js$/, '.tsx'));
+  for (const extension of ['.ts', '.tsx', '.js', '.mjs']) candidates.push(path.join(base, `index${extension}`));
+  return { resolved: candidates.find((candidate) => isFileSyncish(candidate)), candidates };
 }
 
 // AGENTS.md is the first file most entrants read, so a bullet pointing at a
@@ -131,6 +187,11 @@ function isRemovedPathListItem(line, worktree) {
 
 function existsSyncish(target) {
   try { fsSync.lstatSync(target); return true; }
+  catch { return false; }
+}
+
+function isFileSyncish(target) {
+  try { return fsSync.statSync(target).isFile(); }
   catch { return false; }
 }
 

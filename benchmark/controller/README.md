@@ -65,6 +65,8 @@ npm run benchmark:cut-baseline -- --source <commit-ish> --branch <branch-name>
 
 The tool creates the branch in an isolated temporary worktree, removes promoted benchmark source and records, removes non-built-in public content, regenerates the gallery, empties the benchmark rank catalog, commits the result with the source commit in its message, and runs `npm run typecheck` and `npm run build` in that scrubbed checkout. It prints the resulting commit and branch. Do not cut a baseline during v2; v2 deliberately continues from its original open baseline.
 
+A scrubbed checkout must not advertise a command it cannot run, so the cut drops every package.json script whose entry point reaches a removed file through its imports, not only one that names a removed path directly. `check:scope` is the reason the level footprints live in `scripts/level-footprint.mjs` rather than in the harness: the checker imports them, so keeping them outside `scripts/benchmark/` is what lets the entrant's own scope check survive the scrub.
+
 The four files under `src/benchmark-levels/` are retained because `src/levels/index.ts` imports the benchmark catalog even when Vite discovers no benchmark entries. No entrant level or test fixture is retained.
 
 ## Entrant sandbox

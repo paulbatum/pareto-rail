@@ -15,7 +15,7 @@ import {
   writeJson,
 } from './common.mjs';
 import { checkoutLayout } from './checkout-layout.mjs';
-import { benchmarkLevelFootprint } from './protocol.mjs';
+import { benchmarkLevelFootprint } from '../level-footprint.mjs';
 
 const CONTROLLER_SCOPE_SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'check-benchmark-scope.mjs');
 

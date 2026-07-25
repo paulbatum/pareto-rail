@@ -2,13 +2,15 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import {
+  SCRUBBED_BENCHMARK_SCAFFOLD_PATHS,
+  SCRUBBED_REMOVED_PATHS,
+} from './protocol.mjs';
+import {
   BENCHMARK_SOURCE_ROOT,
   BUILT_IN_LEVEL_REGISTRY_PATH,
   LEVEL_CONTENT_ROOT,
   LEVEL_GALLERY_PATH,
-  SCRUBBED_BENCHMARK_SCAFFOLD_PATHS,
-  SCRUBBED_REMOVED_PATHS,
-} from './protocol.mjs';
+} from '../level-footprint.mjs';
 
 const execFileAsync = promisify(execFile);
 const RANK_CATALOG_PATH = 'src/benchmark/rank-catalog.json';
