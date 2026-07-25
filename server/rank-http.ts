@@ -1,5 +1,6 @@
 import type { PrismaClient } from '../src/generated/prisma/client.js';
 import { MAX_RANK_VOTE_BODY_BYTES, validateRankVoteBody } from './rank-vote-validation.js';
+import { parseParticipantPrefix, readRankAggregate } from './rank-aggregate.js';
 import { readRankStats, recordRankVote } from './rank-votes.js';
 
 const RATE_LIMIT_WINDOW_MS = 10_000;
@@ -50,6 +51,20 @@ export async function handleRankStatsRequest(request: Request, prisma: PrismaCli
   } catch (error) {
     console.error('Rank stats persistence failed', error instanceof Error ? error.message : 'unknown error');
     return json({ ok: false, error: 'Stats unavailable' }, 500);
+  }
+}
+
+export async function handleRankAggregateRequest(request: Request, prisma: PrismaClient): Promise<Response> {
+  if (request.method !== 'GET') return json({ ok: false, error: 'Method not allowed' }, 405);
+  const excludeParticipantPrefix = parseParticipantPrefix(new URL(request.url).searchParams.get('exclude'));
+  try {
+    const body = await readRankAggregate(prisma, { excludeParticipantPrefix });
+    const response = json(body, 200);
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+    return response;
+  } catch (error) {
+    console.error('Rank aggregate persistence failed', error instanceof Error ? error.message : 'unknown error');
+    return json({ ok: false, error: 'Results unavailable' }, 500);
   }
 }
 

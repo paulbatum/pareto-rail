@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import mitLicense from '../../../LICENSE?raw';
 import thirdPartyNotices from '../../../THIRD_PARTY_NOTICES.md?raw';
 import aboutContent from '../about.md?raw';
@@ -8,6 +9,8 @@ import { homeCopy } from '../content';
 import { featuredModels } from '../featured-models';
 import { RouteLink } from '../components/RouteLink';
 import { Markdown, markdownRegion } from '../components/Markdown';
+import { CurveChartFigure, CurveLegend, CurveTable, layoutCurveChart, ratedCurvePoints } from '../components/curve-chart';
+import { OWNER_PARTICIPANT_PREFIX, loadLeaderboardResults, type LeaderboardResults } from '../leaderboard';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
@@ -125,14 +128,67 @@ function HeroTunnel() {
 }
 
 export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const [excludeOwner, setExcludeOwner] = useState(false);
+  const [results, setResults] = useState<LeaderboardResults | null>(null);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setStatus('loading');
+    loadLeaderboardResults({ signal: controller.signal, ...(excludeOwner ? { excludeParticipantPrefix: OWNER_PARTICIPANT_PREFIX } : {}) })
+      .then((loaded) => {
+        setResults(loaded);
+        setStatus('ready');
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        console.warn('Could not load leaderboard results', error);
+        setStatus('failed');
+      });
+    return () => controller.abort();
+  }, [excludeOwner]);
+
+  const ratedPoints = results ? ratedCurvePoints(results.curve) : [];
+
   return (
     <section className="page-panel">
       <p className="eyebrow">Quality vs cost</p>
       <h1>Leaderboard</h1>
-      <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Aggregate results will appear here once the first benchmark release ships. Help us populate the leaderboard by ranking some levels!</p><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank Levels</RouteLink></div>
+      {import.meta.env.DEV && <label className="debug-toggle"><input type="checkbox" checked={excludeOwner} onChange={(event) => setExcludeOwner(event.target.checked)} />Exclude owner votes ({OWNER_PARTICIPANT_PREFIX}){results && excludeOwner && ` · ${results.excludedVotes} dropped`}</label>}
+      {status === 'loading' && <p className="lede">Loading community results…</p>}
+      {status === 'failed' && <div className="empty-state"><span className="empty-glyph">◌</span><h2>Results are unavailable</h2><p>The results service could not be reached. Try again in a moment.</p></div>}
+      {status === 'ready' && results && (ratedPoints.length >= 2
+        ? <LeaderboardResultsView results={results} />
+        : <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Aggregate results will appear here once enough comparisons have been recorded. Help us populate the leaderboard by ranking some levels!</p><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank Levels</RouteLink></div>)}
       <RouteLink className="text-link" href="/about" onNavigate={onNavigate}>Read the methodology →</RouteLink>
     </section>
   );
+}
+
+function LeaderboardResultsView({ results }: { results: LeaderboardResults }) {
+  const layout = layoutCurveChart(ratedCurvePoints(results.curve));
+  return (
+    <div className="curve-panel">
+      <div className="curve-heading">
+        <div><p className="eyebrow">Community results</p><h2>The Pareto Frontier</h2></div>
+        <span className="curve-status">{leaderboardNarrative(results)}</span>
+      </div>
+      <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels and across everyone who has voted. The best trade-offs move toward the <strong>upper left</strong>: higher preference at lower generation cost.</p>
+      <CurveLegend />
+      <CurveChartFigure layout={layout} labels={{
+        ratingAxisTitle: 'Community preference rating · higher is better →',
+        chartDescription: 'Scatter plot of community preference rating by measured generation cost. Higher ratings are better and lower costs are better.',
+        ratingTerm: 'Preference',
+      }} />
+      <CurveTable points={results.curve.points.filter((point) => point.comparisons > 0)} caption="Every configuration the community has judged" ratingTerm="Preference" />
+    </div>
+  );
+}
+
+function leaderboardNarrative(results: LeaderboardResults): string {
+  const votes = `${results.votes.toLocaleString('en-US')} ${results.votes === 1 ? 'vote' : 'votes'}`;
+  const participants = `${results.participants.toLocaleString('en-US')} ${results.participants === 1 ? 'participant' : 'participants'}`;
+  return `${votes} · ${participants} · ${results.curve.establishedCount} ranked`;
 }
 
 export function AboutPage() {

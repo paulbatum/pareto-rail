@@ -21,7 +21,7 @@
   },
   "/leaderboard": {
     "title": "Pareto Rail — Leaderboard",
-    "description": "Aggregate benchmark results ranking model-built levels by quality against generation cost. Public results are warming up until the first benchmark release ships.",
+    "description": "Aggregate benchmark results ranking model-built levels by quality against generation cost, fit from every blind comparison visitors have voted on.",
     "canonical": "/leaderboard"
   },
   "/about": {

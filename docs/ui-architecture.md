@@ -22,6 +22,12 @@ Visiting `/match` with missing parameters (and, above a short notice, the `same`
 
 The route is `robots: noindex` (see `applyRouteHead` in `src/app/seo.ts`) because each link is an ephemeral, parameterized share URL; it is intentionally absent from the sitemap and prerender scripts, which only enumerate the listed static routes. The compare cards, vote buttons, reveal cards, and generation details are shared with `/rank` through `src/app/components/matchup.tsx`.
 
+## The `/leaderboard` page
+
+The community counterpart to the personal results on `/rank`, and the same chart: `src/app/components/curve-chart.tsx` owns the quality-vs-cost scatter, the frontier line, the legend, and the results table, and both pages render it with their own wording. `src/app/leaderboard.ts` fetches the server tally from `/api/rank/aggregate` (see `docs/backend.md`), expands each pair's counts back into individual comparisons, and runs the same Bradley-Terry fit the rank controller uses, so a configuration is held off the frontier here for exactly the reasons it would be there. The page falls back to the warming-up empty state whenever fewer than two configurations have a rating.
+
+A development-build-only checkbox re-fetches with the owner's participant-hash prefix excluded, which is how the site owner sees the leaderboard without his own votes. It is gated on `import.meta.env.DEV` and never ships.
+
 ## The `/analysis` pages
 
 `/analysis` lists every rollout analysis package committed under `benchmark/analysis/<level-id>/` (auto-discovered via Vite glob imports — no registry edit); `/analysis/<level-id>` is the explorer. The module lives in `src/app/analysis/`: `data.ts` loads a package's JSON lazily and resolves snapshot PNG URLs, `model.ts` builds the cross-file joins (agent lanes, event index, annotation attachment, the merged chronological stream), and five views render it — Story (narrative + chapters), Timeline (overview strip + virtualized event stream via `@tanstack/react-virtual`), Files (edit map + per-file history), Snapshots (reconstructed renders + provenance), and Run data (full mechanical record plus raw package JSON). The active view and focused event deep-link via `?view=` and `?event=`. Package format: `docs/analysis-package-format.md`.

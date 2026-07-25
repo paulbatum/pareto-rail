@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { getPrismaClient } from './prisma.js';
-import { handleRankStatsRequest, handleRankVotesRequest } from './rank-http.js';
+import { handleRankAggregateRequest, handleRankStatsRequest, handleRankVotesRequest } from './rank-http.js';
 import { MAX_RANK_VOTE_BODY_BYTES } from './rank-vote-validation.js';
 
 /** Mounts the production handlers into Vite's development server only. */
@@ -14,7 +14,8 @@ export function rankApiDevPlugin(): Plugin {
         const url = req.url?.split('?')[0] ?? '';
         const isVotes = url === '/api/rank/votes';
         const isStats = url === '/api/rank/stats';
-        if (!isVotes && !isStats) {
+        const isAggregate = url === '/api/rank/aggregate';
+        if (!isVotes && !isStats && !isAggregate) {
           next();
           return;
         }
@@ -35,7 +36,10 @@ export function rankApiDevPlugin(): Plugin {
             return;
           }
 
-          const response = await handleRankStatsRequest(makeRequest(req), getPrismaClient());
+          const request = makeRequest(req);
+          const response = isAggregate
+            ? await handleRankAggregateRequest(request, getPrismaClient())
+            : await handleRankStatsRequest(request, getPrismaClient());
           await sendResponse(res, response);
         } catch (error) {
           console.error('Rank development handler failed', error instanceof Error ? error.message : 'unknown error');
