@@ -1,4 +1,9 @@
 {
   "id": "vespers-p6bt",
-  "title": "Vespers"
+  "title": "Vespers",
+  "contentImages": {
+    "overview": "/level-content/vespers-p6bt/overview.avif",
+    "start": "/level-content/vespers-p6bt/start.avif",
+    "hero": "/level-content/vespers-p6bt/hero.avif"
+  }
 }
