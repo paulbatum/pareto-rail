@@ -72,7 +72,7 @@ Scheduling state is a `retired` flag at two grains. A retired theme stays in the
 - `prompts/` — the shared assignment template and delegation addendum, with rendering rules.
 - `themes/` — theme texts and authoring guidance.
 - `examples/` — exemplar theme texts used by rehearsal and smoke runs.
-- `recipes/` — verbatim configuration recipes and their template. The recipe is the intervention being measured.
+- `recipes/` — the mechanisms a configuration is built from (one document per harness, plus the budget and delegation behaviors) and the roster of configurations that compose them. The configuration is the intervention being measured; it is defined by its plan row, not by a file per combination.
 - `schemas/` — the run-manifest record format written by the runner.
 - `manifests/` — public per-run provenance for every published entrant, written by `benchmark:export-provenance`.
 - `analysis/` — committed rollout analysis packages that drive the site's `/analysis` view.

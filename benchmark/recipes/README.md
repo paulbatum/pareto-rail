@@ -1,29 +1,99 @@
-# Agent recipes
+# Configurations and mechanisms
 
-Store one verbatim recipe per benchmark configuration at a stable path, such as `fable-solo.md` or `delegation.md`. Start from `template.md`.
+The configuration is the intervention being measured. This directory documents the **mechanisms** a configuration is built from, and carries the **roster** of configurations that compose them.
 
-A recipe states the exact model snapshot, harness and version, prompts and supplied files, session boundaries, allowed stages, time limits, review and revision rules, hidden harness defaults, controller-usage treatment, and token and wall-time capture. The controller (`scripts/benchmark/run.mjs`, documented in `benchmark/controller/README.md`) executes these declarations without adding workflow decisions. The recipe is the intervention being measured.
+## How a configuration is defined
 
-Recipes may change while the protocol is being designed and rehearsed. Before a configuration's first eligible run, commit its runner, executor, and recipe and register their hashes in the private schedule. After that configuration runs, a behavior-changing edit is a new configuration identity; do not silently pool it with the earlier execution. New configurations may join an existing protocol when the shared prompt, themes, baseline, gates, failure semantics, and judgment method remain unchanged.
+A configuration is a row in the private plan, not a file here. The row's `stage` block is what the controller actually executes — adapter, model, effort, provider, timeout, budget, network — and the run record afterwards captures what really happened: the verbatim arguments in `command.json`, the observed harness version, the resolved model, the rendered assignment, the measured cost.
 
-Cost is not a per-configuration frozen input. Every configuration's cost is measured after the fact by ccusage reading the run's isolated harness home; the recipe's Cost section states that method and the pinned ccusage version, not a dated rate table.
+So a document is written only for something neither of those can hold:
 
-`codex-terra-high.md` is the full rehearsal configuration: a one-stage non-interactive `codex exec` recipe with captured JSONL usage, used to prove the controller path. It is not an eligible entrant. `codex-luna-low-smoke.md` is the permanently ineligible fast smoke recipe: Luna adapts Prism Bloom after running the normal benchmark scaffold so the real controller lifecycle can be checked without generating an original showcase level.
+- **A mechanism** — a harness, or a cross-cutting behavior that changes what the entrant sees or how the harness is wired. One document, shared by every configuration that uses it.
+- **Intent** — why a configuration exists and what it is being contrasted against. One row in the roster below.
 
-`pi-luna-low-smoke.md` and `pi-openrouter-deepseek-smoke.md` are the permanently ineligible pi smoke recipes, cloning the `codex-luna-low-smoke.md` assignment onto the pi harness. The pair exists to cover both of pi's billing paths: the first reaches `gpt-5.6-luna` through pi's stored subscription credential, while the second reaches an OpenRouter-hosted `deepseek/deepseek-v4-flash` with an API key and therefore bills real metered spend. pi selects its provider per invocation, so a pi configuration pins `stage.provider` alongside its model; unlike Codex and Claude, its reasoning vocabulary includes `minimal` and `off` but not `ultra`. The adapter supports the same soft-budget protocol through ccusage polling, a controller-owned notice extension, and same-session continuations. Like Claude Code CLI and unlike Codex, pi has no OS-level sandbox.
+Everything else is a knob. A new effort level, a new model on an existing harness, a different budget amount, a different timeout: all of these are a plan row and nothing more. There is no file to add.
 
-`claude-fable-5-high.md` and `codex-sol-high.md` are the solo configurations, each one fresh unattended session. The Claude recipe documents a material harness difference: Claude Code CLI has no OS-level sandbox, so unattended operation relies on `--permission-mode bypassPermissions` rather than an enforced filesystem/network boundary.
+Two rules follow, and they are the ones this directory kept violating before it was restructured:
 
-`claude-fable-5-opus-delegation.md` and `codex-sol-terra-delegation.md` are the within-harness, same-provider delegation configurations: the primary agent plans and reviews while delegating implementation to a cheaper same-provider subagent (Fable → Opus; Sol → Terra) via the harness's built-in subagent support. Both append the shared `benchmark/prompts/flexible-delegation.md` addendum to the assignment and run in an isolated per-run home so ccusage captures the full parent-plus-subagent cost.
+**Never assert in prose what the system measures.** Harness versions are the standing example. The adapter records the installed version into every run record; a version written down here as well is a second source of truth that can only drift out of agreement with the first. The same goes for the effective command line, the resolved model id, and the delivered budget notices.
 
-`claude-fable-5-high-b20.md` and `codex-sol-high-b20.md` are the soft-budget solo variants. They declare `budget.usd: 20`, relative mid-turn notices, and deadline-bounded same-session continuation when an entrant submits well under budget.
+**Never restate what a commit already pins.** The plan's materials commit pins every adapter, prompt, and mechanism document in force for a run. Describing adapter behavior in prose does not make it more fixed; it makes it more likely to be wrong later.
 
-`claude-opus-4-8-high.md` is the solo Opus configuration: the same unattended Claude Code mechanism as `claude-fable-5-high`, pointed at `claude-opus-4-8` with no delegation. `claude-opus-4-8-high-b20.md` is its soft-budget variant.
+## Mechanisms
 
-`codex-luna-high.md`, `pi-luna-high.md`, and `codex-sol-max.md` are the v3 drafts, written for scrubbed baselines and the entrant sandbox rather than v2's open network. The first two are the same `gpt-5.6-luna` model reached through two different harnesses, which are separate configuration ids because harness is part of the intervention. `codex-sol-max.md` differs from `codex-sol-high.md` in reasoning effort alone, so the pair measures effort; the Sol slug also offers `ultra`, which would be a third configuration and not a substitution inside either recipe.
+Harnesses:
 
-`pi-openrouter-inkling-high.md` and `pi-openrouter-kimi-k3-max.md`, with their `-b20` soft-budget variants, are the first eligible-track pi/OpenRouter configurations — every pi recipe above this line is permanently ineligible. They reach `thinkingmachines/inkling` and `moonshotai/kimi-k3` through OpenRouter with metered API billing, following the credential and cost-measurement pattern established by `pi-openrouter-deepseek-smoke.md`. Neither model is listed in pi's bundled `--list-models` catalog even at the latest pinned CLI version (`0.80.10`) for Inkling, or was until that version for Kimi K3 — the adapter's model-catalog check (`scripts/benchmark/pi-cli.mjs`) is audit-only and does not gate a run on catalog presence.
+- [`codex-cli.md`](codex-cli.md) — Codex CLI
+- [`claude-cli.md`](claude-cli.md) — Claude Code CLI
+- [`pi-cli.md`](pi-cli.md) — pi CLI, the one harness that selects a provider, and therefore a billing path
+- [`agy-cli.md`](agy-cli.md) — Antigravity CLI, which cannot be sandboxed and is not priced by ccusage
 
-`pi-openrouter-inkling-smoke.md` and `pi-openrouter-kimi-k3-smoke.md` are the permanently ineligible controller smokes that rehearsed these two before freeze. Both ran the real controller pipeline end to end against a genuine (not bounded-adaptation) assignment — `scripts/benchmark/run.mjs` always renders `benchmark/prompts/level-assignment.md`, so what keeps a smoke cheap is its short stage timeout, not a reduced task. Inkling finished on its own in 31 seconds ($0.14); Kimi K3 ran the full 15-minute window with 38 assistant turns and zero errors or retries before hitting the timeout mid-task ($1.56, accepted via `--accept-stage-output true`). This resolved the effort-mapping and usage-field open items and gave a real (if still single-sample) read against Kimi K3's reported OpenRouter flakiness — see each eligible recipe's Known harness defaults for detail. Neither has run the real 43,200-second timeout yet; treat that, not the effort mapping or basic reachability, as the remaining open item before freeze.
+Cross-cutting:
 
-`pi-luna-b20-smoke.md` is the permanently ineligible smoke that rehearsed pi's soft-budget protocol itself — spend polling, notice delivery, same-session resume — cheaply against `gpt-5.6-luna` on pi's stored subscription credential (no OpenRouter cost). With a deliberately small $2 budget it ran 14 resume rounds, delivered notice text matching the Claude/Codex budgeted recipes verbatim, and correctly stopped resuming once spend crossed the 75% gate (final fraction 76.5%); all four gates passed, including `floor`, since the extra resume rounds gave the entrant enough turns to finish a real level. This confirms the mechanism generically, ahead of `pi-openrouter-inkling-high-b20.md` and `pi-openrouter-kimi-k3-max-b20.md` — each still needs its own budgeted rehearsal before freeze to confirm the same behavior over OpenRouter billing rather than pi's subscription credential.
+- [`budget-protocol.md`](budget-protocol.md) — the soft USD task budget, its notices, and same-session continuation
+- [`delegation.md`](delegation.md) — within-harness delegation to a same-provider subagent
+
+Owned elsewhere, and deliberately not restated here: the entrant sandbox and the four mechanical gates are in `benchmark/controller/README.md`; cost measurement is in `benchmark/README.md`; the assignment and the delegation addendum are files under `benchmark/prompts/`.
+
+## Roster
+
+Every configuration id, what it composes, and what it is for. Model and effort are shown as documentation of intent — the plan row is authoritative, and the run record is what actually ran.
+
+### Eligible track
+
+| Configuration | Model @ effort | Adds | Purpose |
+| --- | --- | --- | --- |
+| `claude-fable-5-high` | `claude-fable-5` @ high | — | Claude solo baseline. |
+| `claude-fable-5-high-b20` | `claude-fable-5` @ high | budget $20 | Does a stated budget change Fable's effort? |
+| `claude-fable-5-opus-delegation` | `claude-fable-5` @ high → `opus` | delegation | Does planning-and-reviewing while a cheaper same-provider model implements beat working alone? |
+| `claude-opus-4-8-high` | `claude-opus-4-8` @ high | — | Opus 4.8 against Fable on the same harness. |
+| `claude-opus-4-8-high-b20` | `claude-opus-4-8` @ high | budget $20 | Budget variant of the above. |
+| `claude-opus-5-high` | `claude-opus-5` @ high | — | Opus 5 on the same harness. |
+| `codex-sol-high` | `gpt-5.6-sol` @ high | — | Codex solo baseline. |
+| `codex-sol-high-b20` | `gpt-5.6-sol` @ high | budget $20 | Budget variant of the above. |
+| `codex-sol-max` | `gpt-5.6-sol` @ max | — | Reasoning effort against `codex-sol-high`, nothing else varied. |
+| `codex-sol-terra-delegation` | `gpt-5.6-sol` @ high → `gpt-5.6-terra` | delegation | The Codex-side counterpart to the Claude delegation configuration. |
+| `codex-luna-high` | `gpt-5.6-luna` @ high | — | Luna on Codex; pairs with `pi-luna-high` to isolate harness. |
+| `pi-luna-high` | `gpt-5.6-luna` @ high, `openai-codex` | — | The same model as `codex-luna-high` through a different harness. Harness is part of the intervention, so these are separate ids. |
+| `pi-kimi-k3-max` | `k3` @ max, `kimi-coding` | — | Kimi K3 on Moonshot's own subscription endpoint, against the metered OpenRouter path below. |
+| `pi-openrouter-inkling-high` | `thinkingmachines/inkling` @ high, `openrouter` | — | Inkling, metered API billing. |
+| `pi-openrouter-inkling-high-b20` | `thinkingmachines/inkling` @ high, `openrouter` | budget $20 | Budget variant of the above. |
+| `pi-openrouter-kimi-k3-max` | `moonshotai/kimi-k3` @ max, `openrouter` | — | Kimi K3, metered. `max` is the model's only tier, standing in for the others' `high` rather than intensifying it. |
+| `pi-openrouter-kimi-k3-max-b20` | `moonshotai/kimi-k3` @ max, `openrouter` | budget $20 | Budget variant of the above. |
+
+### Rehearsal only
+
+| Configuration | Model @ effort | Purpose |
+| --- | --- | --- |
+| `codex-terra-high` | `gpt-5.6-terra` @ high | The full rehearsal configuration that proved the controller path. Never an eligible entrant. |
+
+### Permanently ineligible smokes
+
+These exercise the controller lifecycle cheaply and must never be registered in an eligible schedule, promoted, or included in analysis. Note that `scripts/benchmark/run.mjs` always renders the real assignment — what keeps a smoke cheap is its short stage timeout, not a reduced task, so a smoke that hits its timeout mid-task is the expected outcome rather than a failure.
+
+| Configuration | Model @ effort | Covers |
+| --- | --- | --- |
+| `codex-luna-low-smoke` | `gpt-5.6-luna` @ low | The original Codex lifecycle smoke. |
+| `claude-haiku-low-sandbox-smoke` | `claude-haiku-4-5` @ low | Claude under the entrant sandbox. |
+| `pi-luna-low-smoke` | `gpt-5.6-luna` @ low, `openai-codex` | pi on a subscription credential. |
+| `pi-luna-low-sandbox-smoke` | `gpt-5.6-luna` @ low, `openai-codex` | pi under the entrant sandbox. |
+| `pi-luna-b20-smoke` | `gpt-5.6-luna` @ low, `openai-codex` | The budget protocol itself — polling, notices, same-session resume. |
+| `pi-openrouter-deepseek-smoke` | `deepseek/deepseek-v4-flash` @ low | pi's metered OpenRouter billing path. |
+| `pi-openrouter-inkling-smoke` | `thinkingmachines/inkling` @ high | Reachability and effort mapping for Inkling. |
+| `pi-openrouter-kimi-k3-smoke` | `moonshotai/kimi-k3` @ max | Reachability for Kimi K3, and a read on its reported flakiness. |
+| `pi-openrouter-gemini-3-6-flash-smoke` | `google/gemini-3.6-flash` @ high | Gemini through OpenRouter; ended in mid-run truncation. |
+| `agy-gemini-3-6-flash-smoke` | `gemini-3.6-flash` @ high | The Antigravity boundary, and what an agy adapter can and cannot record. |
+
+## Adding a configuration
+
+Add a plan row. Add a roster line saying what it is for. That is the whole procedure.
+
+Write a mechanism document only if you are adding a harness, or a behavior that changes what the entrant sees. If you find yourself copying an existing document and changing a model name, the thing you are adding is a knob, and it does not want a document.
+
+Before a configuration's first eligible run, commit its adapter and the mechanisms it composes, and record the materials commit in the private plan. After it has run, a behavior-changing edit is a new configuration identity — the ranking pools votes by configuration id, so reusing an id asserts "same intervention". Do not silently pool a changed configuration with its earlier execution.
+
+## Provenance and the `recipe` field
+
+A plan row's `recipePath` points at the harness mechanism document, and the runner reads it from the materials commit, hashes it, and stamps path and hash into the manifest. Nothing parses it.
+
+Manifests published before this restructure point at the per-configuration files that existed then. Those references still resolve: they name a path and hash at a specific commit, and git retains the blob. Historical provenance is unaffected by the reorganization, and those manifests must not be rewritten to match the new layout — they record what was in force at the time, which is the point of them.

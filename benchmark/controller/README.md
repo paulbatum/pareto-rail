@@ -28,7 +28,7 @@ A plan is a hand-edited JSON file — private, because its rows carry the level-
       "themeId": "<theme-id>",
       "themePath": "benchmark/themes/<theme-id>.md",
       "configurationId": "<configuration-id>",
-      "recipePath": "benchmark/recipes/<recipe>.md",
+      "recipePath": "benchmark/recipes/<harness>-cli.md",
       "kind": "benchmark",
       "entrantBaseline": "<optional commit override>",
       "stage": {
