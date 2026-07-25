@@ -13,6 +13,12 @@ Use this workflow for a built-in level or an integrated benchmark level that nee
 
 Store them at `public/level-content/<level-id>/`. Connect the paths through `contentImages`: use `src/levels/index.ts` for a built-in level, or that level's `src/benchmark-levels/<level-id>/level.json` descriptor for a benchmark level.
 
+## Images the level already has
+
+A benchmark entrant may ship its own images, which arrive with the promoted level. Backfill only what is missing: produce the images that are absent, leave every image already present exactly as it is, and do not replace one because your own render would differ. Mixing an authored set with a generated one across the same level is the worst outcome.
+
+The hero is the one exception, and only as a flag rather than an edit. Judge a provided hero against the selection rules below, and if it fails them — no legible focal point, dominated by dead space, a clipped or transitional frame — say so in your report and describe what a better moment would show. Leave the file in place regardless; replacing it is the operator's decision, not yours.
+
 ## Workflow
 
 1. Read `docs/visual-tools.md` and confirm the level id and run duration or named markers.
