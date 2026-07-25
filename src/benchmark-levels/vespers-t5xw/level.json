@@ -1,4 +1,9 @@
 {
   "id": "vespers-t5xw",
-  "title": "Vespers"
+  "title": "Vespers",
+  "contentImages": {
+    "overview": "/level-content/vespers-t5xw/overview.avif",
+    "start": "/level-content/vespers-t5xw/start.avif",
+    "hero": "/level-content/vespers-t5xw/hero.avif"
+  }
 }
