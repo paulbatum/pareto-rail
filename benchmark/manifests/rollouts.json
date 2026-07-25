@@ -112,6 +112,24 @@
       ]
     },
     {
+      "runId": "fable-high-solve-q7ld",
+      "levelId": "speedsolve-q7ld",
+      "themeId": "speedsolve",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/fable-high-solve-q7ld/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 8007850,
+          "sha256": "95d1c8f480c9efd4ffe81fdf68bd94274f9c2e6fb6dd95640b07f1389135497c"
+        },
+        {
+          "path": "runs/fable-high-solve-q7ld/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 8300598,
+          "sha256": "92357230e0b0a468ea2b358efe12801d33b93bbda2cbc327212cd590b5ff6874"
+        }
+      ]
+    },
+    {
       "runId": "fable-high-strandline-s7ah",
       "levelId": "strandline-s7ah",
       "themeId": "strandline",
@@ -324,6 +342,24 @@
           "path": "runs/opus5-high-skyhook-k5rw/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 21850007,
           "sha256": "f8689cb7dbe1d25fd026c272d40bd905fdc6446a0b0f5e25fa0d422abf1239e4"
+        }
+      ]
+    },
+    {
+      "runId": "opus5-high-solve-p4tn",
+      "levelId": "speedsolve-p4tn",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-5-high",
+      "files": [
+        {
+          "path": "runs/opus5-high-solve-p4tn/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 12367725,
+          "sha256": "707640a09d2a2717bae44dbd894230a55c484c858c4c12112ec192cbcffd6664"
+        },
+        {
+          "path": "runs/opus5-high-solve-p4tn/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 13113494,
+          "sha256": "1a86ba1dfb196d10180e05332f418d42eef3590d27ce17bde8b81770a319d505"
         }
       ]
     },
@@ -592,6 +628,78 @@
           "path": "runs/run-uitiw02p99w9/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 8497228,
           "sha256": "6a01dbf321d4b97693f4be7095c7d21725e4f5f67154e367364bce79d97c6b2a"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3c8vrhdys",
+      "levelId": "vespers-c8vr",
+      "themeId": "vespers",
+      "configurationId": "agy-gemini-3-6-flash-high",
+      "files": [
+        {
+          "path": "runs/run-v3c8vrhdys/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 413140,
+          "sha256": "30f01713b27fe3776717bae87f0fde22d81e48bfabadd76f1f1bcac976b5ec20"
+        },
+        {
+          "path": "runs/run-v3c8vrhdys/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 403,
+          "sha256": "d97beb73c6ecb32beb59fee27cf552926dfa684d5eaedf35db0d937979b7d152"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3p6btkzrn",
+      "levelId": "vespers-p6bt",
+      "themeId": "vespers",
+      "configurationId": "claude-opus-5-high",
+      "files": [
+        {
+          "path": "runs/run-v3p6btkzrn/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 12225143,
+          "sha256": "5363bca206a28a8dd0ead1321113cf0b670ea92c1dff2d852c2fa7f95dd79410"
+        },
+        {
+          "path": "runs/run-v3p6btkzrn/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 12253984,
+          "sha256": "755f68ecd087f83d74c1212789ea731e206c2f77332dd6968240988bfc9b9b51"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3r4wjp8ce",
+      "levelId": "vespers-r7ax",
+      "themeId": "vespers",
+      "configurationId": "codex-sol-max",
+      "files": [
+        {
+          "path": "runs/run-v3r4wjp8ce/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 10049897,
+          "sha256": "32cb52a947970ff36061b442cba850fdc3325e6462e7610ec8e233baffc25fc6"
+        },
+        {
+          "path": "runs/run-v3r4wjp8ce/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 762978,
+          "sha256": "401a93cf428c97edeabda664ceab1292ca7a43ecdde7f8170d63c297edc73892"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3t5xwqebm",
+      "levelId": "vespers-t5xw",
+      "themeId": "vespers",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/run-v3t5xwqebm/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 4668288,
+          "sha256": "c15386aa10193efa508bb09e629e4306baa5f05b0f3693886a3a1d30417476fc"
+        },
+        {
+          "path": "runs/run-v3t5xwqebm/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 4964697,
+          "sha256": "04fed9fee028a6752e5457cd544d089524eb8feef97f3d0bdd864c49bd879c8f"
         }
       ]
     },
