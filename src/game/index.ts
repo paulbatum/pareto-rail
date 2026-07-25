@@ -26,6 +26,23 @@ export type GameMountOptions = {
 
 export type GameMount = { dispose(): void };
 
+/* Automated video capture plays the game from outside the page: it needs the scene
+   to find targets, the camera to project them to screen space, and the event bus to
+   follow what its own input did. Opt in per URL (`?capture=1`) so the handle never
+   exists during ordinary play. */
+export type GameCaptureHandle = {
+  scene: Scene;
+  camera: PerspectiveCamera;
+  canvas: HTMLCanvasElement;
+  bus: ReturnType<typeof createEventBus>;
+};
+
+declare global {
+  interface Window {
+    __raildCapture?: GameCaptureHandle;
+  }
+}
+
 type Disposer = () => void;
 
 const inertGameMount: GameMount = { dispose() {} };
@@ -205,6 +222,10 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
 
     const runtime = level.createRuntime({ scene, camera, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(), debugValue });
     stack.add(() => runtime.dispose());
+    if (urlParams.get('capture') === '1') {
+      window.__raildCapture = { scene, camera, canvas: renderer.domElement, bus };
+      stack.add(() => { delete window.__raildCapture; });
+    }
     /* The desktop "press F for fullscreen" nudge only makes sense when fullscreen is available
        and we are not already in it, so gate it here and keep it in sync as fullscreen toggles. */
     if (fullscreenAvailable) {

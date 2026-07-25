@@ -4,6 +4,8 @@ These tools help inspect procedural visuals when a full WebGPU playtest is not a
 
 For performance gates and the `?perf=1` real-hardware overlay, see `docs/perf-tools.md`.
 
+Video recording is a separate concern documented in `docs/playthrough-videos.md`. It exists to produce promotional footage of finished levels and plays no part in building, checking, or reviewing one — a level never needs a video.
+
 ## Procedural model snapshots
 
 Use model snapshots for isolated enemies, props, glyphs, or environment pieces that can be returned from a factory as a Three `Object3D`:
