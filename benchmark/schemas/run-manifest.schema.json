@@ -272,8 +272,18 @@
     "usage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["inputTokens", "outputTokens"],
+      "allOf": [
+        {
+          "description": "Token counts are required unless the stage declares usage unavailable, so an unreported count is never recorded as zero.",
+          "if": { "not": { "required": ["available"] } },
+          "then": { "required": ["inputTokens", "outputTokens"] }
+        }
+      ],
       "properties": {
+        "available": {
+          "const": false,
+          "description": "Present only on a harness that publishes no usage through any documented interface (Antigravity CLI). Token fields are then absent rather than zero."
+        },
         "inputTokens": { "type": "integer", "minimum": 0 },
         "outputTokens": { "type": "integer", "minimum": 0 },
         "cacheReadInputTokens": { "type": "integer", "minimum": 0 },

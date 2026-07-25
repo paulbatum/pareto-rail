@@ -87,6 +87,37 @@ const ADAPTERS = {
       '--sandbox', String(entrantSandboxEnabled(definition)),
     ],
   },
+  'agy-cli': {
+    scriptPath: path.join(ROOT, 'scripts/benchmark/agy-cli.mjs'),
+    stageDir: 'stages/solo/agy',
+    binField: 'agyBin',
+    binFlag: '--agy-bin',
+    harnessName: 'Antigravity CLI',
+    modelProvider: () => 'Google Antigravity subscription',
+    // agy resolves its state directory from the home directory, so HOME is what scopes a run to its
+    // own conversation store. Only the OAuth token is copied in; agy rebuilds the rest of its state.
+    homeEnvVar: 'HOME',
+    credential: { sourceRelative: '.gemini/antigravity-cli/antigravity-oauth-token', dest: '.gemini/antigravity-cli/antigravity-oauth-token' },
+    // agy publishes no usage through any documented interface and ccusage has no view for it, so a
+    // run on this harness records cost as unavailable rather than as an unmeasured zero.
+    costMeasurement: 'unavailable',
+    // This adapter implements no sandbox. Passing the row's own request through (rather than the
+    // always-false entrantSandboxEnabled) lets the adapter reject a row that expects isolation.
+    stageArgs: (definition) => ['--sandbox', String(definition.stage.sandbox === true)],
+  },
+};
+
+// Stand-in for the ccusage summary on a harness that reports no usage. Shaped like a real summary so
+// the manifest builders need no special case, but with a null total and no per-model rows, so nothing
+// downstream can mistake it for a measurement.
+const UNAVAILABLE_COST = {
+  view: null,
+  totalUsd: null,
+  sessionCount: 0,
+  totalTokens: 0,
+  perModelCostAvailable: false,
+  totals: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, reasoningTokens: 0 },
+  models: [],
 };
 
 const CHECKPOINTS = ['inputs', 'worktree', 'setup', 'stage', 'seal', 'gates', 'payload', 'manifest'];
@@ -707,16 +738,17 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
   // (parent + any delegated subagent threads) and prices with its own maintained rate DB. Replay
   // can under-report output, so it is cross-checked against the harness's own counter.
   const commandRecord = commandRecords[0];
-  const cost = reconcileCost(
+  const costUnavailable = adapter.costMeasurement === 'unavailable';
+  const cost = costUnavailable ? UNAVAILABLE_COST : reconcileCost(
     await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome }),
     harnessCountersForRounds(definition.stage.adapter, await loadRoundUsages(outputDirectory, adapter)),
   );
   for (const warning of reconciliationWarnings(cost.reconciliation)) console.warn(warning);
-  const ccusage = await ccusageVersion();
+  const ccusage = costUnavailable ? null : await ccusageVersion();
   const finishedAt = new Date().toISOString();
   const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
   const stageResult = stageLaunch.exitCode === 0 ? 'completed' : (commandRecord.timedOut ? 'timed-out' : 'failed');
-  const stages = buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget });
+  const stages = buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget, costUnavailable });
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -736,7 +768,14 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
     controller: { commit: await gitCommit('HEAD') },
     timing: { startedAt, finishedAt, wallTimeSeconds: (Date.parse(finishedAt) - Date.parse(startedAt)) / 1_000 },
     stages,
-    cost: {
+    cost: costUnavailable ? {
+      currency: 'USD',
+      status: 'unavailable',
+      // No totalUsd key at all: an absent cost must not be readable as zero.
+      unavailableReason: `${adapter.harnessName} publishes no token usage through any documented interface and ccusage has no view for it, so this run carries no cost figure. Wall time is the only measured quantity.`,
+      orchestrationTreatment: 'unavailable',
+      models: [],
+    } : {
       currency: 'USD',
       status: 'measured',
       totalUsd: cost.totalUsd,
@@ -765,7 +804,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
 // When per-model cost is unavailable (Codex), the run collapses to a single stage carrying the run
 // total. All stage entries share the one session id and sum the active wall time of every invocation;
 // the prompt hashes attach to the parent.
-function buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null }) {
+function buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null, costUnavailable = false }) {
   const commandRecord = commandRecords[0];
   const lastCommand = commandRecords.at(-1);
   const continuationRounds = commandRecords.length - 1;
@@ -804,8 +843,12 @@ function buildStages({ definition, adapter, cost, commandRecords, usage, rendere
     promptSha256,
     ...(delegationPromptSha256 ? { delegationPromptSha256 } : {}),
     ...shared,
-    usage: stageUsage(cost.totals),
-    pricing: { status: 'measured', costUsd: cost.totalUsd, source: 'ccusage' },
+    // A harness with no usage interface reports neither tokens nor cost. The usage object marks that
+    // explicitly rather than carrying zeros, which would read as a measurement of nothing.
+    usage: costUnavailable ? { available: false } : stageUsage(cost.totals),
+    pricing: costUnavailable
+      ? { status: 'unavailable', reason: `${adapter.harnessName} reports no usage, so this stage has no cost figure.` }
+      : { status: 'measured', costUsd: cost.totalUsd, source: 'ccusage' },
   }];
 }
 
