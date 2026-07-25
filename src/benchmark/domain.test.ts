@@ -41,12 +41,14 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testFeaturedFirstMatchup();
   testFeaturedThemeCoverage();
   testNewcomerAnchoring();
+  testCatchUpScheduling();
   testNewThemeCoverage();
   testEachPairServedOnceThenExhausts();
   testServedSideOrderCanonicalization();
   testParticipantSequencesDiverge();
   testThemeBalance();
   testConvergenceAndStability();
+  testNewcomerStaysOffFrontier();
   testSameConfigurationPairs();
   testRetiredEntrantsNotScheduled();
   testSchedulingPoolExcludesRetired();
@@ -197,36 +199,40 @@ function testPersonalCurve(): void {
 
 function testIslandPlacement(): void {
   const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
-  const curve = recomputePersonalCurve(coldStartHistory(), { catalog: catalog.entrants });
-  assert.equal(curve.placedCount, 4);
-  assert.equal(curve.points.filter((point) => point.status !== 'pending').length, 4, 'every twice-compared configuration is placed');
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'contested');
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-3')?.status, 'contested');
+  // Enough comparisons that the count bar is cleared by everyone, isolating
+  // connectivity as the only reason a configuration can go unranked.
+  const curve = recomputePersonalCurve(repeatHistory(coldStartHistory(), 3), { catalog: catalog.entrants });
+  assert.equal(curve.establishedCount, 2);
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-0')?.status, 'established');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'provisional', 'an island never compared against the main body cannot be ranked against it');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-3')?.status, 'provisional');
+  assert.ok(curve.points.filter((point) => point.frontier).every((point) => point.status === 'established'), 'the frontier is drawn through ranked configurations only');
 }
 
 function testFeaturedIslandIsMain(): void {
   // The featured island wins the tie even when the other island holds the
   // lexicographically smallest configuration id.
   const catalog = makeSchedulerCatalog(4, 2, false, [2, 3]);
-  const curve = recomputePersonalCurve([
+  const curve = recomputePersonalCurve(repeatHistory([
     historyEntry('theme-a-featured', 'configuration-2', 'configuration-3', 'a'),
     historyEntry('theme-b-featured', 'configuration-2', 'configuration-3', 'a'),
     historyEntry('theme-a-other', 'configuration-0', 'configuration-1', 'a'),
     historyEntry('theme-b-other', 'configuration-0', 'configuration-1', 'a'),
-  ], { catalog: catalog.entrants });
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-0')?.status, 'contested', 'the unfeatured island is capped at contested');
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-1')?.status, 'contested', 'the unfeatured island is capped at contested');
+  ], 3), { catalog: catalog.entrants });
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'established', 'the featured island is the main body');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-0')?.status, 'provisional', 'the unfeatured island stays unranked');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-1')?.status, 'provisional', 'the unfeatured island stays unranked');
 }
 
 function testConnectionPromotes(): void {
   const catalog = makeSchedulerCatalog(4, 2, false, [0, 1]);
   const curve = recomputePersonalCurve([
-    ...coldStartHistory(),
+    ...repeatHistory(coldStartHistory(), 3),
     historyEntry('cross-island', 'configuration-1', 'configuration-2', 'a'),
   ], { catalog: catalog.entrants });
-  assert.equal(curve.points.filter((point) => point.status !== 'pending').length, 4);
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'stable');
-  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-3')?.status, 'stable');
+  assert.equal(curve.establishedCount, 4);
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-2')?.status, 'established');
+  assert.equal(curve.points.find((point) => point.configurationId === 'configuration-3')?.status, 'established');
 }
 
 function testSelfHealingSchedule(): void {
@@ -249,6 +255,15 @@ function testSelfHealingSchedule(): void {
     true,
     'playoff reconnects the solo and delegated comparison islands',
   );
+}
+
+/** Replay a history several times over, so configurations clear the relative
+ * comparison bar without changing the shape of the comparison graph. */
+function repeatHistory(entries: readonly PersonalHistoryEntry[], times: number): PersonalHistoryEntry[] {
+  return Array.from({ length: times }, (_, round) => entries.map((entry) => ({
+    ...entry,
+    vote: { ...entry.vote, matchupId: `${entry.vote.matchupId}-${round}` },
+  }))).flat();
 }
 
 function coldStartHistory(): PersonalHistoryEntry[] {
@@ -328,7 +343,7 @@ function testSchedulerCoverage(): void {
   const openerPairs = [...firstByTheme.values()].map((matchup) => configurationPairFromMatchup(catalog, pairId(matchup.themeId, matchup.levelIdA, matchup.levelIdB)));
   assert.equal(new Set(openerPairs).size, catalog.themes.length, 'theme openers spread across distinct configuration pairs');
   const curve = curveFromJudged(catalog, judged);
-  assert.equal(curve.placedCount, 4, 'the four-vote cold-start graph places every configuration');
+  assert.equal(curve.points.filter((point) => point.comparisons > 0).length, 4, 'the four-vote cold-start graph reaches every configuration');
   assert.ok(Object.values(exposures).every((count) => count === 1));
 }
 
@@ -398,10 +413,40 @@ function testNewcomerAnchoring(): void {
   for (const configurationId of establishedPlaced) assert.notEqual(curve.points.find((point) => point.configurationId === configurationId)?.status, 'pending');
 }
 
+function testCatchUpScheduling(): void {
+  // A configuration added to an already-judged catalog starts far behind the
+  // field. Once coverage has shown its levels once, the playoff phase has to
+  // keep steering comparisons at it until its rating counts, rather than
+  // spreading them evenly and leaving it permanently unranked.
+  const established = makeSchedulerCatalog(4, 3);
+  const simulated = simulateAssignments(established, 18);
+  const catalog = makeSchedulerCatalog(6, 3);
+  const history = [...simulated.judged];
+  const exposures = { ...simulated.exposures };
+  const themeHistory = [...simulated.themes];
+  const newcomers = ['configuration-4', 'configuration-5'];
+  assert.ok(curveFromJudged(catalog, history).points.filter((point) => newcomers.includes(point.configurationId)).every((point) => point.comparisons === 0));
+
+  for (let guard = 0; guard < 60; guard += 1) {
+    const curve = curveFromJudged(catalog, history);
+    if (newcomers.every((id) => curve.points.find((point) => point.configurationId === id)?.status === 'established')) break;
+    const next = scheduleOne(catalog, history, exposures, themeHistory);
+    assert.ok(next, 'the schedule ran dry before the newcomers caught up');
+    appendJudgment(catalog, next!, history, exposures, themeHistory);
+  }
+
+  const curve = curveFromJudged(catalog, history);
+  for (const id of newcomers) {
+    const point = curve.points.find((candidate) => candidate.configurationId === id)!;
+    assert.equal(point.status, 'established', `${id} never reached a countable rating`);
+    assert.ok(point.comparisons >= curve.comparisonsRequired);
+  }
+}
+
 function testNewThemeCoverage(): void {
   const established = makeSchedulerCatalog(8, 2);
   const simulated = simulateAssignments(established, 12);
-  assert.ok(curveFromJudged(established, simulated.judged).placedCount >= 6, 'the established pool is placed before the theme arrives');
+  assert.ok(curveFromJudged(established, simulated.judged).points.filter((point) => point.comparisons >= 2).length >= 6, 'the established pool is placed before the theme arrives');
   const catalog = makeSchedulerCatalog(8, 3);
   const history = [...simulated.judged];
   const exposures = { ...simulated.exposures };
@@ -489,16 +534,45 @@ function testConvergenceAndStability(): void {
   const curve = recomputePersonalCurve(history, { catalog: catalog.entrants });
   const ranked = curve.points.filter((point) => point.rating !== undefined).sort((a, b) => b.rating! - a.rating!).map((point) => point.configurationId);
   assert.deepEqual(ranked, trueOrder);
-  assert.ok(curve.points.filter((point) => point.frontier).every((point) => point.status === 'stable'));
+  assert.ok(curve.points.filter((point) => point.frontier).every((point) => point.status === 'established'));
+}
 
-  const fresh = recomputePersonalCurve([
-    historyEntry('fresh-a', 'configuration-0', 'configuration-1', 'a'),
-    historyEntry('fresh-b', 'configuration-1', 'configuration-2', 'a'),
-    historyEntry('fresh-c', 'configuration-0', 'configuration-2', 'b'),
-    historyEntry('fresh-d', 'configuration-2', 'configuration-3', 'a'),
-    historyEntry('fresh-e', 'configuration-0', 'configuration-3', 'b'),
-  ], { catalog: catalog.entrants });
-  assert.ok(fresh.points.some((point) => point.status === 'contested'), 'a one-vote frontier flip is contested');
+function testNewcomerStaysOffFrontier(): void {
+  // The cheapest configuration on the chart can never be dominated, so frontier
+  // membership alone would hand a newcomer the curve's anchor point. Here the
+  // newcomer is both the cheapest and has lost every comparison, yet
+  // regularization still leaves it rated above a well-measured weak
+  // configuration. It belongs off the frontier until it has been compared as
+  // often as the field.
+  const veterans = ['configuration-1', 'configuration-2', 'configuration-3'];
+  const history: PersonalHistoryEntry[] = [];
+  for (let repeat = 0; repeat < 4; repeat += 1) {
+    for (let i = 0; i < veterans.length; i += 1) for (let j = i + 1; j < veterans.length; j += 1) {
+      history.push(historyEntry(`veteran-${repeat}-${i}-${j}`, veterans[i]!, veterans[j]!, 'b'));
+    }
+  }
+  history.push(historyEntry('newcomer-a', 'configuration-0', 'configuration-3', 'b'));
+  history.push(historyEntry('newcomer-b', 'configuration-0', 'configuration-2', 'b'));
+
+  const curve = recomputePersonalCurve(history);
+  const newcomer = curve.points.find((point) => point.configurationId === 'configuration-0')!;
+  const weakest = curve.points.find((point) => point.configurationId === 'configuration-1')!;
+  assert.equal(newcomer.comparisons, 2);
+  assert.ok(newcomer.meanCost < weakest.meanCost, 'the newcomer is the cheapest configuration');
+  assert.ok(newcomer.rating! > weakest.rating!, 'regularization rates the barely-tested newcomer above a well-measured loser');
+  assert.equal(newcomer.status, 'provisional');
+  assert.equal(newcomer.frontier, false, 'a newcomer does not anchor the frontier on two comparisons');
+  assert.equal(weakest.status, 'established');
+  assert.ok(weakest.frontier, 'the cheapest ranked configuration anchors the frontier instead');
+
+  // Comparisons the newcomer accumulates carry it over the bar. It has to
+  // out-pace the field to get there, since every catch-up comparison also
+  // counts for the veteran on the other side of it.
+  const caughtUp = recomputePersonalCurve([
+    ...history,
+    ...[0, 1, 2].flatMap((round) => veterans.map((veteran, index) => historyEntry(`catch-up-${round}-${index}`, 'configuration-0', veteran, 'b'))),
+  ]);
+  assert.equal(caughtUp.points.find((point) => point.configurationId === 'configuration-0')?.status, 'established');
 }
 
 function testSameConfigurationPairs(): void {

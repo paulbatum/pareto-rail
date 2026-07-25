@@ -1,5 +1,5 @@
 import type { RankCatalogEntrant, SchedulingPool } from './catalog';
-import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve.js';
+import { recomputePersonalCurve, type PersonalCurve, type PersonalHistoryEntry } from './personal-curve.js';
 import type { MatchupVote, RelativeOutcome } from './types';
 
 /** Locale-independent ordering for persisted ids. */
@@ -96,7 +96,7 @@ function selectCoveragePhase(
   // different visitors across different pairs so aggregate coverage is
   // not concentrated on one deterministic sequence.
   const curve = schedulerCurve(catalog, judged);
-  const coldStart = curve.placedCount < catalog.themes.length * 2;
+  const coldStart = anchorConfigurations(curve).size < catalog.themes.length * 2;
   const bothUnseen = themeCandidates
     .filter((candidate) => candidate.unseenCount === 2)
     .sort((left, right) => left.configurationPairCount - right.configurationPairCount
@@ -104,7 +104,7 @@ function selectCoveragePhase(
       || compareIds(left.id, right.id))[0] ?? null;
   if (coldStart && bothUnseen) return bothUnseen;
 
-  const placed = new Set(curve.points.filter((point) => point.status !== 'pending').map((point) => point.configurationId));
+  const placed = anchorConfigurations(curve);
   const anchored = themeCandidates
     .filter((candidate) => candidate.unseenCount === 1)
     .sort((left, right) => {
@@ -156,11 +156,24 @@ function selectPlayoffPhase(
       || compareIds(left.candidate.id, right.candidate.id))[0]?.candidate ?? null;
 }
 
+/** Closeness weighted against how often a configuration pair has already been
+ * matched. The divisor is what pulls comparisons toward a configuration that
+ * joined the catalog late: its pairs are all unmatched, so they outrank pairs
+ * the field has already settled between itself. An explicit term for how far a
+ * configuration is from a countable rating was measured against this and did
+ * not improve time-to-ranked for a single arriving configuration. */
 function playoffInformation(candidate: PairCandidate, ratings: ReadonlyMap<string, number>): number {
   const ratingA = ratings.get(candidate.a.configurationId) ?? 1000;
   const ratingB = ratings.get(candidate.b.configurationId) ?? 1000;
   const p = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
   return p * (1 - p) / (1 + candidate.configurationPairCount);
+}
+
+/** Configurations with enough of a foothold to attach a newly added level to.
+ * A deliberately lower bar than a countable rating: this only decides which
+ * side of a coverage pairing is the known quantity. */
+function anchorConfigurations(curve: PersonalCurve): Set<string> {
+  return new Set(curve.points.filter((point) => point.comparisons >= 2).map((point) => point.configurationId));
 }
 
 function selectCoverageTheme(

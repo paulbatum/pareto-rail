@@ -22,7 +22,7 @@ export interface PersonalHistoryEntry {
   b: PersonalHistoryEntrant;
 }
 
-export type PersonalPointStatus = 'pending' | 'contested' | 'stable';
+export type PersonalPointStatus = 'pending' | 'provisional' | 'established';
 
 export interface PersonalRatingPoint {
   configurationId: string;
@@ -37,13 +37,32 @@ export interface PersonalRatingPoint {
   losses: number;
   frontier: boolean;
   status: PersonalPointStatus;
+  /** Comparisons this configuration needs before its rating counts. */
+  comparisonsRequired: number;
 }
 
 export interface PersonalCurve {
   comparisonCount: number;
   points: PersonalRatingPoint[];
-  placedCount: number;
-  frontierReady: boolean;
+  establishedCount: number;
+  comparisonsRequired: number;
+  chartReady: boolean;
+}
+
+/** A configuration's rating only counts once it has been compared about as
+ * often as the rest of the field. The bar is relative rather than fixed so it
+ * tracks the pool as it grows: a newcomer with two comparisons is not ranked
+ * against configurations with nine, but nobody has to reach an arbitrary
+ * target either. The floor keeps the first few votes of a session — when the
+ * median is still 1 — from certifying the whole field instantly. */
+const ESTABLISHED_SHARE = 0.8;
+const ESTABLISHED_FLOOR = 3;
+
+/** Comparisons required for a configuration's rating to count, given how often
+ * the rest of the field has been compared. */
+export function comparisonsRequired(comparisonCounts: readonly number[]): number {
+  const judged = comparisonCounts.filter((count) => count > 0);
+  return Math.max(ESTABLISHED_FLOOR, Math.ceil(ESTABLISHED_SHARE * median(judged)));
 }
 
 export interface PersonalRatingOptions {
@@ -167,7 +186,10 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   const ratings = new Map([...strengths].map(([id, strength]) => [id, ratingForStrength(strength)] as const));
   const featuredIds = new Set(catalog.filter((entry) => entry.featured).map((entry) => entry.configurationId));
   const mainComponent = mainComparisonComponent([...seenIds], comparisons, featuredIds);
-  const placedIds = new Set([...seenIds].filter((id) => (rawStats.get(id)?.comparisons ?? 0) >= 2));
+  const required = comparisonsRequired([...seenIds].map((id) => rawStats.get(id)?.comparisons ?? 0));
+  // An island of configurations that has never been compared against the main
+  // body cannot be rated on the same scale, however many comparisons it has.
+  const establishedIds = new Set([...seenIds].filter((id) => (rawStats.get(id)?.comparisons ?? 0) >= required && mainComponent.has(id)));
 
   const points = [...configurationIds].map((configurationId): PersonalRatingPoint => {
     const label = catalogLabels.get(configurationId) ?? labels.get(configurationId) ?? displayLabelFor({ generationCost: 0 }, configurationId);
@@ -185,48 +207,26 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
       ties: stats.ties,
       losses: stats.losses,
       frontier: false,
-      status: placedIds.has(configurationId) ? 'stable' : 'pending',
+      status: establishedIds.has(configurationId) ? 'established' : stats.comparisons > 0 ? 'provisional' : 'pending',
+      comparisonsRequired: required,
     };
   }).sort((left, right) => left.configurationId.localeCompare(right.configurationId));
 
-  const placedPoints = points.filter((point) => placedIds.has(point.configurationId) && point.rating !== undefined)
+  // The frontier is drawn through established configurations only. A newcomer
+  // is otherwise guaranteed a place on it whenever it is the cheapest entry —
+  // nothing can dominate the cheapest point — so a model with two comparisons
+  // would anchor the curve on the strength of the prior alone.
+  const establishedPoints = points.filter((point) => establishedIds.has(point.configurationId) && point.rating !== undefined)
     .map((point) => ({ ...point, rating: point.rating! }));
-  const frontierIds = new Set(paretoFrontier(placedPoints).map((point) => point.configurationId));
-  for (const point of points) {
-    point.frontier = placedIds.has(point.configurationId) && frontierIds.has(point.configurationId);
-  }
-
-  for (const point of points) {
-    if (!placedIds.has(point.configurationId)) continue;
-    if (!mainComponent.has(point.configurationId)) {
-      point.status = 'contested';
-      continue;
-    }
-    const blocker = cheaperHighestRatedPoint(point, placedPoints);
-    if (!blocker) {
-      point.status = 'stable';
-      continue;
-    }
-    const synthetic: BradleyTerryComparison = {
-      aConfigurationId: point.configurationId,
-      bConfigurationId: blocker.configurationId,
-      relative: point.frontier ? 'b' : 'a',
-    };
-    const syntheticStrengths = fitBradleyTerry([...comparisons, synthetic], [...seenIds]);
-    const reratedPlaced = placedPoints.map((placedPoint) => ({
-      ...placedPoint,
-      rating: ratingForStrength(syntheticStrengths.get(placedPoint.configurationId)!),
-    }));
-    const syntheticFrontier = new Set(paretoFrontier(reratedPlaced).map((candidate) => candidate.configurationId));
-    const membershipChanged = syntheticFrontier.has(point.configurationId) !== point.frontier;
-    point.status = membershipChanged ? 'contested' : 'stable';
-  }
+  const frontierIds = new Set(paretoFrontier(establishedPoints).map((point) => point.configurationId));
+  for (const point of points) point.frontier = frontierIds.has(point.configurationId);
 
   return {
     comparisonCount: history.length,
     points,
-    placedCount: placedIds.size,
-    frontierReady: placedIds.size >= 2,
+    establishedCount: establishedIds.size,
+    comparisonsRequired: required,
+    chartReady: points.filter((point) => point.rating !== undefined).length >= 2,
   };
 }
 
@@ -300,12 +300,6 @@ function mainComparisonComponent(nodeIds: readonly string[], comparisons: readon
   return new Set(components[0]?.ids ?? []);
 }
 
-function cheaperHighestRatedPoint(point: PersonalRatingPoint, placedPoints: readonly PersonalRatingPoint[]): PersonalRatingPoint | null {
-  return placedPoints
-    .filter((candidate) => candidate.configurationId !== point.configurationId && candidate.meanCost < point.meanCost && candidate.rating !== undefined)
-    .sort((left, right) => (right.rating! - left.rating!) || left.configurationId.localeCompare(right.configurationId))[0] ?? null;
-}
-
 function historyEntrantFromReveal(entrant: RevealPayload['a']): PersonalHistoryEntrant {
   return {
     configurationId: entrant.configurationId ?? `${entrant.modelName}::${entrant.workflowName}`,
@@ -338,6 +332,12 @@ function scoreForA(outcome: RelativeOutcome): number { return outcome === 'a' ? 
 function mean(values: readonly number[]): number {
   const ordered = [...values].sort((left, right) => left - right);
   return ordered.length ? ordered.reduce((sum, value) => sum + value, 0) / ordered.length : 0;
+}
+function median(values: readonly number[]): number {
+  const ordered = [...values].sort((left, right) => left - right);
+  if (ordered.length === 0) return 0;
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2 === 1 ? ordered[middle] : (ordered[middle - 1] + ordered[middle]) / 2;
 }
 function orderedPair(a: string, b: string): [string, string] { return a.localeCompare(b) <= 0 ? [a, b] : [b, a]; }
 function configurationPairKey(a: string, b: string): string { return `${a.length}:${a}::${b.length}:${b}`; }

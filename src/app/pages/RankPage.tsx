@@ -149,7 +149,8 @@ type PlottedCurvePoint = {
   ties: number;
   losses: number;
   frontier: boolean;
-  status: 'pending' | 'contested' | 'stable';
+  status: 'pending' | 'provisional' | 'established';
+  comparisonsRequired: number;
   x: number;
   y: number;
   labelY: number;
@@ -180,12 +181,13 @@ function PersonalCurve({ controller }: { controller: RankController }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const curve = controller.curve;
-  const placedPoints = curve.points.filter((point): point is typeof point & { rating: number } => point.status !== 'pending' && point.rating !== undefined);
+  const plottedPoints = curve.points.filter((point): point is typeof point & { rating: number } => point.rating !== undefined);
   const copyDebugData = async (stage: CurveDebugStage, chart?: CurveDebugChart) => {
     const judgments = controller.judgedMatchups;
     const lines = [
-      `PARETO RAIL PERSONAL CURVE DEBUG v3 | stage=${stage} | exported=${new Date().toISOString()} | comparisons=${curve.comparisonCount} | configurations=${curve.points.length}`,
+      `PARETO RAIL PERSONAL CURVE DEBUG v4 | stage=${stage} | exported=${new Date().toISOString()} | comparisons=${curve.comparisonCount} | configurations=${curve.points.length}`,
       'ALGORITHM | regularized Bradley-Terry | anchor=1 | pseudo-result=tie | rating=1000+400log10(strength)',
+      `THRESHOLD | comparisonsRequired=${curve.comparisonsRequired} | established=${curve.establishedCount} | rule=max(3, ceil(0.8 * median comparisons))`,
       ...(chart
         ? [`CHART | size=${CURVE_CHART.width}x${CURVE_CHART.height} | costDomain=0..${chart.costMax} | costTicks=${chart.costTicks.join(',')} | ratingDomain=${chart.ratingMin}..${chart.ratingMax} | ratingTicks=${chart.ratingTicks.join(',')}`]
         : ['VERDICTS | chart=not-rendered']),
@@ -218,7 +220,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
 
   const judgedMatchups = controller.judgedMatchups;
 
-  if (!curve.frontierReady) return <section className="curve-panel" aria-labelledby="personal-curve-title">
+  if (!curve.chartReady) return <section className="curve-panel" aria-labelledby="personal-curve-title">
     <div className="curve-heading">
       <div><h2 id="personal-curve-title">Your verdicts</h2></div>
       <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('verdicts')} />
@@ -227,8 +229,8 @@ function PersonalCurve({ controller }: { controller: RankController }) {
     <VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} />
   </section>;
 
-  const costs = placedPoints.map((point) => point.meanCost);
-  const ratings = placedPoints.map((point) => point.rating);
+  const costs = plottedPoints.map((point) => point.meanCost);
+  const ratings = plottedPoints.map((point) => point.rating);
   const costTicks = ticksFromZero(Math.max(...costs, 1), 4);
   const ratingTicks = boundedTicks(Math.min(...ratings), Math.max(...ratings), 4);
   const costMax = costTicks.at(-1) ?? 1;
@@ -236,7 +238,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
   const ratingMax = ratingTicks.at(-1) ?? 1050;
   const plotWidth = CURVE_CHART.width - CURVE_CHART.left - CURVE_CHART.right;
   const plotHeight = CURVE_CHART.height - CURVE_CHART.top - CURVE_CHART.bottom;
-  const plotted = spreadCurveLabels(placedPoints.map((point) => ({
+  const plotted = spreadCurveLabels(plottedPoints.map((point) => ({
     ...point,
     x: CURVE_CHART.left + (point.meanCost / costMax) * plotWidth,
     y: CURVE_CHART.top + ((ratingMax - point.rating) / (ratingMax - ratingMin)) * plotHeight,
@@ -256,7 +258,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
       </div>
     </div>
     <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels. The best trade-offs move toward the <strong>upper left</strong>: higher personal preference at lower generation cost.</p>
-    <div className="curve-legend" aria-label="Chart legend"><span><i className="legend-point frontier" />Pareto frontier</span><span><i className="legend-point" />Other configuration</span><span><i className="legend-point contested" />Too close to call</span><span className="best-direction">↖ Better value</span></div>
+    <div className="curve-legend" aria-label="Chart legend"><span><i className="legend-point frontier" />Pareto frontier</span><span><i className="legend-point" />Other configuration</span><span><i className="legend-point provisional" />Too early to call</span><span className="best-direction">↖ Better value</span></div>
     <div className="curve-chart-wrap">
       <svg className="curve-chart" viewBox={`0 0 ${CURVE_CHART.width} ${CURVE_CHART.height}`} role="img" aria-label="Scatter plot of your preference rating by measured generation cost. Higher ratings are better and lower costs are better.">
         <g className="chart-grid">
@@ -282,18 +284,29 @@ function PersonalCurve({ controller }: { controller: RankController }) {
             const labelX = point.x + (labelOnLeft ? -14 : 14);
             const qualifier = workflowQualifier(point.workflowName);
             const effort = effortSuffix(point.configurationId);
-            return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'contested' ? ' contested' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${point.comparisons} comparisons. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
+            return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${evidenceText(point)}. Status: ${statusLabel(point.status)}.${point.frontier ? ' On your Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
               <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
               <circle cx={point.x} cy={point.y} r={point.frontier ? 8 : 6} />
-              <text className="point-label" x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{effort ? `${point.modelName} ${effort}` : point.modelName}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>
             </g>;
+          })}
+        </g>
+        {/* Labels are drawn after every marker so a neighbouring point cannot
+            paint over one. Points crowd together at the cheap end of the axis,
+            where the labels are the only way to tell them apart. */}
+        <g className="curve-labels">
+          {plotted.map((point) => {
+            const labelOnLeft = point.x > CURVE_CHART.width * .62;
+            const labelX = point.x + (labelOnLeft ? -14 : 14);
+            const qualifier = workflowQualifier(point.workflowName);
+            const effort = effortSuffix(point.configurationId);
+            return <text key={point.configurationId} className={`point-label${point.status === 'provisional' ? ' provisional' : ''}`} x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{effort ? `${point.modelName} ${effort}` : point.modelName}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>;
           })}
         </g>
       </svg>
       {active && <div className={`curve-tooltip${active.x > CURVE_CHART.width * .62 ? ' align-right' : ''}`} style={{ left: `${active.x / CURVE_CHART.width * 100}%`, top: `${active.y / CURVE_CHART.height * 100}%` }} role="status">
         <strong>{effortSuffix(active.configurationId) ? `${active.modelName} ${effortSuffix(active.configurationId)}` : active.modelName}</strong>{workflowQualifier(active.workflowName) && <span>{workflowQualifier(active.workflowName)}</span>}
-        <dl><div><dt>Preference</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>${active.meanCost.toFixed(2)}</dd></div><div><dt>Evidence</dt><dd>{active.comparisons} comparison{active.comparisons === 1 ? '' : 's'}</dd></div></dl>
-        <p>{statusLabel(active.status)} · {active.frontier ? 'On your Pareto frontier' : 'Dominated by a higher-value option'}</p>
+        <dl><div><dt>Preference</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>${active.meanCost.toFixed(2)}</dd></div><div><dt>Evidence</dt><dd>{evidenceText(active)}</dd></div></dl>
+        <p>{statusLabel(active.status)} · {placementText(active)}</p>
       </div>}
     </div>
     <PersonalCurveTable points={curve.points.filter((point) => point.comparisons > 0)} showFrontier />
@@ -372,18 +385,34 @@ function PersonalCurveTable({ points, showFrontier }: { points: readonly Persona
       ? <span aria-label="No comparisons yet">—</span>
       : <span aria-label={recordAriaLabel(point)}>{point.wins}–{point.ties}–{point.losses}</span>;
     const effort = effortSuffix(point.configurationId);
-    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? `Frontier · ${statusLabel(point.status)}` : statusLabel(point.status)}</td></tr>;
+    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={frontierStatus ? 'frontier-status' : ''}>{frontierStatus ? 'Frontier' : statusLabel(point.status)}</td></tr>;
   })}</tbody></table></div>;
 }
 
 function curveStatusNarrative(curve: PersonalCurve): string {
-  if (curve.points.every((point) => point.status === 'stable')) return 'All settled';
-  const pending = curve.points.filter((point) => point.status === 'pending').length;
-  return pending > 0 ? `${curve.placedCount} ranked · ${pending} pending` : `${curve.placedCount} ranked · still settling`;
+  const judged = curve.points.filter((point) => point.comparisons > 0).length;
+  const tooEarly = judged - curve.establishedCount;
+  if (tooEarly === 0) return `${curve.establishedCount} ranked`;
+  return `${curve.establishedCount} ranked · ${tooEarly} too early`;
 }
 
 function statusLabel(status: PersonalRatingPoint['status']): string {
-  return status === 'pending' ? 'Needs matchups' : status === 'contested' ? 'Too close to call' : 'Settled';
+  return status === 'pending' ? 'Needs matchups' : status === 'provisional' ? 'Too early to call' : 'Ranked';
+}
+
+/** How much evidence a configuration's rating rests on. Provisional points name
+ * the bar they have to clear, so it is clear whether more voting will settle
+ * them or the configuration simply needs to run on more themes. */
+function evidenceText(point: Pick<PersonalRatingPoint, 'comparisons' | 'comparisonsRequired' | 'status'>): string {
+  const plural = point.comparisons === 1 ? '' : 's';
+  return point.status === 'provisional'
+    ? `${point.comparisons} of ${point.comparisonsRequired} comparison${point.comparisonsRequired === 1 ? '' : 's'}`
+    : `${point.comparisons} comparison${plural}`;
+}
+
+function placementText(point: Pick<PersonalRatingPoint, 'status' | 'frontier'>): string {
+  if (point.status === 'provisional') return 'Held off the frontier until it has been compared as often as the rest';
+  return point.frontier ? 'On your Pareto frontier' : 'Dominated by a higher-value option';
 }
 
 function recordAriaLabel(point: PersonalRatingPoint): string {
@@ -402,6 +431,7 @@ function debugPointLine(point: PersonalRatingPoint | PlottedCurvePoint, index: n
     `rating=${point.rating === undefined ? '-' : point.rating.toFixed(4)}`,
     `meanCost=${point.meanCost.toFixed(6)}`,
     `comparisons=${point.comparisons}`,
+    `required=${point.comparisonsRequired}`,
     `wins=${point.wins}`,
     `ties=${point.ties}`,
     `losses=${point.losses}`,
