@@ -12,6 +12,8 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:export-votes": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs scripts/export-votes.ts",
+    "db:import-votes": "node --experimental-strip-types --experimental-loader ./scripts/benchmark/ts-extension-loader.mjs scripts/import-votes.ts",
     "typecheck": "tsc --noEmit",
     "check:serverless-imports": "node scripts/check-serverless-imports.mjs",
     "check:scope": "node scripts/check-benchmark-scope.mjs",

@@ -22,6 +22,24 @@ PRISMA_ENV_FILE=.env.prod npm run db:migrate:deploy
 
 Never run destructive commands against the production environment.
 
+## Vote data snapshots
+
+Export every matchup and vote row to a timestamped JSON file in the ignored `benchmark/private/votes/`:
+
+```sh
+npm run db:export-votes              # production (default)
+npm run db:export-votes -- --env=local
+```
+
+Load a snapshot back into the local dev database, replacing whatever is there:
+
+```sh
+npm run db:import-votes              # newest snapshot in benchmark/private/votes/
+npm run db:import-votes -- benchmark/private/votes/prod-2026-01-01T00-00-00Z.json
+```
+
+The import only ever writes to the local environment and refuses to run unless the local `DATABASE_URL` points at a loopback host. Participant and IP hashes carry the source environment's salt, so hashes in an imported production snapshot will not match locally computed ones.
+
 ## Vote data admin page
 
 While the Vite dev server is running, `/dev/admin` provides a local-only page for inspecting vote rows, computing participant hashes, and resetting local or production vote data. The page and its API are mounted by dev-server middleware and are not included in production builds; its environment switcher reads local values from `.env` and production values from `.env.prod`. Treat the production delete controls as destructive and use them only when explicitly intended.

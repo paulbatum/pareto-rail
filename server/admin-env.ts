@@ -8,6 +8,7 @@ export type AdminEnvironment = 'local' | 'prod';
 type AdminDatabase = {
   prisma: PrismaClient;
   participantSalt: string;
+  databaseUrl: string;
 };
 
 const databases = new Map<AdminEnvironment, AdminDatabase>();
@@ -39,7 +40,7 @@ export function getAdminDatabase(environment: AdminEnvironment): AdminDatabase {
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: databaseUrl, max: 2 }),
   });
-  const database = { prisma, participantSalt };
+  const database = { prisma, participantSalt, databaseUrl };
   databases.set(environment, database);
   return database;
 }
