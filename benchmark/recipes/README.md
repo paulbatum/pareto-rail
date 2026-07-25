@@ -84,6 +84,11 @@ These exercise the controller lifecycle cheaply and must never be registered in 
 | `pi-openrouter-kimi-k3-smoke` | `moonshotai/kimi-k3` @ max | Reachability for Kimi K3, and a read on its reported flakiness. |
 | `pi-openrouter-gemini-3-6-flash-smoke` | `google/gemini-3.6-flash` @ high | Gemini through OpenRouter; ended in mid-run truncation. |
 | `agy-gemini-3-6-flash-smoke` | `gemini-3.6-flash` @ high | The Antigravity boundary, and what an agy adapter can and cannot record. |
+| `claude-haiku-low-sandbox-b2-smoke` | `claude-haiku-4-5` @ low, budget $2 | The budget protocol under the entrant sandbox on Claude. |
+| `codex-luna-low-sandbox-b2-smoke` | `gpt-5.6-luna` @ low, budget $2 | The same, on Codex. |
+| `pi-luna-low-sandbox-b2-smoke` | `gpt-5.6-luna` @ low, budget $2 | The same, on pi. |
+
+The three `-b2-smoke` rows exist because the budget protocol had only ever run on open-policy plans. The hook that delivers a notice reads its state from under `benchmark/private/`, which the sandbox makes unreadable, and it swallows every error — so a failure there is silent, and a run would complete looking budgeted while its entrant was never told. What these confirm is that the notices arrive; the controller-side resume logic polls from outside the boundary and was never in doubt.
 
 ## Adding a configuration
 
