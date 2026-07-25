@@ -40,7 +40,23 @@ npm run db:import-votes -- benchmark/private/votes/prod-2026-01-01T00-00-00Z.jso
 
 The import only ever writes to the local environment and refuses to run unless the local `DATABASE_URL` points at a loopback host. Participant and IP hashes carry the source environment's salt, so hashes in an imported production snapshot will not match locally computed ones.
 
-Importing rows does not make votes appear in the local app. The client never reads votes back from the server: ranking history, the personal curve, and reveals all come from browser localStorage (`pareto-rail-benchmark` and `pareto-rail-participant-id`, see `src/benchmark/storage.ts`), which is per-origin. To see a production history on `localhost`, copy those two keys from the production tab's console into the local one.
+## Seeing a production vote history locally
+
+Importing rows does not make votes appear in the local app. The client never reads votes back from the server: ranking history, the personal curve, and reveals all come from browser localStorage (`pareto-rail-benchmark` and `pareto-rail-participant-id`, see `src/benchmark/storage.ts`), which is per-origin. Carry those two keys across instead.
+
+In the production tab's console, this builds the whole command and puts it on the clipboard:
+
+```js
+copy(['pareto-rail-benchmark', 'pareto-rail-participant-id']
+  .map((k) => [k, localStorage.getItem(k)])
+  .filter(([, v]) => v !== null)
+  .map(([k, v]) => `localStorage.setItem(${JSON.stringify(k)}, ${JSON.stringify(v)});`)
+  .join('\n') + '\nlocation.reload()')
+```
+
+Paste it into the console on the local origin and run it unedited. Chrome blocks the first console paste until you type `allow pasting`. Where `copy()` is unavailable, run the expression without it and use "Copy string contents" on the returned string — copying the printed output gives an escaped, truncated version that will not work.
+
+The carried participant id then posts local votes under the same identifier but a different hash than the imported rows, which is harmless for scratch data. Removing both keys restores an empty local history.
 
 ## Vote data admin page
 
