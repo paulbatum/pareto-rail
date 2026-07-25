@@ -62,4 +62,6 @@ A stage completes when `codex exec` exits zero, reports one session id, and repo
 
 ## Cost
 
-Measured after the run by ccusage against the run's isolated `CODEX_HOME`, per `benchmark/README.md`, "Cost". Codex is the harness for which ccusage attributes per-model tokens but not per-model cost, so `cost.models` carries token detail without a per-model `costUsd` and the run total stands. Codex's own counter restates the whole session on every resumed round, so the final round's counter is the run's counter and rounds are never summed.
+Measured after the run by ccusage against the run's isolated `CODEX_HOME`, per `benchmark/README.md`, "Cost". Codex is the harness for which ccusage attributes per-model tokens but not per-model cost, so `cost.models` carries token detail without a per-model `costUsd` and the run total stands.
+
+No usage counter is captured for this harness in practice: every Codex run on record writes `cost.reconciliation.status: "unavailable"`, where Claude runs write `agreed`. So a Codex cost figure rests on transcript replay with no second source to catch a replay that lost a message — the gap the cross-check exists to find. Treat the number as single-sourced. Where a resumed round does report a counter, it restates the whole session rather than that round's share, so the final round's counter would be the run's counter and rounds are never summed.

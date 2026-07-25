@@ -29,3 +29,11 @@ For how the per-round usage counters are summed or not summed into a run total, 
 ## Rehearsal
 
 The protocol itself was rehearsed cheaply against a small budget before being used on expensive configurations: 14 resume rounds, notice text matching across harnesses, and correct stopping once spend crossed the submit gate. A configuration reaching this protocol through a new billing path — metered API spend rather than a subscription credential — is worth rehearsing again on that path, since what is being confirmed is the spend polling rather than the notice delivery.
+
+### Under the entrant sandbox
+
+Rehearsed once per sandboxed harness, because the hook reads its state from under `benchmark/private/` — a path the sandbox hides — and discards every error, so a blocked read would have produced a green run whose entrant was never told anything.
+
+Delivery is confirmed on all three: the notice wording appears verbatim in each entrant's own transcript, which is the evidence to check, not the notice history alone. The history is written by `claimBudgetNotice` running inside the hook, so it is better than a controller-side record, but the transcript is what proves the text reached the model's context.
+
+One artifact of rehearsing cheaply is worth knowing before reading these runs as a full pass. Against a $2 budget, the two runs on inexpensive models exhausted the 20-round defensive backstop while still at 35% and 46% of budget, so they ended on the round limit rather than by crossing the submit fraction — they exercised delivery and resumption but never the intended stopping condition. Only the run whose spend actually reached the budget exercised the natural stop, and it did so correctly, resuming once and halting past the threshold. A cheap smoke therefore cannot confirm the stopping rule; a configuration whose spend approaches its budget is what does that.
