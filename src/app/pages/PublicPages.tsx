@@ -166,15 +166,13 @@ export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => 
   );
 }
 
-/** Says plainly how little the ranking rests on, and asks for the one thing
- * that fixes it. It leads with the vote count so nobody has to take "early" on
- * trust. */
+/** The vote count the standings are based on, and the ask. */
 function EarlyResultsBanner({ votes, onNavigate }: { votes: number; onNavigate: (path: string) => void }) {
   return (
     <div className="early-results">
       <div>
         <p className="eyebrow">Early results</p>
-        <p>These standings rest on <strong>{votes.toLocaleString('en-US')} {votes === 1 ? 'vote' : 'votes'}</strong> so far, so they will move — sometimes a lot — as more comparisons come in. Play a matchup and add yours.</p>
+        <p>Based on <strong>{votes.toLocaleString('en-US')} {votes === 1 ? 'vote' : 'votes'}</strong> so far. More votes make this better.</p>
       </div>
       <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank Levels</RouteLink>
     </div>

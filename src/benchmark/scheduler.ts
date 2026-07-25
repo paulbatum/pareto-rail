@@ -87,7 +87,7 @@ function selectCoveragePhase(
         || compareIds(left.id, right.id))[0] ?? null;
     if (featuredPair) return featuredPair;
   }
-  const themeId = selectCoverageTheme(entrantsByTheme, candidates, exposureCounts, lastThemeId);
+  const themeId = selectCoverageTheme(entrantsByTheme, candidates, exposureCounts, lastThemeId, participantId);
   if (!themeId) return null;
   const themeCandidates = candidates.filter((candidate) => candidate.themeId === themeId);
   // Seed each theme with a placed pool before switching to anchored
@@ -143,7 +143,7 @@ function selectPlayoffPhase(
   }
   const themeIds = [...new Set(fresh.map((candidate) => candidate.themeId))];
   const minimum = Math.min(...themeIds.map((themeId) => themeCounts.get(themeId) ?? 0));
-  const themeId = alternateLexicalTheme(themeIds.filter((candidate) => (themeCounts.get(candidate) ?? 0) === minimum), lastThemeId);
+  const themeId = alternateTheme(themeIds.filter((candidate) => (themeCounts.get(candidate) ?? 0) === minimum), lastThemeId, participantId);
   if (!themeId) return null;
 
   const curve = schedulerCurve(catalog, judged);
@@ -176,22 +176,32 @@ function anchorConfigurations(curve: PersonalCurve): Set<string> {
   return new Set(curve.points.filter((point) => point.comparisons >= 2).map((point) => point.configurationId));
 }
 
+/** How much of a claim a theme has on the next comparison, capped at the two
+ * unseen levels it takes to make a wholly fresh pairing. Ranking by the raw
+ * count instead would order themes by how many entrants they hold, so the
+ * largest theme wins every time and a small one is never reached at all —
+ * which starves the configurations that only appear there. */
+function coverageDemand(unseen: number): number {
+  return Math.min(2, unseen);
+}
+
 function selectCoverageTheme(
   entrantsByTheme: ReadonlyMap<string, readonly RankCatalogEntrant[]>,
   candidates: readonly PairCandidate[],
   exposureCounts: ReadonlyMap<string, number>,
   lastThemeId: string | undefined,
+  participantId: string,
 ): string | null {
   const available = [...entrantsByTheme.entries()]
     .map(([themeId, entrants]) => ({
       themeId,
-      unseen: entrants.filter((entrant) => (exposureCounts.get(entrant.levelId) ?? 0) === 0).length,
+      unseen: coverageDemand(entrants.filter((entrant) => (exposureCounts.get(entrant.levelId) ?? 0) === 0).length),
       hasCandidate: candidates.some((candidate) => candidate.themeId === themeId),
     }))
     .filter((item) => item.unseen > 0 && item.hasCandidate);
   if (available.length === 0) return null;
   const maximum = Math.max(...available.map((item) => item.unseen));
-  return alternateLexicalTheme(available.filter((item) => item.unseen === maximum).map((item) => item.themeId), lastThemeId);
+  return alternateTheme(available.filter((item) => item.unseen === maximum).map((item) => item.themeId), lastThemeId, participantId);
 }
 
 function pairsForTheme(
@@ -309,8 +319,14 @@ export function parsePairId(id: string): { themeId: string; levelA: string; leve
   return { themeId: id.slice(0, separator), levelA: pair.slice(0, divider), levelB: pair.slice(divider + 2) };
 }
 
-function alternateLexicalTheme(themeIds: readonly string[], lastThemeId: string | undefined): string | null {
-  const ordered = [...themeIds].sort(compareIds);
+/** Pick among themes with an equal claim. Ordering is salted per participant
+ * so visitors in the same position start in different themes; sorting by id
+ * alone sent every visitor's opening comparisons to the same one, which is
+ * only visible in aggregate. Whichever theme was just served goes last, so a
+ * session moves between themes instead of dwelling on one. */
+function alternateTheme(themeIds: readonly string[], lastThemeId: string | undefined, participantId: string): string | null {
+  const ordered = [...themeIds].sort((left, right) => participantOrder(participantId, left) - participantOrder(participantId, right)
+    || compareIds(left, right));
   return ordered.find((themeId) => themeId !== lastThemeId) ?? ordered[0] ?? null;
 }
 
