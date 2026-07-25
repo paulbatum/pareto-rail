@@ -36,6 +36,13 @@ const configurationLabels = {
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
     featured: true,
   },
+  'codex-sol-max': {
+    modelName: 'GPT-5.6 Sol',
+    workflowName: 'solo',
+    primaryModel: 'gpt-5.6-sol',
+    effort: 'max',
+    workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'codex-sol-terra-delegation': {
     modelName: 'GPT-5.6 Sol',
     workflowName: 'delegated',
@@ -81,6 +88,13 @@ const configurationLabels = {
     effort: 'high',
     workflowSummary: 'The solo unattended Codex session run under a $20 soft task budget: the model is told a budget exists, receives relative spend notices, and is resumed in the same session while it keeps submitting well under budget, so the budget is spent on the level\'s quality.',
   },
+  'agy-gemini-3-6-flash-high': {
+    modelName: 'Gemini 3.6 Flash',
+    workflowName: 'solo',
+    primaryModel: 'gemini-3.6-flash',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'pi-openrouter-kimi-k3-max': {
     modelName: 'Kimi K3',
     workflowName: 'solo',
@@ -106,6 +120,8 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'claude-opus-4-8-high-b20',
   'claude-opus-5-high',
   'codex-sol-high-b20',
+  'codex-sol-max',
+  'agy-gemini-3-6-flash-high',
 ]);
 
 const delegationIntroduction = 'Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.';

@@ -11,3 +11,4 @@ stops being news.
 - Claude Fable 5
 - Claude Opus 4.8
 - GPT-5.6 Sol
+- Gemini 3.6 Flash (new)

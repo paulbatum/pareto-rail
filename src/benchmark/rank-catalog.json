@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-25T00:10:37.744Z",
+  "generatedAt": "2026-07-25T19:02:58.920Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -28,6 +28,14 @@
       "effort": "high",
       "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
       "featured": true
+    },
+    {
+      "id": "codex-sol-max",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "primaryModel": "gpt-5.6-sol",
+      "effort": "max",
+      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "codex-sol-terra-delegation",
@@ -80,6 +88,14 @@
       "primaryModel": "gpt-5.6-sol",
       "effort": "high",
       "workflowSummary": "The solo unattended Codex session run under a $20 soft task budget: the model is told a budget exists, receives relative spend notices, and is resumed in the same session while it keeps submitting well under budget, so the budget is spent on the level's quality."
+    },
+    {
+      "id": "agy-gemini-3-6-flash-high",
+      "modelName": "Gemini 3.6 Flash",
+      "workflowName": "solo",
+      "primaryModel": "gemini-3.6-flash",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "pi-openrouter-kimi-k3-max",
@@ -142,6 +158,12 @@
       "summary": "Build a level that is one continuous boss fight against a colossal twisting puzzle cube - six faces of nine colored squares, hanging in the middle of the arena while the rail orbits it.",
       "prompt": "Build a level that is one continuous boss fight against a colossal twisting puzzle cube - six faces of nine colored squares, hanging in the middle of the arena while the rail orbits it. Shooting it solves it: a handful of squares glow as active targets, and destroying one snaps a layer rotation that leaves the face closer to a single color - order doesn't matter, any target advances the solve. Every rotation lands exactly on the beat; the cube is the percussion section, and the music should be built so that clicks, snaps, and rotations read as one instrument. Keep the score precise and mechanical - tight, quantized, all clean attacks - gaining a layer each time a face is conquered. When a face reaches a single color, the whole face falls away in a shower of loose cubies, exposing a weakpoint in the machinery underneath; destroy it and the rail swings you around to the next face. Six faces down and the core hangs fully exposed for the finish.\n\nYou're never left alone with the puzzle: small colorful polyhedra - tetrahedra, octahedra, prisms in the same candy colors - spawn in orbiting waves and shoot back, forcing you to defend yourself mid-solve.\n\nPalette: the cube owns the six bright solve colors, and everything else stays out of their way - a pale, softly lit void, white-and-grey machinery inside the cube, enemy fire in the cube's own colors. Ending: the naked core spins up, takes your last barrage, and bursts into a confetti storm of tiny cubes as the music resolves - level ends.",
       "experimental": true
+    },
+    {
+      "id": "vespers",
+      "title": "Vespers",
+      "summary": "You fly the nave of a massive cathedral, at night, while something is eating the light out of it.",
+      "prompt": "You fly the nave of a massive cathedral, at night, while something is eating the light out of it.\n\nEvery window in this place is lit from within, and the things in here take that light. They come off the glass as flat black shapes with a stolen pane's colour burning in their chest — that colour is the only reason you can see them at all. Kill one and the light goes back where it belongs: the window it stripped comes up again, and every window you win back stays lit for the rest of the run, so the deeper you fly, the more of the cathedral is burning with colourful stained glass you put there.\n\nBuild the world dark, enormous, and full: black stone piers, tiers of arcade and gallery stacked overhead, a floor of candles far below, ribbed vaults closing over you. The glass is the only saturated thing in the frame — deep cobalt, blood red, bottle green, gold — and it throws its colour onto the stone around it. Jewel light in a black room; keep the contrast enormous.\n\nThe music is the building's own organ. Open on a single held pedal note in a dark minor and let the voices enter one at a time above it — a real tune, in real counterpoint, the way an organ is actually played — with choir and bell weight for the swells, and one voice held back all night so the ending has somewhere to arrive. There is no percussion under any of this; the pulse is the counterpoint moving. The player's locks, shots, and kills are organ voices too — notes inside the polyphony.\n\nPast the middle, the nave goes quiet: a long dark empty span, one voice, almost nothing on screen, so the finale has something to break.\n\nBoss: the thing doing this is nested in the dead rose window at the west end, holding every colour it has taken. Break it open. When it dies the rose window ignites all at once — the biggest single event in the level — every rank of the organ opens, the minor turns major, and the run ends in a lit cathedral."
     }
   ],
   "entrants": [
@@ -1853,6 +1875,142 @@
       "thumbnailPath": "/level-content/speedsolve-zq4n/hero.avif",
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+    },
+    {
+      "levelId": "vespers-c8vr",
+      "themeId": "vespers",
+      "configurationId": "agy-gemini-3-6-flash-high",
+      "modelName": "Gemini 3.6 Flash",
+      "workflowName": "solo",
+      "generationCost": 2.76769785,
+      "linesOfCode": 1183,
+      "run": {
+        "generationWallTimeSeconds": 207.697,
+        "totalWallTimeSeconds": 242.046,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Antigravity CLI",
+          "version": "1.1.7"
+        },
+        "models": [
+          {
+            "modelName": "gemini-3.6-flash",
+            "role": "solo",
+            "inputTokens": 573533,
+            "outputTokens": 20223,
+            "cacheReadTokens": 8527589,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 63545,
+            "costUsd": 2.76769785
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/vespers-c8vr/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "vespers-p6bt",
+      "themeId": "vespers",
+      "configurationId": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "generationCost": 35.0827625,
+      "linesOfCode": 3664,
+      "run": {
+        "generationWallTimeSeconds": 3589,
+        "totalWallTimeSeconds": 3812.843,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.220"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 5971,
+            "outputTokens": 258240,
+            "cacheReadTokens": 46529215,
+            "cacheWriteTokens": 533230,
+            "usageSource": "agreed",
+            "costUsd": 35.0827625
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/vespers-p6bt/hero.avif",
+      "featured": true,
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "vespers-r7ax",
+      "themeId": "vespers",
+      "configurationId": "codex-sol-max",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 12.102682,
+      "linesOfCode": 2751,
+      "run": {
+        "generationWallTimeSeconds": 1964.315,
+        "totalWallTimeSeconds": 2093.816,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 362992,
+            "outputTokens": 83579,
+            "cacheReadTokens": 15560704,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 25587
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/vespers-r7ax/hero.avif",
+      "entrantBaseline": "1bed52749dc8ce9ea906b603894f6acf6854b84f",
+      "materialsCommit": "83bb6e525e0812a66759d56689880099d31a07fd"
+    },
+    {
+      "levelId": "vespers-t5xw",
+      "themeId": "vespers",
+      "configurationId": "claude-fable-5-high",
+      "modelName": "Claude Fable 5",
+      "workflowName": "solo",
+      "generationCost": 52.61433,
+      "linesOfCode": 3424,
+      "run": {
+        "generationWallTimeSeconds": 3045.658,
+        "totalWallTimeSeconds": 3238.777,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.220"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "solo",
+            "inputTokens": 199,
+            "outputTokens": 227356,
+            "cacheReadTokens": 31840480,
+            "cacheWriteTokens": 470203,
+            "usageSource": "agreed",
+            "costUsd": 52.61433
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/vespers-t5xw/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     }
   ]
 }
