@@ -49,7 +49,7 @@ const plan = {
   entrantBaseline: 'd'.repeat(40),
   runs: [{
     runId: 'run-a1b2c3d4', slotId: 'a1b2', levelId: 'cinder-a1b2', themeId: 'cinder', themePath: 'benchmark/themes/cinder.md',
-    configurationId: 'codex-terra-high', recipePath: 'benchmark/recipes/codex-terra-high.md',
+    configurationId: 'codex-terra-high', recipePath: 'benchmark/recipes/codex-cli.md',
     stage: { adapter: 'codex-cli', model: 'gpt-5.6-terra', effort: 'high', timeoutSeconds: 10_800 },
   }],
 };
@@ -70,7 +70,7 @@ const synthesisRow = {
   levelId: 'mass-driver-detailed-a1b2',
   themeId: 'mass-driver-detailed',
   themePath: 'benchmark/themes/mass-driver-detailed.md',
-  recipePath: 'benchmark/recipes/codex-sol-high.md',
+  recipePath: 'benchmark/recipes/codex-cli.md',
   entrantBaseline: 'e'.repeat(40),
 };
 const synthesizedOverride = await synthesizeDefinition(synthesisPlan, synthesisRow, synthesisMaterialsCommit);
@@ -157,7 +157,7 @@ async function assertContinuationOptionGuards() {
       themeId: 'cinder',
       themePath: 'benchmark/themes/cinder.md',
       configurationId: 'codex-terra-high',
-      recipePath: 'benchmark/recipes/codex-terra-high.md',
+      recipePath: 'benchmark/recipes/codex-cli.md',
       levelTitle: 'Cinder',
       stage: { adapter: 'codex-cli', model: 'model', effort: 'high', timeoutSeconds: 1 },
     }, null, 2)}\n`);

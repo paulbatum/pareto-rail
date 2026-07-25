@@ -11,10 +11,11 @@ import { Markdown, markdownRegion } from '../components/Markdown';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
-  const rankPreviewHeroes = ['mass-driver-vyxj', 'mass-driver-wo4m'].flatMap((levelId) => {
-    const entrant = allCatalogEntrants(rankCatalog).find((candidate) => candidate.levelId === levelId);
-    return entrant?.thumbnailPath ? [entrant.thumbnailPath] : [];
-  });
+  // Derived rather than named: an entrant baseline empties the catalog, and naming
+  // ids here both broke the preview and leaked other entrants' ids into the checkout.
+  const rankPreviewHeroes = allCatalogEntrants(rankCatalog)
+    .flatMap((entrant) => (entrant.thumbnailPath ? [entrant.thumbnailPath] : []))
+    .slice(0, 2);
 
   return (
     <>

@@ -26,6 +26,15 @@ export const SCRUBBED_BENCHMARK_SCAFFOLD_PATHS = [
   `${BENCHMARK_SOURCE_ROOT}/validation.ts`,
 ];
 
+// The controller's own harness and the corpus-enumerating suites. An entrant needs
+// none of it — `scaffold`, `check:scope`, and `check:floor` all live outside these
+// paths — while leaving it in place hands an entrant other entrants' level ids, and
+// in the case of the contamination detector, exactly what the audit looks for.
+export const SCRUBBED_REMOVED_PATHS = [
+  'scripts/benchmark',
+  'src/benchmark/domain.test.ts',
+];
+
 /**
  * Benchmark levels: entrant-authored directories under src/benchmark-levels/<id>,
  * auto-discovered by Vite, each carrying its own level.json descriptor. This is the

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execFile, spawn } from 'node:child_process';
+import fsSync from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -13,6 +14,7 @@ import {
   LEVEL_CONTENT_ROOT,
   LEVEL_GALLERY_PATH,
   SCRUBBED_BENCHMARK_SCAFFOLD_PATHS,
+  SCRUBBED_REMOVED_PATHS,
 } from './protocol.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -74,10 +76,62 @@ async function scrubWorktree(worktree, builtInIds) {
     if (!builtInIds.has(entry.name)) await fs.rm(path.join(contentRoot, entry.name), { recursive: true, force: true });
   }
 
+  for (const removed of SCRUBBED_REMOVED_PATHS) {
+    await fs.rm(path.join(worktree, removed), { recursive: true, force: true });
+  }
+  await pruneDanglingScripts(worktree);
+  await pruneDanglingDocReferences(worktree);
+
   // The gallery is built-in only by construction; regenerating it here writes
   // the cards in this commit's registry order.
   await runProcess('npm', ['run', 'gallery'], worktree);
   await reduceRankCatalog(worktree);
+}
+
+// A scrubbed checkout must not advertise commands it can no longer run. Every
+// package.json script naming a local path that the scrub removed is dropped,
+// which is what the entrant sees when it reads the manifest for its workflow.
+async function pruneDanglingScripts(worktree) {
+  const manifestPath = path.join(worktree, 'package.json');
+  const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+  const kept = {};
+  for (const [name, command] of Object.entries(manifest.scripts ?? {})) {
+    const missing = [...command.matchAll(/(?:^|[\s'"=])((?:\.\/)?(?:scripts|src)\/[\w./-]+\.(?:mjs|js|ts|tsx))/g)]
+      .map((match) => match[1].replace(/^\.\//, ''))
+      .filter((candidate, index, all) => all.indexOf(candidate) === index)
+      .filter((candidate) => !existsSyncish(path.join(worktree, candidate)));
+    if (missing.length === 0) kept[name] = command;
+  }
+  manifest.scripts = kept;
+  await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}
+
+// AGENTS.md is the first file most entrants read, so a bullet pointing at a
+// removed path costs real exploration effort — run-v3r4wjp8ce followed the
+// benchmark/README.md pointer, hit a missing file, and lost the rest of a
+// batched command to the non-zero exit.
+async function pruneDanglingDocReferences(worktree) {
+  for (const relative of ['AGENTS.md', 'CLAUDE.md']) {
+    const docPath = path.join(worktree, relative);
+    if (!await pathExists(docPath)) continue;
+    const original = await fs.readFile(docPath, 'utf8');
+    const kept = original.split('\n').filter((line) => !isRemovedPathListItem(line, worktree));
+    if (kept.length !== original.split('\n').length) await fs.writeFile(docPath, kept.join('\n'), 'utf8');
+  }
+}
+
+function isRemovedPathListItem(line, worktree) {
+  if (!/^\s*[-*]\s/.test(line)) return false;
+  // Only a slashed reference can dangle; a bare filename in prose names a convention.
+  const referenced = [...line.matchAll(/`([\w./-]+\.(?:md|mjs|js|ts|tsx|json))`/g)]
+    .map((match) => match[1])
+    .filter((candidate) => candidate.includes('/'));
+  return referenced.length > 0 && referenced.some((candidate) => !existsSyncish(path.join(worktree, candidate)));
+}
+
+function existsSyncish(target) {
+  try { fsSync.lstatSync(target); return true; }
+  catch { return false; }
 }
 
 async function reduceRankCatalog(worktree) {
@@ -92,7 +146,7 @@ async function reduceRankCatalog(worktree) {
 }
 
 function scrubCommitMessage(sourceCommit) {
-  return `Cut scrubbed entrant baseline from ${sourceCommit}\n\nScrubbed promoted benchmark levels, tracked benchmark records, non-built-in level content, and benchmark rank catalog entries; regenerated the built-in-only gallery and retained only the minimum benchmark catalog scaffold required by the application build.`;
+  return `Cut scrubbed entrant baseline from ${sourceCommit}\n\nScrubbed promoted benchmark levels, tracked benchmark records, non-built-in level content, benchmark rank catalog entries, the controller harness under scripts/benchmark, and the corpus-enumerating domain suite; dropped package.json scripts and doc list items left pointing at removed paths; regenerated the built-in-only gallery and retained only the minimum benchmark catalog scaffold required by the application build.`;
 }
 
 async function assertBranchAvailable(repo, branch) {

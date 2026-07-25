@@ -7,6 +7,7 @@ import {
   LEVEL_CONTENT_ROOT,
   LEVEL_GALLERY_PATH,
   SCRUBBED_BENCHMARK_SCAFFOLD_PATHS,
+  SCRUBBED_REMOVED_PATHS,
 } from './protocol.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -82,7 +83,59 @@ export async function scrubbedBaselineViolations({ repo = process.cwd(), baselin
     }
   }
 
+  for (const removed of SCRUBBED_REMOVED_PATHS) {
+    if (paths.some((name) => name === removed || name.startsWith(`${removed}/`))) {
+      violations.push({
+        path: removed,
+        reason: 'controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit',
+      });
+    }
+  }
+
+  // The scrub removes files; what escaped it before was the references left
+  // pointing at them. A dead pointer is not cosmetic — an entrant that follows
+  // one loses the rest of a batched command to the non-zero exit.
+  const tracked = new Set(paths);
+  if (tracked.has('package.json')) {
+    const manifest = JSON.parse(await gitShow(repo, commit, 'package.json'));
+    for (const [name, command] of Object.entries(manifest.scripts ?? {})) {
+      for (const referenced of localScriptPaths(command)) {
+        if (!tracked.has(referenced)) {
+          violations.push({ path: `package.json#scripts.${name}`, reason: `references removed path ${referenced}` });
+        }
+      }
+    }
+  }
+
+  for (const docPath of ['AGENTS.md', 'CLAUDE.md']) {
+    if (!tracked.has(docPath)) continue;
+    const source = await gitShow(repo, commit, docPath);
+    for (const [index, line] of source.split('\n').entries()) {
+      if (!/^\s*[-*]\s/.test(line)) continue;
+      for (const referenced of backtickedPaths(line)) {
+        if (!tracked.has(referenced)) {
+          violations.push({ path: `${docPath}:${index + 1}`, reason: `references removed path ${referenced}` });
+        }
+      }
+    }
+  }
+
   return violations;
+}
+
+function localScriptPaths(command) {
+  return [...command.matchAll(/(?:^|[\s'"=])((?:\.\/)?(?:scripts|src)\/[\w./-]+\.(?:mjs|js|ts|tsx))/g)]
+    .map((match) => match[1].replace(/^\.\//, ''))
+    .filter((candidate, index, all) => all.indexOf(candidate) === index);
+}
+
+function backtickedPaths(line) {
+  // A bare filename in prose (`level.json`, `index.ts`) names a convention, not a
+  // repository path; only a slashed reference can dangle.
+  return [...line.matchAll(/`([\w./-]+\.(?:md|mjs|js|ts|tsx|json))`/g)]
+    .map((match) => match[1])
+    .filter((candidate) => candidate.includes('/'))
+    .filter((candidate, index, all) => all.indexOf(candidate) === index);
 }
 
 /** Throw the launch-guard error for a scrubbed policy baseline. */
