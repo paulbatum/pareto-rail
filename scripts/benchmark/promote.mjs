@@ -15,7 +15,7 @@ import {
   sha256,
 } from './common.mjs';
 import { manifestErrors } from './results.mjs';
-import { benchmarkLevelFootprint } from './protocol.mjs';
+import { benchmarkLevelFootprint } from '../level-footprint.mjs';
 import { convertPngToAvif } from '../png-to-avif.mjs';
 
 const execFileAsync = promisify(execFile);

@@ -3,14 +3,15 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { benchmarkLevelFootprint, builtInLevelFootprint } from './benchmark/protocol.mjs';
+import { benchmarkLevelFootprint, builtInLevelFootprint } from './level-footprint.mjs';
 
 const execFileAsync = promisify(execFile);
 
 // The invocation form selects the footprint: the positional form checks a built-in
 // level (src/levels/<id> plus the registry index), the flag form checks a benchmark
-// entrant (src/benchmark-levels/<id>). This checker and protocol.mjs travel together
-// in the isolated entrant checkout.
+// entrant (src/benchmark-levels/<id>). This checker and level-footprint.mjs travel
+// together in the isolated entrant checkout, which is why the footprints live outside
+// scripts/benchmark: the scrub takes that directory with it.
 export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD', builtIn = false } = {}) {
   if (!levelId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(levelId)) throw new Error('A safe benchmark level id is required.');
   const footprint = builtIn ? builtInLevelFootprint(levelId) : benchmarkLevelFootprint(levelId);

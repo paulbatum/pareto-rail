@@ -265,13 +265,13 @@ async function createFixture({ payloadWorktree = false, rehearsal = false, paylo
   await fs.mkdir(path.join(root, 'src/levels'), { recursive: true });
   await fs.mkdir(path.join(root, 'src/benchmark-levels'), { recursive: true });
   await fs.mkdir(path.join(root, 'docs'), { recursive: true });
-  await fs.mkdir(path.join(root, 'scripts/benchmark'), { recursive: true });
+  await fs.mkdir(path.join(root, 'scripts'), { recursive: true });
   await writeText(path.join(root, '.gitignore'), 'benchmark/private/\n');
   await writeText(path.join(root, 'package.json'), JSON.stringify({ name: 'synthetic-promotion', scripts: { typecheck: 'node -e ""', build: 'node -e ""', 'check:floor': 'node -e "process.exit(0)" --' } }, null, 2) + '\n');
   await writeText(path.join(root, 'src/levels/index.ts'), "export const levelMetadatas = [{ id: 'built-in-level', title: 'Built-in Level', aliases: ['built-in'], kind: 'playable' }];\n");
   await writeText(path.join(root, 'docs/level-gallery.md'), GALLERY);
   await fs.copyFile(path.join(HERE, 'scripts/check-benchmark-scope.mjs'), path.join(root, 'scripts/check-benchmark-scope.mjs'));
-  await fs.copyFile(path.join(HERE, 'scripts/benchmark/protocol.mjs'), path.join(root, 'scripts/benchmark/protocol.mjs'));
+  await fs.copyFile(path.join(HERE, 'scripts/level-footprint.mjs'), path.join(root, 'scripts/level-footprint.mjs'));
   await git(root, ['init', '-q']);
   await git(root, ['config', 'user.name', 'Synthetic Promotion Test']);
   await git(root, ['config', 'user.email', 'synthetic@example.test']);

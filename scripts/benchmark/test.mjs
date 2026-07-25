@@ -13,7 +13,10 @@ import { summarizeAgyCost } from './tokscale-cost.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
-import { BENCHMARK_SOURCE_ROOT, BUILT_IN_SOURCE_ROOT } from './protocol.mjs';
+import {
+  BENCHMARK_SOURCE_ROOT,
+  BUILT_IN_SOURCE_ROOT,
+} from '../level-footprint.mjs';
 import { createWorktree, derivePayload, sealEvaluatedCommit } from './admin.mjs';
 import { pruneRun } from './manage-run.mjs';
 import { sha256 } from './common.mjs';
