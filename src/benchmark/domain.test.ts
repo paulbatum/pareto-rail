@@ -41,6 +41,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testFeaturedFirstMatchup();
   testFeaturedThemeCoverage();
   testNewcomerAnchoring();
+  testCoverageSpreadsAcrossThemes();
   testCatchUpScheduling();
   testNewThemeCoverage();
   testEachPairServedOnceThenExhausts();
@@ -411,6 +412,52 @@ function testNewcomerAnchoring(): void {
   assert.equal(curve.points.find((point) => point.configurationId === 'configuration-4')?.status === 'pending', false);
   assert.equal(curve.points.find((point) => point.configurationId === 'configuration-5')?.status === 'pending', false);
   for (const configurationId of establishedPlaced) assert.notEqual(curve.points.find((point) => point.configurationId === configurationId)?.status, 'pending');
+}
+
+function testCoverageSpreadsAcrossThemes(): void {
+  // Theme demand is capped at the two unseen levels a wholly fresh pairing
+  // needs, so a large theme cannot outrank a small one on entrant count alone.
+  // Without the cap the eight-entrant theme wins every opening comparison and
+  // the configurations that appear only in the small theme are never compared.
+  const uneven = unevenThemePool();
+  const openings = new Map<string, number>();
+  const smallOnly = new Set(['configuration-8', 'configuration-9']);
+  const smallOnlySeen = new Set<string>();
+  for (let index = 0; index < 24; index += 1) {
+    const first = nextScheduledMatchup(uneven, `participant-${index}`, {});
+    assert.ok(first);
+    openings.set(first!.themeId, (openings.get(first!.themeId) ?? 0) + 1);
+    for (const levelId of [first!.levelIdA, first!.levelIdB]) {
+      const configurationId = uneven.entrants.find((entrant) => entrant.levelId === levelId)!.configurationId;
+      if (smallOnly.has(configurationId)) smallOnlySeen.add(configurationId);
+    }
+  }
+  assert.deepEqual([...openings.keys()].sort(), ['theme-big', 'theme-small'], 'opening comparisons reach the small theme, not only the largest');
+  assert.deepEqual([...smallOnlySeen].sort(), ['configuration-8', 'configuration-9'], 'configurations that appear only in a small theme get compared');
+
+  // Equal claims are ordered per participant, so visitors in the same position
+  // do not all open in whichever theme sorts first by id.
+  const even = makeSchedulerCatalog(4, 3);
+  const evenOpenings = new Set(Array.from({ length: 24 }, (_, index) => nextScheduledMatchup(even, `participant-${index}`, {})!.themeId));
+  assert.equal(evenOpenings.size, even.themes.length, 'equally sized themes all host some opening comparison');
+}
+
+function unevenThemePool(): SchedulingPool {
+  const entrant = (themeId: string, index: number): RankCatalogEntrant => ({
+    levelId: `${themeId}-${index}`,
+    themeId,
+    configurationId: `configuration-${index}`,
+    modelName: `Model ${index}`,
+    workflowName: 'solo',
+    generationCost: index + 1,
+  });
+  return {
+    themes: ['theme-big', 'theme-small'].map((id) => ({ id, title: id, summary: 'S', prompt: 'P' })),
+    entrants: [
+      ...Array.from({ length: 8 }, (_, index) => entrant('theme-big', index)),
+      ...Array.from({ length: 2 }, (_, index) => entrant('theme-small', 8 + index)),
+    ],
+  };
 }
 
 function testCatchUpScheduling(): void {
