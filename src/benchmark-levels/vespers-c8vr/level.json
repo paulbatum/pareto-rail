@@ -1,4 +1,9 @@
 {
   "id": "vespers-c8vr",
-  "title": "Vespers"
+  "title": "Vespers",
+  "contentImages": {
+    "overview": "/level-content/vespers-c8vr/overview.avif",
+    "start": "/level-content/vespers-c8vr/start.avif",
+    "hero": "/level-content/vespers-c8vr/hero.avif"
+  }
 }
