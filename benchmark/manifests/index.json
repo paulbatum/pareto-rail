@@ -116,6 +116,12 @@
       "configurationId": "claude-opus-5-high"
     },
     {
+      "runId": "opus5-high-solve-p4tn",
+      "levelId": "speedsolve-p4tn",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-5-high"
+    },
+    {
       "runId": "opus5-high-strandline-s3vn",
       "levelId": "strandline-s3vn",
       "themeId": "strandline",

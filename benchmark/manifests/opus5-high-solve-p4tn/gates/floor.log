@@ -1,0 +1,25 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level speedsolve-p4tn
+
+Speedsolve floor check
+duration 60.0s; spawned kinds 7: bolt, core, facet, octa, prism, tetra, weakpoint
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=1.2
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: 0.1 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, updateCameraEffects, playerHealth, detailsForRun
+  identity hooks [default]: updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.

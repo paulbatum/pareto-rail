@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "6195f8e56b19a44507b0601cb69896fbdcc6fb7c9b4c4b9cf318cb60d53c396c",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 22.150800333999992,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level speedsolve-p4tn\n\nSpeedsolve floor check\nduration 60.0s; spawned kinds 7: bolt, core, facet, octa, prism, tetra, weakpoint\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp [default]\n    gapThirtyseconds=2 [default]\n    releaseShare=0.75 [default]\n    gridRampGapGrowthThirtyseconds=2 [default]\n    maxGridSeconds=1.2\n  action SFX snap: [default] (enabled, 32nd grid)\n  lock radius: 0.1 NDC (engine default 0.085); reticle visual 0.087 NDC = 0.87x lock radius, no reticle scaling\n  words: start \"SOLVE!\" (6), replay \"RESET!\" (6); MAX_LOCKS 6\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, updateCameraEffects, playerHealth, detailsForRun\n  identity hooks [default]: updateAttractCamera, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 0\nreticle warnings: 0\nstart/replay word warnings: 0\nAll floor checks passed.\n",
+  "stderr": ""
+}

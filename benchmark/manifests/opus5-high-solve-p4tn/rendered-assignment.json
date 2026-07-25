@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "6972ad1b2a49900d50a04395d58b92df34cccf06dfe3c4ab1f849e32062a4169"
+  },
+  "theme": {
+    "path": "benchmark/themes/speedsolve.md",
+    "sha256": "5ab6f77afe7eadd9fa61c9f0218516a16967cf4aa526698060344154261c8b0b"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-opus-5-high.md",
+    "sha256": "7649b65c91194950766771fdae91ff390505d05b7aaf817f51502b8845b677c4"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/opus5-high-solve-p4tn/rendered-assignment.md",
+    "sha256": "95d685b335d9ac89bf233f8ea20db0095092544d03efc887d10cb97d2106a21d"
+  },
+  "baseRendering": {
+    "sha256": "95d685b335d9ac89bf233f8ea20db0095092544d03efc887d10cb97d2106a21d"
+  }
+}

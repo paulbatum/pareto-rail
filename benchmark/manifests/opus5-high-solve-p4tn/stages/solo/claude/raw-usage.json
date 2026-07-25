@@ -1,0 +1,123 @@
+{
+  "sessionId": "e2d85d06-70ac-4750-910b-7bff4f8d994c",
+  "initResolvedModel": "claude-opus-5",
+  "finalMessage": "**Speedsolve** is built at `src/benchmark-levels/speedsolve-p4tn/`. It's one continuous boss fight against a colossal twisting cube.\n\n## What it is\n\nA 60.000-second run (144 BPM, exactly 36 bars). The rail corkscrews around a colossal 3×3×3 puzzle cube hanging in a pale, softly lit hall, and the world rolls 60° at each of six face swings — a full turn over the run.\n\nPer face (5 bars): a three-quarter-bar swing rolls the world, quarter-turns the cube, and riffles the incoming face into its scramble. Four squares arrive wrong and glow. Destroying any of them snaps a real quarter turn of that layer **on the next beat** — order never matters — and after four the face is one colour, blows its nine caps off in a shower of loose cubies, and lifts a two-stage weakpoint piston out of the socket underneath. At bar 32 the 26-cubie shell blooms open into a ring and the naked core takes the last barrage, bursting into confetti.\n\nThe cube is real: 26 cubie bodies on a lattice with 54 colour caps, and a layer turn rotates nine cubies 90° and bakes the result back, so caps ride their cubie the way stickers ride a real cube. `cube.ts` is pure state (no meshes) so the headless simulator sees exactly the target positions a player does.\n\n**Musically**, one `snap` voice is both the track's backbeat and the sound of a layer landing — rotations are scheduled onto the next quarter note, so a snap you cause is indistinguishable from one the arrangement was going to play. Locks climb the live chord, kills walk a hidden two-bar melodic lane, and each face *actually conquered* buys an extra counter-melody on top of the per-section layering.\n\n## Verified headless\n\n`typecheck`, `build`, `validate:level-catalog`, `check:benchmark-scope` (19 paths, in scope), `trace:audio` (144 beats in 60 s, layers entering on schedule), and `check:floor` — all pass. 7 enemy kinds, full event coverage, no dead-air gaps, **0** occlusion warnings, **0** centerness/distance warnings, all perf gates green (217 peak draw calls of 500). Rank ladder: perfect 78/78 → S, imperfect 58/78 → B, no-fire → D.\n\nThree things I want to flag from the build: the engine forwards `post.bloom.threshold`/`radius` to three's `bloom()` in swapped order (harmless on dark levels, a total whiteout on a pale one — `index.ts` has a comment and I saved a memory); the headless `perfect` policy locks each target once and stalls on any unlockable target near screen centre, so dormant weakpoints are parked out of frame; and I disposed per-spawn enemy/projectile geometry, which cut geometry growth from +427 to +14.\n\n## Needs a human WebGPU playtest\n\nWSL2 can't render WebGPU, so I used the SwiftShader snapshot path — good enough to catch and fix a full-frame whiteout, oversized bolts, and unreadable letters, not good enough to judge feel or mix. First things to check by hand:\n\n1. Does a layer snap read as landing **on** the beat?\n2. Do the four wrong squares stay legible against the white cubie bodies with the bloom slider at zero?\n3. Does the 60° roll read as swinging *around* the cube, or as the camera tipping over?\n4. Does a conquered face blowing off its caps land as a payoff, and does the confetti finish? — these two moments are the only things no headless capture could show me, since the snapshot tool never fires a shot.\n\nGallery images are at `public/level-content/speedsolve-p4tn/` (hero, start, overview) and `docs/level-gallery.md` is regenerated.",
+  "eventType": "result",
+  "raw": {
+    "is_error": false,
+    "duration_api_ms": 4757830,
+    "num_turns": 234,
+    "stop_reason": "end_turn",
+    "session_id": "e2d85d06-70ac-4750-910b-7bff4f8d994c",
+    "total_cost_usd": 63.04668199999999,
+    "usage": {
+      "input_tokens": 15425,
+      "cache_creation_input_tokens": 665526,
+      "cache_read_input_tokens": 94932556,
+      "output_tokens": 353868,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 665526,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1282,
+          "cache_read_input_tokens": 680611,
+          "cache_creation_input_tokens": 408,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 408
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1244,
+        "outputTokens": 15,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001319,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000,
+        "canonicalModel": "claude-haiku-4-5",
+        "provider": "firstParty"
+      },
+      "claude-opus-5": {
+        "inputTokens": 15425,
+        "outputTokens": 353868,
+        "cacheReadInputTokens": 94932556,
+        "cacheCreationInputTokens": 665526,
+        "webSearchRequests": 0,
+        "costUSD": 63.045362999999995,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-opus-5",
+        "provider": "firstParty"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Speedsolve** is built at `src/benchmark-levels/speedsolve-p4tn/`. It's one continuous boss fight against a colossal twisting cube.\n\n## What it is\n\nA 60.000-second run (144 BPM, exactly 36 bars). The rail corkscrews around a colossal 3×3×3 puzzle cube hanging in a pale, softly lit hall, and the world rolls 60° at each of six face swings — a full turn over the run.\n\nPer face (5 bars): a three-quarter-bar swing rolls the world, quarter-turns the cube, and riffles the incoming face into its scramble. Four squares arrive wrong and glow. Destroying any of them snaps a real quarter turn of that layer **on the next beat** — order never matters — and after four the face is one colour, blows its nine caps off in a shower of loose cubies, and lifts a two-stage weakpoint piston out of the socket underneath. At bar 32 the 26-cubie shell blooms open into a ring and the naked core takes the last barrage, bursting into confetti.\n\nThe cube is real: 26 cubie bodies on a lattice with 54 colour caps, and a layer turn rotates nine cubies 90° and bakes the result back, so caps ride their cubie the way stickers ride a real cube. `cube.ts` is pure state (no meshes) so the headless simulator sees exactly the target positions a player does.\n\n**Musically**, one `snap` voice is both the track's backbeat and the sound of a layer landing — rotations are scheduled onto the next quarter note, so a snap you cause is indistinguishable from one the arrangement was going to play. Locks climb the live chord, kills walk a hidden two-bar melodic lane, and each face *actually conquered* buys an extra counter-melody on top of the per-section layering.\n\n## Verified headless\n\n`typecheck`, `build`, `validate:level-catalog`, `check:benchmark-scope` (19 paths, in scope), `trace:audio` (144 beats in 60 s, layers entering on schedule), and `check:floor` — all pass. 7 enemy kinds, full event coverage, no dead-air gaps, **0** occlusion warnings, **0** centerness/distance warnings, all perf gates green (217 peak draw calls of 500). Rank ladder: perfect 78/78 → S, imperfect 58/78 → B, no-fire → D.\n\nThree things I want to flag from the build: the engine forwards `post.bloom.threshold`/`radius` to three's `bloom()` in swapped order (harmless on dark levels, a total whiteout on a pale one — `index.ts` has a comment and I saved a memory); the headless `perfect` policy locks each target once and stalls on any unlockable target near screen centre, so dormant weakpoints are parked out of frame; and I disposed per-spawn enemy/projectile geometry, which cut geometry growth from +427 to +14.\n\n## Needs a human WebGPU playtest\n\nWSL2 can't render WebGPU, so I used the SwiftShader snapshot path — good enough to catch and fix a full-frame whiteout, oversized bolts, and unreadable letters, not good enough to judge feel or mix. First things to check by hand:\n\n1. Does a layer snap read as landing **on** the beat?\n2. Do the four wrong squares stay legible against the white cubie bodies with the bloom slider at zero?\n3. Does the 60° roll read as swinging *around* the cube, or as the camera tipping over?\n4. Does a conquered face blowing off its caps land as a payoff, and does the confetti finish? — these two moments are the only things no headless capture could show me, since the snapshot tool never fires a shot.\n\nGallery images are at `public/level-content/speedsolve-p4tn/` (hero, start, overview) and `docs/level-gallery.md` is regenerated.",
+    "ttft_ms": 1912,
+    "ttft_stream_ms": 1406,
+    "time_to_request_ms": 80,
+    "type": "result",
+    "duration_ms": 5191512,
+    "uuid": "8e1c15da-3166-4ecb-8240-5a3ecace6702"
+  },
+  "normalized": {
+    "inputTokens": 94947981,
+    "outputTokens": 353868,
+    "cacheReadInputTokens": 94932556,
+    "cacheWriteInputTokens": 665526,
+    "vendorFields": {
+      "totalCostUsd": 63.04668199999999,
+      "durationMs": 5191512,
+      "durationApiMs": 4757830,
+      "numTurns": 234,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1244,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001319,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty"
+        },
+        "claude-opus-5": {
+          "inputTokens": 15425,
+          "outputTokens": 353868,
+          "cacheReadInputTokens": 94932556,
+          "cacheCreationInputTokens": 665526,
+          "webSearchRequests": 0,
+          "costUSD": 63.045362999999995,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-opus-5",
+          "provider": "firstParty"
+        }
+      }
+    }
+  }
+}

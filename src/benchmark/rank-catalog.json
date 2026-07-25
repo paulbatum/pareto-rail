@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-24T23:56:33.086Z",
+  "generatedAt": "2026-07-25T00:10:37.744Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1716,6 +1716,41 @@
       "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+    },
+    {
+      "levelId": "speedsolve-p4tn",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "generationCost": 63.045363,
+      "linesOfCode": 3771,
+      "run": {
+        "generationWallTimeSeconds": 5192.672,
+        "totalWallTimeSeconds": 5286.096,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.219"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 15425,
+            "outputTokens": 353868,
+            "cacheReadTokens": 94932556,
+            "cacheWriteTokens": 665526,
+            "usageSource": "agreed",
+            "costUsd": 63.045363
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/speedsolve-p4tn/hero.avif",
+      "featured": true,
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "4673765e0155cd1052d163becfc70fa2845ee195"
     },
     {
       "levelId": "speedsolve-q7ld",
