@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-v3t5xwqebm",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:48.943Z",
+      "data": {
+        "source": {
+          "runId": "run-v3t5xwqebm",
+          "slotId": "t5xw",
+          "themeId": "vespers",
+          "levelId": "vespers-t5xw",
+          "title": "Vespers",
+          "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+          "evaluatedCommit": "fa9686bfbba600d6cfd2771c9e03fa5bb5143536",
+          "payloadCommit": "3891d48d832cc67395f3784198c07a064d3c5b8b",
+          "manifestSha256": "8390212908d0626e047cb1da0e8bc79f6dfdee719557b585b4f73cb842160294",
+          "definitionSha256": "f961fd5f38a93aeddddddd2a04c65d73fc796ebbf38a08a41af3353df0648899",
+          "evaluatedSha256": "924ba049899a5b901b0d8f2a599a7c0abe23213ea3d2117d4cc0b0e1c50bcf5d",
+          "payloadSha256": "e07d210c8714d3d1decb12acb01f6f1df6ddf4df569002b030d9ee52b5fb3404",
+          "payloadDiffSha256": "8038ca15f6aba2acc8d2957043f7356b10244f7397b035f9ea1fded788da8522",
+          "sourcePath": "src/benchmark-levels/vespers-t5xw/",
+          "destinationPath": "src/benchmark-levels/vespers-t5xw/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/vespers-t5xw",
+              "promotedPath": "src/benchmark-levels/vespers-t5xw",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/vespers-t5xw",
+              "promotedPath": "public/level-content/vespers-t5xw",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "2b66c8a8a0f987b58adb95d5e288110a984ac0b4"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:49.061Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/vespers-t5xw/",
+            "files": 15,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:49.063Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:49.131Z",
+      "data": {
+        "destination": "src/benchmark-levels/vespers-t5xw/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:50:35.961Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.897420332,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "e2cb0c139adf20da6dda8115dfec98457c5449be82b07d87334876503a9e6304",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 19.100466675000003,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-t5xw --base 2b66c8a8a0f987b58adb95d5e288110a984ac0b4",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.06225071200000093,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level vespers-t5xw",
+            "exitCode": 0,
+            "stdoutSha256": "64c55c59a53bf34f42be23b91c8f4106500834239a493e6c33d94872294cebc2",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 23.674419751,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:50:36.028Z",
+      "data": {
+        "promotionCommit": "bf13efe0898312dffcce2ab29d73958afe89c291",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-25T18:50:36.029Z",
+  "source": {
+    "runId": "run-v3t5xwqebm",
+    "slotId": "t5xw",
+    "themeId": "vespers",
+    "levelId": "vespers-t5xw",
+    "title": "Vespers",
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "evaluatedCommit": "fa9686bfbba600d6cfd2771c9e03fa5bb5143536",
+    "payloadCommit": "3891d48d832cc67395f3784198c07a064d3c5b8b",
+    "manifestSha256": "8390212908d0626e047cb1da0e8bc79f6dfdee719557b585b4f73cb842160294",
+    "definitionSha256": "f961fd5f38a93aeddddddd2a04c65d73fc796ebbf38a08a41af3353df0648899",
+    "evaluatedSha256": "924ba049899a5b901b0d8f2a599a7c0abe23213ea3d2117d4cc0b0e1c50bcf5d",
+    "payloadSha256": "e07d210c8714d3d1decb12acb01f6f1df6ddf4df569002b030d9ee52b5fb3404",
+    "payloadDiffSha256": "8038ca15f6aba2acc8d2957043f7356b10244f7397b035f9ea1fded788da8522",
+    "sourcePath": "src/benchmark-levels/vespers-t5xw/",
+    "destinationPath": "src/benchmark-levels/vespers-t5xw/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/vespers-t5xw",
+        "promotedPath": "src/benchmark-levels/vespers-t5xw",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/vespers-t5xw",
+        "promotedPath": "public/level-content/vespers-t5xw",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "2b66c8a8a0f987b58adb95d5e288110a984ac0b4"
+  },
+  "promotionCommit": "bf13efe0898312dffcce2ab29d73958afe89c291"
+}

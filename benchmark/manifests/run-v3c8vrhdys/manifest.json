@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v3c8vrhdys",
+  "slotId": "c8vr",
+  "configuration": {
+    "id": "agy-gemini-3-6-flash-high"
+  },
+  "theme": {
+    "id": "vespers",
+    "path": "benchmark/themes/vespers.md",
+    "sha256": "c0866c43804268b700a568a31382462e4e50b2500b99bd2148d88924e0adc83f"
+  },
+  "baseline": {
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/agy-cli.md",
+    "sha256": "45e5844e6de4ac07558dac566a76baff376ab24700b11a2842e7c1e016cac366"
+  },
+  "controller": {
+    "commit": "cf4e1e74bf1ba712a2f994ff741f06bf141166f8"
+  },
+  "timing": {
+    "startedAt": "2026-07-25T08:23:22.111Z",
+    "finishedAt": "2026-07-25T08:27:24.157Z",
+    "wallTimeSeconds": 242.046
+  },
+  "stages": [
+    {
+      "id": "gemini-3.6-flash",
+      "role": "solo",
+      "model": {
+        "provider": "Google Antigravity subscription",
+        "snapshotId": "gemini-3.6-flash"
+      },
+      "promptSha256": "916adead40ec49c0313d56390b77bc431125125ef026a3a7f7d17f8281248a54",
+      "harness": {
+        "name": "Antigravity CLI",
+        "version": "1.1.7"
+      },
+      "sessionId": "9d7605e6-34bf-4bb1-97fe-a901def07202",
+      "rolloutArtifactSha256": "30f01713b27fe3776717bae87f0fde22d81e48bfabadd76f1f1bcac976b5ec20",
+      "outputArtifactSha256": "d97beb73c6ecb32beb59fee27cf552926dfa684d5eaedf35db0d937979b7d152",
+      "startedAt": "2026-07-25T08:23:32.562Z",
+      "finishedAt": "2026-07-25T08:27:12.435Z",
+      "wallTimeSeconds": 207.69652894299998,
+      "result": "completed",
+      "entrantSandbox": false,
+      "sandboxUnavailable": true,
+      "usage": {
+        "inputTokens": 573533,
+        "outputTokens": 20223,
+        "cacheReadInputTokens": 8527589,
+        "reasoningTokens": 63545
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 2.7676978500000007,
+        "source": "tokscale"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 2.7676978500000007,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "tokscale",
+      "version": "4.7.0",
+      "view": "antigravity-cli",
+      "command": "tokscale models --home <run harness home> --json",
+      "basis": "rate-card"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gemini-3.6-flash",
+        "costUsd": 2.7676978500000007,
+        "inputTokens": 573533,
+        "outputTokens": 20223,
+        "cacheReadTokens": 8527589,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 63545
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.465649819,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.898503374,
+      "outputSha256": "21b13c92790709650e95d61c7995fb1fe1cdd59b38d5b4eebf04418b3f87c205"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-c8vr --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03424744899999951,
+      "outputSha256": "4d819287dd191c0fe6f2165d8d0c302d18af362f513f441ec167130407207e49"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level vespers-c8vr",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 4.318894813000001,
+      "outputSha256": "70e5d5416227a98be7f25dcea65648b6655925c6ee0e085e989065fec2aedd9e"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "vespers-c8vr",
+    "title": "Vespers",
+    "evaluated": {
+      "commit": "dc12262d9a375743cea9df4b14a7937c64b8add8",
+      "branch": "benchmark-run-run-v3c8vrhdys"
+    },
+    "payload": {
+      "commit": "45f77df94b630e3fe7fe2ef2a6139f2f3f6c9598",
+      "branch": "benchmark-payload-run-v3c8vrhdys"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

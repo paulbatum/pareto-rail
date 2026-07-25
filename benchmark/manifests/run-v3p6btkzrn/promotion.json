@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-v3p6btkzrn",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:47:19.061Z",
+      "data": {
+        "source": {
+          "runId": "run-v3p6btkzrn",
+          "slotId": "p6bt",
+          "themeId": "vespers",
+          "levelId": "vespers-p6bt",
+          "title": "Vespers",
+          "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+          "evaluatedCommit": "6995a0a5e874ccaf6ece6a7ff3e7c75132422a3c",
+          "payloadCommit": "fb32d17855a971321aa594ee2cb253bf73fcc12c",
+          "manifestSha256": "51db8e02c8a6c929ae8ff7d443be38e9b9414eb982bb4d81fa75df4221382295",
+          "definitionSha256": "b99977885a97907272c9e2fdb4f0c711367c8bfa4809d93313cfd5be9a6b5e13",
+          "evaluatedSha256": "ec09ff789eec3e6a43c11463cbba7a7090889c4cfddd07bcc1461e9768a019bf",
+          "payloadSha256": "03eadceb7a0540b78eabddb457668e751ca70dfef7287539dbe596f16d1b5a26",
+          "payloadDiffSha256": "72b46b295542a8104a08ccec1884bc99f5f92d7e86f43726bd8b256fb48f732b",
+          "sourcePath": "src/benchmark-levels/vespers-p6bt/",
+          "destinationPath": "src/benchmark-levels/vespers-p6bt/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/vespers-p6bt",
+              "promotedPath": "src/benchmark-levels/vespers-p6bt",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/vespers-p6bt",
+              "promotedPath": "public/level-content/vespers-p6bt",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "10172db08dcaeea267ac9f79b4e75b0157143277"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:47:19.212Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/vespers-p6bt/",
+            "files": 19,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:47:19.215Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:47:19.317Z",
+      "data": {
+        "destination": "src/benchmark-levels/vespers-p6bt/",
+        "verifiedFiles": 19
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:48:05.732Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.029218367,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "2374050098dba9e277713090ae9bedc2fc7ad2c971e193ca1ce56601b79c33e1",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 18.542813756,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-p6bt --base 10172db08dcaeea267ac9f79b4e75b0157143277",
+            "exitCode": 0,
+            "stdoutSha256": "e37e3c8ba738e90bdfd178309da95b3c676f42b1df6f7b121be71738cbdaccf7",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.047720425999999865,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level vespers-p6bt",
+            "exitCode": 0,
+            "stdoutSha256": "05cfe9a87632570e3fe6f2948815846ce0df6aa99697fbf4ac14bda089b8fbd2",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 23.704921660999997,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:48:05.813Z",
+      "data": {
+        "promotionCommit": "203d428cc6347278503c9fed5516b9e876f66f97",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-25T18:48:05.814Z",
+  "source": {
+    "runId": "run-v3p6btkzrn",
+    "slotId": "p6bt",
+    "themeId": "vespers",
+    "levelId": "vespers-p6bt",
+    "title": "Vespers",
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "evaluatedCommit": "6995a0a5e874ccaf6ece6a7ff3e7c75132422a3c",
+    "payloadCommit": "fb32d17855a971321aa594ee2cb253bf73fcc12c",
+    "manifestSha256": "51db8e02c8a6c929ae8ff7d443be38e9b9414eb982bb4d81fa75df4221382295",
+    "definitionSha256": "b99977885a97907272c9e2fdb4f0c711367c8bfa4809d93313cfd5be9a6b5e13",
+    "evaluatedSha256": "ec09ff789eec3e6a43c11463cbba7a7090889c4cfddd07bcc1461e9768a019bf",
+    "payloadSha256": "03eadceb7a0540b78eabddb457668e751ca70dfef7287539dbe596f16d1b5a26",
+    "payloadDiffSha256": "72b46b295542a8104a08ccec1884bc99f5f92d7e86f43726bd8b256fb48f732b",
+    "sourcePath": "src/benchmark-levels/vespers-p6bt/",
+    "destinationPath": "src/benchmark-levels/vespers-p6bt/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/vespers-p6bt",
+        "promotedPath": "src/benchmark-levels/vespers-p6bt",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/vespers-p6bt",
+        "promotedPath": "public/level-content/vespers-p6bt",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "10172db08dcaeea267ac9f79b4e75b0157143277"
+  },
+  "promotionCommit": "203d428cc6347278503c9fed5516b9e876f66f97"
+}

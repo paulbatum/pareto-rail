@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v3r4wjp8ce",
+  "slotId": "r7ax",
+  "configuration": {
+    "id": "codex-sol-max"
+  },
+  "theme": {
+    "id": "vespers",
+    "path": "benchmark/themes/vespers.md",
+    "sha256": "c0866c43804268b700a568a31382462e4e50b2500b99bd2148d88924e0adc83f"
+  },
+  "baseline": {
+    "materialsCommit": "83bb6e525e0812a66759d56689880099d31a07fd",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "1bed52749dc8ce9ea906b603894f6acf6854b84f"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d604d10cfd3e531102fe0b5911082e755f3967ee858a10f596c6fb425f53189b"
+  },
+  "controller": {
+    "commit": "712404f9041571d41a30624f02ab8f374a7e5719"
+  },
+  "timing": {
+    "startedAt": "2026-07-25T06:40:20.888Z",
+    "finishedAt": "2026-07-25T07:15:14.704Z",
+    "wallTimeSeconds": 2093.816
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "4ff57bb33ccc3c303c6a6cc86554a4893beb6bdcb35c5b3bce490209fed484f2",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.145.0"
+      },
+      "sessionId": "019f9801-0d34-7c93-b011-0354721e820d",
+      "rolloutArtifactSha256": "32cb52a947970ff36061b442cba850fdc3325e6462e7610ec8e233baffc25fc6",
+      "outputArtifactSha256": "401a93cf428c97edeabda664ceab1292ca7a43ecdde7f8170d63c297edc73892",
+      "startedAt": "2026-07-25T06:40:31.407Z",
+      "finishedAt": "2026-07-25T07:14:59.644Z",
+      "wallTimeSeconds": 1964.3154251590001,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 362992,
+        "outputTokens": 83579,
+        "cacheReadInputTokens": 15560704,
+        "reasoningTokens": 25587
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 12.102682,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 12.102682,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 362992,
+        "outputTokens": 83579,
+        "cacheReadTokens": 15560704,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 25587
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.546795739,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.230777556,
+      "outputSha256": "3ccafc17a7253726558a357cb404642c9ad59117f2113c300e651753ea3690ab"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-r7ax --base 1bed52749dc8ce9ea906b603894f6acf6854b84f",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03245224899999994,
+      "outputSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level vespers-r7ax",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.342921355999999,
+      "outputSha256": "3efe7cba7b7244e2341a35565c601fb7af6ad0b69b1dcb07529310271d9ace2d"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "vespers-r7ax",
+    "title": "Vespers",
+    "evaluated": {
+      "commit": "b399c2d45043a9114c609ba0d37cca6128e82b79",
+      "branch": "benchmark-run-run-v3r4wjp8ce"
+    },
+    "payload": {
+      "commit": "8c8a633b7faf3fabbfb51c8411b9a7fb7f3f736a",
+      "branch": "benchmark-payload-run-v3r4wjp8ce"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

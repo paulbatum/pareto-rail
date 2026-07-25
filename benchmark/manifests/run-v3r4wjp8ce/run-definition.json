@@ -1,0 +1,21 @@
+{
+  "runId": "run-v3r4wjp8ce",
+  "slotId": "r7ax",
+  "levelId": "vespers-r7ax",
+  "themeId": "vespers",
+  "themePath": "benchmark/themes/vespers.md",
+  "configurationId": "codex-sol-max",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v3",
+  "baselinePolicy": "scrubbed",
+  "materialsCommit": "83bb6e525e0812a66759d56689880099d31a07fd",
+  "entrantBaseline": "1bed52749dc8ce9ea906b603894f6acf6854b84f",
+  "levelTitle": "Vespers"
+}

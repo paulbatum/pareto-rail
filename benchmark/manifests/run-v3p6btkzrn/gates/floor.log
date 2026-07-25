@@ -1,0 +1,28 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level vespers-p6bt
+
+Vespers floor check
+duration 62.7s; spawned kinds 7: censer, gargoyle, mote, rose-heart, rose-petal, seraph, shade
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=3
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2
+    maxGridSeconds=0.75
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC; reticle visual 0.066 NDC = 0.77x lock radius, no reticle scaling
+  words: start "START!" (6), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, playerHealth, detailsForRun
+  identity hooks [default]: allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+reticle warnings: 0
+start/replay word warnings: 0
+All floor checks passed.

@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-v3c8vrhdys",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:04.993Z",
+      "data": {
+        "source": {
+          "runId": "run-v3c8vrhdys",
+          "slotId": "c8vr",
+          "themeId": "vespers",
+          "levelId": "vespers-c8vr",
+          "title": "Vespers",
+          "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+          "evaluatedCommit": "dc12262d9a375743cea9df4b14a7937c64b8add8",
+          "payloadCommit": "45f77df94b630e3fe7fe2ef2a6139f2f3f6c9598",
+          "manifestSha256": "b1a2c449b635cce2f8ca54038abea70acc5247c90bc7f8f216423c5038ef9fcd",
+          "definitionSha256": "783b76ec45a494f3d74e58f7a7ff5f1f15238471a497c46953cb103701fb788e",
+          "evaluatedSha256": "21e7d2cb35dc65df98af926f59ef14e94e87a02c9f580be2d2a941a4c3c239c5",
+          "payloadSha256": "13f9b2bd6d3692d1ac4ccda38e3a63892490053422cffe6ab856a58e42a43102",
+          "payloadDiffSha256": "f4608ce9cdcea720d5ae2a6a0cbe5a48b896efb388fe900afc37e3a09c24989a",
+          "sourcePath": "src/benchmark-levels/vespers-c8vr/",
+          "destinationPath": "src/benchmark-levels/vespers-c8vr/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/vespers-c8vr",
+              "promotedPath": "src/benchmark-levels/vespers-c8vr",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/vespers-c8vr",
+              "promotedPath": "public/level-content/vespers-c8vr",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "ad56a84827332b7c1b77439f813e27cb96bb1abe"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:05.096Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/vespers-c8vr/",
+            "files": 12,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:05.098Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:05.168Z",
+      "data": {
+        "destination": "src/benchmark-levels/vespers-c8vr/",
+        "verifiedFiles": 12
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:48.552Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.1696194569999996,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "6483911ac7409ffdaff66e6a9f86643261fd6ad12cb54b7bc0be527a282d2766",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 18.857814499,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-c8vr --base ad56a84827332b7c1b77439f813e27cb96bb1abe",
+            "exitCode": 0,
+            "stdoutSha256": "4d819287dd191c0fe6f2165d8d0c302d18af362f513f441ec167130407207e49",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.0439656959999993,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level vespers-c8vr",
+            "exitCode": 0,
+            "stdoutSha256": "70e5d5416227a98be7f25dcea65648b6655925c6ee0e085e989065fec2aedd9e",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 21.256421037000003,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:49:48.624Z",
+      "data": {
+        "promotionCommit": "2b66c8a8a0f987b58adb95d5e288110a984ac0b4",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-25T18:49:48.625Z",
+  "source": {
+    "runId": "run-v3c8vrhdys",
+    "slotId": "c8vr",
+    "themeId": "vespers",
+    "levelId": "vespers-c8vr",
+    "title": "Vespers",
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "evaluatedCommit": "dc12262d9a375743cea9df4b14a7937c64b8add8",
+    "payloadCommit": "45f77df94b630e3fe7fe2ef2a6139f2f3f6c9598",
+    "manifestSha256": "b1a2c449b635cce2f8ca54038abea70acc5247c90bc7f8f216423c5038ef9fcd",
+    "definitionSha256": "783b76ec45a494f3d74e58f7a7ff5f1f15238471a497c46953cb103701fb788e",
+    "evaluatedSha256": "21e7d2cb35dc65df98af926f59ef14e94e87a02c9f580be2d2a941a4c3c239c5",
+    "payloadSha256": "13f9b2bd6d3692d1ac4ccda38e3a63892490053422cffe6ab856a58e42a43102",
+    "payloadDiffSha256": "f4608ce9cdcea720d5ae2a6a0cbe5a48b896efb388fe900afc37e3a09c24989a",
+    "sourcePath": "src/benchmark-levels/vespers-c8vr/",
+    "destinationPath": "src/benchmark-levels/vespers-c8vr/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/vespers-c8vr",
+        "promotedPath": "src/benchmark-levels/vespers-c8vr",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/vespers-c8vr",
+        "promotedPath": "public/level-content/vespers-c8vr",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "ad56a84827332b7c1b77439f813e27cb96bb1abe"
+  },
+  "promotionCommit": "2b66c8a8a0f987b58adb95d5e288110a984ac0b4"
+}

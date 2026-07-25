@@ -1,0 +1,21 @@
+{
+  "runId": "run-v3c8vrhdys",
+  "slotId": "c8vr",
+  "levelId": "vespers-c8vr",
+  "themeId": "vespers",
+  "themePath": "benchmark/themes/vespers.md",
+  "configurationId": "agy-gemini-3-6-flash-high",
+  "recipePath": "benchmark/recipes/agy-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "agy-cli",
+    "model": "gemini-3.6-flash",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v3",
+  "baselinePolicy": "scrubbed",
+  "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+  "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+  "levelTitle": "Vespers"
+}

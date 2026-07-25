@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v3p6btkzrn",
+  "slotId": "p6bt",
+  "configuration": {
+    "id": "claude-opus-5-high"
+  },
+  "theme": {
+    "id": "vespers",
+    "path": "benchmark/themes/vespers.md",
+    "sha256": "c0866c43804268b700a568a31382462e4e50b2500b99bd2148d88924e0adc83f"
+  },
+  "baseline": {
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-cli.md",
+    "sha256": "2c0fb25bd878961cbd97776ca0a93fffd816fe452147e0811cc1cb7899c76667"
+  },
+  "controller": {
+    "commit": "cf4e1e74bf1ba712a2f994ff741f06bf141166f8"
+  },
+  "timing": {
+    "startedAt": "2026-07-25T07:18:00.488Z",
+    "finishedAt": "2026-07-25T08:21:33.331Z",
+    "wallTimeSeconds": 3812.843
+  },
+  "stages": [
+    {
+      "id": "claude-opus-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-5"
+      },
+      "promptSha256": "f60378b2519eb5e4d7b64723162da0219cc23f0f52787dba1c7e1c9bfa3d21b1",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.220 (Claude Code)"
+      },
+      "sessionId": "c1c6a55c-055a-41be-a6e0-b62b76b5870e",
+      "rolloutArtifactSha256": "5363bca206a28a8dd0ead1321113cf0b670ea92c1dff2d852c2fa7f95dd79410",
+      "outputArtifactSha256": "755f68ecd087f83d74c1212789ea731e206c2f77332dd6968240988bfc9b9b51",
+      "startedAt": "2026-07-25T07:18:08.344Z",
+      "finishedAt": "2026-07-25T08:21:19.497Z",
+      "wallTimeSeconds": 3588.9995256750003,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 5971,
+        "outputTokens": 258240,
+        "cacheReadInputTokens": 46529215,
+        "cacheWriteInputTokens": 533230
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 35.08276249999999,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 35.08276249999999,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-opus-5",
+        "usageSource": "agreed",
+        "costUsd": 35.08276249999999,
+        "inputTokens": 5971,
+        "outputTokens": 258240,
+        "cacheReadTokens": 46529215,
+        "cacheWriteTokens": 533230
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.5187492500000002,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.0573071149999995,
+      "outputSha256": "7741e79b144e738459d24f24cb744317f56498491ddd2de80a0481f23b28348e"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-p6bt --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03263946200000009,
+      "outputSha256": "e37e3c8ba738e90bdfd178309da95b3c676f42b1df6f7b121be71738cbdaccf7"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level vespers-p6bt",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.971369540999999,
+      "outputSha256": "05cfe9a87632570e3fe6f2948815846ce0df6aa99697fbf4ac14bda089b8fbd2"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "vespers-p6bt",
+    "title": "Vespers",
+    "evaluated": {
+      "commit": "6995a0a5e874ccaf6ece6a7ff3e7c75132422a3c",
+      "branch": "benchmark-run-run-v3p6btkzrn"
+    },
+    "payload": {
+      "commit": "fb32d17855a971321aa594ee2cb253bf73fcc12c",
+      "branch": "benchmark-payload-run-v3p6btkzrn"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

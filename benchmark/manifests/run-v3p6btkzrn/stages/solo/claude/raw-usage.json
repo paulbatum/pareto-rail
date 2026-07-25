@@ -1,0 +1,87 @@
+{
+  "sessionId": "c1c6a55c-055a-41be-a6e0-b62b76b5870e",
+  "initResolvedModel": "claude-opus-5",
+  "finalMessage": "**Vespers** is built and green across every gate. `src/benchmark-levels/vespers-p6bt/` is the only touched path — no registry edit, no shared-code change.\n\n## What it is\n\nA 62.7-second flight down the nave of a black cathedral at night. All 198 windows start dark because the things in here are wearing that light — flat black cut-outs off the glass with one stolen pane burning in the chest. **Kill one and the colour goes home**: the window it stripped comes back up, its twin across the nave with it, and both stay lit for the rest of the run. Miss one and that pane is gone permanently. `detailsForRun` reports `Windows relit n/198`, and `rankForRun` gates S on it.\n\nFive movements, addressed in bars from `timing.ts`: pedal (bars 0–3) → subject (4–7) → gallery (8–11, densest) → **hush** (12–14, three targets in eleven seconds, the camera lifting into the vault) → the rose fight (16–23). A speed profile surges into the gallery, drops the floor out at the hush, and surges again into the west end.\n\nSeven kinds, four distinct motions: shades peel off the wall and slide inward; seraphs hover and sink with counter-turning wing ranks; **censers swing a full pendulum every two beats in strict tempo** — the metronome you can see; gargoyles crouch then lunge, spitting homing embers. The boss is the dead rose window: the heart can't be locked while a petal still burns, and every stage break slams the shell shut for 2.6 s of unlockable ember fire.\n\nAudio is one organ, no percussion anywhere — a held pedal alone, then tenor subject (bar 2), answer (4), choir (6), descant and bell (8), voices written as scale degrees so they retune with the harmony. Locks walk a flute up the mode, firing is the swell shoe opening, and kills sound a hidden two-bar melody lane per section. **The reed rank never speaks until the rose ignites**, at which point the lead set turns major and a separate tutti arrangement takes over on the next bar line.\n\n## Verified\n\n`typecheck`, `build`, `check:floor` (occlusion clean across 73 targets; perf 250 draw calls of a 500 limit; no centerness/distance/reticle warnings; full event coverage) and `trace:audio` (535 scheduled events; pitches and voice registers inspected). Simulation: perfect 66/73 with no hull loss, imperfect 61/73 rank A, no-fire dies at 36.7 s. I inspected the whole run as stills including a bloom-off pass.\n\n`check:benchmark-scope` could not run — it imports `scripts/benchmark/protocol.mjs`, which does not exist in this checkout. I verified scope by hand instead: `git status` shows only the level directory.\n\n## For a playtester\n\n**Nothing here has been heard.** Judge the balance between the organ and the player's stops first — particularly whether the mixture kill voice in the gallery and rose sections sits inside the counterpoint or on top of it, and whether the flute locks are audible at all under the descant.\n\nThen: the ignition. It is the level's biggest event and the hardest thing to tune blind — I pulled it back three times because the whole nave coming up at once was washing the frame white. The 1-second flash may still be too much on real hardware. After that, watch the hush (bars 12–15) for whether five seconds of near-empty nave reads as intentional or as the level breaking, and the gargoyle lunge at close range, which fills a third of the frame in red.",
+  "eventType": "result",
+  "raw": {
+    "is_error": false,
+    "duration_api_ms": 3249567,
+    "num_turns": 151,
+    "stop_reason": "end_turn",
+    "session_id": "c1c6a55c-055a-41be-a6e0-b62b76b5870e",
+    "total_cost_usd": 35.08276249999998,
+    "usage": {
+      "input_tokens": 5971,
+      "cache_creation_input_tokens": 533230,
+      "cache_read_input_tokens": 46529215,
+      "output_tokens": 258240,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 533230,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-opus-5": {
+        "inputTokens": 5971,
+        "outputTokens": 258240,
+        "cacheReadInputTokens": 46529215,
+        "cacheCreationInputTokens": 533230,
+        "webSearchRequests": 0,
+        "costUSD": 35.08276249999998,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-opus-5",
+        "provider": "firstParty"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Vespers** is built and green across every gate. `src/benchmark-levels/vespers-p6bt/` is the only touched path — no registry edit, no shared-code change.\n\n## What it is\n\nA 62.7-second flight down the nave of a black cathedral at night. All 198 windows start dark because the things in here are wearing that light — flat black cut-outs off the glass with one stolen pane burning in the chest. **Kill one and the colour goes home**: the window it stripped comes back up, its twin across the nave with it, and both stay lit for the rest of the run. Miss one and that pane is gone permanently. `detailsForRun` reports `Windows relit n/198`, and `rankForRun` gates S on it.\n\nFive movements, addressed in bars from `timing.ts`: pedal (bars 0–3) → subject (4–7) → gallery (8–11, densest) → **hush** (12–14, three targets in eleven seconds, the camera lifting into the vault) → the rose fight (16–23). A speed profile surges into the gallery, drops the floor out at the hush, and surges again into the west end.\n\nSeven kinds, four distinct motions: shades peel off the wall and slide inward; seraphs hover and sink with counter-turning wing ranks; **censers swing a full pendulum every two beats in strict tempo** — the metronome you can see; gargoyles crouch then lunge, spitting homing embers. The boss is the dead rose window: the heart can't be locked while a petal still burns, and every stage break slams the shell shut for 2.6 s of unlockable ember fire.\n\nAudio is one organ, no percussion anywhere — a held pedal alone, then tenor subject (bar 2), answer (4), choir (6), descant and bell (8), voices written as scale degrees so they retune with the harmony. Locks walk a flute up the mode, firing is the swell shoe opening, and kills sound a hidden two-bar melody lane per section. **The reed rank never speaks until the rose ignites**, at which point the lead set turns major and a separate tutti arrangement takes over on the next bar line.\n\n## Verified\n\n`typecheck`, `build`, `check:floor` (occlusion clean across 73 targets; perf 250 draw calls of a 500 limit; no centerness/distance/reticle warnings; full event coverage) and `trace:audio` (535 scheduled events; pitches and voice registers inspected). Simulation: perfect 66/73 with no hull loss, imperfect 61/73 rank A, no-fire dies at 36.7 s. I inspected the whole run as stills including a bloom-off pass.\n\n`check:benchmark-scope` could not run — it imports `scripts/benchmark/protocol.mjs`, which does not exist in this checkout. I verified scope by hand instead: `git status` shows only the level directory.\n\n## For a playtester\n\n**Nothing here has been heard.** Judge the balance between the organ and the player's stops first — particularly whether the mixture kill voice in the gallery and rose sections sits inside the counterpoint or on top of it, and whether the flute locks are audible at all under the descant.\n\nThen: the ignition. It is the level's biggest event and the hardest thing to tune blind — I pulled it back three times because the whole nave coming up at once was washing the frame white. The 1-second flash may still be too much on real hardware. After that, watch the hush (bars 12–15) for whether five seconds of near-empty nave reads as intentional or as the level breaking, and the gargoyle lunge at close range, which fills a third of the frame in red.",
+    "ttft_ms": 2661,
+    "ttft_stream_ms": 2177,
+    "time_to_request_ms": 43,
+    "type": "result",
+    "duration_ms": 3588330,
+    "uuid": "20bb582a-6d4f-4ed5-b40b-a1d149cdd9d8"
+  },
+  "normalized": {
+    "inputTokens": 46535186,
+    "outputTokens": 258240,
+    "cacheReadInputTokens": 46529215,
+    "cacheWriteInputTokens": 533230,
+    "vendorFields": {
+      "totalCostUsd": 35.08276249999998,
+      "durationMs": 3588330,
+      "durationApiMs": 3249567,
+      "numTurns": 151,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-opus-5": {
+          "inputTokens": 5971,
+          "outputTokens": 258240,
+          "cacheReadInputTokens": 46529215,
+          "cacheCreationInputTokens": 533230,
+          "webSearchRequests": 0,
+          "costUSD": 35.08276249999998,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-opus-5",
+          "provider": "firstParty"
+        }
+      }
+    }
+  }
+}

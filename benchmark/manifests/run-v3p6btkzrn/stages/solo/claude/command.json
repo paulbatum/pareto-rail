@@ -1,0 +1,33 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-opus-5",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--disallowedTools",
+    "WebFetch,WebSearch",
+    "--settings",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-v3p6btkzrn/stages/solo/claude/sandbox-settings.json",
+    "--session-id",
+    "c1c6a55c-055a-41be-a6e0-b62b76b5870e"
+  ],
+  "cliVersion": "2.1.220 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-v3p6btkzrn",
+  "startedAt": "2026-07-25T07:18:08.344Z",
+  "finishedAt": "2026-07-25T08:21:19.497Z",
+  "wallTimeSeconds": 3588.9995256750003,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-v3r4wjp8ce",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:50:36.363Z",
+      "data": {
+        "source": {
+          "runId": "run-v3r4wjp8ce",
+          "slotId": "r7ax",
+          "themeId": "vespers",
+          "levelId": "vespers-r7ax",
+          "title": "Vespers",
+          "materialsCommit": "83bb6e525e0812a66759d56689880099d31a07fd",
+          "evaluatedCommit": "b399c2d45043a9114c609ba0d37cca6128e82b79",
+          "payloadCommit": "8c8a633b7faf3fabbfb51c8411b9a7fb7f3f736a",
+          "manifestSha256": "ca6823f50a2007b82cf99d20642098181ade22fbadac3cdf806df12bc4612c5f",
+          "definitionSha256": "957d7cb651fe66a5f8cb7c7e5bab52ff0cf423d1adb0cff9b2c893733962e461",
+          "evaluatedSha256": "b58e5a0b484f3f00263a94d2ad50da20154f40392cdabbbd841633b65b3215e7",
+          "payloadSha256": "4f1d2d2e07aeed4283054e4c91a4d19e1db49000e9a194d9882e7531441b843a",
+          "payloadDiffSha256": "22d22fb303cf01e17cb7ee7fa11cb0db49cda3fb548ae26eafaf77bb9732ec2a",
+          "sourcePath": "src/benchmark-levels/vespers-r7ax/",
+          "destinationPath": "src/benchmark-levels/vespers-r7ax/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/vespers-r7ax",
+              "promotedPath": "src/benchmark-levels/vespers-r7ax",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/vespers-r7ax",
+              "promotedPath": "public/level-content/vespers-r7ax",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "bf13efe0898312dffcce2ab29d73958afe89c291"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:50:36.503Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/vespers-r7ax/",
+            "files": 11,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/vespers-r7ax/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:50:36.506Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:50:36.582Z",
+      "data": {
+        "destination": "src/benchmark-levels/vespers-r7ax/",
+        "verifiedFiles": 14
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:51:22.997Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.4122075360000004,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "27c019d2afe5cb517f23447b3a068cf8082b9065b0979ce43e8742089067b13f",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 19.139217948,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-r7ax --base bf13efe0898312dffcce2ab29d73958afe89c291",
+            "exitCode": 0,
+            "stdoutSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04602395600000091,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level vespers-r7ax",
+            "exitCode": 0,
+            "stdoutSha256": "3efe7cba7b7244e2341a35565c601fb7af6ad0b69b1dcb07529310271d9ace2d",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 23.713816966,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T18:51:23.073Z",
+      "data": {
+        "promotionCommit": "7f494c7e683a2bb8fafc3231e4ba39a7c8914cd9",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-25T18:51:23.073Z",
+  "source": {
+    "runId": "run-v3r4wjp8ce",
+    "slotId": "r7ax",
+    "themeId": "vespers",
+    "levelId": "vespers-r7ax",
+    "title": "Vespers",
+    "materialsCommit": "83bb6e525e0812a66759d56689880099d31a07fd",
+    "evaluatedCommit": "b399c2d45043a9114c609ba0d37cca6128e82b79",
+    "payloadCommit": "8c8a633b7faf3fabbfb51c8411b9a7fb7f3f736a",
+    "manifestSha256": "ca6823f50a2007b82cf99d20642098181ade22fbadac3cdf806df12bc4612c5f",
+    "definitionSha256": "957d7cb651fe66a5f8cb7c7e5bab52ff0cf423d1adb0cff9b2c893733962e461",
+    "evaluatedSha256": "b58e5a0b484f3f00263a94d2ad50da20154f40392cdabbbd841633b65b3215e7",
+    "payloadSha256": "4f1d2d2e07aeed4283054e4c91a4d19e1db49000e9a194d9882e7531441b843a",
+    "payloadDiffSha256": "22d22fb303cf01e17cb7ee7fa11cb0db49cda3fb548ae26eafaf77bb9732ec2a",
+    "sourcePath": "src/benchmark-levels/vespers-r7ax/",
+    "destinationPath": "src/benchmark-levels/vespers-r7ax/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/vespers-r7ax",
+        "promotedPath": "src/benchmark-levels/vespers-r7ax",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/vespers-r7ax",
+        "promotedPath": "public/level-content/vespers-r7ax",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "bf13efe0898312dffcce2ab29d73958afe89c291"
+  },
+  "promotionCommit": "7f494c7e683a2bb8fafc3231e4ba39a7c8914cd9"
+}

@@ -215,6 +215,30 @@
       "configurationId": "claude-opus-4-8-high"
     },
     {
+      "runId": "run-v3c8vrhdys",
+      "levelId": "vespers-c8vr",
+      "themeId": "vespers",
+      "configurationId": "agy-gemini-3-6-flash-high"
+    },
+    {
+      "runId": "run-v3p6btkzrn",
+      "levelId": "vespers-p6bt",
+      "themeId": "vespers",
+      "configurationId": "claude-opus-5-high"
+    },
+    {
+      "runId": "run-v3r4wjp8ce",
+      "levelId": "vespers-r7ax",
+      "themeId": "vespers",
+      "configurationId": "codex-sol-max"
+    },
+    {
+      "runId": "run-v3t5xwqebm",
+      "levelId": "vespers-t5xw",
+      "themeId": "vespers",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
       "runId": "run-vbovdxbaxq9v",
       "levelId": "skyhook-81u5",
       "themeId": "skyhook",

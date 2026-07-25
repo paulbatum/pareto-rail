@@ -1,0 +1,99 @@
+{
+  "sessionId": "0651afdd-8a9d-4a47-b25a-0984e88e8bfe",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Vespers is built and passes every gate.** The level lives entirely in `src/benchmark-levels/vespers-t5xw/` — a 60.0-second run (18 bars at 72 BPM, ending exactly on the final bar line) through a night cathedral where killing a light-thief streams its stolen color back into a real window that stays lit for the rest of the run.\n\n## What was built\n\n- **World** (`visuals/environment.ts`): a straight gothic nave ~590m long — instanced piers, arcade/gallery arches and ribbed vaults as one merged line pass, a candle sea on the floor, and ~140 stained-glass windows (all panes are a single InstancedMesh, glows another, floor light-pools a third). Every window starts dark; each thief is assigned the nearest dark window at spawn and burns with exactly its color. Misses leave that window dead all run — the end-state cathedral is a visible scoreboard. The dead rose window at the west end ignites sector-by-sector as boss petals die, then all at once, cascading light back down the nave through every window the player couldn't save.\n- **Enemies**: wisps (shrouds sinking toward the candles), moths (crossing the nave on flapping wings), gargoyles (perched, telegraphed pounce, interceptable gloom bolts), censers (2-HP pendulums swinging on chains), and the Vigil — six glass petals shielding a two-stage heart whose seal runs through `validateRelease` (blocked volleys flash \"shielded\" gold), with three echo petals summoned at the stage break.\n- **Music** (`audio.ts`): organ counterpoint in D minor over a held pedal, no percussion — voices enter one at a time, choir and bells join at the plenum, the nave drops to a single flute for the quiet span (bars 11–13), a walking pedal underscores the boss, and the finale ducks the mix, turns the third major, and finally releases the en-chamade trumpet held back all night. Kills play per-section melody lanes from the live harmony; locks climb a flute scale; fire is a chord-rooted chiff; everything quantizes to the transport.\n\n## Verified\n\n- `npm run typecheck` and `npm run build` pass; `npm run check:floor` passes with **zero warnings** (occlusion, perf, audio config, centerness, reticle all clean).\n- Simulation: perfect policy 63/64 kills, rank S with the Vigil down; imperfect seed 1 ranks S; the only dead-air gap (39–43.5s) is the authored quiet span; all gameplay events fire. I fixed a real boss deadlock the simulator exposed (an unlockable centered heart starved target selection) by moving the seal into `validateRelease`.\n- Headless SwiftShader snapshots (in `snapshots/gameplay/`) confirm bloom-off legibility, letter readability, and the boss composition. Scope: git shows the level directory is the only repository change (`check:benchmark-scope` couldn't run — its `scripts/benchmark/` module is absent from this scrubbed baseline).\n\n## Needs human eyes\n\nWSL2 can't render WebGPU, so a real playtest should check: the lit-vs-dark window contrast when kills actually land (no-fire snapshots can't show ignition), the organ mix balance in the plenum and how hard the trumpet finale hits, bolt read-and-intercept feel, and whether the rose-window ignition cascade lands as the run's biggest moment.",
+  "eventType": "result",
+  "raw": {
+    "is_error": false,
+    "duration_api_ms": 2911881,
+    "num_turns": 157,
+    "stop_reason": "end_turn",
+    "session_id": "0651afdd-8a9d-4a47-b25a-0984e88e8bfe",
+    "total_cost_usd": 52.61433,
+    "usage": {
+      "input_tokens": 199,
+      "cache_creation_input_tokens": 470203,
+      "cache_read_input_tokens": 31840480,
+      "output_tokens": 227356,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 470203,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1147,
+          "cache_read_input_tokens": 469072,
+          "cache_creation_input_tokens": 1131,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 1131
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-fable-5": {
+        "inputTokens": 199,
+        "outputTokens": 227356,
+        "cacheReadInputTokens": 31840480,
+        "cacheCreationInputTokens": 470203,
+        "webSearchRequests": 0,
+        "costUSD": 52.61433,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-fable-5",
+        "provider": "firstParty"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Vespers is built and passes every gate.** The level lives entirely in `src/benchmark-levels/vespers-t5xw/` — a 60.0-second run (18 bars at 72 BPM, ending exactly on the final bar line) through a night cathedral where killing a light-thief streams its stolen color back into a real window that stays lit for the rest of the run.\n\n## What was built\n\n- **World** (`visuals/environment.ts`): a straight gothic nave ~590m long — instanced piers, arcade/gallery arches and ribbed vaults as one merged line pass, a candle sea on the floor, and ~140 stained-glass windows (all panes are a single InstancedMesh, glows another, floor light-pools a third). Every window starts dark; each thief is assigned the nearest dark window at spawn and burns with exactly its color. Misses leave that window dead all run — the end-state cathedral is a visible scoreboard. The dead rose window at the west end ignites sector-by-sector as boss petals die, then all at once, cascading light back down the nave through every window the player couldn't save.\n- **Enemies**: wisps (shrouds sinking toward the candles), moths (crossing the nave on flapping wings), gargoyles (perched, telegraphed pounce, interceptable gloom bolts), censers (2-HP pendulums swinging on chains), and the Vigil — six glass petals shielding a two-stage heart whose seal runs through `validateRelease` (blocked volleys flash \"shielded\" gold), with three echo petals summoned at the stage break.\n- **Music** (`audio.ts`): organ counterpoint in D minor over a held pedal, no percussion — voices enter one at a time, choir and bells join at the plenum, the nave drops to a single flute for the quiet span (bars 11–13), a walking pedal underscores the boss, and the finale ducks the mix, turns the third major, and finally releases the en-chamade trumpet held back all night. Kills play per-section melody lanes from the live harmony; locks climb a flute scale; fire is a chord-rooted chiff; everything quantizes to the transport.\n\n## Verified\n\n- `npm run typecheck` and `npm run build` pass; `npm run check:floor` passes with **zero warnings** (occlusion, perf, audio config, centerness, reticle all clean).\n- Simulation: perfect policy 63/64 kills, rank S with the Vigil down; imperfect seed 1 ranks S; the only dead-air gap (39–43.5s) is the authored quiet span; all gameplay events fire. I fixed a real boss deadlock the simulator exposed (an unlockable centered heart starved target selection) by moving the seal into `validateRelease`.\n- Headless SwiftShader snapshots (in `snapshots/gameplay/`) confirm bloom-off legibility, letter readability, and the boss composition. Scope: git shows the level directory is the only repository change (`check:benchmark-scope` couldn't run — its `scripts/benchmark/` module is absent from this scrubbed baseline).\n\n## Needs human eyes\n\nWSL2 can't render WebGPU, so a real playtest should check: the lit-vs-dark window contrast when kills actually land (no-fire snapshots can't show ignition), the organ mix balance in the plenum and how hard the trumpet finale hits, bolt read-and-intercept feel, and whether the rose-window ignition cascade lands as the run's biggest moment.",
+    "ttft_ms": 1715,
+    "ttft_stream_ms": 1207,
+    "time_to_request_ms": 52,
+    "type": "result",
+    "duration_ms": 3044842,
+    "uuid": "4eb76961-9650-43a1-9415-d6f6fd65d415"
+  },
+  "normalized": {
+    "inputTokens": 31840679,
+    "outputTokens": 227356,
+    "cacheReadInputTokens": 31840480,
+    "cacheWriteInputTokens": 470203,
+    "vendorFields": {
+      "totalCostUsd": 52.61433,
+      "durationMs": 3044842,
+      "durationApiMs": 2911881,
+      "numTurns": 157,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-fable-5": {
+          "inputTokens": 199,
+          "outputTokens": 227356,
+          "cacheReadInputTokens": 31840480,
+          "cacheCreationInputTokens": 470203,
+          "webSearchRequests": 0,
+          "costUSD": 52.61433,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-fable-5",
+          "provider": "firstParty"
+        }
+      }
+    }
+  }
+}
