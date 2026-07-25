@@ -108,7 +108,7 @@
           "enum": ["included", "excluded", "already-included", "none", "unavailable"]
         },
         "costSource": {
-          "description": "Tool and version that computed the cost. ccusage prices the persisted rollouts (parent plus any delegated subagents) with its own maintained rate DB.",
+          "description": "Tool, version, and pricing basis behind the cost. ccusage prices the persisted rollouts (parent plus any delegated subagents) with its own maintained rate DB; the Antigravity CLI has no ccusage source and is priced by tokscale from the same local conversation databases the adapter captures.",
           "type": "object",
           "additionalProperties": false,
           "required": ["tool", "version"],
@@ -116,7 +116,11 @@
             "tool": { "type": "string", "minLength": 1 },
             "version": { "type": "string", "minLength": 1 },
             "view": { "type": "string", "minLength": 1 },
-            "command": { "type": "string", "minLength": 1 }
+            "command": { "type": "string", "minLength": 1 },
+            "basis": {
+              "description": "How the figure was arrived at. `metered` passes through the per-call charge the provider reported. `rate-card` multiplies token counts by a published rate, which is the only basis available for a subscription. The two are not interchangeable: on one run both tools could read, their token counts agreed exactly while their totals differed by half, entirely because of this.",
+              "enum": ["metered", "rate-card"]
+            }
           }
         },
         "models": {
@@ -272,18 +276,8 @@
     "usage": {
       "type": "object",
       "additionalProperties": false,
-      "allOf": [
-        {
-          "description": "Token counts are required unless the stage declares usage unavailable, so an unreported count is never recorded as zero.",
-          "if": { "not": { "required": ["available"] } },
-          "then": { "required": ["inputTokens", "outputTokens"] }
-        }
-      ],
+      "required": ["inputTokens", "outputTokens"],
       "properties": {
-        "available": {
-          "const": false,
-          "description": "Present only on a harness that publishes no usage through any documented interface (Antigravity CLI). Token fields are then absent rather than zero."
-        },
         "inputTokens": { "type": "integer", "minimum": 0 },
         "outputTokens": { "type": "integer", "minimum": 0 },
         "cacheReadInputTokens": { "type": "integer", "minimum": 0 },

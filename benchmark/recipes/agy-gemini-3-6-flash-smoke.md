@@ -53,15 +53,17 @@ A third detail is not a deviation but a hazard worth recording: the working dire
 - Dependency provisioning: before this stage, the controller runs `npm ci` in the fresh worktree as unmeasured deterministic setup.
 - Commit behavior: the agent may use the normal repository workflow; the controller seals permitted changes afterward and derives the payload.
 
-## Usage and cost: unavailable by construction
+## Cost: measured by tokscale, not ccusage
 
-**This configuration records no cost, and that is a property of the harness, not an omission.**
+This is the one configuration ccusage does not price. Its `gemini` view covers the Gemini CLI, a different tool that individual subscriptions can no longer authenticate against at all, and no published ccusage release reads Antigravity data. That is a gap in the tool rather than in the data: Antigravity support has been proposed upstream at least eight times and implemented twice — ccusage PR #1487 is complete and tested against a real install — but every one of those threads was auto-closed by the repository's new-contributor filter without a maintainer reply.
 
-agy reports token counts nowhere the controller can reach them. Its `--print` output is prose, its readable transcript records steps and tool calls but carries no usage fields, and ccusage — which prices every other configuration in this benchmark — has no agy view; its `gemini` view covers the Gemini CLI, a different tool that individual subscriptions can no longer authenticate against at all. What remains unexplored is the conversation database's `gen_metadata` blob, an undocumented protobuf that may or may not hold generation counts.
+The usage itself is fully recoverable offline. Each row of the `gen_metadata` table in agy's conversation database is a protobuf carrying one generation's input, output, cache-read, and thinking tokens plus its response model. `tokscale` decodes exactly that, and its `--home` flag re-roots the entire scan, which gives a run the same isolation ccusage's per-harness environment variables and `--pi-path` give elsewhere. The controller therefore prices this adapter with tokscale (pinned in `package.json`, invoked through the repository's own binary) and records `cost.costSource.tool` accordingly.
 
-Until that is settled the manifest states the gap rather than estimating around it: `cost.status` is `unavailable` with a reason, no `totalUsd` key is written, and each stage carries `usage: { available: false }` and `pricing: { status: 'unavailable' }`. The manifest schema was extended to express this, so an absent count can never be read as a zero. Note too that a subscription bills no per-token price, so even recovered counts would need a rate table chosen by hand, exactly as the Claude and Codex subscription configurations already do through ccusage.
+**The two tools do not price on the same basis, and the manifest says which was used.** Cross-checked on the one run both can read — the pi/OpenRouter Gemini smoke — their token counts agree exactly (131,124 input, 7,142 output, 195,025 cache-read) while their totals differ by half: ccusage $0.1843 against tokscale $0.2795. ccusage passes through the per-call charge the provider reported; tokscale multiplies token counts by a rate card. Neither is wrong. `cost.costSource.basis` records `metered` or `rate-card` so the two are never silently compared as the same kind of number.
 
-The consequence is that **this configuration cannot be placed on the benchmark's quality-versus-cost curve.** Wall time is the only measured quantity. Any eligible agy configuration would need a real usage path first.
+For this configuration the distinction is largely moot: a subscription bills no per-token price, so a rate card is the only available basis — the same one ccusage applies to the Claude and Codex subscription configurations. A future eligible agy entrant would sit on the same footing as those, not on the footing of the metered OpenRouter rows.
+
+One measurement guarantee is weaker here than elsewhere. Every other harness reports its own usage counter, which the controller cross-checks against the transcript replay to catch a replay that lost a message. agy publishes no such counter, so `cost.reconciliation.status` is `unavailable` for this configuration and the decode stands unverified against a second source.
 
 ## What is captured
 

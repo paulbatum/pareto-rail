@@ -84,6 +84,7 @@
     "prisma": "^7.8.0",
     "puppeteer": "^25.3.0",
     "sharp": "^0.35.3",
+    "tokscale": "4.7.0",
     "typescript": "latest",
     "vite": "latest"
   }

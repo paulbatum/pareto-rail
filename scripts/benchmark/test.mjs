@@ -9,6 +9,7 @@ import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from 
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { assertSiblingSharedInputs, codexNetworkAccess, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
 import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
+import { summarizeAgyCost } from './tokscale-cost.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
@@ -308,6 +309,32 @@ assert.equal(piCost.models[0].cacheReadTokens, 2560);
 // artifact. The Claude and Codex views declare no prefix, so their names pass through untouched.
 assert.equal(summarizeCost('pi-cli', prefixReport('vendor/[pi] odd')).models[0].modelName, 'vendor/[pi] odd');
 assert.equal(claudeCost.models.some((m) => m.modelName.startsWith('[')), false);
+
+// tokscale prices the Antigravity CLI, which ccusage cannot see. Its report groups by client, so the
+// summary keeps only the local-SQLite `antigravity-cli` rows: the `antigravity` IDE client reaches a
+// home through a sync cache and can never belong to a run's isolated harness home.
+const agyReport = {
+  entries: [
+    { client: 'antigravity-cli', model: 'gemini-3.6-flash', input: 275689, output: 15754, cacheRead: 2430391, cacheWrite: 0, reasoning: 18831, messageCount: 41, cost: 1.03747965 },
+    { client: 'antigravity', model: 'gemini-3.1-pro', input: 999, output: 999, cacheRead: 0, cacheWrite: 0, reasoning: 0, messageCount: 3, cost: 9.99 },
+  ],
+};
+const agyCost = summarizeAgyCost(agyReport);
+assert.equal(agyCost.view, 'antigravity-cli');
+assert.equal(agyCost.perModelCostAvailable, true);
+assert.equal(agyCost.totalUsd, 1.03747965);
+assert.equal(agyCost.models.length, 1);
+assert.equal(agyCost.models[0].modelName, 'gemini-3.6-flash');
+assert.equal(agyCost.models[0].cacheReadTokens, 2430391);
+assert.equal(agyCost.models[0].reasoningTokens, 18831);
+assert.equal(agyCost.totals.inputTokens, 275689);
+// An empty report is a controller failure, not a free run: the stage only reaches measurement after
+// the harness exited, so no rows means the home was not this run's.
+assert.throws(() => summarizeAgyCost({ entries: [] }), /found no antigravity-cli usage/);
+assert.throws(() => summarizeAgyCost({}), /missing its entries array/);
+// tokscale reports no counter of its own to cross-check, which reconciliation must state rather than
+// silently call agreement.
+assert.equal(reconcileCost(agyCost, null).reconciliation.status, 'unavailable');
 
 // The pi adapter reports its own tally in Claude's `modelUsage` shape so it reconciles unchanged.
 const piCounters = harnessCounters({ normalized: { vendorFields: { modelUsage: { 'gpt-5.6-luna': { outputTokens: 76, costUSD: 0.009118 } } } } });
