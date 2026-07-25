@@ -1,4 +1,9 @@
 {
   "id": "thermal-ink-4xmh",
-  "title": "Thermal Ink"
+  "title": "Thermal Ink",
+  "contentImages": {
+    "overview": "/level-content/thermal-ink-4xmh/overview.avif",
+    "start": "/level-content/thermal-ink-4xmh/start.avif",
+    "hero": "/level-content/thermal-ink-4xmh/hero.avif"
+  }
 }
