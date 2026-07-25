@@ -1,5 +1,7 @@
 import { findCatalogEntrant, rankCatalog } from '../benchmark/catalog';
-import { recomputePersonalCurve, type PersonalCurve, type PersonalHistoryEntry } from '../benchmark/personal-curve';
+import { completedMatchupsFromVotes } from '../benchmark/catalog-api';
+import { personalHistoryFromReveals, recomputePersonalCurve, type PersonalCurve, type PersonalHistoryEntry } from '../benchmark/personal-curve';
+import { BenchmarkLocalStore } from '../benchmark/storage';
 import { selectPersonalCurveCatalog } from './rank';
 import type { MatchupVote, RelativeOutcome } from '../benchmark/types';
 
@@ -49,6 +51,14 @@ export async function loadLeaderboardResults(options: LeaderboardOptions = {}): 
     latestVoteAt: body.latestVoteAt ?? null,
     excludedVotes: body.excludedVotes ?? 0,
   };
+}
+
+/** This device's own curve, read straight from local vote history — the same
+ * fit the rank page shows, so the two can be put side by side. */
+export function personalCurveFromLocalHistory(): PersonalCurve {
+  const matchups = completedMatchupsFromVotes(rankCatalog, new BenchmarkLocalStore().snapshot.history);
+  const history = personalHistoryFromReveals(matchups.map((item) => item.vote), matchups.map((item) => item.reveal));
+  return recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history) });
 }
 
 /** Expand each pair's tally back into one comparison per vote. The fit only

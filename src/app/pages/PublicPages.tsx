@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mitLicense from '../../../LICENSE?raw';
 import thirdPartyNotices from '../../../THIRD_PARTY_NOTICES.md?raw';
 import aboutContent from '../about.md?raw';
@@ -9,8 +9,9 @@ import { homeCopy } from '../content';
 import { featuredModels } from '../featured-models';
 import { RouteLink } from '../components/RouteLink';
 import { Markdown, markdownRegion } from '../components/Markdown';
-import { CurveChartFigure, CurveLegend, CurveTable, layoutCurveChart, ratedCurvePoints } from '../components/curve-chart';
-import { OWNER_PARTICIPANT_PREFIX, loadLeaderboardResults, type LeaderboardResults } from '../leaderboard';
+import { CurveChartFigure, CurveLegend, CurveTable, curveDomain, layoutCurveChart, ratedCurvePoints } from '../components/curve-chart';
+import { OWNER_PARTICIPANT_PREFIX, loadLeaderboardResults, personalCurveFromLocalHistory, type LeaderboardResults } from '../leaderboard';
+import type { PersonalCurve } from '../../benchmark/personal-curve';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
@@ -166,13 +167,22 @@ export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => 
 }
 
 function LeaderboardResultsView({ results }: { results: LeaderboardResults }) {
+  const [comparing, setComparing] = useState(false);
+  // Read once per mount: local history only changes on /rank, and a stale read
+  // would put a chart on screen that no longer matches the rank page.
+  const [personal] = useState(personalCurveFromLocalHistory);
   const layout = layoutCurveChart(ratedCurvePoints(results.curve));
+  const canCompare = ratedCurvePoints(personal).length >= 2;
   return (
     <div className="curve-panel">
       <div className="curve-heading">
         <div><p className="eyebrow">Community results</p><h2>The Pareto Frontier</h2></div>
-        <span className="curve-status">{leaderboardNarrative(results)}</span>
+        <div className="curve-heading-actions">
+          <span className="curve-status">{leaderboardNarrative(results)}</span>
+          {canCompare && <button className="button" type="button" onClick={() => setComparing(true)}>Compare to personal</button>}
+        </div>
       </div>
+      {comparing && <CurveComparison results={results} personal={personal} onClose={() => setComparing(false)} />}
       <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels and across everyone who has voted. The best trade-offs move toward the <strong>upper left</strong>: higher preference at lower generation cost.</p>
       <CurveLegend />
       <CurveChartFigure layout={layout} labels={{
@@ -183,6 +193,53 @@ function LeaderboardResultsView({ results }: { results: LeaderboardResults }) {
       <CurveTable points={results.curve.points.filter((point) => point.comparisons > 0)} caption="Every configuration the community has judged" ratingTerm="Preference" />
     </div>
   );
+}
+
+/** The community curve and this device's own curve, side by side on one pair of
+ * axes so the same configuration can be found in both. Ratings from a handful
+ * of personal comparisons swing much wider than the community's, so the shared
+ * scale is what makes the two charts answer the same question. */
+function CurveComparison({ results, personal, onClose }: { results: LeaderboardResults; personal: PersonalCurve; onClose: () => void }) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const communityPoints = ratedCurvePoints(results.curve);
+  const personalPoints = ratedCurvePoints(personal);
+  const domain = curveDomain([...communityPoints, ...personalPoints]);
+
+  useEffect(() => {
+    closeButton.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  return <div className="curve-compare-backdrop" onClick={onClose}>
+    <section className="curve-compare" role="dialog" aria-modal="true" aria-labelledby="curve-compare-title" onClick={(event) => event.stopPropagation()}>
+      <div className="curve-heading">
+        <div><p className="eyebrow">Side by side</p><h2 id="curve-compare-title">Community vs your results</h2></div>
+        <button className="button" type="button" ref={closeButton} onClick={onClose}>Close</button>
+      </div>
+      <p className="curve-intro">Both charts share one pair of axes, so a configuration sits at the same cost in each and its height is directly comparable. Your ratings rest on far fewer comparisons, so expect them to swing wider.</p>
+      <CurveLegend />
+      <div className="curve-compare-grid">
+        <article>
+          <h3>Community<span>{leaderboardNarrative(results)}</span></h3>
+          <CurveChartFigure layout={layoutCurveChart(communityPoints, domain)} labels={{
+            ratingAxisTitle: 'Community preference rating · higher is better →',
+            chartDescription: 'Scatter plot of community preference rating by measured generation cost.',
+            ratingTerm: 'Preference',
+          }} />
+        </article>
+        <article>
+          <h3>Yours<span>{personal.comparisonCount} of your comparisons · {personal.establishedCount} ranked</span></h3>
+          <CurveChartFigure layout={layoutCurveChart(personalPoints, domain)} labels={{
+            ratingAxisTitle: 'Your preference rating · higher is better →',
+            chartDescription: 'Scatter plot of your own preference rating by measured generation cost.',
+            ratingTerm: 'Preference',
+          }} />
+        </article>
+      </div>
+    </section>
+  </div>;
 }
 
 function leaderboardNarrative(results: LeaderboardResults): string {

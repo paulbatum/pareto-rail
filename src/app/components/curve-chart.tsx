@@ -38,9 +38,22 @@ export function ratedCurvePoints(curve: PersonalCurve): (PersonalRatingPoint & {
   return curve.points.filter((point): point is PersonalRatingPoint & { rating: number } => point.rating !== undefined);
 }
 
-export function layoutCurveChart(points: readonly (PersonalRatingPoint & { rating: number })[]): CurveChartLayout {
-  const costTicks = ticksFromZero(Math.max(...points.map((point) => point.meanCost), 1), 4);
-  const ratingTicks = boundedTicks(Math.min(...points.map((point) => point.rating)), Math.max(...points.map((point) => point.rating)), 4);
+/** Axis ticks two charts can share so their points are read against the same
+ * scale. Derived from the union of both point sets. */
+export interface CurveDomain {
+  costTicks: readonly number[];
+  ratingTicks: readonly number[];
+}
+
+export function curveDomain(points: readonly (PersonalRatingPoint & { rating: number })[]): CurveDomain {
+  return {
+    costTicks: ticksFromZero(Math.max(...points.map((point) => point.meanCost), 1), 4),
+    ratingTicks: boundedTicks(Math.min(...points.map((point) => point.rating)), Math.max(...points.map((point) => point.rating)), 4),
+  };
+}
+
+export function layoutCurveChart(points: readonly (PersonalRatingPoint & { rating: number })[], domain: CurveDomain = curveDomain(points)): CurveChartLayout {
+  const { costTicks, ratingTicks } = domain;
   const costMax = costTicks.at(-1) ?? 1;
   const ratingMin = ratingTicks[0] ?? 950;
   const ratingMax = ratingTicks.at(-1) ?? 1050;
