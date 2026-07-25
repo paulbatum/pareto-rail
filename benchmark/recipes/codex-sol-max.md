@@ -38,7 +38,7 @@ This is the maximum-effort Sol configuration: the same unattended Codex CLI mech
 - Role: `solo`
 - Model provider: OpenAI Codex subscription
 - Exact model selection: `gpt-5.6-sol` with `model_reasoning_effort="max"`. The CLI does not expose a dated Sol snapshot; capture `codex --version`, the complete bundled model catalog, and the selected catalog entry. Do not describe this alias-like catalog slug as a weight-pinned snapshot. The adapter refuses to launch if the bundled catalog entry for the slug does not list `max` among its supported reasoning levels.
-- Harness and version: Codex CLI `0.144.1` is pinned for this configuration, matching the other v3 Codex recipes. The adapter records the installed version at launch; a version other than the pinned one is a controller failure rather than a silent substitution.
+- Harness and version: Codex CLI `0.145.0` is pinned for this configuration, matching the other v3 Codex recipes. The adapter records the installed version at launch; a version other than the pinned one is a controller failure rather than a silent substitution.
 - Session: fresh process following the continuation policy above. Native session persistence remains enabled for rollout capture.
 - Working tree access: write access only to the entrant worktree through the adapter's sandbox profile (see Runtime policy).
 - Input artifacts from earlier stages: none.
