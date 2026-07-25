@@ -20,7 +20,7 @@ import { measureAgyRunCost, tokscaleVersion } from './tokscale-cost.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
-import { assertSandboxDependencies, entrantSandboxEnabled } from './entrant-sandbox.mjs';
+import { assertSandboxDependencies, entrantSandboxEnabled, sandboxUnavailable, sandboxWarning } from './entrant-sandbox.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
@@ -103,9 +103,10 @@ const ADAPTERS = {
     // the same local conversation databases. See scripts/benchmark/tokscale-cost.mjs for why, and for
     // the measured difference between the two tools' pricing bases.
     costMeasurement: 'tokscale',
-    // This adapter implements no sandbox. Passing the row's own request through (rather than the
-    // always-false entrantSandboxEnabled) lets the adapter reject a row that expects isolation.
-    stageArgs: (definition) => ['--sandbox', String(definition.stage.sandbox === true)],
+    // This adapter implements no sandbox and cannot honor a request for one, so it is always told
+    // false. The runner warns at launch and the manifest records sandboxUnavailable; see
+    // UNSANDBOXABLE_ADAPTERS in entrant-sandbox.mjs for why this is a warning rather than a bar.
+    stageArgs: () => ['--sandbox', 'false'],
   },
 };
 
@@ -182,6 +183,10 @@ async function main() {
     // stage if its dependencies are missing rather than launching an unisolated run. Mirrors the
     // scrubbed-baseline guard above: evaluated for every row, consequential only where it applies.
     if (entrantSandboxEnabled(definition)) assertSandboxDependencies();
+    // A harness that cannot be isolated is a warning, not a bar (v3). Say so loudly here — this is the
+    // last point before an expensive stage launches — and record it in the manifest.
+    const sandboxNotice = sandboxWarning(definition);
+    if (sandboxNotice) console.warn(`\n!! ${sandboxNotice}\n`);
 
     const inputs = await checkpoint(state, statePath, 'inputs', async () => {
       const existing = await optionalJson(path.join(outputDirectory, 'rendered-assignment.json'));
@@ -812,7 +817,7 @@ function buildStages({ definition, adapter, cost, commandRecords, usage, rendere
   };
   const promptSha256 = renderedMeta.rendering.sha256;
   const delegationPromptSha256 = renderedMeta.delegation?.sha256;
-  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, entrantSandbox: entrantSandboxEnabled(definition), ...(continuationRounds > 0 ? { continuationRounds } : {}), ...(budget ? { budget } : {}) };
+  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, entrantSandbox: entrantSandboxEnabled(definition), ...(sandboxUnavailable(definition) ? { sandboxUnavailable: true } : {}), ...(continuationRounds > 0 ? { continuationRounds } : {}), ...(budget ? { budget } : {}) };
   const delegated = Boolean(definition.delegation) && cost.models.length > 1;
 
   if (cost.perModelCostAvailable && cost.models.length >= 1) {

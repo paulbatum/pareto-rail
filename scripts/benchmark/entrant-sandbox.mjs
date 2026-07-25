@@ -31,6 +31,35 @@ export const PRIMARY_REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(i
 // Harnesses that receive the entrant sandbox. Codex is isolated by its own adapter and is excluded.
 export const SANDBOXED_ADAPTERS = new Set(['claude-cli', 'pi-cli']);
 
+// Harnesses that cannot be isolated at all. Neither existing mechanism reaches agy: Claude uses its
+// own built-in bubblewrap sandbox, and pi is confined by a controller-owned extension wrapping its
+// tools, which agy has no equivalent of. Confining it would mean wrapping the whole process with a
+// host-side egress allowlist — real work nobody has done.
+//
+// From v3 this is a warning rather than a bar. A row on such a harness runs unisolated, the runner
+// says so at launch, and the manifest records it, with the contamination audit as the control — the
+// same footing open-policy rows have always run on. The distinction the record has to preserve is
+// between an entrant that was not isolated by policy and one that could not be.
+export const UNSANDBOXABLE_ADAPTERS = new Set(['agy-cli']);
+
+export function sandboxUnavailable(definition) {
+  return UNSANDBOXABLE_ADAPTERS.has(definition?.stage?.adapter);
+}
+
+// The launch-time notice for a row that will run unisolated on a harness that cannot be isolated.
+// Returns null when the row is either isolated or unisolated by ordinary policy.
+export function sandboxWarning(definition) {
+  if (!sandboxUnavailable(definition)) return null;
+  const requested = definition?.stage?.sandbox === true;
+  const byPolicy = definition?.baselinePolicy === 'scrubbed';
+  const because = requested
+    ? 'the row sets stage.sandbox true, which this harness cannot honor'
+    : byPolicy
+      ? 'a scrubbed plan would otherwise isolate it'
+      : 'its plan does not ask for isolation';
+  return `Entrant sandbox unavailable for ${definition.stage.adapter}: ${because}. The entrant runs with full filesystem and network access; the contamination audit is the only control on this run. Recorded in the manifest as sandboxUnavailable.`;
+}
+
 // The sandbox activates for scrubbed plans, mirroring codexNetworkAccess() in run.mjs. A row may set
 // stage.sandbox=false as an explicit rehearsal-only escape hatch (analogous to stage.networkAccess).
 // Open-policy rows keep their historical unsandboxed behavior, with the contamination audit as control.

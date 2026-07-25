@@ -61,10 +61,11 @@ async function main() {
   const model = requireOption(options, 'model');
   const effort = requireOption(options, 'effort');
   if (!EFFORT_TIERS.has(effort)) fail(`Unsupported --effort: ${effort}. agy publishes only: ${[...EFFORT_TIERS].join(', ')}.`);
-  // agy has no OS-level sandbox and this adapter implements none, so a row that asks for one must
-  // fail loudly. Accepting the flag and ignoring it would report isolation the run does not have.
+  // agy has no OS-level sandbox and this adapter implements none. From v3 that is a warning rather
+  // than a bar, so a request for isolation is refused out loud and the stage proceeds without it —
+  // what must never happen is the run reporting isolation it does not have.
   if (options.sandbox !== undefined && options.sandbox !== 'false') {
-    fail('The agy adapter does not implement the entrant sandbox. Set stage.sandbox to false and accept the unsandboxed condition, or use a sandboxed adapter.');
+    console.warn('!! The agy adapter cannot isolate an entrant, and this stage was asked to. It runs with full filesystem and network access; the contamination audit is the only control.');
   }
   const timeoutSeconds = parseTimeout(options['timeout-seconds']);
   const agyBin = options['agy-bin'] ?? 'agy';

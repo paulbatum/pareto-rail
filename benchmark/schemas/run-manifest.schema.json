@@ -327,6 +327,10 @@
         "rolloutArtifactSha256": { "$ref": "#/$defs/sha256" },
         "continuationRounds": { "type": "integer", "minimum": 1 },
         "entrantSandbox": { "type": "boolean" },
+        "sandboxUnavailable": {
+          "const": true,
+          "description": "Present when the harness cannot be isolated at all, distinguishing an entrant that was not sandboxed because its plan did not ask from one that could not be sandboxed. From v3 this is recorded and warned about rather than blocking a run; the contamination audit is the control."
+        },
         "startedAt": { "type": "string", "format": "date-time" },
         "finishedAt": { "type": "string", "format": "date-time" },
         "wallTimeSeconds": { "type": "number", "minimum": 0 },
