@@ -1,4 +1,9 @@
 {
   "id": "thermal-ink-yk97",
-  "title": "Thermal Ink"
+  "title": "Thermal Ink",
+  "contentImages": {
+    "overview": "/level-content/thermal-ink-yk97/overview.avif",
+    "start": "/level-content/thermal-ink-yk97/start.avif",
+    "hero": "/level-content/thermal-ink-yk97/hero.avif"
+  }
 }
