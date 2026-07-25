@@ -37,6 +37,14 @@
   --pr-flag-ink:      #171410;  /* text on flag fills */
   --pr-flag-soft:     #3A2717;  /* flag-tinted surface */
 
+  /* ---- Data values ---- */
+  /* Results tables only, for reading a column at a glance: green marks the top
+     of a column worth being high in, red the top of one worth being low in.
+     Both stay off lime and raspberry so a tinted figure never reads as a button
+     or a link. */
+  --pr-value-high:    #63D48C;  /* strong preference */
+  --pr-value-costly:  #D9583F;  /* expensive */
+
   /* ---- Line-work / etching graphics ---- */
   --pr-etch-faint:    #3A3425;  /* far tunnel rings (was #DCD5C4) */
   --pr-etch-mid:      #5C543D;  /* near tunnel rings, stray marks (was #B8AF9A) */
@@ -74,6 +82,8 @@
   --pr-flag: #C4590E;
   --pr-flag-ink: #FFFFFF;
   --pr-flag-soft: #FBE7D3;
+  --pr-value-high: #1E7A42;
+  --pr-value-costly: #B23A20;
   --pr-etch-faint: #DCD5C4;
   --pr-etch-mid: #B8AF9A;
   --pr-stripe-a: #F2EEE3;
@@ -134,6 +144,8 @@ input:focus, select:focus, textarea:focus {
   --flag: var(--pr-flag);
   --flag-ink: var(--pr-flag-ink);
   --flag-tint: var(--pr-flag-soft);
+  --value-high: var(--pr-value-high);
+  --value-costly: var(--pr-value-costly);
   --sans: var(--pr-font-display);
   --mono: var(--pr-font-mono);
 }

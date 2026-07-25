@@ -151,7 +151,7 @@ export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => 
   const ratedPoints = results ? ratedCurvePoints(results.curve) : [];
 
   return (
-    <section className="page-panel">
+    <section className="page-panel leaderboard-panel">
       <p className="eyebrow">Quality vs cost</p>
       <h1>Leaderboard</h1>
       {import.meta.env.DEV && <label className="debug-toggle"><input type="checkbox" checked={excludeOwner} onChange={(event) => setExcludeOwner(event.target.checked)} />Exclude owner votes ({OWNER_PARTICIPANT_PREFIX}){results && excludeOwner && ` · ${results.excludedVotes} dropped`}</label>}

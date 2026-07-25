@@ -26,6 +26,8 @@ The route is `robots: noindex` (see `applyRouteHead` in `src/app/seo.ts`) becaus
 
 The community counterpart to the personal results on `/rank`, and the same chart: `src/app/components/curve-chart.tsx` owns the quality-vs-cost scatter, the frontier line, the legend, and the results table, and both pages render it with their own wording. `src/app/leaderboard.ts` fetches the server tally from `/api/rank/aggregate` (see `docs/backend.md`), expands each pair's counts back into individual comparisons, and runs the same Bradley-Terry fit the rank controller uses, so a configuration is held off the frontier here for exactly the reasons it would be there. The page falls back to the warming-up empty state whenever fewer than two configurations have a rating.
 
+The shared table tints its figures so a column can be read at a glance: preference greens toward the top of the column, mean cost reds toward the top of its own, and a record's wins, ties, and losses take green, neutral ink, and red. The two colours are theme tokens (`--pr-value-high`, `--pr-value-costly`) held off the lime CTA and the raspberry accent, so a tinted number never reads as something to click. Intensity is relative to the rows on screen, not an absolute scale, and an all-equal column stays neutral.
+
 A development-build-only checkbox re-fetches with the owner's participant-hash prefix excluded, which is how the site owner sees the leaderboard without his own votes. It is gated on `import.meta.env.DEV` and never ships.
 
 ## The `/analysis` pages

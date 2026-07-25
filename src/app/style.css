@@ -210,7 +210,9 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 /* Matchup thumbnails and the curve chart both read better big, so the rank
    route claims more of the viewport than the editorial pages do. */
 [data-route="rank"] .app-content { width: min(1360px, 100%); }
-.rank-panel { max-width: 1180px; }
+/* The results pages carry a chart and a wide table, so they get more room than
+   the editorial pages. */
+.rank-panel, .leaderboard-panel { max-width: 1180px; }
 .rank-panel > .lede { max-width: none; }
 .rank-note { max-width: 700px; padding: 13px 0; color: var(--soft-text); border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); border-left: none; line-height: 1.55; font-size: 14px; }
 .prompt-details { margin: 22px 0; color: var(--body-text); border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
@@ -390,6 +392,13 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-table tbody th span.explainer-bubble, .explainer-bubble { position: fixed; z-index: 6; display: block; width: 290px; margin: 0; padding: 14px; color: var(--ink); font: 12.5px/1.55 var(--sans); letter-spacing: normal; text-transform: none; white-space: normal; background: var(--card); border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--hairline); pointer-events: none; }
 .curve-table tbody td { color: var(--body-text); }
 .curve-table .frontier-status { color: var(--accent); }
+/* A record reads as three figures, not one string: wins and losses take the
+   same green and red as the columns they explain, and the tie count stays
+   neutral between them. */
+.curve-table .record-cell { color: var(--muted); }
+.curve-table .record-wins { color: var(--value-high); }
+.curve-table .record-ties { color: var(--ink); }
+.curve-table .record-losses { color: var(--value-costly); }
 
 /* ---------- Invitations ---------- */
 .crystal-invitation, .benchmark-invitation { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--hairline); color: var(--body-text); line-height: 1.5; }
@@ -493,7 +502,7 @@ html:fullscreen .perf-overlay { display: none; }
   .curve-heading-actions { justify-content: flex-start; }
   .curve-legend .best-direction { width: 100%; margin-left: 0; }
   .curve-tooltip { width: 190px; }
-  .curve-table { min-width: 580px; }
+  .curve-table { min-width: 640px; }
 }
 
 /* A landscape phone is wide but very short, so the width query above never

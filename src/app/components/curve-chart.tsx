@@ -136,13 +136,31 @@ export function CurveLegend() {
 
 export function CurveTable({ points, caption, ratingTerm }: { points: readonly PersonalRatingPoint[]; caption: string; ratingTerm: string }) {
   const ordered = [...points].sort((left, right) => (right.rating ?? -Infinity) - (left.rating ?? -Infinity) || left.configurationId.localeCompare(right.configurationId));
-  return <div className="curve-table-wrap"><table className="curve-table"><caption>{caption}</caption><thead><tr><th scope="col">Model</th><th scope="col">Record</th><th scope="col">{ratingTerm}</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
+  const ratingRange = valueRange(ordered.flatMap((point) => (point.rating === undefined ? [] : [point.rating])));
+  const costRange = valueRange(ordered.map((point) => point.meanCost));
+  return <div className="curve-table-wrap"><table className="curve-table"><caption>{caption}</caption><thead><tr><th scope="col">Model</th><th scope="col">Matches</th><th scope="col">Record</th><th scope="col">{ratingTerm}</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
     const record = point.comparisons === 0
       ? <span aria-label="No comparisons yet">—</span>
-      : <span aria-label={recordAriaLabel(point)}>{point.wins}–{point.ties}–{point.losses}</span>;
+      : <span aria-label={recordAriaLabel(point)}><span className="record-wins">{point.wins}</span>–<span className="record-ties">{point.ties}</span>–<span className="record-losses">{point.losses}</span></span>;
     const effort = effortSuffix(point.configurationId);
-    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{record}</td><td>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td>${point.meanCost.toFixed(2)}</td><td className={point.frontier ? 'frontier-status' : ''}>{point.frontier ? 'Frontier' : statusLabel(point.status)}</td></tr>;
+    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{point.comparisons}</td><td className="record-cell">{record}</td><td style={point.rating === undefined ? undefined : { color: rampColor('--value-high', ratingRange(point.rating)) }}>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td style={{ color: rampColor('--value-costly', costRange(point.meanCost)) }}>${point.meanCost.toFixed(2)}</td><td className={point.frontier ? 'frontier-status' : ''}>{point.frontier ? 'Frontier' : statusLabel(point.status)}</td></tr>;
   })}</tbody></table></div>;
+}
+
+/** Position a value takes in its column, as 0 (lowest in the table) to 1
+ * (highest). A column whose values are all equal reads as neutral rather than
+ * uniformly hot: nothing in it stands out from anything else. */
+function valueRange(values: readonly number[]): (value: number) => number {
+  const low = Math.min(...values);
+  const high = Math.max(...values);
+  if (!Number.isFinite(low) || !Number.isFinite(high) || high === low) return () => 0;
+  return (value) => (value - low) / (high - low);
+}
+
+/** Tint a figure toward its column's colour by how far up the column it sits,
+ * leaving the low end at ordinary body text so only the extremes carry weight. */
+function rampColor(token: string, position: number): string {
+  return `color-mix(in oklab, var(${token}) ${Math.round(15 + 75 * position)}%, var(--body-text))`;
 }
 
 const BUDGET_EXPLAINER = 'This entrant was told how much of its budget it had spent as it worked. If it submitted a level having used less than 75%, it was sent back to keep improving it.';
