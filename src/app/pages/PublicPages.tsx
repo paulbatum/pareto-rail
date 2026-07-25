@@ -159,22 +159,21 @@ export function LeaderboardPage({ onNavigate }: { onNavigate: (path: string) => 
       {status === 'loading' && <p className="lede">Loading community results…</p>}
       {status === 'failed' && <div className="empty-state"><span className="empty-glyph">◌</span><h2>Results are unavailable</h2><p>The results service could not be reached. Try again in a moment.</p></div>}
       {status === 'ready' && results && (ratedPoints.length >= 2
-        ? <><EarlyResultsBanner votes={results.votes} onNavigate={onNavigate} /><LeaderboardResultsView results={results} /></>
+        ? <><EarlyResultsBanner onNavigate={onNavigate} /><LeaderboardResultsView results={results} /></>
         : <div className="empty-state"><span className="empty-glyph">◌</span><h2>Public results are warming up</h2><p>Aggregate results will appear here once enough comparisons have been recorded. Help us populate the leaderboard by ranking some levels!</p><RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank Levels</RouteLink></div>)}
       <RouteLink className="text-link" href="/about" onNavigate={onNavigate}>Read the methodology →</RouteLink>
     </section>
   );
 }
 
-/** The vote count the standings are based on, and the ask. */
-function EarlyResultsBanner({ votes, onNavigate }: { votes: number; onNavigate: (path: string) => void }) {
+function EarlyResultsBanner({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <div className="early-results">
       <div>
-        <p className="eyebrow">Early results</p>
-        <p>Based on <strong>{votes.toLocaleString('en-US')} {votes === 1 ? 'vote' : 'votes'}</strong> so far. More votes make this better.</p>
+        <h2>We can’t do this alone</h2>
+        <p>We need more votes to make the leaderboard reliable. Play two levels, choose the better one, and help us improve the rankings.</p>
       </div>
-      <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Rank Levels</RouteLink>
+      <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>Compare two levels</RouteLink>
     </div>
   );
 }

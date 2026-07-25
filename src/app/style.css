@@ -340,7 +340,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-status { flex: 0 0 auto; max-width: min(420px, 100%); padding: 7px 10px; color: var(--muted); background: var(--card); border: 1px solid var(--hairline); font: 11px var(--mono); letter-spacing: .04em; line-height: 1.35; text-align: right; }
 /* ---------- Early-results call to action ---------- */
 .early-results { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: center; justify-content: space-between; margin: 0 0 26px; padding: 20px 22px; background: var(--card); border: 1px dashed var(--ghost); }
-.early-results .eyebrow { margin: 0 0 7px; }
+.early-results h2 { margin: 0 0 8px; color: var(--ink); font-size: 19px; letter-spacing: -.015em; }
 .early-results p { max-width: 720px; margin: 0; color: var(--soft-text); line-height: 1.6; }
 .early-results strong { color: var(--ink); }
 .early-results .button { flex: 0 0 auto; }
