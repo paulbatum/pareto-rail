@@ -257,7 +257,7 @@ function CurveComparison({ results, personal, onClose }: { results: LeaderboardR
 function leaderboardNarrative(results: LeaderboardResults): string {
   const votes = `${results.votes.toLocaleString('en-US')} ${results.votes === 1 ? 'vote' : 'votes'}`;
   const participants = `${results.participants.toLocaleString('en-US')} ${results.participants === 1 ? 'participant' : 'participants'}`;
-  return `${votes} · ${participants} · ${results.curve.establishedCount} ranked`;
+  return `${votes} · ${participants}`;
 }
 
 export function AboutPage() {
