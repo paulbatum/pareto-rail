@@ -377,14 +377,16 @@ const piCounters = harnessCounters({ normalized: { vendorFields: { modelUsage: {
 assert.equal(piCounters.get('gpt-5.6-luna').outputTokens, 76);
 assert.equal(reconcileCost(piCost, piCounters).reconciliation.status, 'agreed');
 
-// Resumed pi invocations report only their own API calls, unlike Claude/Codex's cumulative result
-// counters. The round-aware helper sums pi but preserves the final-round rule for other harnesses.
+// Resumed pi and Claude invocations report only their own API calls, so their rounds are summed;
+// Codex restates the whole session each round, so its final round stands alone.
 const roundOne = { normalized: { vendorFields: { modelUsage: { 'gpt-5.6-luna': { outputTokens: 40, costUSD: 0.004 } } } } };
 const roundTwo = { normalized: { vendorFields: { modelUsage: { 'gpt-5.6-luna': { outputTokens: 36, costUSD: 0.005118 } } } } };
-const resumedPiCounters = harnessCountersForRounds('pi-cli', [roundOne, roundTwo]);
-assert.equal(resumedPiCounters.get('gpt-5.6-luna').outputTokens, 76);
-assert.equal(Number(resumedPiCounters.get('gpt-5.6-luna').costUsd.toFixed(6)), 0.009118);
-assert.equal(harnessCountersForRounds('claude-cli', [roundOne, roundTwo]).get('gpt-5.6-luna').outputTokens, 36);
+for (const adapter of ['pi-cli', 'claude-cli']) {
+  const accumulated = harnessCountersForRounds(adapter, [roundOne, roundTwo]);
+  assert.equal(accumulated.get('gpt-5.6-luna').outputTokens, 76, `${adapter} sums its round counters`);
+  assert.equal(Number(accumulated.get('gpt-5.6-luna').costUsd.toFixed(6)), 0.009118);
+}
+assert.equal(harnessCountersForRounds('codex-cli', [roundOne, roundTwo]).get('gpt-5.6-luna').outputTokens, 36);
 
 // Reconciling the replayed transcripts against the harness's own counter. Replay loses output when
 // an assistant message never finalized on disk, so a counter above replay wins; a counter below

@@ -121,13 +121,17 @@ export function harnessCounters(usage) {
   return counters.size > 0 ? counters : null;
 }
 
-// Claude and Codex restate whole-session usage on every resumed invocation, so their final round is
-// authoritative. pi emits usage only for API calls made by that invocation; sum its round counters
-// before comparing them with ccusage's replay of the one appended session transcript.
+// Codex restates whole-session usage on every resumed invocation, so its final round is authoritative.
+// Claude and pi instead report only what their own invocation spent, so their rounds are summed before
+// being compared with ccusage's replay of the one appended session transcript. This is measured, not
+// assumed: on every multi-round run on record a Codex final round equals the replay, while summed
+// Claude and pi rounds do.
+const ACCUMULATING_ADAPTERS = new Set(['claude-cli', 'pi-cli']);
+
 export function harnessCountersForRounds(adapter, usages) {
   const present = usages.filter(Boolean);
   if (present.length === 0) return null;
-  if (adapter !== 'pi-cli') return harnessCounters(present.at(-1));
+  if (!ACCUMULATING_ADAPTERS.has(adapter)) return harnessCounters(present.at(-1));
 
   const combined = new Map();
   for (const usage of present) {

@@ -23,16 +23,20 @@ async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
   if (options.help) {
     console.log(`Usage:
-  npm run benchmark:reconcile-cost -- [--write true] [--run <run-id>]
+  npm run benchmark:reconcile-cost -- [--write true] [--run <run-id>] [--recompute true]
 
 Reports what reconciling each run's recorded cost against its harness counter would change.
-Nothing is modified unless --write true is passed.`);
+A run that already carries a reconciliation is left alone unless --recompute true says to redo it,
+which is for a record computed under a rule since corrected. Nothing is modified unless --write true
+is passed.`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'write', 'run']));
+  assertOnlyOptions(options, new Set(['help', 'write', 'run', 'recompute']));
   const write = options.write === 'true';
   if (options.write !== undefined && !write) fail('--write only accepts true.');
+  const recompute = options.recompute === 'true';
+  if (options.recompute !== undefined && !recompute) fail('--recompute only accepts true.');
 
   const runIds = (await fs.readdir(RUNS, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && (!options.run || entry.name === options.run))
@@ -43,7 +47,7 @@ Nothing is modified unless --write true is passed.`);
   let changed = 0;
   let totalDelta = 0;
   for (const runId of runIds) {
-    const outcome = await reconcileRun(runId, write);
+    const outcome = await reconcileRun(runId, write, recompute);
     if (!outcome) continue;
     console.log(`${runId} — ${outcome.summary}`);
     for (const warning of outcome.warnings) console.log(`  ${warning}`);
@@ -55,11 +59,11 @@ Nothing is modified unless --write true is passed.`);
   console.log(`\n${changed} run${changed === 1 ? '' : 's'} restated${changed > 0 ? `, total cost +$${totalDelta.toFixed(4)}` : ''}.${write || changed === 0 ? '' : ' Re-run with --write true to apply.'}`);
 }
 
-async function reconcileRun(runId, write) {
+async function reconcileRun(runId, write, recompute) {
   const manifestPath = path.join(RUNS, runId, 'manifest.json');
   const manifest = await optionalJson(manifestPath);
   if (!manifest?.cost || !Array.isArray(manifest.cost.models) || typeof manifest.cost.totalUsd !== 'number') return null;
-  if (manifest.cost.reconciliation) return { summary: `already reconciled (${manifest.cost.reconciliation.status})`, warnings: [], costDelta: 0 };
+  if (manifest.cost.reconciliation && !recompute) return { summary: `already reconciled (${manifest.cost.reconciliation.status})`, warnings: [], costDelta: 0 };
 
   const stage = await stageFor(runId);
   if (!stage) return { summary: 'no stage directory retained; left as measured', warnings: [], costDelta: 0 };
