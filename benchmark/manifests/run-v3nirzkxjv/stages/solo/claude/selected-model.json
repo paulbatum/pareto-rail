@@ -1,0 +1,8 @@
+{
+  "requestedModel": "claude-opus-5",
+  "initResolvedModel": "claude-opus-5",
+  "modelUsageKeys": [
+    "claude-opus-5"
+  ],
+  "selectedReasoningEffort": "high"
+}

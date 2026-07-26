@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "incident": "2026-07-heap-gate-collection-timing",
+  "note": "DNF was recorded on the floor check's heap gate, which measured the last heap sample minus the first without collecting first. That reading depends on whether a collection fires near the final sample, and re-running the unmodified gate against the sealed commit was bimodal on identical code: about 34 MB (fail) or about 23-26 MB (pass). Which mode a run lands in tracks host load, so the entrant's checks passed on a host busy with its own harness while the gate failed minutes later on a quiet one. Measured with a forced collection the level retains 7.7 MB, against 6.6 MB for the highest promoted level and 8.6 MB for the built-in helios, and the sealed commit passes every floor gate with no warnings. Classified as an infrastructure failure, not a model failure. The disposition change is the owner's call.",
+  "classification": "infrastructure"
+}

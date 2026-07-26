@@ -221,16 +221,34 @@
       "configurationId": "claude-opus-5-high"
     },
     {
+      "runId": "run-v36fh9mj5e",
+      "levelId": "tinker-ball-6fh9",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
       "runId": "run-v3c8vrhdys",
       "levelId": "vespers-c8vr",
       "themeId": "vespers",
       "configurationId": "agy-gemini-3-6-flash-high"
     },
     {
+      "runId": "run-v3nirzkxjv",
+      "levelId": "tinker-ball-nirz",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-opus-5-high"
+    },
+    {
       "runId": "run-v3p6btkzrn",
       "levelId": "vespers-p6bt",
       "themeId": "vespers",
       "configurationId": "claude-opus-5-high"
+    },
+    {
+      "runId": "run-v3q1cid4ze",
+      "levelId": "tinker-ball-q1ci",
+      "themeId": "tinker-ball",
+      "configurationId": "codex-sol-max"
     },
     {
       "runId": "run-v3r4wjp8ce",
@@ -254,6 +272,12 @@
       "runId": "run-v3t6nvtrtz",
       "levelId": "thermal-ink-t6nv",
       "themeId": "thermal-ink",
+      "configurationId": "agy-gemini-3-6-flash-high"
+    },
+    {
+      "runId": "run-v3xa2fxuvx",
+      "levelId": "tinker-ball-xa2f",
+      "themeId": "tinker-ball",
       "configurationId": "agy-gemini-3-6-flash-high"
     },
     {

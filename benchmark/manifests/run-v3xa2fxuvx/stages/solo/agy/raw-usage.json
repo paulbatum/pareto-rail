@@ -1,0 +1,6 @@
+{
+  "sessionId": "c2a7ef3d-7003-4515-87e0-35e767f2cf56",
+  "initResolvedModel": "gemini-3.6-flash-high",
+  "usageAvailable": false,
+  "usageUnavailableReason": "agy reports no token usage through any documented interface."
+}

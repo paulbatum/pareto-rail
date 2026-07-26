@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "regatedAt": "2026-07-26T03:15:00Z",
+  "evaluatedCommit": "287bf2c94940a906f76bf7c3c1a4b0c5c2598865",
+  "incident": "2026-07-heap-gate-collection-timing",
+  "previousRecord": "gates-dnf-original/",
+  "previousDisposition": "dnf (required-gate-failed, floor)",
+  "reason": "The original floor gate failed on a heap measurement that read the last heap sample minus the first without collecting first, which is bimodal on identical code and tracks host load. The corrected measurement collects before every read and compares window means; the level retains 7.7 MB against a 16 MB budget.",
+  "deviation": "The four gate commands were re-run against the sealed commit in the entrant checkout, exactly as scripts/benchmark/admin.mjs runGates does. For the floor gate only, the checkout's scripts/check-perf.mjs and scripts/check-floor-cli.ts were replaced with the controller's corrected copies and restored immediately afterwards; typecheck, build and scope ran against the pristine checkout. runGates could not do this itself because it refuses a modified worktree, and the checkout's own copy of the floor check is the defect being corrected.",
+  "controllerCommit": "2848854",
+  "classification": "infrastructure",
+  "contaminationAudit": {
+    "verdict": "clean",
+    "toolCalls": 134,
+    "findings": 0,
+    "webEvents": 0,
+    "reviewerNote": "Audited before promotion. No findings and no web events, so there is no external level material to review the entrant's output against."
+  }
+}

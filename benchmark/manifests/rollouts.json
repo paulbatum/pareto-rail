@@ -650,6 +650,24 @@
       ]
     },
     {
+      "runId": "run-v36fh9mj5e",
+      "levelId": "tinker-ball-6fh9",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/run-v36fh9mj5e/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 16724386,
+          "sha256": "a12956cb04004b937308aa2cb069bc1c3db1b256b9355a84bdf7c8f8c66d0cf8"
+        },
+        {
+          "path": "runs/run-v36fh9mj5e/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 17843429,
+          "sha256": "30a68a8843941837f22840bbb1fce4722f4919409ad5f59fcbf1b573c993515b"
+        }
+      ]
+    },
+    {
       "runId": "run-v3c8vrhdys",
       "levelId": "vespers-c8vr",
       "themeId": "vespers",
@@ -668,6 +686,24 @@
       ]
     },
     {
+      "runId": "run-v3nirzkxjv",
+      "levelId": "tinker-ball-nirz",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-opus-5-high",
+      "files": [
+        {
+          "path": "runs/run-v3nirzkxjv/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 12564275,
+          "sha256": "05731a4822a246c4243cab7c64fbaf9f8095e8cdfb1306afd189de6f37a5b6ee"
+        },
+        {
+          "path": "runs/run-v3nirzkxjv/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 4397275,
+          "sha256": "25228035f4fccbdfade18d9951ed30327a15b33a6579536e71495dc9b3d63b5f"
+        }
+      ]
+    },
+    {
       "runId": "run-v3p6btkzrn",
       "levelId": "vespers-p6bt",
       "themeId": "vespers",
@@ -682,6 +718,24 @@
           "path": "runs/run-v3p6btkzrn/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 12253984,
           "sha256": "755f68ecd087f83d74c1212789ea731e206c2f77332dd6968240988bfc9b9b51"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3q1cid4ze",
+      "levelId": "tinker-ball-q1ci",
+      "themeId": "tinker-ball",
+      "configurationId": "codex-sol-max",
+      "files": [
+        {
+          "path": "runs/run-v3q1cid4ze/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 10660670,
+          "sha256": "d4e76379c86bd290b6bc645e937584cd13aed437f6c32706c429fa51851f213c"
+        },
+        {
+          "path": "runs/run-v3q1cid4ze/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 1363961,
+          "sha256": "3c28c186324053bd39d363e3a3d1cff4d5396f1ea960c746e34eddbbab09d616"
         }
       ]
     },
@@ -754,6 +808,24 @@
           "path": "runs/run-v3t6nvtrtz/stages/solo/agy/events.jsonl.gz",
           "rawBytes": 398,
           "sha256": "6584dea1bf85bd07ddced645c2b33cca507d922e5ab927e2f3cffe0911b2eb18"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3xa2fxuvx",
+      "levelId": "tinker-ball-xa2f",
+      "themeId": "tinker-ball",
+      "configurationId": "agy-gemini-3-6-flash-high",
+      "files": [
+        {
+          "path": "runs/run-v3xa2fxuvx/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 292000,
+          "sha256": "15a25f1108a069aaee72adfb76e2f7fa0673f65bd2568e88bfe1d6ee9c6ab729"
+        },
+        {
+          "path": "runs/run-v3xa2fxuvx/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 398,
+          "sha256": "ccfb96b9758b8272cd6f7d0204f3853def270031e8f16b521258e269d6a8ba0b"
         }
       ]
     },

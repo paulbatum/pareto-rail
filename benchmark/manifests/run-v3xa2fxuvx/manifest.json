@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v3xa2fxuvx",
+  "slotId": "xa2f",
+  "configuration": {
+    "id": "agy-gemini-3-6-flash-high"
+  },
+  "theme": {
+    "id": "tinker-ball",
+    "path": "benchmark/themes/tinker-ball.md",
+    "sha256": "b9c846813d00dda166372ee7a298d6fa8bb5428e432a8988994126c1adcebc47"
+  },
+  "baseline": {
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/agy-cli.md",
+    "sha256": "45e5844e6de4ac07558dac566a76baff376ab24700b11a2842e7c1e016cac366"
+  },
+  "controller": {
+    "commit": "baa2d2860b0acbc7f11fcccc21a9a5a58ae66b8e"
+  },
+  "timing": {
+    "startedAt": "2026-07-26T00:36:50.487Z",
+    "finishedAt": "2026-07-26T00:39:52.156Z",
+    "wallTimeSeconds": 181.669
+  },
+  "stages": [
+    {
+      "id": "gemini-3.6-flash",
+      "role": "solo",
+      "model": {
+        "provider": "Google Antigravity subscription",
+        "snapshotId": "gemini-3.6-flash"
+      },
+      "promptSha256": "1581c2cd71eef7f114759d279941bd6f7d71f891988b2886ecdba17c9b5d8a93",
+      "harness": {
+        "name": "Antigravity CLI",
+        "version": "1.1.7"
+      },
+      "sessionId": "c2a7ef3d-7003-4515-87e0-35e767f2cf56",
+      "rolloutArtifactSha256": "15a25f1108a069aaee72adfb76e2f7fa0673f65bd2568e88bfe1d6ee9c6ab729",
+      "outputArtifactSha256": "ccfb96b9758b8272cd6f7d0204f3853def270031e8f16b521258e269d6a8ba0b",
+      "startedAt": "2026-07-26T00:37:04.332Z",
+      "finishedAt": "2026-07-26T00:39:39.730Z",
+      "wallTimeSeconds": 151.256075583,
+      "result": "completed",
+      "entrantSandbox": false,
+      "sandboxUnavailable": true,
+      "usage": {
+        "inputTokens": 380891,
+        "outputTokens": 14634,
+        "cacheReadInputTokens": 4600680,
+        "reasoningTokens": 34889
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 1.632861,
+        "source": "tokscale"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 1.632861,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "tokscale",
+      "version": "4.7.0",
+      "view": "antigravity-cli",
+      "command": "tokscale models --home <run harness home> --json",
+      "basis": "rate-card"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gemini-3.6-flash",
+        "costUsd": 1.632861,
+        "inputTokens": 380891,
+        "outputTokens": 14634,
+        "cacheReadTokens": 4600680,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 34889
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.579610725,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.6347496489999993,
+      "outputSha256": "08b6e95e7ae7e6b0319778395b4cd82e015df2688bbb6818e258c386a4de8e21"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-xa2f --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.0339763469999998,
+      "outputSha256": "7c7366d9c083876e5da04515e6ac0a1fd34c717e780182ce60e04f643722cf09"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level tinker-ball-xa2f",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.81474939,
+      "outputSha256": "68baf7ae83b2285e6123d62c273425fa090c37a8d65ac5ea9930a5e5f380a735"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "tinker-ball-xa2f",
+    "title": "Tinker Ball",
+    "evaluated": {
+      "commit": "81c6ed94ab35097c055ff40fdbd7b17fe1d76e63",
+      "branch": "benchmark-run-run-v3xa2fxuvx"
+    },
+    "payload": {
+      "commit": "99b622c2356f883cd11ff578710ad984209c9327",
+      "branch": "benchmark-payload-run-v3xa2fxuvx"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

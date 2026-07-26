@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v36fh9mj5e",
+  "slotId": "6fh9",
+  "configuration": {
+    "id": "claude-fable-5-high"
+  },
+  "theme": {
+    "id": "tinker-ball",
+    "path": "benchmark/themes/tinker-ball.md",
+    "sha256": "b9c846813d00dda166372ee7a298d6fa8bb5428e432a8988994126c1adcebc47"
+  },
+  "baseline": {
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-cli.md",
+    "sha256": "2c0fb25bd878961cbd97776ca0a93fffd816fe452147e0811cc1cb7899c76667"
+  },
+  "controller": {
+    "commit": "ade88c097266df6994da7b84db465ff9f3b28040"
+  },
+  "timing": {
+    "startedAt": "2026-07-26T00:36:55.128Z",
+    "finishedAt": "2026-07-26T01:37:17.216Z",
+    "wallTimeSeconds": 3622.088
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5"
+      },
+      "promptSha256": "b02cc47d5e784f500b4972591bbd55858318370dda442a7378952d1dee0be99d",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.220 (Claude Code)"
+      },
+      "sessionId": "11796544-57e4-4979-abe3-f9ae6c8b5d0c",
+      "rolloutArtifactSha256": "a12956cb04004b937308aa2cb069bc1c3db1b256b9355a84bdf7c8f8c66d0cf8",
+      "outputArtifactSha256": "30a68a8843941837f22840bbb1fce4722f4919409ad5f59fcbf1b573c993515b",
+      "startedAt": "2026-07-26T00:37:06.886Z",
+      "finishedAt": "2026-07-26T01:37:01.980Z",
+      "wallTimeSeconds": 3491.098717317,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 219,
+        "outputTokens": 248701,
+        "cacheReadInputTokens": 35881195,
+        "cacheWriteInputTokens": 952096
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 67.36035499999998,
+        "source": "ccusage"
+      }
+    },
+    {
+      "id": "claude-opus-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-5"
+      },
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.220 (Claude Code)"
+      },
+      "sessionId": "11796544-57e4-4979-abe3-f9ae6c8b5d0c",
+      "rolloutArtifactSha256": "a12956cb04004b937308aa2cb069bc1c3db1b256b9355a84bdf7c8f8c66d0cf8",
+      "outputArtifactSha256": "30a68a8843941837f22840bbb1fce4722f4919409ad5f59fcbf1b573c993515b",
+      "startedAt": "2026-07-26T00:37:06.886Z",
+      "finishedAt": "2026-07-26T01:37:01.980Z",
+      "wallTimeSeconds": 3491.098717317,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 78,
+        "outputTokens": 36727,
+        "cacheReadInputTokens": 3219056,
+        "cacheWriteInputTokens": 266296
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 4.192443000000001,
+        "source": "harness-counter"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 71.55279800000002,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "adjusted",
+      "source": "harness result event modelUsage",
+      "adjustments": [
+        {
+          "modelName": "claude-opus-5",
+          "replayOutputTokens": 36099,
+          "counterOutputTokens": 36727,
+          "resolution": "took-counter",
+          "replayCostUsd": 4.176742999999999,
+          "counterCostUsd": 4.192443000000001
+        }
+      ]
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5",
+        "usageSource": "agreed",
+        "costUsd": 67.36035499999998,
+        "inputTokens": 219,
+        "outputTokens": 248701,
+        "cacheReadTokens": 35881195,
+        "cacheWriteTokens": 952096
+      },
+      {
+        "modelName": "claude-opus-5",
+        "usageSource": "harness-counter",
+        "costUsd": 4.192443000000001,
+        "inputTokens": 78,
+        "outputTokens": 36727,
+        "cacheReadTokens": 3219056,
+        "cacheWriteTokens": 266296
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.778491444,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.4351321870000002,
+      "outputSha256": "d3e499ceb63d9b282e5809c547bd9a27c68f3eaf4ec79826b27c8d98dfb208db"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-6fh9 --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.036898071000000525,
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level tinker-ball-6fh9",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.259137706000001,
+      "outputSha256": "c892eb6e8c958a688d6f8e103b38a43b4dfad9fbdd94f40b04a7c4ee8c8285b4"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "tinker-ball-6fh9",
+    "title": "Tinker Ball",
+    "evaluated": {
+      "commit": "8cfff5b1351ae06024330cfaf78deb7ed4a59896",
+      "branch": "benchmark-run-run-v36fh9mj5e"
+    },
+    "payload": {
+      "commit": "a817b726d94ae97f17df4ffb9304b0f5ad131d69",
+      "branch": "benchmark-payload-run-v36fh9mj5e"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

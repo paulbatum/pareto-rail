@@ -1,0 +1,38 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level tinker-ball-q1ci
+
+Tinker Ball floor check
+duration 60.0s; spawned kinds 10: block-golem, button-beetle, clothespin-bird, pencil-walker, spill-card-core, spill-controller, spill-heart, spill-jar-core, spill-ruler-core, spool-crab
+event coverage missing: playerhit
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp
+    gapThirtyseconds=1
+    releaseShare=0.62
+    gridRampGapGrowthThirtyseconds=1
+    maxGridSeconds=0.9
+  action SFX snap: overridden grid (enabled, 32nd grid)
+  lock radius: 0.16 NDC (engine default 0.085); reticle visual 0.107 NDC = 0.67x lock radius, no reticle scaling
+  words: start "START!" (6), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, detailsForRun
+  identity hooks [default]: playerHealth, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0, over authoring budget: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+reticle warnings: 0
+start/replay word warnings: 0
+
+Performance gates:
+  ✓ draw calls growth: 179.13 late vs 322.75 early (0.55×, +-143.62, allowance 64)
+  ✓ scene objects growth: 467.44 late vs 460.25 early (1.02×, +7.19, allowance 128)
+  ✓ visible objects growth: 463.94 late vs 424.25 early (1.09×, +39.69, allowance 128)
+  ✓ geometry count growth: 336.94 late vs 225.75 early (1.49×, +111.19, allowance 512)
+  ✓ texture count growth: 3 late vs 3 early (1.00×, +0, allowance 8)
+  ✓ heap retention: +7.7 MB retained (26.3 MB late vs 18.6 MB early, 0.1 MB/s), allowance 16.0 MB
+  ✓ draw call budget: 451 peak, limit 500
+  ✓ scene object budget: 661 peak, limit 5,000
+All floor checks passed.

@@ -1,0 +1,21 @@
+{
+  "runId": "run-v3q1cid4ze",
+  "slotId": "q1ci",
+  "levelId": "tinker-ball-q1ci",
+  "themeId": "tinker-ball",
+  "themePath": "benchmark/themes/tinker-ball.md",
+  "configurationId": "codex-sol-max",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+  "benchmarkVersion": "v3",
+  "baselinePolicy": "scrubbed",
+  "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+  "levelTitle": "Tinker Ball"
+}

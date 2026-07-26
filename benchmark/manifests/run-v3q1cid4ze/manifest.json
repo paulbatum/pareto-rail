@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v3q1cid4ze",
+  "slotId": "q1ci",
+  "configuration": {
+    "id": "codex-sol-max"
+  },
+  "theme": {
+    "id": "tinker-ball",
+    "path": "benchmark/themes/tinker-ball.md",
+    "sha256": "b9c846813d00dda166372ee7a298d6fa8bb5428e432a8988994126c1adcebc47"
+  },
+  "baseline": {
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d604d10cfd3e531102fe0b5911082e755f3967ee858a10f596c6fb425f53189b"
+  },
+  "controller": {
+    "commit": "28488541024436e9c88a777a9a63cc6e14864e20"
+  },
+  "timing": {
+    "startedAt": "2026-07-26T00:36:46.640Z",
+    "finishedAt": "2026-07-26T03:19:44.054Z",
+    "wallTimeSeconds": 9777.414
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "bc66697813ca9aefd6f2f5690a3a0e00e865bd52a876a4ce258c992c1e82bbb9",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.145.0"
+      },
+      "sessionId": "019f9bda-91ba-7f93-a08c-eebbcef8ab84",
+      "rolloutArtifactSha256": "d4e76379c86bd290b6bc645e937584cd13aed437f6c32706c429fa51851f213c",
+      "outputArtifactSha256": "3c28c186324053bd39d363e3a3d1cff4d5396f1ea960c746e34eddbbab09d616",
+      "startedAt": "2026-07-26T00:36:58.560Z",
+      "finishedAt": "2026-07-26T01:22:05.112Z",
+      "wallTimeSeconds": 2629.925050596,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 420154,
+        "outputTokens": 100093,
+        "cacheReadInputTokens": 17602048,
+        "reasoningTokens": 35240
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 13.904584,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 13.904584,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 420154,
+        "outputTokens": 100093,
+        "cacheReadTokens": 17602048,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 35240
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.679102242,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.4874401329999998,
+      "outputSha256": "153a7e554889154b0aabb4c65ca842fb9939ddba69953c8c2400a01081c44890"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-q1ci --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03833856099999957,
+      "outputSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level tinker-ball-q1ci",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 10.230799853,
+      "outputSha256": "918fb8e5958f81987e908c5a1665655e621030eebd041f5eb19d5b1aa2f2d8a8"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "tinker-ball-q1ci",
+    "title": "Tinker Ball",
+    "evaluated": {
+      "commit": "287bf2c94940a906f76bf7c3c1a4b0c5c2598865",
+      "branch": "benchmark-run-run-v3q1cid4ze"
+    },
+    "payload": {
+      "commit": "67c63f345cd31aebad812f91b83b1e8bc8c70bca",
+      "branch": "benchmark-payload-run-v3q1cid4ze"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

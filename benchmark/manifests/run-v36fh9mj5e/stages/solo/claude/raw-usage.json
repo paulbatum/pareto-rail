@@ -1,0 +1,123 @@
+{
+  "sessionId": "11796544-57e4-4979-abe3-f9ae6c8b5d0c",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Tinker Ball is built and passing every gate.** The complete level lives in `src/benchmark-levels/tinker-ball-6fh9/` — nothing outside that directory was touched — and it's a 60.0-second run (32 bars at 128 BPM, ending exactly on the phrase).\n\n## What the level is\n\nYou escort a rolling cleaning ball on one lap of an oversized worktable under a desk lamp, with the route drawn as pale scratches in the wood. Three glue-monster kinds with distinct silhouettes and motion: **button beetles** that scuttle and skitter on the tabletop, **pencil striders** that walk tall on stilt legs with a heavy gait bob, and **clothespin snappers** that swoop in figure-eights and lob interceptable glue globs at the 4-point hull. The signature loop: every kill breaks the body into bright craft pieces that bounce on the wood, rest, then chase the ball down and stick to it — the ball grows from marble to melon and wears the whole run. The finale is the **Glue Spill** under the lamp: three gated 4-hit shelled cores that pace the camera (shell supplies pop off per hit), then a 6-hit heart — a full six-lock volley moment — then the coast across the one clean patch of table.\n\nThe music is workshop pop in C major: bell mallets, tick-tock woodblocks, reed-organ offbeat stabs, handclaps, bouncy octave bass. Kills read hidden two-bar melody lanes (music box → toy piano → metallic peals per act), locks climb a pentatonic, fire is a chord-rooted rubber-band pluck, the spill flips to the relative minor, and the heart's death lands a ducked major rescue fanfare resolving to C for the coast. Letters are toy building blocks; the reticle is an embroidery hoop.\n\n## Verified\n\n- `npm run typecheck`, `npm run build`, and `npm run check:floor` all pass — occlusion 0 warnings, perf 0 failures (130 peak draw calls vs 500 budget, geometry growth fixed by disposing baked creature geometry), audio config clean, `level.md` card done.\n- Simulator: perfect policy survives to a B rank (59/71), seeded imperfect earns A (68/71, one hull hit); S requires beating the heart plus a near-perfect clear. Beat and reject events covered; `trace:audio` and `trace:spawns` both clean.\n- Snapshot review (SwiftShader fallback) across attract/acts/boss/coast/REPLAY caught and fixed several real issues: START! sinking below the table, the ball overtaking the camera at the rail end, glue globs blooming into a frame-filling sphere on final approach, a dust mote crossing the lens, and scenery grazing sightlines on the route's S-curves (placement now checks clearance against the whole route polyline).\n- One accepted soft warning: 42% of sim kills land within the center 0.25 NDC radius (hard gate is 70%) — an artifact of the robot locking targets at long range.\n\n## Needs human eyes (WebGPU playtest — headless can't render it)\n\n1. **The rescue loop**: scatter → bounce → magnet → stick, and the ball's growing lumpy silhouette — snapshots can't fire, so this never appeared in a capture.\n2. **Mix and musicality**: kill-lane melodies under chained volleys, the minor turn at the spill, the heart fanfare, and whether the reed-organ/bell balance sits right.\n3. The spill collapse on the killing blow, camera shake/FOV feel, and overall brightness (SwiftShader renders hotter than WebGPU, so the warm haze may look different in the real renderer).",
+  "eventType": "result",
+  "raw": {
+    "is_error": false,
+    "duration_api_ms": 3777511,
+    "num_turns": 161,
+    "stop_reason": "end_turn",
+    "session_id": "11796544-57e4-4979-abe3-f9ae6c8b5d0c",
+    "total_cost_usd": 71.55279800000001,
+    "usage": {
+      "input_tokens": 219,
+      "cache_creation_input_tokens": 952096,
+      "cache_read_input_tokens": 35881195,
+      "output_tokens": 248701,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 952096,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1248,
+          "cache_read_input_tokens": 509508,
+          "cache_creation_input_tokens": 474,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 474
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-fable-5": {
+        "inputTokens": 219,
+        "outputTokens": 248701,
+        "cacheReadInputTokens": 35881195,
+        "cacheCreationInputTokens": 952096,
+        "webSearchRequests": 0,
+        "costUSD": 67.36035499999997,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-fable-5",
+        "provider": "firstParty"
+      },
+      "claude-opus-5[1m]": {
+        "inputTokens": 78,
+        "outputTokens": 36727,
+        "cacheReadInputTokens": 3219056,
+        "cacheCreationInputTokens": 266296,
+        "webSearchRequests": 0,
+        "costUSD": 4.192443000000001,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-opus-5",
+        "provider": "firstParty"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Tinker Ball is built and passing every gate.** The complete level lives in `src/benchmark-levels/tinker-ball-6fh9/` — nothing outside that directory was touched — and it's a 60.0-second run (32 bars at 128 BPM, ending exactly on the phrase).\n\n## What the level is\n\nYou escort a rolling cleaning ball on one lap of an oversized worktable under a desk lamp, with the route drawn as pale scratches in the wood. Three glue-monster kinds with distinct silhouettes and motion: **button beetles** that scuttle and skitter on the tabletop, **pencil striders** that walk tall on stilt legs with a heavy gait bob, and **clothespin snappers** that swoop in figure-eights and lob interceptable glue globs at the 4-point hull. The signature loop: every kill breaks the body into bright craft pieces that bounce on the wood, rest, then chase the ball down and stick to it — the ball grows from marble to melon and wears the whole run. The finale is the **Glue Spill** under the lamp: three gated 4-hit shelled cores that pace the camera (shell supplies pop off per hit), then a 6-hit heart — a full six-lock volley moment — then the coast across the one clean patch of table.\n\nThe music is workshop pop in C major: bell mallets, tick-tock woodblocks, reed-organ offbeat stabs, handclaps, bouncy octave bass. Kills read hidden two-bar melody lanes (music box → toy piano → metallic peals per act), locks climb a pentatonic, fire is a chord-rooted rubber-band pluck, the spill flips to the relative minor, and the heart's death lands a ducked major rescue fanfare resolving to C for the coast. Letters are toy building blocks; the reticle is an embroidery hoop.\n\n## Verified\n\n- `npm run typecheck`, `npm run build`, and `npm run check:floor` all pass — occlusion 0 warnings, perf 0 failures (130 peak draw calls vs 500 budget, geometry growth fixed by disposing baked creature geometry), audio config clean, `level.md` card done.\n- Simulator: perfect policy survives to a B rank (59/71), seeded imperfect earns A (68/71, one hull hit); S requires beating the heart plus a near-perfect clear. Beat and reject events covered; `trace:audio` and `trace:spawns` both clean.\n- Snapshot review (SwiftShader fallback) across attract/acts/boss/coast/REPLAY caught and fixed several real issues: START! sinking below the table, the ball overtaking the camera at the rail end, glue globs blooming into a frame-filling sphere on final approach, a dust mote crossing the lens, and scenery grazing sightlines on the route's S-curves (placement now checks clearance against the whole route polyline).\n- One accepted soft warning: 42% of sim kills land within the center 0.25 NDC radius (hard gate is 70%) — an artifact of the robot locking targets at long range.\n\n## Needs human eyes (WebGPU playtest — headless can't render it)\n\n1. **The rescue loop**: scatter → bounce → magnet → stick, and the ball's growing lumpy silhouette — snapshots can't fire, so this never appeared in a capture.\n2. **Mix and musicality**: kill-lane melodies under chained volleys, the minor turn at the spill, the heart fanfare, and whether the reed-organ/bell balance sits right.\n3. The spill collapse on the killing blow, camera shake/FOV feel, and overall brightness (SwiftShader renders hotter than WebGPU, so the warm haze may look different in the real renderer).",
+    "ttft_ms": 2076,
+    "ttft_stream_ms": 1145,
+    "time_to_request_ms": 48,
+    "type": "result",
+    "duration_ms": 3490278,
+    "uuid": "5ccfb0e8-f94e-408d-8326-91f17c5255cf"
+  },
+  "normalized": {
+    "inputTokens": 35881414,
+    "outputTokens": 248701,
+    "cacheReadInputTokens": 35881195,
+    "cacheWriteInputTokens": 952096,
+    "vendorFields": {
+      "totalCostUsd": 71.55279800000001,
+      "durationMs": 3490278,
+      "durationApiMs": 3777511,
+      "numTurns": 161,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-fable-5": {
+          "inputTokens": 219,
+          "outputTokens": 248701,
+          "cacheReadInputTokens": 35881195,
+          "cacheCreationInputTokens": 952096,
+          "webSearchRequests": 0,
+          "costUSD": 67.36035499999997,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-fable-5",
+          "provider": "firstParty"
+        },
+        "claude-opus-5[1m]": {
+          "inputTokens": 78,
+          "outputTokens": 36727,
+          "cacheReadInputTokens": 3219056,
+          "cacheCreationInputTokens": 266296,
+          "webSearchRequests": 0,
+          "costUSD": 4.192443000000001,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-opus-5",
+          "provider": "firstParty"
+        }
+      }
+    }
+  }
+}
