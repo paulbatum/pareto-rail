@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-26T00:21:40.077Z",
+  "generatedAt": "2026-07-26T03:50:31.798Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -170,6 +170,12 @@
       "title": "Thermal Ink",
       "summary": "Build a one-minute level that is one continuous boss fight with a giant mutant octopus in a drowned industrial harbor.",
       "prompt": "Build a one-minute level that is one continuous boss fight with a giant mutant octopus in a drowned industrial harbor. The creature is already wrapped around wreckage, dragging cables through the water and sending smaller spawn from broken machinery. The rail circles, dives beneath its arms, and skims collapsing steel while the octopus turns to keep you in reach.\n\nNormal vision is sodium-harbor murk: tobacco brown water, muddy ochre haze, rust-red metal, dirty cream paint, and hard industrial lamps burning through grit. Wrecked hulls, chains, pipes, and snapped cables form silhouettes. The octopus is an oily mass against them; its spawn are scavenger shapes made from flesh and harbor debris, attacking from the edges.\n\nThe octopus ejects dense clouds of oil-black ink across the route. Fly into one and normal sight is swallowed — lamps become dim stains and every enemy disappears. Activate infrared and the image snaps into a stark charcoal display: octopus and spawn blaze as white-hot silhouettes, vulnerable points burn as red signal cores, and drifting ink remains cold black. This is the fight's central rhythm: find the boss in normal murk, lose it in the ink, switch modes, strike through darkness, then return as the cloud thins. Infrared must feel like a decisive new sense, not a colored filter.\n\nScore it with a slow industrial pulse, heavy bouncing synth bass, and sparse metallic percussion beneath one simple, haunting synth melody. In infrared the noise falls back and the melody turns brighter and sharply focused. Break the octopus down arm by arm until its central core is exposed; the last volley lands through a final ink blackout, and its thermal silhouette collapses as the harbor lamps return, level ends."
+    },
+    {
+      "id": "tinker-ball",
+      "title": "Tinker Ball",
+      "summary": "Build a level across one oversized, cluttered worktable.",
+      "prompt": "Build a level across one oversized, cluttered worktable. You are a rolling ball sent to clean it up, beginning no bigger than a marble among buttons, pins, beads, and paperclips. Scratches become roads under warm desk-lamp shadows. You only shoot; the ball follows its own lively route around the table.\n\nEnemies are many dark glue monsters that have stolen ordinary supplies and built temporary bodies around visible black adhesive cores. Rulers and pencils become legs, buttons and spools form beetles, cardboard and clothespins fold into snapping birds. You are defeating glue creatures and rescuing clean materials. Shoot a core and its body breaks into individual pieces that scatter and remain on the floor. The ball deliberately arcs from the larger route through each fresh debris field, keeping the pieces directly ahead of camera. As it rolls over them, they visibly stick to its surface. Its uneven shape records every enemy dismantled.\n\nThe action never leaves the worktable, but changing scale transforms it. Marble-sized, the ball gathers buttons, pins, beads, and paperclips. At tennis-ball scale it takes thread spools, erasers, paint pots, and small wooden blocks. By the finale it is melon-sized, collecting long rulers, jars, and cardboard structures. Score it as bright, eccentric pop: bell-like mallets, clipped reed-organ stabs, a bouncy synth bass, handclaps, and tiny workshop percussion.\n\nBoss: a central glue spill swallows the table's materials, recycling loose objects into new layers around its dark cores. Crack those cores one by one; each broken shell showers the route with rescued pieces, gathered across sweeping turns. The ball grows rougher and heavier until it can roll through the heart of the spill. The last glue snaps clean, freed supplies cling to the ball, and it coasts across a spotless patch of table, level ends."
     }
   ],
   "entrants": [
@@ -2144,6 +2150,153 @@
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-yk97/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "tinker-ball-6fh9",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-fable-5-high",
+      "modelName": "Claude Fable 5",
+      "workflowName": "solo",
+      "generationCost": 71.552798,
+      "linesOfCode": 3742,
+      "run": {
+        "generationWallTimeSeconds": 3491.099,
+        "totalWallTimeSeconds": 3622.088,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.220"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "solo",
+            "inputTokens": 219,
+            "outputTokens": 248701,
+            "cacheReadTokens": 35881195,
+            "cacheWriteTokens": 952096,
+            "usageSource": "agreed",
+            "costUsd": 67.360355
+          },
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 78,
+            "outputTokens": 36727,
+            "cacheReadTokens": 3219056,
+            "cacheWriteTokens": 266296,
+            "usageSource": "harness-counter",
+            "costUsd": 4.192443
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-6fh9/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "tinker-ball-nirz",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "generationCost": 48.9337675,
+      "linesOfCode": 4047,
+      "run": {
+        "generationWallTimeSeconds": 4012.442,
+        "totalWallTimeSeconds": 5413.81,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.220"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 348,
+            "outputTokens": 263807,
+            "cacheReadTokens": 65665745,
+            "cacheWriteTokens": 950398,
+            "usageSource": "agreed",
+            "costUsd": 48.9337675
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-nirz/hero.avif",
+      "featured": true,
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "tinker-ball-q1ci",
+      "themeId": "tinker-ball",
+      "configurationId": "codex-sol-max",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 13.904584,
+      "linesOfCode": 3444,
+      "run": {
+        "generationWallTimeSeconds": 2629.925,
+        "totalWallTimeSeconds": 9777.414,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 420154,
+            "outputTokens": 100093,
+            "cacheReadTokens": 17602048,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 35240
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-q1ci/hero.avif",
+      "featured": true,
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "tinker-ball-xa2f",
+      "themeId": "tinker-ball",
+      "configurationId": "agy-gemini-3-6-flash-high",
+      "modelName": "Gemini 3.6 Flash",
+      "workflowName": "solo",
+      "generationCost": 1.632861,
+      "linesOfCode": 1160,
+      "run": {
+        "generationWallTimeSeconds": 151.256,
+        "totalWallTimeSeconds": 181.669,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Antigravity CLI",
+          "version": "1.1.7"
+        },
+        "models": [
+          {
+            "modelName": "gemini-3.6-flash",
+            "role": "solo",
+            "inputTokens": 380891,
+            "outputTokens": 14634,
+            "cacheReadTokens": 4600680,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 34889,
+            "costUsd": 1.632861
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-xa2f/hero.avif",
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     }
