@@ -25,6 +25,9 @@ const RUN_ROOT_FILES = [
   'evaluated.json',
   'promotion.json',
   'incident.json',
+  // A regated run's gate logs record the verdict but not that it was regated or
+  // under what deviation, which is exactly what a skeptical reader would ask.
+  'regate.json',
   'setup.json',
   'worktree.json',
   'stage-launch.json',
