@@ -1,4 +1,9 @@
 {
   "id": "tinker-ball-6fh9",
-  "title": "Tinker Ball"
+  "title": "Tinker Ball",
+  "contentImages": {
+    "overview": "/level-content/tinker-ball-6fh9/overview.avif",
+    "start": "/level-content/tinker-ball-6fh9/start.avif",
+    "hero": "/level-content/tinker-ball-6fh9/hero.avif"
+  }
 }
