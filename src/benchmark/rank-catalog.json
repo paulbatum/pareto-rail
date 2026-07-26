@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-25T19:02:58.920Z",
+  "generatedAt": "2026-07-26T00:04:25.925Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -164,6 +164,12 @@
       "title": "Vespers",
       "summary": "You fly the nave of a massive cathedral, at night, while something is eating the light out of it.",
       "prompt": "You fly the nave of a massive cathedral, at night, while something is eating the light out of it.\n\nEvery window in this place is lit from within, and the things in here take that light. They come off the glass as flat black shapes with a stolen pane's colour burning in their chest — that colour is the only reason you can see them at all. Kill one and the light goes back where it belongs: the window it stripped comes up again, and every window you win back stays lit for the rest of the run, so the deeper you fly, the more of the cathedral is burning with colourful stained glass you put there.\n\nBuild the world dark, enormous, and full: black stone piers, tiers of arcade and gallery stacked overhead, a floor of candles far below, ribbed vaults closing over you. The glass is the only saturated thing in the frame — deep cobalt, blood red, bottle green, gold — and it throws its colour onto the stone around it. Jewel light in a black room; keep the contrast enormous.\n\nThe music is the building's own organ. Open on a single held pedal note in a dark minor and let the voices enter one at a time above it — a real tune, in real counterpoint, the way an organ is actually played — with choir and bell weight for the swells, and one voice held back all night so the ending has somewhere to arrive. There is no percussion under any of this; the pulse is the counterpoint moving. The player's locks, shots, and kills are organ voices too — notes inside the polyphony.\n\nPast the middle, the nave goes quiet: a long dark empty span, one voice, almost nothing on screen, so the finale has something to break.\n\nBoss: the thing doing this is nested in the dead rose window at the west end, holding every colour it has taken. Break it open. When it dies the rose window ignites all at once — the biggest single event in the level — every rank of the organ opens, the minor turns major, and the run ends in a lit cathedral."
+    },
+    {
+      "id": "thermal-ink",
+      "title": "Thermal Ink",
+      "summary": "Build a one-minute level that is one continuous boss fight with a giant mutant octopus in a drowned industrial harbor.",
+      "prompt": "Build a one-minute level that is one continuous boss fight with a giant mutant octopus in a drowned industrial harbor. The creature is already wrapped around wreckage, dragging cables through the water and sending smaller spawn from broken machinery. The rail circles, dives beneath its arms, and skims collapsing steel while the octopus turns to keep you in reach.\n\nNormal vision is sodium-harbor murk: tobacco brown water, muddy ochre haze, rust-red metal, dirty cream paint, and hard industrial lamps burning through grit. Wrecked hulls, chains, pipes, and snapped cables form silhouettes. The octopus is an oily mass against them; its spawn are scavenger shapes made from flesh and harbor debris, attacking from the edges.\n\nThe octopus ejects dense clouds of oil-black ink across the route. Fly into one and normal sight is swallowed — lamps become dim stains and every enemy disappears. Activate infrared and the image snaps into a stark charcoal display: octopus and spawn blaze as white-hot silhouettes, vulnerable points burn as red signal cores, and drifting ink remains cold black. This is the fight's central rhythm: find the boss in normal murk, lose it in the ink, switch modes, strike through darkness, then return as the cloud thins. Infrared must feel like a decisive new sense, not a colored filter.\n\nScore it with a slow industrial pulse, heavy bouncing synth bass, and sparse metallic percussion beneath one simple, haunting synth melody. In infrared the noise falls back and the melody turns brighter and sharply focused. Break the octopus down arm by arm until its central core is exposed; the last volley lands through a final ink blackout, and its thermal silhouette collapses as the harbor lamps return, level ends."
     }
   ],
   "entrants": [
@@ -2009,6 +2015,142 @@
         ]
       },
       "thumbnailPath": "/level-content/vespers-t5xw/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "thermal-ink-4xmh",
+      "themeId": "thermal-ink",
+      "configurationId": "claude-opus-5-high",
+      "modelName": "Claude Opus 5",
+      "workflowName": "solo",
+      "generationCost": 41.5354655,
+      "linesOfCode": 4135,
+      "run": {
+        "generationWallTimeSeconds": 3840.747,
+        "totalWallTimeSeconds": 3907.756,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.220"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5",
+            "role": "solo",
+            "inputTokens": 6140,
+            "outputTokens": 254913,
+            "cacheReadTokens": 59101921,
+            "cacheWriteTokens": 558098,
+            "usageSource": "agreed",
+            "costUsd": 41.5354655
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/thermal-ink-4xmh/hero.avif",
+      "featured": true,
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "thermal-ink-sxom",
+      "themeId": "thermal-ink",
+      "configurationId": "codex-sol-max",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 13.267182,
+      "linesOfCode": 3032,
+      "run": {
+        "generationWallTimeSeconds": 1864.599,
+        "totalWallTimeSeconds": 1913.227,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 520522,
+            "outputTokens": 74722,
+            "cacheReadTokens": 16845824,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 24626
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/thermal-ink-sxom/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "thermal-ink-t6nv",
+      "themeId": "thermal-ink",
+      "configurationId": "agy-gemini-3-6-flash-high",
+      "modelName": "Gemini 3.6 Flash",
+      "workflowName": "solo",
+      "generationCost": 1.9641339,
+      "linesOfCode": 1003,
+      "run": {
+        "generationWallTimeSeconds": 176.574,
+        "totalWallTimeSeconds": 4280.322,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Antigravity CLI",
+          "version": "1.1.7"
+        },
+        "models": [
+          {
+            "modelName": "gemini-3.6-flash",
+            "role": "solo",
+            "inputTokens": 451390,
+            "outputTokens": 17800,
+            "cacheReadTokens": 5447276,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 44861,
+            "costUsd": 1.9641339
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/thermal-ink-t6nv/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "thermal-ink-yk97",
+      "themeId": "thermal-ink",
+      "configurationId": "claude-fable-5-high",
+      "modelName": "Claude Fable 5",
+      "workflowName": "solo",
+      "generationCost": 49.256356,
+      "linesOfCode": 3528,
+      "run": {
+        "generationWallTimeSeconds": 2878.777,
+        "totalWallTimeSeconds": 2924.183,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.220"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5",
+            "role": "solo",
+            "inputTokens": 207,
+            "outputTokens": 204424,
+            "cacheReadTokens": 30560526,
+            "cacheWriteTokens": 423628,
+            "usageSource": "agreed",
+            "costUsd": 49.256356
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/thermal-ink-yk97/hero.avif",
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     }
