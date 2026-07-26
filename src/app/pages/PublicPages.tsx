@@ -4,7 +4,10 @@ import thirdPartyNotices from '../../../THIRD_PARTY_NOTICES.md?raw';
 import aboutContent from '../about.md?raw';
 import readme from '../../../README.md?raw';
 import { levelMetadatas } from '../../levels';
-import { allCatalogEntrants, rankCatalog } from '../../benchmark/catalog';
+import { findCatalogEntrant, rankCatalog, schedulingPool } from '../../benchmark/catalog';
+import { completedMatchupsFromVotes } from '../../benchmark/catalog-api';
+import { nextScheduledMatchup } from '../../benchmark/scheduler';
+import { BenchmarkLocalStore } from '../../benchmark/storage';
 import { homeCopy } from '../content';
 import { featuredModels } from '../featured-models';
 import { RouteLink } from '../components/RouteLink';
@@ -15,11 +18,10 @@ import type { PersonalCurve } from '../../benchmark/personal-curve';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const crystalHero = levelMetadatas.find((level) => level.id === 'crystal-corridor')?.contentImages?.hero;
-  // Derived rather than named: an entrant baseline empties the catalog, and naming
-  // ids here both broke the preview and leaked other entrants' ids into the checkout.
-  const rankPreviewHeroes = allCatalogEntrants(rankCatalog)
-    .flatMap((entrant) => (entrant.thumbnailPath ? [entrant.thumbnailPath] : []))
-    .slice(0, 2);
+  // The pair this visitor's next matchup will actually serve, resolved once per
+  // mount so it cannot change under them mid-view. Derived rather than named:
+  // naming ids here leaked other entrants' ids into every entrant checkout.
+  const [rankPreviewHeroes] = useState(scheduledPreviewHeroes);
 
   return (
     <>
@@ -84,6 +86,26 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
       </section>
     </>
   );
+}
+
+/** Thumbnails for the matchup `/rank` would serve this visitor next, run through
+ * the same local scheduler that page uses so the card previews the real pair. An
+ * entrant baseline publishes an empty catalog, where this yields nothing and the
+ * card renders without media. */
+function scheduledPreviewHeroes(): readonly string[] {
+  try {
+    const store = new BenchmarkLocalStore();
+    const judged = completedMatchupsFromVotes(rankCatalog, store.snapshot.history)
+      .map(({ vote }) => ({ matchupId: vote.matchupId, relative: vote.relative, aLevelId: vote.aEntrantId }));
+    const scheduled = nextScheduledMatchup(schedulingPool(rankCatalog), store.participantId, { judged });
+    if (!scheduled) return [];
+    const heroes = [scheduled.levelIdA, scheduled.levelIdB]
+      .map((levelId) => findCatalogEntrant(rankCatalog, levelId)?.thumbnailPath);
+    // Both sides or neither: one image under a "VS" would read as a broken pair.
+    return heroes.every((hero) => !!hero) ? (heroes as string[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 function HeroTunnel() {
