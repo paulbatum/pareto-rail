@@ -11,7 +11,9 @@ import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
   fail,
+  MANUAL_RESUME_MESSAGE,
   parseArgs,
+  parseResumeRound,
   pathInside,
   requireOption,
   sha256,
@@ -51,8 +53,6 @@ const PROVIDER_EXTENSIONS = {
 const PROVIDER_QUOTA_WAIT = new Set(['kimi-coding']);
 const DEFAULT_QUOTA_WAIT_MS = 900_000;
 const DEFAULT_QUOTA_WAIT_MAX = 50;
-
-export const MANUAL_RESUME_MESSAGE = 'Your previous session was interrupted. You have been resumed in the same session; continue the assignment from where you left off and finish it per the original instructions.';
 
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
@@ -544,14 +544,6 @@ async function readSessionId(eventPath) {
     if (event?.type === 'session' && event.id) return event.id;
   }
   fail(`Existing pi session event log did not report a session identifier: ${eventPath}`);
-}
-
-function parseResumeRound(value) {
-  if (value === undefined) return undefined;
-  if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1) {
-    fail('--resume-round must be an integer of at least 1.');
-  }
-  return Number(value);
 }
 
 function parseTimeout(value) {

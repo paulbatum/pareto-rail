@@ -12,8 +12,11 @@ import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
   fail,
+  MANUAL_RESUME_MESSAGE,
   parseArgs,
+  parseResumeRound,
   pathInside,
+  readJson,
   requireOption,
   sha256,
   writeJson,
@@ -39,11 +42,16 @@ async function main() {
     [--sandbox <true|false>] \\
     [--timeout-seconds <positive-integer>] \\
     [--budget-usd <positive-number>] \\
+    [--resume-round <integer-at-least-1>] \\
     [--claude-bin <path-or-command>]`);
     return;
   }
   if (rest.length > 0) fail(`Unexpected argument: ${rest.join(' ')}.`);
-  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'sandbox', 'timeout-seconds', 'budget-usd', 'claude-bin']));
+  assertOnlyOptions(options, new Set(['help', 'worktree', 'prompt', 'out', 'model', 'effort', 'sandbox', 'timeout-seconds', 'budget-usd', 'resume-round', 'claude-bin']));
+  if (options['resume-round'] !== undefined && options['budget-usd'] !== undefined) {
+    fail('--resume-round cannot be combined with --budget-usd.');
+  }
+  const resumeRound = parseResumeRound(options['resume-round']);
 
   const worktree = path.resolve(requireOption(options, 'worktree'));
   const promptPath = path.resolve(requireOption(options, 'prompt'));
@@ -59,8 +67,13 @@ async function main() {
   if (pathInside(outputDirectory, worktree)) fail('Claude stage output must be outside the entrant worktree.');
   await assertDirectory(worktree, 'worktree');
   const prompt = await readFile(promptPath, 'prompt');
-  await assertAbsent(outputDirectory, 'stage output directory');
-  await fs.mkdir(outputDirectory, { recursive: true });
+  if (resumeRound === undefined) {
+    await assertAbsent(outputDirectory, 'stage output directory');
+    await fs.mkdir(outputDirectory, { recursive: true });
+  } else {
+    await assertDirectory(outputDirectory, 'existing stage output directory');
+    await assertRoundArtifactsAbsent(outputDirectory, resumeRound);
+  }
 
   // Entrant sandbox: Claude Code's built-in bubblewrap sandbox enforces the filesystem and network
   // boundary under --print/bypassPermissions. full Chrome cannot start under its seccomp filter, so the
@@ -75,7 +88,11 @@ async function main() {
 
   const cliVersion = await runCommand(claudeBin, ['--version'], { cwd: worktree });
 
-  const sessionId = randomUUID();
+  // A resumed stage re-enters the session the interrupted round recorded, so the entrant keeps its own
+  // context and its half-built worktree rather than starting over against work it does not remember.
+  const sessionId = resumeRound === undefined
+    ? randomUUID()
+    : await readRecordedSessionId(outputDirectory);
   const finalMessage = path.join(outputDirectory, 'final-message.md');
   const printArgs = ['--print', '--output-format', 'stream-json', '--verbose'];
   const sharedArgs = [
@@ -120,19 +137,34 @@ async function main() {
     sharedArgs.push('--settings', settingsPath);
   }
 
-  const firstArgs = [...printArgs, ...sharedArgs, '--session-id', sessionId];
   if (timeoutSeconds !== undefined) deadline = Date.now() + timeoutSeconds * 1_000;
-  let turn = await runTurn({
-    executable: claudeBin,
-    args: firstArgs,
-    cwd: worktree,
-    input: prompt,
-    timeoutSeconds,
-    outputDirectory,
-    cliVersion,
-    expectedSessionId: sessionId,
-    round: 0,
-  });
+  let turn;
+  if (resumeRound === undefined) {
+    const firstArgs = [...printArgs, ...sharedArgs, '--session-id', sessionId];
+    turn = await runTurn({
+      executable: claudeBin,
+      args: firstArgs,
+      cwd: worktree,
+      input: prompt,
+      timeoutSeconds,
+      outputDirectory,
+      cliVersion,
+      expectedSessionId: sessionId,
+      round: 0,
+    });
+  } else {
+    turn = await runTurn({
+      executable: claudeBin,
+      args: [...printArgs, '--resume', sessionId, ...sharedArgs],
+      cwd: worktree,
+      input: MANUAL_RESUME_MESSAGE,
+      timeoutSeconds,
+      outputDirectory,
+      cliVersion,
+      expectedSessionId: sessionId,
+      round: resumeRound,
+    });
+  }
   await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
   await writeJson(path.join(outputDirectory, 'selected-model.json'), {
     requestedModel: model,
@@ -291,6 +323,25 @@ async function assertNoEntrantSettingsOverride(worktree) {
 async function primaryRepository(worktree) {
   const result = await runCommand('git', ['rev-parse', '--git-common-dir'], { cwd: worktree });
   return path.dirname(path.resolve(worktree, result.stdout.trim()));
+}
+
+async function assertRoundArtifactsAbsent(outputDirectory, round) {
+  const suffix = `-resume-${round}`;
+  for (const name of [`events${suffix}.jsonl`, `stderr${suffix}.log`, `command${suffix}.json`, `raw-usage${suffix}.json`, `final-message${suffix}.md`]) {
+    await assertAbsent(path.join(outputDirectory, name), `Claude resume round ${round} artifact ${name}`);
+  }
+}
+
+// The interrupted round's result.json carries the session the harness actually used, which is the one
+// Claude Code can re-enter; a stage that died before writing it has no session to resume.
+async function readRecordedSessionId(outputDirectory) {
+  const resultPath = path.join(outputDirectory, 'result.json');
+  const record = await readJson(resultPath).catch(() => fail(`Missing the recorded Claude stage result needed to resume: ${resultPath}`));
+  const sessionId = record?.sessionId;
+  if (typeof sessionId !== 'string' || sessionId.length === 0) {
+    fail(`Recorded Claude stage result did not report a session identifier: ${resultPath}`);
+  }
+  return sessionId;
 }
 
 async function assertDirectory(target, label) {

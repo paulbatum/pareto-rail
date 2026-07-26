@@ -138,6 +138,7 @@ async function assertContinuationOptionGuards() {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-continuation-guards-'));
   const runner = path.join(process.cwd(), 'scripts/benchmark/run.mjs');
   const piAdapter = path.join(process.cwd(), 'scripts/benchmark/pi-cli.mjs');
+  const claudeAdapter = path.join(process.cwd(), 'scripts/benchmark/claude-cli.mjs');
   try {
     await assert.rejects(
       () => exec(process.execPath, [runner, '--plan', 'plan.json', '--run', 'run-a1b2c3d4', '--continue-stage', 'true'], { cwd: process.cwd() }),
@@ -166,13 +167,15 @@ async function assertContinuationOptionGuards() {
     }, null, 2)}\n`);
     await assert.rejects(
       () => exec(process.execPath, [runner, '--resume', nonPiRun, '--continue-stage', 'true'], { cwd: process.cwd() }),
-      /--continue-stage is only valid for pi-cli stages/,
+      /--continue-stage is only valid for claude-cli and pi-cli stages/,
     );
 
-    await assert.rejects(
-      () => exec(process.execPath, [piAdapter, '--resume-round', '1', '--budget-usd', '2'], { cwd: process.cwd() }),
-      /--resume-round cannot be combined with --budget-usd/,
-    );
+    for (const adapter of [piAdapter, claudeAdapter]) {
+      await assert.rejects(
+        () => exec(process.execPath, [adapter, '--resume-round', '1', '--budget-usd', '2'], { cwd: process.cwd() }),
+        /--resume-round cannot be combined with --budget-usd/,
+      );
+    }
 
     const fakePi = path.join(temporary, 'fake-pi.mjs');
     await fs.writeFile(fakePi, `#!/usr/bin/env node
@@ -201,6 +204,36 @@ else console.log(JSON.stringify({ type: 'session', id: 'fake-session' }));
         '--pi-bin', fakePi,
       ], { cwd: process.cwd() }),
       /pi resume round 1 artifact events-resume-1\.jsonl already exists/,
+    );
+
+    // A Claude stage resumes by re-entering the session its interrupted round recorded, so the round's
+    // artifacts must be clear and result.json must name a session to re-enter.
+    const claudeStage = path.join(temporary, 'claude-stage');
+    await fs.mkdir(claudeStage, { recursive: true });
+    const claudeArgs = [
+      claudeAdapter,
+      '--worktree', process.cwd(),
+      '--prompt', promptPath,
+      '--out', claudeStage,
+      '--model', 'fake-model',
+      '--effort', 'low',
+      '--timeout-seconds', '1',
+      '--resume-round', '1',
+    ];
+    await fs.writeFile(path.join(claudeStage, 'events-resume-1.jsonl'), '{}\n');
+    await assert.rejects(
+      () => exec(process.execPath, claudeArgs, { cwd: process.cwd() }),
+      /Claude resume round 1 artifact events-resume-1\.jsonl already exists/,
+    );
+    await fs.rm(path.join(claudeStage, 'events-resume-1.jsonl'));
+    await assert.rejects(
+      () => exec(process.execPath, claudeArgs, { cwd: process.cwd() }),
+      /Missing the recorded Claude stage result needed to resume/,
+    );
+    await fs.writeFile(path.join(claudeStage, 'result.json'), '{"result":"failed"}\n');
+    await assert.rejects(
+      () => exec(process.execPath, claudeArgs, { cwd: process.cwd() }),
+      /did not report a session identifier/,
     );
   } finally {
     await fs.rm(temporary, { recursive: true, force: true });

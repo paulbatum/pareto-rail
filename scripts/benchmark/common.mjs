@@ -6,8 +6,20 @@ export const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 export const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const RUN_ID_PATTERN = /^[a-z0-9][a-z0-9-]{3,63}$/;
 
+// Sent verbatim to a harness resumed in its own session after an interruption, so the entrant keeps
+// the assignment it was already working to rather than being handed a second one.
+export const MANUAL_RESUME_MESSAGE = 'Your previous session was interrupted. You have been resumed in the same session; continue the assignment from where you left off and finish it per the original instructions.';
+
 export function fail(message) {
   throw new Error(message);
+}
+
+export function parseResumeRound(value) {
+  if (value === undefined) return undefined;
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1) {
+    fail('--resume-round must be an integer of at least 1.');
+  }
+  return Number(value);
 }
 
 export function parseArgs(argv, { positional = false, booleans = [] } = {}) {

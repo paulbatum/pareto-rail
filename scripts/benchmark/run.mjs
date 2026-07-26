@@ -38,6 +38,10 @@ async function writeJson(filePath, value) {
 
 // One entry per supported `definition.stage.adapter`. Adds a harness without touching
 // the Codex path: same stage shape (model, effort, timeoutSeconds), different process runner.
+// Adapters whose harness can re-enter its own recorded session, so an interrupted stage continues with
+// the entrant's context intact instead of restarting against a worktree it does not remember.
+const CONTINUABLE_ADAPTERS = new Set(['claude-cli', 'pi-cli']);
+
 const ADAPTERS = {
   'codex-cli': {
     scriptPath: path.join(ROOT, 'scripts/benchmark/codex-cli.mjs'),
@@ -146,7 +150,7 @@ async function main() {
     definition = await readJson(path.join(outputDirectory, 'run-definition.json'));
     const errors = validateRunDefinition(definition);
     if (errors.length) fail(`Invalid run definition:\n${errors.map((error) => `- ${error}`).join('\n')}`);
-    if (continueStage && definition.stage.adapter !== 'pi-cli') fail('--continue-stage is only valid for pi-cli stages.');
+    if (continueStage && !CONTINUABLE_ADAPTERS.has(definition.stage.adapter)) fail(`--continue-stage is only valid for ${[...CONTINUABLE_ADAPTERS].sort().join(' and ')} stages.`);
     if (continueStage && definition.stage.budget) fail('--continue-stage cannot be used with a budgeted stage; the budget protocol owns its continuations.');
   } else {
     const planPath = path.resolve(options.plan);
