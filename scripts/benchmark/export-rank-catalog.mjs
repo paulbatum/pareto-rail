@@ -34,7 +34,6 @@ const configurationLabels = {
     primaryModel: 'gpt-5.6-sol',
     effort: 'high',
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
-    featured: true,
   },
   'codex-sol-max': {
     modelName: 'GPT-5.6 Sol',
@@ -42,6 +41,7 @@ const configurationLabels = {
     primaryModel: 'gpt-5.6-sol',
     effort: 'max',
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+    featured: true,
   },
   'codex-sol-terra-delegation': {
     modelName: 'GPT-5.6 Sol',
