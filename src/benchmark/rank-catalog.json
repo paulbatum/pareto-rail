@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-26T03:50:31.798Z",
+  "generatedAt": "2026-07-26T04:19:57.301Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -26,7 +26,8 @@
       "workflowName": "solo",
       "primaryModel": "gpt-5.6-sol",
       "effort": "high",
-      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
+      "featured": true
     },
     {
       "id": "codex-sol-max",
@@ -251,6 +252,7 @@
         ]
       },
       "thumbnailPath": "/level-content/hull-run-ns5n/hero.avif",
+      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -284,6 +286,7 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-7rkv/hero.avif",
+      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -685,6 +688,7 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-9uib/hero.avif",
+      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -1000,6 +1004,7 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-b6ej/hero.avif",
+      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
@@ -1235,6 +1240,7 @@
           }
         ]
       },
+      "featured": true,
       "retired": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
@@ -1436,6 +1442,7 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-detailed-uk78/hero.avif",
+      "featured": true,
       "entrantBaseline": "4bc00a921882971dc6dbc8467b5dc35a0a18f3c1",
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
     },
@@ -1606,6 +1613,7 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-s5cx/hero.avif",
+      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
@@ -1740,6 +1748,7 @@
         ]
       },
       "thumbnailPath": "/level-content/purse-pursuit-tahr/hero.avif",
+      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
     },
@@ -1842,6 +1851,7 @@
         ]
       },
       "thumbnailPath": "/level-content/speedsolve-wvdv/hero.avif",
+      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
     },
