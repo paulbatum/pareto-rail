@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v3sxomzehc",
+  "slotId": "sxom",
+  "configuration": {
+    "id": "codex-sol-max"
+  },
+  "theme": {
+    "id": "thermal-ink",
+    "path": "benchmark/themes/thermal-ink.md",
+    "sha256": "e73f34c0e5245c1d99f9e882650f3b83bbcddfdce3638a24ef1b28e3b759f979"
+  },
+  "baseline": {
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d604d10cfd3e531102fe0b5911082e755f3967ee858a10f596c6fb425f53189b"
+  },
+  "controller": {
+    "commit": "bf11faf390dbdf4a89fc815a232486ff0da5b7eb"
+  },
+  "timing": {
+    "startedAt": "2026-07-25T22:36:46.030Z",
+    "finishedAt": "2026-07-25T23:08:39.257Z",
+    "wallTimeSeconds": 1913.227
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "530d352d57446af7ce8fdbc5dcf7e3224796c27e07c6c476a3e66b10f984d184",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.145.0"
+      },
+      "sessionId": "019f9b6c-deb8-7413-8a7f-97a4e412d0f9",
+      "rolloutArtifactSha256": "16977005ec3f5342653dc883a5e7a9aefbfb31dfbfd3865a1b198ac6338ee6df",
+      "outputArtifactSha256": "beb5aeb2edd4a080d0443a5c1432731b4b9ba24db8148a59ac27d2a9b2166954",
+      "startedAt": "2026-07-25T22:37:08.940Z",
+      "finishedAt": "2026-07-25T23:08:22.515Z",
+      "wallTimeSeconds": 1864.599495568,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 520522,
+        "outputTokens": 74722,
+        "cacheReadInputTokens": 16845824,
+        "reasoningTokens": 24626
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 13.267182,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 13.267182,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 520522,
+        "outputTokens": 74722,
+        "cacheReadTokens": 16845824,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 24626
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.060514508,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.606494464,
+      "outputSha256": "bd5d601ddac32d631ecfe4826c9e5dd4e60c9915adb9ff9eeb0330fb4e63b653"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level thermal-ink-sxom --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03562290699999994,
+      "outputSha256": "0b0a2040f096e30c28abdc977a849890c9e8d42b6b81a346281c9952802a5209"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level thermal-ink-sxom",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 9.517257858999999,
+      "outputSha256": "c48dd7e445ca20fb27aada6b8d53fa6dd5634cc355b82934f0c501230450915e"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "thermal-ink-sxom",
+    "title": "Thermal Ink",
+    "evaluated": {
+      "commit": "9a694423a0cdcd379ffdb715965f2386e8faa42a",
+      "branch": "benchmark-run-run-v3sxomzehc"
+    },
+    "payload": {
+      "commit": "60971a853ff1c3a3f3fe48f71884fe3e5ef1de9a",
+      "branch": "benchmark-payload-run-v3sxomzehc"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

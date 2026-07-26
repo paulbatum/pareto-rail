@@ -1,0 +1,8 @@
+{
+  "requestedModel": "claude-fable-5",
+  "initResolvedModel": "claude-fable-5",
+  "modelUsageKeys": [
+    "claude-fable-5"
+  ],
+  "selectedReasoningEffort": "high"
+}

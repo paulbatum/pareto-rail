@@ -1,0 +1,66 @@
+
+> pareto-rail@0.0.0 prebuild
+> node scripts/generate-icons.mjs
+
+Generated 4 home-screen icons in public/icons.
+
+> pareto-rail@0.0.0 build
+> prisma generate && npm run validate:level-catalog && node scripts/check-serverless-imports.mjs && node scripts/check-no-tracked-png.mjs && vite build && node scripts/generate-social-heroes.mjs && node scripts/prerender-heads.mjs && node scripts/generate-sitemap.mjs && node scripts/check-bundle-budget.mjs
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.8.0 -> 7.9.0                        │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+
+✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 51ms
+
+
+> pareto-rail@0.0.0 validate:level-catalog
+> node scripts/validate-level-catalog.mjs
+
+Validated 1 discovered benchmark level module(s).
+Serverless import check passed: 16 module(s) in the api/ runtime graph, no bad value imports.
+Tracked PNG check passed: no tracked PNG files.
+vite v8.1.3 building client environment for production...
+[2Ktransforming...✓ 187 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/version.json                              0.05 kB │ gzip:   0.07 kB
+dist/index.html                                4.17 kB │ gzip:   1.59 kB
+dist/.vite/manifest.json                       6.12 kB │ gzip:   1.00 kB
+dist/assets/AnalysisRoute-Dxf2HCl4.css        22.51 kB │ gzip:   4.77 kB
+dist/assets/index-Dy-HfJ6l.css                60.72 kB │ gzip:  12.42 kB
+dist/assets/client-tip-Dm2ve0zN.js             0.17 kB │ gzip:   0.14 kB
+dist/assets/events-C-SlUeJz.js                 0.20 kB │ gzip:   0.16 kB
+dist/assets/audio-trace-GtutyGgA.js            0.40 kB │ gzip:   0.27 kB
+dist/assets/music-time-BbGUkMAl.js             0.44 kB │ gzip:   0.27 kB
+dist/assets/speed-profile-W-oLAii7.js          0.70 kB │ gzip:   0.43 kB
+dist/assets/hostile-shot-C3PeXTCF.js           1.69 kB │ gzip:   0.75 kB
+dist/assets/arrangement-CAUocjw2.js            3.68 kB │ gzip:   1.58 kB
+dist/assets/BufferGeometryUtils-DAnnqlqt.js    3.78 kB │ gzip:   1.10 kB
+dist/assets/perf-overlay-GdWpIJbN.js           6.01 kB │ gzip:   2.34 kB
+dist/assets/audio-kit-ClIvojiD.js              9.61 kB │ gzip:   3.50 kB
+dist/assets/environment-kit-BEUkr-9I.js       10.16 kB │ gzip:   4.08 kB
+dist/assets/prism-wyHTZVeC.js                 14.53 kB │ gzip:   5.83 kB
+dist/assets/thermal-ink-t6nv-CSRI5ss-.js      17.22 kB │ gzip:   5.96 kB
+dist/assets/rezdle-DWg71mwQ.js                17.56 kB │ gzip:   7.04 kB
+dist/assets/GameFrame-Dd7k2r57.js             24.68 kB │ gzip:   7.96 kB
+dist/assets/rush-BTch6QEA.js                  29.17 kB │ gzip:  10.14 kB
+dist/assets/crystal-WC3hPgc_.js               52.36 kB │ gzip:  17.47 kB
+dist/assets/AnalysisRoute-DMxyP4Xf.js         68.78 kB │ gzip:  19.55 kB
+dist/assets/helios-IIM-cHB0.js                73.29 kB │ gzip:  24.00 kB
+dist/assets/lock-on-runner-EAmAwHGr.js       245.61 kB │ gzip:  65.71 kB
+dist/assets/index-BVbY93lW.js                342.49 kB │ gzip: 105.88 kB
+dist/assets/word-data-bEQzhfW8.js            622.40 kB │ gzip: 206.10 kB
+dist/assets/three.tsl-4W9lN3mQ.js            649.13 kB │ gzip: 182.22 kB
+
+✓ built in 467ms
+Generated 4 social hero JPEG(s) into dist/social/heroes/.
+Prerendered 7 route heads into dist/ (/, /levels, /levels/data, /rank, /leaderboard, /about, /analysis).
+Wrote dist/sitemap.xml with 11 URLs (4 play, 0 analysis).
+Bundle budget check passed: homepage eager gzip 114.5 kB (baseline 132.1 kB, -13.3%, limit 152.0 kB).

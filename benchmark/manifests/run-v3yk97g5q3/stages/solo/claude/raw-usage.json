@@ -1,0 +1,99 @@
+{
+  "sessionId": "9cf869ac-a860-489e-98e6-0daab414f378",
+  "initResolvedModel": "claude-fable-5",
+  "finalMessage": "**Thermal Ink is built and passes every headless gate.** The level lives entirely in `src/benchmark-levels/thermal-ink-yk97/` — a 60.0-second continuous boss fight (24 bars at 96 BPM, ending on the phrase boundary) against a mutant octopus wrapped around a capsized hull in a sodium-lamp harbor.\n\n**How the level works**\n\n- **The ink/infrared rhythm is one clock.** `timing.ts` defines three bar-aligned ink windows (bars 6–8, 12–14, 20–23) plus `inkAt`/`infraredAt` ramp functions. Gameplay staging, the ejected cloud blobs, the fog/material mode-swap, the TSL screen grade (charcoal grayscale with preserved red signal cores and scanlines), and the music's section turnovers all read the same windows — each blackout has a ~0.9s blind beat before the lens snaps in.\n- **Boss structure.** The body is scenery anchored 30 units ahead of the camera (always on screen while the rail circles the basin), with eight writhing dressing arms, slit lamp-amber eyes, and a siphon. The six lockable arm tips (2 HP each, red signal cores) unfurl in pairs across the run; the core (`hitStages [2,6]`) spawns just before the final ejection and is only lockable once **all arms are dead and the final blackout has begun** — so the killing volley always lands through ink, and the lamps return on the kill.\n- **Supporting cast**: skimmers (debris-rays crossing the full screen), lurkers (barnacle crabs with telegraphed spit), dredgers (3-HP jaws lowered in on chains from above the mantle), and interceptable homing ink globs. 3-point hull.\n- **Audio**: Em–Cmaj7–Am–Bm over an 8-bar cycle; half-time industrial kick, bouncing filter bass, anvil/chain percussion, and one haunting lead that turns bright and focused under infrared while drums fall back to a sub pulse with sonar pings. Kills walk per-mode melody lanes, locks climb the live chord, core chips ring an escalating anvil, the reject is a sour foghorn blat, and the core kill lands a scheduled finale (duck, sub drop, E-minor bloom, falling peal, foghorn).\n\n**Verified**: `typecheck`, `build`, `check:floor` all green — including 0 occlusion warnings, all perf gates, event coverage, and center/distance spread. Simulation: perfect policy clears **54/54, S-rank, 60.02s**, no dead-air gaps. The audio trace confirms the arrangement structure. I reviewed SwiftShader stills of the murk, blind beat, infrared, and finale moments and iterated on palette, boss layout, and ink-blob behavior based on them. One caveat: `check:benchmark-scope` cannot run in this checkout (its companion `scripts/benchmark/protocol.mjs` was scrubbed), so I verified via git that every change is confined to the level directory.\n\n**For a human playtester**: judge the bloom level on the white-hot mantle under infrared (it runs hot by design; the slider-at-zero read is clean), the feel of the three blackout transitions, and the final mix balance — none of which headless tools can confirm.",
+  "eventType": "result",
+  "raw": {
+    "is_error": false,
+    "duration_api_ms": 2747813,
+    "num_turns": 172,
+    "stop_reason": "end_turn",
+    "session_id": "9cf869ac-a860-489e-98e6-0daab414f378",
+    "total_cost_usd": 49.25635600000002,
+    "usage": {
+      "input_tokens": 207,
+      "cache_creation_input_tokens": 423628,
+      "cache_read_input_tokens": 30560526,
+      "output_tokens": 204424,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 423628,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1113,
+          "cache_read_input_tokens": 423540,
+          "cache_creation_input_tokens": 88,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 88
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-fable-5": {
+        "inputTokens": 207,
+        "outputTokens": 204424,
+        "cacheReadInputTokens": 30560526,
+        "cacheCreationInputTokens": 423628,
+        "webSearchRequests": 0,
+        "costUSD": 49.25635600000002,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-fable-5",
+        "provider": "firstParty"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Thermal Ink is built and passes every headless gate.** The level lives entirely in `src/benchmark-levels/thermal-ink-yk97/` — a 60.0-second continuous boss fight (24 bars at 96 BPM, ending on the phrase boundary) against a mutant octopus wrapped around a capsized hull in a sodium-lamp harbor.\n\n**How the level works**\n\n- **The ink/infrared rhythm is one clock.** `timing.ts` defines three bar-aligned ink windows (bars 6–8, 12–14, 20–23) plus `inkAt`/`infraredAt` ramp functions. Gameplay staging, the ejected cloud blobs, the fog/material mode-swap, the TSL screen grade (charcoal grayscale with preserved red signal cores and scanlines), and the music's section turnovers all read the same windows — each blackout has a ~0.9s blind beat before the lens snaps in.\n- **Boss structure.** The body is scenery anchored 30 units ahead of the camera (always on screen while the rail circles the basin), with eight writhing dressing arms, slit lamp-amber eyes, and a siphon. The six lockable arm tips (2 HP each, red signal cores) unfurl in pairs across the run; the core (`hitStages [2,6]`) spawns just before the final ejection and is only lockable once **all arms are dead and the final blackout has begun** — so the killing volley always lands through ink, and the lamps return on the kill.\n- **Supporting cast**: skimmers (debris-rays crossing the full screen), lurkers (barnacle crabs with telegraphed spit), dredgers (3-HP jaws lowered in on chains from above the mantle), and interceptable homing ink globs. 3-point hull.\n- **Audio**: Em–Cmaj7–Am–Bm over an 8-bar cycle; half-time industrial kick, bouncing filter bass, anvil/chain percussion, and one haunting lead that turns bright and focused under infrared while drums fall back to a sub pulse with sonar pings. Kills walk per-mode melody lanes, locks climb the live chord, core chips ring an escalating anvil, the reject is a sour foghorn blat, and the core kill lands a scheduled finale (duck, sub drop, E-minor bloom, falling peal, foghorn).\n\n**Verified**: `typecheck`, `build`, `check:floor` all green — including 0 occlusion warnings, all perf gates, event coverage, and center/distance spread. Simulation: perfect policy clears **54/54, S-rank, 60.02s**, no dead-air gaps. The audio trace confirms the arrangement structure. I reviewed SwiftShader stills of the murk, blind beat, infrared, and finale moments and iterated on palette, boss layout, and ink-blob behavior based on them. One caveat: `check:benchmark-scope` cannot run in this checkout (its companion `scripts/benchmark/protocol.mjs` was scrubbed), so I verified via git that every change is confined to the level directory.\n\n**For a human playtester**: judge the bloom level on the white-hot mantle under infrared (it runs hot by design; the slider-at-zero read is clean), the feel of the three blackout transitions, and the final mix balance — none of which headless tools can confirm.",
+    "ttft_ms": 2251,
+    "ttft_stream_ms": 1277,
+    "time_to_request_ms": 62,
+    "type": "result",
+    "duration_ms": 2877577,
+    "uuid": "46df563c-63b7-4e9f-9355-d2e2667e9ffb"
+  },
+  "normalized": {
+    "inputTokens": 30560733,
+    "outputTokens": 204424,
+    "cacheReadInputTokens": 30560526,
+    "cacheWriteInputTokens": 423628,
+    "vendorFields": {
+      "totalCostUsd": 49.25635600000002,
+      "durationMs": 2877577,
+      "durationApiMs": 2747813,
+      "numTurns": 172,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-fable-5": {
+          "inputTokens": 207,
+          "outputTokens": 204424,
+          "cacheReadInputTokens": 30560526,
+          "cacheCreationInputTokens": 423628,
+          "webSearchRequests": 0,
+          "costUSD": 49.25635600000002,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-fable-5",
+          "provider": "firstParty"
+        }
+      }
+    }
+  }
+}

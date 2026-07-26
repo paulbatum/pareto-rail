@@ -215,6 +215,12 @@
       "configurationId": "claude-opus-4-8-high"
     },
     {
+      "runId": "run-v34xmh17pb",
+      "levelId": "thermal-ink-4xmh",
+      "themeId": "thermal-ink",
+      "configurationId": "claude-opus-5-high"
+    },
+    {
       "runId": "run-v3c8vrhdys",
       "levelId": "vespers-c8vr",
       "themeId": "vespers",
@@ -233,9 +239,27 @@
       "configurationId": "codex-sol-max"
     },
     {
+      "runId": "run-v3sxomzehc",
+      "levelId": "thermal-ink-sxom",
+      "themeId": "thermal-ink",
+      "configurationId": "codex-sol-max"
+    },
+    {
       "runId": "run-v3t5xwqebm",
       "levelId": "vespers-t5xw",
       "themeId": "vespers",
+      "configurationId": "claude-fable-5-high"
+    },
+    {
+      "runId": "run-v3t6nvtrtz",
+      "levelId": "thermal-ink-t6nv",
+      "themeId": "thermal-ink",
+      "configurationId": "agy-gemini-3-6-flash-high"
+    },
+    {
+      "runId": "run-v3yk97g5q3",
+      "levelId": "thermal-ink-yk97",
+      "themeId": "thermal-ink",
       "configurationId": "claude-fable-5-high"
     },
     {

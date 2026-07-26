@@ -1,0 +1,21 @@
+{
+  "runId": "run-v34xmh17pb",
+  "slotId": "4xmh",
+  "levelId": "thermal-ink-4xmh",
+  "themeId": "thermal-ink",
+  "themePath": "benchmark/themes/thermal-ink.md",
+  "configurationId": "claude-opus-5-high",
+  "recipePath": "benchmark/recipes/claude-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v3",
+  "baselinePolicy": "scrubbed",
+  "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+  "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+  "levelTitle": "Thermal Ink"
+}

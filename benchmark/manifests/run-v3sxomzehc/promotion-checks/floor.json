@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "stdoutSha256": "c48dd7e445ca20fb27aada6b8d53fa6dd5634cc355b82934f0c501230450915e",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "wallTimeSeconds": 28.315227178999997,
+  "stdout": "\n> pareto-rail@0.0.0 check:floor\n> node scripts/check-floor.mjs --level thermal-ink-sxom\n\nThermal Ink floor check\nduration 60.0s; spawned kinds 6: arm, boiler-spawn, cable-eel, core, ink-cloud, scavenger\nevent coverage missing: none\n\nEngine defaults:\n  shot rhythm:\n    pattern=grid-ramp\n    gapThirtyseconds=1\n    releaseShare=0.64\n    gridRampGapGrowthThirtyseconds=1\n    maxGridSeconds=0.2\n  action SFX snap: overridden grid (enabled, 32nd grid)\n  lock radius: 0.095 NDC (engine default 0.085); reticle visual 0.097 NDC = 1.02x lock radius, no reticle scaling\n  words: start \"START\" (5), replay \"REPLAY\" (6); MAX_LOCKS 6\n  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, updateCameraEffects, updateAttractCamera, playerHealth, detailsForRun\n  identity hooks [default]: easeRunProgress, allowLockUndo\n\ntarget occlusion warnings: 0\nperformance gate failures: 0\naudio configuration failures: 0\nspawn centerness/distance warnings: 0\nreticle warnings: 0\nstart/replay word warnings: 0\nAll floor checks passed.\n",
+  "stderr": ""
+}

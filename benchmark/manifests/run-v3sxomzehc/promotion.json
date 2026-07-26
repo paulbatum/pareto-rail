@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-v3sxomzehc",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T23:10:10.501Z",
+      "data": {
+        "source": {
+          "runId": "run-v3sxomzehc",
+          "slotId": "sxom",
+          "themeId": "thermal-ink",
+          "levelId": "thermal-ink-sxom",
+          "title": "Thermal Ink",
+          "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+          "evaluatedCommit": "9a694423a0cdcd379ffdb715965f2386e8faa42a",
+          "payloadCommit": "60971a853ff1c3a3f3fe48f71884fe3e5ef1de9a",
+          "manifestSha256": "57a8bd9a9d348a358e87d0830fb37cc685df8886d47ab25d6b80d4f588630ab1",
+          "definitionSha256": "f78d9af165fd2a46ed38b67993b7be7c10949695f2ef9e70936ea717923a9875",
+          "evaluatedSha256": "e4b3b58d5757b6904f1dfe403b7989f2a22956a5e9d4dad14d3e6df74ef6a336",
+          "payloadSha256": "26c2a4df6984eec09ac4698872970fa72f233cf03c9cd392073fcb26c85aa4a7",
+          "payloadDiffSha256": "794ea9d5aff49f7f97934b3506fbb65eac7a331bdd59305349dcff23715ab5bc",
+          "sourcePath": "src/benchmark-levels/thermal-ink-sxom/",
+          "destinationPath": "src/benchmark-levels/thermal-ink-sxom/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/thermal-ink-sxom",
+              "promotedPath": "src/benchmark-levels/thermal-ink-sxom",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/thermal-ink-sxom",
+              "promotedPath": "public/level-content/thermal-ink-sxom",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "bf11faf390dbdf4a89fc815a232486ff0da5b7eb"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T23:10:10.697Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/thermal-ink-sxom/",
+            "files": 14,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/thermal-ink-sxom/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T23:10:10.701Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T23:10:10.835Z",
+      "data": {
+        "destination": "src/benchmark-levels/thermal-ink-sxom/",
+        "verifiedFiles": 17
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T23:11:06.907Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.7259509490000005,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "e791545e4cabea533d2e1cc58e52f1a28952dc8a3a58fb8ed97b366111ca9d57",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 22.650490282,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level thermal-ink-sxom --base bf11faf390dbdf4a89fc815a232486ff0da5b7eb",
+            "exitCode": 0,
+            "stdoutSha256": "0b0a2040f096e30c28abdc977a849890c9e8d42b6b81a346281c9952802a5209",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04607887599999958,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level thermal-ink-sxom",
+            "exitCode": 0,
+            "stdoutSha256": "c48dd7e445ca20fb27aada6b8d53fa6dd5634cc355b82934f0c501230450915e",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 28.315227178999997,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-25T23:11:07.001Z",
+      "data": {
+        "promotionCommit": "585a8ca5f72c235cf03ac2c3c346fe36494a2b85",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-25T23:11:07.002Z",
+  "source": {
+    "runId": "run-v3sxomzehc",
+    "slotId": "sxom",
+    "themeId": "thermal-ink",
+    "levelId": "thermal-ink-sxom",
+    "title": "Thermal Ink",
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "evaluatedCommit": "9a694423a0cdcd379ffdb715965f2386e8faa42a",
+    "payloadCommit": "60971a853ff1c3a3f3fe48f71884fe3e5ef1de9a",
+    "manifestSha256": "57a8bd9a9d348a358e87d0830fb37cc685df8886d47ab25d6b80d4f588630ab1",
+    "definitionSha256": "f78d9af165fd2a46ed38b67993b7be7c10949695f2ef9e70936ea717923a9875",
+    "evaluatedSha256": "e4b3b58d5757b6904f1dfe403b7989f2a22956a5e9d4dad14d3e6df74ef6a336",
+    "payloadSha256": "26c2a4df6984eec09ac4698872970fa72f233cf03c9cd392073fcb26c85aa4a7",
+    "payloadDiffSha256": "794ea9d5aff49f7f97934b3506fbb65eac7a331bdd59305349dcff23715ab5bc",
+    "sourcePath": "src/benchmark-levels/thermal-ink-sxom/",
+    "destinationPath": "src/benchmark-levels/thermal-ink-sxom/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/thermal-ink-sxom",
+        "promotedPath": "src/benchmark-levels/thermal-ink-sxom",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/thermal-ink-sxom",
+        "promotedPath": "public/level-content/thermal-ink-sxom",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "bf11faf390dbdf4a89fc815a232486ff0da5b7eb"
+  },
+  "promotionCommit": "585a8ca5f72c235cf03ac2c3c346fe36494a2b85"
+}

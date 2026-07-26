@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v34xmh17pb",
+  "slotId": "4xmh",
+  "configuration": {
+    "id": "claude-opus-5-high"
+  },
+  "theme": {
+    "id": "thermal-ink",
+    "path": "benchmark/themes/thermal-ink.md",
+    "sha256": "e73f34c0e5245c1d99f9e882650f3b83bbcddfdce3638a24ef1b28e3b759f979"
+  },
+  "baseline": {
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-cli.md",
+    "sha256": "2c0fb25bd878961cbd97776ca0a93fffd816fe452147e0811cc1cb7899c76667"
+  },
+  "controller": {
+    "commit": "b516c5e819082db6cac2d96ce325ef21c36d6215"
+  },
+  "timing": {
+    "startedAt": "2026-07-25T22:36:43.708Z",
+    "finishedAt": "2026-07-25T23:41:51.464Z",
+    "wallTimeSeconds": 3907.756
+  },
+  "stages": [
+    {
+      "id": "claude-opus-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-5"
+      },
+      "promptSha256": "643b08b416378718518baf8f34ce42abd04140254bfcb28eac4801039755d7c9",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.220 (Claude Code)"
+      },
+      "sessionId": "3a8e8bf8-00e8-47d4-bd81-259f73e111d4",
+      "rolloutArtifactSha256": "755242d4d1f39c32b1b0e72a20f46c6c053b8d5442be29172977d245b22b64e9",
+      "outputArtifactSha256": "a808f71fbd83f011750e8eedf9b4ae0cc87fd01744d8df4ead8243cb4d8bd9e5",
+      "startedAt": "2026-07-25T22:37:00.647Z",
+      "finishedAt": "2026-07-25T23:41:33.109Z",
+      "wallTimeSeconds": 3840.747228462,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 6140,
+        "outputTokens": 254913,
+        "cacheReadInputTokens": 59101921,
+        "cacheWriteInputTokens": 558098
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 41.53546550000002,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 41.53546550000002,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-opus-5",
+        "usageSource": "agreed",
+        "costUsd": 41.53546550000002,
+        "inputTokens": 6140,
+        "outputTokens": 254913,
+        "cacheReadTokens": 59101921,
+        "cacheWriteTokens": 558098
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7545314950000002,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.603696866,
+      "outputSha256": "33b27e360364f8bcb8199cc25fada4bad731749d7f69e303b0facf71d71c8a60"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level thermal-ink-4xmh --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.0361682409999994,
+      "outputSha256": "20aa044c95ac3d702fd37180f09d755a4cf68496b068f6d8bac5c6acba73ff38"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level thermal-ink-4xmh",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 10.643460725,
+      "outputSha256": "26587a5d3be47a225764f2f3d20a67c705bcfa7a6fd22776c95556e9b36faa5c"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "thermal-ink-4xmh",
+    "title": "Thermal Ink",
+    "evaluated": {
+      "commit": "9e0bda7bec4a7fac35c4cdc406851323bd12caa4",
+      "branch": "benchmark-run-run-v34xmh17pb"
+    },
+    "payload": {
+      "commit": "a50cdc4235bd33a2c0883cfec4268ea0785682ca",
+      "branch": "benchmark-payload-run-v34xmh17pb"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

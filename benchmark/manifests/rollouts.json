@@ -632,6 +632,24 @@
       ]
     },
     {
+      "runId": "run-v34xmh17pb",
+      "levelId": "thermal-ink-4xmh",
+      "themeId": "thermal-ink",
+      "configurationId": "claude-opus-5-high",
+      "files": [
+        {
+          "path": "runs/run-v34xmh17pb/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 20954026,
+          "sha256": "755242d4d1f39c32b1b0e72a20f46c6c053b8d5442be29172977d245b22b64e9"
+        },
+        {
+          "path": "runs/run-v34xmh17pb/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 21003565,
+          "sha256": "a808f71fbd83f011750e8eedf9b4ae0cc87fd01744d8df4ead8243cb4d8bd9e5"
+        }
+      ]
+    },
+    {
       "runId": "run-v3c8vrhdys",
       "levelId": "vespers-c8vr",
       "themeId": "vespers",
@@ -686,6 +704,24 @@
       ]
     },
     {
+      "runId": "run-v3sxomzehc",
+      "levelId": "thermal-ink-sxom",
+      "themeId": "thermal-ink",
+      "configurationId": "codex-sol-max",
+      "files": [
+        {
+          "path": "runs/run-v3sxomzehc/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 5481077,
+          "sha256": "16977005ec3f5342653dc883a5e7a9aefbfb31dfbfd3865a1b198ac6338ee6df"
+        },
+        {
+          "path": "runs/run-v3sxomzehc/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 498718,
+          "sha256": "beb5aeb2edd4a080d0443a5c1432731b4b9ba24db8148a59ac27d2a9b2166954"
+        }
+      ]
+    },
+    {
       "runId": "run-v3t5xwqebm",
       "levelId": "vespers-t5xw",
       "themeId": "vespers",
@@ -700,6 +736,42 @@
           "path": "runs/run-v3t5xwqebm/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 4964697,
           "sha256": "04fed9fee028a6752e5457cd544d089524eb8feef97f3d0bdd864c49bd879c8f"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3t6nvtrtz",
+      "levelId": "thermal-ink-t6nv",
+      "themeId": "thermal-ink",
+      "configurationId": "agy-gemini-3-6-flash-high",
+      "files": [
+        {
+          "path": "runs/run-v3t6nvtrtz/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 309615,
+          "sha256": "852bf9b84ae6e5e617f05e3530cdca679ca54c1fb567517232ff570b5dff7d1e"
+        },
+        {
+          "path": "runs/run-v3t6nvtrtz/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 398,
+          "sha256": "6584dea1bf85bd07ddced645c2b33cca507d922e5ab927e2f3cffe0911b2eb18"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3yk97g5q3",
+      "levelId": "thermal-ink-yk97",
+      "themeId": "thermal-ink",
+      "configurationId": "claude-fable-5-high",
+      "files": [
+        {
+          "path": "runs/run-v3yk97g5q3/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 5649892,
+          "sha256": "8ad8f42fb106a1e45de997b2ec210613da4206abefc0cb608d856511d48936da"
+        },
+        {
+          "path": "runs/run-v3yk97g5q3/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 5929818,
+          "sha256": "073390170d179d2c1b2f4924249b168fd064c5c2819b7a71512a818153c050e5"
         }
       ]
     },

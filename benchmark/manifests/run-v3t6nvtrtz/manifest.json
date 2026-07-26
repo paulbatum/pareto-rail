@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v3t6nvtrtz",
+  "slotId": "t6nv",
+  "configuration": {
+    "id": "agy-gemini-3-6-flash-high"
+  },
+  "theme": {
+    "id": "thermal-ink",
+    "path": "benchmark/themes/thermal-ink.md",
+    "sha256": "e73f34c0e5245c1d99f9e882650f3b83bbcddfdce3638a24ef1b28e3b759f979"
+  },
+  "baseline": {
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/agy-cli.md",
+    "sha256": "45e5844e6de4ac07558dac566a76baff376ab24700b11a2842e7c1e016cac366"
+  },
+  "controller": {
+    "commit": "f8b0572feec4af564ae53c92b82f05f1ba91b58e"
+  },
+  "timing": {
+    "startedAt": "2026-07-25T22:36:48.354Z",
+    "finishedAt": "2026-07-25T23:48:08.676Z",
+    "wallTimeSeconds": 4280.322
+  },
+  "stages": [
+    {
+      "id": "gemini-3.6-flash",
+      "role": "solo",
+      "model": {
+        "provider": "Google Antigravity subscription",
+        "snapshotId": "gemini-3.6-flash"
+      },
+      "promptSha256": "d1f1c5f10144ebf58241b7384fca1b03addac1d099079cfa83b88ff5201fba26",
+      "harness": {
+        "name": "Antigravity CLI",
+        "version": "1.1.7"
+      },
+      "sessionId": "a4f1ab29-609f-4156-a890-042cc132f828",
+      "rolloutArtifactSha256": "852bf9b84ae6e5e617f05e3530cdca679ca54c1fb567517232ff570b5dff7d1e",
+      "outputArtifactSha256": "6584dea1bf85bd07ddced645c2b33cca507d922e5ab927e2f3cffe0911b2eb18",
+      "startedAt": "2026-07-25T22:37:12.380Z",
+      "finishedAt": "2026-07-25T22:40:09.771Z",
+      "wallTimeSeconds": 176.573901601,
+      "result": "completed",
+      "entrantSandbox": false,
+      "sandboxUnavailable": true,
+      "usage": {
+        "inputTokens": 451390,
+        "outputTokens": 17800,
+        "cacheReadInputTokens": 5447276,
+        "reasoningTokens": 44861
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 1.9641339000000007,
+        "source": "tokscale"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 1.9641339000000007,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "tokscale",
+      "version": "4.7.0",
+      "view": "antigravity-cli",
+      "command": "tokscale models --home <run harness home> --json",
+      "basis": "rate-card"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gemini-3.6-flash",
+        "costUsd": 1.9641339000000007,
+        "inputTokens": 451390,
+        "outputTokens": 17800,
+        "cacheReadTokens": 5447276,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 44861
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.060859232,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.832342702,
+      "outputSha256": "130b834560aecb78349138761ce60d271e9e3cbe21786d08ed790bd5556cb3b7"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level thermal-ink-t6nv --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.035821364999999786,
+      "outputSha256": "4d819287dd191c0fe6f2165d8d0c302d18af362f513f441ec167130407207e49"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level thermal-ink-t6nv",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.132778000999999,
+      "outputSha256": "5d33f535020a6b8f90912b31ef6d29419995afc1d494bacc9035b0e705cda14d"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "thermal-ink-t6nv",
+    "title": "Thermal Ink",
+    "evaluated": {
+      "commit": "6bd5722cf7379091e9983ef8364cc45b64695b90",
+      "branch": "benchmark-run-run-v3t6nvtrtz"
+    },
+    "payload": {
+      "commit": "145fe9ef757b49ac6a28b1fa332f883394612043",
+      "branch": "benchmark-payload-run-v3t6nvtrtz"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "reasonCode": "operator-salvage-after-baseline-defect",
+    "notes": "Infrastructure failure, salvaged rather than rerun. The v3 scrubbed baseline 77173b463dad124e56dcbecbb0ff740c6f3687e5 ships scripts/check-benchmark-scope.mjs while scrubbing scripts/benchmark/protocol.mjs, which it imports, so npm run check:benchmark-scope crashes with ERR_MODULE_NOT_FOUND. This entrant reconstructed protocol.mjs to repair the command and committed it, and sealing then rejected that file as out of scope before any gate ran. Every other v3 entrant met the same broken command and left git clean. The operator reset the entrant branch to the baseline and deleted the reconstructed protocol.mjs, then resumed; the entrant's own level files under src/benchmark-levels/thermal-ink-t6nv were not modified, inspected for content, or added to. The resumed run passed all four gates. Its output is therefore entrant-authored but operator-touched before judging, which no other run in this benchmark is. The stage ran once; its cost stands as recorded. The defect is fixed for later baselines by scripts/level-footprint.mjs on branch benchmark/v3-baseline-4-source, which moves the footprint model outside the scrubbed harness directory."
+  }
+}
