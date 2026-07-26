@@ -8,7 +8,7 @@ import { MAX_LOCKS } from '../src/engine/locks';
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
   const options = parseArgs(argv);
-  const { analyzePerformanceLevels, formatPerformanceReports } = await import('./check-perf.mjs');
+  const { analyzePerformanceLevels, formatGateGlyph, formatPerformanceReports } = await import('./check-perf.mjs');
   const audioConfigErrors = await validateLevelAudioConfig(options.level, root);
 
   const [result, occlusionReports, perfReports] = await Promise.all([
@@ -61,6 +61,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
       }
     }
   }
+  const spawnWarningCount = warnings.length;
 
   const cardPath = path.join(root, 'src', level.sourceRoot, level.folder, 'level.md');
   try {
@@ -81,16 +82,25 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
     failures.push(`Target occlusion check found ${occlusionWarnings.length} warning${occlusionWarnings.length === 1 ? '' : 's'}. Run npm run check:occlusion -- --level ${level.id} for details.`);
   }
 
-  const perfFailures = perfReports.flatMap((report: { failures: unknown[] }) => report.failures);
+  type PerfGate = { name: string; status: string; detail: string };
+  type PerfReport = { failures: unknown[]; marginal?: PerfGate[]; gates: PerfGate[] };
+  const perfFailures = perfReports.flatMap((report: PerfReport) => report.failures);
   if (perfFailures.length > 0) {
     failures.push(`Performance check found ${perfFailures.length} failing gate${perfFailures.length === 1 ? '' : 's'}. Run npm run check:perf -- --level ${level.id} for details.`);
+  }
+
+  // A gate reserves margin above the authoring budget before it fails, so a level
+  // can sit just inside a limit and still gate green. Say so: the budget is the
+  // number to build to, and the author cannot see it from a bare pass.
+  const perfMarginal = perfReports.flatMap((report: PerfReport) => report.marginal ?? []);
+  for (const gate of perfMarginal) {
+    warnings.push(`Performance gate "${gate.name}" is over its authoring budget and inside the margin a benchmark gate reserves: ${gate.detail}.`);
   }
   for (const error of audioConfigErrors) failures.push(`Audio configuration validation failed: ${error}`);
 
   // An under-drawn reticle only warns: the engine already scales it up at
   // runtime, so the level is playable, but the drawn sight should match the
   // lock radius the level authored.
-  const spawnWarningCount = warnings.length;
   const words = result.engineDefaults.words;
   let reticleWarnings = 0;
   const reticle = result.engineDefaults.lockRadius.reticle;
@@ -124,12 +134,22 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   lines.push(formatEngineDefaultsReport(result.engineDefaults));
   lines.push('');
   lines.push(`target occlusion warnings: ${occlusionWarnings.length}`);
-  lines.push(`performance gate failures: ${perfFailures.length}`);
+  lines.push(`performance gate failures: ${perfFailures.length}, over authoring budget: ${perfMarginal.length}`);
   lines.push(`audio configuration failures: ${audioConfigErrors.length}`);
   lines.push(`spawn centerness/distance warnings: ${spawnWarningCount}`);
   lines.push(`reticle warnings: ${reticleWarnings}`);
   lines.push(`start/replay word warnings: ${wordWarnings}`);
-  
+
+  // A bare "all checks passed" hides how much of each budget the level is using,
+  // which is what an author needs before treating a performance number as settled.
+  // A failing run already gets these lines beside the sample table below.
+  const perfGates = failures.length === 0 ? perfReports.flatMap((report: PerfReport) => report.gates) : [];
+  if (perfGates.length > 0) {
+    lines.push('');
+    lines.push('Performance gates:');
+    for (const gate of perfGates) lines.push(`  ${formatGateGlyph(gate.status)} ${gate.name}: ${gate.detail}`);
+  }
+
   if (warnings.length) {
     lines.push('');
     lines.push('Warnings:');

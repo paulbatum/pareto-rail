@@ -25,6 +25,7 @@ This is a showcase piece, not a prototype or a proof of concept. Polish is the p
 - No imports from other levels' directories.
 - Do not turn an existing level into a parameterized template for new levels; each level stays independent.
 - `npm run typecheck`, `npm run build`, and `npm run check:floor -- --level <id>` must pass.
+- `check:floor` prints its performance gates on every run, passing or not. A `⚠` there means the level is over its authoring budget and sitting in the margin the gate reserves above it — build to the budget, not to the margin.
 
 ## The floor
 

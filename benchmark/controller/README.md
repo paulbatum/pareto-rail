@@ -103,7 +103,9 @@ The stage's retained `events.jsonl` flushes lazily — half an hour with no file
 
 ## Regate
 
-Gates are deterministic against the sealed commit, so a gate-tooling fix never re-runs generation. Move the run's `gates/` directory aside and resume; the disposition is recomputed from the refreshed gate records at the current controller commit.
+Gates are deterministic against the sealed commit, so a gate-tooling fix never re-runs generation. Move the run's `gates/` directory aside and resume; the disposition is recomputed from the refreshed gate records.
+
+Which tooling those refreshed gates run is not uniform, and it decides what a regate can actually fix. `scope` runs the controller's own copy of the checker by absolute path, so a fix to it reaches every run immediately. `typecheck`, `build`, and `floor` run inside the entrant checkout — `npm run check:floor` there resolves the checkout's `package.json` and its `scripts/`, which came from the entrant baseline. A fix to the floor check therefore reaches runs cut from the next baseline, not runs already sealed against an earlier one. That is the intended shape rather than an oversight: the entrant is measured by the same command it was given, and moving that bar underneath a sealed run would judge it against a check it never had. When a defect in the floor check itself is what failed a sealed run, the call is the failure policy's — an infrastructure failure to be classified and recorded, not a disposition to be recomputed by re-running the old check.
 
 ## Inspecting and managing runs
 

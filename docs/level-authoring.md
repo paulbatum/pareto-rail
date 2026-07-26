@@ -78,6 +78,8 @@ npm run check:floor -- --level <level-id>
 
 `check:floor` includes score/audio configuration validation, simulation, target occlusion, and headless performance gates. Use focused tools such as `simulate`, `snapshot:gameplay`, `trace:audio`, and `check:perf` while investigating a specific problem, but `check:floor` is the level readiness gate.
 
+It prints the performance gates on every run, passing or not, because a bare pass hides how much of each budget a level is using. A gate marked `⚠` is over the budget a level is authored to and inside the margin a benchmark gate reserves above it: the run still passes, and the level still has work to do. `docs/perf-tools.md` covers what each gate measures and where the two bars sit.
+
 ## Runner contract
 
 Pass a `LockOnRunnerLevel` to `createLockOnRunner`:

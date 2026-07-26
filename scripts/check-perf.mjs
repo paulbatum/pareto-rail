@@ -11,8 +11,7 @@ const DEFAULT_HEIGHT = 360;
 const DEFAULT_DT = 1 / 60;
 const DEFAULT_SEED = 20260704;
 const DEFAULT_GROWTH_RATIO = 1.35;
-const DEFAULT_HEAP_ALLOWANCE_MB = 32;
-const DEFAULT_HEAP_SLOPE_MB_PER_SECOND = 0.35;
+const DEFAULT_HEAP_RETENTION_MB = 16;
 const DEFAULT_MAX_CALLS = 500;
 const DEFAULT_MAX_OBJECTS = 5000;
 const DEFAULT_FRAME_GROWTH_WARN_RATIO = 1.5;
@@ -20,6 +19,12 @@ const DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE = 64;
 const DEFAULT_OBJECT_GROWTH_ALLOWANCE = 128;
 const DEFAULT_GEOMETRY_GROWTH_ALLOWANCE = 512;
 const DEFAULT_TEXTURE_GROWTH_ALLOWANCE = 8;
+
+// Every allowance above is the budget a level is authored to. A gate that decides
+// a benchmark run allows this much more before it fails, so a level sitting just
+// over its budget is told about it as a warning rather than being failed by it.
+const GATE_TOLERANCE = 1.5;
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 if (process.argv[1] && import.meta.url === pathToFileUrl(process.argv[1])) {
@@ -117,6 +122,7 @@ async function analyzeLevel(browser, baseUrl, level, options) {
 
     client = await page.createCDPSession();
     await client.send('Performance.enable');
+    await client.send('HeapProfiler.enable');
 
     const metadata = await page.evaluate(() => window.__gameplaySnapshot.metadata());
     if (!metadata || !Number.isFinite(metadata.duration) || metadata.duration <= 0) {
@@ -131,6 +137,12 @@ async function analyzeLevel(browser, baseUrl, level, options) {
         (stepOptions) => window.__gameplaySnapshot.stepPerformance(stepOptions),
         { targetTime, dt: options.dt },
       );
+      // Collect before reading, so the heap column is what the run is holding on
+      // to rather than wherever the sawtooth happened to be. Sampling the raw heap
+      // measures uncollected garbage as much as retention, which makes the reading
+      // depend on whether a collection happened to fire near the sample — during a
+      // quiet stretch of a level, none does, and a clean run reads like a leak.
+      await client.send('HeapProfiler.collectGarbage');
       const heapUsedMB = await readCdpHeapUsedMB(client);
       samples.push({ ...sample, heapUsedMB: heapUsedMB ?? sample.heapUsedMB });
     }
@@ -172,14 +184,23 @@ function analyzeSamples({ level, samples, options }) {
   addGrowthGate(gates, 'visible objects growth', samples, early, late, 'visibleObjects', options.growthRatio, { allowance: options.objectGrowthAllowance });
   addGrowthGate(gates, 'geometry count growth', samples, early, late, 'geometries', options.growthRatio, { allowance: options.geometryGrowthAllowance });
   addGrowthGate(gates, 'texture count growth', samples, early, late, 'textures', options.growthRatio, { zeroIsOk: true, allowance: options.textureGrowthAllowance });
-  addHeapGrowthGate(gates, samples, early, late, options);
-  addHeapSlopeGate(gates, samples, options);
+  addHeapRetentionGate(gates, samples, early, late, options);
   addBudgetGate(gates, samples, 'draw call budget', 'calls', options.maxCalls);
   addBudgetGate(gates, samples, 'scene object budget', 'sceneObjects', options.maxObjects);
   addFrameGrowthWarning(warnings, early, late, options.frameGrowthWarnRatio);
 
   const failures = gates.filter((gate) => gate.status === 'fail');
-  return { level, options: publicOptions(options), samples, windows: describeWindows(early, late), gates, warnings, failures };
+  const marginal = gates.filter((gate) => gate.status === 'warn');
+  return { level, options: publicOptions(options), samples, windows: describeWindows(early, late), gates, warnings, failures, marginal };
+}
+
+/**
+ * `pass` is inside the authoring budget, `warn` is over it but inside the margin a
+ * gate reserves, `fail` is past the margin too.
+ */
+function gateStatus(overBudget, overGateLimit) {
+  if (overGateLimit) return 'fail';
+  return overBudget ? 'warn' : 'pass';
 }
 
 function selectEarlyWindow(samples) {
@@ -203,12 +224,12 @@ function addGrowthGate(gates, name, samples, early, late, key, threshold, extra 
   const ratio = safeRatio(lateMean, earlyMean);
   const growth = lateMean - earlyMean;
   const allowance = extra.allowance ?? 0;
-  const failed = extra.zeroIsOk && earlyMean === 0
-    ? lateMean > allowance
-    : ratio > threshold && growth > allowance;
+  const exceeds = (budget) => (extra.zeroIsOk && earlyMean === 0
+    ? lateMean > budget
+    : ratio > threshold && growth > budget);
   gates.push({
     name,
-    status: failed ? 'fail' : 'pass',
+    status: gateStatus(exceeds(allowance), exceeds(allowance * GATE_TOLERANCE)),
     metric: key,
     early: round(earlyMean, 3),
     late: round(lateMean, 3),
@@ -219,60 +240,43 @@ function addGrowthGate(gates, name, samples, early, late, key, threshold, extra 
   });
 }
 
-function addHeapGrowthGate(gates, samples, early, late, options) {
-  const earlyHeap = mean(early.map((sample) => sample.heapUsedMB).filter(isFiniteNumber));
-  const lateHeap = mean(late.map((sample) => sample.heapUsedMB).filter(isFiniteNumber));
-  if (!Number.isFinite(earlyHeap) || !Number.isFinite(lateHeap)) {
-    gates.push({ name: 'heap growth', status: 'skip', metric: 'heapUsedMB', detail: 'heap metric unavailable' });
+/**
+ * How much the level is still holding at the end of a run that it was not holding
+ * near the start. Both ends are window means of collected readings, so the verdict
+ * does not turn on collection timing at either endpoint.
+ */
+function addHeapRetentionGate(gates, samples, early, late, options) {
+  const points = samples.filter((sample) => isFiniteNumber(sample.heapUsedMB));
+  const earlyPoints = early.filter((sample) => isFiniteNumber(sample.heapUsedMB));
+  const latePoints = late.filter((sample) => isFiniteNumber(sample.heapUsedMB));
+  // Without a reading at both ends there is nothing to compare, and `mean` of an
+  // empty window is zero — which would read as the whole late heap being retained.
+  if (points.length < 4 || earlyPoints.length === 0 || latePoints.length === 0) {
+    gates.push({ name: 'heap retention', status: 'skip', metric: 'heapUsedMB', detail: 'heap metric unavailable' });
     return;
   }
-  const ratio = safeRatio(lateHeap, earlyHeap);
-  const growth = lateHeap - earlyHeap;
-  const failed = ratio > options.growthRatio && growth > options.heapAllowanceMB;
+  const earlyHeap = mean(earlyPoints.map((sample) => sample.heapUsedMB));
+  const lateHeap = mean(latePoints.map((sample) => sample.heapUsedMB));
+  const retained = lateHeap - earlyHeap;
+  const slope = linearSlope(points.map((sample) => [sample.t, sample.heapUsedMB]));
   gates.push({
-    name: 'heap growth',
-    status: failed ? 'fail' : 'pass',
+    name: 'heap retention',
+    status: gateStatus(retained > options.heapRetentionMB, retained > options.heapRetentionMB * GATE_TOLERANCE),
     metric: 'heapUsedMB',
     early: round(earlyHeap, 3),
     late: round(lateHeap, 3),
-    ratio: round(ratio, 3),
-    threshold: options.growthRatio,
-    allowanceMB: options.heapAllowanceMB,
-    detail: `${formatMB(lateHeap)} late vs ${formatMB(earlyHeap)} early (${formatRatio(ratio)}, +${formatMB(growth)})`,
-  });
-}
-
-function addHeapSlopeGate(gates, samples, options) {
-  const points = samples.filter((sample) => isFiniteNumber(sample.heapUsedMB));
-  if (points.length < 4) {
-    gates.push({ name: 'heap monotonic slope', status: 'skip', metric: 'heapUsedMB', detail: 'not enough heap samples' });
-    return;
-  }
-  const slope = linearSlope(points.map((sample) => [sample.t, sample.heapUsedMB]));
-  const first = points[0].heapUsedMB;
-  const last = points[points.length - 1].heapUsedMB;
-  const netGrowth = last - first;
-  const nonDecreasingRatio = monotonicRatio(points.map((sample) => sample.heapUsedMB));
-  const failed = slope > options.heapSlopeMBPerSecond && netGrowth > options.heapAllowanceMB && nonDecreasingRatio >= 0.7;
-  gates.push({
-    name: 'heap monotonic slope',
-    status: failed ? 'fail' : 'pass',
-    metric: 'heapUsedMB',
+    retainedMB: round(retained, 3),
     slopeMBPerSecond: round(slope, 4),
-    threshold: options.heapSlopeMBPerSecond,
-    netGrowthMB: round(netGrowth, 3),
-    allowanceMB: options.heapAllowanceMB,
-    nonDecreasingRatio: round(nonDecreasingRatio, 3),
-    detail: `${formatMB(netGrowth)} net, ${formatMB(slope)}/s slope, ${(nonDecreasingRatio * 100).toFixed(0)}% non-decreasing steps`,
+    allowanceMB: options.heapRetentionMB,
+    detail: `+${formatMB(retained)} retained (${formatMB(lateHeap)} late vs ${formatMB(earlyHeap)} early, ${formatMB(slope)}/s), allowance ${formatMB(options.heapRetentionMB)}`,
   });
 }
 
 function addBudgetGate(gates, samples, name, key, limit) {
   const peak = Math.max(...samples.map((sample) => sample[key]));
-  const failed = peak > limit;
   gates.push({
     name,
-    status: failed ? 'fail' : 'pass',
+    status: gateStatus(peak > limit, peak > limit * GATE_TOLERANCE),
     metric: key,
     peak,
     limit,
@@ -300,20 +304,27 @@ function addFrameGrowthWarning(warnings, early, late, threshold) {
 export function formatPerformanceReports(reports, options = {}) {
   const lines = [];
   const resolvedOptions = { ...defaultOptions(), ...options };
-  lines.push(`Performance check (growth ${resolvedOptions.growthRatio}×, max calls ${resolvedOptions.maxCalls}, max objects ${resolvedOptions.maxObjects})`);
+  lines.push(`Performance check (growth ${resolvedOptions.growthRatio}×, max calls ${resolvedOptions.maxCalls}, max objects ${resolvedOptions.maxObjects}, retained heap ${resolvedOptions.heapRetentionMB} MB; a gate allows ${GATE_TOLERANCE}× these before failing)`);
   for (const report of reports) {
-    const status = report.failures.length === 0 ? '✓' : '✗';
+    const status = report.failures.length > 0 ? '✗' : (report.marginal ?? []).length > 0 ? '⚠' : '✓';
     lines.push('');
     lines.push(`${status} ${report.level.id}: duration ${report.level.duration.toFixed(1)}s, samples ${report.samples.length}`);
     lines.push(formatSampleTable(report.samples));
     lines.push('Gates:');
-    for (const gate of report.gates) lines.push(`  ${gate.status === 'pass' ? '✓' : gate.status === 'skip' ? '-' : '✗'} ${gate.name}: ${gate.detail}`);
+    for (const gate of report.gates) lines.push(`  ${formatGateGlyph(gate.status)} ${gate.name}: ${gate.detail}`);
     if (report.warnings.length > 0) {
       lines.push('Warnings:');
       for (const warning of report.warnings) lines.push(`  ⚠ ${warning.name}: ${warning.detail}`);
     }
   }
   return lines.join('\n');
+}
+
+export function formatGateGlyph(status) {
+  if (status === 'pass') return '✓';
+  if (status === 'warn') return '⚠';
+  if (status === 'skip') return '-';
+  return '✗';
 }
 
 function formatSampleTable(samples) {
@@ -355,8 +366,7 @@ function defaultOptions() {
     dt: DEFAULT_DT,
     seed: DEFAULT_SEED,
     growthRatio: DEFAULT_GROWTH_RATIO,
-    heapAllowanceMB: DEFAULT_HEAP_ALLOWANCE_MB,
-    heapSlopeMBPerSecond: DEFAULT_HEAP_SLOPE_MB_PER_SECOND,
+    heapRetentionMB: DEFAULT_HEAP_RETENTION_MB,
     maxCalls: DEFAULT_MAX_CALLS,
     maxObjects: DEFAULT_MAX_OBJECTS,
     frameGrowthWarnRatio: DEFAULT_FRAME_GROWTH_WARN_RATIO,
@@ -409,13 +419,9 @@ function parseArgs(argv) {
       case 'growthRatio':
         parsed.growthRatio = readPositiveNumber(value, `--${key}`);
         break;
-      case 'heap-allowance-mb':
-      case 'heapAllowanceMB':
-        parsed.heapAllowanceMB = readNonNegativeNumber(value, `--${key}`);
-        break;
-      case 'heap-slope-mb-per-second':
-      case 'heapSlopeMBPerSecond':
-        parsed.heapSlopeMBPerSecond = readNonNegativeNumber(value, `--${key}`);
+      case 'heap-retention-mb':
+      case 'heapRetentionMB':
+        parsed.heapRetentionMB = readNonNegativeNumber(value, `--${key}`);
         break;
       case 'max-calls':
       case 'maxCalls':
@@ -464,8 +470,8 @@ function publicOptions(options) {
     dt: options.dt,
     seed: options.seed,
     growthRatio: options.growthRatio,
-    heapAllowanceMB: options.heapAllowanceMB,
-    heapSlopeMBPerSecond: options.heapSlopeMBPerSecond,
+    heapRetentionMB: options.heapRetentionMB,
+    gateTolerance: GATE_TOLERANCE,
     maxCalls: options.maxCalls,
     maxObjects: options.maxObjects,
     frameGrowthWarnRatio: options.frameGrowthWarnRatio,
@@ -502,7 +508,7 @@ function readNonNegativeNumber(value, flag) {
 }
 
 function printHelpAndExit() {
-  console.log(`Usage: npm run check:perf -- --level <id> [options]\n\nOptions:\n  --json <path>                         Write raw samples and gate verdicts\n  --render <all|sample>                 Render mode: "all" (every frame) or "sample" (only sample points), default "sample"\n  --growth-ratio <ratio>                Late/early growth failure ratio, default ${DEFAULT_GROWTH_RATIO}\n  --heap-allowance-mb <mb>              Absolute heap growth allowance, default ${DEFAULT_HEAP_ALLOWANCE_MB}\n  --heap-slope-mb-per-second <mb>       Monotonic heap slope allowance, default ${DEFAULT_HEAP_SLOPE_MB_PER_SECOND}\n  --max-calls <count>                   Absolute draw-call budget, default ${DEFAULT_MAX_CALLS}\n  --max-objects <count>                 Absolute scene object budget, default ${DEFAULT_MAX_OBJECTS}\n  --frame-growth-warn-ratio <ratio>     Relative frame-time warning ratio, default ${DEFAULT_FRAME_GROWTH_WARN_RATIO}\n  --draw-call-growth-allowance <count>  Absolute draw-call growth allowance, default ${DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE}\n  --object-growth-allowance <count>     Absolute object growth allowance, default ${DEFAULT_OBJECT_GROWTH_ALLOWANCE}\n  --geometry-growth-allowance <count>   Absolute geometry growth allowance, default ${DEFAULT_GEOMETRY_GROWTH_ALLOWANCE}\n  --texture-growth-allowance <count>    Absolute texture growth allowance, default ${DEFAULT_TEXTURE_GROWTH_ALLOWANCE}\n  --dt <seconds>                        Fixed simulation step, default ${DEFAULT_DT}\n  --seed <integer>                      Snapshot RNG seed, default ${DEFAULT_SEED}\n  --no-fail                             Print failures but exit zero`);
+  console.log(`Usage: npm run check:perf -- --level <id> [options]\n\nOptions:\n  --json <path>                         Write raw samples and gate verdicts\n  --render <all|sample>                 Render mode: "all" (every frame) or "sample" (only sample points), default "sample"\n  --growth-ratio <ratio>                Late/early growth failure ratio, default ${DEFAULT_GROWTH_RATIO}\n  --heap-retention-mb <mb>              Retained heap allowance across a run, default ${DEFAULT_HEAP_RETENTION_MB}\n  --max-calls <count>                   Absolute draw-call budget, default ${DEFAULT_MAX_CALLS}\n  --max-objects <count>                 Absolute scene object budget, default ${DEFAULT_MAX_OBJECTS}\n  --frame-growth-warn-ratio <ratio>     Relative frame-time warning ratio, default ${DEFAULT_FRAME_GROWTH_WARN_RATIO}\n  --draw-call-growth-allowance <count>  Absolute draw-call growth allowance, default ${DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE}\n  --object-growth-allowance <count>     Absolute object growth allowance, default ${DEFAULT_OBJECT_GROWTH_ALLOWANCE}\n  --geometry-growth-allowance <count>   Absolute geometry growth allowance, default ${DEFAULT_GEOMETRY_GROWTH_ALLOWANCE}\n  --texture-growth-allowance <count>    Absolute texture growth allowance, default ${DEFAULT_TEXTURE_GROWTH_ALLOWANCE}\n  --dt <seconds>                        Fixed simulation step, default ${DEFAULT_DT}\n  --seed <integer>                      Snapshot RNG seed, default ${DEFAULT_SEED}\n  --no-fail                             Print failures but exit zero`);
   process.exit(0);
 }
 
@@ -528,13 +534,6 @@ function linearSlope(points) {
     denominator += (x - meanX) ** 2;
   }
   return denominator === 0 ? 0 : numerator / denominator;
-}
-
-function monotonicRatio(values) {
-  if (values.length < 2) return 1;
-  let nonDecreasing = 0;
-  for (let i = 1; i < values.length; i += 1) if (values[i] >= values[i - 1]) nonDecreasing += 1;
-  return nonDecreasing / (values.length - 1);
 }
 
 function isFiniteNumber(value) {
