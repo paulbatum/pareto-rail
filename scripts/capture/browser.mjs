@@ -112,16 +112,24 @@ export async function launchCaptureBrowser({ port, width, height, muted = true, 
 
   const child = spawn(executable, args, { detached: true, stdio: 'ignore' });
   child.unref();
-  const version = await waitForDebugPort(port, 30_000);
+  const stop = () => stopBrowser(profile, port);
 
-  return {
-    browserURL: `http://127.0.0.1:${port}`,
-    version,
-    async stop() {
-      // The launcher process exits immediately on Windows, so kill by command line.
-      const script = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*${profile}*' `
-        + `-and $_.CommandLine -like '*remote-debugging-port=${port}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }`;
-      await run('powershell.exe', ['-NoProfile', '-Command', script], { cwd: '/mnt/c' }).catch(() => {});
-    },
-  };
+  let version;
+  try {
+    version = await waitForDebugPort(port, 30_000);
+  } catch (error) {
+    // The browser starts even when it cannot bind the port, so a failure here would
+    // otherwise leave it running and the port looking taken to the next run.
+    await stop();
+    throw error;
+  }
+
+  return { browserURL: `http://127.0.0.1:${port}`, version, stop };
+}
+
+// The launcher process exits immediately on Windows, so kill by command line.
+async function stopBrowser(profile, port) {
+  const script = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*${profile}*' `
+    + `-and $_.CommandLine -like '*remote-debugging-port=${port}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }`;
+  await run('powershell.exe', ['-NoProfile', '-Command', script], { cwd: '/mnt/c' }).catch(() => {});
 }

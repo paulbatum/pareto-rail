@@ -9,11 +9,16 @@
  * an approximation and the frame timings mean nothing.
  */
 import { existsSync } from 'node:fs';
-import net from 'node:net';
 import puppeteer from 'puppeteer';
 import { launchCaptureBrowser } from './browser.mjs';
 
 export const RENDER_MODES = ['gpu', 'software'];
+
+/* 9333 belongs to the playthrough recorder. Fixed rather than picked per run: Windows
+   reserves scattered blocks of TCP ports, and a browser handed one of those starts
+   normally but never binds, which reads as a browser that failed to come up. Pass a
+   different port to run two capture tools at once. */
+export const DEFAULT_DEBUG_PORT = 9334;
 
 const SOFTWARE_ARGS = [
   '--no-sandbox',
@@ -43,7 +48,7 @@ export function defaultRenderMode() {
  * Opens the browser the render tools drive. The caller closes it through `close()`.
  * `backend` is the three.js backend the pages should ask for.
  */
-export async function openRenderBrowser({ mode = defaultRenderMode(), width = 1280, height = 720, port } = {}) {
+export async function openRenderBrowser({ mode = defaultRenderMode(), width = 1280, height = 720, port = DEFAULT_DEBUG_PORT } = {}) {
   if (!RENDER_MODES.includes(mode)) throw new Error(`Unknown render mode: ${mode} (${RENDER_MODES.join(', ')})`);
 
   if (mode === 'software') {
@@ -58,11 +63,9 @@ export async function openRenderBrowser({ mode = defaultRenderMode(), width = 12
     return { browser, mode, backend: 'webgl', close: () => browser.close() };
   }
 
-  // A port and profile per run, so two tools capturing at once do not share a browser.
-  const debugPort = port ?? await findFreePort();
   let launched;
   try {
-    launched = await launchCaptureBrowser({ port: debugPort, width, height, profile: `pareto-rail-snapshot-${debugPort}` });
+    launched = await launchCaptureBrowser({ port, width, height, profile: `pareto-rail-snapshot-${port}` });
   } catch (error) {
     throw new Error(`${error instanceof Error ? error.message : error}\n\n${SOFTWARE_HINT}`);
   }
@@ -125,19 +128,6 @@ function withoutDisplay(env) {
   const copy = { ...env };
   delete copy.DISPLAY;
   return copy;
-}
-
-/* Mirrored networking shares one loopback between WSL and Windows, so a port free here
-   is the port the Windows browser can bind. */
-function findFreePort() {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.on('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const { port } = server.address();
-      server.close(() => resolve(port));
-    });
-  });
 }
 
 function findLinuxChrome() {
