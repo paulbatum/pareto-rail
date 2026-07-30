@@ -98,7 +98,12 @@ export interface Slab {
    * Distance ahead of the hero camera. This is also where the mass's front face
    * lands, and two front faces at the same depth both draw, so any two masses
    * whose rectangles overlap must differ here by at least a couple of world
-   * units. `npm run refcompare flicker` and tmp/pyre/zfight.mjs both check it.
+   * units.
+   *
+   * After adding or moving a mass, run `node src/levels/pyre/tools/zfight.mjs`;
+   * it audits every overlapping pair and exits non-zero on a collision. It only
+   * sees these tables, so confirm the frame itself with `npm run refcompare --
+   * flicker` over two captures a small step apart.
    */
   depth: number;
   color: number;

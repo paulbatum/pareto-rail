@@ -13,7 +13,7 @@ import {
 } from 'three';
 import type { BufferGeometry, InstancedMesh as InstancedMeshType, Material } from 'three';
 import { mulberry32 } from '../../../engine/rng';
-import { createEdges, createInstancedEdges, type EdgeStyle } from './edge-overlay';
+import { createEdges, createInstancedEdges, type EdgeStyle } from '../../../engine/edge-overlay';
 import { FRAME_HEIGHT, FRAME_WIDTH, frameAngle, frameLength, frameMid, framePoint, referenceCamera, solveFrameBox } from '../frame';
 import {
   PYRE_APRON,

@@ -25,5 +25,6 @@ Authoring runs through the frame projection rather than hand-placed world coordi
 
 - A mass thicker than its outline is wide cannot be fitted to that outline, because its side face alone overruns it. Keep thickness well under the world width of the element, or push the element further away.
 - Layer order is by depth, not by build order. An element authored at a shallower depth covers one authored deeper, however late it is added.
+- A mass's front face sits exactly at its authored depth, so two overlapping masses at the same depth fight. `node src/levels/pyre/tools/zfight.mjs` audits every overlapping pair and exits non-zero on a collision — run it after adding or moving a mass.
 
 The fly-around is bounded on purpose. Geometry authored to a single frame reads as a shell from behind or from directly overhead, so the sweep stays in front of the basin and under about fifty units of altitude, where the megastructure and sky still sit behind the subject. Widening that range needs geometry the hero frame never sees.
