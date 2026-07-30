@@ -15,6 +15,7 @@ import type { BufferGeometry, Material } from 'three';
 import { mulberry32 } from '../../../engine/rng';
 import { FRAME_HEIGHT, FRAME_WIDTH, frameAngle, frameLength, frameMid, framePoint, referenceCamera, solveFrameBox } from '../frame';
 import {
+  PYRE_APRON,
   PYRE_BASIN,
   PYRE_COLORS,
   PYRE_DEPTHS,
@@ -223,6 +224,11 @@ export function addTerrain(sink: EnvironmentSink) {
   addPlate(sink, { x0: -11, x1: -5, z0: -16, z1: -22, top: 0.15, drop: 6, color: PYRE_COLORS.slab });
   addPlate(sink, { x0: 2, x1: 8, z0: -17, z1: -23, top: 0.2, drop: 6, color: PYRE_COLORS.slab });
 
+  for (const step of PYRE_APRON.steps) {
+    addPlate(sink, { ...step, drop: 12 });
+    addPlate(sink, { x0: step.x0, x1: step.x1, z0: step.z0, z1: step.z0 - 1.4, top: step.top + 0.15, drop: 4, color: PYRE_APRON.riser });
+  }
+
   // Shelves stepping down into the near rim, so the basin edge reads as
   // terraced ground rather than a clean cut.
   addPlate(sink, { x0: -26, x1: 34, z0: -33, z1: -42, top: -2.4, drop: 8, color: PYRE_COLORS.snowShaded });
@@ -267,7 +273,7 @@ export function addDunes(sink: EnvironmentSink, seed: number) {
 /** Loose rock scattered over the plain, dark against the snow. */
 export function addRockField(sink: EnvironmentSink, seed: number) {
   const rng = mulberry32(seed);
-  const count = 420;
+  const count = 620;
   const geometry = new BoxGeometry(1, 1, 1);
   const material = flat(PYRE_COLORS.rock);
   const mesh = new InstancedMesh(geometry, material, count);
@@ -278,7 +284,7 @@ export function addRockField(sink: EnvironmentSink, seed: number) {
   const axis = new Vector3(0, 1, 0);
 
   for (let i = 0; i < count; i += 1) {
-    const z = MathUtils.lerp(-18, -210, rng());
+    const z = MathUtils.lerp(-14, -210, rng());
     const half = z > PYRE_BASIN.nearZ ? 90 : basinHalfWidth(z) + 30 + rng() * 260;
     const side = rng() < 0.5 ? -1 : 1;
     const x = z > PYRE_BASIN.nearZ ? (rng() - 0.5) * 2 * half : PYRE_BASIN.centreX + side * half;
@@ -322,10 +328,14 @@ export function addBlockField(sink: EnvironmentSink, seed: number) {
     const columns = Math.ceil((half * 2) / step);
     for (let column = 0; column < columns; column += 1) {
       if (rng() < 0.12) continue;
+
       const x = PYRE_BASIN.centreX - half + (column + 0.5) * step + (rng() - 0.5) * step * 0.4;
+      const { bounds } = PYRE_APRON;
+      if (x > bounds.x0 - 10 && x < bounds.x1 + 10 && z < bounds.z0 && z > bounds.z1) continue;
       const lateral = Math.abs(x - PYRE_BASIN.centreX) / half;
       const depth = -z;
-      let top = MathUtils.lerp(4.5, -2.5, rng() * 0.75 + (row / rows) * 0.25);
+      const centreRise = (1 - lateral) ** 1.4 * 5;
+      let top = Math.min(4.2, -5 + centreRise + rng() * 7 - (row / rows) * 1.5);
       if (Math.abs(x - PYRE_GATEWAY_LANE.centreX) < PYRE_GATEWAY_LANE.halfWidth) {
         // Blocks in front of the gateway duck under its sill; blocks behind it
         // stop at its lintel. Either way the silhouette stays whole.

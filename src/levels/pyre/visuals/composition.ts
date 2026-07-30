@@ -70,6 +70,28 @@ export const PYRE_BASIN = {
  */
 export const PYRE_GATEWAY_LANE = { centreX: -15, halfWidth: 21 };
 
+/**
+ * The terraced concrete apron filling the near-left of the basin, which is what
+ * the reference gives its bottom quarter to. The block field yields to its
+ * footprint so the shelf edges read instead of being buried under blocks.
+ */
+export const PYRE_APRON = {
+  bounds: { x0: -120, x1: -6, z0: -24, z1: -84 },
+  /**
+   * Lit terrace tops, each with a dark riser at its near edge for the shelf line.
+   * The tops descend far more gently than the basin does: a terrace falling at the
+   * viewing ray's own slope is edge-on to the hero camera and shows nothing.
+   */
+  riser: 0x24334c,
+  steps: [
+    { x0: -120, x1: -12, z0: -28, z1: -44, top: -2.6, color: 0x93b7c4 },
+    { x0: -120, x1: -16, z0: -44, z1: -58, top: -3.2, color: 0x6e93a6 },
+    { x0: -120, x1: -22, z0: -58, z1: -80, top: -3.6, color: 0x8aaebd },
+    { x0: -52, x1: -18, z0: -30, z1: -41, top: -1.6, color: 0xa2c5cd },
+    { x0: -92, x1: -58, z0: -46, z1: -56, top: -2.9, color: 0x9ab9c6 },
+  ],
+};
+
 export interface Slab {
   rect: FrameRect;
   depth: number;
@@ -117,13 +139,14 @@ export const PYRE_BACKDROP: Slab[] = [
  * another; the crisp geometry lives in the edge beams instead.
  */
 export const PYRE_MEGASTRUCTURE: Slab[] = [
-  { rect: { x0: 300, y0: -200, x1: 1350, y1: 340 }, depth: 218, color: 0x545d7e, thickness: 3 },
-  { rect: { x0: 300, y0: 330, x1: 1350, y1: 620 }, depth: 218, color: 0x8a7a99, thickness: 3 },
-  { rect: { x0: 300, y0: 610, x1: 1350, y1: 840 }, depth: 218, color: 0x93808f, thickness: 3 },
+  { rect: { x0: 300, y0: -200, x1: 1350, y1: 250 }, depth: 218, color: 0x555d7e, thickness: 3 },
+  { rect: { x0: 300, y0: 240, x1: 1350, y1: 424 }, depth: 218, color: 0x6f6a8c, thickness: 3 },
+  { rect: { x0: 300, y0: 414, x1: 1350, y1: 624 }, depth: 218, color: 0x8c7d9c, thickness: 3 },
+  { rect: { x0: 300, y0: 614, x1: 1350, y1: 840 }, depth: 218, color: 0x93808f, thickness: 3 },
   { rect: { x0: 120, y0: -120, x1: 760, y1: 700 }, depth: 212, color: 0x3f7796, thickness: 3, roll: 14 },
   { rect: { x0: -120, y0: -160, x1: 460, y1: 430 }, depth: 208, color: 0x467e9f, thickness: 3, roll: -24 },
   { rect: { x0: 470, y0: -160, x1: 980, y1: 700 }, depth: 204, color: 0x6b6180, thickness: 3, roll: -11 },
-  { rect: { x0: 940, y0: -180, x1: 1450, y1: 560 }, depth: 196, color: 0x50557a, thickness: 3, roll: 20 },
+  { rect: { x0: 940, y0: -180, x1: 1450, y1: 560 }, depth: 206, color: 0x50557a, thickness: 3, roll: 20 },
   { rect: { x0: 1180, y0: 90, x1: 1720, y1: 660 }, depth: 192, color: 0x2c4f75, thickness: 3, roll: -18 },
   { rect: { x0: 1600, y0: -140, x1: 2060, y1: 560 }, depth: 184, color: 0x1a3c58, thickness: 3, roll: 9 },
 
@@ -164,36 +187,41 @@ export const PYRE_PYRAMIDS: Pyramid[] = [
 
 /** The leaning stack at the left edge: irregular blocks, top offset right of the base. */
 export const PYRE_LEFT_MONOLITH: Slab[] = [
-  { rect: { x0: 156, y0: 432, x1: 330, y1: 600 }, depth: PYRE_DEPTHS.leftMonolith, color: 0x1d3f60, thickness: 10, roll: -9, yaw: 14 },
-  { rect: { x0: 96, y0: 574, x1: 292, y1: 692 }, depth: PYRE_DEPTHS.leftMonolith, color: 0x1a3856, thickness: 11, roll: -7, yaw: -8 },
-  { rect: { x0: 74, y0: 664, x1: 254, y1: 872 }, depth: PYRE_DEPTHS.leftMonolith, color: 0x16304c, thickness: 10, roll: -11, yaw: 6 },
-  { rect: { x0: 86, y0: 832, x1: 250, y1: 926 }, depth: PYRE_DEPTHS.leftMonolith - 8, color: 0x122840, thickness: 8, roll: 5, yaw: -18 },
+  { rect: { x0: 160, y0: 438, x1: 320, y1: 592 }, depth: PYRE_DEPTHS.leftMonolith, color: 0x1d3f60, thickness: 10, roll: -6, yaw: 12 },
+  { rect: { x0: 100, y0: 580, x1: 282, y1: 684 }, depth: PYRE_DEPTHS.leftMonolith, color: 0x1a3856, thickness: 11, roll: -5, yaw: -8 },
+  { rect: { x0: 80, y0: 672, x1: 226, y1: 862 }, depth: PYRE_DEPTHS.leftMonolith, color: 0x16304c, thickness: 10, roll: -8, yaw: 6 },
+  { rect: { x0: 92, y0: 838, x1: 196, y1: 902 }, depth: PYRE_DEPTHS.leftMonolith - 8, color: 0x122840, thickness: 7, roll: 6, yaw: -16 },
+  { rect: { x0: 176, y0: 852, x1: 246, y1: 898 }, depth: PYRE_DEPTHS.leftMonolith - 10, color: 0x16304c, thickness: 6, roll: -4, yaw: 14 },
+
 ];
 
 /** The pale, brightly lit group at the right: offset stacking over a terraced base. */
 export const PYRE_RIGHT_MONOLITHS: Slab[] = [
-  { rect: { x0: 1484, y0: 452, x1: 1616, y1: 552 }, depth: PYRE_DEPTHS.rightMonoliths, color: PYRE_COLORS.paleStone, thickness: 8, roll: -2, yaw: 10 },
-  { rect: { x0: 1466, y0: 540, x1: 1628, y1: 660 }, depth: PYRE_DEPTHS.rightMonoliths, color: 0x7dbed6, thickness: 9, roll: 3, yaw: -12 },
-  { rect: { x0: 1522, y0: 582, x1: 1712, y1: 812 }, depth: PYRE_DEPTHS.rightMonoliths + 8, color: 0x84c3da, thickness: 9, roll: -1, yaw: 6 },
-  { rect: { x0: 1448, y0: 640, x1: 1552, y1: 900 }, depth: PYRE_DEPTHS.rightMonoliths - 6, color: PYRE_COLORS.paleStoneDim, thickness: 7, roll: 2, yaw: -6 },
-  { rect: { x0: 1526, y0: 802, x1: 1698, y1: 944 }, depth: PYRE_DEPTHS.rightMonoliths - 4, color: 0x6ea6c0, thickness: 9, roll: 1, yaw: 4 },
-  { rect: { x0: 1660, y0: 700, x1: 1752, y1: 906 }, depth: PYRE_DEPTHS.rightMonoliths + 14, color: 0x74b2cb, thickness: 7, roll: -3, yaw: -10 },
+  { rect: { x0: 1494, y0: 458, x1: 1596, y1: 546 }, depth: PYRE_DEPTHS.rightMonoliths, color: PYRE_COLORS.paleStone, thickness: 8, roll: -2, yaw: 10 },
+  { rect: { x0: 1486, y0: 540, x1: 1606, y1: 654 }, depth: PYRE_DEPTHS.rightMonoliths, color: 0x7dbed6, thickness: 9, roll: 3, yaw: -12 },
+  { rect: { x0: 1540, y0: 584, x1: 1692, y1: 808 }, depth: PYRE_DEPTHS.rightMonoliths + 8, color: 0x84c3da, thickness: 9, roll: -1, yaw: 6 },
+  { rect: { x0: 1452, y0: 644, x1: 1546, y1: 870 }, depth: PYRE_DEPTHS.rightMonoliths - 6, color: PYRE_COLORS.paleStoneDim, thickness: 7, roll: 2, yaw: -6 },
+  { rect: { x0: 1538, y0: 806, x1: 1684, y1: 928 }, depth: PYRE_DEPTHS.rightMonoliths - 4, color: 0x6ea6c0, thickness: 9, roll: 1, yaw: 4 },
+
 ];
 
 /** The lone pale pillar right of centre, standing out of the block field. */
 export const PYRE_CENTRE_MONOLITH: Slab[] = [
-  { rect: { x0: 1160, y0: 578, x1: 1254, y1: 642 }, depth: PYRE_DEPTHS.centreMonolith, color: 0xbdd0dc, thickness: 6, roll: -2, yaw: 12 },
-  { rect: { x0: 1148, y0: 632, x1: 1244, y1: 704 }, depth: PYRE_DEPTHS.centreMonolith, color: 0xa9c1d1, thickness: 7, roll: 3, yaw: -8 },
-  { rect: { x0: 1164, y0: 694, x1: 1266, y1: 796 }, depth: PYRE_DEPTHS.centreMonolith, color: 0xbdd0dc, thickness: 7, roll: -1, yaw: 5 },
-  { rect: { x0: 1176, y0: 786, x1: 1262, y1: 946 }, depth: PYRE_DEPTHS.centreMonolith - 4, color: 0x5c3a3c, thickness: 7, roll: 2, yaw: -6 },
+  { rect: { x0: 1158, y0: 583, x1: 1216, y1: 640 }, depth: PYRE_DEPTHS.centreMonolith, color: 0xbdd0dc, thickness: 6, roll: -2, yaw: 12 },
+  { rect: { x0: 1166, y0: 636, x1: 1210, y1: 676 }, depth: PYRE_DEPTHS.centreMonolith, color: 0xa9c1d1, thickness: 5, roll: 3, yaw: -8 },
+  { rect: { x0: 1170, y0: 672, x1: 1212, y1: 710 }, depth: PYRE_DEPTHS.centreMonolith, color: 0xbdd0dc, thickness: 5, roll: -1, yaw: 5 },
+  { rect: { x0: 1166, y0: 706, x1: 1218, y1: 772 }, depth: PYRE_DEPTHS.centreMonolith, color: 0xb2c8d7, thickness: 6, roll: 2, yaw: -6 },
+  { rect: { x0: 1181, y0: 766, x1: 1234, y1: 812 }, depth: PYRE_DEPTHS.centreMonolith - 3, color: 0xbdd0dc, thickness: 6, roll: -2, yaw: 8 },
+  { rect: { x0: 1186, y0: 806, x1: 1236, y1: 892 }, depth: PYRE_DEPTHS.centreMonolith - 3, color: 0x5c3a3c, thickness: 6, roll: 1, yaw: -5 },
+
 ];
 
 /** The stepped, layered wall banding the right frame edge. */
 export const PYRE_RIGHT_WALL: Slab[] = [
-  { rect: { x0: 1686, y0: 398, x1: 1990, y1: 520 }, depth: PYRE_DEPTHS.rightWall, color: 0x274d6c, thickness: 18, roll: 6 },
-  { rect: { x0: 1708, y0: 500, x1: 1990, y1: 620 }, depth: PYRE_DEPTHS.rightWall - 6, color: 0x224765, thickness: 18, roll: 6 },
-  { rect: { x0: 1730, y0: 600, x1: 1990, y1: 720 }, depth: PYRE_DEPTHS.rightWall - 12, color: 0x1a3c58, thickness: 18, roll: 6 },
-  { rect: { x0: 1752, y0: 700, x1: 1990, y1: 812 }, depth: PYRE_DEPTHS.rightWall - 18, color: 0x15334f, thickness: 18, roll: 6 },
+  { rect: { x0: 1686, y0: 398, x1: 1990, y1: 520 }, depth: PYRE_DEPTHS.rightWall, color: 0x35638a, thickness: 18, roll: 6 },
+  { rect: { x0: 1708, y0: 500, x1: 1990, y1: 620 }, depth: PYRE_DEPTHS.rightWall - 6, color: 0x2c5678, thickness: 18, roll: 6 },
+  { rect: { x0: 1730, y0: 600, x1: 1990, y1: 720 }, depth: PYRE_DEPTHS.rightWall - 12, color: 0x244968, thickness: 18, roll: 6 },
+  { rect: { x0: 1752, y0: 700, x1: 1990, y1: 812 }, depth: PYRE_DEPTHS.rightWall - 18, color: 0x1d3d59, thickness: 18, roll: 6 },
 ];
 
 /** The near megastructure block cutting into the top-left corner. */
