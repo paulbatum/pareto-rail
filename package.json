@@ -21,6 +21,7 @@
     "snapshot": "node scripts/snapshot.mjs",
     "snapshot:gameplay": "node scripts/gameplay-snapshot.mjs",
     "capture:playthrough": "node scripts/capture-playthrough.mjs",
+    "refcompare": "node scripts/ref-compare/index.mjs",
     "trace:audio": "node scripts/audio-trace.mjs",
     "trace:spawns": "node scripts/spawn-trace.mjs",
     "simulate": "node scripts/simulate.mjs",
