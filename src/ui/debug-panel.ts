@@ -15,6 +15,7 @@ import type { LevelDebugSelector } from '../engine/types';
 const CAMERA_EDGE_LOOK_KEY = 'pareto-rail-debug-camera-edge-look-degrees';
 const CAMERA_EDGE_ROLL_KEY = 'pareto-rail-debug-camera-edge-roll-degrees';
 const CAMERA_EDGE_DEAD_ZONE_KEY = 'pareto-rail-debug-camera-edge-dead-zone';
+const FREECAM_SPEED_KEY = 'pareto-rail-debug-freecam-speed';
 
 const GRID_OPTIONS = [
   { label: 'Immediate', enabled: false, gridThirtyseconds: 4 },
@@ -35,11 +36,17 @@ type TimingPreset = {
   gridRampGapGrowthThirtyseconds: number;
 };
 
+type FreecamControls = {
+  setActive: (active: boolean) => void;
+  setSpeed: (unitsPerSecond: number) => void;
+};
+
 type DebugPanelLevel = {
   id: string;
   bpm: number;
   debugSelector?: LevelDebugSelector;
   urlParams?: URLSearchParams;
+  freecam?: FreecamControls;
   /** Mounts the perf readout at the top of the panel body instead of leaving it floating. */
   mountPerfReadout?: (host: HTMLElement) => void;
 };
@@ -99,6 +106,7 @@ export function installDebugPanel(level: DebugPanelLevel) {
   body.append(levelReadout);
 
   if (level.debugSelector) body.append(createDebugModeSection(level, level.debugSelector));
+  if (level.freecam) body.append(createFreecamSection(level.freecam));
   body.append(createCameraSection());
 
   const timingSection = document.createElement('section');
@@ -191,6 +199,42 @@ export function installDebugPanel(level: DebugPanelLevel) {
   growthInput.addEventListener('input', apply);
   initializeFromStore();
   return { dispose: () => panel.remove() };
+}
+
+function createFreecamSection(freecam: FreecamControls) {
+  const section = document.createElement('section');
+  section.className = 'debug-panel-section';
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Free camera';
+
+  const toggleLabel = document.createElement('label');
+  toggleLabel.className = 'debug-panel-row';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  const toggleText = document.createElement('span');
+  toggleText.textContent = 'Free camera';
+  toggleLabel.append(checkbox, toggleText);
+
+  const { label: speedLabel, text: speedText, input: speedInput } = range('1', '80', '1');
+  speedInput.value = `${readStoredNumber(FREECAM_SPEED_KEY, 12)}`;
+
+  const help = document.createElement('p');
+  help.textContent = 'Detaches the view onto a flying copy of the player camera; the game keeps running. Mouse looks, WASD moves, Space rises, C or Ctrl drops, Shift boosts. Escape gives the cursor back and pauses — click the game to fly again. Prefer C over Ctrl: the browser closes the tab on Ctrl+W.';
+
+  function applySpeed() {
+    const value = Number(speedInput.value);
+    speedText.textContent = `Speed: ${value} units/s`;
+    freecam.setSpeed(value);
+    localStorage.setItem(FREECAM_SPEED_KEY, `${value}`);
+  }
+
+  checkbox.addEventListener('change', () => freecam.setActive(checkbox.checked));
+  speedInput.addEventListener('input', applySpeed);
+  applySpeed();
+
+  section.append(heading, toggleLabel, speedLabel, help);
+  return section;
 }
 
 function createCameraSection() {

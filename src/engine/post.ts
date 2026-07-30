@@ -48,6 +48,7 @@ export function getMotionBlurLevel() {
 
 export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camera, config: LevelPostConfig = {}) {
   const scenePass = pass(scene, camera);
+  let activeCamera = camera;
   const sceneColor = scenePass.getTextureNode();
   const clipToPreviousClipUniform = uniform(new Matrix4());
   const blurredScene = createDepthReprojectionMotionBlur(scenePass.getTextureNode(), scenePass.getTextureNode('depth'), clipToPreviousClipUniform);
@@ -86,9 +87,9 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
   let previousMatrixInitialized = false;
 
   function computeViewProjection(target: Matrix4) {
-    camera.updateMatrixWorld();
-    currentView.copy(camera.matrixWorld).invert();
-    target.multiplyMatrices(camera.projectionMatrix, currentView);
+    activeCamera.updateMatrixWorld();
+    currentView.copy(activeCamera.matrixWorld).invert();
+    target.multiplyMatrices(activeCamera.projectionMatrix, currentView);
   }
 
   function updateMotionBlurMatrix() {
@@ -107,6 +108,14 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
   }
 
   return {
+    /* Renders the frame through a different camera. The scene pass holds the camera
+       it was built with, so redirecting it means writing that field. Dropping the
+       previous view matrix keeps the swap from smearing as one frame of motion. */
+    setCamera(next: Camera) {
+      activeCamera = next;
+      scenePass.camera = next;
+      previousMatrixInitialized = false;
+    },
     render(options: { advanceMotionBlur?: boolean } = {}) {
       if (options.advanceMotionBlur !== false) updateMotionBlurMatrix();
       post.render();

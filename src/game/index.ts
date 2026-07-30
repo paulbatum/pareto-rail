@@ -193,6 +193,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     if (signal?.aborted) return abort();
 
     let paused = false;
+    let freecam: import('./freecam').Freecam | null = null;
     let last = performance.now();
     let setPaused = (_paused: boolean) => {};
     const fullscreenAvailable = canUseFullscreen();
@@ -247,7 +248,17 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     stack.add(() => { offRunStart(); document.body.classList.remove('run-ended'); });
     if (import.meta.env.DEV) {
       try {
-        const installedDebugPanel = await import('../ui/debug-panel').then(({ installDebugPanel }) => installDebugPanel({ id: level.id, bpm: level.bpm, debugSelector: level.debugSelector, urlParams, mountPerfReadout: perfOverlay ? (host) => perfOverlay.mount(host) : undefined })) as { dispose?: () => void } | undefined;
+        freecam = (await import('./freecam')).createFreecam({
+          playerCamera: camera,
+          canvas: renderer.domElement,
+          onCameraChange: (next) => post.setCamera(next),
+        });
+        stack.add(() => freecam?.dispose());
+      } catch (error) {
+        console.warn('Freecam failed to install', error);
+      }
+      try {
+        const installedDebugPanel = await import('../ui/debug-panel').then(({ installDebugPanel }) => installDebugPanel({ id: level.id, bpm: level.bpm, debugSelector: level.debugSelector, urlParams, freecam: freecam ?? undefined, mountPerfReadout: perfOverlay ? (host) => perfOverlay.mount(host) : undefined })) as { dispose?: () => void } | undefined;
         if (installedDebugPanel) stack.add(() => installedDebugPanel.dispose?.());
       } catch (error) {
         console.warn('Debug panel failed to install', error);
@@ -259,6 +270,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       const height = viewHeight();
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      freecam?.syncAspect(camera.aspect);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(width, height);
     };
@@ -271,7 +283,9 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       if (disposed) return;
       const now = performance.now(); const dtMs = now - last; const dt = Math.min(0.05, dtMs / 1000); last = now;
       if (!paused) runtime.update(dt, now / 1000);
-      post.render({ advanceMotionBlur: !paused }); perfOverlay?.recordFrame(dtMs, now);
+      /* Outside the pause gate so the debug camera still flies over a stopped game. */
+      freecam?.update(dt);
+      post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()) }); perfOverlay?.recordFrame(dtMs, now);
     });
     stack.add(() => renderer.setAnimationLoop(null));
 
