@@ -226,7 +226,18 @@ export function addTerrain(sink: EnvironmentSink) {
 
   for (const step of PYRE_APRON.steps) {
     addPlate(sink, { ...step, drop: 12 });
-    addPlate(sink, { x0: step.x0, x1: step.x1, z0: step.z0, z1: step.z0 - 1.4, top: step.top + 0.15, drop: 4, color: PYRE_APRON.riser });
+    // Stand the riser proud of its step in both axes. Sharing the step's front
+    // plane put two camera-facing faces at the same z; sitting only a fraction
+    // above its top left a grazing-angle sliver that fought from the fly-around.
+    addPlate(sink, {
+      x0: step.x0 + 1.5,
+      x1: step.x1 - 1.5,
+      z0: step.z0 + 1.6,
+      z1: step.z0 - 1.4,
+      top: step.top + 1.2,
+      drop: 4,
+      color: PYRE_APRON.riser,
+    });
   }
 
   // Shelves stepping down into the near rim, so the basin edge reads as
