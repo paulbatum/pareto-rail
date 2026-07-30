@@ -21,7 +21,8 @@ Shared code lives in `src/engine/`:
 - `visual-kit.ts` contains lifecycle helpers for visual bookkeeping: pending mesh-to-event records, transient effect pools, additive material setup, and attached adornment slots. It owns no look or timing decisions; levels still supply every mesh, color, number, and update rule;
 - `environment-kit.ts` contains lifecycle helpers for rail-relative scenery fields and atmosphere ramps. It owns placement/recycling bookkeeping and interpolation; levels still supply every mesh, color, count, distribution, and keyframe;
 - `camera-feel.ts` contains opt-in FOV kick/offset and trauma-shake primitives with no default bindings; levels decide every trigger and magnitude;
-- `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting.
+- `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting;
+- `render-config.ts` applies a level's optional renderer-level state: tone mapping, exposure, and shadow maps.
 
 ## Module layout: spine and leaves
 
@@ -146,6 +147,24 @@ Every level must render legible procedural glyphs for at least the characters in
 Every level must also express rejected releases in its own visual and audio language. The runner emits `reject` when a release fails, including incomplete START/REPLAY words and any level-specific `validateRelease` rule. Visuals receive `setEnemyDenied` for released targets and any required targets that were missing. Levels that need additional context, such as a boss shield plate blocking a shot, may emit and handle their own richer event as well.
 
 Any axis passed to `setFromAxisAngle` must be unit length; a non-unit axis compounds into exploding instance matrices. Hand-authored axes and the `randomUnit`/`randomDirection` helpers are safe by construction — renormalize any axis you compute or interpolate.
+
+## Render configuration
+
+`LevelDefinition.render` is optional and owns the renderer-level state the level needs before its first frame:
+
+```ts
+render?: {
+  toneMapping?: 'none' | 'aces' | 'agx' | 'neutral';
+  exposure?: number;
+  shadows?: { type?: 'basic' | 'pcf' | 'pcf-soft' | 'vsm' };
+};
+```
+
+Omitting it gives the unlit emissive frame most levels are calibrated against: no tone mapping, exposure 1, no shadow maps. Declare it when the level wants a filmic pipeline or real lighting.
+
+Tone mapping runs after the whole post chain, so the vignette and any `composeOutput` hook operate on linear HDR color and the curve sees their result. Bloom on HDR values behaves differently once a curve compresses the highlights: retune bloom strength and threshold rather than carrying over numbers from an untone-mapped level.
+
+`shadows` only switches the renderer's shadow maps on. The level still adds lights, sets `castShadow` on them, and sets `castShadow`/`receiveShadow` per mesh — and pays for the extra shadow passes, so check `check:perf` after enabling them.
 
 ## Post-processing
 

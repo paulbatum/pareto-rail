@@ -15,6 +15,7 @@ import {
 import { WebGPURenderer, type WebGPURendererParameters } from 'three/webgpu';
 import { createEventBus } from '../events';
 import { createPost } from '../engine/post';
+import { applyRenderConfig } from '../engine/render-config';
 import { collectPerfCounters, type PerfCounters } from '../engine/perf-counters';
 import type { Hud } from '../ui/hud';
 import { getLevelById } from '../levels';
@@ -241,6 +242,7 @@ async function bootstrap() {
   renderer.setPixelRatio(1);
   renderer.setSize(width, height, false);
   renderer.setClearColor(selectedLevel.post?.clearColor ?? 0x02040a, 1);
+  applyRenderConfig(renderer, selectedLevel.render);
   await renderer.init();
   activeBackend = readActiveBackend(renderer);
   stopRendererAnimation(renderer);

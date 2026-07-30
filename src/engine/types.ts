@@ -62,6 +62,16 @@ export type LevelPostConfig = {
   composeOutput?: (input: LevelPostComposeInput) => LevelPostColorNode;
 };
 
+export type LevelToneMapping = 'none' | 'aces' | 'agx' | 'neutral';
+export type LevelShadowMapType = 'basic' | 'pcf' | 'pcf-soft' | 'vsm';
+
+export type LevelRenderConfig = {
+  toneMapping?: LevelToneMapping;
+  exposure?: number;
+  /** Omit to leave shadow maps off; lights and castShadow/receiveShadow stay a level scene decision. */
+  shadows?: { type?: LevelShadowMapType };
+};
+
 export type LevelDebugSelector = {
   queryParam: string;
   label: string;
@@ -75,6 +85,7 @@ export type LevelDefinition = {
   bpm: number;
   aliases?: string[];
   debugSelector?: LevelDebugSelector;
+  render?: LevelRenderConfig;
   post?: LevelPostConfig;
   markers?: Record<string, number>;
   sections?: Array<{ name: string; time: number }>;

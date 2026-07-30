@@ -4,6 +4,7 @@ import type { RunSummary } from '../engine/scoring';
 import { GAME_FOV_DEGREES } from '../engine/lock-on-runner';
 import { createEventBus } from '../events';
 import { createPost, getBloomLevel, getMotionBlurLevel, setBloomLevel, setMotionBlurLevel } from '../engine/post';
+import { applyRenderConfig } from '../engine/render-config';
 import { getStartScreenTip } from '../ui/client-tip';
 import { installDevErrorOverlay } from '../ui/dev-error-overlay';
 import { createHud, showUnsupported } from '../ui/hud';
@@ -146,6 +147,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(viewWidth(), viewHeight());
     renderer.setClearColor(level.post?.clearColor ?? 0x02040a, 1);
+    applyRenderConfig(renderer, level.render);
     try {
       await renderer.init();
     } catch (error) {
