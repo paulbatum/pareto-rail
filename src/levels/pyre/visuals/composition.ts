@@ -108,7 +108,34 @@ export interface Slab {
   roll?: number;
   /** Rotation about the world up axis, degrees. */
   yaw?: number;
+  /** Overrides the derived outline colour where the frame wants a deliberate rim. */
+  edge?: number;
 }
+
+/**
+ * Outline styling. The masses are unlit flats, so an edge is the only thing
+ * that separates two faces of one block; these lines are part of the level's
+ * look rather than a review aid. The default is a contrast step from the face —
+ * darker on light masses, lighter on dark — with deliberate overrides where the
+ * composition wants a brighter rim.
+ */
+export const PYRE_EDGE = {
+  threshold: 16,
+  offset: 0.06,
+  style(faceColor: number) {
+    const r = (faceColor >> 16) & 0xff;
+    const g = (faceColor >> 8) & 0xff;
+    const b = faceColor & 0xff;
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    const step = (channel: number) =>
+      Math.round(luminance > 0.46 ? channel * 0.66 : channel + (255 - channel) * 0.34);
+    return {
+      color: (step(r) << 16) | (step(g) << 8) | step(b),
+      threshold: PYRE_EDGE.threshold,
+      offset: PYRE_EDGE.offset,
+    };
+  },
+};
 
 export interface Beam {
   rect: FrameRect;

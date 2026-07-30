@@ -11,8 +11,9 @@ import {
   Quaternion,
   Vector3,
 } from 'three';
-import type { BufferGeometry, Material } from 'three';
+import type { BufferGeometry, InstancedMesh as InstancedMeshType, Material } from 'three';
 import { mulberry32 } from '../../../engine/rng';
+import { createEdges, createInstancedEdges, type EdgeStyle } from './edge-overlay';
 import { FRAME_HEIGHT, FRAME_WIDTH, frameAngle, frameLength, frameMid, framePoint, referenceCamera, solveFrameBox } from '../frame';
 import {
   PYRE_APRON,
@@ -32,15 +33,37 @@ export interface EnvironmentBuild {
   dispose(): void;
 }
 
-/** Collects every geometry and material the environment owns so the level can release them. */
+/**
+ * Collects every geometry and material the environment owns so the level can
+ * release them, and attaches the edge shells when the spine asks for them.
+ * `edgeStyleFor` being null is the single switch that turns the overlay off.
+ */
 export class EnvironmentSink {
   readonly group = new Group();
   private readonly geometries = new Set<BufferGeometry>();
   private readonly materials = new Set<Material>();
 
+  constructor(private readonly edgeStyleFor: ((faceColor: number) => EdgeStyle) | null = null) {}
+
   add(object: Object3D) {
     this.group.add(object);
     return object;
+  }
+
+  /** Outline a mesh in a contrast step from its own face colour. */
+  outline(mesh: Mesh, faceColor: number) {
+    if (!this.edgeStyleFor) return;
+    const lines = createEdges(mesh, this.edgeStyleFor(faceColor));
+    mesh.add(lines);
+    this.track(lines.geometry, lines.material as Material);
+  }
+
+  /** Outline every instance of an instanced mesh as one merged shell. */
+  outlineInstances(mesh: InstancedMeshType, faceColor: number) {
+    if (!this.edgeStyleFor) return;
+    const lines = createInstancedEdges(mesh, this.edgeStyleFor(faceColor));
+    this.add(lines);
+    this.track(lines.geometry, lines.material as Material);
   }
 
   track(geometry: BufferGeometry, material: Material) {
@@ -67,8 +90,13 @@ function flat(color: number) {
   return new MeshBasicMaterial({ color });
 }
 
+/** Atmosphere layers opt out of outlines: they are haze, not masses. */
+export interface SlabOptions {
+  outline?: boolean;
+}
+
 /** A box whose outline fills its authored frame rectangle. */
-export function addSlab(sink: EnvironmentSink, slab: Slab) {
+export function addSlab(sink: EnvironmentSink, slab: Slab, options: SlabOptions = {}) {
   const solved = solveFrameBox(slab.rect, slab.depth, slab.thickness, slab.roll ?? 0, slab.yaw ?? 0);
   const geometry = new BoxGeometry(solved.width, solved.height, slab.thickness);
   const material = flat(slab.color);
@@ -76,11 +104,12 @@ export function addSlab(sink: EnvironmentSink, slab: Slab) {
   mesh.position.copy(solved.position);
   mesh.rotation.set(0, DEG(slab.yaw ?? 0), DEG(slab.roll ?? 0));
   sink.track(geometry, material);
+  if (options.outline !== false) sink.outline(mesh, slab.edge ?? slab.color);
   return sink.add(mesh);
 }
 
-export function addSlabs(sink: EnvironmentSink, slabs: readonly Slab[]) {
-  for (const slab of slabs) addSlab(sink, slab);
+export function addSlabs(sink: EnvironmentSink, slabs: readonly Slab[], options: SlabOptions = {}) {
+  for (const slab of slabs) addSlab(sink, slab, options);
 }
 
 /** A long box laid along a diagonal of the frame. */
@@ -92,6 +121,7 @@ export function addBeam(sink: EnvironmentSink, beam: Beam) {
   mesh.position.z -= beam.thickness / 2;
   mesh.rotation.z = frameAngle(beam.rect, beam.depth);
   sink.track(geometry, material);
+  sink.outline(mesh, beam.color);
   return sink.add(mesh);
 }
 
@@ -156,6 +186,7 @@ export function addPyramid(sink: EnvironmentSink, pyramid: Pyramid) {
   }
 
   sink.track(mesh.geometry, mesh.material as Material);
+  sink.outline(mesh, pyramid.color);
   return sink.add(pivot);
 }
 
@@ -169,12 +200,14 @@ interface Plate {
   color: number;
 }
 
-function addPlate(sink: EnvironmentSink, plate: Plate) {
+/** `outline: false` for the broad terrain fill, whose box edges are not features. */
+function addPlate(sink: EnvironmentSink, plate: Plate, outline = true) {
   const geometry = new BoxGeometry(plate.x1 - plate.x0, plate.drop, Math.abs(plate.z1 - plate.z0));
   const material = flat(plate.color);
   const mesh = new Mesh(geometry, material);
   mesh.position.set((plate.x0 + plate.x1) / 2, plate.top - plate.drop / 2, (plate.z0 + plate.z1) / 2);
   sink.track(geometry, material);
+  if (outline) sink.outline(mesh, plate.color);
   return sink.add(mesh);
 }
 
@@ -189,7 +222,7 @@ const RIM_STEPS = 7;
 
 /** The snow plain, the hole the block field sits in, and the shelves at its rim. */
 export function addTerrain(sink: EnvironmentSink) {
-  addPlate(sink, { x0: -PLAIN_EDGE, x1: PLAIN_EDGE, z0: 90, z1: PYRE_BASIN.nearZ, top: 0, drop: 40, color: PYRE_COLORS.snow });
+  addPlate(sink, { x0: -PLAIN_EDGE, x1: PLAIN_EDGE, z0: 90, z1: PYRE_BASIN.nearZ, top: 0, drop: 40, color: PYRE_COLORS.snow }, false);
   addPlate(sink, {
     x0: -PLAIN_EDGE,
     x1: PLAIN_EDGE,
@@ -198,14 +231,14 @@ export function addTerrain(sink: EnvironmentSink) {
     top: 0,
     drop: 40,
     color: PYRE_COLORS.snow,
-  });
+  }, false);
 
   for (let i = 0; i < RIM_STEPS; i += 1) {
     const z0 = MathUtils.lerp(PYRE_BASIN.nearZ, PYRE_BASIN.farZ, i / RIM_STEPS);
     const z1 = MathUtils.lerp(PYRE_BASIN.nearZ, PYRE_BASIN.farZ, (i + 1) / RIM_STEPS);
     const half = basinHalfWidth(z1);
-    addPlate(sink, { x0: -PLAIN_EDGE, x1: PYRE_BASIN.centreX - half, z0, z1, top: 0, drop: 40, color: PYRE_COLORS.snow });
-    addPlate(sink, { x0: PYRE_BASIN.centreX + half, x1: PLAIN_EDGE, z0, z1, top: 0, drop: 40, color: PYRE_COLORS.snow });
+    addPlate(sink, { x0: -PLAIN_EDGE, x1: PYRE_BASIN.centreX - half, z0, z1, top: 0, drop: 40, color: PYRE_COLORS.snow }, false);
+    addPlate(sink, { x0: PYRE_BASIN.centreX + half, x1: PLAIN_EDGE, z0, z1, top: 0, drop: 40, color: PYRE_COLORS.snow }, false);
   }
 
   addPlate(sink, {
@@ -216,7 +249,7 @@ export function addTerrain(sink: EnvironmentSink) {
     top: PYRE_BASIN.floorY,
     drop: 12,
     color: PYRE_COLORS.basinFloor,
-  });
+  }, false);
 
   // Dark slab platforms laid over the near plain: the reference foreground is
   // terraced concrete, not clean snow, and they carry the frame's bottom edge.
@@ -388,6 +421,7 @@ export function addBlockField(sink: EnvironmentSink, seed: number) {
     });
     mesh.instanceMatrix.needsUpdate = true;
     sink.track(geometry, material);
+    sink.outlineInstances(mesh, tier.color);
     sink.add(mesh);
   }
 }

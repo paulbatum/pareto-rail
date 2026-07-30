@@ -7,6 +7,7 @@ import {
   PYRE_BEAMS,
   PYRE_CENTRE_MONOLITH,
   PYRE_COLORS,
+  PYRE_EDGE,
   PYRE_FRAME_SLAB,
   PYRE_GATEWAY,
   PYRE_LEFT_MONOLITH,
@@ -32,14 +33,21 @@ import {
 const FIELD_SEED = 20260730;
 
 /**
+ * The single switch for the outline overlay. Pyre is unlit, so the lines are
+ * what make two faces of one mass read apart; a later lighting pass will do that
+ * job instead and should set this to null.
+ */
+const PYRE_EDGE_STYLE: ((faceColor: number) => ReturnType<typeof PYRE_EDGE.style>) | null = PYRE_EDGE.style;
+
+/**
  * Environment build order runs back to front, which is also the order the
  * picture reads: sky panels, overhead planes, distant masses, the block field,
  * then the ground the camera stands on.
  */
 export function createEnvironment(scene: Scene): EnvironmentBuild {
-  const sink = new EnvironmentSink();
-  addSlabs(sink, PYRE_BACKDROP);
-  addSlabs(sink, PYRE_MEGASTRUCTURE);
+  const sink = new EnvironmentSink(PYRE_EDGE_STYLE);
+  addSlabs(sink, PYRE_BACKDROP, { outline: false });
+  addSlabs(sink, PYRE_MEGASTRUCTURE, { outline: false });
   for (const pyramid of PYRE_PYRAMIDS) addPyramid(sink, pyramid);
   addSlabs(sink, PYRE_RIGHT_WALL);
   addBeams(sink, PYRE_BEAMS);
