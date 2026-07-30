@@ -22,7 +22,7 @@ Shared code lives in `src/engine/`:
 - `environment-kit.ts` contains lifecycle helpers for rail-relative scenery fields and atmosphere ramps. It owns placement/recycling bookkeeping and interpolation; levels still supply every mesh, color, count, distribution, and keyframe;
 - `camera-feel.ts` contains opt-in FOV kick/offset and trauma-shake primitives with no default bindings; levels decide every trigger and magnitude;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting;
-- `render-config.ts` applies a level's optional renderer-level state: tone mapping, exposure, and shadow maps;
+- `render-config.ts` applies a level's optional renderer-level state — tone mapping, exposure, shadow maps — and resolves the camera depth range every call site builds its camera from;
 - `edge-overlay.ts` builds inflated edge-line shells for meshes and instanced meshes as an authored visual style; levels choose the meshes, colors, and whether to use it at all.
 
 ## Module layout: spine and leaves
