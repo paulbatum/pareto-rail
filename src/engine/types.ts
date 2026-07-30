@@ -70,6 +70,8 @@ export type LevelRenderConfig = {
   exposure?: number;
   /** Omit to leave shadow maps off; lights and castShadow/receiveShadow stay a level scene decision. */
   shadows?: { type?: LevelShadowMapType };
+  /** Camera far plane in world units. Omit for the shared 500; raise it for a level whose vista needs real distance. */
+  farPlane?: number;
 };
 
 export type LevelDebugSelector = {

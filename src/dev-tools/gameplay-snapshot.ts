@@ -15,7 +15,7 @@ import {
 import { WebGPURenderer, type WebGPURendererParameters } from 'three/webgpu';
 import { createEventBus } from '../events';
 import { createPost } from '../engine/post';
-import { applyRenderConfig } from '../engine/render-config';
+import { applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
 import { collectPerfCounters, type PerfCounters } from '../engine/perf-counters';
 import type { Hud } from '../ui/hud';
 import { getLevelById } from '../levels';
@@ -230,7 +230,7 @@ async function bootstrap() {
   document.title = `Pareto Rail gameplay snapshot — ${selectedLevel.title}`;
 
   scene = new Scene();
-  camera = new PerspectiveCamera(62, width / height, 0.1, 500);
+  camera = new PerspectiveCamera(62, width / height, CAMERA_NEAR, resolveCameraFar(selectedLevel.render));
 
   const rendererParams = {
     antialias: true,

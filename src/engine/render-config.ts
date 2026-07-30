@@ -27,6 +27,17 @@ const SHADOW_MAP_TYPES: Record<LevelShadowMapType, ShadowMapType> = {
   vsm: VSMShadowMap,
 };
 
+/* Shared camera depth range. The near plane is fixed: with a non-reversed 24-bit
+   depth buffer it, not the far plane, sets precision at distance. */
+export const CAMERA_NEAR = 0.1;
+const CAMERA_FAR = 500;
+
+/** Far plane for a level's runtime camera. Every camera call site resolves through this,
+    so a level that declares no farPlane gets the shared default after an opted-in one. */
+export function resolveCameraFar(config: LevelRenderConfig = {}) {
+  return config.farPlane ?? CAMERA_FAR;
+}
+
 /* Every field is written on every call so a level that declares nothing gets the
    unlit emissive defaults back after an opted-in level released the renderer.
    Call before renderer.init(): shadow state has to be settled before the first frame.

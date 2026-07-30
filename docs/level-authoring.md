@@ -158,10 +158,15 @@ render?: {
   toneMapping?: 'none' | 'aces' | 'agx' | 'neutral';
   exposure?: number;
   shadows?: { type?: 'basic' | 'pcf' | 'pcf-soft' | 'vsm' };
+  farPlane?: number;
 };
 ```
 
-Omitting it gives the unlit emissive frame most levels are calibrated against: no tone mapping, exposure 1, no shadow maps. Declare it when the level wants a filmic pipeline or real lighting.
+Omitting it gives the unlit emissive frame most levels are calibrated against: no tone mapping, exposure 1, no shadow maps, camera far plane 500. Declare it when the level wants a filmic pipeline, real lighting, or real distance.
+
+`farPlane` sets the camera far plane in world units for both the game and the gameplay-snapshot harness. Raise it for a monumental vista rather than compressing one into the default 500 — but scene fog still has to reach that far, and every extra unit of draw distance is geometry the frustum keeps.
+
+Depth precision bounds how far you should go. three's WebGPU backend does **not** use reversed-z by default (`reversedDepthBuffer` defaults to false and nothing here enables it), so the depth buffer is `depth24plus-stencil8`: 24-bit, hyperbolic, precision set by the near plane far more than the far plane. With the shared near plane of 0.1 the depth quantum is about 0.15 units at 500 out, 1.3 at 1500, 5 at 3000, and 15 at 5000. Raising `farPlane` therefore costs almost nothing at distances the level already drew — it only lets you place geometry where precision is coarse. Keep it at or below about 3000, and out past ~1500 use single-layer shells and silhouettes, not stacked or near-coplanar surfaces.
 
 Tone mapping runs after the whole post chain, so the vignette and any `composeOutput` hook operate on linear HDR color and the curve sees their result. Bloom on HDR values behaves differently once a curve compresses the highlights: retune bloom strength and threshold rather than carrying over numbers from an untone-mapped level.
 
