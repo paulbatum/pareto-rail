@@ -1,4 +1,5 @@
 import { PerspectiveCamera, Vector3, Matrix4, Quaternion, Euler, MathUtils } from 'three';
+import { readMasses } from './read-masses.mjs';
 const W=1920,H=1080,FOV=62,PITCH=16,EYE=5;
 const TAN_V=Math.tan(MathUtils.degToRad(FOV)/2), TAN_H=TAN_V*(W/H);
 const p=MathUtils.degToRad(PITCH), SIN=Math.sin(p), COS=Math.cos(p);
@@ -45,12 +46,11 @@ console.log('backdrop want -260,-240-980,380');
 solve({x0:-260,y0:-240,x1:980,y1:380},222,2,0,0,true);
 
 // --- real slab audit ---
-import fs from 'node:fs';
-const slabs = JSON.parse(fs.readFileSync('src/levels/pyre/tools/slabs.json','utf8'));
+const slabs = readMasses();
 console.log('\n=== audit ===');
 for (const s of slabs) {
-  const [x0,y0,x1,y1]=s.rect;
-  const r={x0,y0,x1,y1};
+  const r=s.rect;
+  const {x0,y0,x1,y1}=r;
   const res=solve(r,s.depth,s.thickness,s.roll,s.yaw);
   // measure final
   const q=new Quaternion().setFromEuler(new Euler(0,MathUtils.degToRad(s.yaw),MathUtils.degToRad(s.roll)));
