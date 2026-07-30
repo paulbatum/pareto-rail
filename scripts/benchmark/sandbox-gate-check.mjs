@@ -47,7 +47,7 @@ async function main() {
     // hang on the WSLg X socket; and steer Puppeteer to the headless shell (full Chrome cannot start
     // under the seccomp AF_UNIX block). The floor and scope checks take a level id.
     const suffix = gate === 'check:floor' || gate === 'check:scope' ? ` -- --level ${quote(level)}` : '';
-    const command = `export TMPDIR=/tmp; unset DISPLAY; export PUPPETEER_EXECUTABLE_PATH=${quote(headlessShell)}; npm run ${gate}${suffix}`;
+    const command = `export TMPDIR=/tmp; unset DISPLAY; export PUPPETEER_EXECUTABLE_PATH=${quote(headlessShell)}; export PARETO_RENDER_MODE=software; npm run ${gate}${suffix}`;
     const wrapped = await SandboxManager.wrapWithSandbox(command);
     process.stdout.write(`\n=== ${gate} (sandboxed) ===\n`);
     const outcome = await run('bash', ['-c', wrapped], worktree);

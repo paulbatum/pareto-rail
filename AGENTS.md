@@ -31,7 +31,7 @@ Stack: Vite + strict TypeScript + three.js **WebGPU only** (`WebGPURenderer` fro
 
 `npm run typecheck` and `npm run build` must pass for any change. Stage scratch and throwaway outputs in the repository's gitignored `tmp/` directory rather than `/tmp` — sandboxed environments used for this repo may discard `/tmp` between commands. Level and benchmark tasks have additional readiness gates (scope, floor) — see `docs/level-authoring.md` and `docs/level-brief.md`.
 
-Headless Chrome in WSL2 cannot render WebGPU (broken device limits), so the game itself won't run headless. The snapshot tools fall back to SwiftShader/WebGL for best-effort visual inspection (see `docs/visual-tools.md`); use them for self-review. Final visual and audio quality still needs a human WebGPU playtest.
+Headless Chrome in WSL2 cannot render WebGPU, so the snapshot tools drive a GPU browser on the Windows side and render the pipeline the game ships; see `docs/visual-tools.md` for the setup they need and the reduced-fidelity fallback. Use them for self-review. Final visual and audio quality still needs a human playtest — a still frame does not carry motion, feel, or sound.
 
 ## Keeping docs current
 

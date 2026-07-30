@@ -10,10 +10,13 @@ import {
 import { WebGPURenderer, type WebGPURendererParameters } from 'three/webgpu';
 import { createPost } from '../engine/post';
 
+type Backend = 'webgpu' | 'webgl';
+
 type SnapshotApi = {
   ready: Promise<void>;
   capture(yawDeg: number, pitchDeg: number): Promise<string>;
   luminance(): number;
+  backend(): Backend;
 };
 
 type SnapshotRenderer = WebGPURenderer & {
@@ -22,6 +25,7 @@ type SnapshotRenderer = WebGPURenderer & {
 };
 
 type SnapshotRendererParameters = WebGPURendererParameters & {
+  forceWebGL: boolean;
   preserveDrawingBuffer: true;
 };
 
@@ -43,6 +47,7 @@ const SCRATCH_CONTEXT = SCRATCH_CANVAS.getContext('2d', { willReadFrequently: tr
 const params = new URLSearchParams(window.location.search);
 const size = readPositiveNumber(params.get('size')) ?? DEFAULT_SIZE;
 const bloomEnabled = params.get('bloom') !== '0';
+const requestedBackend = readBackend(params.get('backend'));
 
 const scene = new Scene();
 scene.background = new Color(BACKGROUND);
@@ -54,6 +59,7 @@ const orbit = {
 
 let post: PostRenderer | null = null;
 let renderer: SnapshotRenderer | null = null;
+let activeBackend: Backend = requestedBackend;
 let lastLuminance = 0;
 
 window.__snapshot = {
@@ -68,6 +74,9 @@ window.__snapshot = {
   luminance() {
     return lastLuminance;
   },
+  backend() {
+    return activeBackend;
+  },
 };
 
 async function bootstrap() {
@@ -79,7 +88,7 @@ async function bootstrap() {
   const rendererParams = {
     antialias: true,
     alpha: false,
-    forceWebGL: true,
+    forceWebGL: requestedBackend === 'webgl',
     preserveDrawingBuffer: true,
   } as SnapshotRendererParameters;
   renderer = new WebGPURenderer(rendererParams) as SnapshotRenderer;
@@ -87,6 +96,7 @@ async function bootstrap() {
   renderer.setSize(size, size, false);
   renderer.setClearColor(BACKGROUND, 1);
   await renderer.init();
+  activeBackend = readActiveBackend(renderer);
   document.body.append(renderer.domElement);
 
   const object = await createSnapshotObject(modulePath, exportName, readArgs(params.get('args')));
@@ -124,6 +134,18 @@ function readArgs(value: string | null): unknown[] {
   const parsed = JSON.parse(value) as unknown;
   if (!Array.isArray(parsed)) throw new Error('args must be a JSON array');
   return parsed;
+}
+
+function readBackend(value: string | null): Backend {
+  if (value === 'webgl') return 'webgl';
+  return 'webgpu';
+}
+
+/* three.js falls back to its WebGL2 backend without throwing when no WebGPU device is
+   available, so what was asked for is not necessarily what is rendering. */
+function readActiveBackend(value: SnapshotRenderer): Backend {
+  const backend = (value as unknown as { backend?: { isWebGPUBackend?: boolean } }).backend;
+  return backend?.isWebGPUBackend === true ? 'webgpu' : 'webgl';
 }
 
 function readPositiveNumber(value: string | null): number | null {

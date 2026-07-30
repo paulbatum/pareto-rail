@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
-import puppeteer from 'puppeteer';
+import { assertBackend, backendForMode, defaultRenderMode, gotoOrExplain, openRenderBrowser, readRenderMode } from './capture/render-browser.mjs';
 
 const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 720;
@@ -37,29 +36,23 @@ async function main() {
     },
   });
 
-  let browser;
+  let target;
   try {
     await server.listen();
     const address = server.httpServer?.address();
     if (!address || typeof address === 'string') throw new Error('Could not determine Vite dev server port');
     const baseUrl = `http://127.0.0.1:${address.port}`;
 
-    browser = await puppeteer.launch({
-      headless: true,
-      executablePath: findChromeExecutable(),
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--enable-webgl',
-        '--ignore-gpu-blocklist',
-        '--disable-gpu-sandbox',
-        '--enable-unsafe-swiftshader',
-        '--use-gl=angle',
-        '--use-angle=swiftshader',
-      ],
+    target = await openRenderBrowser({
+      mode: options.mode,
+      width: options.width,
+      height: options.height,
+      port: options.debugPort,
     });
+    const browser = target.browser;
 
     const metadata = await readLevelMetadata(browser, baseUrl, options);
+    assertBackend(options.backend, metadata.backend);
     options.metadata = metadata;
     resolveMusicalTimes(options);
 
@@ -70,7 +63,7 @@ async function main() {
 
     for (const time of options.times) await captureStill(browser, baseUrl, outDir, options, time);
   } finally {
-    if (browser) await browser.close();
+    if (target) await target.close();
     await server.close();
   }
 }
@@ -106,7 +99,7 @@ async function captureSheet(browser, baseUrl, outDir, options) {
     `${safeName(options.level)}-${sheetType}thumbnails-${captures.length}-${formatTime(firstTime)}-to-${formatTime(lastTime)}-${fidelityLabel}${projectileSuffix(options)}${mortalitySuffix(options)}${startScreenSuffix(options)}.png`,
   );
   await fs.writeFile(outputPath, addSnapshotSeedTextChunk(decodePngDataUrl(dataUrl), captures[0].seed));
-  console.log(`${path.relative(process.cwd(), outputPath)} thumbnails=${captures.length} fidelity=${fidelityLabel}`);
+  console.log(`${path.relative(process.cwd(), outputPath)} thumbnails=${captures.length} fidelity=${fidelityLabel} backend=${captures[0].backend}`);
 }
 
 async function makeEvenTimes(browser, baseUrl, options) {
@@ -124,7 +117,7 @@ async function readLevelMetadata(browser, baseUrl, options) {
   try {
     await page.setViewport({ width: options.width, height: options.height, deviceScaleFactor: 1 });
     const url = newGameplaySnapshotUrl(baseUrl, { ...options, startScreen: false }, 0, 'postless');
-    await page.goto(url.href, { waitUntil: 'networkidle0' });
+    await gotoOrExplain(page, url.href, { mode: options.mode, baseUrl });
     await page.evaluate(() => window.__gameplaySnapshot.ready);
     const metadata = await page.evaluate(() => window.__gameplaySnapshot.metadata());
     if (!metadata || !Number.isFinite(metadata.duration) || metadata.duration <= 0) {
@@ -161,10 +154,11 @@ async function captureOnce(browser, baseUrl, options, time, fidelity) {
   try {
     await page.setViewport({ width: options.width, height: options.height, deviceScaleFactor: 1 });
     const url = newGameplaySnapshotUrl(baseUrl, options, time, fidelity);
-    await page.goto(url.href, { waitUntil: 'networkidle0' });
+    await gotoOrExplain(page, url.href, { mode: options.mode, baseUrl });
     await page.evaluate(() => window.__gameplaySnapshot.ready);
     const result = await page.evaluate(() => window.__gameplaySnapshot.capture());
     if (!result || typeof result.dataUrl !== 'string') throw new Error('Capture did not return a data URL');
+    assertBackend(options.backend, result.backend);
     return result;
   } finally {
     await page.close();
@@ -179,6 +173,7 @@ function newGameplaySnapshotUrl(baseUrl, options, time, fidelity) {
   url.searchParams.set('width', String(options.width));
   url.searchParams.set('height', String(options.height));
   url.searchParams.set('fidelity', fidelity);
+  url.searchParams.set('backend', options.backend);
   if (options.immortal) url.searchParams.set('immortal', '1');
   if (options.startScreen) url.searchParams.set('startScreen', '1');
   if (options.projectiles) url.searchParams.set('projectiles', '1');
@@ -274,6 +269,8 @@ function parseArgs(argv) {
     sections: false,
     showLabels: true,
     noBorders: false,
+    mode: defaultRenderMode(),
+    debugPort: undefined,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -320,6 +317,16 @@ function parseArgs(argv) {
 
     if (key === 'no-borders') {
       parsed.noBorders = true;
+      continue;
+    }
+
+    if (key === 'software') {
+      parsed.mode = 'software';
+      continue;
+    }
+
+    if (key === 'gpu') {
+      parsed.mode = 'gpu';
       continue;
     }
 
@@ -390,12 +397,21 @@ function parseArgs(argv) {
       case 'columns':
         parsed.columns = readPositiveInteger(value, '--columns');
         break;
+      case 'debug-port':
+      case 'debugPort':
+        parsed.debugPort = readPositiveInteger(value, `--${key}`);
+        break;
+      case 'render-mode':
+      case 'renderMode':
+        parsed.mode = readRenderMode(value);
+        break;
       default:
         throw new Error(`Unknown option: --${key}`);
     }
   }
 
   if (!parsed.level) throw new Error('Missing required option: --level <id>');
+  parsed.backend = backendForMode(parsed.mode);
   if (parsed.startScreen && parsed.times.length === 0 && parsed.atsRaw.length === 0) parsed.times.push(0.8);
   const hasTimeInput = parsed.times.length > 0 || parsed.atsRaw.length > 0 || parsed.sections || parsed.thumbnailCount !== undefined;
   if (parsed.sheet) {
@@ -449,7 +465,7 @@ function readBoolean(value, flag) {
 function logCapture(outputPath, result, time = undefined) {
   const warning = result.luminance < LOW_LUMINANCE ? ' LOW_LUMINANCE' : '';
   const target = outputPath ? path.relative(process.cwd(), outputPath) : `capture ${time.toFixed(2)}s`;
-  console.log(`${target} fidelity=${result.fidelity} state=${result.state} luminance=${result.luminance.toFixed(4)}${warning}`);
+  console.log(`${target} fidelity=${result.fidelity} backend=${result.backend} state=${result.state} luminance=${result.luminance.toFixed(4)}${warning}`);
 }
 
 function defaultColumns(count) {
@@ -527,19 +543,6 @@ function crc32(buffer) {
     for (let bit = 0; bit < 8; bit += 1) crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
   }
   return (crc ^ 0xffffffff) >>> 0;
-}
-
-function findChromeExecutable() {
-  if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
-  for (const candidate of [
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-  ]) {
-    if (existsSync(candidate)) return candidate;
-  }
-  return undefined;
 }
 
 function resolveMusicalTimes(options) {

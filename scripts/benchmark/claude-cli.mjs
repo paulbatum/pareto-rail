@@ -83,6 +83,7 @@ async function main() {
     assertSandboxDependencies();
     await assertNoEntrantSettingsOverride(worktree);
     process.env.PUPPETEER_EXECUTABLE_PATH = await findHeadlessShell();
+    process.env.PARETO_RENDER_MODE = 'software';
     process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = '1';
   }
 

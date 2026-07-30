@@ -93,7 +93,10 @@ async function main() {
   // isolated runs steer Puppeteer to chrome-headless-shell — a stripped browser with no
   // singleton whose IPC rides socketpair and whose CDP rides TCP loopback, both permitted.
   const headlessShell = networkAccess ? undefined : await findHeadlessShell();
-  if (headlessShell) process.env.PUPPETEER_EXECUTABLE_PATH = headlessShell;
+  if (headlessShell) {
+    process.env.PUPPETEER_EXECUTABLE_PATH = headlessShell;
+    process.env.PARETO_RENDER_MODE = 'software';
+  }
   const tomlPath = (value) => JSON.stringify(value);
   const permissionProfile = `permissions.entrant={filesystem={`
     + `":minimal"="read", `

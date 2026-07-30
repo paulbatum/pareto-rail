@@ -9,7 +9,7 @@ npm run check:perf -- --level <level-id>
 npm run check:perf -- --level rush --json snapshots/perf/rush.json
 ```
 
-The tool boots the level through the gameplay snapshot harness with seeded randomness, immortal player mode, a fixed simulation step, a 640×360 default viewport, and the SwiftShader/WebGL fallback used by the other headless visual tools. It advances the real runtime loop for the full run and samples once per simulated second:
+The tool boots the level through the gameplay snapshot harness with seeded randomness, immortal player mode, a fixed simulation step, a 640×360 default viewport, and the SwiftShader/WebGL software path. It advances the real runtime loop for the full run and samples once per simulated second:
 
 - renderer draw calls and triangles;
 - renderer geometry, texture, and exposed program or pipeline counts;
@@ -25,6 +25,12 @@ The default gates are intentionally aimed at growth and absurd budgets, not abso
 - draw calls fail above `500` in any sampled frame;
 - total scene objects fail above `5000` in any sample;
 - stepped frame-time growth above `1.5×` is a warning, not a failure, because SwiftShader absolute timing is not representative of real WebGPU hardware.
+
+### Render path
+
+This gate stays on the software path by default, unlike the visual tools in `docs/visual-tools.md`, which default to the real WebGPU pipeline. Every gate above measures growth or an object budget, none of which the backend changes, and the frame-time warning ratio is calibrated against software timings. Staying there also keeps the gate runnable inside the benchmark entrant sandboxes, which cannot reach a GPU browser.
+
+Pass `--gpu` when the frame column itself is the question — it samples the pipeline the game ships, and needs the setup described in `docs/visual-tools.md`.
 
 ### Retained heap
 

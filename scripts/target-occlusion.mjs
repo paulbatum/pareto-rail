@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createServer } from 'vite';
-import puppeteer from 'puppeteer';
+import { openRenderBrowser } from './capture/render-browser.mjs';
 
 const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 720;
@@ -48,33 +47,22 @@ export async function analyzeOcclusionLevels(levels, options = {}) {
     },
   });
 
-  let browser;
+  let target;
   try {
     await server.listen();
     const address = server.httpServer?.address();
     if (!address || typeof address === 'string') throw new Error('Could not determine Vite dev server port');
     const baseUrl = `http://127.0.0.1:${address.port}`;
 
-    browser = await puppeteer.launch({
-      headless: true,
-      executablePath: findChromeExecutable(),
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--enable-webgl',
-        '--ignore-gpu-blocklist',
-        '--disable-gpu-sandbox',
-        '--enable-unsafe-swiftshader',
-        '--use-gl=angle',
-        '--use-angle=swiftshader',
-      ],
-    });
+    // Occlusion is CPU raycasting against the scene graph and never renders a frame, so
+    // it always takes the software path: a GPU browser would cost startup and change nothing.
+    target = await openRenderBrowser({ mode: 'software' });
 
     const reports = [];
-    for (const level of levels) reports.push(await analyzeLevel(browser, baseUrl, level, resolvedOptions));
+    for (const level of levels) reports.push(await analyzeLevel(target.browser, baseUrl, level, resolvedOptions));
     return reports;
   } finally {
-    if (browser) await browser.close();
+    if (target) await target.close();
     await server.close();
   }
 }
@@ -276,18 +264,6 @@ function readNonNegativeNumber(value, flag) {
   return parsed;
 }
 
-function findChromeExecutable() {
-  if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
-  for (const candidate of [
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-  ]) {
-    if (existsSync(candidate)) return candidate;
-  }
-  return undefined;
-}
 
 function pathToFileUrl(filePath) {
   return pathToFileURL(path.resolve(filePath)).href;

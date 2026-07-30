@@ -1,17 +1,29 @@
 # Visual tools
 
-These tools help inspect procedural visuals when a full WebGPU playtest is not available. They use headless Chrome with SwiftShader/WebGL fallbacks where possible. Do not constrain level design around these fallbacks: the game remains WebGPU-only, and the tools own any reduced-fidelity rendering.
+These tools inspect procedural visuals without a human playtest. They render through the same WebGPU pipeline the game ships, so what they capture is what a player sees.
 
 For performance gates and the `?perf=1` real-hardware overlay, see `docs/perf-tools.md`.
 
 Video recording is a separate concern documented in `docs/playthrough-videos.md`. It exists to produce promotional footage of finished levels and plays no part in building, checking, or reviewing one — a level never needs a video.
+
+## Requirements
+
+Rendering needs a real GPU, which rules out headless Chrome inside WSL: it exposes no render device and no WebGPU at all. The tools therefore drive Chrome (or Edge) on the Windows side over its remote debugging port, exactly as the playthrough recorder does. That needs:
+
+- a Windows Chrome or Edge — point `PARETO_CAPTURE_BROWSER` at the executable if it is installed somewhere unusual;
+- WSL's mirrored networking mode (`networkingMode=mirrored` in `.wslconfig`), so WSL reaches the browser and the browser reaches the dev server;
+- a registered `WSLInterop` binfmt handler, so WSL can start a Windows program at all. A qemu or docker binfmt installer can flush it; `wsl --shutdown` from Windows restores it.
+
+Each tool names the missing piece when one of these is absent rather than falling back quietly, because a silent fallback returns an image that is not the game.
+
+`--software` takes the fallback deliberately: Chrome inside WSL on SwiftShader, where three.js can only use its WebGL2 backend. It approximates the composition and gets the colours roughly right, but node materials and postprocessing are not what ships. Environments with no Windows browser to reach — the benchmark entrant sandboxes — set `PARETO_RENDER_MODE=software` so their tools take that path by default. `--gpu` forces the real pipeline back on.
 
 ## Procedural model snapshots
 
 Use model snapshots for isolated enemies, props, glyphs, or environment pieces that can be returned from a factory as a Three `Object3D`:
 
 ```sh
-npm run snapshot -- --module src/levels/crystal/visuals/crystal.ts --export createCrystalNode
+npm run snapshot -- --module src/levels/crystal/visuals/crystal.ts --export createCrystal --args '["drifter"]'
 ```
 
 Useful options:
@@ -21,6 +33,7 @@ Useful options:
 --angles 8             # number of orbit views
 --size 1024            # square PNG size
 --bloom 0              # disable shared bloom for inspection
+--software             # SwiftShader fallback instead of the real pipeline
 --out snapshots/foo
 ```
 
@@ -51,6 +64,7 @@ Useful options:
 --mortal                    # allow the player to die normally
 --projectiles               # include homing shot meshes
 --debug-value <value>        # pass a level debug selector value
+--software                  # SwiftShader fallback instead of the real pipeline
 --out snapshots/gameplay
 ```
 
@@ -113,11 +127,11 @@ Remove `--dry-run` to render. The command delegates to `gameplay-snapshot` with
 seed `424242`, four evenly spaced run-time centers, immortal mode, hidden
 projectiles, `1280x720` source frames, `320px` thumbnails, four columns, and
 the `auto` fidelity policy (falling back through `full`, `postless`, then
-`flat`). It records the actually resolved fidelity for each frame and the
-aggregate fidelity. The command writes `<opaque-entrant-id>.png` plus a JSON
-manifest containing the resolved times, output dimensions, SHA-256, and the
-snapshot-script hash. The filename intentionally contains no model or
-workflow identity.
+`flat`). It records the actually resolved fidelity for each frame, the
+aggregate fidelity, and the render backend the frames came from. The command
+writes `<opaque-entrant-id>.png` plus a JSON manifest containing the resolved
+times, output dimensions, SHA-256, and the snapshot-script hash. The filename
+intentionally contains no model or workflow identity.
 
 ## Target occlusion check
 
@@ -128,7 +142,7 @@ npm run check:occlusion -- --all
 npm run check:occlusion -- --level deluge --no-fail
 ```
 
-By default the tool drives a simple perfect lock-on policy, then warns when a target center is blocked for more than 5% of its on-screen lifetime. `npm run check:floor -- --level <level-id>` runs this default occlusion pass for the selected level; use `check:occlusion` directly when you need all levels, JSON, alternate thresholds, or a non-failing diagnostic run. The tool ignores projectiles, the reticle, letters, other targets, non-depth-writing effects, and objects with `userData.raildIgnoreOcclusion = true` on themselves or an ancestor. Useful options:
+By default the tool drives a simple perfect lock-on policy, then warns when a target center is blocked for more than 5% of its on-screen lifetime. It raycasts the scene graph and never renders a frame, so it always takes the software path and needs no GPU browser. `npm run check:floor -- --level <level-id>` runs this default occlusion pass for the selected level; use `check:occlusion` directly when you need all levels, JSON, alternate thresholds, or a non-failing diagnostic run. The tool ignores projectiles, the reticle, letters, other targets, non-depth-writing effects, and objects with `userData.raildIgnoreOcclusion = true` on themselves or an ancestor. Useful options:
 
 ```sh
 --threshold 0.05                # maximum occluded ratio

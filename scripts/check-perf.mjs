@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createServer } from 'vite';
-import puppeteer from 'puppeteer';
+import { assertBackend, backendForMode, gotoOrExplain, openRenderBrowser, readRenderMode } from './capture/render-browser.mjs';
 
 const DEFAULT_WIDTH = 640;
 const DEFAULT_HEIGHT = 360;
@@ -64,33 +63,20 @@ export async function analyzePerformanceLevels(levels, options = {}) {
     },
   });
 
-  let browser;
+  let target;
   try {
     await server.listen();
     const address = server.httpServer?.address();
     if (!address || typeof address === 'string') throw new Error('Could not determine Vite dev server port');
     const baseUrl = `http://127.0.0.1:${address.port}`;
 
-    browser = await puppeteer.launch({
-      headless: true,
-      executablePath: findChromeExecutable(),
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--enable-webgl',
-        '--ignore-gpu-blocklist',
-        '--disable-gpu-sandbox',
-        '--enable-unsafe-swiftshader',
-        '--use-gl=angle',
-        '--use-angle=swiftshader',
-      ],
-    });
+    target = await openRenderBrowser({ mode: resolvedOptions.mode, width: resolvedOptions.width, height: resolvedOptions.height });
 
     const reports = [];
-    for (const level of levels) reports.push(await analyzeLevel(browser, baseUrl, level, resolvedOptions));
+    for (const level of levels) reports.push(await analyzeLevel(target.browser, baseUrl, level, resolvedOptions));
     return reports;
   } finally {
-    if (browser) await browser.close();
+    if (target) await target.close();
     await server.close();
   }
 }
@@ -117,7 +103,8 @@ async function analyzeLevel(browser, baseUrl, level, options) {
     url.searchParams.set('projectiles', '1');
     url.searchParams.set('seed', String(options.seed));
     url.searchParams.set('render', options.render);
-    await page.goto(url.href, { waitUntil: 'networkidle0' });
+    url.searchParams.set('backend', backendForMode(options.mode));
+    await gotoOrExplain(page, url.href, { mode: options.mode, baseUrl });
     await page.evaluate(() => window.__gameplaySnapshot.ready);
 
     client = await page.createCDPSession();
@@ -128,6 +115,7 @@ async function analyzeLevel(browser, baseUrl, level, options) {
     if (!metadata || !Number.isFinite(metadata.duration) || metadata.duration <= 0) {
       throw new Error(`Could not read level duration for ${level}`);
     }
+    assertBackend(backendForMode(options.mode), metadata.backend);
 
     const samples = [];
     const duration = metadata.duration;
@@ -150,7 +138,7 @@ async function analyzeLevel(browser, baseUrl, level, options) {
     return analyzeSamples({
       level: { id: level, title: metadata.title ?? level, duration },
       samples,
-      options,
+      options: { ...options, backend: metadata.backend },
     });
   } finally {
     if (client) await client.detach().catch(() => {});
@@ -377,6 +365,10 @@ function defaultOptions() {
     jsonPath: '',
     fail: true,
     render: 'sample',
+    // The gates here measure growth, not absolute time, and the frame-time warning ratio
+    // is calibrated against the software path. `--gpu` swaps in the real WebGPU pipeline
+    // when the frame column itself is the question.
+    mode: 'software',
   };
 }
 
@@ -388,6 +380,14 @@ function parseArgs(argv) {
     const key = arg.slice(2);
     if (key === 'no-fail') {
       parsed.fail = false;
+      continue;
+    }
+    if (key === 'gpu') {
+      parsed.mode = 'gpu';
+      continue;
+    }
+    if (key === 'software') {
+      parsed.mode = 'software';
       continue;
     }
     if (key === 'help' || key === 'h') printHelpAndExit();
@@ -458,6 +458,10 @@ function parseArgs(argv) {
         if (value !== 'all' && value !== 'sample') throw new Error('--render must be "all" or "sample"');
         parsed.render = value;
         break;
+      case 'render-mode':
+      case 'renderMode':
+        parsed.mode = readRenderMode(value);
+        break;
       default:
         throw new Error(`Unknown option: --${key}`);
     }
@@ -475,6 +479,7 @@ function publicOptions(options) {
     maxCalls: options.maxCalls,
     maxObjects: options.maxObjects,
     frameGrowthWarnRatio: options.frameGrowthWarnRatio,
+    backend: options.backend,
     drawCallGrowthAllowance: options.drawCallGrowthAllowance,
     objectGrowthAllowance: options.objectGrowthAllowance,
     geometryGrowthAllowance: options.geometryGrowthAllowance,
@@ -508,7 +513,7 @@ function readNonNegativeNumber(value, flag) {
 }
 
 function printHelpAndExit() {
-  console.log(`Usage: npm run check:perf -- --level <id> [options]\n\nOptions:\n  --json <path>                         Write raw samples and gate verdicts\n  --render <all|sample>                 Render mode: "all" (every frame) or "sample" (only sample points), default "sample"\n  --growth-ratio <ratio>                Late/early growth failure ratio, default ${DEFAULT_GROWTH_RATIO}\n  --heap-retention-mb <mb>              Retained heap allowance across a run, default ${DEFAULT_HEAP_RETENTION_MB}\n  --max-calls <count>                   Absolute draw-call budget, default ${DEFAULT_MAX_CALLS}\n  --max-objects <count>                 Absolute scene object budget, default ${DEFAULT_MAX_OBJECTS}\n  --frame-growth-warn-ratio <ratio>     Relative frame-time warning ratio, default ${DEFAULT_FRAME_GROWTH_WARN_RATIO}\n  --draw-call-growth-allowance <count>  Absolute draw-call growth allowance, default ${DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE}\n  --object-growth-allowance <count>     Absolute object growth allowance, default ${DEFAULT_OBJECT_GROWTH_ALLOWANCE}\n  --geometry-growth-allowance <count>   Absolute geometry growth allowance, default ${DEFAULT_GEOMETRY_GROWTH_ALLOWANCE}\n  --texture-growth-allowance <count>    Absolute texture growth allowance, default ${DEFAULT_TEXTURE_GROWTH_ALLOWANCE}\n  --dt <seconds>                        Fixed simulation step, default ${DEFAULT_DT}\n  --seed <integer>                      Snapshot RNG seed, default ${DEFAULT_SEED}\n  --no-fail                             Print failures but exit zero`);
+  console.log(`Usage: npm run check:perf -- --level <id> [options]\n\nOptions:\n  --json <path>                         Write raw samples and gate verdicts\n  --render <all|sample>                 Render mode: "all" (every frame) or "sample" (only sample points), default "sample"\n  --gpu                                 Sample on the real WebGPU pipeline instead of the software path\n  --growth-ratio <ratio>                Late/early growth failure ratio, default ${DEFAULT_GROWTH_RATIO}\n  --heap-retention-mb <mb>              Retained heap allowance across a run, default ${DEFAULT_HEAP_RETENTION_MB}\n  --max-calls <count>                   Absolute draw-call budget, default ${DEFAULT_MAX_CALLS}\n  --max-objects <count>                 Absolute scene object budget, default ${DEFAULT_MAX_OBJECTS}\n  --frame-growth-warn-ratio <ratio>     Relative frame-time warning ratio, default ${DEFAULT_FRAME_GROWTH_WARN_RATIO}\n  --draw-call-growth-allowance <count>  Absolute draw-call growth allowance, default ${DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE}\n  --object-growth-allowance <count>     Absolute object growth allowance, default ${DEFAULT_OBJECT_GROWTH_ALLOWANCE}\n  --geometry-growth-allowance <count>   Absolute geometry growth allowance, default ${DEFAULT_GEOMETRY_GROWTH_ALLOWANCE}\n  --texture-growth-allowance <count>    Absolute texture growth allowance, default ${DEFAULT_TEXTURE_GROWTH_ALLOWANCE}\n  --dt <seconds>                        Fixed simulation step, default ${DEFAULT_DT}\n  --seed <integer>                      Snapshot RNG seed, default ${DEFAULT_SEED}\n  --no-fail                             Print failures but exit zero`);
   process.exit(0);
 }
 
@@ -566,19 +571,6 @@ function compactInt(value) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}m`;
   if (value >= 10_000) return `${Math.round(value / 1000)}k`;
   return String(Math.round(value));
-}
-
-function findChromeExecutable() {
-  if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
-  for (const candidate of [
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-  ]) {
-    if (existsSync(candidate)) return candidate;
-  }
-  return undefined;
 }
 
 function pathToFileUrl(filePath) {

@@ -40,7 +40,10 @@ export async function generateThumbnail({ level, entrant, outDir = path.join(ROO
     const frameFidelities = [...result.stdout.matchAll(/capture\s+[0-9]+(?:\.[0-9]+)?s\s+fidelity=([a-z]+)/g)].map((match) => match[1]);
     if (frameFidelities.length !== 4) throw new Error(`snapshot output did not report four resolved fidelities (found ${frameFidelities.length})`);
     const aggregateFidelity = [...new Set(frameFidelities)].length === 1 ? frameFidelities[0] : 'mixed';
-    const metadata = { seed, times, width, height, thumbWidth, columns, fidelity: aggregateFidelity, frameFidelities, immortal: true, projectiles: false, outputWidth: dimensions.width, outputHeight: dimensions.height };
+    const backends = [...result.stdout.matchAll(/backend=([a-z0-9]+)/g)].map((match) => match[1]);
+    if (backends.length === 0) throw new Error('snapshot output did not report a render backend');
+    const backend = [...new Set(backends)].length === 1 ? backends[0] : 'mixed';
+    const metadata = { seed, times, width, height, thumbWidth, columns, fidelity: aggregateFidelity, frameFidelities, backend, immortal: true, projectiles: false, outputWidth: dimensions.width, outputHeight: dimensions.height };
     const manifest = { schemaVersion: 1, opaqueEntrantId: entrant, levelId: level, thumbnail: { path: `/benchmark/thumbnails/${entrant}.png`, status: 'actual', sha256: sha256(png), metadata }, command: { script: 'scripts/gameplay-snapshot.mjs', sha256: sha256(await fs.readFile(path.join(ROOT, 'scripts/gameplay-snapshot.mjs'))) } };
     await fs.writeFile(path.join(outDir, `${entrant}.json`), `${JSON.stringify(manifest, null, 2)}\n`);
     return { outputPath, manifest };

@@ -206,6 +206,7 @@ async function main() {
   if (sandbox) {
     childEnv.PARETO_RAIL_SANDBOX_CONFIG = sandboxConfigPath;
     childEnv.PUPPETEER_EXECUTABLE_PATH = headlessShellPath;
+    childEnv.PARETO_RENDER_MODE = 'software';
   }
   if (quotaWait) {
     childEnv.PARETO_RAIL_QUOTA_WAIT_DIRECTORY = quotaWait.directory;

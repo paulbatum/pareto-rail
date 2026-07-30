@@ -21,6 +21,7 @@ import { getLevelById } from '../levels';
 import type { LevelDefinition } from '../engine/types';
 
 type Fidelity = 'full' | 'postless' | 'flat';
+type Backend = 'webgpu' | 'webgl';
 
 type OcclusionOptions = {
   dt?: number;
@@ -75,12 +76,13 @@ type PerfStepSample = PerfCounters & {
 
 type GameplaySnapshotApi = {
   ready: Promise<void>;
-  capture(): Promise<{ dataUrl: string; luminance: number; fidelity: Fidelity; state: string; seed: number | null }>;
+  capture(): Promise<{ dataUrl: string; luminance: number; fidelity: Fidelity; backend: Backend; state: string; seed: number | null }>;
   analyzeOcclusion(options?: OcclusionOptions): Promise<OcclusionReport>;
   stepPerformance(options: PerfStepOptions): Promise<PerfStepSample>;
   metadata(): {
     duration: number | null;
     fidelity: Fidelity;
+    backend: Backend;
     state: string;
     bpm: number | null;
     markers: Record<string, number>;
@@ -95,7 +97,7 @@ type SnapshotRenderer = WebGPURenderer & {
 };
 
 type SnapshotRendererParameters = WebGPURendererParameters & {
-  forceWebGL: true;
+  forceWebGL: boolean;
   preserveDrawingBuffer: true;
 };
 
@@ -162,11 +164,13 @@ const height = readPositiveNumber(params.get('height')) ?? DEFAULT_HEIGHT;
 const targetTime = readNonNegativeNumber(params.get('time')) ?? 0;
 const fixedDt = readPositiveNumber(params.get('dt')) ?? DEFAULT_DT;
 const fidelity = readFidelity(params.get('fidelity'));
+const requestedBackend = readBackend(params.get('backend'));
 const showProjectiles = params.get('projectiles') === '1';
 const startScreen = params.get('startScreen') === '1';
 const skipRenders = params.get('render') === 'sample';
 
 let renderer: SnapshotRenderer | null = null;
+let activeBackend: Backend = requestedBackend;
 let post: PostRenderer | null = null;
 let scene: Scene | null = null;
 let camera: PerspectiveCamera | null = null;
@@ -196,6 +200,7 @@ window.__gameplaySnapshot = {
       dataUrl: renderer.domElement.toDataURL('image/png'),
       luminance,
       fidelity,
+      backend: activeBackend,
       state: runtimeState,
       seed: window.__snapshotSeed ?? null,
     };
@@ -210,6 +215,7 @@ window.__gameplaySnapshot = {
     return {
       duration: runDuration,
       fidelity,
+      backend: activeBackend,
       state: runtimeState,
       bpm: selectedLevel ? selectedLevel.bpm : null,
       markers: selectedLevel ? (selectedLevel.markers ?? {}) : {},
@@ -228,7 +234,7 @@ async function bootstrap() {
   const rendererParams = {
     antialias: true,
     alpha: false,
-    forceWebGL: true,
+    forceWebGL: requestedBackend === 'webgl',
     preserveDrawingBuffer: true,
   } as SnapshotRendererParameters;
   renderer = new WebGPURenderer(rendererParams) as SnapshotRenderer;
@@ -236,6 +242,7 @@ async function bootstrap() {
   renderer.setSize(width, height, false);
   renderer.setClearColor(selectedLevel.post?.clearColor ?? 0x02040a, 1);
   await renderer.init();
+  activeBackend = readActiveBackend(renderer);
   stopRendererAnimation(renderer);
   document.body.append(renderer.domElement);
 
@@ -742,6 +749,18 @@ function createFallbackMaterial(source: Material, object: RenderableObject) {
 function readFidelity(value: string | null): Fidelity {
   if (value === 'full' || value === 'postless' || value === 'flat') return value;
   return 'full';
+}
+
+function readBackend(value: string | null): Backend {
+  if (value === 'webgl') return 'webgl';
+  return 'webgpu';
+}
+
+/* three.js falls back to its WebGL2 backend without throwing when no WebGPU device is
+   available, so what was asked for is not necessarily what is rendering. */
+function readActiveBackend(value: SnapshotRenderer): Backend {
+  const backend = (value as unknown as { backend?: { isWebGPUBackend?: boolean } }).backend;
+  return backend?.isWebGPUBackend === true ? 'webgpu' : 'webgl';
 }
 
 function readPositiveNumber(value: string | null): number | null {

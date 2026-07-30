@@ -10,11 +10,8 @@ while working on it, use the snapshot tools in `docs/visual-tools.md` instead.
 
 ## Requirements
 
-Recording needs a real GPU, which rules out running it inside WSL: headless Chrome there
-exposes no render device and no WebGPU at all. The recorder therefore drives Chrome (or
-Edge) on the Windows side over its remote debugging port, and reaches it on loopback,
-which requires WSL's mirrored networking mode. It also needs `ffmpeg` on the path. Point
-`PARETO_CAPTURE_BROWSER` at the executable if it is installed somewhere unusual.
+Recording drives a GPU browser on the Windows side, the same setup the snapshot tools
+need — see the requirements in `docs/visual-tools.md`. It also needs `ffmpeg` on the path.
 
 The recorder serves the production build and rebuilds automatically when `dist/` is
 missing. Pass `--build` to force a rebuild after changing the game.
