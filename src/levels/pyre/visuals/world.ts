@@ -56,9 +56,9 @@ export const PYRE_GROUND = {
  * what leaves room for the city to be dropped into it.
  */
 export const PYRE_PIT = {
-  x0: -900,
-  x1: 900,
+  x0: -320,
+  x1: 320,
   nearZ: -150,
-  farZ: -2550,
+  farZ: -1200,
   depth: 800,
 };
