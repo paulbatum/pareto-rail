@@ -2,7 +2,6 @@ import { MathUtils } from 'three';
 import type { LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { createMusicTime } from '../../engine/music-time';
 import { createCameraPath, type CameraKey } from './camera-path';
-import { framePoint } from './frame';
 
 export const PYRE_BPM = 120;
 export const PYRE_TIME = createMusicTime(PYRE_BPM, { stepsPerBar: 16 });
@@ -15,36 +14,48 @@ export const PYRE_RUN_DURATION = PYRE_TIME.bar(21);
  */
 export const PYRE_HERO_TIME = 5;
 
-/** A point on the hero camera's forward axis: aiming here reproduces the hero pose exactly. */
-const HERO_FOCUS = framePoint(960, 540, 100);
-const HERO_AIM: readonly [number, number, number] = [HERO_FOCUS.x, HERO_FOCUS.y, HERO_FOCUS.z];
+/**
+ * The hero pose, matched to the reference frame rather than to the geometry.
+ *
+ * The reference's horizon sits 76% down the frame; at the game's 62° vertical
+ * field of view that is a 16° upward pitch. Its near rim sits at 91%, which is
+ * 9.7° below horizontal — so the eye has to stand about 5.9 rim-distances high.
+ * 60 m over a rim 350 m ahead is that ratio. Nothing in the world is built to
+ * this pose: it is one vantage among the fly-around's.
+ */
+export const PYRE_HERO_EYE: readonly [number, number, number] = [0, 60, 200];
+export const PYRE_HERO_PITCH_DEGREES = 16;
+
+const PITCH = MathUtils.degToRad(PYRE_HERO_PITCH_DEGREES);
+const AIM_REACH = 1000;
+const HERO_AIM: readonly [number, number, number] = [
+  PYRE_HERO_EYE[0],
+  PYRE_HERO_EYE[1] + AIM_REACH * Math.sin(PITCH),
+  PYRE_HERO_EYE[2] - AIM_REACH * Math.cos(PITCH),
+];
 
 /**
- * The showcase path: hold the reference framing, then arc left across the front
- * of the basin, rise to look down into the trench, and come back along the right
- * flank past the pale monolith group.
- *
- * The sweep deliberately stays in front of the scene and under about fifty units
- * of altitude. The massing is authored to one frame, so from behind or from
- * directly overhead it reads as the shell it is; this arc keeps the
- * megastructure and the sky behind the subject at every vantage.
+ * The showcase path: hold the hero framing, cross the rim, then swing wide and
+ * high around the left flank, over the pit, and back down the right — the range
+ * a real place has to survive. Altitudes run to a few hundred metres so the
+ * sweep looks down into the cut rather than across it.
  *
  * The keys around the hero moment share one focus point, so the aim is genuinely
  * still there rather than merely passing through.
  */
 const PYRE_CAMERA_KEYS: CameraKey[] = [
-  { time: 0, position: [0, 7, 15], focus: HERO_AIM },
-  { time: 3, position: [0, 5.7, 5], focus: HERO_AIM },
-  { time: PYRE_HERO_TIME, position: [0, 5, 0], focus: HERO_AIM },
-  { time: 7, position: [0, 5.1, -5], focus: HERO_AIM },
-  { time: 9, position: [0, 6.5, -11], focus: HERO_AIM },
-  { time: 13, position: [-34, 12, -8], focus: [-14, -6, -96] },
-  { time: 18, position: [-96, 22, 10], focus: [-30, -4, -110] },
-  { time: 23, position: [-120, 40, 34], focus: [-46, 2, -128] },
-  { time: 28, position: [-40, 52, 46], focus: [-8, 0, -138] },
-  { time: 33, position: [56, 44, 40], focus: [10, 0, -132] },
-  { time: 38, position: [126, 26, 14], focus: [24, -4, -118] },
-  { time: 42, position: [78, 14, -14], focus: [-6, -6, -120] },
+  { time: 0, position: [0, 90, 800], focus: HERO_AIM },
+  { time: 3, position: [0, 70, 400], focus: HERO_AIM },
+  { time: PYRE_HERO_TIME, position: PYRE_HERO_EYE, focus: HERO_AIM },
+  { time: 7, position: [0, 70, -60], focus: HERO_AIM },
+  { time: 9, position: [0, 140, -300], focus: HERO_AIM },
+  { time: 13, position: [-1500, 320, -400], focus: [0, -120, -1300] },
+  { time: 18, position: [-1900, 420, 300], focus: [0, -100, -1400] },
+  { time: 23, position: [-1500, 500, 900], focus: [0, -80, -1400] },
+  { time: 28, position: [-500, 620, 1200], focus: [0, -100, -1350] },
+  { time: 33, position: [900, 560, 1100], focus: [0, -90, -1400] },
+  { time: 38, position: [1800, 380, 500], focus: [0, -100, -1400] },
+  { time: 42, position: [1300, 200, -200], focus: [0, -120, -1200] },
 ];
 
 const cameraPath = createCameraPath(PYRE_CAMERA_KEYS);

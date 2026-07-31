@@ -2,66 +2,43 @@ import { BoxGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial, RingGeometry, 
 import type { Object3D } from 'three';
 import type { EventBus } from '../../../events';
 import { glyphOnCells } from '../../../engine/glyphs';
-import {
-  PYRE_BACKDROP,
-  PYRE_BEAMS,
-  PYRE_CENTRE_MONOLITH,
-  PYRE_COLORS,
-  PYRE_EDGE,
-  PYRE_FRAME_SLAB,
-  PYRE_GATEWAY,
-  PYRE_LEFT_MONOLITH,
-  PYRE_MEGASTRUCTURE,
-  PYRE_PYRAMIDS,
-  PYRE_RIGHT_MONOLITHS,
-  PYRE_RIGHT_WALL,
-  PYRE_SLOTS,
-  PYRE_TRENCH_STRUCTURES,
-} from './composition';
-import {
-  addBeams,
-  addBlockField,
-  addDunes,
-  addPyramid,
-  addRockField,
-  addSlabs,
-  addTerrain,
-  EnvironmentSink,
-  type EnvironmentBuild,
-} from './environment';
+import { EnvironmentSink, type EnvironmentBuild } from './kit';
+import { addGround } from './terrain';
+import { PYRE_COLORS } from './world';
 
-const FIELD_SEED = 20260730;
+/**
+ * Outline styling. The masses are flat-shaded placeholders, so an edge is what
+ * separates one mass from the next where their values are close; these lines are
+ * part of the level's look rather than a review aid. The default is a contrast
+ * step from the face — darker on light masses, lighter on dark.
+ */
+export const PYRE_EDGE = {
+  threshold: 16,
+  style(faceColor: number) {
+    const r = (faceColor >> 16) & 0xff;
+    const g = (faceColor >> 8) & 0xff;
+    const b = faceColor & 0xff;
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    const step = (channel: number) =>
+      Math.round(luminance > 0.46 ? channel * 0.66 : channel + (255 - channel) * 0.34);
+    return {
+      color: (step(r) << 16) | (step(g) << 8) | step(b),
+      threshold: PYRE_EDGE.threshold,
+    };
+  },
+};
 
 /**
  * The single switch for the outline overlay. Pyre is unlit, so the lines are
- * what make two faces of one mass read apart; a later lighting pass will do that
- * job instead and should set this to null.
+ * what make two masses read apart; a later lighting pass will do that job
+ * instead and should set this to null.
  */
 const PYRE_EDGE_STYLE: ((faceColor: number) => ReturnType<typeof PYRE_EDGE.style>) | null = PYRE_EDGE.style;
 
-/**
- * Environment build order runs back to front, which is also the order the
- * picture reads: sky panels, overhead planes, distant masses, the block field,
- * then the ground the camera stands on.
- */
+/** The ground and the cut in it. Nothing else is built yet. */
 export function createEnvironment(scene: Scene): EnvironmentBuild {
   const sink = new EnvironmentSink(PYRE_EDGE_STYLE);
-  addSlabs(sink, PYRE_BACKDROP, { outline: false });
-  addSlabs(sink, PYRE_MEGASTRUCTURE, { outline: false });
-  for (const pyramid of PYRE_PYRAMIDS) addPyramid(sink, pyramid);
-  addSlabs(sink, PYRE_RIGHT_WALL);
-  addBeams(sink, PYRE_BEAMS);
-  addTerrain(sink);
-  addBlockField(sink, FIELD_SEED);
-  addSlabs(sink, PYRE_TRENCH_STRUCTURES);
-  addSlabs(sink, PYRE_GATEWAY);
-  addSlabs(sink, PYRE_SLOTS);
-  addSlabs(sink, PYRE_CENTRE_MONOLITH);
-  addSlabs(sink, PYRE_LEFT_MONOLITH);
-  addSlabs(sink, PYRE_RIGHT_MONOLITHS);
-  addSlabs(sink, PYRE_FRAME_SLAB);
-  addDunes(sink, FIELD_SEED + 2);
-  addRockField(sink, FIELD_SEED + 1);
+  addGround(sink);
 
   const build = sink.build();
   scene.add(build.group);
@@ -69,7 +46,7 @@ export function createEnvironment(scene: Scene): EnvironmentBuild {
 }
 
 export function installVisualEventHandlers(_bus: EventBus, _scene: Scene) {
-  // Empty by design: this level is being blocked out for its composition.
+  // Empty by design: this level is being blocked out for its geometry.
 }
 
 // Placeholder target and reticle language, kept legible against the vista.

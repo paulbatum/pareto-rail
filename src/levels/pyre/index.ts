@@ -12,13 +12,15 @@ import {
   setEnemyLocked,
   setReticleActive,
 } from './visuals';
-import { PYRE_COLORS } from './visuals/composition';
+import { PYRE_COLORS, PYRE_FAR_PLANE } from './visuals/world';
 
 export const pyreLevel: LevelDefinition = {
   id: 'pyre',
   title: 'Pyre',
   description: 'A slow crawl across a frozen plain toward a burning block city under an overhead megastructure.',
   bpm: PYRE_BPM,
+  // The vista runs kilometres out, well past the shared far plane.
+  render: { farPlane: PYRE_FAR_PLANE },
   // Blockout stage: flat value-matched placeholder colours, so bloom and
   // vignette stay off and the massing is judged on its own.
   post: {
