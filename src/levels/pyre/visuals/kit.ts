@@ -1,14 +1,16 @@
 import {
   BoxGeometry,
   BufferAttribute,
+  BufferGeometry,
   Color,
+  ConeGeometry,
   Group,
   Mesh,
   MeshBasicMaterial,
   Object3D,
   Vector3,
 } from 'three';
-import type { BufferGeometry, Material } from 'three';
+import type { Material } from 'three';
 import { createEdges, type EdgeStyle } from '../../../engine/edge-overlay';
 import { PYRE_LIGHT } from './world';
 
@@ -164,6 +166,124 @@ export function addMass(sink: EnvironmentSink, mass: Mass) {
   sink.track(geometry, material);
   if (mass.outline !== false) {
     sink.outline(mesh, mass.color, edgeOffset(Math.min(mass.sx, mass.sy, mass.sz), origin.length()));
+  }
+  return sink.add(mesh);
+}
+
+export interface Pyramid {
+  x: number;
+  z: number;
+  /** Full base width, corner to corner along the axes. */
+  base: number;
+  height: number;
+  /** Base altitude; sink it so the silhouette runs behind nearer masses. */
+  y0: number;
+  /** Degrees. 45 puts a corner toward a camera looking down -z. */
+  yaw?: number;
+  color: number;
+  outline?: boolean;
+}
+
+export function addPyramid(sink: EnvironmentSink, pyramid: Pyramid) {
+  // A 4-segment cone is a square pyramid whose corners sit at the radius.
+  const cone = new ConeGeometry(pyramid.base / Math.SQRT2, pyramid.height, 4);
+  origin.set(pyramid.x, pyramid.y0 + pyramid.height / 2, pyramid.z);
+  const geometry = shadeGeometry(cone, pyramid.color);
+  const material = new MeshBasicMaterial({ vertexColors: true });
+  const mesh = new Mesh(geometry, material);
+  mesh.position.copy(origin);
+  mesh.rotation.y = DEG * (45 + (pyramid.yaw ?? 0));
+  sink.track(geometry, material);
+  if (pyramid.outline !== false) {
+    sink.outline(mesh, pyramid.color, edgeOffset(pyramid.base * 0.2, origin.length()));
+  }
+  return sink.add(mesh);
+}
+
+/** Deterministic 0..1 hash, so tower silhouettes survive rebuilds unchanged. */
+export function hash01(x: number, y: number) {
+  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+/** One tower storey: half-widths left/right of centre and its height. */
+export type TowerSection = readonly [left: number, right: number, height: number];
+
+export interface CragTower {
+  x: number;
+  z: number;
+  /** Full extent along z. */
+  depth: number;
+  /** Stacked bottom-up from y0. */
+  sections: readonly TowerSection[];
+  y0?: number;
+  /** Sideways slope as rise/run; positive leans toward +x. */
+  lean?: number;
+  /** Corner displacement as a fraction of the section size. */
+  jitter?: number;
+  seed?: number;
+  color: number;
+  outline?: boolean;
+}
+
+/**
+ * A tower of stacked box sections with every corner displaced by a hash of its
+ * own index, so the silhouette breaks into rock instead of stepping in clean
+ * right angles. Sections are independent boxes: the jitter pulls them apart at
+ * the joints without tearing the mesh, and that separation is what reads as
+ * erosion at distance.
+ */
+export function addCragTower(sink: EnvironmentSink, tower: CragTower) {
+  const jitter = tower.jitter ?? 0.2;
+  const seed = tower.seed ?? 0;
+  const hd = tower.depth / 2;
+  const positions: number[] = [];
+  let y = 0;
+
+  for (let si = 0; si < tower.sections.length; si += 1) {
+    const [left, right, height] = tower.sections[si];
+    const ring = [
+      [-left, -hd],
+      [right, -hd],
+      [right, hd],
+      [-left, hd],
+    ] as const;
+    const corner = (k: number, c: number) => {
+      const [px, pz] = ring[c];
+      const t = seed + si * 3.7 + k * 1.3 + px * 0.9 + pz * 0.6;
+      return [
+        px + (hash01(t, 5.0) - 0.5) * jitter * (left + right),
+        y + k * height + (hash01(t, 17.0) - 0.5) * jitter * height,
+        pz + (hash01(t, 11.0) - 0.5) * jitter * tower.depth,
+      ];
+    };
+    const v = [corner(0, 0), corner(0, 1), corner(0, 2), corner(0, 3), corner(1, 0), corner(1, 1), corner(1, 2), corner(1, 3)];
+    const quads = [
+      [3, 2, 1, 0],
+      [4, 5, 6, 7],
+      [0, 1, 5, 4],
+      [1, 2, 6, 5],
+      [2, 3, 7, 6],
+      [3, 0, 4, 7],
+    ];
+    for (const [a, b, c, d] of quads) {
+      positions.push(...v[a], ...v[b], ...v[c], ...v[a], ...v[c], ...v[d]);
+    }
+    y += height;
+  }
+
+  const raw = new BufferGeometry();
+  raw.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
+  const geometry = shadeGeometry(raw, tower.color);
+  const material = new MeshBasicMaterial({ vertexColors: true });
+  const mesh = new Mesh(geometry, material);
+  origin.set(tower.x, tower.y0 ?? 0, tower.z);
+  mesh.position.copy(origin);
+  mesh.rotation.z = Math.atan(-(tower.lean ?? 0));
+  sink.track(geometry, material);
+  if (tower.outline !== false) {
+    const thinnest = Math.min(tower.depth, ...tower.sections.map(([l, r]) => l + r));
+    sink.outline(mesh, tower.color, edgeOffset(thinnest, origin.length()));
   }
   return sink.add(mesh);
 }

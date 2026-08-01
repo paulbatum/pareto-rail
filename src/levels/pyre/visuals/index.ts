@@ -5,6 +5,7 @@ import { glyphOnCells } from '../../../engine/glyphs';
 import { createHeightHaze } from '../../../engine/height-haze';
 import { EnvironmentSink, type EnvironmentBuild } from './kit';
 import { addMoltenFloor } from './molten';
+import { addStructures } from './structures';
 import { addGround } from './terrain';
 import { PYRE_COLORS, PYRE_HAZE } from './world';
 
@@ -42,6 +43,7 @@ export function createEnvironment(scene: Scene): EnvironmentBuild {
   const sink = new EnvironmentSink(PYRE_EDGE_STYLE);
   addGround(sink);
   addMoltenFloor(sink);
+  addStructures(sink);
 
   const haze = createHeightHaze({
     ...PYRE_HAZE,
