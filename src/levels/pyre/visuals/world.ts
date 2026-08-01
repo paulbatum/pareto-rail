@@ -97,7 +97,8 @@ export const PYRE_TOWERS = [
 export const PYRE_MEGASTRUCTURE = [
   { x: -1500, y: 1700, z: -3400, sx: 4000, sy: 110, sz: 1600, yaw: 18, roll: -38, color: 0x6e8ea0 },
   { x: 1600, y: 1500, z: -3200, sx: 3600, sy: 110, sz: 1500, yaw: -14, roll: 44, color: 0x6e8ea0 },
-  { x: -500, y: 2600, z: -3100, sx: 5200, sy: 130, sz: 2000, yaw: 6, roll: -12, color: 0x63808f },
+  /** High canopy slab, kept to the upper left so the starfield corner stays open. */
+  { x: -1600, y: 2900, z: -3100, sx: 5200, sy: 130, sz: 2000, yaw: 14, roll: -18, color: 0x63808f },
   { x: -2400, y: 700, z: -1600, sx: 320, sy: 2600, sz: 320, yaw: 24, roll: -28, color: PYRE_COLORS.paleStone },
   { x: 2500, y: 600, z: -1300, sx: 300, sy: 2200, sz: 300, yaw: -20, roll: 24, color: PYRE_COLORS.ice },
 ] as const;

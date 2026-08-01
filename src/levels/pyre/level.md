@@ -26,4 +26,4 @@ Two conventions the next layer depends on:
 - **Ground is y = 0.** The pit runs negative; everything built on the plain runs positive. Nothing has to be rebased.
 - **The hero pose is matched to the reference frame, not to the geometry.** `PYRE_HERO_EYE` and `PYRE_PIT.nearZ` together set where the horizon and the near rim land in frame; moving either moves the composition. The derivation is in the comment on `PYRE_HERO_EYE`.
 
-The fly-around runs the full circuit around the pit, so anything added has to hold up from behind and from above — not only from the hero pose.
+The fly-around holds the front hemisphere — the composition is a one-direction stage (sky wall behind, megastructure converging frontward), so nothing needs to hold up from behind, but everything must survive the front arc's range of heights and flanks, including looking down into the pit.

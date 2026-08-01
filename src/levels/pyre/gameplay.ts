@@ -35,27 +35,28 @@ const HERO_AIM: readonly [number, number, number] = [
 ];
 
 /**
- * The showcase path: hold the hero framing, cross the rim, then swing wide and
- * high around the left flank, over the pit, and back down the right — the range
- * a real place has to survive. Altitudes run to a few hundred metres so the
- * sweep looks down into the cut rather than across it.
+ * The showcase path: a front-arc sweep, never crossing behind the vista. The
+ * composition is a one-direction stage — the megastructure converges frontward
+ * and the sky wall stands behind it — so the path holds the front hemisphere:
+ * approach from the right, settle into the hero framing, push low over the deck
+ * to the rim, rise to look down into the molten cut, then swing wide left and
+ * back across the front at altitude.
  *
  * The keys around the hero moment share one focus point, so the aim is genuinely
  * still there rather than merely passing through.
  */
 const PYRE_CAMERA_KEYS: CameraKey[] = [
-  { time: 0, position: [0, 90, 800], focus: HERO_AIM },
-  { time: 3, position: [0, 70, 400], focus: HERO_AIM },
+  { time: 0, position: [900, 120, 700], focus: [0, 300, -1550] },
+  { time: 3, position: [420, 90, 400], focus: HERO_AIM },
   { time: PYRE_HERO_TIME, position: PYRE_HERO_EYE, focus: HERO_AIM },
-  { time: 7, position: [0, 70, -60], focus: HERO_AIM },
-  { time: 9, position: [0, 140, -300], focus: HERO_AIM },
-  { time: 13, position: [-1500, 320, -400], focus: [0, -120, -1300] },
-  { time: 18, position: [-1900, 420, 300], focus: [0, -100, -1400] },
-  { time: 23, position: [-1500, 500, 900], focus: [0, -80, -1400] },
-  { time: 28, position: [-500, 620, 1200], focus: [0, -100, -1350] },
-  { time: 33, position: [900, 560, 1100], focus: [0, -90, -1400] },
-  { time: 38, position: [1800, 380, 500], focus: [0, -100, -1400] },
-  { time: 42, position: [1300, 200, -200], focus: [0, -120, -1200] },
+  { time: 8, position: [0, 55, -40], focus: [0, 140, -1300] },
+  { time: 11, position: [0, 190, -240], focus: [0, -160, -900] },
+  { time: 15, position: [-700, 240, -100], focus: [0, 150, -1400] },
+  { time: 20, position: [-1300, 380, 350], focus: [0, 220, -1500] },
+  { time: 26, position: [-400, 520, 650], focus: [0, 250, -1600] },
+  { time: 32, position: [700, 420, 500], focus: [0, 220, -1500] },
+  { time: 37, position: [1150, 220, 150], focus: [0, 150, -1400] },
+  { time: 42, position: [120, 80, 300], focus: HERO_AIM },
 ];
 
 const cameraPath = createCameraPath(PYRE_CAMERA_KEYS);
