@@ -46,6 +46,26 @@ export const PYRE_LIGHT = {
  * saturates near the far ground edge, not at the pit.
  */
 /**
+ * The terraced tile field: the plain is armour plating, not snowfield. One
+ * instanced mesh; heights quantize to terrace steps keyed on coarse blocks so
+ * the steps run in courses, and each tile carries a small value tilt so the
+ * field reads built rather than blank.
+ */
+export const PYRE_TILES = {
+  x0: -1400,
+  x1: 1400,
+  z0: -1500,
+  z1: 450,
+  pitch: 48,
+  gap: 5,
+  /** Terrace quantum and count. */
+  step: 4,
+  levels: 3,
+  /** Matches PYRE_GROUND.color, which is declared below this constant. */
+  color: 0x87a5b0,
+};
+
+/**
  * The great pyramid: the dark mass the whole frame is built around. Base sunk
  * well below ground so its silhouette rises from behind the town band rather
  * than standing on the plain; corner toward the camera so the silhouette edges
