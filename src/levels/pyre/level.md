@@ -3,7 +3,7 @@
 A frozen plain under an overhead megastructure, looking down into a sunken city that burns. The run opens held on that view, then arcs slowly around the front of the pit to show the massing from the flanks and from above.
 
 ## Visual language
-Placeholder flats only. Every mass is a box in one unlit colour, flat-shaded per facet against a fixed key so a hundred-metre block reads as a solid rather than a card. Bloom and vignette are off so the massing is judged on its own.
+Unlit and authored under AgX: baked per-facet shading against a fixed key, procedural TSL surfaces from the engine kit (stone towers, the molten pit floor), the engine height haze carrying the cold veil and the warm column, and emissive slit cards for windows, stars, and the blue sun. The vista is a one-direction stage built around the reference frame in `tmp/inspiration/pyr_1080.jpg`: dark pyramid inside a red halo, framing crag towers, overhead megastructure, terraced plate ground, burning trench.
 
 ## Musical language
 TODO.
@@ -19,7 +19,9 @@ TODO. The spawn timeline is a handful of placeholder targets that keep the runne
 - `src/levels/pyre/camera-path.ts` — construction only; turns those keys into a rail, a time-to-progress curve, and the per-frame aim.
 
 ## Status & notes
-Blockout stage: a ground plane, one rectangular pit, the analytic height haze over both, and the molten field on the pit floor (`visuals/molten.ts`, built from the engine TSL surface kit) — all verified from the hero pose and the fly-around's flank and overhead vantages. The hero pose sees the floor only as glow on the haze; the high vantages read its block plan. Structures, lighting, the remaining materials, gameplay and audio are still to come.
+Vista stage: massing, haze, tone, and first materials are in — pyramid, crag towers (stone via `visuals/stone.ts`), megastructure, town band, trench lining with lit slits, molten floor, instanced tile field, star cards and the blue sun. Verified across the fly-around by contact sheet; perf, build, and bundle gates pass.
+
+Still to come, in rough order of visual leverage: pyramid face detail (the reference carries a dense emissive speckle gathered into vertical chains — see the Blender scene's `streak_emit` notes at `/home/pbatum/vibes/blender/build_scene.py`), molten light spill on the trench rims, deck machinery detail near the hero eye, moss speckle on flat tops, then the real gameplay pass (spawn design beyond placeholders) and procedural music/SFX.
 
 Two conventions the next layer depends on:
 
