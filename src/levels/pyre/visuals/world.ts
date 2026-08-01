@@ -41,6 +41,36 @@ export const PYRE_LIGHT = {
  * axis below the rim. Density is set so a sightline at hero-eye altitude
  * saturates near the far ground edge, not at the pit.
  */
+/**
+ * The molten field on the pit floor. Sunk far enough that the hero pose sees
+ * only its glow on the haze, not the surface; the fly-around's high vantages
+ * look straight down onto it. Scales are in metres: blocks are city-block
+ * pitch, heat patches span a few blocks, grain breaks the surface up close.
+ */
+export const PYRE_MOLTEN = {
+  footprint: { x0: -320, x1: 320, nearZ: -150, farZ: -1200 },
+  top: -220,
+  thickness: 10,
+  blockScale: 1 / 80,
+  heatScale: 1 / 200,
+  grainScale: 1 / 20,
+  gamma: 1.9,
+  /**
+   * Peak of the hottest core, not the average. The veil into the pit transmits
+   * ~15% from the fly-around vantages, so the field is authored far over 1 and
+   * arrives at readable levels; the gamma-bent field keeps the mean well under
+   * the peak so the floor does not clip to one salmon.
+   */
+  strength: 9,
+  /** Deep red through orange to yellow, reserved for the hottest slivers. */
+  ramp: [
+    [0.0, [1.0, 0.035, 0.003]],
+    [0.5, [1.0, 0.09, 0.006]],
+    [0.84, [1.0, 0.215, 0.021]],
+    [1.0, [1.0, 0.48, 0.1]],
+  ],
+} as const;
+
 export const PYRE_HAZE = {
   coldColor: PYRE_COLORS.haze,
   density: 0.0009,

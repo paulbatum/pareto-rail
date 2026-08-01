@@ -19,7 +19,7 @@ TODO. The spawn timeline is a handful of placeholder targets that keep the runne
 - `src/levels/pyre/camera-path.ts` — construction only; turns those keys into a rail, a time-to-progress curve, and the per-frame aim.
 
 ## Status & notes
-Blockout stage: a ground plane, one rectangular pit, and the analytic height haze over both — cold veil plus a warm glow segment in the pit, verified from the hero pose and the fly-around's flank and overhead vantages. Structures, lighting, materials, gameplay and audio are all still to come.
+Blockout stage: a ground plane, one rectangular pit, the analytic height haze over both, and the molten field on the pit floor (`visuals/molten.ts`, built from the engine TSL surface kit) — all verified from the hero pose and the fly-around's flank and overhead vantages. The hero pose sees the floor only as glow on the haze; the high vantages read its block plan. Structures, lighting, the remaining materials, gameplay and audio are still to come.
 
 Two conventions the next layer depends on:
 
