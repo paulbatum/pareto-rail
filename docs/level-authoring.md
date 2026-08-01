@@ -23,7 +23,9 @@ Shared code lives in `src/engine/`:
 - `camera-feel.ts` contains opt-in FOV kick/offset and trauma-shake primitives with no default bindings; levels decide every trigger and magnitude;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting;
 - `render-config.ts` applies a level's optional renderer-level state — tone mapping, exposure, shadow maps — and resolves the camera depth range every call site builds its camera from;
-- `edge-overlay.ts` builds inflated edge-line shells for meshes and instanced meshes as an authored visual style; levels choose the meshes, colors, and whether to use it at all.
+- `edge-overlay.ts` builds inflated edge-line shells for meshes and instanced meshes as an authored visual style; levels choose the meshes, colors, and whether to use it at all;
+- `tsl-surface.ts` contains TSL node primitives for procedural surfaces: multi-octave fractal noise with anisotropic squash, Chebychev voronoi (per-cell random and distance-to-edge), a two-frequency plate-seam mask, and a color ramp. Node-in/node-out; levels own every material built from them. The voronoi helpers build large shader graphs — budget how many run per fragment;
+- `height-haze.ts` contains an analytic height-falloff depth haze with an optional warm glow along sightlines through a hot region, wired as `scene.fogNode` so every material picks it up; all knobs are live uniforms.
 
 ## Module layout: spine and leaves
 
