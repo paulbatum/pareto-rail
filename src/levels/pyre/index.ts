@@ -19,13 +19,15 @@ export const pyreLevel: LevelDefinition = {
   title: 'Pyre',
   description: 'A slow crawl across a frozen plain toward a burning block city under an overhead megastructure.',
   bpm: PYRE_BPM,
-  // The vista runs kilometres out, well past the shared far plane.
-  render: { farPlane: PYRE_FAR_PLANE },
-  // Blockout stage: flat value-matched placeholder colours, so bloom and
-  // vignette stay off and the massing is judged on its own.
+  // The vista runs kilometres out, well past the shared far plane. AgX is the
+  // tone the level is authored under: emissives roll into filmic orange instead
+  // of clipping, and the cold field keeps its depth.
+  render: { farPlane: PYRE_FAR_PLANE, toneMapping: 'agx', exposure: 0.72 },
   post: {
     clearColor: PYRE_COLORS.sky,
-    bloom: { strength: 0, threshold: 1, radius: 0.1 },
+    // Threshold above 1: only authored emissives (slits, molten field) bloom;
+    // the pale ground must not, or the whole frame goes milky.
+    bloom: { strength: 0.6, threshold: 1.05, radius: 0.22 },
     vignette: false,
   },
   createAudio,

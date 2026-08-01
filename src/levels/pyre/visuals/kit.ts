@@ -11,6 +11,8 @@ import {
   Vector3,
 } from 'three';
 import type { Material } from 'three';
+import { MeshBasicNodeMaterial } from 'three/webgpu';
+import { vec3 } from 'three/tsl';
 import { createEdges, type EdgeStyle } from '../../../engine/edge-overlay';
 import { PYRE_LIGHT } from './world';
 
@@ -224,6 +226,12 @@ export interface CragTower {
   seed?: number;
   color: number;
   outline?: boolean;
+  /**
+   * Optional surface override. When set, the baked vertex colours carry only the
+   * grayscale facet level (base white) and this material is expected to multiply
+   * them in — so facet shading survives under a procedural surface.
+   */
+  material?: Material;
 }
 
 /**
@@ -274,8 +282,8 @@ export function addCragTower(sink: EnvironmentSink, tower: CragTower) {
 
   const raw = new BufferGeometry();
   raw.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
-  const geometry = shadeGeometry(raw, tower.color);
-  const material = new MeshBasicMaterial({ vertexColors: true });
+  const geometry = shadeGeometry(raw, tower.material ? 0xffffff : tower.color);
+  const material = tower.material ?? new MeshBasicMaterial({ vertexColors: true });
   const mesh = new Mesh(geometry, material);
   origin.set(tower.x, tower.y0 ?? 0, tower.z);
   mesh.position.copy(origin);
@@ -285,6 +293,25 @@ export function addCragTower(sink: EnvironmentSink, tower: CragTower) {
     const thinnest = Math.min(tower.depth, ...tower.sections.map(([l, r]) => l + r));
     sink.outline(mesh, tower.color, edgeOffset(thinnest, origin.length()));
   }
+  return sink.add(mesh);
+}
+
+/**
+ * A discrete light slit: flat, sharp, no texture. Authored over 1 so it blooms
+ * and rolls filmic under AgX rather than reading as painted-on colour.
+ */
+export function addSlit(
+  sink: EnvironmentSink,
+  at: { x: number; y: number; z: number; sx: number; sy: number; sz: number },
+  rgb: readonly [number, number, number],
+  strength: number,
+) {
+  const geometry = new BoxGeometry(at.sx, at.sy, at.sz);
+  const material = new MeshBasicNodeMaterial();
+  material.colorNode = vec3(rgb[0], rgb[1], rgb[2]).mul(strength);
+  const mesh = new Mesh(geometry, material);
+  mesh.position.set(at.x, at.y, at.z);
+  sink.track(geometry, material);
   return sink.add(mesh);
 }
 

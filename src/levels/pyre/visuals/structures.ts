@@ -1,4 +1,5 @@
-import { addCragTower, addMass, addPyramid, hash01, type EnvironmentSink, type TowerSection } from './kit';
+import { addCragTower, addMass, addPyramid, addSlit, hash01, type EnvironmentSink, type TowerSection } from './kit';
+import { stoneMaterial } from './stone';
 import { PYRE_BACKDROP, PYRE_MEGASTRUCTURE, PYRE_PYRAMID, PYRE_TOWERS, PYRE_TOWN } from './world';
 
 /**
@@ -10,8 +11,9 @@ export function addStructures(sink: EnvironmentSink) {
   addMass(sink, { ...PYRE_BACKDROP, outline: false });
   addPyramid(sink, { ...PYRE_PYRAMID, yaw: 0 });
 
+  const stone = stoneMaterial();
   for (const tower of PYRE_TOWERS) {
-    addCragTower(sink, { ...tower, sections: tower.sections as readonly TowerSection[] });
+    addCragTower(sink, { ...tower, sections: tower.sections as readonly TowerSection[], material: stone });
   }
 
   for (const slab of PYRE_MEGASTRUCTURE) {
@@ -38,15 +40,21 @@ function addTown(sink: EnvironmentSink) {
         const h = hMin + (hMax - hMin) * hash01(x * 1.9, z * 0.57 + s);
         const w = pitch * (0.55 + 0.4 * hash01(x * 0.11, z * 1.3));
         const d = pitch * (0.55 + 0.4 * hash01(x * 1.7, z * 0.23));
-        addMass(sink, {
-          x: x + (g - 0.5) * pitch * 0.4,
-          y: h / 2,
-          z: z + (hash01(x, z) - 0.5) * pitch * 0.4,
-          sx: w,
-          sy: h,
-          sz: d,
-          color,
-        });
+        const bx = x + (g - 0.5) * pitch * 0.4;
+        const bz = z + (hash01(x, z) - 0.5) * pitch * 0.4;
+        addMass(sink, { x: bx, y: h / 2, z: bz, sx: w, sy: h, sz: d, color });
+        // Lit slits on the camera-facing walls of the far band only: the city
+        // shows its windows to the viewer, not to the void behind it.
+        if (s === 0 && h > 30 && hash01(bx * 0.37, bz * 1.13) > 0.6) {
+          addSlit(sink, {
+            x: bx + (hash01(bx, bz * 3.1) - 0.5) * w * 0.5,
+            y: h * 0.42,
+            z: bz + d / 2 + 1.2,
+            sx: 2.4 + 3 * hash01(bz, bx),
+            sy: Math.min(h * 0.7, 12 + 26 * hash01(bx * 1.7, bz * 0.9)),
+            sz: 1,
+          }, [1.0, 0.45, 0.12], 5);
+        }
       }
     }
   }

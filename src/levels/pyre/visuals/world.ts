@@ -94,13 +94,14 @@ export const PYRE_TOWERS = [
  * frame, converging over the pyramid. Far enough back that the fly-around never
  * passes through one.
  */
+/** Dark blue-grey: the plates are silhouettes against the veil, not lit faces. */
 export const PYRE_MEGASTRUCTURE = [
-  { x: -1500, y: 1700, z: -3400, sx: 4000, sy: 110, sz: 1600, yaw: 18, roll: -38, color: 0x6e8ea0 },
-  { x: 1600, y: 1500, z: -3200, sx: 3600, sy: 110, sz: 1500, yaw: -14, roll: 44, color: 0x6e8ea0 },
+  { x: -1500, y: 1700, z: -3400, sx: 4000, sy: 110, sz: 1600, yaw: 18, roll: -38, color: 0x46606f },
+  { x: 1600, y: 1500, z: -3200, sx: 3600, sy: 110, sz: 1500, yaw: -14, roll: 44, color: 0x46606f },
   /** High canopy slab, kept to the upper left so the starfield corner stays open. */
-  { x: -1600, y: 2900, z: -3100, sx: 5200, sy: 130, sz: 2000, yaw: 14, roll: -18, color: 0x63808f },
-  { x: -2400, y: 700, z: -1600, sx: 320, sy: 2600, sz: 320, yaw: 24, roll: -28, color: PYRE_COLORS.paleStone },
-  { x: 2500, y: 600, z: -1300, sx: 300, sy: 2200, sz: 300, yaw: -20, roll: 24, color: PYRE_COLORS.ice },
+  { x: -1600, y: 2900, z: -3100, sx: 5200, sy: 130, sz: 2000, yaw: 14, roll: -18, color: 0x3d5462 },
+  { x: -2400, y: 700, z: -1600, sx: 320, sy: 2600, sz: 320, yaw: 24, roll: -28, color: 0x54707f },
+  { x: 2500, y: 600, z: -1300, sx: 300, sy: 2200, sz: 300, yaw: -20, roll: 24, color: 0x54707f },
 ] as const;
 
 /**
@@ -120,6 +121,8 @@ export const PYRE_TOWN = {
     /** Side rims, thinning with distance. */
     { x0: -430, x1: -330, z0: -1080, z1: -300, pitch: 58, hMin: 14, hMax: 52 },
     { x0: 340, x1: 440, z0: -1060, z1: -320, pitch: 58, hMin: 14, hMax: 56 },
+    /** The machined deck: a low plate field running under the hero eye to the rim. */
+    { x0: -190, x1: 190, z0: -148, z1: -20, pitch: 30, hMin: 1, hMax: 5 },
   ],
   door: { x: 0, y: 60, z: -1190, sx: 90, sy: 120, sz: 30 },
 };
@@ -155,11 +158,13 @@ export const PYRE_MOLTEN = {
 } as const;
 
 export const PYRE_HAZE = {
-  coldColor: PYRE_COLORS.haze,
-  density: 0.0009,
+  /** Darker and bluer than the old baked tint: AgX lifts accumulated haze. */
+  coldColor: 0x243850,
+  /** Low: the near field stays crisp; the warm column carries the veil. */
+  density: 0.0004,
   floorHeight: 0,
   falloffHeight: 150,
-  glowColor: 0xff5a22,
+  glowColor: 0xff4818,
   /**
    * A rising column, not a pool: from the pit floor up and *behind* the pyramid.
    * The sky background takes no fog, so the veil needs surfaces to accumulate
@@ -169,10 +174,10 @@ export const PYRE_HAZE = {
    * The tall glow falloff is what lets it reach that high before the cold
    * profile would have killed it.
    */
-  glowStart: [0, -140, -1100] as const,
-  glowEnd: [0, 1100, -2400] as const,
+  glowStart: [0, -140, -1600] as const,
+  glowEnd: [0, 1100, -2600] as const,
   glowRadius: 340,
-  glowStrength: 1.2,
+  glowStrength: 1.35,
   glowFalloffHeight: 420,
   glowSamples: 6,
 };
@@ -199,7 +204,8 @@ export const PYRE_GROUND = {
   edge: 3000,
   nearZ: 600,
   farZ: -4000,
-  color: PYRE_COLORS.ice,
+  /** Darker than the tower ice: the reference's plain is shadowed mid grey-blue. */
+  color: 0x87a5b0,
 };
 
 /**
