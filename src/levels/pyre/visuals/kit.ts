@@ -242,7 +242,9 @@ export interface CragTower {
  * erosion at distance.
  */
 export function addCragTower(sink: EnvironmentSink, tower: CragTower) {
-  const jitter = tower.jitter ?? 0.2;
+  // Default kept low: at 0.2 the section gaps open far enough that their
+  // interior faces catch the bright stops and the tower reads as loose slabs.
+  const jitter = tower.jitter ?? 0.12;
   const seed = tower.seed ?? 0;
   const hd = tower.depth / 2;
   const positions: number[] = [];

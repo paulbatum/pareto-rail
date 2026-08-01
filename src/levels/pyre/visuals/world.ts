@@ -68,24 +68,24 @@ export const PYRE_PYRAMID = {
  */
 export const PYRE_TOWERS = [
   {
-    x: -620, z: -420, depth: 220, color: PYRE_COLORS.paleStone, seed: 3, lean: 0.06,
-    sections: [[95, 105, 90], [80, 92, 85], [88, 70, 75], [60, 74, 60], [48, 50, 45]],
+    x: -620, z: -420, depth: 150, color: PYRE_COLORS.paleStone, seed: 3, lean: 0.06,
+    sections: [[62, 70, 115], [54, 60, 100], [58, 46, 88], [40, 48, 72], [28, 33, 58]],
   },
   {
-    x: -840, z: -700, depth: 260, color: PYRE_COLORS.paleStone, seed: 11, lean: -0.04,
-    sections: [[120, 110, 70], [95, 100, 65], [78, 82, 55], [55, 60, 40]],
+    x: -840, z: -700, depth: 175, color: PYRE_COLORS.paleStone, seed: 11, lean: -0.04,
+    sections: [[78, 72, 105], [62, 66, 92], [52, 55, 78], [36, 40, 60]],
   },
   {
-    x: 540, z: -320, depth: 200, color: PYRE_COLORS.ice, seed: 7, lean: -0.05,
-    sections: [[85, 95, 80], [92, 78, 90], [70, 80, 70], [58, 62, 55], [40, 48, 40]],
+    x: 540, z: -320, depth: 140, color: PYRE_COLORS.ice, seed: 7, lean: -0.05,
+    sections: [[56, 62, 110], [60, 51, 118], [46, 52, 92], [38, 41, 72], [26, 31, 55]],
   },
   {
-    x: 790, z: -560, depth: 240, color: PYRE_COLORS.ice, seed: 19, lean: 0.03,
-    sections: [[110, 100, 95], [88, 96, 85], [80, 70, 70], [52, 58, 50]],
+    x: 790, z: -560, depth: 165, color: PYRE_COLORS.ice, seed: 19, lean: 0.03,
+    sections: [[72, 66, 125], [58, 63, 108], [52, 46, 88], [34, 38, 64]],
   },
   {
-    x: 250, z: -1120, depth: 120, color: PYRE_COLORS.ice, seed: 23, lean: 0.02,
-    sections: [[48, 52, 60], [40, 44, 55], [30, 34, 40]],
+    x: 250, z: -1120, depth: 95, color: PYRE_COLORS.ice, seed: 23, lean: 0.02,
+    sections: [[34, 37, 78], [28, 31, 68], [21, 24, 50]],
   },
 ] as const;
 

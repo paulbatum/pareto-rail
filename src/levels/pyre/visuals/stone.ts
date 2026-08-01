@@ -25,11 +25,11 @@ export function stoneMaterial() {
   fac = mix(fac, fractalNoise(pos.mul(vec3(1, 0.06, 1)), { scale: 0.25, octaves: 5 }), 0.32);
 
   const stone = colorRamp([
-    [0.0, [0.055, 0.065, 0.085]],
-    [0.3, [0.16, 0.185, 0.22]],
-    [0.5, [0.34, 0.375, 0.42]],
-    [0.72, [0.56, 0.60, 0.66]],
-    [1.0, [0.24, 0.27, 0.32]],
+    [0.0, [0.045, 0.055, 0.072]],
+    [0.3, [0.125, 0.145, 0.175]],
+    [0.5, [0.26, 0.29, 0.33]],
+    [0.72, [0.42, 0.455, 0.50]],
+    [1.0, [0.185, 0.21, 0.25]],
   ])(fac);
 
   // Bright toward up-left-away, dark toward right-and-camera: the z component
