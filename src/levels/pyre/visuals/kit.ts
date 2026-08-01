@@ -10,7 +10,7 @@ import {
 } from 'three';
 import type { BufferGeometry, Material } from 'three';
 import { createEdges, type EdgeStyle } from '../../../engine/edge-overlay';
-import { PYRE_COLORS, PYRE_LIGHT } from './world';
+import { PYRE_LIGHT } from './world';
 
 /**
  * Construction primitives for pyre's world. Everything here takes world metres
@@ -67,34 +67,22 @@ export class EnvironmentSink {
 }
 
 const LIGHT = new Vector3(...PYRE_LIGHT.direction).normalize();
-const SKY = new Color(PYRE_COLORS.haze);
-
-/**
- * Depth-cue tint. The far ground sits kilometres out and the fly-around never
- * leaves the basin, so distance from the world origin tracks distance from the
- * camera closely enough to bake: it stays true from every vantage, where a tint
- * baked from the hero pose would only be true from one.
- */
-function hazeAmount(distance: number) {
-  const t = (distance - PYRE_LIGHT.hazeNear) / (PYRE_LIGHT.hazeFar - PYRE_LIGHT.hazeNear);
-  return Math.min(Math.max(t, 0), 1) * PYRE_LIGHT.hazeStrength;
-}
 
 const triangle = [new Vector3(), new Vector3(), new Vector3()];
-const hazePoint = new Vector3();
 const edgeA = new Vector3();
 const edgeB = new Vector3();
 const faceNormal = new Vector3();
 const faceColor = new Color();
 
 /**
- * Bakes flat facet shading and distance haze into vertex colours.
+ * Bakes flat facet shading into vertex colours. Aerial perspective is not baked:
+ * the engine height haze does that per pixel.
  *
  * The blockout has no lights, so without this every mass is one unbroken colour
  * and a hundred-metre block reads as a card. Per-facet shading is what makes the
  * masses read as solids from any angle; a lighting pass later replaces it.
  */
-export function shadeGeometry(source: BufferGeometry, color: number, origin: Vector3) {
+export function shadeGeometry(source: BufferGeometry, color: number) {
   const geometry = source.index ? source.toNonIndexed() : source;
   if (geometry !== source) source.dispose();
 
@@ -117,11 +105,10 @@ export function shadeGeometry(source: BufferGeometry, color: number, origin: Vec
     faceColor.copy(base).multiplyScalar(level);
 
     for (let corner = 0; corner < 3; corner += 1) {
-      const haze = hazeAmount(hazePoint.copy(triangle[corner]).add(origin).length());
       const index = (i + corner) * 3;
-      colors[index] = faceColor.r + (SKY.r - faceColor.r) * haze;
-      colors[index + 1] = faceColor.g + (SKY.g - faceColor.g) * haze;
-      colors[index + 2] = faceColor.b + (SKY.b - faceColor.b) * haze;
+      colors[index] = faceColor.r;
+      colors[index + 1] = faceColor.g;
+      colors[index + 2] = faceColor.b;
       normals[index] = faceNormal.x;
       normals[index + 1] = faceNormal.y;
       normals[index + 2] = faceNormal.z;
@@ -166,26 +153,10 @@ export interface Mass {
 const DEG = Math.PI / 180;
 const origin = new Vector3();
 
-/**
- * Haze is a vertex attribute, so it is only as smooth as the mesh carrying it.
- * A kilometre-wide face made of two triangles interpolates it linearly across
- * the whole span and bands badly; splitting every face into roughly 200 m cells
- * keeps the gradient continuous, and across a shared edge two masses then agree.
- */
-const CELL = 200;
-const cells = (extent: number) => Math.min(Math.max(Math.round(extent / CELL), 1), 32);
-
 export function addMass(sink: EnvironmentSink, mass: Mass) {
   origin.set(mass.x, mass.y, mass.z);
-  const box = new BoxGeometry(
-    mass.sx,
-    mass.sy,
-    mass.sz,
-    cells(mass.sx),
-    cells(mass.sy),
-    cells(mass.sz),
-  );
-  const geometry = shadeGeometry(box, mass.color, origin);
+  const box = new BoxGeometry(mass.sx, mass.sy, mass.sz);
+  const geometry = shadeGeometry(box, mass.color);
   const material = new MeshBasicMaterial({ vertexColors: true });
   const mesh = new Mesh(geometry, material);
   mesh.position.copy(origin);

@@ -14,12 +14,12 @@ TODO. The spawn timeline is a handful of placeholder targets that keep the runne
 ## What to read
 - `src/levels/pyre/visuals/world.ts` — every size and place in the world, in metres.
 - `src/levels/pyre/visuals/terrain.ts` — construction only; lays the ground slabs and the pit.
-- `src/levels/pyre/visuals/kit.ts` — the primitives: the disposal sink, facet shading with baked haze, and boxes.
+- `src/levels/pyre/visuals/kit.ts` — the primitives: the disposal sink, facet shading, and boxes. Aerial perspective comes from the engine height haze (`PYRE_HAZE` in `world.ts`), not from the kit.
 - `src/levels/pyre/gameplay.ts` — the fly-around keyframes: each names a time, a camera position and a point to look at.
 - `src/levels/pyre/camera-path.ts` — construction only; turns those keys into a rail, a time-to-progress curve, and the per-frame aim.
 
 ## Status & notes
-Blockout stage, reset to its floor: a ground plane and one rectangular pit. Structures, lighting, materials, gameplay and audio are all still to come.
+Blockout stage: a ground plane, one rectangular pit, and the analytic height haze over both — cold veil plus a warm glow segment in the pit, verified from the hero pose and the fly-around's flank and overhead vantages. Structures, lighting, materials, gameplay and audio are all still to come.
 
 Two conventions the next layer depends on:
 

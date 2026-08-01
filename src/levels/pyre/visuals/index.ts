@@ -1,10 +1,11 @@
-import { BoxGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial, RingGeometry, Scene, SphereGeometry, TorusGeometry } from 'three';
+import { BoxGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial, RingGeometry, Scene, SphereGeometry, TorusGeometry, Vector3 } from 'three';
 import type { Object3D } from 'three';
 import type { EventBus } from '../../../events';
 import { glyphOnCells } from '../../../engine/glyphs';
+import { createHeightHaze } from '../../../engine/height-haze';
 import { EnvironmentSink, type EnvironmentBuild } from './kit';
 import { addGround } from './terrain';
-import { PYRE_COLORS } from './world';
+import { PYRE_COLORS, PYRE_HAZE } from './world';
 
 /**
  * Outline styling. The masses are flat-shaded placeholders, so an edge is what
@@ -35,14 +36,27 @@ export const PYRE_EDGE = {
  */
 const PYRE_EDGE_STYLE: ((faceColor: number) => ReturnType<typeof PYRE_EDGE.style>) | null = PYRE_EDGE.style;
 
-/** The ground and the cut in it. Nothing else is built yet. */
+/** The ground and the cut in it, under the analytic haze. Nothing else is built yet. */
 export function createEnvironment(scene: Scene): EnvironmentBuild {
   const sink = new EnvironmentSink(PYRE_EDGE_STYLE);
   addGround(sink);
 
+  const haze = createHeightHaze({
+    ...PYRE_HAZE,
+    glowStart: new Vector3(...PYRE_HAZE.glowStart),
+    glowEnd: new Vector3(...PYRE_HAZE.glowEnd),
+  });
+  const detachHaze = haze.attach(scene);
+
   const build = sink.build();
   scene.add(build.group);
-  return build;
+  return {
+    group: build.group,
+    dispose() {
+      detachHaze();
+      build.dispose();
+    },
+  };
 }
 
 export function installVisualEventHandlers(_bus: EventBus, _scene: Scene) {

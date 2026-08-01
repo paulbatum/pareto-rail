@@ -32,10 +32,27 @@ export const PYRE_LIGHT = {
   ambient: 0.5,
   key: 0.44,
   sky: 0.14,
-  /** Baked aerial perspective: the distance at which haze starts and saturates. */
-  hazeNear: 1100,
-  hazeFar: 6000,
-  hazeStrength: 0.5,
+};
+
+/**
+ * Analytic depth haze (engine `height-haze`, wired as `scene.fogNode`).
+ * The cold veil dissolves horizontal sightlines while the sky stays clear; the
+ * warm term is the burning city read through it, a segment along the pit's long
+ * axis below the rim. Density is set so a sightline at hero-eye altitude
+ * saturates near the far ground edge, not at the pit.
+ */
+export const PYRE_HAZE = {
+  coldColor: PYRE_COLORS.haze,
+  density: 0.0009,
+  floorHeight: 0,
+  falloffHeight: 150,
+  glowColor: 0xff5a22,
+  glowStrength: 0.9,
+  glowStart: [-180, -120, -675] as const,
+  glowEnd: [180, -120, -675] as const,
+  glowRadius: 180,
+  glowFalloffHeight: 130,
+  glowSamples: 4,
 };
 
 /** The ground: one flat sheet at y = 0, cut around the pit. */
