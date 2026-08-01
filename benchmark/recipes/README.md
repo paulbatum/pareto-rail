@@ -57,6 +57,7 @@ Every configuration id, what it composes, and what it is for. Model and effort a
 | `pi-luna-high` | `gpt-5.6-luna` @ high, `openai-codex` | — | The same model as `codex-luna-high` through a different harness. Harness is part of the intervention, so these are separate ids. |
 | `agy-gemini-3-6-flash-high` | `gemini-3.6-flash` @ high | — | Gemini on the Antigravity subscription. The one eligible configuration that runs unisolated, because its harness cannot be sandboxed; the contamination audit is its only control and the manifest records `sandboxUnavailable`. Also the only configuration priced by tokscale rather than ccusage, so its cost carries basis `rate-card` where every other row carries `metered` — see `agy-cli.md`. |
 | `pi-kimi-k3-max` | `k3` @ max, `kimi-coding` | — | Kimi K3 on Moonshot's own subscription endpoint, against the metered OpenRouter path below. |
+| `pi-openrouter-deepseek-v4-flash-max` | `deepseek/deepseek-v4-flash-0731` @ max, `openrouter` | — | A cheap, fast model at its top thinking level, metered — what the low-cost end of the frontier can reach. |
 | `pi-openrouter-inkling-high` | `thinkingmachines/inkling` @ high, `openrouter` | — | Inkling, metered API billing. |
 | `pi-openrouter-inkling-high-b20` | `thinkingmachines/inkling` @ high, `openrouter` | budget $20 | Budget variant of the above. |
 | `pi-openrouter-kimi-k3-max` | `moonshotai/kimi-k3` @ max, `openrouter` | — | Kimi K3, metered. `max` is the model's only tier, standing in for the others' `high` rather than intensifying it. |
