@@ -25,6 +25,7 @@ const stagingRoot = path.join(root, 'tmp/rollouts-export');
 const indexPath = path.join(root, 'benchmark/manifests/rollouts.json');
 
 const TRANSCRIPT_FILES = ['rollout.jsonl', 'events.jsonl'];
+const SUBAGENT_ROLLOUT_DIRECTORY = 'subagent-rollouts';
 
 // Same credential shapes as export-provenance.mjs. The published transcripts
 // scan clean today; any future hit fails the export before staging.
@@ -106,6 +107,16 @@ function collectTranscripts(runDir) {
         const abs = path.join(harnessPath, name);
         if (fs.existsSync(abs) && fs.statSync(abs).isFile()) {
           files.push({ rel: path.join('stages', stage, harness, name), abs });
+        }
+      }
+      // A harness that delegates into sessions of its own keeps one transcript per subagent here,
+      // beside the parent rollout; they are part of the same run's record.
+      const subagentPath = path.join(harnessPath, SUBAGENT_ROLLOUT_DIRECTORY);
+      if (!fs.existsSync(subagentPath)) continue;
+      for (const name of fs.readdirSync(subagentPath).sort()) {
+        const abs = path.join(subagentPath, name);
+        if (name.endsWith('.jsonl') && fs.statSync(abs).isFile()) {
+          files.push({ rel: path.join('stages', stage, harness, SUBAGENT_ROLLOUT_DIRECTORY, name), abs });
         }
       }
     }

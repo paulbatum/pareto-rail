@@ -63,7 +63,7 @@ The retained `events.jsonl` is deliberately not a verbatim copy of stdout. pi's 
 
 A stage completes when pi exits zero, reports one session id, and its final assistant message reports usage. A nonzero exit, a timeout, a missing session id, missing usage, or an unsupported effort stops the run for controller-failure classification.
 
-pi is the one harness with an operator-invoked same-session recovery for an interrupted process, `--continue-stage`, described under "Resume and recovery" in the controller README. It writes round-suffixed records and is not something the controller does automatically.
+pi has an operator-invoked same-session recovery for an interrupted process, `--continue-stage`, described under "Resume and recovery" in the controller README. It writes round-suffixed records and is not something the controller does automatically.
 
 ## Cost
 

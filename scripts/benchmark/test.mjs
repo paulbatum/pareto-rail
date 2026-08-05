@@ -8,10 +8,11 @@ import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
 import { assertSiblingSharedInputs, codexNetworkAccess, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
-import { harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
+import { collectSessionView, counterUnavailableReason, harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { summarizeAgyCost } from './tokscale-cost.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
+import { entrantSandboxEnabled, sandboxUnavailable, sandboxWarning } from './entrant-sandbox.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import {
   BENCHMARK_SOURCE_ROOT,
@@ -95,6 +96,12 @@ assert.ok(validatePlan(invalidBaselinePolicy).some((error) => error.includes('ba
 assert.equal(codexNetworkAccess({ baselinePolicy: 'open', stage: {} }), true);
 assert.equal(codexNetworkAccess({ baselinePolicy: 'scrubbed', stage: {} }), false);
 assert.equal(codexNetworkAccess({ baselinePolicy: 'scrubbed', stage: { networkAccess: true } }), true);
+// A harness that cannot be confined never claims a boundary: it is refused the sandbox, warned about
+// at launch, and recorded as unavailable even on a scrubbed plan that would otherwise isolate it.
+assert.equal(entrantSandboxEnabled({ baselinePolicy: 'scrubbed', stage: { adapter: 'prime-agent-cli' } }), false);
+assert.equal(sandboxUnavailable({ stage: { adapter: 'prime-agent-cli' } }), true);
+assert.match(sandboxWarning({ baselinePolicy: 'scrubbed', stage: { adapter: 'prime-agent-cli' } }), /Entrant sandbox unavailable for prime-agent-cli/);
+assert.equal(sandboxWarning({ baselinePolicy: 'scrubbed', stage: { adapter: 'pi-cli' } }), null);
 assert.deepEqual(dispositionFor({ kind: 'benchmark', passing: false, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'dnf', reasonCode: 'required-gate-failed' });
 assert.deepEqual(dispositionFor({ kind: 'rehearsal', passing: true, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'rehearsal' });
 const duplicateSlotPlan = structuredClone(plan);
@@ -139,6 +146,7 @@ async function assertContinuationOptionGuards() {
   const runner = path.join(process.cwd(), 'scripts/benchmark/run.mjs');
   const piAdapter = path.join(process.cwd(), 'scripts/benchmark/pi-cli.mjs');
   const claudeAdapter = path.join(process.cwd(), 'scripts/benchmark/claude-cli.mjs');
+  const primeAgentAdapter = path.join(process.cwd(), 'scripts/benchmark/prime-agent-cli.mjs');
   try {
     await assert.rejects(
       () => exec(process.execPath, [runner, '--plan', 'plan.json', '--run', 'run-a1b2c3d4', '--continue-stage', 'true'], { cwd: process.cwd() }),
@@ -167,15 +175,30 @@ async function assertContinuationOptionGuards() {
     }, null, 2)}\n`);
     await assert.rejects(
       () => exec(process.execPath, [runner, '--resume', nonPiRun, '--continue-stage', 'true'], { cwd: process.cwd() }),
-      /--continue-stage is only valid for claude-cli and pi-cli stages/,
+      /--continue-stage is only valid for these stages: claude-cli, pi-cli, prime-agent-cli/,
     );
 
-    for (const adapter of [piAdapter, claudeAdapter]) {
+    for (const adapter of [piAdapter, claudeAdapter, primeAgentAdapter]) {
       await assert.rejects(
         () => exec(process.execPath, [adapter, '--resume-round', '1', '--budget-usd', '2'], { cwd: process.cwd() }),
         /--resume-round cannot be combined with --budget-usd/,
       );
     }
+
+    // The Prime Agent adapter implements no entrant sandbox, so a request for one is refused rather
+    // than silently ignored; the runner always passes false.
+    await assert.rejects(
+      () => exec(process.execPath, [
+        primeAgentAdapter,
+        '--worktree', process.cwd(),
+        '--prompt', path.join(temporary, 'prompt.md'),
+        '--out', path.join(temporary, 'prime-agent-stage'),
+        '--model', 'fake-model',
+        '--effort', 'low',
+        '--sandbox', 'true',
+      ], { cwd: process.cwd() }),
+      /--sandbox true is not supported/,
+    );
 
     const fakePi = path.join(temporary, 'fake-pi.mjs');
     await fs.writeFile(fakePi, `#!/usr/bin/env node
@@ -345,6 +368,40 @@ assert.equal(piCost.models[0].cacheReadTokens, 2560);
 // artifact. The Claude and Codex views declare no prefix, so their names pass through untouched.
 assert.equal(summarizeCost('pi-cli', prefixReport('vendor/[pi] odd')).models[0].modelName, 'vendor/[pi] odd');
 assert.equal(claudeCost.models.some((m) => m.modelName.startsWith('[')), false);
+
+// Prime Agent persists in pi's session format and is priced through the same view, prefix and all.
+const primeAgentCost = summarizeCost('prime-agent-cli', piReport);
+assert.equal(primeAgentCost.view, 'pi');
+assert.equal(primeAgentCost.models[0].modelName, 'gpt-5.6-luna');
+// Its own counter covers the parent session only, so a delegated run has nothing to cross-check
+// against and reconciliation says so rather than flagging the extra subagent spend as a discrepancy.
+assert.equal(harnessCountersForRounds('prime-agent-cli', [{ normalized: { vendorFields: { modelUsage: { 'gpt-5.6-luna': { outputTokens: 76 } } } } }]), null);
+const parentOnly = reconcileCost(primeAgentCost, null, { reason: counterUnavailableReason('prime-agent-cli') });
+assert.equal(parentOnly.reconciliation.status, 'unavailable');
+assert.match(parentOnly.reconciliation.reason, /only the parent session/);
+
+// Delegated subagents are sessions of their own, stored outside the sessions directory the ccusage
+// view reads, so every transcript in the home is collected into one directory before measuring.
+const primeAgentHome = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-prime-agent-home-'));
+try {
+  await fs.mkdir(path.join(primeAgentHome, 'sessions'), { recursive: true });
+  await fs.mkdir(path.join(primeAgentHome, 'session-artifacts/parent/sub-1'), { recursive: true });
+  await fs.mkdir(path.join(primeAgentHome, 'logs'), { recursive: true });
+  await fs.writeFile(path.join(primeAgentHome, 'sessions/parent.jsonl'), '{}\n');
+  await fs.writeFile(path.join(primeAgentHome, 'session-artifacts/parent/sub-1/child.jsonl'), '{}\n');
+  await fs.writeFile(path.join(primeAgentHome, 'session-artifacts/parent/rlm-subagents.jsonl'), '{}\n');
+  await fs.writeFile(path.join(primeAgentHome, 'logs/agent.jsonl'), '{}\n');
+  const view = await collectSessionView(primeAgentHome, path.join(primeAgentHome, 'cost-view'));
+  const collected = (await fs.readdir(view)).sort();
+  assert.equal(collected.length, 2, 'the parent and each subagent transcript are collected');
+  assert.ok(collected.some((name) => name.includes('child.jsonl')));
+  assert.ok(!collected.some((name) => name.includes('rlm-subagents') || name.includes('agent.jsonl')), 'the spawn registry and harness logs are not transcripts');
+  // Rebuilding is idempotent, so repeated polling during a run never double-counts.
+  await collectSessionView(primeAgentHome, path.join(primeAgentHome, 'cost-view'));
+  assert.deepEqual((await fs.readdir(view)).sort(), collected);
+} finally {
+  await fs.rm(primeAgentHome, { recursive: true, force: true });
+}
 
 // tokscale prices the Antigravity CLI, which ccusage cannot see. Its report groups by client, so the
 // summary keeps only the local-SQLite `antigravity-cli` rows: the `antigravity` IDE client reaches a

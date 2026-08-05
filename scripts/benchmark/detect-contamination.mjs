@@ -69,6 +69,9 @@ const SHELL_TOOL_NAMES = new Set([
   'cells',
   'exec',
   'exec_command',
+  // Prime Agent's only tool is a persistent IPython kernel, so its `code` argument carries both
+  // shell commands (`%%bash` cells) and Python that reads and copies files directly.
+  'ipython',
   'run_command',
   'shell',
 ]);
@@ -252,7 +255,7 @@ function shellCommandSource(call) {
     return [];
   }
   if (!input || typeof input !== 'object' || !SHELL_TOOL_NAMES.has(name)) return [];
-  for (const key of ['command', 'cmd', 'script']) if (typeof input[key] === 'string') return [input[key]];
+  for (const key of ['command', 'cmd', 'script', 'code']) if (typeof input[key] === 'string') return [input[key]];
   return [];
 }
 
@@ -456,6 +459,7 @@ function normalizeAdapter(adapter) {
   if (adapter === 'codex-cli' || adapter === 'codex') return 'codex-cli';
   if (adapter === 'claude-cli' || adapter === 'claude') return 'claude-cli';
   if (adapter === 'pi-cli' || adapter === 'pi') return 'pi-cli';
+  if (adapter === 'prime-agent-cli' || adapter === 'prime-agent') return 'prime-agent-cli';
   if (adapter === 'agy-cli' || adapter === 'agy') return 'agy-cli';
   return null;
 }
@@ -988,12 +992,16 @@ async function findTranscriptFiles(runDirectory) {
   const rootEvents = path.join(runDirectory, 'events.jsonl');
   if (await isFile(rootEvents)) files.push(rootEvents);
 
-  const rollouts = files.filter((file) => path.basename(file) === 'rollout.jsonl').sort();
+  const rollouts = files.filter((file) => path.basename(file) !== 'events.jsonl').sort();
   if (rollouts.length > 0) return rollouts;
   return files.filter((file) => path.basename(file) === 'events.jsonl').sort();
 }
 
-async function walk(directory, files) {
+// A harness that delegates into sessions of its own retains one transcript per subagent beside the
+// parent rollout, and a delegated entrant does much of its work there — so those are audited too.
+const SUBAGENT_ROLLOUT_DIRECTORY = 'subagent-rollouts';
+
+async function walk(directory, files, { subagentRollouts = false } = {}) {
   let entries;
   try {
     entries = await fsp.readdir(directory, { withFileTypes: true });
@@ -1002,8 +1010,11 @@ async function walk(directory, files) {
   }
   for (const entry of entries) {
     const fullPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) await walk(fullPath, files);
-    else if (entry.isFile() && (entry.name === 'rollout.jsonl' || entry.name === 'events.jsonl')) files.push(fullPath);
+    if (entry.isDirectory()) await walk(fullPath, files, { subagentRollouts: subagentRollouts || entry.name === SUBAGENT_ROLLOUT_DIRECTORY });
+    else if (!entry.isFile()) continue;
+    // The subagent registry records spawns rather than tool calls.
+    else if (subagentRollouts && entry.name.endsWith('.jsonl') && entry.name !== 'rlm-subagents.jsonl') files.push(fullPath);
+    else if (entry.name === 'rollout.jsonl' || entry.name === 'events.jsonl') files.push(fullPath);
   }
 }
 

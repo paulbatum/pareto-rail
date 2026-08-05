@@ -37,6 +37,7 @@
     "benchmark:claude": "node scripts/benchmark/claude-cli.mjs",
     "benchmark:pi": "node scripts/benchmark/pi-cli.mjs",
     "benchmark:agy": "node scripts/benchmark/agy-cli.mjs",
+    "benchmark:prime-agent": "node scripts/benchmark/prime-agent-cli.mjs",
     "benchmark:run": "node scripts/benchmark/run.mjs",
     "benchmark:cut-baseline": "node scripts/benchmark/cut-baseline.mjs",
     "benchmark:results": "node scripts/benchmark/results.mjs",

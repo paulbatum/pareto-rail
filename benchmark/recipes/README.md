@@ -27,6 +27,7 @@ Harnesses:
 - [`claude-cli.md`](claude-cli.md) — Claude Code CLI
 - [`pi-cli.md`](pi-cli.md) — pi CLI, the one harness that selects a provider, and therefore a billing path
 - [`agy-cli.md`](agy-cli.md) — Antigravity CLI, which cannot be sandboxed and is not priced by ccusage
+- [`prime-agent-cli.md`](prime-agent-cli.md) — Prime Agent CLI, whose only tool is an IPython kernel and whose delegated subagents are sessions of their own; also cannot be sandboxed
 
 Cross-cutting:
 

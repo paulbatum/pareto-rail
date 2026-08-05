@@ -98,6 +98,18 @@ function paths(findings) {
   assert.deepEqual(classes(result.findings), ['content-read', 'listing', 'outside-worktree']);
 }
 
+// Prime Agent: the same session shape as pi, but every action arrives as Python in one `ipython`
+// tool call, so the code is read as shell activity — %%bash commands and Python file reads alike.
+{
+  const records = [
+    { type: 'message', message: { role: 'assistant', content: [{ type: 'toolCall', name: 'ipython', arguments: { code: "%%bash\ncat public/level-content/other-zz99/hero.png" } }] } },
+    { type: 'message', message: { role: 'assistant', content: [{ type: 'toolCall', name: 'ipython', arguments: { code: "print(open('src/benchmark-levels/other-zz99/gameplay.ts').read())" } }] } },
+    { type: 'message', message: { role: 'assistant', content: [{ type: 'toolCall', name: 'ipython', arguments: { code: "import shutil; shutil.copy('/home/entrant/secrets.txt', 'notes.txt')" } }] } },
+  ];
+  const result = auditTranscriptRecords(records, { ...options, adapter: 'prime-agent-cli' });
+  assert.deepEqual(classes(result.findings), ['content-read', 'content-read', 'outside-worktree']);
+}
+
 // agy: tool calls hang off a PLANNER_RESPONSE step as {name, args}, with capitalized
 // argument keys. The same three cases are recognized through that shape.
 {

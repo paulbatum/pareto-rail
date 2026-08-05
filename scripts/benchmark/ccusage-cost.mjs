@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail } from './common.mjs';
@@ -21,6 +22,11 @@ const HARNESS = {
   // ccusage labels every pi model `[pi] <id>` for display. That prefix is a ccusage artifact, not
   // part of the model's identity, so it is stripped here rather than recorded in a run manifest.
   'pi-cli': { view: 'pi', totalsCostKey: 'totalCost', shape: 'model-breakdowns', modelNamePrefix: '[pi] ', scope: { kind: 'path-flag', flag: '--pi-path', homeRelative: 'sessions' } },
+  // Prime Agent persists in pi's session format, so the pi view prices it — but only the parent
+  // session lives under `sessions/`. A delegated subagent is a session of its own under
+  // `session-artifacts/`, which the view never reaches, so the whole home is collected into one
+  // sessions directory of links first and ccusage is pointed at that instead.
+  'prime-agent-cli': { view: 'pi', totalsCostKey: 'totalCost', shape: 'model-breakdowns', modelNamePrefix: '[pi] ', scope: { kind: 'collected-path-flag', flag: '--pi-path', viewRelative: 'cost-view' } },
 };
 
 export function harnessForAdapter(adapter) {
@@ -126,9 +132,23 @@ export function harnessCounters(usage) {
 // being compared with ccusage's replay of the one appended session transcript. This is measured, not
 // assumed: on every multi-round run on record a Codex final round equals the replay, while summed
 // Claude and pi rounds do.
-const ACCUMULATING_ADAPTERS = new Set(['claude-cli', 'pi-cli']);
+const ACCUMULATING_ADAPTERS = new Set(['claude-cli', 'pi-cli', 'prime-agent-cli']);
+
+// Harnesses whose counter covers only the session that emitted it. Prime Agent delegates into full
+// sessions of their own, whose spend the parent's event stream never reports, so its counter is
+// systematically below a replay that includes the subagents — the shape reconciliation reads as a
+// replay it should keep and a run it should flag. There is nothing to cross-check the run total
+// against, so none is claimed.
+const PARENT_ONLY_COUNTER_ADAPTERS = new Set(['prime-agent-cli']);
+
+export function counterUnavailableReason(adapter) {
+  return PARENT_ONLY_COUNTER_ADAPTERS.has(adapter)
+    ? 'The harness counts only the parent session, so it cannot cross-check a run that may include delegated subagent sessions.'
+    : 'The harness reports no per-model counter to cross-check.';
+}
 
 export function harnessCountersForRounds(adapter, usages) {
+  if (PARENT_ONLY_COUNTER_ADAPTERS.has(adapter)) return null;
   const present = usages.filter(Boolean);
   if (present.length === 0) return null;
   if (!ACCUMULATING_ADAPTERS.has(adapter)) return harnessCounters(present.at(-1));
@@ -152,8 +172,8 @@ export function harnessCountersForRounds(adapter, usages) {
 // message, while a counter far below replay would mean it covers only part of the session, and the
 // replay stands. Counters naming a model the run does not attribute (Claude Code's auxiliary
 // summarizer, which leaves no rollout) are ignored here and declared in benchmark/README.md.
-export function reconcileCost(summary, counters) {
-  if (!counters) return { ...summary, reconciliation: { status: 'unavailable', reason: 'The harness reports no per-model counter to cross-check.' } };
+export function reconcileCost(summary, counters, { reason = counterUnavailableReason(null) } = {}) {
+  if (!counters) return { ...summary, reconciliation: { status: 'unavailable', reason } };
   const adjustments = [];
   let totalUsd = summary.totalUsd;
   const models = summary.models.map((model) => {
@@ -202,7 +222,7 @@ export async function ccusageVersion(node = process.execPath) {
 export async function measureRunCost({ adapter, home, node = process.execPath, tolerateEmpty = false }) {
   try {
     const harness = harnessForAdapter(adapter);
-    const { stdout } = await run(node, [CCUSAGE_CLI, harness.view, 'session', '--json', ...scopeArgs(harness, home)], {
+    const { stdout } = await run(node, [CCUSAGE_CLI, harness.view, 'session', '--json', ...await scopeArgs(harness, home)], {
       env: scopeEnv(harness, home),
     });
     let report;
@@ -222,9 +242,48 @@ export async function measureRunCost({ adapter, home, node = process.execPath, t
 
 // A path-flag harness is scoped by argument, so it must not also inherit an operator env var that
 // would widen the search back out to the shared home.
-function scopeArgs(harness, home) {
-  if (harness.scope.kind !== 'path-flag') return [];
-  return [harness.scope.flag, path.join(home, harness.scope.homeRelative)];
+async function scopeArgs(harness, home) {
+  if (harness.scope.kind === 'path-flag') return [harness.scope.flag, path.join(home, harness.scope.homeRelative)];
+  if (harness.scope.kind === 'collected-path-flag') {
+    const view = path.join(home, harness.scope.viewRelative);
+    await collectSessionView(home, view);
+    return [harness.scope.flag, view];
+  }
+  return [];
+}
+
+// Gather every transcript in the home — the parent session and each delegated subagent session — into
+// one `sessions/` directory the ccusage view can read. Entries are hard links to the live files, so a
+// poll during a run prices the transcripts as they stand; the view is rebuilt on every measurement and
+// is the only path ccusage is pointed at, so nothing is counted twice.
+export async function collectSessionView(home, view) {
+  const destination = path.join(view, 'sessions');
+  await fsp.rm(view, { recursive: true, force: true });
+  await fsp.mkdir(destination, { recursive: true });
+  for (const source of await transcripts(home, view)) {
+    const name = path.relative(home, source).split(path.sep).join('-');
+    await fsp.link(source, path.join(destination, name)).catch(() => fsp.copyFile(source, path.join(destination, name)));
+  }
+  return destination;
+}
+
+async function transcripts(directory, view) {
+  let entries;
+  try {
+    entries = await fsp.readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+  const found = [];
+  for (const entry of entries) {
+    const fullPath = path.join(directory, entry.name);
+    if (fullPath === view || entry.name === 'logs') continue;
+    if (entry.isDirectory()) found.push(...await transcripts(fullPath, view));
+    // `rlm-subagents.jsonl` is a registry of spawns rather than a transcript, and carries no usage.
+    else if (entry.isFile() && entry.name.endsWith('.jsonl') && entry.name !== 'rlm-subagents.jsonl') found.push(fullPath);
+  }
+  return found;
 }
 
 function scopeEnv(harness, home) {

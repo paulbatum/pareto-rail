@@ -15,7 +15,7 @@ import {
   sha256,
 } from './common.mjs';
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
-import { ccusageVersion, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
+import { ccusageVersion, counterUnavailableReason, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { measureAgyRunCost, tokscaleVersion } from './tokscale-cost.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
@@ -40,7 +40,7 @@ async function writeJson(filePath, value) {
 // the Codex path: same stage shape (model, effort, timeoutSeconds), different process runner.
 // Adapters whose harness can re-enter its own recorded session, so an interrupted stage continues with
 // the entrant's context intact instead of restarting against a worktree it does not remember.
-const CONTINUABLE_ADAPTERS = new Set(['claude-cli', 'pi-cli']);
+const CONTINUABLE_ADAPTERS = new Set(['claude-cli', 'pi-cli', 'prime-agent-cli']);
 
 const ADAPTERS = {
   'codex-cli': {
@@ -90,6 +90,30 @@ const ADAPTERS = {
     stageArgs: (definition) => [
       ...(definition.stage.provider ? ['--provider', definition.stage.provider] : []),
       '--sandbox', String(entrantSandboxEnabled(definition)),
+    ],
+  },
+  'prime-agent-cli': {
+    scriptPath: path.join(ROOT, 'scripts/benchmark/prime-agent-cli.mjs'),
+    stageDir: 'stages/solo/prime-agent',
+    binField: 'primeAgentBin',
+    binFlag: '--prime-agent-bin',
+    harnessName: 'Prime Agent',
+    // Prime Agent reaches a model through a selectable provider, as pi does, so the billing account
+    // is a property of the run rather than of the harness.
+    modelProvider: (definition) => `Prime Agent provider ${definition.stage.provider ?? 'default'}`,
+    homeEnvVar: 'PRIME_AGENT_CODING_AGENT_DIR',
+    credential: { sourceRelative: '.prime/agent/auth.json', dest: 'auth.json' },
+    // A stage stops with the entrant, as it does on every other harness. `autonomous` is the harness's
+    // own continuation loop and is an intervention of its own — a comparable configuration would need
+    // the same treatment on the other harnesses first — so a row opts into it explicitly and pairs it
+    // with `autonomousGate`, the command the harness stops on. This adapter implements no sandbox and
+    // cannot honor a request for one, so it is always told false; see UNSANDBOXABLE_ADAPTERS in
+    // entrant-sandbox.mjs.
+    stageArgs: (definition) => [
+      ...(definition.stage.provider ? ['--provider', definition.stage.provider] : []),
+      '--autonomous', String(definition.stage.autonomous ?? false),
+      ...(definition.stage.autonomousGate ? ['--autonomous-gate', definition.stage.autonomousGate] : []),
+      '--sandbox', 'false',
     ],
   },
   'agy-cli': {
@@ -150,7 +174,7 @@ async function main() {
     definition = await readJson(path.join(outputDirectory, 'run-definition.json'));
     const errors = validateRunDefinition(definition);
     if (errors.length) fail(`Invalid run definition:\n${errors.map((error) => `- ${error}`).join('\n')}`);
-    if (continueStage && !CONTINUABLE_ADAPTERS.has(definition.stage.adapter)) fail(`--continue-stage is only valid for ${[...CONTINUABLE_ADAPTERS].sort().join(' and ')} stages.`);
+    if (continueStage && !CONTINUABLE_ADAPTERS.has(definition.stage.adapter)) fail(`--continue-stage is only valid for these stages: ${[...CONTINUABLE_ADAPTERS].sort().join(', ')}.`);
     if (continueStage && definition.stage.budget) fail('--continue-stage cannot be used with a budgeted stage; the budget protocol owns its continuations.');
   } else {
     const planPath = path.resolve(options.plan);
@@ -528,6 +552,8 @@ function validateStage(value, label, errors) {
   if (value.provider !== undefined) validateString(value.provider, `${label}.provider`, errors);
   if (value.networkAccess !== undefined && typeof value.networkAccess !== 'boolean') errors.push(`${label}.networkAccess must be a boolean.`);
   if (value.sandbox !== undefined && typeof value.sandbox !== 'boolean') errors.push(`${label}.sandbox must be a boolean.`);
+  if (value.autonomous !== undefined && typeof value.autonomous !== 'boolean') errors.push(`${label}.autonomous must be a boolean.`);
+  if (value.autonomousGate !== undefined) validateString(value.autonomousGate, `${label}.autonomousGate`, errors);
   if (value.budget !== undefined) {
     if (!isPlainObject(value.budget)) errors.push(`${label}.budget must be an object.`);
     else if (!(typeof value.budget.usd === 'number' && Number.isFinite(value.budget.usd) && value.budget.usd > 0)) errors.push(`${label}.budget.usd must be a positive finite number.`);
@@ -753,6 +779,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
     : reconcileCost(
       await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome }),
       harnessCountersForRounds(definition.stage.adapter, await loadRoundUsages(outputDirectory, adapter)),
+      { reason: counterUnavailableReason(definition.stage.adapter) },
     );
   for (const warning of reconciliationWarnings(cost.reconciliation)) console.warn(warning);
   const costSource = COST_SOURCES[usesTokscale ? 'tokscale' : 'ccusage'];

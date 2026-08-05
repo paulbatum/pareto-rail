@@ -36,11 +36,17 @@ export const SANDBOXED_ADAPTERS = new Set(['claude-cli', 'pi-cli']);
 // tools, which agy has no equivalent of. Confining it would mean wrapping the whole process with a
 // host-side egress allowlist — real work nobody has done.
 //
+// Prime Agent is there for a different reason. It shares pi's extension API, but wrapping tools buys
+// nothing: it executes through a persistent IPython kernel and spawns delegated subagents as separate
+// processes, both outside the harness process a `tool_call` hook sees. The boundary would have to sit
+// around the whole process tree, which also carries the model API traffic the run depends on, so an
+// egress-allowlisted namespace is the only shape that works — again, real work nobody has done.
+//
 // From v3 this is a warning rather than a bar. A row on such a harness runs unisolated, the runner
 // says so at launch, and the manifest records it, with the contamination audit as the control — the
 // same footing open-policy rows have always run on. The distinction the record has to preserve is
 // between an entrant that was not isolated by policy and one that could not be.
-export const UNSANDBOXABLE_ADAPTERS = new Set(['agy-cli']);
+export const UNSANDBOXABLE_ADAPTERS = new Set(['agy-cli', 'prime-agent-cli']);
 
 export function sandboxUnavailable(definition) {
   return UNSANDBOXABLE_ADAPTERS.has(definition?.stage?.adapter);
