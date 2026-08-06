@@ -10,8 +10,11 @@ import { assertSandboxDependencies, findHeadlessShell, PRIMARY_REPOSITORY_ROOT, 
 import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
+  COMPACTION_CONTINUATION_MESSAGE,
+  compactionTruncation,
   fail,
   MANUAL_RESUME_MESSAGE,
+  MAX_COMPACTION_CONTINUATIONS,
   parseArgs,
   parseResumeRound,
   pathInside,
@@ -223,56 +226,76 @@ async function main() {
   }
 
   if (timeoutSeconds !== undefined) deadline = Date.now() + timeoutSeconds * 1_000;
-  let turn;
-  let eventLogs;
-  if (resumeRound === undefined) {
-    turn = await runTurn({
-      executable: piBin,
-      args: sharedArgs,
-      cwd: worktree,
-      input: prompt,
-      timeoutSeconds,
-      outputDirectory,
-      cliVersion,
-      model,
-      expectedSessionId: undefined,
-      round: 0,
-      env: childEnv,
-    });
-    eventLogs = [{ path: 'events.jsonl', droppedLines: turn.result.droppedLines }];
-  } else {
-    turn = await runTurn({
-      executable: piBin,
-      args: [...sharedArgs, '--session', resumedSessionId],
-      cwd: worktree,
-      input: MANUAL_RESUME_MESSAGE,
-      timeoutSeconds,
-      outputDirectory,
-      cliVersion,
-      model,
-      expectedSessionId: resumedSessionId,
-      round: resumeRound,
-      env: childEnv,
-    });
-    eventLogs = [
-      { path: 'events.jsonl', droppedLines: 0 },
-      ...Array.from({ length: resumeRound }, (_, index) => ({
-        path: `events-resume-${index + 1}.jsonl`,
-        droppedLines: index + 1 === resumeRound ? turn.result.droppedLines : 0,
-      })),
-    ];
-  }
+  // Round 0 is the launch; every later round is a resume of the same session, whatever prompted it.
+  let round = resumeRound ?? 0;
+  const eventLogs = Array.from({ length: round }, (_, index) => ({ path: roundEventLog(index), droppedLines: 0 }));
+  let turn = await runTurn({
+    executable: piBin,
+    args: round === 0 ? sharedArgs : [...sharedArgs, '--session', resumedSessionId],
+    cwd: worktree,
+    input: round === 0 ? prompt : MANUAL_RESUME_MESSAGE,
+    timeoutSeconds,
+    outputDirectory,
+    cliVersion,
+    model,
+    expectedSessionId: resumedSessionId,
+    round,
+    env: childEnv,
+  });
+  eventLogs.push({ path: roundEventLog(round), droppedLines: turn.result.droppedLines });
   const sessionId = turn.usage.sessionId;
   const finalMessage = path.join(outputDirectory, 'final-message.md');
   await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
 
+  // WORKAROUND for https://github.com/PrimeIntellect-ai/prime-agent/issues/674, which pi shares: a
+  // headless session ends at its first threshold compaction with the entrant's work unfinished.
+  // Resuming the session puts the entrant back where it was, with its compacted context and its
+  // worktree, so the adapter does it rather than leaving a long run to die at its first compaction.
+  // This is not the budget protocol's continuation: it only ever repairs a stop pi should not have
+  // made. Delete it, and its detector in common.mjs, once the upstream issue is fixed.
+  const compactionContinuations = [];
+  // A resumed round that does no tool work is an entrant with nothing left to do, so the compaction it
+  // stopped at cost the run nothing and further rounds would only repeat "done".
+  let compactionSettled = false;
+  const continueThroughCompaction = async () => {
+    compactionSettled = false;
+    while (turn.usage.truncation && compactionContinuations.length < MAX_COMPACTION_CONTINUATIONS && remainingTime(deadline) > 0) {
+      const reason = turn.usage.truncation;
+      console.warn(`[workaround] pi stopped early: ${reason}. Resuming the same session (round ${round + 1}). This works around https://github.com/PrimeIntellect-ai/prime-agent/issues/674 and should be removed once that is fixed.`);
+      const startedAt = new Date().toISOString();
+      round += 1;
+      turn = await runTurn({
+        executable: piBin,
+        args: [...sharedArgs, '--session', sessionId],
+        cwd: worktree,
+        input: COMPACTION_CONTINUATION_MESSAGE,
+        timeoutSeconds: remainingTimeoutSeconds(deadline),
+        outputDirectory,
+        cliVersion,
+        model,
+        expectedSessionId: sessionId,
+        round,
+        env: childEnv,
+      });
+      eventLogs.push({ path: roundEventLog(round), droppedLines: turn.result.droppedLines });
+      await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
+      compactionContinuations.push({ round, reason, startedAt, finishedAt: turn.finishedAt, exitCode: turn.result.code, toolCalls: turn.usage.toolCalls });
+      if (turn.result.code !== 0) break;
+      if (turn.usage.toolCalls === 0) {
+        compactionSettled = true;
+        break;
+      }
+    }
+  };
+  await continueThroughCompaction();
+
   const resumes = [];
   let finalSpend;
-  if (budgetUsd !== undefined && turn.result.code === 0) {
+  if (budgetUsd !== undefined && turn.result.code === 0 && !turn.usage.truncation) {
     finalSpend = await poller.refresh();
     while (shouldResume({ finalFraction: finalSpend.fraction, roundsUsed: resumes.length, remainingMs: remainingTime(deadline) })) {
-      const round = resumes.length + 1;
       const resumeStartedAt = new Date().toISOString();
+      round += 1;
       turn = await runTurn({
         executable: piBin,
         args: [...sharedArgs, '--session', sessionId],
@@ -287,7 +310,7 @@ async function main() {
         env: childEnv,
       });
       await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
-      eventLogs.push({ path: `events-resume-${round}.jsonl`, droppedLines: turn.result.droppedLines });
+      eventLogs.push({ path: roundEventLog(round), droppedLines: turn.result.droppedLines });
       resumes.push({
         round,
         spentUsd: finalSpend.spentUsd,
@@ -297,6 +320,9 @@ async function main() {
         exitCode: turn.result.code,
       });
       if (turn.result.code !== 0) break;
+      // A budget round can be cut short by the same compaction stop; repair it before measuring spend.
+      await continueThroughCompaction();
+      if (turn.result.code !== 0 || turn.usage.truncation) break;
       finalSpend = await poller.refresh();
     }
   }
@@ -309,8 +335,11 @@ async function main() {
   }
 
   const rollout = await captureRollout(sessionId, outputDirectory);
+  const truncation = compactionSettled ? null : turn.usage.truncation ?? null;
   await writeJson(path.join(outputDirectory, 'result.json'), {
-    result: turn.result.code === 0 ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
+    result: truncation ? 'truncated' : turn.result.code === 0 ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
+    ...(truncation ? { truncation } : {}),
+    ...(compactionContinuations.length > 0 ? { compactionContinuations, compactionSettled, compactionWorkaround: 'https://github.com/PrimeIntellect-ai/prime-agent/issues/674' } : {}),
     exitCode: turn.result.code,
     timedOut: turn.result.timedOut,
     sessionId: turn.usage.sessionId,
@@ -328,7 +357,10 @@ async function main() {
     ...(budgetSummary ? { budget: { path: 'budget.json' } } : {}),
   });
 
-  if (turn.result.code !== 0) process.exitCode = turn.result.code || 1;
+  if (truncation) {
+    console.error(`pi stopped before the entrant finished: ${truncation}. Automatic continuation did not clear it after ${compactionContinuations.length} round${compactionContinuations.length === 1 ? '' : 's'}; the session is intact, so resume it with --continue-stage true rather than relaunching.`);
+    process.exitCode = 1;
+  } else if (turn.result.code !== 0) process.exitCode = turn.result.code || 1;
   else console.log(JSON.stringify({ sessionId: turn.usage.sessionId, usage: turn.usage.normalized, wallTimeSeconds: turn.result.wallTimeSeconds }));
 }
 
@@ -363,6 +395,10 @@ async function runTurn({ executable, args, cwd, input, timeoutSeconds, outputDir
   await writeJson(path.join(outputDirectory, `raw-usage${suffix}.json`), usage);
   if (round > 0) await fs.writeFile(path.join(outputDirectory, `final-message${suffix}.md`), usage.finalMessage, 'utf8');
   return { result, usage, startedAt, finishedAt };
+}
+
+function roundEventLog(round) {
+  return round === 0 ? 'events.jsonl' : `events-resume-${round}.jsonl`;
 }
 
 function remainingTime(deadline) {
@@ -406,7 +442,7 @@ async function readDotenv(dotenvPath, key) {
 // pi streams one JSON event per line. Unlike the Claude and Codex counters, which restate the whole
 // session on every turn, each pi `message_end` carries only that one API call's usage — so the run's
 // usage is the sum across assistant messages, never the last one.
-function extractUsage(eventLog, model, expectedSessionId) {
+export function extractUsage(eventLog, model, expectedSessionId) {
   const events = eventLog.split('\n').filter(Boolean).map((line, index) => {
     try {
       return JSON.parse(line);
@@ -422,8 +458,9 @@ function extractUsage(eventLog, model, expectedSessionId) {
 
   const assistant = events.filter((event) => event.type === 'message_end' && event.message?.role === 'assistant');
   if (assistant.length === 0) fail('pi JSON reported no assistant message_end events to measure.');
+  const toolCalls = events.filter((event) => event.type === 'tool_execution_start').length;
 
-  const totals = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, reasoningTokens: 0 };
+  const totals ={ inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, reasoningTokens: 0 };
   const perModel = new Map();
   for (const [index, event] of assistant.entries()) {
     const usage = event.message.usage;
@@ -459,6 +496,8 @@ function extractUsage(eventLog, model, expectedSessionId) {
 
   return {
     sessionId: session.id,
+    ...(compactionTruncation(events) ? { truncation: compactionTruncation(events) } : {}),
+    toolCalls,
     // Matched against the cost summary's per-model rows in the runner's stage split.
     initResolvedModel: assistant.at(-1).message.model ?? model,
     assistantMessageCount: assistant.length,

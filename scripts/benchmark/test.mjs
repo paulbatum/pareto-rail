@@ -12,7 +12,8 @@ import { collectSessionView, counterUnavailableReason, harnessCounters, harnessC
 import { summarizeAgyCost } from './tokscale-cost.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
-import { compactionTruncation, extractUsage } from './prime-agent-cli.mjs';
+import { extractUsage } from './prime-agent-cli.mjs';
+import { extractUsage as extractPiUsage } from './pi-cli.mjs';
 import { entrantSandboxEnabled, sandboxUnavailable, sandboxWarning } from './entrant-sandbox.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import {
@@ -21,7 +22,7 @@ import {
 } from '../level-footprint.mjs';
 import { createWorktree, derivePayload, sealEvaluatedCommit } from './admin.mjs';
 import { pruneRun } from './manage-run.mjs';
-import { sha256 } from './common.mjs';
+import { compactionTruncation, sha256 } from './common.mjs';
 
 const exec = promisify(execFile);
 
@@ -370,9 +371,10 @@ assert.equal(piCost.models[0].cacheReadTokens, 2560);
 assert.equal(summarizeCost('pi-cli', prefixReport('vendor/[pi] odd')).models[0].modelName, 'vendor/[pi] odd');
 assert.equal(claudeCost.models.some((m) => m.modelName.startsWith('[')), false);
 
-// A headless Prime Agent session ends at its first threshold compaction (filed upstream), leaving a
-// half-finished entrant behind a zero exit code. Both endings are detected so the stage fails and the
-// controller's same-session continuation is available instead of the truncation being sealed.
+// A headless pi or Prime Agent session ends at its first threshold compaction (filed upstream),
+// leaving a half-finished entrant behind a zero exit code. Both endings are detected so the stage
+// fails and the controller's same-session continuation is available instead of the truncation being
+// sealed.
 const assistantEnd = (message) => ({ type: 'message_end', message: { role: 'assistant', ...message } });
 assert.match(compactionTruncation([
   assistantEnd({ stopReason: 'toolUse' }),
@@ -406,6 +408,25 @@ const usageEvent = (toolCalls) => eventLog([
 assert.equal(extractUsage(usageEvent(3), 'gpt-5.6-luna').toolCalls, 3);
 assert.equal(extractUsage(usageEvent(0), 'gpt-5.6-luna').toolCalls, 0);
 assert.equal(extractUsage(usageEvent(0), 'gpt-5.6-luna').truncation, undefined);
+
+// pi shares the print-mode idle wait behind that stop, so its adapter reports the same two fields and
+// runs the same continuation loop. The truncation case is the shape a real kimi run ended on: the
+// provider cut the assistant message off on a length stop, pi ended the agent loop, compacted, and
+// settled — an exit code of zero over an entrant that never finished.
+const piUsageEvent = (trailing) => eventLog([
+  { type: 'session', id: 'session-1' },
+  { type: 'tool_execution_start', toolName: 'bash' },
+  assistantEnd({ stopReason: 'length', content: [{ type: 'text', text: '' }], usage: { input: 1, output: 1 }, model: 'k3' }),
+  { type: 'agent_end' },
+  ...trailing,
+]);
+assert.equal(extractPiUsage(piUsageEvent([]), 'k3').truncation, undefined);
+assert.equal(extractPiUsage(piUsageEvent([]), 'k3').toolCalls, 1);
+assert.match(extractPiUsage(piUsageEvent([
+  { type: 'compaction_start', reason: 'threshold' },
+  { type: 'compaction_end', reason: 'threshold' },
+  { type: 'agent_settled' },
+]), 'k3').truncation, /ended at a threshold compaction/);
 
 // Prime Agent persists in pi's session format and is priced through the same view, prefix and all.
 const primeAgentCost = summarizeCost('prime-agent-cli', piReport);

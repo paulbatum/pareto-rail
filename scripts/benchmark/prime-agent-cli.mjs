@@ -9,8 +9,11 @@ import { parseBudgetUsd, startBudgetPoller, writeBudgetSummary } from './budget-
 import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
+  COMPACTION_CONTINUATION_MESSAGE,
+  compactionTruncation,
   fail,
   MANUAL_RESUME_MESSAGE,
+  MAX_COMPACTION_CONTINUATIONS,
   parseArgs,
   parseResumeRound,
   pathInside,
@@ -61,15 +64,6 @@ const AUTONOMOUS_LIMIT_NOTICE = 'Autonomous run stopped before terminal evidence
 const SESSION_BUSY_PATTERN = /Session is already active/i;
 const SESSION_BUSY_ATTEMPTS = 30;
 const SESSION_BUSY_DELAY_MS = 10_000;
-
-// Bound on the compaction workaround below. A stage is bounded by wall clock like every other
-// harness; this only stops a pathological loop where every resume dies immediately.
-const MAX_COMPACTION_CONTINUATIONS = 30;
-
-// Sent when the adapter resumes a session the harness stopped at a compaction. The entrant was not
-// interrupted by an operator and its context is intact, so it is told what happened rather than
-// handed the generic recovery message.
-const COMPACTION_CONTINUATION_MESSAGE = 'Your session was compacted and the harness stopped it early. Your context above is the compaction summary; your worktree is untouched. Continue the assignment from where you left off and finish it per the original instructions.';
 
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
@@ -329,26 +323,6 @@ function succeeded(result) {
   return result.code === 0 || autonomousLimitReached(result);
 }
 
-// A headless run ends at its first threshold compaction: the harness treats the session as idle while
-// compaction runs, tears the connection down, and exits zero with the entrant's task half finished
-// (filed upstream). The stage looks complete and is not, so it is detected here and reported as a
-// failure — which is also what makes the controller's `--continue-stage` recovery available, and that
-// resumes the same session from the compacted context.
-//
-// Two endings, one cause. The session either shows a compaction after the agent loop's last end, or
-// an aborted post-compaction turn carrying no tokens.
-export function compactionTruncation(events) {
-  const lastAgentEnd = events.findLastIndex((event) => event.type === 'agent_end');
-  if (lastAgentEnd !== -1) {
-    const trailingCompaction = events.slice(lastAgentEnd).find((event) => event.type === 'compaction_start' || event.type === 'compaction_end');
-    if (trailingCompaction) return 'the session ended at a threshold compaction';
-  }
-  const lastAssistant = events.findLast((event) => event.type === 'message_end' && event.message?.role === 'assistant');
-  if (lastAssistant?.message?.stopReason === 'aborted') {
-    return `the final turn was aborted: ${lastAssistant.message.errorMessage ?? 'no error message'}`;
-  }
-  return null;
-}
 
 function autonomousLimitReached(result) {
   return !result.timedOut && result.stderr.includes(AUTONOMOUS_LIMIT_NOTICE);

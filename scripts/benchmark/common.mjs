@@ -10,6 +10,40 @@ export const RUN_ID_PATTERN = /^[a-z0-9][a-z0-9-]{3,63}$/;
 // the assignment it was already working to rather than being handed a second one.
 export const MANUAL_RESUME_MESSAGE = 'Your previous session was interrupted. You have been resumed in the same session; continue the assignment from where you left off and finish it per the original instructions.';
 
+// Sent when an adapter resumes a session its harness stopped at a compaction. The entrant was not
+// interrupted by an operator and its context is intact, so it is told what happened rather than
+// handed the generic recovery message.
+export const COMPACTION_CONTINUATION_MESSAGE = 'Your session was compacted and the harness stopped it early. Your context above is the compaction summary; your worktree is untouched. Continue the assignment from where you left off and finish it per the original instructions.';
+
+// Bound on the compaction workaround. A stage is bounded by wall clock like every other harness; this
+// only stops a pathological loop where every resume dies immediately.
+export const MAX_COMPACTION_CONTINUATIONS = 30;
+
+// A headless run ends at its first threshold compaction: the harness treats the session as idle while
+// compaction runs, tears the connection down, and exits zero with the entrant's task half finished
+// (https://github.com/PrimeIntellect-ai/prime-agent/issues/674). The stage looks complete and is not,
+// so it is detected here and reported as a failure — which is also what makes the controller's
+// `--continue-stage` recovery available, and that resumes the same session from the compacted context.
+//
+// This lives in the shared module because pi and Prime Agent share the print-mode idle wait that
+// causes it; both adapters detect it the same way. Delete it, and the continuation loops that use it,
+// once the upstream issue is fixed in every harness the benchmark runs.
+//
+// Two endings, one cause. The session either shows a compaction after the agent loop's last end, or
+// an aborted post-compaction turn carrying no tokens.
+export function compactionTruncation(events) {
+  const lastAgentEnd = events.findLastIndex((event) => event.type === 'agent_end');
+  if (lastAgentEnd !== -1) {
+    const trailingCompaction = events.slice(lastAgentEnd).find((event) => event.type === 'compaction_start' || event.type === 'compaction_end');
+    if (trailingCompaction) return 'the session ended at a threshold compaction';
+  }
+  const lastAssistant = events.findLast((event) => event.type === 'message_end' && event.message?.role === 'assistant');
+  if (lastAssistant?.message?.stopReason === 'aborted') {
+    return `the final turn was aborted: ${lastAssistant.message.errorMessage ?? 'no error message'}`;
+  }
+  return null;
+}
+
 export function fail(message) {
   throw new Error(message);
 }
