@@ -54,6 +54,15 @@ const AUTONOMOUS_MAX_TOKENS = 100_000_000;
 // not a broken stage, so the adapter records it and exits zero so the run seals and gates normally.
 const AUTONOMOUS_LIMIT_NOTICE = 'Autonomous run stopped before terminal evidence;';
 
+// Bound on the compaction workaround below. A stage is bounded by wall clock like every other
+// harness; this only stops a pathological loop where every resume dies immediately.
+const MAX_COMPACTION_CONTINUATIONS = 30;
+
+// Sent when the adapter resumes a session the harness stopped at a compaction. The entrant was not
+// interrupted by an operator and its context is intact, so it is told what happened rather than
+// handed the generic recovery message.
+const COMPACTION_CONTINUATION_MESSAGE = 'Your session was compacted and the harness stopped it early. Your context above is the compaction summary; your worktree is untouched. Continue the assignment from where you left off and finish it per the original instructions.';
+
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -163,57 +172,77 @@ async function main() {
   }
 
   if (timeoutSeconds !== undefined) deadline = Date.now() + timeoutSeconds * 1_000;
-  let turn;
-  let eventLogs;
-  if (resumeRound === undefined) {
-    turn = await runTurn({
-      executable: primeAgentBin,
-      args: sharedArgs,
-      cwd: worktree,
-      input: prompt,
-      timeoutSeconds,
-      outputDirectory,
-      cliVersion,
-      model,
-      expectedSessionId: undefined,
-      round: 0,
-      env: childEnv,
-    });
-    eventLogs = [{ path: 'events.jsonl', droppedLines: turn.result.droppedLines }];
-  } else {
-    turn = await runTurn({
-      executable: primeAgentBin,
-      args: [...sharedArgs, '--resume', resumedSessionFile],
-      cwd: worktree,
-      input: MANUAL_RESUME_MESSAGE,
-      timeoutSeconds,
-      outputDirectory,
-      cliVersion,
-      model,
-      expectedSessionId: resumedSessionId,
-      round: resumeRound,
-      env: childEnv,
-    });
-    eventLogs = [
-      { path: 'events.jsonl', droppedLines: 0 },
-      ...Array.from({ length: resumeRound }, (_, index) => ({
-        path: `events-resume-${index + 1}.jsonl`,
-        droppedLines: index + 1 === resumeRound ? turn.result.droppedLines : 0,
-      })),
-    ];
-  }
+  // Round 0 is the launch; every later round is a resume of the same session, whatever prompted it.
+  let round = resumeRound ?? 0;
+  const eventLogs = Array.from({ length: round }, (_, index) => ({ path: roundEventLog(index), droppedLines: 0 }));
+  let turn = await runTurn({
+    executable: primeAgentBin,
+    args: round === 0 ? sharedArgs : [...sharedArgs, '--resume', resumedSessionFile],
+    cwd: worktree,
+    input: round === 0 ? prompt : MANUAL_RESUME_MESSAGE,
+    timeoutSeconds,
+    outputDirectory,
+    cliVersion,
+    model,
+    expectedSessionId: resumedSessionId,
+    round,
+    env: childEnv,
+  });
+  eventLogs.push({ path: roundEventLog(round), droppedLines: turn.result.droppedLines });
   const sessionId = turn.usage.sessionId;
   const sessionFile = resumedSessionFile ?? await findSessionFile(primeAgentHome(), sessionId);
   const finalMessage = path.join(outputDirectory, 'final-message.md');
   await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
+
+  // WORKAROUND for https://github.com/PrimeIntellect-ai/prime-agent/issues/674: a headless session
+  // ends at its first threshold compaction with the entrant's work unfinished. Resuming the session
+  // puts the entrant back where it was, with its compacted context and its worktree, so the adapter
+  // does it rather than leaving a long run to die at its first compaction. This is not the budget
+  // protocol's continuation and not autonomous mode: it only ever repairs a stop the harness should
+  // not have made. Delete it, and its detector, once the upstream issue is fixed.
+  const compactionContinuations = [];
+  // A resumed round that does no tool work is an entrant with nothing left to do, so the compaction it
+  // stopped at cost the run nothing and further rounds would only repeat "done".
+  let compactionSettled = false;
+  const continueThroughCompaction = async () => {
+    compactionSettled = false;
+    while (turn.usage.truncation && compactionContinuations.length < MAX_COMPACTION_CONTINUATIONS && remainingTime(deadline) > 0) {
+      const reason = turn.usage.truncation;
+      console.warn(`[workaround] Prime Agent stopped early: ${reason}. Resuming the same session (round ${round + 1}). This works around https://github.com/PrimeIntellect-ai/prime-agent/issues/674 and should be removed once that is fixed.`);
+      const startedAt = new Date().toISOString();
+      round += 1;
+      turn = await runTurn({
+        executable: primeAgentBin,
+        args: [...sharedArgs, '--resume', sessionFile],
+        cwd: worktree,
+        input: COMPACTION_CONTINUATION_MESSAGE,
+        timeoutSeconds: remainingTimeoutSeconds(deadline),
+        outputDirectory,
+        cliVersion,
+        model,
+        expectedSessionId: sessionId,
+        round,
+        env: childEnv,
+      });
+      eventLogs.push({ path: roundEventLog(round), droppedLines: turn.result.droppedLines });
+      await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
+      compactionContinuations.push({ round, reason, startedAt, finishedAt: turn.finishedAt, exitCode: turn.result.code, toolCalls: turn.usage.toolCalls });
+      if (!succeeded(turn.result)) break;
+      if (turn.usage.toolCalls === 0) {
+        compactionSettled = true;
+        break;
+      }
+    }
+  };
+  await continueThroughCompaction();
 
   const resumes = [];
   let finalSpend;
   if (budgetUsd !== undefined && succeeded(turn.result) && !turn.usage.truncation) {
     finalSpend = await poller.refresh();
     while (shouldResume({ finalFraction: finalSpend.fraction, roundsUsed: resumes.length, remainingMs: remainingTime(deadline) })) {
-      const round = resumes.length + 1;
       const resumeStartedAt = new Date().toISOString();
+      round += 1;
       turn = await runTurn({
         executable: primeAgentBin,
         args: [...sharedArgs, '--resume', sessionFile],
@@ -228,7 +257,7 @@ async function main() {
         env: childEnv,
       });
       await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
-      eventLogs.push({ path: `events-resume-${round}.jsonl`, droppedLines: turn.result.droppedLines });
+      eventLogs.push({ path: roundEventLog(round), droppedLines: turn.result.droppedLines });
       resumes.push({
         round,
         spentUsd: finalSpend.spentUsd,
@@ -238,6 +267,9 @@ async function main() {
         exitCode: turn.result.code,
       });
       if (!succeeded(turn.result)) break;
+      // A budget round can be cut short by the same compaction stop; repair it before measuring spend.
+      await continueThroughCompaction();
+      if (!succeeded(turn.result) || turn.usage.truncation) break;
       finalSpend = await poller.refresh();
     }
   }
@@ -251,10 +283,11 @@ async function main() {
 
   const rollout = await captureRollout(sessionFile, sessionId, outputDirectory);
   const subagents = await captureSubagentRollouts(sessionId, outputDirectory);
-  const truncation = turn.usage.truncation ?? null;
+  const truncation = compactionSettled ? null : turn.usage.truncation ?? null;
   await writeJson(path.join(outputDirectory, 'result.json'), {
     result: truncation ? 'truncated' : succeeded(turn.result) ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
     ...(truncation ? { truncation } : {}),
+    ...(compactionContinuations.length > 0 ? { compactionContinuations, compactionSettled, compactionWorkaround: 'https://github.com/PrimeIntellect-ai/prime-agent/issues/674' } : {}),
     ...(autonomousLimitReached(turn.result) ? { autonomousLimit: lastNotice(turn.result.stderr) } : {}),
     exitCode: turn.result.code,
     timedOut: turn.result.timedOut,
@@ -275,7 +308,7 @@ async function main() {
   });
 
   if (truncation) {
-    console.error(`Prime Agent stopped before the entrant finished: ${truncation}. The session is intact — resume it with --continue-stage true rather than relaunching.`);
+    console.error(`Prime Agent stopped before the entrant finished: ${truncation}. Automatic continuation did not clear it after ${compactionContinuations.length} round${compactionContinuations.length === 1 ? '' : 's'}; the session is intact, so resume it with --continue-stage true rather than relaunching.`);
     process.exitCode = 1;
   } else if (!succeeded(turn.result)) process.exitCode = turn.result.code || 1;
   else console.log(JSON.stringify({ sessionId: turn.usage.sessionId, usage: turn.usage.normalized, wallTimeSeconds: turn.result.wallTimeSeconds }));
@@ -360,6 +393,10 @@ async function runTurn({ executable, args, cwd, input, timeoutSeconds, outputDir
   return { result, usage, startedAt, finishedAt };
 }
 
+function roundEventLog(round) {
+  return round === 0 ? 'events.jsonl' : `events-resume-${round}.jsonl`;
+}
+
 function remainingTime(deadline) {
   return deadline === Infinity ? Infinity : Math.max(0, deadline - Date.now());
 }
@@ -416,6 +453,7 @@ export function extractUsage(eventLog, model, expectedSessionId) {
     fail(`Prime Agent reported session id ${session.id}, expected the original ${expectedSessionId}.`);
   }
 
+  const toolCalls = events.filter((event) => event.type === 'tool_execution_start').length;
   const assistant = events.filter((event) => event.type === 'message_end' && event.message?.role === 'assistant');
   if (assistant.length === 0) fail('Prime Agent JSON reported no assistant message_end events to measure.');
 
@@ -456,6 +494,7 @@ export function extractUsage(eventLog, model, expectedSessionId) {
   return {
     sessionId: session.id,
     ...(compactionTruncation(events) ? { truncation: compactionTruncation(events) } : {}),
+    toolCalls,
     // Matched against the cost summary's per-model rows in the runner's stage split.
     initResolvedModel: assistant.at(-1).message.model ?? model,
     assistantMessageCount: assistant.length,

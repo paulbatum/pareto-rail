@@ -12,7 +12,7 @@ import { collectSessionView, counterUnavailableReason, harnessCounters, harnessC
 import { summarizeAgyCost } from './tokscale-cost.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
-import { compactionTruncation } from './prime-agent-cli.mjs';
+import { compactionTruncation, extractUsage } from './prime-agent-cli.mjs';
 import { entrantSandboxEnabled, sandboxUnavailable, sandboxWarning } from './entrant-sandbox.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import {
@@ -393,6 +393,19 @@ assert.equal(compactionTruncation([
   { type: 'agent_end' },
 ]), null);
 assert.equal(compactionTruncation([assistantEnd({ stopReason: 'stop' }), { type: 'agent_end' }]), null);
+
+// The continuation loop stops when a resumed round does no tool work, so a compaction that caught an
+// entrant with nothing left to do costs one round rather than the whole backstop.
+const eventLog = (events) => events.map((event) => JSON.stringify(event)).join('\n');
+const usageEvent = (toolCalls) => eventLog([
+  { type: 'session', id: 'session-1' },
+  ...Array.from({ length: toolCalls }, () => ({ type: 'tool_execution_start', toolName: 'ipython' })),
+  assistantEnd({ stopReason: 'stop', content: [{ type: 'text', text: 'Done.' }], usage: { input: 1, output: 1 }, model: 'gpt-5.6-luna' }),
+  { type: 'agent_end' },
+]);
+assert.equal(extractUsage(usageEvent(3), 'gpt-5.6-luna').toolCalls, 3);
+assert.equal(extractUsage(usageEvent(0), 'gpt-5.6-luna').toolCalls, 0);
+assert.equal(extractUsage(usageEvent(0), 'gpt-5.6-luna').truncation, undefined);
 
 // Prime Agent persists in pi's session format and is priced through the same view, prefix and all.
 const primeAgentCost = summarizeCost('prime-agent-cli', piReport);

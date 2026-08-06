@@ -67,12 +67,12 @@ Whether the resulting figure is metered spend or rate-priced subscription usage 
 
 A stage completes when the harness exits zero, reports one session id, and its final assistant message reports usage — or, under autonomous mode, when it stops at a limit. A nonzero exit, a timeout, a missing session id, missing usage, an unsupported effort, or a final assistant message carrying `stopReason: "error"` stops the run for controller-failure classification.
 
-**A headless session ends at its first threshold compaction.** The harness counts as idle while compaction runs, tears the connection down, and exits zero with the entrant's work half finished — so the stage looks complete and is not. The session shows one of two endings: a compaction after the agent loop's last end, or a post-compaction turn aborted with zero tokens. The adapter detects both, records `result: "truncated"` with the reason, and exits non-zero, which stops the controller and makes the same-session continuation available.
+**A headless session ends at its first threshold compaction** ([prime-agent#674](https://github.com/PrimeIntellect-ai/prime-agent/issues/674)). The harness counts as idle while compaction runs, tears the connection down, and exits zero with the entrant's work half finished — so the stage looks complete and is not. The session shows one of two endings: a compaction after the agent loop's last end, or a post-compaction turn aborted with zero tokens.
 
-Continue such a stage rather than relaunching it:
+The adapter detects both and resumes the same session itself, which puts the entrant back where it was with its compacted context and its untouched worktree. Each continuation warns on the console, writes the usual round-suffixed artifacts, and is recorded in `result.json` under `compactionContinuations`. The loop stops when a resumed round does no tool work — an entrant with nothing left to do — and the stage is then a normal completion carrying `compactionSettled`. Wall clock bounds it as it bounds everything else, with a defensive round cap behind that; a stage that exhausts the cap is failed as `truncated`, and the session is still intact:
 
 ```sh
 npm run benchmark:run -- --resume benchmark/private/runs/<runId> --continue-stage true
 ```
 
-The entrant resumes in its own session from the compacted context with its worktree intact. A long run may need this more than once. Budget rows are continued by the controller's budget protocol instead, resuming the same session the same way.
+**This is a workaround and should be deleted once the upstream issue is fixed.** It repairs a stop the harness should not have made, and nothing else: an entrant that chooses to stop is never continued, which is what separates it from autonomous mode and from the budget protocol. Budget rows are continued by the budget protocol as usual, and a budget round cut short by a compaction is repaired before its spend is measured.
