@@ -67,4 +67,12 @@ Whether the resulting figure is metered spend or rate-priced subscription usage 
 
 A stage completes when the harness exits zero, reports one session id, and its final assistant message reports usage — or, under autonomous mode, when it stops at a limit. A nonzero exit, a timeout, a missing session id, missing usage, an unsupported effort, or a final assistant message carrying `stopReason: "error"` stops the run for controller-failure classification.
 
-Budget rows are continued by the controller's budget protocol, resuming the same session by file path. `--continue-stage` recovery works the same way.
+**A headless session ends at its first threshold compaction.** The harness counts as idle while compaction runs, tears the connection down, and exits zero with the entrant's work half finished — so the stage looks complete and is not. The session shows one of two endings: a compaction after the agent loop's last end, or a post-compaction turn aborted with zero tokens. The adapter detects both, records `result: "truncated"` with the reason, and exits non-zero, which stops the controller and makes the same-session continuation available.
+
+Continue such a stage rather than relaunching it:
+
+```sh
+npm run benchmark:run -- --resume benchmark/private/runs/<runId> --continue-stage true
+```
+
+The entrant resumes in its own session from the compacted context with its worktree intact. A long run may need this more than once. Budget rows are continued by the controller's budget protocol instead, resuming the same session the same way.

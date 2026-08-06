@@ -12,6 +12,7 @@ import { collectSessionView, counterUnavailableReason, harnessCounters, harnessC
 import { summarizeAgyCost } from './tokscale-cost.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
+import { compactionTruncation } from './prime-agent-cli.mjs';
 import { entrantSandboxEnabled, sandboxUnavailable, sandboxWarning } from './entrant-sandbox.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import {
@@ -368,6 +369,30 @@ assert.equal(piCost.models[0].cacheReadTokens, 2560);
 // artifact. The Claude and Codex views declare no prefix, so their names pass through untouched.
 assert.equal(summarizeCost('pi-cli', prefixReport('vendor/[pi] odd')).models[0].modelName, 'vendor/[pi] odd');
 assert.equal(claudeCost.models.some((m) => m.modelName.startsWith('[')), false);
+
+// A headless Prime Agent session ends at its first threshold compaction (filed upstream), leaving a
+// half-finished entrant behind a zero exit code. Both endings are detected so the stage fails and the
+// controller's same-session continuation is available instead of the truncation being sealed.
+const assistantEnd = (message) => ({ type: 'message_end', message: { role: 'assistant', ...message } });
+assert.match(compactionTruncation([
+  assistantEnd({ stopReason: 'toolUse' }),
+  { type: 'agent_end' },
+  { type: 'compaction_start', reason: 'threshold' },
+  { type: 'compaction_end', reason: 'threshold' },
+]), /ended at a threshold compaction/);
+assert.match(compactionTruncation([
+  { type: 'agent_end' },
+  assistantEnd({ stopReason: 'aborted', errorMessage: 'Request was aborted' }),
+]), /aborted: Request was aborted/);
+// Compaction the session recovered from and worked past is not a truncation.
+assert.equal(compactionTruncation([
+  { type: 'compaction_start', reason: 'threshold' },
+  { type: 'compaction_end', reason: 'threshold' },
+  { type: 'turn_start' },
+  assistantEnd({ stopReason: 'stop' }),
+  { type: 'agent_end' },
+]), null);
+assert.equal(compactionTruncation([assistantEnd({ stopReason: 'stop' }), { type: 'agent_end' }]), null);
 
 // Prime Agent persists in pi's session format and is priced through the same view, prefix and all.
 const primeAgentCost = summarizeCost('prime-agent-cli', piReport);

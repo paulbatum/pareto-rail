@@ -209,7 +209,7 @@ async function main() {
 
   const resumes = [];
   let finalSpend;
-  if (budgetUsd !== undefined && succeeded(turn.result)) {
+  if (budgetUsd !== undefined && succeeded(turn.result) && !turn.usage.truncation) {
     finalSpend = await poller.refresh();
     while (shouldResume({ finalFraction: finalSpend.fraction, roundsUsed: resumes.length, remainingMs: remainingTime(deadline) })) {
       const round = resumes.length + 1;
@@ -251,8 +251,10 @@ async function main() {
 
   const rollout = await captureRollout(sessionFile, sessionId, outputDirectory);
   const subagents = await captureSubagentRollouts(sessionId, outputDirectory);
+  const truncation = turn.usage.truncation ?? null;
   await writeJson(path.join(outputDirectory, 'result.json'), {
-    result: succeeded(turn.result) ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
+    result: truncation ? 'truncated' : succeeded(turn.result) ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
+    ...(truncation ? { truncation } : {}),
     ...(autonomousLimitReached(turn.result) ? { autonomousLimit: lastNotice(turn.result.stderr) } : {}),
     exitCode: turn.result.code,
     timedOut: turn.result.timedOut,
@@ -272,7 +274,10 @@ async function main() {
     ...(budgetSummary ? { budget: { path: 'budget.json' } } : {}),
   });
 
-  if (!succeeded(turn.result)) process.exitCode = turn.result.code || 1;
+  if (truncation) {
+    console.error(`Prime Agent stopped before the entrant finished: ${truncation}. The session is intact — resume it with --continue-stage true rather than relaunching.`);
+    process.exitCode = 1;
+  } else if (!succeeded(turn.result)) process.exitCode = turn.result.code || 1;
   else console.log(JSON.stringify({ sessionId: turn.usage.sessionId, usage: turn.usage.normalized, wallTimeSeconds: turn.result.wallTimeSeconds }));
 }
 
@@ -280,6 +285,27 @@ async function main() {
 // entrant's work in place, so it is a completed stage for the controller's purposes.
 function succeeded(result) {
   return result.code === 0 || autonomousLimitReached(result);
+}
+
+// A headless run ends at its first threshold compaction: the harness treats the session as idle while
+// compaction runs, tears the connection down, and exits zero with the entrant's task half finished
+// (filed upstream). The stage looks complete and is not, so it is detected here and reported as a
+// failure — which is also what makes the controller's `--continue-stage` recovery available, and that
+// resumes the same session from the compacted context.
+//
+// Two endings, one cause. The session either shows a compaction after the agent loop's last end, or
+// an aborted post-compaction turn carrying no tokens.
+export function compactionTruncation(events) {
+  const lastAgentEnd = events.findLastIndex((event) => event.type === 'agent_end');
+  if (lastAgentEnd !== -1) {
+    const trailingCompaction = events.slice(lastAgentEnd).find((event) => event.type === 'compaction_start' || event.type === 'compaction_end');
+    if (trailingCompaction) return 'the session ended at a threshold compaction';
+  }
+  const lastAssistant = events.findLast((event) => event.type === 'message_end' && event.message?.role === 'assistant');
+  if (lastAssistant?.message?.stopReason === 'aborted') {
+    return `the final turn was aborted: ${lastAssistant.message.errorMessage ?? 'no error message'}`;
+  }
+  return null;
 }
 
 function autonomousLimitReached(result) {
@@ -429,6 +455,7 @@ export function extractUsage(eventLog, model, expectedSessionId) {
 
   return {
     sessionId: session.id,
+    ...(compactionTruncation(events) ? { truncation: compactionTruncation(events) } : {}),
     // Matched against the cost summary's per-model rows in the runner's stage split.
     initResolvedModel: assistant.at(-1).message.model ?? model,
     assistantMessageCount: assistant.length,
