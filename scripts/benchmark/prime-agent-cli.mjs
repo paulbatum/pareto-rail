@@ -54,6 +54,14 @@ const AUTONOMOUS_MAX_TOKENS = 100_000_000;
 // not a broken stage, so the adapter records it and exits zero so the run seals and gates normally.
 const AUTONOMOUS_LIMIT_NOTICE = 'Autonomous run stopped before terminal evidence;';
 
+// The daemon holds a session lease for a moment after a print-mode process exits, so an immediate
+// re-entry is refused with this error even though the session is on disk and intact. Same teardown
+// race as the compaction stop above, seen from the other side: the documented recovery is briefly
+// unavailable exactly when the workaround needs it. Waiting is enough — the lease clears on its own.
+const SESSION_BUSY_PATTERN = /Session is already active/i;
+const SESSION_BUSY_ATTEMPTS = 30;
+const SESSION_BUSY_DELAY_MS = 10_000;
+
 // Bound on the compaction workaround below. A stage is bounded by wall clock like every other
 // harness; this only stops a pathological loop where every resume dies immediately.
 const MAX_COMPACTION_CONTINUATIONS = 30;
@@ -175,7 +183,8 @@ async function main() {
   // Round 0 is the launch; every later round is a resume of the same session, whatever prompted it.
   let round = resumeRound ?? 0;
   const eventLogs = Array.from({ length: round }, (_, index) => ({ path: roundEventLog(index), droppedLines: 0 }));
-  let turn = await runTurn({
+  // A resumed launch can meet the same unreleased lease as the workaround does, so it waits too.
+  let turn = await (round === 0 ? runTurn : runTurnAwaitingSession)({
     executable: primeAgentBin,
     args: round === 0 ? sharedArgs : [...sharedArgs, '--resume', resumedSessionFile],
     cwd: worktree,
@@ -211,7 +220,7 @@ async function main() {
       console.warn(`[workaround] Prime Agent stopped early: ${reason}. Resuming the same session (round ${round + 1}). This works around https://github.com/PrimeIntellect-ai/prime-agent/issues/674 and should be removed once that is fixed.`);
       const startedAt = new Date().toISOString();
       round += 1;
-      turn = await runTurn({
+      turn = await runTurnAwaitingSession({
         executable: primeAgentBin,
         args: [...sharedArgs, '--resume', sessionFile],
         cwd: worktree,
@@ -243,7 +252,7 @@ async function main() {
     while (shouldResume({ finalFraction: finalSpend.fraction, roundsUsed: resumes.length, remainingMs: remainingTime(deadline) })) {
       const resumeStartedAt = new Date().toISOString();
       round += 1;
-      turn = await runTurn({
+      turn = await runTurnAwaitingSession({
         executable: primeAgentBin,
         args: [...sharedArgs, '--resume', sessionFile],
         cwd: worktree,
@@ -360,6 +369,18 @@ function autonomousArgs(timeoutSeconds, gate) {
   ];
 }
 
+// Resume a session that the daemon has not released yet, waiting for the lease rather than failing
+// the round. Every other outcome, including a genuine startup failure, is returned to the caller.
+async function runTurnAwaitingSession(options) {
+  for (let attempt = 1; ; attempt += 1) {
+    const turn = await runTurn(options);
+    if (!turn.sessionBusy) return turn;
+    if (attempt >= SESSION_BUSY_ATTEMPTS) fail(`Prime Agent still holds a lease on session ${options.expectedSessionId} after ${attempt} attempts; the daemon did not release it.`);
+    console.warn(`[workaround] The daemon has not released session ${options.expectedSessionId} yet; waiting ${SESSION_BUSY_DELAY_MS / 1_000}s before retrying (attempt ${attempt}/${SESSION_BUSY_ATTEMPTS}).`);
+    await new Promise((resolve) => setTimeout(resolve, SESSION_BUSY_DELAY_MS));
+  }
+}
+
 async function runTurn({ executable, args, cwd, input, timeoutSeconds, outputDirectory, cliVersion, model, expectedSessionId, round, env }) {
   const suffix = round === 0 ? '' : `-resume-${round}`;
   const startedAt = new Date().toISOString();
@@ -387,6 +408,12 @@ async function runTurn({ executable, args, cwd, input, timeoutSeconds, outputDir
     exitCode: result.code,
     timedOut: result.timedOut,
   });
+  // An invocation that never opened a session produced no event stream to measure. Report what the
+  // harness said rather than the missing session id, which is the symptom rather than the cause.
+  if (!result.stdout.includes('"type":"session"') && !result.stdout.includes('"type": "session"')) {
+    if (SESSION_BUSY_PATTERN.test(result.stderr)) return { result, sessionBusy: true, startedAt, finishedAt };
+    fail(`Prime Agent opened no session${result.timedOut ? ' before the stage timeout' : ''}. Its stderr was:\n${result.stderr.trim().split('\n').slice(-5).join('\n')}`);
+  }
   const usage = extractUsage(result.stdout, model, expectedSessionId);
   await writeJson(path.join(outputDirectory, `raw-usage${suffix}.json`), usage);
   if (round > 0) await fs.writeFile(path.join(outputDirectory, `final-message${suffix}.md`), usage.finalMessage, 'utf8');
