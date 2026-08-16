@@ -154,6 +154,34 @@ Technical test fixture; excluded from the level picker.
 
 ## Benchmark levels
 
+# Broadside
+
+Sixty seconds inside a fleet engagement, launched off the home carrier's deck into a crossfire of capital ships: ride the friendly cruiser RELENTLESS's flank while her broadside guns fire over your shoulder, fall silent through the eye of the battle, corkscrew under an enemy cruiser and rake the turrets off her belly, then swing up and over the enemy flagship SOVEREIGN's aft deck as her shield falls, kill her three shield generators, and dive her dorsal trench to put one shot into her core — and pull out as she comes apart under a magenta-gold nebula.
+
+## Visual language
+Two fleets read at a glance: friendlies are ice-white hulls with cyan windows and engine glow, hostiles are obsidian with molten-orange seams firing crimson. The sky is one huge magenta-gold nebula with a gold core that backlights every silhouette, and the battle never stops talking — cyan and crimson tracer darts cross the whole corridor, distant capital-ship hits bloom far away, and RELENTLESS's broadside salvos land as authored walls of muzzle-flash and arcing shell fire on a musical grid. The eye of the battle strips all of it to silence, debris, and far-off thunder. The SOVEREIGN is a 620-meter obsidian flagship wrapped in a fresnel shield dome that flickers as her generators die; killing her core marches secondary explosions down her spine as her three hull sections drift apart. Player fire is white-cyan; locks walk a cyan→gold→magenta gradient, with gold gun-laying brackets on locked targets.
+
+## Musical language
+132 BPM in D minor, 33 bars = exactly 60 seconds, scored like space opera: tuned timpani drive every section, detuned-saw horns carry a launch call and a melee theme, string ostinati chug sixteenths under the fighting, and the RELENTLESS's own broadside guns are the biggest percussion in the mix — six authored salvos across bars 9.5–12 that boom and duck the hall on the same grid the muzzle flashes fire on. The eye (bars 13–15) drops to a solo flute, high string shimmer, harp glints, and distant battle rumble; the belly run goes dark with low brass; the flagship climbs a one-chord-per-bar cadence (Dm–Gm–Bb–A) that holds the dominant into the trench. Locks, volleys, chips, and kills snap to the transport, read the live chord, and kills walk hidden per-section melody lanes. The finale is earned: killing the core ducks the hall for a breath and lands a D-major tutti (the Picardy third) that rings out under the pull-out — it never plays if the core survives.
+
+## Mechanical signature
+A 60-second run with a 4-point hull and ~85 targets across ten beats. Darts slash-cross the weave in offset lanes, weaver pairs braid helices, armored gunships hold station and fire interceptable homing bolts (two staged hits crack their plating), and mines drift through the eye's wreck field with a proximity-detonation heartbeat. The belly run glues ten raked turrets to the enemy cruiser's ventral hull in world space as she passes overhead. The boss is a real two-phase fight: three shield generators on standoff pylons gate the fight while a shield-dome brain drives point-defense fire (its bolts fizzle the moment the dome falls, clearing the dive); killing all three drops the dome and un-shields two trench nodes. The core is the exception to the lockout pattern: it sits visible down the genuine trench cut from the crest — foreshadowed, but its cradle holds the lockout until the run commits to the dive. The trench itself is a true cut through the mid hull (the deck splits into flank slabs), so sightlines down the corridor cross no hull faces. Escorts scramble up over the aft deck edge onto intercept lanes as the rail crests, and the rail itself is the ride: a variable-speed profile surges on the broadside flank, floats at half speed through the eye, corkscrews the belly, crawls the flagship's port flank, then whips up over her aft deck and dives the trench into a victory pull-out that looks back at the dying flagship.
+
+## What to read
+- `src/benchmark-levels/broadside-b2o2/timing.ts`
+- `src/benchmark-levels/broadside-b2o2/gameplay.ts`
+- `src/benchmark-levels/broadside-b2o2/flagship.ts`
+- `src/benchmark-levels/broadside-b2o2/audio.ts`
+- `src/benchmark-levels/broadside-b2o2/audio-voices.ts`
+- `src/benchmark-levels/broadside-b2o2/visuals/index.ts`
+- `src/benchmark-levels/broadside-b2o2/visuals/environment.ts`
+- `src/benchmark-levels/broadside-b2o2/visuals/fleet.ts`
+
+## Status & notes
+Built to the standing brief from the Broadside theme assignment. Typecheck, build, check:scope, check:perf, and check:floor all pass clean — floor with zero warnings, including zero target-occlusion warnings (boss targets paint up exactly when their sightlines open; the shield dome's mesh origin rides an occlusion anchor off the port flank while its shell child stays wrapped on the hull). Sim policies verify perfect=S / imperfect=A. SwiftShader snapshot review covered every section; WebGPU visuals and the final mix need a human playtest (WSL2 cannot render WebGPU). Dark palette colors are authored in sRGB and converted in `visuals/palette.ts` — the renderer treats raw floats as linear, which lifts them (0.045 renders as ~0.24); keep that convention when retouching materials. First things to check by eye: the deck launch framing at bar 0, RELENTLESS's salvo flashes lining up with the booms at bars 9.5–12, belly-turret readability against the hull at bar 21, and the aft-deck crest plus trench dive at bars 29–33.
+
+---
+
 # Hull Run
 
 An exactly sixty-second strike along the skin of a capital ship: the horizon holds still while seams, ridges, hatches, and antenna masts tear past underneath. The vessel begins almost black, then alert lamps and defense batteries wake in a red-and-amber chain all the way to its bow.
