@@ -22,11 +22,12 @@ import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 import { assertSandboxDependencies, entrantSandboxEnabled, sandboxUnavailable, sandboxWarning } from './entrant-sandbox.mjs';
+import { BENCHMARK_SOURCE_ROOT, benchmarkLevelFootprint } from '../level-footprint.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ADMIN = path.join(ROOT, 'scripts/benchmark/admin.mjs');
 const RUNS_DIRECTORY = path.join(ROOT, 'benchmark/private/runs');
-const SOURCE_ROOT = 'src/benchmark-levels';
+const SOURCE_ROOT = BENCHMARK_SOURCE_ROOT;
 const ASSIGNMENT_TEMPLATE_PATH = 'benchmark/prompts/level-assignment.md';
 const EFFORTS = new Set(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra']);
 
@@ -421,11 +422,18 @@ async function validateEvaluated(evaluated, worktree) {
   if (status) fail('Recorded evaluated worktree is not clean.');
 }
 
+// Re-validation of an already-recorded payload, so it reads the footprint the same way admin.mjs
+// built the payload from: the level's source directory plus its optional content-image root.
 async function validatePayload(payload, materialsCommit, levelId) {
   const payloadCommit = await gitCommit(payload?.payloadCommit);
-  const levelDirectory = `${SOURCE_ROOT}/${levelId}/`;
+  const roots = benchmarkLevelFootprint(levelId).roots;
+  const sourceRoot = roots.find((root) => root.required);
+  if (!sourceRoot) fail('Level footprint has no required source root.');
   const names = (await command('git', ['diff', '--name-only', `${materialsCommit}..${payloadCommit}`], ROOT)).stdout.trim().split('\n').filter(Boolean);
-  if (!names.length || names.some((name) => !name.startsWith(levelDirectory))) fail('Recorded payload does not contain exactly the assigned level directory.');
+  const owned = (name) => roots.some((root) => name.startsWith(`${root.path}/`));
+  if (!names.some((name) => name.startsWith(`${sourceRoot.path}/`)) || names.some((name) => !owned(name))) {
+    fail('Recorded payload does not contain exactly the assigned level footprint.');
+  }
 }
 
 export async function reusableGateRecord(outputDirectory, evaluatedCommit) {
