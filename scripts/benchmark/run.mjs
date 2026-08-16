@@ -11,6 +11,7 @@ import {
   isPlainObject,
   parseArgs,
   readJson,
+  readRecordedRounds,
   requireOption,
   sha256,
 } from './common.mjs';
@@ -894,14 +895,7 @@ function stageUsage({ inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, ca
 // Claude/Codex and sums pi's invocation-local counters across the appended session. File presence,
 // rather than the budget record, also covers manual continuation rounds.
 export async function loadRoundUsages(outputDirectory, adapter) {
-  const usages = [await optionalJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json'))];
-  if (!usages[0]) return usages;
-  for (let round = 1; ; round += 1) {
-    const usage = await optionalJson(path.join(outputDirectory, adapter.stageDir, `raw-usage-resume-${round}.json`));
-    if (!usage) break;
-    usages.push(usage);
-  }
-  return usages;
+  return readRecordedRounds(path.join(outputDirectory, adapter.stageDir), 'raw-usage');
 }
 
 async function loadRoundCommands(outputDirectory, adapter) {
@@ -915,7 +909,10 @@ async function loadRoundCommands(outputDirectory, adapter) {
 }
 
 async function loadStageUsage(outputDirectory, adapter, definition) {
-  const recorded = await optionalJson(path.join(outputDirectory, adapter.stageDir, 'raw-usage.json'));
+  // Session identity holds across every round of one stage, so the earliest round that recorded it
+  // answers for the stage. Round 0 usually does; when it died before reporting, a later one carries
+  // the same session.
+  const [recorded] = await loadRoundUsages(outputDirectory, adapter);
   if (recorded) return recorded;
   const eventSource = await fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8');
   for (const line of eventSource.split('\n')) {

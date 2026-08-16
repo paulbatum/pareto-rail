@@ -9,7 +9,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { harnessCountersForRounds, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
-import { assertOnlyOptions, parseArgs, writeJson } from './common.mjs';
+import { assertOnlyOptions, parseArgs, readRecordedRounds, writeJson } from './common.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const RUNS = path.join(ROOT, 'benchmark/private/runs');
@@ -96,14 +96,7 @@ async function stageFor(runId) {
 }
 
 async function roundUsages(stagePath) {
-  const usages = [await optionalJson(path.join(stagePath, 'raw-usage.json'))];
-  if (!usages[0]) return usages;
-  for (let round = 1; ; round += 1) {
-    const usage = await optionalJson(path.join(stagePath, `raw-usage-resume-${round}.json`));
-    if (!usage) break;
-    usages.push(usage);
-  }
-  return usages;
+  return readRecordedRounds(stagePath, 'raw-usage');
 }
 
 async function optionalJson(target) {

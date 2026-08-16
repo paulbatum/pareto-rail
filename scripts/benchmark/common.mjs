@@ -107,6 +107,28 @@ export async function readJson(filePath) {
   }
 }
 
+// Per-round stage records are named `<stem>.json` for the launch and `<stem>-resume-<n>.json` for
+// each continuation. A round that dies before the harness reports — a provider error, a timeout —
+// writes none, so the recorded rounds are enumerated rather than walked from zero: stopping at the
+// first gap would drop every surviving later round.
+export async function readRecordedRounds(stagePath, stem) {
+  const pattern = new RegExp(`^${stem}(?:-resume-(\\d+))?\\.json$`);
+  let entries;
+  try {
+    entries = await fs.readdir(stagePath);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+  const rounds = [];
+  for (const entry of entries) {
+    const match = pattern.exec(entry);
+    if (match) rounds.push({ round: match[1] ? Number(match[1]) : 0, name: entry });
+  }
+  rounds.sort((a, b) => a.round - b.round);
+  return Promise.all(rounds.map((record) => readJson(path.join(stagePath, record.name))));
+}
+
 export async function writeJson(filePath, value) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');

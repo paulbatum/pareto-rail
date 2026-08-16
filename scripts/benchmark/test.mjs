@@ -137,6 +137,14 @@ try {
   await fs.writeFile(path.join(stageDirectory, 'raw-usage-resume-2.json'), JSON.stringify({ round: 2 }));
   const usages = await loadRoundUsages(continuationArtifacts, { stageDir: 'stages/solo/pi' });
   assert.deepEqual(usages.map((usage) => usage.round), [0, 1, 2], 'round usage discovery does not depend on budget.json');
+
+  // A round that dies before the harness reports usage leaves a gap. The rounds that did record
+  // must survive it — dropping them would under-report the stage and lose its session identity.
+  await fs.rm(path.join(stageDirectory, 'raw-usage.json'));
+  await fs.rm(path.join(stageDirectory, 'raw-usage-resume-2.json'));
+  await fs.writeFile(path.join(stageDirectory, 'raw-usage-resume-3.json'), JSON.stringify({ round: 3 }));
+  const gapped = await loadRoundUsages(continuationArtifacts, { stageDir: 'stages/solo/pi' });
+  assert.deepEqual(gapped.map((usage) => usage.round), [1, 3], 'round usage discovery survives rounds that recorded nothing');
 } finally {
   await fs.rm(continuationArtifacts, { recursive: true, force: true });
 }
