@@ -69,6 +69,21 @@ A scrubbed checkout must not advertise a command it cannot run, so the cut drops
 
 The four files under `src/benchmark-levels/` are retained because `src/levels/index.ts` imports the benchmark catalog even when Vite discovers no benchmark entries. No entrant level or test fixture is retained.
 
+## Running a configuration on a theme older than it
+
+A configuration can only ever run on themes whose materials commit predates it, so a new roster entry that is assigned an existing theme hits a materials commit that has no recipe document for it. `synthesizeDefinition` reads every input from `materialsCommit`, including `recipePath`, and aborts: `fatal: path '<recipe>' exists on disk, but not in '<commit>'`. `materialsCommit` is plan-level, so no row can override it.
+
+Two wrong turns to skip. Pointing the row at another configuration's recipe records a mechanism the run did not use. Pointing the plan at newer materials changes what the entrant reads: the assignment template gained an Environment section describing the filesystem sandbox, which is false for an open-policy row and absent from what the theme's earlier entrants received.
+
+Derive a materials commit instead:
+
+1. Read a sibling's `benchmark/private/runs/<runId>/rendered-assignment.json` and note its `template.sha256` and `theme.sha256`. Any entrant of the same theme will do; that pair is what the comparison holds constant.
+2. Branch from the plan the siblings ran under, add the configuration's recipe document, and commit. Add nothing else — `git diff --name-only <base> <new>` must name only that file.
+3. Put the new rows in their own plan file with the derived commit as `materialsCommit`, keeping the siblings' `entrantBaseline`, `benchmarkVersion`, and `baselinePolicy`. A separate file leaves the existing plan's recorded provenance where it is.
+4. Before launching, hash the template and theme the new plan will render (`git show <materialsCommit>:<path>`) and check both against step 1. They must match. The recipe is hashed into `rendered-assignment.json` for provenance but never rendered into the assignment, so it is the one input that may differ.
+
+Themes of one era can sit under different materials commits — a theme added later has its own — so compare against a sibling of the same theme, not of the same era.
+
 ## Entrant sandbox
 
 Entrant shells run under an OS-level sandbox for scrubbed plans (the same activation as Codex's network isolation). It confines tool execution three ways: the entrant worktree is the only writable tree; the primary repository (its `.git`, the tracked `benchmark/` tree, promoted levels, and — since run records live under `benchmark/private` — this run's own harness home and copied credential) and the host `/tmp` (every concurrent run's checkout) are unreadable; and there is no external network egress, while loopback keeps working for the floor and snapshot self-checks. It is decided by the row's effective `baselinePolicy`; a rehearsal row may set `stage.sandbox: false` to opt out.
@@ -92,6 +107,8 @@ Resume validates existing artifacts and continues at the first unfinished step. 
 ## Failure policy
 
 Infrastructure failure: fix it, rerun, and keep and report the cost of every attempt. Model failure — a gate fails on the sealed output — is a DNF, shown as such. The agent classifies which one it was and records the decision as a free-text note in the run record, and puts the call to the owner when it is not clear-cut.
+
+An escalation holds that row, not the queue. Rows are independent: each is one plan row against its own entrant checkout, and no row's outcome decides another's. So set the ambiguous row aside, launch the remaining rows, and report the classification with them.
 
 Two transient infrastructure failures recur on the Claude Code stage. The first is `Failed to authenticate: OAuth session expired and could not be refreshed`: the stage runs against a copy of the owner's credential in its isolated home, and another Claude session on that account running alongside the benchmark can rotate the shared refresh token out from under that copy, so a stage started with a near-expired token cannot refresh. The second is `API Error: Stream idle timeout - no chunks received`, a mid-stage stall of the streaming response. Both kill the stage without the entrant having failed at anything, so recover with `--continue-stage true` (see Resume and recovery): it re-enters the recorded session, and the resume copies the owner's credential into the run's home again, which is what clears an expired one. Relaunch fresh only when there is no session to re-enter or no entrant work worth keeping. The OAuth race is intermittent; if it keeps recurring, re-login on the owner's account (`claude`, interactive) to refresh the stored token before launching more Claude stages.
 
