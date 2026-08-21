@@ -60,6 +60,7 @@ export interface RankCatalog {
 export interface SchedulingPool {
   themes: readonly RankCatalogTheme[];
   entrants: readonly RankCatalogEntrant[];
+  configurations?: readonly RankCatalogConfiguration[];
 }
 
 export function allCatalogEntrants(catalog: RankCatalog): readonly RankCatalogEntrant[] {
@@ -77,7 +78,7 @@ export function schedulingPool(catalog: RankCatalog): SchedulingPool {
   const themes = catalog.themes.filter((theme) => !theme.retired && !theme.experimental);
   const scheduledThemeIds = new Set(themes.map((theme) => theme.id));
   const entrants = catalog.entrants.filter((entrant) => !entrant.retired && scheduledThemeIds.has(entrant.themeId));
-  return { themes, entrants };
+  return { themes, entrants, configurations: catalog.configurations };
 }
 
 export function findCatalogEntrant(catalog: RankCatalog, levelId: string): RankCatalogEntrant | undefined {

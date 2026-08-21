@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { workflowQualifier } from '../../benchmark/identity';
 import { rankCatalog } from '../../benchmark/catalog';
+import { configurationGroupEfforts } from '../../benchmark/identity';
 
 export const CURVE_CHART = { width: 720, height: 410, left: 72, right: 24, top: 42, bottom: 68 } as const;
 
@@ -25,7 +26,12 @@ export interface CurveChartLayout {
   frontierPath: string | null;
 }
 
-const configurationEfforts = new Map((rankCatalog.configurations ?? []).map((configuration) => [configuration.id, configuration.effort]));
+// A point is keyed by its rating group, and a chart shown from a fixture catalog
+// is keyed by configuration id, so both resolve here.
+const configurationEfforts = new Map([
+  ...(rankCatalog.configurations ?? []).map((configuration) => [configuration.id, configuration.effort] as const),
+  ...configurationGroupEfforts(rankCatalog.configurations),
+]);
 
 /** The reasoning effort a configuration ran at, as a parenthetical suffix for
  * model names on the results chart and table. */

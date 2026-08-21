@@ -6,7 +6,8 @@ import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
 import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, revealFromVote } from './catalog-api';
 import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { mapVerdict, type ComparisonState, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
-import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogEntrant, type RankCatalogTheme, type SchedulingPool } from './catalog';
+import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type RankCatalogTheme, type SchedulingPool } from './catalog';
+import { configurationGroupResolver } from './identity';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { CustomMatchController } from '../app/match';
 import { parseRoute, routePath } from '../app/router';
@@ -61,6 +62,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testCatalogDerivedHistory();
   testRetiredEntrantReveal();
   testPersonalCurveCatalogExcludesRetired();
+  testProviderVariantsShareOnePoint();
   await testReloadPreservesMatchupAndPlayState();
   await testCatalogChangesRefreshReveals();
   testVoteValidationIsCatalogWide();
@@ -873,6 +875,33 @@ function testPersonalCurveCatalogExcludesRetired(): void {
   const curve = recomputePersonalCurve(history, { catalog: selected });
   assert.equal(curve.points.find((point) => point.configurationId === 'shared')?.meanCost, 25, 'shared configuration costs were not pooled across live and retired entrants');
   assert.equal(curve.points.find((point) => point.configurationId === 'active-unplayed')?.status, 'pending', 'unplayed active configuration was not shown as pending');
+}
+
+/** Two configurations that differ only in which provider served the model are one
+ * intervention to a voter, so they are rated as one point and their costs pool.
+ * Two that differ in reasoning effort are the comparison the benchmark exists to
+ * make, so they stay apart. */
+function testProviderVariantsShareOnePoint(): void {
+  const configurations: RankCatalogConfiguration[] = [
+    { id: 'sub', modelName: 'Model X', workflowName: 'solo', primaryModel: 'x', effort: 'max', workflowSummary: '' },
+    { id: 'metered', modelName: 'Model X', workflowName: 'solo', primaryModel: 'x', effort: 'max', workflowSummary: '' },
+    { id: 'low', modelName: 'Model X', workflowName: 'solo', primaryModel: 'x', effort: 'high', workflowSummary: '' },
+  ];
+  const groupIdFor = configurationGroupResolver(configurations);
+  assert.equal(groupIdFor('sub'), groupIdFor('metered'), 'provider variants did not resolve to one rating group');
+  assert.notEqual(groupIdFor('sub'), groupIdFor('low'), 'two reasoning efforts collapsed into one rating group');
+  assert.equal(groupIdFor('absent'), 'absent', 'a configuration outside the catalog did not resolve to itself');
+
+  const history = [
+    historyEntry('m1', 'sub', 'low', 'a', 10, 4),
+    historyEntry('m2', 'metered', 'low', 'a', 20, 4),
+  ];
+  const curve = recomputePersonalCurve(history, { groupIdFor });
+  assert.equal(curve.points.length, 2, 'the provider variants were not pooled into one point');
+  const pooled = curve.points.find((point) => point.configurationId === groupIdFor('sub'))!;
+  assert.equal(pooled.comparisons, 2, 'both votes were not credited to the pooled point');
+  assert.equal(pooled.wins, 2, 'the pooled point did not carry both wins');
+  assert.equal(pooled.meanCost, 15, 'costs were not averaged across the pooled configurations');
 }
 
 async function testReloadPreservesMatchupAndPlayState(): Promise<void> {

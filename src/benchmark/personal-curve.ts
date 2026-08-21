@@ -25,6 +25,8 @@ export interface PersonalHistoryEntry {
 export type PersonalPointStatus = 'pending' | 'provisional' | 'established';
 
 export interface PersonalRatingPoint {
+  /** The identity this point is rated under. It is a configuration id unless the
+   * caller supplied `groupIdFor` and it pooled several configurations here. */
   configurationId: string;
   modelName: string;
   workflowName: string;
@@ -67,6 +69,10 @@ export function comparisonsRequired(comparisonCounts: readonly number[]): number
 
 export interface PersonalRatingOptions {
   catalog?: readonly PersonalCurveCatalogEntry[];
+  /** Resolves a configuration id to the identity it is rated under, so that
+   * configurations a voter cannot tell apart share one rating and one point.
+   * Defaults to rating every configuration on its own. */
+  groupIdFor?: (configurationId: string) => string;
 }
 
 export interface BradleyTerryComparison {
@@ -142,11 +148,13 @@ export function predictedWinProbability(strengthA: number, strengthB: number): n
  * affect the fit: votes are aggregated before the MM iteration. */
 export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[], options: PersonalRatingOptions = {}): PersonalCurve {
   const catalog = options.catalog ?? [];
+  const groupIdFor = options.groupIdFor ?? ((configurationId: string) => configurationId);
   const catalogCosts = new Map<string, number[]>();
   const catalogLabels = new Map<string, { modelName: string; workflowName: string }>();
   for (const entry of catalog) {
-    catalogCosts.set(entry.configurationId, [...(catalogCosts.get(entry.configurationId) ?? []), entry.generationCost]);
-    addLabel(catalogLabels, entry.configurationId, { modelName: entry.modelName, workflowName: entry.workflowName });
+    const id = groupIdFor(entry.configurationId);
+    catalogCosts.set(id, [...(catalogCosts.get(id) ?? []), entry.generationCost]);
+    addLabel(catalogLabels, id, { modelName: entry.modelName, workflowName: entry.workflowName });
   }
 
   const seenIds = new Set<string>();
@@ -156,8 +164,8 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   const comparisons: BradleyTerryComparison[] = [];
 
   for (const entry of history) {
-    const aId = configurationIdFor(entry.a);
-    const bId = configurationIdFor(entry.b);
+    const aId = groupIdFor(configurationIdFor(entry.a));
+    const bId = groupIdFor(configurationIdFor(entry.b));
     seenIds.add(aId);
     seenIds.add(bId);
     addObservedPoint(aId, entry.a, observedCosts, labels, rawStats);
@@ -184,7 +192,7 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   const configurationIds = new Set([...seenIds, ...catalogCosts.keys()]);
   const strengths = fitBradleyTerry(comparisons, [...seenIds]);
   const ratings = new Map([...strengths].map(([id, strength]) => [id, ratingForStrength(strength)] as const));
-  const featuredIds = new Set(catalog.filter((entry) => entry.featured).map((entry) => entry.configurationId));
+  const featuredIds = new Set(catalog.filter((entry) => entry.featured).map((entry) => groupIdFor(entry.configurationId)));
   const mainComponent = mainComparisonComponent([...seenIds], comparisons, featuredIds);
   const required = comparisonsRequired([...seenIds].map((id) => rawStats.get(id)?.comparisons ?? 0));
   // An island of configurations that has never been compared against the main

@@ -1,4 +1,5 @@
 import type { RankCatalogEntrant, SchedulingPool } from './catalog';
+import { configurationGroupResolver } from './identity.js';
 import { recomputePersonalCurve, type PersonalCurve, type PersonalHistoryEntry } from './personal-curve.js';
 import type { MatchupVote, RelativeOutcome } from './types';
 
@@ -51,7 +52,7 @@ export function nextScheduledMatchup(catalog: SchedulingPool, participantId: str
   const exposureCounts = exposureMap(catalog, judged);
   const pairCounts = countJudgedPairs(catalog, judged);
   const configurationPairCounts = countJudgedConfigurationPairs(catalog, judged);
-  const candidates = [...entrantsByTheme.entries()].flatMap(([themeId, entrants]) => pairsForTheme(themeId, entrants, exposureCounts, pairCounts, configurationPairCounts));
+  const candidates = [...entrantsByTheme.entries()].flatMap(([themeId, entrants]) => pairsForTheme(themeId, entrants, exposureCounts, pairCounts, configurationPairCounts, configurationGroupResolver(catalog.configurations)));
   if (candidates.length === 0) return null;
 
   const lastThemeId = parsePairId(judged.at(-1)?.matchupId ?? '')?.themeId;
@@ -105,6 +106,7 @@ function selectCoveragePhase(
   if (coldStart && bothUnseen) return bothUnseen;
 
   const placed = anchorConfigurations(curve);
+  const groupIdFor = configurationGroupResolver(catalog.configurations);
   const anchored = themeCandidates
     .filter((candidate) => candidate.unseenCount === 1)
     .sort((left, right) => {
@@ -112,7 +114,7 @@ function selectCoveragePhase(
       const rightUnseen = (exposureCounts.get(right.a.levelId) ?? 0) === 0 ? right.a : right.b;
       const leftAnchor = leftUnseen === left.a ? left.b : left.a;
       const rightAnchor = rightUnseen === right.a ? right.b : right.a;
-      return Number(placed.has(rightAnchor.configurationId)) - Number(placed.has(leftAnchor.configurationId))
+      return Number(placed.has(groupIdFor(rightAnchor.configurationId))) - Number(placed.has(groupIdFor(leftAnchor.configurationId)))
         || left.configurationPairCount - right.configurationPairCount
         || participantOrder(participantId, left.id) - participantOrder(participantId, right.id)
         || compareIds(left.id, right.id);
@@ -148,9 +150,10 @@ function selectPlayoffPhase(
 
   const curve = schedulerCurve(catalog, judged);
   const ratings = new Map(curve.points.flatMap((point) => point.rating === undefined ? [] : [[point.configurationId, point.rating] as const]));
+  const groupIdFor = configurationGroupResolver(catalog.configurations);
   return fresh
     .filter((candidate) => candidate.themeId === themeId)
-    .map((candidate) => ({ candidate, information: playoffInformation(candidate, ratings) }))
+    .map((candidate) => ({ candidate, information: playoffInformation(candidate, ratings, groupIdFor) }))
     .sort((left, right) => right.information - left.information
       || participantOrder(participantId, left.candidate.id) - participantOrder(participantId, right.candidate.id)
       || compareIds(left.candidate.id, right.candidate.id))[0]?.candidate ?? null;
@@ -162,9 +165,9 @@ function selectPlayoffPhase(
  * the field has already settled between itself. An explicit term for how far a
  * configuration is from a countable rating was measured against this and did
  * not improve time-to-ranked for a single arriving configuration. */
-function playoffInformation(candidate: PairCandidate, ratings: ReadonlyMap<string, number>): number {
-  const ratingA = ratings.get(candidate.a.configurationId) ?? 1000;
-  const ratingB = ratings.get(candidate.b.configurationId) ?? 1000;
+function playoffInformation(candidate: PairCandidate, ratings: ReadonlyMap<string, number>, groupIdFor: (configurationId: string) => string): number {
+  const ratingA = ratings.get(groupIdFor(candidate.a.configurationId)) ?? 1000;
+  const ratingB = ratings.get(groupIdFor(candidate.b.configurationId)) ?? 1000;
   const p = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
   return p * (1 - p) / (1 + candidate.configurationPairCount);
 }
@@ -210,15 +213,18 @@ function pairsForTheme(
   exposureCounts: ReadonlyMap<string, number>,
   pairCounts: ReadonlyMap<string, number>,
   configurationPairCounts: ReadonlyMap<string, number>,
+  groupIdFor: (configurationId: string) => string,
 ): PairCandidate[] {
   const candidates: PairCandidate[] = [];
   for (let i = 0; i < entrants.length; i += 1) {
     for (let j = i + 1; j < entrants.length; j += 1) {
       const a = entrants[i];
       const b = entrants[j];
-      if (a.configurationId === b.configurationId) continue;
+      // Two entrants of one rating group would be judged against themselves, so
+      // the pairing is dropped exactly as a same-configuration pairing is.
+      if (groupIdFor(a.configurationId) === groupIdFor(b.configurationId)) continue;
       const id = pairId(themeId, a.levelId, b.levelId);
-      const configurationPairId = configurationPairIdFor(a.configurationId, b.configurationId);
+      const configurationPairId = configurationPairIdFor(groupIdFor(a.configurationId), groupIdFor(b.configurationId));
       const exposureA = exposureCounts.get(a.levelId) ?? 0;
       const exposureB = exposureCounts.get(b.levelId) ?? 0;
       candidates.push({
@@ -249,14 +255,15 @@ function countJudgedPairs(catalog: SchedulingPool, judged: readonly SchedulerJud
 }
 
 function countJudgedConfigurationPairs(catalog: SchedulingPool, judged: readonly SchedulerJudgedVote[]): Map<string, number> {
+  const groupIdFor = configurationGroupResolver(catalog.configurations);
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const counts = new Map<string, number>();
   for (const item of judged) {
     const parsed = parsePairId(item.matchupId);
     const a = parsed ? entrants.get(parsed.levelA) : undefined;
     const b = parsed ? entrants.get(parsed.levelB) : undefined;
-    if (!parsed || !a || !b || a.themeId !== parsed.themeId || b.themeId !== parsed.themeId || a.configurationId === b.configurationId) continue;
-    const key = configurationPairIdFor(a.configurationId, b.configurationId);
+    if (!parsed || !a || !b || a.themeId !== parsed.themeId || b.themeId !== parsed.themeId || groupIdFor(a.configurationId) === groupIdFor(b.configurationId)) continue;
+    const key = configurationPairIdFor(groupIdFor(a.configurationId), groupIdFor(b.configurationId));
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return counts;
@@ -278,13 +285,14 @@ function exposureMap(
 }
 
 function schedulerCurve(catalog: SchedulingPool, judged: readonly SchedulerJudgedVote[]) {
+  const groupIdFor = configurationGroupResolver(catalog.configurations);
   const entrants = new Map(catalog.entrants.map((entrant) => [entrant.levelId, entrant]));
   const history: PersonalHistoryEntry[] = [];
   for (const item of judged) {
     const parsed = parsePairId(item.matchupId);
     const a = parsed ? entrants.get(parsed.levelA) : undefined;
     const b = parsed ? entrants.get(parsed.levelB) : undefined;
-    if (!parsed || !a || !b || a.themeId !== parsed.themeId || b.themeId !== parsed.themeId || a.configurationId === b.configurationId) continue;
+    if (!parsed || !a || !b || a.themeId !== parsed.themeId || b.themeId !== parsed.themeId || groupIdFor(a.configurationId) === groupIdFor(b.configurationId)) continue;
     // The stored outcome refers to the sides as served, which may be flipped
     // relative to the canonical pair order used here.
     const relative = item.aLevelId === parsed.levelB ? invertRelative(item.relative) : item.relative;
@@ -303,7 +311,7 @@ function schedulerCurve(catalog: SchedulingPool, judged: readonly SchedulerJudge
       b: { configurationId: b.configurationId, modelName: b.modelName, workflowName: b.workflowName, generationCost: b.generationCost },
     });
   }
-  return recomputePersonalCurve(history, { catalog: catalog.entrants });
+  return recomputePersonalCurve(history, { catalog: catalog.entrants, groupIdFor });
 }
 
 function configurationPairIdFor(configurationA: string, configurationB: string): string {

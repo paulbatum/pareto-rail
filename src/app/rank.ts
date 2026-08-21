@@ -4,6 +4,7 @@ import {
   type PersonalHistoryEntry,
 } from '../benchmark/personal-curve';
 import { allCatalogEntrants, schedulingPool, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
+import { configurationGroupResolver } from '../benchmark/identity';
 import { assignmentFromVote, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, type CompletedMatchup } from '../benchmark/catalog-api';
 import { ComparisonStateMachine } from '../benchmark/state';
 import { BenchmarkLocalStore } from '../benchmark/storage';
@@ -59,7 +60,7 @@ export class RankController {
   get curve() {
     const matchups = this.judgedMatchups;
     const history = personalHistoryFromReveals(matchups.map((item) => item.vote), matchups.map((item) => item.reveal));
-    return recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history) });
+    return recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history), groupIdFor: configurationGroupResolver(rankCatalog.configurations) });
   }
 
   subscribe(listener: Listener) {
