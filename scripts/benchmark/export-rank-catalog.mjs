@@ -395,7 +395,9 @@ function reportFeaturedModelDrift(catalog) {
   const named = fs.readFileSync(featuredModelsPath, 'utf8').split('\n')
     .map((line) => /^-\s+(.*\S)\s*$/.exec(line.trim())?.[1])
     .filter((entry) => entry !== undefined)
-    .map((entry) => entry.replace(/\s*\(new\)$/i, ''));
+    .map((entry) => entry.replace(/\s*\(new\)$/i, ''))
+    // A name may be written as a markdown link; the catalog knows it by its text.
+    .map((entry) => /^\[(.+)\]\(\S+\)$/.exec(entry)?.[1] ?? entry);
   const publishing = new Set(catalog.entrants
     .filter((entrant) => !entrant.retired)
     .map((entrant) => configurationLabels[entrant.configurationId]?.modelName)

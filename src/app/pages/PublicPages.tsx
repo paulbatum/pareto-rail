@@ -36,7 +36,9 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
               <ul>
                 {featuredModels.map((model) => (
                   <li key={model.name} className={model.isNew ? 'is-new' : undefined}>
-                    {model.name}
+                    {model.href
+                      ? <a href={model.href} target="_blank" rel="noreferrer">{model.name}</a>
+                      : model.name}
                     {model.isNew && <span className="new-tag">{homeCopy.models.newTag}</span>}
                   </li>
                 ))}
