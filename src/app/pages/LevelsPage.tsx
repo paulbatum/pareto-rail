@@ -100,8 +100,8 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
   // narrows only the benchmark bands (built-ins carry no generation record).
   const filteredBuiltIn = selectedCategories.has('built-in') ? builtIn : EMPTY_BUILT_IN;
   const filteredBands = useMemo(
-    () => filterBands(bands, selectedCategories, selectedConfigs),
-    [bands, selectedCategories, selectedConfigs],
+    () => filterBands(bands, selectedCategories, configOptions, selectedConfigs),
+    [bands, selectedCategories, configOptions, selectedConfigs],
   );
   const benchmarkCount = filteredBands.reduce((total, band) => total + band.records.length, 0);
 
@@ -161,7 +161,7 @@ export function LevelsPage({ route, onNavigate }: { route: Extract<AppRoute, { k
   );
 }
 
-type ConfigOption = { id: string; label: string };
+type ConfigOption = { id: string; label: string; configurationIds: string[] };
 type CategoryOption = { id: LevelCategory; label: string };
 
 /** Filter bar shared by both views. Category is a set of independent toggles —
@@ -674,17 +674,30 @@ function themeBands(): ThemeBand[] {
 
 /** The configurations that actually produced a displayed benchmark run, in the
  * catalog's own configuration order, each with its visitor-facing label. */
+/** A chip is a model and a workflow, not a configuration. Configurations that
+ * differ only in something this page does not distinguish — the provider serving
+ * the model, the reasoning effort — read as one name, so they share one chip and
+ * pressing it shows every level any of them built. */
 function configOptionsFrom(bands: ThemeBand[]): ConfigOption[] {
   const present = new Set<string>();
   for (const band of bands) {
     for (const record of band.records) present.add(record.entrant.configurationId);
   }
-  return (rankCatalog.configurations ?? [])
-    .filter((configuration) => present.has(configuration.id))
-    .map((configuration) => ({
-      id: configuration.id,
-      label: entrantLabel({ modelName: configuration.modelName, workflowName: configuration.workflowName }),
-    }));
+  const options: ConfigOption[] = [];
+  const byLabel = new Map<string, ConfigOption>();
+  for (const configuration of rankCatalog.configurations ?? []) {
+    if (!present.has(configuration.id)) continue;
+    const label = entrantLabel({ modelName: configuration.modelName, workflowName: configuration.workflowName });
+    const existing = byLabel.get(label);
+    if (existing) {
+      existing.configurationIds.push(configuration.id);
+      continue;
+    }
+    const option: ConfigOption = { id: label, label, configurationIds: [configuration.id] };
+    byLabel.set(label, option);
+    options.push(option);
+  }
+  return options;
 }
 
 /** The categories that actually have levels to show, in fixed display order.
@@ -703,12 +716,13 @@ function categoryOptionsFrom(builtIn: BuiltInRecord[], bands: ThemeBand[]): Cate
  * selected; retired and experimental are opt-in, so they stay hidden until their
  * chip is pressed. A non-empty configuration selection then keeps only runs from
  * those configurations, and any theme band left empty is dropped. */
-function filterBands(bands: ThemeBand[], categories: ReadonlySet<LevelCategory>, configs: ReadonlySet<string>): ThemeBand[] {
+function filterBands(bands: ThemeBand[], categories: ReadonlySet<LevelCategory>, options: ConfigOption[], selected: ReadonlySet<string>): ThemeBand[] {
+  const selectedConfigurationIds = new Set(options.filter((option) => selected.has(option.id)).flatMap((option) => option.configurationIds));
   const result: ThemeBand[] = [];
   for (const band of bands) {
     const visible = band.records.filter((record) => {
       if (!categories.has(benchmarkCategory(record))) return false;
-      return configs.size === 0 || configs.has(record.entrant.configurationId);
+      return selected.size === 0 || selectedConfigurationIds.has(record.entrant.configurationId);
     });
     if (visible.length > 0) result.push({ ...band, records: visible });
   }
