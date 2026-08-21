@@ -35,10 +35,11 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
               <h2>{homeCopy.models.heading}</h2>
               <ul>
                 {featuredModels.map((model) => (
-                  <li key={model.name} className={model.isNew ? 'is-new' : undefined}>
+                  <li key={model.name} className={[model.isNew && 'is-new', model.note && 'has-note'].filter(Boolean).join(' ') || undefined}>
                     {model.href
                       ? <a href={model.href} target="_blank" rel="noreferrer">{model.name}</a>
                       : model.name}
+                    {model.note && <span className="model-note">{model.note}</span>}
                     {model.isNew && <span className="new-tag">{homeCopy.models.newTag}</span>}
                   </li>
                 ))}

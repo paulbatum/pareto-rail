@@ -396,7 +396,9 @@ function reportFeaturedModelDrift(catalog) {
     .map((line) => /^-\s+(.*\S)\s*$/.exec(line.trim())?.[1])
     .filter((entry) => entry !== undefined)
     .map((entry) => entry.replace(/\s*\(new\)$/i, ''))
-    // A name may be written as a markdown link; the catalog knows it by its text.
+    // A name may carry a note after an em dash, and may be written as a markdown
+    // link. The catalog knows the model by its name alone, so both come off here.
+    .map((entry) => /^(.*?)\s+—\s+.*\S$/.exec(entry)?.[1] ?? entry)
     .map((entry) => /^\[(.+)\]\(\S+\)$/.exec(entry)?.[1] ?? entry);
   const publishing = new Set(catalog.entrants
     .filter((entrant) => !entrant.retired)
