@@ -466,11 +466,14 @@ export function manifestNeedsRefresh(manifest, evaluated, payload, gateRecord) {
   return gateRecord.gates.some((gate) => recordedGates.get(gate.id) !== gate.status);
 }
 
+// A failed gate does not decide whether the entrant failed or the infrastructure did, and only the
+// owner assigns that. So the runner records `unadjudicated` and stops there; `benchmark:manage --
+// adjudicate` turns it into a DNF or an infrastructure failure.
 export function dispositionFor({ kind = 'benchmark', passing, payload }) {
   if (kind === 'rehearsal') return { status: 'rehearsal' };
-  if (!passing) return { status: 'dnf', reasonCode: 'required-gate-failed' };
+  if (!passing) return { status: 'unadjudicated', reasonCode: 'required-gate-failed' };
   if (payload) return { status: 'playable' };
-  return { status: 'dnf', reasonCode: 'payload-pending' };
+  return { status: 'unadjudicated', reasonCode: 'payload-pending' };
 }
 
 function validateManifest(manifest, definition, evaluated, payload, gateRecord) {

@@ -106,9 +106,18 @@ Resume validates existing artifacts and continues at the first unfinished step. 
 
 ## Failure policy
 
-Infrastructure failure: fix it, rerun, and keep and report the cost of every attempt. Model failure — a gate fails on the sealed output — is a DNF, shown as such. The agent classifies which one it was and records the decision as a free-text note in the run record, and puts the call to the owner when it is not clear-cut.
+A failed gate means the run produced no playable entrant. It does not say whether the entrant failed or the run never gave it a fair attempt, so the runner records `disposition.status: "unadjudicated"` and stops. The owner assigns the verdict:
 
-An escalation holds that row, not the queue. Rows are independent: each is one plan row against its own entrant checkout, and no row's outcome decides another's. So set the ambiguous row aside, launch the remaining rows, and report the classification with them.
+```sh
+npm run benchmark:manage -- adjudicate --run <run-id> --as dnf|infrastructure --reason "<why>"
+```
+
+- `dnf` — the entrant failed. The result stands and is shown as a DNF.
+- `infrastructure` — the run never gave the entrant a fair attempt. Rerun the row, and keep and report the cost of every attempt.
+
+The verdict is written as `adjudication.json` beside the run. Like the disqualification marker it changes only the displayed state, so manifests stay as recorded. A run is adjudicated once; `benchmark:results` shows an unadjudicated run as `unadjudicated` until then, and a `dnf` written into a manifest before adjudication existed was the controller's own reading, so it displays as unadjudicated too.
+
+The agent's job is to gather what the verdict rests on, not to reach it: the stage's exit and final message, what the entrant had built, which gate failed and why, and whether the harness ended the stage on its own. Put that in the run's `incident.json` and report it. An escalation holds that row, not the queue — rows are independent, each one plan row against its own entrant checkout, and no row's outcome decides another's — so launch the remaining rows and report the pending verdict with them.
 
 Two transient infrastructure failures recur on the Claude Code stage. The first is `Failed to authenticate: OAuth session expired and could not be refreshed`: the stage runs against a copy of the owner's credential in its isolated home, and another Claude session on that account running alongside the benchmark can rotate the shared refresh token out from under that copy, so a stage started with a near-expired token cannot refresh. The second is `API Error: Stream idle timeout - no chunks received`, a mid-stage stall of the streaming response. Both kill the stage without the entrant having failed at anything, so recover with `--continue-stage true` (see Resume and recovery): it re-enters the recorded session, and the resume copies the owner's credential into the run's home again, which is what clears an expired one. Relaunch fresh only when there is no session to re-enter or no entrant work worth keeping. The OAuth race is intermittent; if it keeps recurring, re-login on the owner's account (`claude`, interactive) to refresh the stored token before launching more Claude stages.
 

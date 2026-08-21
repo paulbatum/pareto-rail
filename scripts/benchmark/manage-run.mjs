@@ -10,7 +10,9 @@ import { loadResults } from './results.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const RUNS_DIR = path.join(ROOT, 'benchmark/private/runs');
 const ARCHIVE_DIR = path.join(ROOT, 'benchmark/private/archive/runs');
-const FAILED_STATES = new Set(['gate-failed', 'dnf', 'controller-failure', 'incomplete']);
+const FAILED_STATES = new Set(['gate-failed', 'unadjudicated', 'dnf', 'infrastructure-failure', 'controller-failure', 'incomplete']);
+// A verdict is assigned once: a run that already carries one, or that never failed, is not re-decided.
+const ADJUDICABLE_STATES = new Set(['unadjudicated', 'gate-failed']);
 
 async function main() {
   const { rest, options } = parseArgs(process.argv.slice(2), { positional: true, booleans: ['unblind'] });
@@ -20,7 +22,8 @@ async function main() {
   npm run benchmark:manage -- archive-dnf [--dry-run true]
   npm run benchmark:manage -- unarchive --run <run-id-or-archived-directory>
   npm run benchmark:manage -- prune --run <run-id> --confirm <run-id>
-  npm run benchmark:manage -- delete --run <run-id> --confirm <run-id> [--dry-run true]`);
+  npm run benchmark:manage -- delete --run <run-id> --confirm <run-id> [--dry-run true]
+  npm run benchmark:manage -- adjudicate --run <run-id> --as dnf|infrastructure --reason "<why>"`);
     return;
   }
   const command = rest[0];
@@ -29,6 +32,7 @@ async function main() {
   if (command === 'archive-dnf') { assertOnlyOptions(options, new Set(['dry-run'])); return archiveDnf(options); }
   if (command === 'unarchive') { assertOnlyOptions(options, new Set(['run'])); return unarchive(options.run); }
   if (command === 'prune') { assertOnlyOptions(options, new Set(['run', 'confirm'])); return pruneRun({ runId: options.run, confirmation: options.confirm }); }
+  if (command === 'adjudicate') { assertOnlyOptions(options, new Set(['run', 'as', 'reason'])); return adjudicate({ runId: options.run, verdict: options.as, reason: options.reason }); }
   if (command === 'delete') { assertOnlyOptions(options, new Set(['run', 'confirm', 'dry-run'])); return deleteRun({ runId: options.run, confirmation: options.confirm, dryRun: options['dry-run'] === 'true' }); }
   fail(`Unknown command: ${command}`);
 }
@@ -159,6 +163,28 @@ async function assertSafeToPrune(target, root) {
   if (head !== target.commit) fail(`Refusing to prune ${target.kind}: worktree HEAD ${head} does not match recorded commit ${target.commit}.`);
   const status = (await run('git', ['status', '--porcelain=v1', '--untracked-files=all'], target.path)).output.trim();
   if (status) fail(`Refusing to prune ${target.kind}: worktree is dirty.\n${status}`);
+}
+
+const VERDICTS = new Set(['dnf', 'infrastructure']);
+
+// The runner records a failed gate as `unadjudicated` and stops. Which failure it was decides what
+// happens next — a DNF stands as the entrant's result, an infrastructure failure is rerun — and the
+// owner makes that call, so this writes their verdict as a marker beside the run. Like the
+// disqualification marker it changes only the displayed state; the manifest is left as recorded.
+export async function adjudicate({ runId, verdict, reason, root = ROOT }) {
+  if (!runId) fail('Adjudication requires --run <run-id>.');
+  if (!VERDICTS.has(verdict)) fail(`Adjudication requires --as ${[...VERDICTS].join(' or --as ')}.`);
+  if (!reason || !reason.trim()) fail('Adjudication requires --reason "<why>", which is recorded verbatim.');
+  const runDirectory = path.join(root, 'benchmark/private/runs', runId);
+  const result = (await loadResults(path.join(root, 'benchmark/private/runs'), {})).find((candidate) => candidate.runId === runId);
+  if (!result) fail(`No run record found for ${runId}.`);
+  if (!ADJUDICABLE_STATES.has(result.state)) fail(`Refusing to adjudicate ${runId}: its state is ${result.state}. Only a run awaiting a verdict can be adjudicated.`);
+
+  const existing = await optionalJson(path.join(runDirectory, 'adjudication.json'));
+  if (existing) fail(`${runId} is already adjudicated as ${existing.verdict}: ${existing.reason}`);
+  await writeJson(path.join(runDirectory, 'adjudication.json'), { schemaVersion: 1, verdict, adjudicatedAt: new Date().toISOString(), reason });
+  console.log(`Adjudicated ${runId} (${result.levelId}) as ${verdict === 'dnf' ? 'a DNF' : 'an infrastructure failure'}.`);
+  if (verdict === 'infrastructure') console.log('  Rerun the row and keep the cost of every attempt. Delete this record only once the rerun exists.');
 }
 
 // `prune` reclaims a run's temporary worktrees and keeps its record, because a run that produced an

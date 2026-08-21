@@ -54,7 +54,15 @@ export function shouldUnblind(unblind = false) {
   return unblind === true;
 }
 
-export function resultFromArtifacts({ directoryName, manifest, definition, gates, failure, recovery, promotion, incident, disqualification }, { unblind = false } = {}) {
+// The owner's verdict on a failed run: `dnf` means the entrant failed, `infrastructure` means the
+// run never gave the entrant a fair attempt and is rerun instead.
+function adjudicatedState(adjudication) {
+  if (adjudication?.verdict === 'dnf') return 'dnf';
+  if (adjudication?.verdict === 'infrastructure') return 'infrastructure-failure';
+  return null;
+}
+
+export function resultFromArtifacts({ directoryName, manifest, definition, gates, failure, recovery, promotion, incident, disqualification, adjudication }, { unblind = false } = {}) {
   const benchmarkVersion = manifest?.benchmarkVersion ?? definition?.benchmarkVersion ?? null;
   const unblinded = shouldUnblind(unblind);
   const gateRecords = manifest?.gates ?? gates?.gates ?? [];
@@ -68,8 +76,11 @@ export function resultFromArtifacts({ directoryName, manifest, definition, gates
   const configuration = manifest?.configuration?.id ?? definition?.configurationId ?? definition?.assignment?.configurationId ?? null;
 
   let state = 'incomplete';
-  if (failedGates.length) state = 'gate-failed';
-  else if (manifest?.disposition?.status === 'dnf') state = 'dnf';
+  // A failed gate leaves the run awaiting the owner's verdict, and `dnf` is that verdict rather than
+  // a reading the controller takes. A `dnf` written into an older manifest was the controller's own
+  // reading, so it displays as unadjudicated too until the owner assigns one.
+  const awaitingVerdict = failedGates.length || manifest?.disposition?.status === 'unadjudicated' || manifest?.disposition?.status === 'dnf';
+  if (awaitingVerdict) state = adjudicatedState(adjudication) ?? 'unadjudicated';
   else if (manifest?.disposition?.status === 'controller-failure') state = 'controller-failure';
   else if (manifest) state = 'completed';
   else if (failure) state = 'controller-failure';
@@ -126,6 +137,7 @@ export async function readRunArtifacts(runDirectory, directoryName) {
     promotion: await optionalJson(path.join(runDirectory, 'promotion.json')),
     incident: await optionalJson(path.join(runDirectory, 'incident.json')),
     disqualification: await optionalJson(path.join(runDirectory, 'disqualification.json')),
+    adjudication: await optionalJson(path.join(runDirectory, 'adjudication.json')),
   };
   if (!artifacts.manifest && !artifacts.definition) return null;
   return artifacts;

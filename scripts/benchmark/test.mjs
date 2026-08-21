@@ -104,7 +104,7 @@ assert.equal(entrantSandboxEnabled({ baselinePolicy: 'scrubbed', stage: { adapte
 assert.equal(sandboxUnavailable({ stage: { adapter: 'prime-agent-cli' } }), true);
 assert.match(sandboxWarning({ baselinePolicy: 'scrubbed', stage: { adapter: 'prime-agent-cli' } }), /Entrant sandbox unavailable for prime-agent-cli/);
 assert.equal(sandboxWarning({ baselinePolicy: 'scrubbed', stage: { adapter: 'pi-cli' } }), null);
-assert.deepEqual(dispositionFor({ kind: 'benchmark', passing: false, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'dnf', reasonCode: 'required-gate-failed' });
+assert.deepEqual(dispositionFor({ kind: 'benchmark', passing: false, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'unadjudicated', reasonCode: 'required-gate-failed' });
 assert.deepEqual(dispositionFor({ kind: 'rehearsal', passing: true, payload: { payloadCommit: 'a'.repeat(40) } }), { status: 'rehearsal' });
 const duplicateSlotPlan = structuredClone(plan);
 duplicateSlotPlan.runs.push({ ...plan.runs[0], runId: 'run-b2c3d4e5' });
@@ -662,6 +662,21 @@ const disqualifiedPromotion = resultFromArtifacts({
 assert.equal(disqualifiedPromotion.promotionStatus, 'not-applicable');
 assert.equal(disqualifiedPromotion.promotionCommit, 'c'.repeat(40), 'a disqualified run still reports the promotion it received');
 assert.equal(resultFromArtifacts({ directoryName: 'run-a1b2', manifest: benchmarkLevelsManifest, disqualification: { schemaVersion: 1, status: 'disqualified' } }).promotionStatus, 'not-applicable');
+// A failed gate is not a DNF: the controller records it as awaiting the owner's verdict, and only an
+// adjudication marker turns it into one. A `dnf` left in an older manifest is the controller's own
+// reading and awaits a verdict too.
+const failedGateManifest = { ...eligibleManifest, gates: [{ id: 'floor', status: 'failed' }] };
+const stateOf = (extra) => resultFromArtifacts({ directoryName: 'run-a1b2', ...extra }).state;
+assert.equal(stateOf({ manifest: failedGateManifest }), 'unadjudicated');
+assert.equal(stateOf({ manifest: { ...eligibleManifest, disposition: { status: 'dnf' } } }), 'unadjudicated');
+assert.equal(stateOf({ manifest: { ...eligibleManifest, disposition: { status: 'unadjudicated' } } }), 'unadjudicated');
+assert.equal(stateOf({ manifest: failedGateManifest, adjudication: { schemaVersion: 1, verdict: 'dnf', reason: 'entrant never finished the level' } }), 'dnf');
+assert.equal(stateOf({ manifest: failedGateManifest, adjudication: { schemaVersion: 1, verdict: 'infrastructure', reason: 'provider returned an empty completion' } }), 'infrastructure-failure');
+// A disqualification still outranks a verdict.
+assert.equal(stateOf({ manifest: failedGateManifest, adjudication: { schemaVersion: 1, verdict: 'dnf', reason: 'x' }, disqualification: { schemaVersion: 1, status: 'disqualified' } }), 'disqualified');
+// A passing run is untouched by the adjudication path.
+assert.equal(stateOf({ manifest: eligibleManifest }), 'completed');
+
 // Rehearsals never enter promotion, whatever promotion.json happens to hold.
 assert.equal(resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest, promotion: { status: 'failed' } }).promotionStatus, 'not-applicable');
 const recoveredResult = resultFromArtifacts({ directoryName: 'rehearsal-a1b2', manifest: resultManifest, recovery: { recoveredAt: '2026-01-01T01:00:00.000Z', reason: 'infrastructure-timeout' } });
@@ -1083,10 +1098,10 @@ async function assertMissingGatesResumeFixture() {
   try {
     await fs.writeFile(path.join(runDirectory, 'controller-state.json'), `${JSON.stringify({ checkpoints: { gates: { status: 'completed' } } }, null, 2)}\n`);
     assert.equal(await reusableGateRecord(runDirectory, evaluatedCommit), null, 'a completed gates checkpoint with no gates.json must not be reusable');
-    const oldManifest = { output: { evaluated: { commit: evaluatedCommit } }, gates: [{ id: 'typecheck', status: 'failed' }], disposition: { status: 'dnf' } };
+    const oldManifest = { output: { evaluated: { commit: evaluatedCommit } }, gates: [{ id: 'typecheck', status: 'failed' }], disposition: { status: 'unadjudicated' } };
     const newGateRecord = { evaluatedCommit, gates: ['typecheck', 'build', 'scope', 'floor'].map((id) => ({ id, status: 'passed' })) };
     assert.equal(manifestNeedsRefresh(oldManifest, { evaluatedCommit }, null, newGateRecord), true, 'changed gate results must refresh the manifest on resume');
-    assert.deepEqual(dispositionFor({ kind: 'benchmark', passing: true, payload: null }), { status: 'dnf', reasonCode: 'payload-pending' });
+    assert.deepEqual(dispositionFor({ kind: 'benchmark', passing: true, payload: null }), { status: 'unadjudicated', reasonCode: 'payload-pending' });
     await fs.mkdir(path.join(runDirectory, 'gates'), { recursive: true });
     await fs.writeFile(path.join(runDirectory, 'gates/gates.json'), `${JSON.stringify(newGateRecord)}\n`);
     assert.deepEqual(await reusableGateRecord(runDirectory, evaluatedCommit), newGateRecord);
