@@ -96,6 +96,20 @@ export const configurationLabels = {
     effort: 'high',
     workflowSummary: 'One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
+  'agy-gemini-3-7-flash-high': {
+    modelName: 'Gemini 3.7 Flash',
+    workflowName: 'solo',
+    primaryModel: 'gemini-3.7-flash',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
+  'pi-openrouter-ox-alpha-high': {
+    modelName: 'Ox Alpha',
+    workflowName: 'solo',
+    primaryModel: 'stealth/ox-alpha',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended pi session driving Ox Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'pi-kimi-k3-max': {
     modelName: 'Kimi K3',
     workflowName: 'solo',
@@ -128,6 +142,8 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'codex-sol-high-b20',
   'codex-sol-max',
   'agy-gemini-3-6-flash-high',
+  'agy-gemini-3-7-flash-high',
+  'pi-openrouter-ox-alpha-high',
   'pi-kimi-k3-max',
   'pi-openrouter-kimi-k3-max',
 ]);

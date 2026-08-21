@@ -668,6 +668,24 @@
       ]
     },
     {
+      "runId": "run-v31izg5mbm",
+      "levelId": "vespers-1izg",
+      "themeId": "vespers",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-v31izg5mbm/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 4111626,
+          "sha256": "ced0e02637eba523ac436f6a044950ae889f14102561d8246332191ad40c297b"
+        },
+        {
+          "path": "runs/run-v31izg5mbm/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 19801120,
+          "sha256": "b35f54b0f5020065fca88ab6e5406cbb215d108a8c4c2eea7bc10cde271c46e6"
+        }
+      ]
+    },
+    {
       "runId": "run-v34xmh17pb",
       "levelId": "thermal-ink-4xmh",
       "themeId": "thermal-ink",
@@ -704,6 +722,24 @@
       ]
     },
     {
+      "runId": "run-v37umhrqn6",
+      "levelId": "tinker-ball-7umh",
+      "themeId": "tinker-ball",
+      "configurationId": "agy-gemini-3-7-flash-high",
+      "files": [
+        {
+          "path": "runs/run-v37umhrqn6/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 746434,
+          "sha256": "9c479ea869ffe86c663728a56aeeedc6b7de5234e274a1733cb5dc9811ea0bee"
+        },
+        {
+          "path": "runs/run-v37umhrqn6/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 402,
+          "sha256": "81b610965072eaf9312511242ab167ae4a1fee2fa29aa09bc32d5372fa61b57b"
+        }
+      ]
+    },
+    {
       "runId": "run-v3c8vrhdys",
       "levelId": "vespers-c8vr",
       "themeId": "vespers",
@@ -718,6 +754,42 @@
           "path": "runs/run-v3c8vrhdys/stages/solo/agy/events.jsonl.gz",
           "rawBytes": 403,
           "sha256": "d97beb73c6ecb32beb59fee27cf552926dfa684d5eaedf35db0d937979b7d152"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3gnffufye",
+      "levelId": "tinker-ball-gnff",
+      "themeId": "tinker-ball",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-v3gnffufye/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 5692965,
+          "sha256": "c057acb4ffdfe177dbd2a1b9808158a54498878d96e3cd4cfd795e4c09fcc060"
+        },
+        {
+          "path": "runs/run-v3gnffufye/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 27690074,
+          "sha256": "fe9613846e34b844466969f977805f494f2b2073f2c4e1538c30cd885b9a5afd"
+        }
+      ]
+    },
+    {
+      "runId": "run-v3j7xpm8d7",
+      "levelId": "vespers-j7xp",
+      "themeId": "vespers",
+      "configurationId": "agy-gemini-3-7-flash-high",
+      "files": [
+        {
+          "path": "runs/run-v3j7xpm8d7/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 683917,
+          "sha256": "12661fc9dd3d575d17f31286275bbdf7606401470c13eb2295ae2205c7c19acc"
+        },
+        {
+          "path": "runs/run-v3j7xpm8d7/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 398,
+          "sha256": "5e235d7593fc60e2f3e45658f12f3754efcfc0db0aaacc0b4fbc6cb9dc14a8ab"
         }
       ]
     },

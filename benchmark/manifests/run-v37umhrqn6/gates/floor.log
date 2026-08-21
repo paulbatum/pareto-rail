@@ -1,0 +1,23 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level tinker-ball-7umh
+
+Tinker Ball floor check
+duration 60.0s; spawned kinds 11: beetle, hazard, mortar, skitterer, snapper, spill-core-1, spill-core-2, spill-core-3, spill-core-4, spill-heart, walker
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: 0.085 NDC (engine default 0.085); reticle visual 0.059 NDC = 0.69x lock radius, no reticle scaling
+  words: start "START!" (6), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: scoreForHit, scoreForKill, scoreForVolley, validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+reticle warnings: 0
+start/replay word warnings: 0
+All floor checks passed.

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T02:44:09.962Z",
+  "generatedAt": "2026-08-21T05:45:48.739Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -97,6 +97,22 @@
       "primaryModel": "gemini-3.6-flash",
       "effort": "high",
       "workflowSummary": "One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+    },
+    {
+      "id": "agy-gemini-3-7-flash-high",
+      "modelName": "Gemini 3.7 Flash",
+      "workflowName": "solo",
+      "primaryModel": "gemini-3.7-flash",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+    },
+    {
+      "id": "pi-openrouter-ox-alpha-high",
+      "modelName": "Ox Alpha",
+      "workflowName": "solo",
+      "primaryModel": "stealth/ox-alpha",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended pi session driving Ox Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "pi-kimi-k3-max",
@@ -1966,6 +1982,40 @@
       "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
     },
     {
+      "levelId": "vespers-1izg",
+      "themeId": "vespers",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "modelName": "Ox Alpha",
+      "workflowName": "solo",
+      "generationCost": 9.29824389,
+      "linesOfCode": 3168,
+      "run": {
+        "generationWallTimeSeconds": 2117.036,
+        "totalWallTimeSeconds": 2194.088,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "pi",
+          "version": "0.84.2"
+        },
+        "models": [
+          {
+            "modelName": "stealth/ox-alpha",
+            "role": "solo",
+            "inputTokens": 6037563,
+            "outputTokens": 131098,
+            "cacheReadTokens": 18988544,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed",
+            "costUsd": 9.29824389
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/vespers-1izg/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
+    },
+    {
       "levelId": "vespers-c8vr",
       "themeId": "vespers",
       "configurationId": "agy-gemini-3-6-flash-high",
@@ -1998,6 +2048,40 @@
       "thumbnailPath": "/level-content/vespers-c8vr/hero.avif",
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "vespers-j7xp",
+      "themeId": "vespers",
+      "configurationId": "agy-gemini-3-7-flash-high",
+      "modelName": "Gemini 3.7 Flash",
+      "workflowName": "solo",
+      "generationCost": 1.22870081,
+      "linesOfCode": 2467,
+      "run": {
+        "generationWallTimeSeconds": 682.3,
+        "totalWallTimeSeconds": 725.267,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Antigravity CLI",
+          "version": "1.1.17"
+        },
+        "models": [
+          {
+            "modelName": "gemini-3.7-flash",
+            "role": "solo",
+            "inputTokens": 1034067,
+            "outputTokens": 30851,
+            "cacheReadTokens": 15892585,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 99791,
+            "costUsd": 1.22870081
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/vespers-j7xp/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
     {
       "levelId": "vespers-p6bt",
@@ -2282,6 +2366,74 @@
       "thumbnailPath": "/level-content/tinker-ball-6fh9/hero.avif",
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "tinker-ball-7umh",
+      "themeId": "tinker-ball",
+      "configurationId": "agy-gemini-3-7-flash-high",
+      "modelName": "Gemini 3.7 Flash",
+      "workflowName": "solo",
+      "generationCost": 1.54978661,
+      "linesOfCode": 2867,
+      "run": {
+        "generationWallTimeSeconds": 608.726,
+        "totalWallTimeSeconds": 653.486,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Antigravity CLI",
+          "version": "1.1.17"
+        },
+        "models": [
+          {
+            "modelName": "gemini-3.7-flash",
+            "role": "solo",
+            "inputTokens": 1557896,
+            "outputTokens": 29030,
+            "cacheReadTokens": 18588883,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 114166,
+            "costUsd": 1.54978661
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-7umh/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
+    },
+    {
+      "levelId": "tinker-ball-gnff",
+      "themeId": "tinker-ball",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "modelName": "Ox Alpha",
+      "workflowName": "solo",
+      "generationCost": 11.34135524,
+      "linesOfCode": 3513,
+      "run": {
+        "generationWallTimeSeconds": 2413.967,
+        "totalWallTimeSeconds": 2502.422,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "pi",
+          "version": "0.84.2"
+        },
+        "models": [
+          {
+            "modelName": "stealth/ox-alpha",
+            "role": "solo",
+            "inputTokens": 7215804,
+            "outputTokens": 131234,
+            "cacheReadTokens": 24758784,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed",
+            "costUsd": 11.34135524
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-gnff/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
     {
       "levelId": "tinker-ball-nirz",

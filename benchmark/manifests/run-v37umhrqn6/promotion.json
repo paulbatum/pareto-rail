@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-v37umhrqn6",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:21:53.275Z",
+      "data": {
+        "source": {
+          "runId": "run-v37umhrqn6",
+          "slotId": "7umh",
+          "themeId": "tinker-ball",
+          "levelId": "tinker-ball-7umh",
+          "title": "Tinker Ball",
+          "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+          "evaluatedCommit": "2997c0ac6230cc9d9caa73a24db25b5c8e353063",
+          "payloadCommit": "b1bb3c5fadba597700ae62b41ca6901ae8c57a9e",
+          "manifestSha256": "b18bc928f6c5f55538ccb6408beedfbc0b9dddbad33647b00e383314f0d87b9b",
+          "definitionSha256": "33d4fb826dd25e913721235388c634257027bf7cfefd6cf510a469448985f3e8",
+          "evaluatedSha256": "e272c1eda6050c666ddd0877d67c04d811b7d44cc704c6439b16a23ea4b2f29a",
+          "payloadSha256": "2273dc0bde90b27f5f20aea2db6959a8bec600651775314306ec1a26f0769ad4",
+          "payloadDiffSha256": "7e34ff9135cccc0ed153f8505a8c7c943aa946652a0c77561d1195fbe6358e02",
+          "sourcePath": "src/benchmark-levels/tinker-ball-7umh/",
+          "destinationPath": "src/benchmark-levels/tinker-ball-7umh/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/tinker-ball-7umh",
+              "promotedPath": "src/benchmark-levels/tinker-ball-7umh",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/tinker-ball-7umh",
+              "promotedPath": "public/level-content/tinker-ball-7umh",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "bd9b2b19e58a51ecfa20cb20b340e7f58bc30eb6"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:21:53.429Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/tinker-ball-7umh/",
+            "files": 15,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/tinker-ball-7umh/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:21:53.431Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:21:53.513Z",
+      "data": {
+        "destination": "src/benchmark-levels/tinker-ball-7umh/",
+        "verifiedFiles": 18
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:22:50.649Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.414712247,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "2787e4859ca8cd2ffaf64d887ad26e7e64ed0cc57cf30563972a122806c4ab47",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 22.806370335,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-7umh --base bd9b2b19e58a51ecfa20cb20b340e7f58bc30eb6",
+            "exitCode": 0,
+            "stdoutSha256": "20aa044c95ac3d702fd37180f09d755a4cf68496b068f6d8bac5c6acba73ff38",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.05328888799999913,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level tinker-ball-7umh",
+            "exitCode": 0,
+            "stdoutSha256": "e2c23b3b67e23a1c2081627c99d79b5700a95f46a45ebbdcc27636281b4f8ce9",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 27.879450862,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:22:50.732Z",
+      "data": {
+        "promotionCommit": "44eafb10bc34fbe0b20b2c5da4489c20fa9f906a",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-08-21T02:22:50.732Z",
+  "source": {
+    "runId": "run-v37umhrqn6",
+    "slotId": "7umh",
+    "themeId": "tinker-ball",
+    "levelId": "tinker-ball-7umh",
+    "title": "Tinker Ball",
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "evaluatedCommit": "2997c0ac6230cc9d9caa73a24db25b5c8e353063",
+    "payloadCommit": "b1bb3c5fadba597700ae62b41ca6901ae8c57a9e",
+    "manifestSha256": "b18bc928f6c5f55538ccb6408beedfbc0b9dddbad33647b00e383314f0d87b9b",
+    "definitionSha256": "33d4fb826dd25e913721235388c634257027bf7cfefd6cf510a469448985f3e8",
+    "evaluatedSha256": "e272c1eda6050c666ddd0877d67c04d811b7d44cc704c6439b16a23ea4b2f29a",
+    "payloadSha256": "2273dc0bde90b27f5f20aea2db6959a8bec600651775314306ec1a26f0769ad4",
+    "payloadDiffSha256": "7e34ff9135cccc0ed153f8505a8c7c943aa946652a0c77561d1195fbe6358e02",
+    "sourcePath": "src/benchmark-levels/tinker-ball-7umh/",
+    "destinationPath": "src/benchmark-levels/tinker-ball-7umh/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/tinker-ball-7umh",
+        "promotedPath": "src/benchmark-levels/tinker-ball-7umh",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/tinker-ball-7umh",
+        "promotedPath": "public/level-content/tinker-ball-7umh",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "bd9b2b19e58a51ecfa20cb20b340e7f58bc30eb6"
+  },
+  "promotionCommit": "44eafb10bc34fbe0b20b2c5da4489c20fa9f906a"
+}

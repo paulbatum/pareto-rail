@@ -1,0 +1,23 @@
+{
+  "sessionId": "01a021c5-9b63-7d22-b890-98cdaa9893db",
+  "truncation": "the session ended at a threshold compaction",
+  "toolCalls": 174,
+  "initResolvedModel": "stealth/ox-alpha",
+  "assistantMessageCount": 145,
+  "finalMessage": "**Vespers** is complete. Final handoff summary:\n\n## What was built\n\n`src/benchmark-levels/vespers-1izg/` — a 64.3-second (22½-bar) rail-shooter level at 84 BPM, directory-only benchmark contract, ~3,500 lines across 14 files.\n\n**The theme, mechanically:** every non-boss enemy carries one specific stained-glass pane (assigned by rail position at timeline-build time). Kill it and that exact window relights where it falls — and stays lit for the rest of the run. The end screen reports \"Windows relit n/28\" as a persistent ledger of your run. The Devourer nested in the dead rose window holds everything else: 6 stolen-light spokes → 4 petal panes that must be taken in one linked `validateRelease` sweep → the 6-lock heart. Breaking it ignites the rose, relights every remaining window, floods the frame, and turns the minor major.\n\n**The world:** a wireframe gothic nave — pointed arcade arches sampled along the rail, string courses, vault diagonals, a candle floor, dust — kept near-invisible so the four jewel colours (cobalt/crimson/verdant/gold) are the only saturated thing in the frame. Enemies are matte-black silhouettes readable by their stolen ember: a winged **shade** (drift/weave/sweep), a pendulum-swinging **censer**, and a ring-eyed **watcher** that flares its iris before spitting homing gloom.\n\n**The music:** real organ counterpoint, no percussion — pedal alone at bar 0, tenor flute at bar 2, alto principal at bar 4, the tune at bar 5 (each voice arrival choreographed with a wave), choir + bell swells for the feast, a two-voice silence at bars 14–16, harmonic-rhythm doubling and a riser under the boss, tutti D major at bar 21. Player locks/shots/kills are transport-quantized organ voices pitched from the live harmony, with per-section kill lanes (chant arch, octave zig-zags, descent, tolling peals); the heart's death ducks the mix and blooms the full organ through a falling bell peal.\n\n## Verified\n\n- `typecheck`, `build` (incl. catalog validation + bundle budget), `check:floor` — **all gates pass** (occlusion 0, perf 0, audio 0)\n- `simulate`: 7 kinds, no dead-air gaps, spread across the full frame (one soft warning: 33.9% center concentration, mostly the boss itself), imperfect policy lands A-rank\n- `trace:audio` / `trace:spawns`: voice-entry schedule and 70-entry timeline land where authored\n- Snapshots: nave, shades, watcher, censer, rose, boss fight, and START/REPLAY glyphs all render and read correctly\n- Scope: working tree contains exactly the assigned directory\n\n## Needs human eyes\n\nHeadless Chrome can't render WebGPU and the snapshot tools auto-expose, so final colour/bloom balance and the organ mix need a real playtest — priorities are in `level.md`: the first relight, the silence, the petal-ring denial read, and the ignition. One caveat: `check:benchmark-scope` itself can't run in this checkout (`scripts/benchmark/protocol.mjs` missing from the scrubbed baseline); scope was verified by hand via `git status`.",
+  "normalized": {
+    "inputTokens": 6006882,
+    "outputTokens": 129908,
+    "cacheReadTokens": 18843584,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/ox-alpha": {
+          "outputTokens": 129908,
+          "costUSD": 9.24114334
+        }
+      }
+    }
+  }
+}

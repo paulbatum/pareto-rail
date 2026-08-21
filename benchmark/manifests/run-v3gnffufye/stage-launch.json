@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-v3gnffufye",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-v3gnffufye/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-v3gnffufye/stages/solo/pi",
+    "--model",
+    "stealth/ox-alpha",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter",
+    "--sandbox",
+    "true"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-08-21T01:09:50.737Z",
+  "finishedAt": "2026-08-21T01:51:08.335Z",
+  "wallTimeSeconds": 2415.935119147,
+  "stdoutSha256": "7c9e5a81f23dcd61e1d316728dad4ad8cc9cd0bd554cdd088a56e31ce232fc42",
+  "stderrSha256": "54c7a4fb0598f4a6a0b039293cb2f9612fcf642eaeaacd69d50e2730f1093475",
+  "stdout": "{\"sessionId\":\"01a021de-0671-719b-a258-1243d5ff492b\",\"usage\":{\"inputTokens\":52944,\"outputTokens\":1208,\"cacheReadTokens\":89664,\"cacheWriteTokens\":0,\"reasoningTokens\":0,\"vendorFields\":{\"modelUsage\":{\"stealth/ox-alpha\":{\"outputTokens\":1208,\"costUSD\":0.06947504}}}},\"wallTimeSeconds\":50.61302679499984}\n",
+  "stderr": "[workaround] pi stopped early: the session ended at a threshold compaction. Resuming the same session (round 1). This works around https://github.com/PrimeIntellect-ai/prime-agent/issues/674 and should be removed once that is fixed.\n"
+}

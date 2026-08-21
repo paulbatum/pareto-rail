@@ -227,6 +227,12 @@
       "configurationId": "claude-opus-4-8-high"
     },
     {
+      "runId": "run-v31izg5mbm",
+      "levelId": "vespers-1izg",
+      "themeId": "vespers",
+      "configurationId": "pi-openrouter-ox-alpha-high"
+    },
+    {
       "runId": "run-v34xmh17pb",
       "levelId": "thermal-ink-4xmh",
       "themeId": "thermal-ink",
@@ -239,10 +245,28 @@
       "configurationId": "claude-fable-5-high"
     },
     {
+      "runId": "run-v37umhrqn6",
+      "levelId": "tinker-ball-7umh",
+      "themeId": "tinker-ball",
+      "configurationId": "agy-gemini-3-7-flash-high"
+    },
+    {
       "runId": "run-v3c8vrhdys",
       "levelId": "vespers-c8vr",
       "themeId": "vespers",
       "configurationId": "agy-gemini-3-6-flash-high"
+    },
+    {
+      "runId": "run-v3gnffufye",
+      "levelId": "tinker-ball-gnff",
+      "themeId": "tinker-ball",
+      "configurationId": "pi-openrouter-ox-alpha-high"
+    },
+    {
+      "runId": "run-v3j7xpm8d7",
+      "levelId": "vespers-j7xp",
+      "themeId": "vespers",
+      "configurationId": "agy-gemini-3-7-flash-high"
     },
     {
       "runId": "run-v3nirzkxjv",

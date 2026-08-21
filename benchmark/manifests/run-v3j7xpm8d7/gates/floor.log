@@ -1,0 +1,23 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level vespers-j7xp
+
+Vespers floor check
+duration 61.3s; spawned kinds 15: boss-core, boss-shard-cobalt, boss-shard-crimson, boss-shard-emerald, boss-shard-gold, gargoyle-cobalt, gargoyle-crimson, gargoyle-gold, lancet-cobalt, lancet-crimson, lancet-emerald, lancet-gold, seraph-cobalt, seraph-emerald, seraph-gold
+event coverage missing: playerhit
+
+Engine defaults:
+  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC; reticle visual 0.051 NDC = 0.60x lock radius, no reticle scaling
+  words: start "START!" (6), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForKill, scoreForVolley, easeRunProgress
+  identity hooks [default]: scoreForHit, validateRelease, rankForRun, updateCameraEffects, updateAttractCamera, playerHealth, allowLockUndo, detailsForRun
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+reticle warnings: 0
+start/replay word warnings: 0
+All floor checks passed.

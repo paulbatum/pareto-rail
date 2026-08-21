@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v31izg5mbm",
+  "slotId": "1izg",
+  "configuration": {
+    "id": "pi-openrouter-ox-alpha-high"
+  },
+  "theme": {
+    "id": "vespers",
+    "path": "benchmark/themes/vespers.md",
+    "sha256": "c0866c43804268b700a568a31382462e4e50b2500b99bd2148d88924e0adc83f"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-cli.md",
+    "sha256": "5fcb9e6686bcf1b1e697f36434da3eab5674e28b7550c2442d57f2ebd6a3bf1b"
+  },
+  "controller": {
+    "commit": "4c5d08ea0f7db3e8c1ae3a0c3f9ed922efa8f584"
+  },
+  "timing": {
+    "startedAt": "2026-08-21T00:43:00.739Z",
+    "finishedAt": "2026-08-21T01:19:34.827Z",
+    "wallTimeSeconds": 2194.088
+  },
+  "stages": [
+    {
+      "id": "stealth/ox-alpha",
+      "role": "solo",
+      "model": {
+        "provider": "pi provider openrouter",
+        "snapshotId": "stealth/ox-alpha"
+      },
+      "promptSha256": "4535473b3917d8f49ab3e4ceef3974674052b3fd8085bc40e95a653fd0b414d8",
+      "harness": {
+        "name": "pi",
+        "version": "0.84.2"
+      },
+      "sessionId": "01a021c5-9b63-7d22-b890-98cdaa9893db",
+      "rolloutArtifactSha256": "ced0e02637eba523ac436f6a044950ae889f14102561d8246332191ad40c297b",
+      "outputArtifactSha256": "b35f54b0f5020065fca88ab6e5406cbb215d108a8c4c2eea7bc10cde271c46e6",
+      "startedAt": "2026-08-21T00:43:12.937Z",
+      "finishedAt": "2026-08-21T01:19:21.811Z",
+      "wallTimeSeconds": 2117.0360619870003,
+      "result": "completed",
+      "entrantSandbox": true,
+      "continuationRounds": 1,
+      "usage": {
+        "inputTokens": 6037563,
+        "outputTokens": 131098,
+        "cacheReadInputTokens": 18988544
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 9.298243890000004,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 9.298243890000004,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "pi",
+      "command": "ccusage pi session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "stealth/ox-alpha",
+        "usageSource": "agreed",
+        "costUsd": 9.298243890000004,
+        "inputTokens": 6037563,
+        "outputTokens": 131098,
+        "cacheReadTokens": 18988544,
+        "cacheWriteTokens": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.73608874,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.5810345999999997,
+      "outputSha256": "6ec69ca56053bd5c764276689a565493a0061cc4837f665a7c924b7cb74f9b50"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-1izg --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03679903999999988,
+      "outputSha256": "0b0a2040f096e30c28abdc977a849890c9e8d42b6b81a346281c9952802a5209"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level vespers-1izg",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.185763785000001,
+      "outputSha256": "0dadaeb5f84c4db0fd8109cc7bb453313f96b4a588e4f4abf0b96ddc5614d7d8"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "vespers-1izg",
+    "title": "Vespers",
+    "evaluated": {
+      "commit": "a3b58abf437bb9dd6c676e6f5bc8e8230b1235a4",
+      "branch": "benchmark-run-run-v31izg5mbm"
+    },
+    "payload": {
+      "commit": "3eeefbbdcc3934145c32b1b43af76e4bee832e93",
+      "branch": "benchmark-payload-run-v31izg5mbm"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "notes": "Two reviewer decisions on this run.\n\nCost basis. OpenRouter charges nothing for stealth/ox-alpha during its cloaked evaluation window, so no spend was billed for this run. The recorded $9.30 is ccusage pricing the transcript's tokens from its own rate database, and it carries basis 'metered' because that field is fixed per pricing tool rather than derived from the billing relationship. Token counts are sound: ccusage and pi's own counter agree. Treat the dollar figure as a rate estimate, not measured spend, wherever this run is placed on a cost axis.\n\nContamination audit. The audit reports CONTAMINATED on three findings, and review clears all three. Each is a bash command that greps for the literal string \"benchmark\" across the entrant's own scripts/ directory; the audit matched the grep pattern and reported it as a path. No command names another level, and every file read is inside the entrant worktree, which the entrant sandbox made the only readable tree. There are no web events. Reviewed by the agent driving the run; the audit finding is a heuristic false positive and does not block promotion."
+  }
+}

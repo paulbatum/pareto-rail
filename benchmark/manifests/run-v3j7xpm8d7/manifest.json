@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v3j7xpm8d7",
+  "slotId": "j7xp",
+  "configuration": {
+    "id": "agy-gemini-3-7-flash-high"
+  },
+  "theme": {
+    "id": "vespers",
+    "path": "benchmark/themes/vespers.md",
+    "sha256": "c0866c43804268b700a568a31382462e4e50b2500b99bd2148d88924e0adc83f"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/agy-cli.md",
+    "sha256": "50f39a2708d06d3e98935a1fc7799dbcdab64581f8a5e624307126044e906f07"
+  },
+  "controller": {
+    "commit": "4c5d08ea0f7db3e8c1ae3a0c3f9ed922efa8f584"
+  },
+  "timing": {
+    "startedAt": "2026-08-21T00:57:17.239Z",
+    "finishedAt": "2026-08-21T01:09:22.506Z",
+    "wallTimeSeconds": 725.267
+  },
+  "stages": [
+    {
+      "id": "gemini-3.7-flash",
+      "role": "solo",
+      "model": {
+        "provider": "Google Antigravity subscription",
+        "snapshotId": "gemini-3.7-flash"
+      },
+      "promptSha256": "1c3abbe4a09633cf49c740c4544813dea288be51e0cad623c2f2a7f9f5eae968",
+      "harness": {
+        "name": "Antigravity CLI",
+        "version": "1.1.17"
+      },
+      "sessionId": "90370c67-66e1-400a-a75d-20a895851b37",
+      "rolloutArtifactSha256": "12661fc9dd3d575d17f31286275bbdf7606401470c13eb2295ae2205c7c19acc",
+      "outputArtifactSha256": "5e235d7593fc60e2f3e45658f12f3754efcfc0db0aaacc0b4fbc6cb9dc14a8ab",
+      "startedAt": "2026-08-21T00:57:30.333Z",
+      "finishedAt": "2026-08-21T01:09:09.245Z",
+      "wallTimeSeconds": 682.300260752,
+      "result": "completed",
+      "entrantSandbox": false,
+      "sandboxUnavailable": true,
+      "usage": {
+        "inputTokens": 1034067,
+        "outputTokens": 30851,
+        "cacheReadInputTokens": 15892585,
+        "reasoningTokens": 99791
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 1.2287008125,
+        "source": "tokscale"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 1.2287008125,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "tokscale",
+      "version": "4.7.0",
+      "view": "antigravity-cli",
+      "command": "tokscale models --home <run harness home> --json",
+      "basis": "rate-card"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gemini-3.7-flash",
+        "costUsd": 1.2287008125,
+        "inputTokens": 1034067,
+        "outputTokens": 30851,
+        "cacheReadTokens": 15892585,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 99791
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7642145810000003,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.7238840739999994,
+      "outputSha256": "2064e3365163fcd49acd2bfb58c767d5a48fc7233d54c10cd994a053d7dbf287"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-j7xp --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03761157899999944,
+      "outputSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level vespers-j7xp",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.647533148999999,
+      "outputSha256": "5619f8fb700255a75f3e3454dac12c0d0ec3f04f7a8ff42ba383f97b79c2ccf1"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "vespers-j7xp",
+    "title": "Vespers",
+    "evaluated": {
+      "commit": "f5cb968f2b9df8aaf27708895710026acefadf3c",
+      "branch": "benchmark-run-run-v3j7xpm8d7"
+    },
+    "payload": {
+      "commit": "8a9006f377d010e77a5c3851050ce2ade2c1aed8",
+      "branch": "benchmark-payload-run-v3j7xpm8d7"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "notes": "Harness version differs from this configuration's nearest comparator. The agy-gemini-3-6-flash-high runs executed on Antigravity CLI 1.1.7; this run executed on 1.1.17, the version installed when it launched. A comparison between the two configurations therefore varies harness version as well as model. Each run's version is recorded under stages[].harness.version."
+  }
+}

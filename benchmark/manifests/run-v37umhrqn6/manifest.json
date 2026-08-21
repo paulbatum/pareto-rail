@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-v37umhrqn6",
+  "slotId": "7umh",
+  "configuration": {
+    "id": "agy-gemini-3-7-flash-high"
+  },
+  "theme": {
+    "id": "tinker-ball",
+    "path": "benchmark/themes/tinker-ball.md",
+    "sha256": "b9c846813d00dda166372ee7a298d6fa8bb5428e432a8988994126c1adcebc47"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/agy-cli.md",
+    "sha256": "50f39a2708d06d3e98935a1fc7799dbcdab64581f8a5e624307126044e906f07"
+  },
+  "controller": {
+    "commit": "4c5d08ea0f7db3e8c1ae3a0c3f9ed922efa8f584"
+  },
+  "timing": {
+    "startedAt": "2026-08-21T00:46:04.626Z",
+    "finishedAt": "2026-08-21T00:56:58.112Z",
+    "wallTimeSeconds": 653.486
+  },
+  "stages": [
+    {
+      "id": "gemini-3.7-flash",
+      "role": "solo",
+      "model": {
+        "provider": "Google Antigravity subscription",
+        "snapshotId": "gemini-3.7-flash"
+      },
+      "promptSha256": "7868553a43486dc63f9235b1128fb3a22eacf026023dde4bfd35e5497b120cd5",
+      "harness": {
+        "name": "Antigravity CLI",
+        "version": "1.1.17"
+      },
+      "sessionId": "721a07b8-1cad-4eb3-9c2b-08ad74802f28",
+      "rolloutArtifactSha256": "9c479ea869ffe86c663728a56aeeedc6b7de5234e274a1733cb5dc9811ea0bee",
+      "outputArtifactSha256": "81b610965072eaf9312511242ab167ae4a1fee2fa29aa09bc32d5372fa61b57b",
+      "startedAt": "2026-08-21T00:46:18.714Z",
+      "finishedAt": "2026-08-21T00:56:41.714Z",
+      "wallTimeSeconds": 608.7259408420001,
+      "result": "completed",
+      "entrantSandbox": false,
+      "sandboxUnavailable": true,
+      "usage": {
+        "inputTokens": 1557896,
+        "outputTokens": 29030,
+        "cacheReadInputTokens": 18588883,
+        "reasoningTokens": 114166
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 1.5497866124999995,
+        "source": "tokscale"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 1.5497866124999995,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "tokscale",
+      "version": "4.7.0",
+      "view": "antigravity-cli",
+      "command": "tokscale models --home <run harness home> --json",
+      "basis": "rate-card"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gemini-3.7-flash",
+        "costUsd": 1.5497866124999995,
+        "inputTokens": 1557896,
+        "outputTokens": 29030,
+        "cacheReadTokens": 18588883,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 114166
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.8119286089999997,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 4.203203049,
+      "outputSha256": "32aadae5efab3af26038683a7fb558721625a50a3452e698873f5204a6e18a3d"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-7umh --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.052246756000000456,
+      "outputSha256": "20aa044c95ac3d702fd37180f09d755a4cf68496b068f6d8bac5c6acba73ff38"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level tinker-ball-7umh",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.281247091999999,
+      "outputSha256": "b8cf921c29ab5a6b0d601a449645f60c667afb5dcd71204f5d048ba477ee4778"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "tinker-ball-7umh",
+    "title": "Tinker Ball",
+    "evaluated": {
+      "commit": "2997c0ac6230cc9d9caa73a24db25b5c8e353063",
+      "branch": "benchmark-run-run-v37umhrqn6"
+    },
+    "payload": {
+      "commit": "b1bb3c5fadba597700ae62b41ca6901ae8c57a9e",
+      "branch": "benchmark-payload-run-v37umhrqn6"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "notes": "Harness version differs from this configuration's nearest comparator. The agy-gemini-3-6-flash-high runs executed on Antigravity CLI 1.1.7; this run executed on 1.1.17, the version installed when it launched. A comparison between the two configurations therefore varies harness version as well as model. Each run's version is recorded under stages[].harness.version."
+  }
+}

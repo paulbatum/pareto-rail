@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-v3j7xpm8d7",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:20:55.761Z",
+      "data": {
+        "source": {
+          "runId": "run-v3j7xpm8d7",
+          "slotId": "j7xp",
+          "themeId": "vespers",
+          "levelId": "vespers-j7xp",
+          "title": "Vespers",
+          "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+          "evaluatedCommit": "f5cb968f2b9df8aaf27708895710026acefadf3c",
+          "payloadCommit": "8a9006f377d010e77a5c3851050ce2ade2c1aed8",
+          "manifestSha256": "7390582da4ee3eaf74ee716f706ec4644e881b1fc844a3ac35cb2d9709dad980",
+          "definitionSha256": "cd9f0b9959070a7c4ad0b2827ac66947c4a0cebfc33bd9de0286c3ee4a5b61cf",
+          "evaluatedSha256": "ed8e5a3d256608e2454d8a88d33147e4169b8efdaf855b1bcf259bb9a9166844",
+          "payloadSha256": "93abfd3fb9ff1687400566670a73bfa3c15d2b64fbe8f701e3f883d42f143700",
+          "payloadDiffSha256": "a8b1accfe8b5c7bf79d378ca8c1d4a3298ccf7fc09d68f0066f7ea197c63fc74",
+          "sourcePath": "src/benchmark-levels/vespers-j7xp/",
+          "destinationPath": "src/benchmark-levels/vespers-j7xp/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/vespers-j7xp",
+              "promotedPath": "src/benchmark-levels/vespers-j7xp",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/vespers-j7xp",
+              "promotedPath": "public/level-content/vespers-j7xp",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "fe8536f16a08e31d5a2929d9a172dda3c037b4e1"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:20:55.897Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/vespers-j7xp/",
+            "files": 12,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/vespers-j7xp/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:20:55.899Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:20:55.989Z",
+      "data": {
+        "destination": "src/benchmark-levels/vespers-j7xp/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:21:52.549Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.069606664999999,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "6c0772a7aeb173dc10519171874351e9998822d7a38448f6f7f58286e0c8f7b0",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 22.777819711,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-j7xp --base fe8536f16a08e31d5a2929d9a172dda3c037b4e1",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.053050705000001475,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level vespers-j7xp",
+            "exitCode": 0,
+            "stdoutSha256": "ae498bd1053f2272ec09283dad1abcdfe16cfea378534b64e41f53132967d635",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 27.684655988,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-08-21T02:21:52.633Z",
+      "data": {
+        "promotionCommit": "bd9b2b19e58a51ecfa20cb20b340e7f58bc30eb6",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-08-21T02:21:52.634Z",
+  "source": {
+    "runId": "run-v3j7xpm8d7",
+    "slotId": "j7xp",
+    "themeId": "vespers",
+    "levelId": "vespers-j7xp",
+    "title": "Vespers",
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "evaluatedCommit": "f5cb968f2b9df8aaf27708895710026acefadf3c",
+    "payloadCommit": "8a9006f377d010e77a5c3851050ce2ade2c1aed8",
+    "manifestSha256": "7390582da4ee3eaf74ee716f706ec4644e881b1fc844a3ac35cb2d9709dad980",
+    "definitionSha256": "cd9f0b9959070a7c4ad0b2827ac66947c4a0cebfc33bd9de0286c3ee4a5b61cf",
+    "evaluatedSha256": "ed8e5a3d256608e2454d8a88d33147e4169b8efdaf855b1bcf259bb9a9166844",
+    "payloadSha256": "93abfd3fb9ff1687400566670a73bfa3c15d2b64fbe8f701e3f883d42f143700",
+    "payloadDiffSha256": "a8b1accfe8b5c7bf79d378ca8c1d4a3298ccf7fc09d68f0066f7ea197c63fc74",
+    "sourcePath": "src/benchmark-levels/vespers-j7xp/",
+    "destinationPath": "src/benchmark-levels/vespers-j7xp/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/vespers-j7xp",
+        "promotedPath": "src/benchmark-levels/vespers-j7xp",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/vespers-j7xp",
+        "promotedPath": "public/level-content/vespers-j7xp",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "fe8536f16a08e31d5a2929d9a172dda3c037b4e1"
+  },
+  "promotionCommit": "bd9b2b19e58a51ecfa20cb20b340e7f58bc30eb6"
+}

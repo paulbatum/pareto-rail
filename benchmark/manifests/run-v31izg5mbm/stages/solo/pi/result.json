@@ -1,0 +1,40 @@
+{
+  "result": "completed",
+  "compactionContinuations": [
+    {
+      "round": 1,
+      "reason": "the session ended at a threshold compaction",
+      "startedAt": "2026-08-21T01:18:24.276Z",
+      "finishedAt": "2026-08-21T01:19:21.811Z",
+      "exitCode": 0,
+      "toolCalls": 5
+    }
+  ],
+  "compactionSettled": false,
+  "compactionWorkaround": "https://github.com/PrimeIntellect-ai/prime-agent/issues/674",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "01a021c5-9b63-7d22-b890-98cdaa9893db",
+  "usageSha256": "7de8f66b409fa707c62bddbf4611ca57eb764a5c6650d6aaac7048dfa62f4f8a",
+  "eventLogSha256": "5b67ece02f20e595912c93eb9f9849b338cce49977980a9577b80374562c2871",
+  "stderrSha256": "f4d1030a5f88e92e566d15faf7b0ab8bf77a194a5f6148b684678834006ba826",
+  "eventLog": {
+    "retained": "all events except message_update",
+    "droppedLines": 60365,
+    "files": [
+      {
+        "path": "events.jsonl",
+        "droppedLines": 59421
+      },
+      {
+        "path": "events-resume-1.jsonl",
+        "droppedLines": 944
+      }
+    ]
+  },
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-v31izg5mbm/harness-home/sessions/--tmp-pareto-rail-run-v31izg5mbm--/2026-08-21T00-43-13-635Z_01a021c5-9b63-7d22-b890-98cdaa9893db.jsonl",
+    "sha256": "ced0e02637eba523ac436f6a044950ae889f14102561d8246332191ad40c297b"
+  }
+}
