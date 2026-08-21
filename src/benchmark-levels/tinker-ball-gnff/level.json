@@ -1,0 +1,9 @@
+{
+  "id": "tinker-ball-gnff",
+  "title": "Tinker Ball",
+  "contentImages": {
+    "overview": "/level-content/tinker-ball-gnff/overview.avif",
+    "start": "/level-content/tinker-ball-gnff/start.avif",
+    "hero": "/level-content/tinker-ball-gnff/hero.avif"
+  }
+}
