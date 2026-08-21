@@ -1,0 +1,36 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f7927-d1a6-739d-9bef-99c46295f230",
+  "usageSha256": "3413b526ea25093ece1d9a7a4188fc04f0904ee662daf47fda8bb2eaa9d4d0a9",
+  "eventLogSha256": "4cd050f176ba41a960566a97d655afbeda3aed849e543ae2e422f694cf095d9a",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "eventLog": {
+    "retained": "all events except message_update",
+    "droppedLines": 14621,
+    "files": [
+      {
+        "path": "events.jsonl",
+        "droppedLines": 0
+      },
+      {
+        "path": "events-resume-1.jsonl",
+        "droppedLines": 0
+      },
+      {
+        "path": "events-resume-2.jsonl",
+        "droppedLines": 0
+      },
+      {
+        "path": "events-resume-3.jsonl",
+        "droppedLines": 14621
+      }
+    ]
+  },
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-sub-broadside-b2o2/harness-home/sessions/--tmp-pareto-rail-kimi-k3-sub-broadside-b2o2--/2026-07-19T06-54-40-550Z_019f7927-d1a6-739d-9bef-99c46295f230.jsonl",
+    "sha256": "7800fa0d748a237cce430dbb8ee8c73cf6699c8af07a5e04ed40a91057d9718f"
+  }
+}

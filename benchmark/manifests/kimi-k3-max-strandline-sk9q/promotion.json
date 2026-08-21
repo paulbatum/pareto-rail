@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "runId": "kimi-k3-max-strandline-sk9q",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:49:29.870Z",
+      "data": {
+        "source": {
+          "runId": "kimi-k3-max-strandline-sk9q",
+          "slotId": "sk9q",
+          "themeId": "strandline",
+          "levelId": "strandline-sk9q",
+          "title": "Strandline",
+          "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+          "evaluatedCommit": "3c1bb971ef51a1632dffb0b68ef2b349e2b09b51",
+          "payloadCommit": "a404501bfb6a5c086f60c0f8aecc290215e54d6e",
+          "manifestSha256": "96605a8b3f1e26692795cadf676afc738512c227f724dabd05901473b61ca07b",
+          "definitionSha256": "4ae807d30716776be27e22b34faaf25a1ddca0c0fff9aef27d1db1415cafaec8",
+          "evaluatedSha256": "8a3c71128f54ef48c1509f9defa1db928aa31e6a49534f7a14b5b9ce0d852b95",
+          "payloadSha256": "33770327a5110bf9f739ab77a9f717d2c61d0e7a4307bf9b6bb669596c211870",
+          "payloadDiffSha256": "b7d471d7f7ac00e8bd14b22921311f906e8b66de71d6d18c57a8d33b7e7e2521",
+          "sourcePath": "src/benchmark-levels/strandline-sk9q/",
+          "destinationPath": "src/benchmark-levels/strandline-sk9q/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/strandline-sk9q",
+              "promotedPath": "src/benchmark-levels/strandline-sk9q",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/strandline-sk9q",
+              "promotedPath": "public/level-content/strandline-sk9q",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "1d4171a3728145eea5c163d721ac11ea64f2850e"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:49:30.058Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/strandline-sk9q/",
+            "files": 15,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/strandline-sk9q/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:49:30.166Z",
+      "data": {
+        "destination": "src/benchmark-levels/strandline-sk9q/",
+        "verifiedFiles": 18
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:49:58.611Z",
+      "data": {
+        "gallerySha256": "9c3780635ed7d166e5568e8d91ea307718e569781035c7c42708f1ce416339d0",
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 3.711067451,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "4a01c828ee90f0dbfd15ea69ad4ca49806576afb144fab7a2b0bb30c8c910674",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 8.836671598,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-sk9q --base 1d4171a3728145eea5c163d721ac11ea64f2850e",
+            "exitCode": 0,
+            "stdoutSha256": "e37e3c8ba738e90bdfd178309da95b3c676f42b1df6f7b121be71738cbdaccf7",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.03990120399999978,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level strandline-sk9q",
+            "exitCode": 0,
+            "stdoutSha256": "cb6d75f749a7b9ad644e6408a4bc40ab5119857eeefaa56da6d1af8368bff0af",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 15.535602449,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-07-18T23:49:58.679Z",
+      "data": {
+        "promotionCommit": "b9999f3977d6d19a9ae8cf38337b80314a65016a",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-07-18T23:49:58.680Z",
+  "source": {
+    "runId": "kimi-k3-max-strandline-sk9q",
+    "slotId": "sk9q",
+    "themeId": "strandline",
+    "levelId": "strandline-sk9q",
+    "title": "Strandline",
+    "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+    "evaluatedCommit": "3c1bb971ef51a1632dffb0b68ef2b349e2b09b51",
+    "payloadCommit": "a404501bfb6a5c086f60c0f8aecc290215e54d6e",
+    "manifestSha256": "96605a8b3f1e26692795cadf676afc738512c227f724dabd05901473b61ca07b",
+    "definitionSha256": "4ae807d30716776be27e22b34faaf25a1ddca0c0fff9aef27d1db1415cafaec8",
+    "evaluatedSha256": "8a3c71128f54ef48c1509f9defa1db928aa31e6a49534f7a14b5b9ce0d852b95",
+    "payloadSha256": "33770327a5110bf9f739ab77a9f717d2c61d0e7a4307bf9b6bb669596c211870",
+    "payloadDiffSha256": "b7d471d7f7ac00e8bd14b22921311f906e8b66de71d6d18c57a8d33b7e7e2521",
+    "sourcePath": "src/benchmark-levels/strandline-sk9q/",
+    "destinationPath": "src/benchmark-levels/strandline-sk9q/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/strandline-sk9q",
+        "promotedPath": "src/benchmark-levels/strandline-sk9q",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/strandline-sk9q",
+        "promotedPath": "public/level-content/strandline-sk9q",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "1d4171a3728145eea5c163d721ac11ea64f2850e"
+  },
+  "promotionCommit": "b9999f3977d6d19a9ae8cf38337b80314a65016a"
+}

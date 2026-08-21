@@ -148,6 +148,42 @@
       ]
     },
     {
+      "runId": "kimi-k3-max-strandline-sk9q",
+      "levelId": "strandline-sk9q",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-kimi-k3-max",
+      "files": [
+        {
+          "path": "runs/kimi-k3-max-strandline-sk9q/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 19554459,
+          "sha256": "15064c32d9d22922145b29306d397b17c0462ebb318912d08097cb22b46a10b9"
+        },
+        {
+          "path": "runs/kimi-k3-max-strandline-sk9q/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 96514762,
+          "sha256": "4490f6a6b953b6c457a3299c30466b8ff4770dce5013a6a66f81b126eb364eef"
+        }
+      ]
+    },
+    {
+      "runId": "kimi-k3-sub-broadside-b2o2",
+      "levelId": "broadside-b2o2",
+      "themeId": "broadside",
+      "configurationId": "pi-kimi-k3-max",
+      "files": [
+        {
+          "path": "runs/kimi-k3-sub-broadside-b2o2/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 23064938,
+          "sha256": "7800fa0d748a237cce430dbb8ee8c73cf6699c8af07a5e04ed40a91057d9718f"
+        },
+        {
+          "path": "runs/kimi-k3-sub-broadside-b2o2/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 3210568,
+          "sha256": "dfb1c08efb15c11d725b593a2d595587082549445953bc67d602b6e8a5408407"
+        }
+      ]
+    },
+    {
       "runId": "opus-b20-broadside-ob4d",
       "levelId": "broadside-ob4d",
       "themeId": "broadside",

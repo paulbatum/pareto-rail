@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "f16adc5c3a6bcfe0ee0549bf5e58ddc5acc8554233fd2765612250c4bc65a4e4"
+  },
+  "theme": {
+    "path": "benchmark/themes/broadside.md",
+    "sha256": "26b45de49b732d66b6dd68c6d97c053519f755e0e7543cf97a368a31794e8376"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-kimi-k3-max.md",
+    "sha256": "297f493ec2ec6c12703e2a51679888a80a878e9d1d3bee84b0ce8874744e9087"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-sub-broadside-b2o2/rendered-assignment.md",
+    "sha256": "6972a0e5884d15f1d5916aeb1ac91de788ace07d6c677f1b195d08501a1a90dd"
+  },
+  "baseRendering": {
+    "sha256": "6972a0e5884d15f1d5916aeb1ac91de788ace07d6c677f1b195d08501a1a90dd"
+  }
+}

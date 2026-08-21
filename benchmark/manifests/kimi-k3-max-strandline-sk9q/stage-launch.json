@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-kimi-k3-max-strandline-sk9q",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-max-strandline-sk9q/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-max-strandline-sk9q/stages/solo/pi",
+    "--model",
+    "moonshotai/kimi-k3",
+    "--effort",
+    "max",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-07-18T10:16:14.899Z",
+  "finishedAt": "2026-07-18T13:29:15.656Z",
+  "wallTimeSeconds": 10898.767803956,
+  "stdoutSha256": "6d0f03074075de86ee39de13f89cd69407c751c66f0feb3c4cabd84dca63e4e2",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"019f74ba-0b84-7600-9b00-fba82df2a174\",\"usage\":{\"inputTokens\":709704,\"outputTokens\":209846,\"cacheReadTokens\":51843796,\"cacheWriteTokens\":0,\"reasoningTokens\":112217,\"vendorFields\":{\"modelUsage\":{\"moonshotai/kimi-k3\":{\"outputTokens\":209846,\"costUSD\":20.82994079999999}}}},\"wallTimeSeconds\":10895.969740384002}\n",
+  "stderr": ""
+}

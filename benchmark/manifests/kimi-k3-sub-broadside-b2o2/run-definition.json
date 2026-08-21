@@ -1,0 +1,21 @@
+{
+  "runId": "kimi-k3-sub-broadside-b2o2",
+  "slotId": "b2o2",
+  "levelId": "broadside-b2o2",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "pi-kimi-k3-max",
+  "recipePath": "benchmark/recipes/pi-kimi-k3-max.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "k3",
+    "provider": "kimi-coding",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Broadside"
+}

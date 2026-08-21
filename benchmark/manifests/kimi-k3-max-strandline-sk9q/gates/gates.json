@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "3c1bb971ef51a1632dffb0b68ef2b349e2b09b51",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7393743320000001,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-max-strandline-sk9q/gates/typecheck.log",
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.079245517,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-max-strandline-sk9q/gates/build.log",
+      "outputSha256": "2f068f84ea11d9206bfb2779e436cafa721559c2f7593655b8163d48b9e8d8b1"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-sk9q --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.04069948000000022,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-max-strandline-sk9q/gates/scope.log",
+      "outputSha256": "e37e3c8ba738e90bdfd178309da95b3c676f42b1df6f7b121be71738cbdaccf7"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level strandline-sk9q",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.123341361,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-max-strandline-sk9q/gates/floor.log",
+      "outputSha256": "cb6d75f749a7b9ad644e6408a4bc40ab5119857eeefaa56da6d1af8368bff0af"
+    }
+  ]
+}

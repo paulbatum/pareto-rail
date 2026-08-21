@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "kimi-k3-sub-broadside-b2o2",
+  "slotId": "b2o2",
+  "configuration": {
+    "id": "pi-kimi-k3-max"
+  },
+  "theme": {
+    "id": "broadside",
+    "path": "benchmark/themes/broadside.md",
+    "sha256": "26b45de49b732d66b6dd68c6d97c053519f755e0e7543cf97a368a31794e8376"
+  },
+  "baseline": {
+    "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "src/benchmark-levels/domain.test.ts",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/hull-run-cvs3",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/hull-run-ns5n",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-7rkv",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-9281",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-bczy",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-esvz",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-vyxj",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-wo4m",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-81u5",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-9uib",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-lkor",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-snxd",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/test-fixtures",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "public/level-content/hull-run-cvs3",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/hull-run-ns5n",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-7rkv",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-bczy",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-vyxj",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-wo4m",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-81u5",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-9uib",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-lkor",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-snxd",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "docs/level-gallery.md",
+          "reason": "the generated gallery still contains benchmark level content"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-kimi-k3-max.md",
+    "sha256": "297f493ec2ec6c12703e2a51679888a80a878e9d1d3bee84b0ce8874744e9087"
+  },
+  "controller": {
+    "commit": "08b17b777ebe5267c9357c85b3f39e2ed6b39bd1"
+  },
+  "timing": {
+    "startedAt": "2026-07-19T06:54:25.958Z",
+    "finishedAt": "2026-08-16T05:51:14.702Z",
+    "wallTimeSeconds": 2415408.744
+  },
+  "stages": [
+    {
+      "id": "k3",
+      "role": "solo",
+      "model": {
+        "provider": "pi provider kimi-coding",
+        "snapshotId": "k3"
+      },
+      "promptSha256": "6972a0e5884d15f1d5916aeb1ac91de788ace07d6c677f1b195d08501a1a90dd",
+      "harness": {
+        "name": "pi",
+        "version": "0.80.10"
+      },
+      "sessionId": "019f7927-d1a6-739d-9bef-99c46295f230",
+      "rolloutArtifactSha256": "7800fa0d748a237cce430dbb8ee8c73cf6699c8af07a5e04ed40a91057d9718f",
+      "outputArtifactSha256": "dfb1c08efb15c11d725b593a2d595587082549445953bc67d602b6e8a5408407",
+      "startedAt": "2026-07-19T06:54:39.911Z",
+      "finishedAt": "2026-08-16T05:46:44.802Z",
+      "wallTimeSeconds": 52753.53537355,
+      "result": "completed",
+      "entrantSandbox": false,
+      "continuationRounds": 3,
+      "usage": {
+        "inputTokens": 2462239,
+        "outputTokens": 492720,
+        "cacheReadInputTokens": 62243332
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 24.610234976999987,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 24.610234976999987,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "pi",
+      "command": "ccusage pi session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "suspect",
+      "source": "harness result event modelUsage",
+      "adjustments": [
+        {
+          "modelName": "k3",
+          "replayOutputTokens": 492720,
+          "counterOutputTokens": 69394,
+          "resolution": "kept-replay"
+        }
+      ]
+    },
+    "models": [
+      {
+        "modelName": "k3",
+        "usageSource": "ccusage",
+        "costUsd": 24.610234976999987,
+        "inputTokens": 2462239,
+        "outputTokens": 492720,
+        "cacheReadTokens": 62243332,
+        "cacheWriteTokens": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7977707459999999,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.4425862179999998,
+      "outputSha256": "8f2633d4322a6c2116c89a81056ea4815e85f1f42c392d9a160493c814b60068"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level broadside-b2o2 --base 5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03517519799999991,
+      "outputSha256": "04645335a578615a9ea189b4ae6e33a2e6cb495ac2940a5a7201da1d20d014ae"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level broadside-b2o2",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 7.295796310000001,
+      "outputSha256": "a1b6951d35bfbddc752bfbec440ad71bf11ba688d5679fd14bacd2eb7782d900"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "broadside-b2o2",
+    "title": "Broadside",
+    "evaluated": {
+      "commit": "1e48aec6a36cefa80469c81dad6abc1c4786bfdd",
+      "branch": "benchmark-run-kimi-k3-sub-broadside-b2o2"
+    },
+    "payload": {
+      "commit": "83898d7d21c474d765a4e290034b66e4cf78e29f",
+      "branch": "benchmark-payload-kimi-k3-sub-broadside-b2o2"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "notes": "Baseline exposure. This run is covered by incident 2026-07-baseline-contamination: its open-policy baseline carried the previously promoted benchmark levels. The entrant read several of them, all cross-theme, which the incident retains rather than disqualifies; the reads and the owner's clearance are itemized in incident.json. No broadside entrant was read and there are no web events.\n\nCost reconciliation. The manifest records status 'suspect' because rounds that died on a provider 403 recorded no usage, so the harness counter under-covers the run. The ccusage replay is the correct figure. cost-reconciliation.md in this run directory carries the working.\n\nOutstanding. The entrant could verify composition only through SwiftShader snapshots, so the level still needs a human WebGPU playtest."
+  }
+}

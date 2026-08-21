@@ -1,0 +1,5 @@
+{
+  "model": "moonshotai/kimi-k3",
+  "provider": "openrouter",
+  "selectedThinkingLevel": "max"
+}

@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "f16adc5c3a6bcfe0ee0549bf5e58ddc5acc8554233fd2765612250c4bc65a4e4"
+  },
+  "theme": {
+    "path": "benchmark/themes/strandline.md",
+    "sha256": "31621cb405a2b293bf0f7026add0b462312e75c44dfcea3a8549b1fd9616bff1"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-openrouter-kimi-k3-max.md",
+    "sha256": "131056d7a11b538e4a351033b461e0f2c7a216bf9fa4af424adc9273eb8a11b4"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-max-strandline-sk9q/rendered-assignment.md",
+    "sha256": "4e40229e2676ed4f51cb256952362413613b5415da85fcad9c222c129f97cdf5"
+  },
+  "baseRendering": {
+    "sha256": "4e40229e2676ed4f51cb256952362413613b5415da85fcad9c222c129f97cdf5"
+  }
+}

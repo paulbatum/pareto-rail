@@ -50,6 +50,18 @@
       "configurationId": "claude-fable-5-high"
     },
     {
+      "runId": "kimi-k3-max-strandline-sk9q",
+      "levelId": "strandline-sk9q",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-kimi-k3-max"
+    },
+    {
+      "runId": "kimi-k3-sub-broadside-b2o2",
+      "levelId": "broadside-b2o2",
+      "themeId": "broadside",
+      "configurationId": "pi-kimi-k3-max"
+    },
+    {
       "runId": "opus-b20-broadside-ob4d",
       "levelId": "broadside-ob4d",
       "themeId": "broadside",

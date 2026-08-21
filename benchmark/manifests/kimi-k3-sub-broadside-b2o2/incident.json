@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "incident": "2026-07-baseline-contamination",
+  "note": "Entrant baseline contained prior benchmark levels and benchmark infrastructure; the intended baseline exposes built-in levels only.",
+  "auditVerdict": "cross-theme-reads-retained",
+  "auditNote": "The contamination audit reports CONTAMINATED. The entrant read the full source of skyhook-snxd (index, timing, gameplay, audio, audio-voices, every visuals module, lamprey, level.md), then hull-run-ns5n, hull-run-cvs3/visuals/models.ts, and mass-driver-esvz, returning to skyhook's visuals on 2026-07-19 and 2026-07-28; a late read of hull-run-cvs3/level.json took the contentImages schema shape. Every read is cross-theme: no broadside entrant appears anywhere in the transcript, and there are no web events. Under this incident's rule, cross-theme reads are equivalent in kind to the sanctioned built-in reference material, so the run is retained with the exposure caveat recorded. The precedent is sol-high-mdd-uk78, retained on the same class of reads. Owner verdict on 2026-08-21: cleared, retainable. This field previously read \"clean\", which the audit does not support."
+}

@@ -1,0 +1,24 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "019f74ba-0b84-7600-9b00-fba82df2a174",
+  "usageSha256": "2e54d5ce30daa03972ec28440b450e125a4abf7d3813b2a6e3f5bf16235c95e0",
+  "eventLogSha256": "4490f6a6b953b6c457a3299c30466b8ff4770dce5013a6a66f81b126eb364eef",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "eventLog": {
+    "retained": "all events except message_update",
+    "droppedLines": 198755,
+    "files": [
+      {
+        "path": "events.jsonl",
+        "droppedLines": 198755
+      }
+    ]
+  },
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/kimi-k3-max-strandline-sk9q/harness-home/sessions/--tmp-pareto-rail-kimi-k3-max-strandline-sk9q--/2026-07-18T10-16-17-540Z_019f74ba-0b84-7600-9b00-fba82df2a174.jsonl",
+    "sha256": "15064c32d9d22922145b29306d397b17c0462ebb318912d08097cb22b46a10b9"
+  }
+}

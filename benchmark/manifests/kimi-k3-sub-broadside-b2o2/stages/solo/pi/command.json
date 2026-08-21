@@ -1,0 +1,28 @@
+{
+  "executable": "pi",
+  "arguments": [
+    "--print",
+    "--mode",
+    "json",
+    "--approve",
+    "--offline",
+    "--no-extensions",
+    "--thinking",
+    "max",
+    "--model",
+    "k3",
+    "--provider",
+    "kimi-coding",
+    "--extension",
+    "/home/pbatum/.pi/agent/npm/node_modules/pi-provider-kimi-code/index.ts"
+  ],
+  "cliVersion": "0.80.10",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-kimi-k3-sub-broadside-b2o2",
+  "startedAt": "2026-07-19T06:54:39.911Z",
+  "finishedAt": "2026-07-19T07:33:51.534Z",
+  "wallTimeSeconds": 2245.252768227,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

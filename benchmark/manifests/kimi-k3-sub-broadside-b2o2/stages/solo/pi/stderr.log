@@ -1,0 +1,3 @@
+[kimi-coding] auth refresh: requesting new access token
+[kimi-coding] auth refresh: recovered newer kimi-code token
+Warning: Model "k3" not found for provider "kimi-coding". Using custom model id.

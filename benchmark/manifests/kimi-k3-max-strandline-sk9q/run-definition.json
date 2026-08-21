@@ -1,0 +1,21 @@
+{
+  "runId": "kimi-k3-max-strandline-sk9q",
+  "slotId": "sk9q",
+  "levelId": "strandline-sk9q",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "pi-openrouter-kimi-k3-max",
+  "recipePath": "benchmark/recipes/pi-openrouter-kimi-k3-max.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "moonshotai/kimi-k3",
+    "provider": "openrouter",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Strandline"
+}
