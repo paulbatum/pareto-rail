@@ -6,7 +6,7 @@ import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
 import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, revealFromVote } from './catalog-api';
 import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { mapVerdict, type ComparisonState, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
-import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type RankCatalogTheme, type SchedulingPool } from './catalog';
+import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type PricedCatalogEntrant, type RankCatalogTheme, type SchedulingPool } from './catalog';
 import { configurationGroupResolver } from './identity';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { CustomMatchController } from '../app/match';
@@ -445,7 +445,7 @@ function testCoverageSpreadsAcrossThemes(): void {
 }
 
 function unevenThemePool(): SchedulingPool {
-  const entrant = (themeId: string, index: number): RankCatalogEntrant => ({
+  const entrant = (themeId: string, index: number): PricedCatalogEntrant => ({
     levelId: `${themeId}-${index}`,
     themeId,
     configurationId: `configuration-${index}`,
@@ -643,7 +643,7 @@ function testRetiredEntrantsNotScheduled(): void {
   assert.ok(next);
   assert.equal([next!.levelIdA, next!.levelIdB].includes('retired-theme-a1b2'), false, 'retired entrants must not be scheduled');
 
-  function entrant(levelId: string, configurationId: string, retired = false): RankCatalogEntrant {
+  function entrant(levelId: string, configurationId: string, retired = false): PricedCatalogEntrant {
     return { levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost: 1, ...(retired ? { retired: true } : {}) };
   }
 }
@@ -852,7 +852,7 @@ function testPersonalCurveCatalogExcludesRetired(): void {
   // configuration the participant actually judged. A configuration living only on
   // retired entrants stays out unless it was judged.
   const theme = { id: 'curve-theme', title: 'Curve', summary: 'S', prompt: 'P' };
-  const entrant = (levelId: string, configurationId: string, generationCost: number, retired = false): RankCatalogEntrant => ({ levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost, ...(retired ? { retired: true } : {}) });
+  const entrant = (levelId: string, configurationId: string, generationCost: number, retired = false): PricedCatalogEntrant => ({ levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost, ...(retired ? { retired: true } : {}) });
   const catalog: RankCatalog = {
     generatedAt: 'test',
     themes: [theme],
@@ -940,7 +940,7 @@ async function testCatalogChangesRefreshReveals(): Promise<void> {
 
   const changedPool = {
     ...originalPool,
-    entrants: original.entrants.map((entrant, index) => ({ ...entrant, thumbnailPath: `/new-${index}.avif` })),
+    entrants: originalPool.entrants.map((entrant, index) => ({ ...entrant, thumbnailPath: `/new-${index}.avif` })),
   };
   const changedCatalog = makeRankCatalog(changedPool);
   const reloaded = new BenchmarkLocalStore(storage, 'thumbnail-refresh');
@@ -1060,7 +1060,7 @@ function historyEntry(matchupId: string, aConfigurationId: string, bConfiguratio
 
 function makeSchedulerCatalog(configurations: number, themeCount: number, sameConfiguration = false, featuredConfigurations: readonly number[] = [], slotPrefix = ''): SchedulingPool {
   const themes: RankCatalogTheme[] = Array.from({ length: themeCount }, (_, index) => ({ id: `${slotPrefix ? `${slotPrefix}-` : ''}theme-${String.fromCharCode(97 + index)}`, title: `Theme ${index}`, summary: 'S', prompt: 'P' }));
-  const entrants: RankCatalogEntrant[] = themes.flatMap((theme) => Array.from({ length: configurations }, (_, index) => ({
+  const entrants: PricedCatalogEntrant[] = themes.flatMap((theme) => Array.from({ length: configurations }, (_, index) => ({
     levelId: `${theme.id}-${index}`,
     themeId: theme.id,
     configurationId: sameConfiguration ? 'shared' : `configuration-${index}`,

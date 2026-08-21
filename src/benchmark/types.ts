@@ -57,7 +57,9 @@ export interface RevealEntrant extends PreVoteEntrant {
   modelName: string;
   snapshotLabel?: string;
   workflowName: string;
-  generationCost: number;
+  /** Absent when the run carries no cost: a model published without a price leaves
+   * token counts and no dollar figure. */
+  generationCost?: number;
   costCurrency?: string;
   run?: BenchmarkRunMetrics;
   dataClass: BenchmarkDataClass;

@@ -229,7 +229,10 @@ function verdictOutcome(verdict: VoteVerdict, reveal: RevealPayload) {
   const otherSide = preferredSide === 'a' ? 'b' : 'a';
   const preferred = reveal[preferredSide];
   const other = reveal[otherSide];
-  return <><span className="verdict-identity">{entrantIdentity(preferred)}</span>{' beat '}<span className="verdict-identity">{entrantIdentity(other)}</span>{' '}<span className="verdict-costs">(${preferred.generationCost.toFixed(2)} vs ${other.generationCost.toFixed(2)})</span></>;
+  const costs = preferred.generationCost !== undefined && other.generationCost !== undefined
+    ? <>{' '}<span className="verdict-costs">(${preferred.generationCost.toFixed(2)} vs ${other.generationCost.toFixed(2)})</span></>
+    : null;
+  return <><span className="verdict-identity">{entrantIdentity(preferred)}</span>{' beat '}<span className="verdict-identity">{entrantIdentity(other)}</span>{costs}</>;
 }
 
 function entrantIdentity(entrant: RevealPayload['a']): string {
@@ -282,7 +285,7 @@ function debugPointLine(point: PersonalRatingPoint | PlottedCurvePoint, index: n
 }
 
 function debugEntrant(entrant: RevealPayload['a']): string {
-  return `${entrant.modelName}/${entrant.workflowName} config=${entrant.configurationId ?? '-'} entrant=${entrant.entrantId} level=${entrant.levelId} cost=${entrant.generationCost.toFixed(6)}`;
+  return `${entrant.modelName}/${entrant.workflowName} config=${entrant.configurationId ?? '-'} entrant=${entrant.entrantId} level=${entrant.levelId} cost=${entrant.generationCost?.toFixed(6) ?? 'unavailable'}`;
 }
 
 function debugCurrentMatchup(controller: RankController): string[] {

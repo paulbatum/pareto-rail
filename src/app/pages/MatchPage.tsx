@@ -164,7 +164,7 @@ function pickerBands(): PickerBand[] {
   for (const theme of rankCatalog.themes) {
     const entries = rankCatalog.entrants
       .filter((entrant) => entrant.themeId === theme.id && playable.has(entrant.levelId))
-      .sort((first, second) => first.generationCost - second.generationCost)
+      .sort((first, second) => (first.generationCost ?? Number.POSITIVE_INFINITY) - (second.generationCost ?? Number.POSITIVE_INFINITY))
       .map((entrant): PickerEntry => ({ levelId: entrant.levelId, ...(entrant.thumbnailPath ? { thumbnailPath: entrant.thumbnailPath } : {}) }));
     if (entries.length > 0) bands.push({ theme, entries });
   }

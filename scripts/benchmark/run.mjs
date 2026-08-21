@@ -149,6 +149,24 @@ const COST_SOURCES = {
   tokscale: { tool: 'tokscale', basis: 'rate-card', commandFor: () => 'tokscale models --home <run harness home> --json' },
 };
 
+// A cloaked model is published without a price. The provider bills nothing for it, and a harness
+// that has no catalog entry for the id prices the session from a fallback rate card, so the figure
+// it reports describes no charge anyone incurred. A run on such a model records its cost as
+// unavailable: the token counts stand, the dollar figure does not exist. Remove the entry once the
+// model is named and priced, then restate the affected runs from their retained token counts.
+const UNPRICED_MODELS = new Map([
+  ['stealth/ox-alpha', 'OpenRouter publishes stealth/ox-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge.'],
+]);
+
+// The reason this run cannot be priced, or null when every model it ran carries a price.
+export function unpricedReasonFor(modelNames) {
+  for (const modelName of modelNames) {
+    const reason = UNPRICED_MODELS.get(modelName);
+    if (reason) return reason;
+  }
+  return null;
+}
+
 const CHECKPOINTS = ['inputs', 'worktree', 'setup', 'stage', 'seal', 'gates', 'payload', 'manifest'];
 
 async function main() {
@@ -796,7 +814,9 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
   const finishedAt = new Date().toISOString();
   const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
   const stageResult = stageLaunch.exitCode === 0 ? 'completed' : (commandRecord.timedOut ? 'timed-out' : 'failed');
-  const stages = buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget, costTool: costSource.tool });
+  const unpricedReason = unpricedReasonFor([definition.stage.model, ...cost.models.map((model) => model.modelName)]);
+  if (unpricedReason) console.warn(`Cost recorded as unavailable: ${unpricedReason}`);
+  const stages = buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget, costTool: costSource.tool, unpricedReason });
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -818,15 +838,21 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
     stages,
     cost: {
       currency: 'USD',
-      status: 'measured',
-      totalUsd: cost.totalUsd,
-      orchestrationTreatment: definition.delegation ? 'included' : 'none',
-      costSource: { tool: costSource.tool, version: costToolVersion, view: cost.view, command: costSource.commandFor(cost.view), basis: costSource.basis },
+      // An unpriced model leaves the run with token counts and no total. The figure the cost tool
+      // reported for it is dropped rather than recorded, so nothing downstream can plot it.
+      ...(unpricedReason
+        ? { status: 'unavailable', unavailableReason: unpricedReason, orchestrationTreatment: 'unavailable' }
+        : {
+          status: 'measured',
+          totalUsd: cost.totalUsd,
+          orchestrationTreatment: definition.delegation ? 'included' : 'none',
+          costSource: { tool: costSource.tool, version: costToolVersion, view: cost.view, command: costSource.commandFor(cost.view), basis: costSource.basis },
+        }),
       reconciliation: cost.reconciliation,
       models: cost.models.map((model) => ({
         modelName: model.modelName,
         ...(model.usageSource ? { usageSource: model.usageSource } : {}),
-        ...(model.costUsd !== null ? { costUsd: model.costUsd } : {}),
+        ...(model.costUsd !== null && !unpricedReason ? { costUsd: model.costUsd } : {}),
         inputTokens: model.inputTokens,
         outputTokens: model.outputTokens,
         cacheReadTokens: model.cacheReadTokens,
@@ -845,7 +871,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
 // When per-model cost is unavailable (Codex), the run collapses to a single stage carrying the run
 // total. All stage entries share the one session id and sum the active wall time of every invocation;
 // the prompt hashes attach to the parent.
-function buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null, costTool = 'ccusage' }) {
+function buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null, costTool = 'ccusage', unpricedReason = null }) {
   const commandRecord = commandRecords[0];
   const lastCommand = commandRecords.at(-1);
   const continuationRounds = commandRecords.length - 1;
@@ -872,7 +898,9 @@ function buildStages({ definition, adapter, cost, commandRecords, usage, rendere
         ...(isParent ? { promptSha256, ...(delegationPromptSha256 ? { delegationPromptSha256 } : {}) } : {}),
         ...shared,
         usage: stageUsage(model),
-        pricing: { status: 'measured', costUsd: model.costUsd ?? 0, source: model.usageSource === 'harness-counter' ? 'harness-counter' : costTool },
+        pricing: unpricedReason
+          ? { status: 'unavailable', reason: unpricedReason }
+          : { status: 'measured', costUsd: model.costUsd ?? 0, source: model.usageSource === 'harness-counter' ? 'harness-counter' : costTool },
       };
     });
   }
@@ -885,7 +913,9 @@ function buildStages({ definition, adapter, cost, commandRecords, usage, rendere
     ...(delegationPromptSha256 ? { delegationPromptSha256 } : {}),
     ...shared,
     usage: stageUsage(cost.totals),
-    pricing: { status: 'measured', costUsd: cost.totalUsd, source: costTool },
+    pricing: unpricedReason
+      ? { status: 'unavailable', reason: unpricedReason }
+      : { status: 'measured', costUsd: cost.totalUsd, source: costTool },
   }];
 }
 

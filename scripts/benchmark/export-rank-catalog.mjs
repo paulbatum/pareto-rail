@@ -199,7 +199,11 @@ function runManifest(entrant) {
   return manifest;
 }
 
+// The run's cost, or null when the run could not be priced at all — a model published without a
+// price leaves token counts and no dollar figure. A null cost publishes as an absent
+// `generationCost`, which keeps the entrant out of matchups and off the cost curve.
 function generationCost(entrant, manifest) {
+  if (manifest.cost?.status === 'unavailable') return null;
   let total = 0;
   for (const [index, stage] of manifest.stages.entries()) {
     const cost = stage?.pricing?.costUsd;
@@ -308,7 +312,7 @@ export function buildEntrant(entrant, { includeThumbnail }) {
     configurationId: entrant.configurationId,
     modelName: labels.modelName,
     workflowName: labels.workflowName,
-    generationCost: Number(cost.toFixed(8)),
+    ...(cost === null ? {} : { generationCost: Number(cost.toFixed(8)) }),
     ...(promotedDirectory(entrant.levelId) ? { linesOfCode: countSourceLines(path.join(levelsRoot, entrant.levelId)) } : {}),
     run: runMetrics(entrant, manifest, labels),
     ...(descriptor ? { thumbnailPath: descriptor.contentImages.hero } : {}),

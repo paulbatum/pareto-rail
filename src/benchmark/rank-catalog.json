@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T05:45:48.739Z",
+  "generatedAt": "2026-08-21T07:23:45.043Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1987,13 +1987,12 @@
       "configurationId": "pi-openrouter-ox-alpha-high",
       "modelName": "Ox Alpha",
       "workflowName": "solo",
-      "generationCost": 9.29824389,
       "linesOfCode": 3168,
       "run": {
         "generationWallTimeSeconds": 2117.036,
         "totalWallTimeSeconds": 2194.088,
         "result": "completed",
-        "orchestrationTreatment": "none",
+        "orchestrationTreatment": "unavailable",
         "harness": {
           "name": "pi",
           "version": "0.84.2"
@@ -2006,12 +2005,12 @@
             "outputTokens": 131098,
             "cacheReadTokens": 18988544,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed",
-            "costUsd": 9.29824389
+            "usageSource": "agreed"
           }
         ]
       },
       "thumbnailPath": "/level-content/vespers-1izg/hero.avif",
+      "retired": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -2407,13 +2406,12 @@
       "configurationId": "pi-openrouter-ox-alpha-high",
       "modelName": "Ox Alpha",
       "workflowName": "solo",
-      "generationCost": 11.34135524,
       "linesOfCode": 3513,
       "run": {
         "generationWallTimeSeconds": 2413.967,
         "totalWallTimeSeconds": 2502.422,
         "result": "completed",
-        "orchestrationTreatment": "none",
+        "orchestrationTreatment": "unavailable",
         "harness": {
           "name": "pi",
           "version": "0.84.2"
@@ -2426,12 +2424,12 @@
             "outputTokens": 131234,
             "cacheReadTokens": 24758784,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed",
-            "costUsd": 11.34135524
+            "usageSource": "agreed"
           }
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-gnff/hero.avif",
+      "retired": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },

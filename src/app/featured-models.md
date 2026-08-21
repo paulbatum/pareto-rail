@@ -30,5 +30,5 @@ put it last.
 - GPT-5.6 Sol
 - Gemini 3.7 Flash
 - Kimi K3
-- [Ox Alpha](https://openrouter.ai/stealth/ox-alpha) — a stealth model on OpenRouter (new)
+- [Ox Alpha](https://openrouter.ai/stealth/ox-alpha) — a stealth model on OpenRouter, unranked until it can be priced (new)
 - Gemini 3.6 Flash (retired)

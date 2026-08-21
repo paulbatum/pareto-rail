@@ -242,11 +242,14 @@ export function personalHistoryFromReveals(votes: readonly MatchupVote[], reveal
   const byMatchup = new Map(reveals.map((reveal) => [reveal.matchupId, reveal]));
   return votes.flatMap((vote) => {
     const reveal = byMatchup.get(vote.matchupId);
-    return reveal ? [{
+    // The fit places every comparison on the cost axis, so a comparison with an
+    // unpriced side has no position on it and is dropped.
+    if (!reveal || reveal.a.generationCost === undefined || reveal.b.generationCost === undefined) return [];
+    return [{
       vote,
-      a: historyEntrantFromReveal(reveal.a),
-      b: historyEntrantFromReveal(reveal.b),
-    }] : [];
+      a: historyEntrantFromReveal(reveal.a, reveal.a.generationCost),
+      b: historyEntrantFromReveal(reveal.b, reveal.b.generationCost),
+    }];
   });
 }
 
@@ -308,12 +311,12 @@ function mainComparisonComponent(nodeIds: readonly string[], comparisons: readon
   return new Set(components[0]?.ids ?? []);
 }
 
-function historyEntrantFromReveal(entrant: RevealPayload['a']): PersonalHistoryEntrant {
+function historyEntrantFromReveal(entrant: RevealPayload['a'], generationCost: number): PersonalHistoryEntrant {
   return {
     configurationId: entrant.configurationId ?? `${entrant.modelName}::${entrant.workflowName}`,
     modelName: entrant.modelName,
     workflowName: entrant.workflowName,
-    generationCost: entrant.generationCost,
+    generationCost,
   };
 }
 

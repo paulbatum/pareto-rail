@@ -55,7 +55,9 @@ export function RevealCards({ reveal, sideAnnotation }: { reveal: RevealPayload;
       <h2>Level {side.toUpperCase()}</h2>
       {sideAnnotation?.(side)}
       <p className="identity">{entrantLabel({ modelName: entrant.modelName, snapshotLabel: entrant.snapshotLabel, workflowName: entrant.workflowName })}</p>
-      <p className="cost"><strong className="cost-value">${entrant.generationCost.toFixed(2)}</strong><span className="cost-label">measured generation cost</span></p>
+      {entrant.generationCost === undefined
+        ? <p className="cost"><strong className="cost-value">Not priced</strong><span className="cost-label">this model is published without a price</span></p>
+        : <p className="cost"><strong className="cost-value">${entrant.generationCost.toFixed(2)}</strong><span className="cost-label">measured generation cost</span></p>}
       <GenerationDetails entrant={entrant} />
     </article>;
   };

@@ -381,7 +381,7 @@ function DataView({ builtIn, bands, benchmarkCount, onClearConfigs, onNavigate }
               {band.records.map((record) => (
                 <RailItem key={record.levelId} record={record} selected={record.levelId === selected.levelId}>
                   {record.entrant.featured === true && <b className="featured-mark" title="Featured">◆</b>}
-                  <span className="catalog-rail-cost">{formatCost(record.entrant.generationCost)}</span>
+                  <span className="catalog-rail-cost" title={formatCost(record.entrant.generationCost)}>{record.entrant.generationCost === undefined ? '—' : formatCost(record.entrant.generationCost)}</span>
                 </RailItem>
               ))}
             </Fragment>
@@ -657,7 +657,7 @@ function themeBands(): ThemeBand[] {
     const records = rankCatalog.entrants
       .map((entrant, entrantIndex) => ({ entrant, entrantIndex }))
       .filter(({ entrant }) => entrant.themeId === theme.id && playable.has(entrant.levelId))
-      .sort((first, second) => first.entrant.generationCost - second.entrant.generationCost)
+      .sort((first, second) => costOrder(first.entrant.generationCost) - costOrder(second.entrant.generationCost))
       .map(({ entrant, entrantIndex }): BenchmarkRecord => ({
         kind: 'benchmark',
         levelId: entrant.levelId,
@@ -763,8 +763,15 @@ function withEffort(model: string, effort?: string): string {
   return effort ? `${model} (${effort})` : model;
 }
 
-function formatCost(value: number): string {
-  return `$${value.toFixed(2)}`;
+/** An entrant whose run carries no cost reads as "Not priced" rather than as a
+ * dollar figure, because no charge for it is known. */
+function formatCost(value: number | undefined): string {
+  return value === undefined ? 'Not priced' : `$${value.toFixed(2)}`;
+}
+
+/** Sort key that puts an unpriced entrant after every priced one. */
+function costOrder(value: number | undefined): number {
+  return value ?? Number.POSITIVE_INFINITY;
 }
 
 function formatWallTime(seconds: number): string {

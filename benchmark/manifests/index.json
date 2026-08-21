@@ -230,7 +230,8 @@
       "runId": "run-v31izg5mbm",
       "levelId": "vespers-1izg",
       "themeId": "vespers",
-      "configurationId": "pi-openrouter-ox-alpha-high"
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "retired": true
     },
     {
       "runId": "run-v34xmh17pb",
@@ -260,7 +261,8 @@
       "runId": "run-v3gnffufye",
       "levelId": "tinker-ball-gnff",
       "themeId": "tinker-ball",
-      "configurationId": "pi-openrouter-ox-alpha-high"
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "retired": true
     },
     {
       "runId": "run-v3j7xpm8d7",
