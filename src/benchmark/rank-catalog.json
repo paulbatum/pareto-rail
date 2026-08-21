@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T07:23:45.043Z",
+  "generatedAt": "2026-08-21T07:31:21.442Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -2010,7 +2010,6 @@
         ]
       },
       "thumbnailPath": "/level-content/vespers-1izg/hero.avif",
-      "retired": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -2429,7 +2428,6 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-gnff/hero.avif",
-      "retired": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },

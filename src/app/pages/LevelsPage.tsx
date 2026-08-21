@@ -39,30 +39,35 @@ type Navigate = (path: string) => void;
 
 const REFERENCE_LEVEL_IDS = new Set(['crystal-corridor', 'helios']);
 
-/** The catalog groups levels into four browsing categories. Built-ins are the
- * hand-made levels; the other three name a benchmark theme's scheduling state —
- * `ranked` is live in matchups, `retired` is finished history, `experimental` is
- * a new theme being shown off before it enters ranking. The default view shows
- * built-ins and ranked levels; retired and experimental are opt-in. */
-type LevelCategory = 'built-in' | 'ranked' | 'retired' | 'experimental';
+/** The catalog groups levels into five browsing categories. Built-ins are the
+ * hand-made levels; the other four name why a benchmark level is or is not in
+ * matchups — `ranked` is live in matchups, `retired` is finished history,
+ * `experimental` is a new theme being shown off before it enters ranking, and
+ * `stealth` is a level whose model is published without a price, so it has no
+ * position on the cost axis to be ranked on. The default view shows built-ins,
+ * ranked and stealth levels; retired and experimental are opt-in. */
+type LevelCategory = 'built-in' | 'ranked' | 'stealth' | 'retired' | 'experimental';
 
-const CATEGORY_ORDER: readonly LevelCategory[] = ['built-in', 'ranked', 'retired', 'experimental'];
-const DEFAULT_CATEGORIES: readonly LevelCategory[] = ['built-in', 'ranked'];
+const CATEGORY_ORDER: readonly LevelCategory[] = ['built-in', 'ranked', 'stealth', 'retired', 'experimental'];
+const DEFAULT_CATEGORIES: readonly LevelCategory[] = ['built-in', 'ranked', 'stealth'];
 
 /** User-facing category names, kept jargon-free per the levels-page copy rules. */
 const CATEGORY_LABEL: Record<LevelCategory, string> = {
   'built-in': 'Built in',
   ranked: 'Ranked',
+  stealth: 'Stealth',
   retired: 'Retired',
   experimental: 'Experimental',
 };
 
-/** The scheduling category a benchmark entrant belongs to. A retired entrant (or
- * any entrant of a retired theme) reads as retired even inside an otherwise live
- * theme; an experimental theme's entrants read as experimental; everything else
- * is ranked. */
+/** The category a benchmark entrant belongs to, most specific first. A retired
+ * entrant (or any entrant of a retired theme) reads as retired even inside an
+ * otherwise live theme; an entrant whose run carries no cost reads as stealth;
+ * an experimental theme's entrants read as experimental; everything else is
+ * ranked. */
 function benchmarkCategory(record: BenchmarkRecord): Exclude<LevelCategory, 'built-in'> {
   if (record.theme.retired === true || record.entrant.retired === true) return 'retired';
+  if (record.entrant.generationCost === undefined) return 'stealth';
   if (record.theme.experimental === true) return 'experimental';
   return 'ranked';
 }
@@ -214,6 +219,14 @@ function LevelsFilters({ configOptions, selectedConfigs, onToggleConfig, onClear
       </div>
     </div>
   );
+}
+
+/** The badge on an entrant's record, naming its category unless it is ranked.
+ * A ranked entrant carries no badge, since ranked is the ordinary state. */
+function CategoryTag({ record }: { record: BenchmarkRecord }) {
+  const category = benchmarkCategory(record);
+  if (category === 'ranked') return null;
+  return <span className={`result-tag ${category}`}>{CATEGORY_LABEL[category]}</span>;
 }
 
 /** The scheduling badge shown beside a theme title in the band heads and rail.
@@ -457,9 +470,7 @@ function EntrantRecordDetail({ record, themeTarget, onNavigate }: { record: Benc
     <>
       <header className="catalog-record-header">
         <h2>{entrant.levelId}</h2>
-        {(theme.retired || entrant.retired)
-          ? <span className="result-tag">{CATEGORY_LABEL.retired}</span>
-          : theme.experimental && <span className="result-tag experimental">{CATEGORY_LABEL.experimental}</span>}
+        <CategoryTag record={record} />
         {run && <span className={completed ? 'result-tag' : 'result-tag timed-out'}>{formatResult(run.result)}</span>}
         <span className="spacer" />
         <RouteLink className="button primary" href={playPath(entrant.levelId)} onNavigate={onNavigate}>▸ Play this level</RouteLink>

@@ -672,6 +672,7 @@ html:fullscreen .perf-overlay { display: none; }
 .result-tag { padding: 4px 9px; color: var(--muted); border: 1px solid var(--hairline); font: 9.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 .result-tag.timed-out { color: var(--accent); border-color: var(--accent); }
 .result-tag.experimental { color: var(--cta); border-color: var(--cta); background: var(--cta-tint); }
+.result-tag.stealth { color: var(--flag); border-color: var(--flag); background: var(--flag-tint); }
 .catalog-identity { margin: 0 0 24px; color: var(--body-text); font: 11.5px var(--mono); letter-spacing: .06em; }
 
 .catalog-stats { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 24px; }
