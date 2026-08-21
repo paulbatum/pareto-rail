@@ -406,21 +406,29 @@ export function buildCatalog(publication, generatedAt) {
 // The home page names its models from hand-maintained copy, so a model can be
 // announced while it is still running and stay named after a retirement. Export
 // reports the drift and leaves the decision with the operator rather than
-// projecting the catalog into the copy.
+// projecting the catalog into the copy. A `(retired)` name is an answer already
+// given — the model publishes levels the home page deliberately stops naming —
+// so it is silent in both directions.
+//
+// This parses the same file as src/app/featured-models.ts by the same rules;
+// change one and change the other.
 function reportFeaturedModelDrift(catalog) {
-  const named = fs.readFileSync(featuredModelsPath, 'utf8').split('\n')
+  const listed = fs.readFileSync(featuredModelsPath, 'utf8').split('\n')
     .map((line) => /^-\s+(.*\S)\s*$/.exec(line.trim())?.[1])
     .filter((entry) => entry !== undefined)
-    .map((entry) => entry.replace(/\s*\(new\)$/i, ''))
+    .map((entry) => ({ entry, retired: /\(retired\)$/i.test(entry) }))
+    .map(({ entry, retired }) => ({ retired, name: entry.replace(/\s*\((?:new|retired)\)$/i, '') }))
     // A name may carry a note after an em dash, and may be written as a markdown
     // link. The catalog knows the model by its name alone, so both come off here.
-    .map((entry) => /^(.*?)\s+—\s+.*\S$/.exec(entry)?.[1] ?? entry)
-    .map((entry) => /^\[(.+)\]\(\S+\)$/.exec(entry)?.[1] ?? entry);
+    .map((item) => ({ ...item, name: /^(.*?)\s+—\s+.*\S$/.exec(item.name)?.[1] ?? item.name }))
+    .map((item) => ({ ...item, name: /^\[(.+)\]\(\S+\)$/.exec(item.name)?.[1] ?? item.name }));
+  const named = listed.filter((item) => !item.retired).map((item) => item.name);
+  const acknowledged = new Set(listed.map((item) => item.name));
   const publishing = new Set(catalog.entrants
     .filter((entrant) => !entrant.retired)
     .map((entrant) => configurationLabels[entrant.configurationId]?.modelName)
     .filter(Boolean));
-  const unnamed = [...publishing].filter((modelName) => !named.includes(modelName));
+  const unnamed = [...publishing].filter((modelName) => !acknowledged.has(modelName));
   const unpublished = named.filter((modelName) => !publishing.has(modelName));
   if (unnamed.length === 0 && unpublished.length === 0) return;
   console.warn(`\nFeatured models in ${path.relative(root, featuredModelsPath)} differ from the catalog just written:`);
