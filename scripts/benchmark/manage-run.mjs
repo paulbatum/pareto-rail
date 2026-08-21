@@ -19,7 +19,8 @@ async function main() {
   npm run benchmark:manage -- status [--unblind]
   npm run benchmark:manage -- archive-dnf [--dry-run true]
   npm run benchmark:manage -- unarchive --run <run-id-or-archived-directory>
-  npm run benchmark:manage -- prune --run <run-id> --confirm <run-id>`);
+  npm run benchmark:manage -- prune --run <run-id> --confirm <run-id>
+  npm run benchmark:manage -- delete --run <run-id> --confirm <run-id> [--dry-run true]`);
     return;
   }
   const command = rest[0];
@@ -28,6 +29,7 @@ async function main() {
   if (command === 'archive-dnf') { assertOnlyOptions(options, new Set(['dry-run'])); return archiveDnf(options); }
   if (command === 'unarchive') { assertOnlyOptions(options, new Set(['run'])); return unarchive(options.run); }
   if (command === 'prune') { assertOnlyOptions(options, new Set(['run', 'confirm'])); return pruneRun({ runId: options.run, confirmation: options.confirm }); }
+  if (command === 'delete') { assertOnlyOptions(options, new Set(['run', 'confirm', 'dry-run'])); return deleteRun({ runId: options.run, confirmation: options.confirm, dryRun: options['dry-run'] === 'true' }); }
   fail(`Unknown command: ${command}`);
 }
 
@@ -157,6 +159,102 @@ async function assertSafeToPrune(target, root) {
   if (head !== target.commit) fail(`Refusing to prune ${target.kind}: worktree HEAD ${head} does not match recorded commit ${target.commit}.`);
   const status = (await run('git', ['status', '--porcelain=v1', '--untracked-files=all'], target.path)).output.trim();
   if (status) fail(`Refusing to prune ${target.kind}: worktree is dirty.\n${status}`);
+}
+
+// `prune` reclaims a run's temporary worktrees and keeps its record, because a run that produced an
+// entrant is evidence the benchmark answers fairness questions from. `delete` is for the other case:
+// a run whose entrant produced nothing anyone will look at again — a provider blip, an aborted
+// launch. It removes the record and every trace the run created, so the refusals below are what
+// stands between that and deleting something the catalog or a published manifest still points at.
+export async function deleteRun({ runId, confirmation, dryRun = false, root = ROOT }) {
+  if (!runId || confirmation !== runId) fail('Destructive deletion requires --run <run-id> --confirm <same-run-id>.');
+  const located = await locateRun(runId, root);
+  const definition = await readJson(path.join(located.directory, 'run-definition.json'));
+  const levelId = definition.levelId ?? definition.assignment?.levelId;
+  await assertSafeToDelete({ runId, levelId, located, definition, root });
+
+  const worktrees = [
+    definition.worktree?.path,
+    definition.payload?.path,
+    (await optionalJson(path.join(located.directory, 'worktree.json')))?.worktree,
+    (await optionalJson(path.join(located.directory, 'payload.json')))?.worktree,
+  ].filter((candidate, index, all) => candidate && all.indexOf(candidate) === index);
+  for (const worktree of worktrees) {
+    if (pathInside(worktree, root) || pathInside(root, worktree)) fail(`Refusing to delete: worktree ${worktree} overlaps the primary repository.`);
+  }
+
+  const branches = [
+    definition.worktree?.branch ?? `benchmark-run-${runId}`,
+    definition.payload?.branch,
+  ].filter((candidate, index, all) => candidate && all.indexOf(candidate) === index);
+  const liveBranches = [];
+  for (const branch of branches) {
+    const found = await git(root, ['rev-parse', '--verify', `refs/heads/${branch}`], { allowFailure: true });
+    if (found.code === 0) liveBranches.push({ branch, commit: found.output.trim() });
+  }
+
+  const recoveryRefs = (await git(root, ['for-each-ref', '--format=%(refname)', `refs/benchmark-recovery/${runId}`])).output
+    .split('\n').map((line) => line.trim()).filter(Boolean);
+
+  const label = dryRun ? 'Would delete' : 'Deleting';
+  console.log(`${label} run ${runId}${levelId ? ` (${levelId})` : ''}, state ${located.state}.`);
+  console.log(`  ${label} record ${path.relative(root, located.directory)}`);
+  for (const worktree of worktrees) console.log(`  ${label} worktree ${worktree}${await pathExists(worktree) ? '' : ' (already gone)'}`);
+  for (const { branch, commit } of liveBranches) console.log(`  ${label} branch ${branch} at ${commit}`);
+  for (const ref of recoveryRefs) console.log(`  ${label} recovery ref ${ref}`);
+  if (dryRun) { console.log('Nothing was removed. Re-run without --dry-run to delete.'); return; }
+
+  for (const worktree of worktrees) {
+    if (!await pathExists(worktree)) continue;
+    const layout = await checkoutLayout(worktree);
+    if (layout === 'linked') await git(root, ['worktree', 'remove', '--force', worktree]);
+    else if (layout === 'standalone') await fs.rm(worktree, { recursive: true, force: true });
+    else fail(`Refusing to delete: ${worktree} is not a recognized Git checkout.`);
+  }
+  await git(root, ['worktree', 'prune']);
+  for (const { branch } of liveBranches) await git(root, ['branch', '-D', branch]);
+  for (const ref of recoveryRefs) await git(root, ['update-ref', '-d', ref]);
+  await fs.rm(located.directory, { recursive: true, force: true });
+  console.log(`Deleted ${runId}. Its plan row is untouched — edit the plan file yourself to drop or re-slot it.`);
+}
+
+// A run directory lives under runs/ while active and under archive/runs/<run-id>-<timestamp> once
+// archived, so both are searched and the state comes from the record rather than the directory name.
+async function locateRun(runId, root) {
+  const runsDirectory = path.join(root, 'benchmark/private/runs');
+  const archiveDirectory = path.join(root, 'benchmark/private/archive/runs');
+  for (const [directory, archived] of [[runsDirectory, false], [archiveDirectory, true]]) {
+    let results;
+    try { results = await loadResults(directory, {}); } catch { continue; }
+    const match = results.find((result) => result.runId === runId);
+    if (!match) continue;
+    const entries = await fs.readdir(directory, { withFileTypes: true });
+    for (const entry of entries.filter((candidate) => candidate.isDirectory())) {
+      const candidate = path.join(directory, entry.name);
+      const definition = await optionalJson(path.join(candidate, 'run-definition.json'));
+      if ((definition?.runId ?? definition?.assignment?.runId) === runId) return { directory: candidate, archived, state: match.state };
+    }
+  }
+  fail(`No run record found for ${runId} under benchmark/private/runs or benchmark/private/archive/runs.`);
+}
+
+async function assertSafeToDelete({ runId, levelId, located, definition, root }) {
+  if (!FAILED_STATES.has(located.state)) {
+    fail(`Refusing to delete ${runId}: its state is ${located.state}, not a failed run. Only ${[...FAILED_STATES].join(', ')} may be deleted; use prune to reclaim a completed run's worktrees.`);
+  }
+  if (definition.kind === 'benchmark' && !levelId) fail(`Refusing to delete ${runId}: its record has no level id, so promotion and publication cannot be checked.`);
+  if (!levelId) return;
+
+  const promoted = path.join(root, 'src/benchmark-levels', levelId);
+  if (await pathExists(promoted)) fail(`Refusing to delete ${runId}: ${path.relative(root, promoted)} exists, so the run is promoted. Retire the entrant instead.`);
+
+  const publication = await optionalJson(path.join(root, 'benchmark/private/publication.json'));
+  if (publication?.entrants?.some((entrant) => entrant.runId === runId || entrant.levelId === levelId)) {
+    fail(`Refusing to delete ${runId}: the publication manifest still lists it. Remove it there first, and read docs/compat.md before you do — production votes reference level ids.`);
+  }
+
+  const manifest = path.join(root, 'benchmark/manifests', runId);
+  if (await pathExists(manifest)) fail(`Refusing to delete ${runId}: published provenance exists at ${path.relative(root, manifest)}.`);
 }
 
 async function optionalJson(filePath) {

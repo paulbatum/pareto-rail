@@ -21,7 +21,7 @@ import {
   BUILT_IN_SOURCE_ROOT,
 } from '../level-footprint.mjs';
 import { createWorktree, derivePayload, sealEvaluatedCommit } from './admin.mjs';
-import { pruneRun } from './manage-run.mjs';
+import { deleteRun, pruneRun } from './manage-run.mjs';
 import { compactionTruncation, sha256 } from './common.mjs';
 
 const exec = promisify(execFile);
@@ -898,6 +898,72 @@ async function assertPruneLayouts() {
     }
   }
 }
+
+// `delete` is the one command that loses a run, so each refusal is asserted alongside the happy path.
+async function assertDeleteRun() {
+  const repo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-delete-'));
+  const runId = 'run-delete-fixture';
+  const levelId = 'thermal-ink-zzzz';
+  const checkout = `${repo}-checkout`;
+  const branch = `benchmark-run-${runId}`;
+  const runDirectory = path.join(repo, 'benchmark/private/runs', runId);
+  try {
+    await exec('git', ['init', '-q', '-b', 'main'], { cwd: repo });
+    await exec('git', ['config', 'user.name', 'Benchmark Test'], { cwd: repo });
+    await exec('git', ['config', 'user.email', 'benchmark@example.com'], { cwd: repo });
+    await fs.writeFile(path.join(repo, 'base.txt'), 'base\n');
+    await exec('git', ['add', '.'], { cwd: repo });
+    await exec('git', ['commit', '-qm', 'base'], { cwd: repo });
+    const commit = (await exec('git', ['rev-parse', 'HEAD'], { cwd: repo })).stdout.trim();
+    await exec('git', ['worktree', 'add', '-qb', branch, checkout, commit], { cwd: repo });
+    await exec('git', ['update-ref', `refs/benchmark-recovery/${runId}/evaluated`, commit], { cwd: repo });
+
+    await fs.mkdir(runDirectory, { recursive: true });
+    const writeRecord = async (gateStatus) => {
+      await fs.writeFile(path.join(runDirectory, 'run-definition.json'), `${JSON.stringify({ runId, levelId, kind: 'benchmark', worktree: { path: checkout, branch } })}\n`);
+      await fs.writeFile(path.join(runDirectory, 'manifest.json'), `${JSON.stringify({ runId, gates: [{ id: 'floor', status: gateStatus }] })}\n`);
+    };
+
+    await writeRecord('failed');
+    await assert.rejects(() => deleteRun({ runId, confirmation: 'wrong', root: repo }), /requires --run <run-id> --confirm/);
+    await assert.rejects(() => deleteRun({ runId: 'run-absent', confirmation: 'run-absent', root: repo }), /No run record found/);
+
+    // A promoted run is the catalog's, not the controller's, whatever its gates say.
+    await fs.mkdir(path.join(repo, 'src/benchmark-levels', levelId), { recursive: true });
+    await assert.rejects(() => deleteRun({ runId, confirmation: runId, root: repo }), /is promoted/);
+    await fs.rm(path.join(repo, 'src/benchmark-levels', levelId), { recursive: true });
+
+    await fs.writeFile(path.join(repo, 'benchmark/private/publication.json'), `${JSON.stringify({ themes: [], entrants: [{ levelId, runId }] })}\n`);
+    await assert.rejects(() => deleteRun({ runId, confirmation: runId, root: repo }), /publication manifest still lists it/);
+    await fs.rm(path.join(repo, 'benchmark/private/publication.json'));
+
+    await fs.mkdir(path.join(repo, 'benchmark/manifests', runId), { recursive: true });
+    await assert.rejects(() => deleteRun({ runId, confirmation: runId, root: repo }), /published provenance exists/);
+    await fs.rm(path.join(repo, 'benchmark/manifests', runId), { recursive: true });
+
+    // A run whose gates all passed is evidence; prune reclaims its worktrees, delete refuses it.
+    await writeRecord('passed');
+    await assert.rejects(() => deleteRun({ runId, confirmation: runId, root: repo }), /its state is completed, not a failed run/);
+
+    await writeRecord('failed');
+    await deleteRun({ runId, confirmation: runId, dryRun: true, root: repo });
+    assert.ok(await fs.lstat(runDirectory), 'a dry run must leave the record in place');
+
+    await deleteRun({ runId, confirmation: runId, root: repo });
+    await assert.rejects(() => fs.lstat(runDirectory));
+    await assert.rejects(() => fs.lstat(checkout));
+    assert.equal((await exec('git', ['branch', '--list', branch], { cwd: repo })).stdout.trim(), '');
+    assert.equal((await exec('git', ['for-each-ref', '--format=%(refname)', `refs/benchmark-recovery/${runId}`], { cwd: repo })).stdout.trim(), '');
+    // The primary repository keeps its own history.
+    assert.equal((await exec('git', ['cat-file', '-t', commit], { cwd: repo })).stdout.trim(), 'commit');
+  } finally {
+    await exec('git', ['worktree', 'remove', '--force', checkout], { cwd: repo }).catch(() => {});
+    await fs.rm(repo, { recursive: true, force: true });
+    await fs.rm(checkout, { recursive: true, force: true });
+  }
+}
+
+await assertDeleteRun();
 
 const scopeRepo = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-directory-only-scope-'));
 try {

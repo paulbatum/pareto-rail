@@ -115,7 +115,12 @@ npm run benchmark:results
 npm run benchmark:manage -- status
 ```
 
-`benchmark:status` is the first stop: it joins every plan file under `benchmark/private/` and any run schedule to the executed artifacts (live and archived) and answers what is left, splitting runs into pending, needs-promotion, and ran. `benchmark:results` then gives the per-run-artifact detail for the live directory — lifecycle state, gates, timing, cost, manifest completeness — with run ids and dispositions only. All three take `--unblind` to reveal configuration and model identities, under the rule in `benchmark/README.md`, Blindness. `benchmark:manage` also offers `archive-dnf`, `unarchive`, and `prune` (a strictly verified, doubly confirmed removal of a run's temporary worktrees that preserves every branch and commit).
+`benchmark:status` is the first stop: it joins every plan file under `benchmark/private/` and any run schedule to the executed artifacts (live and archived) and answers what is left, splitting runs into pending, needs-promotion, and ran. `benchmark:results` then gives the per-run-artifact detail for the live directory — lifecycle state, gates, timing, cost, manifest completeness — with run ids and dispositions only. All three take `--unblind` to reveal configuration and model identities, under the rule in `benchmark/README.md`, Blindness. `benchmark:manage` also offers `archive-dnf`, `unarchive`, `prune`, and `delete`. `prune` and `delete` differ in what survives, so pick by whether the run is evidence:
+
+- `prune --run <id> --confirm <id>` removes a run's temporary worktrees and preserves every branch, commit, and record. Use it to reclaim disk from a run whose entrant produced work.
+- `delete --run <id> --confirm <id>` removes the run record and every trace the run created: its worktrees, its branches, its `refs/benchmark-recovery/<id>` refs, and the record directory itself, live or archived. Nothing is recoverable afterwards. Use it for a run whose entrant produced nothing worth keeping — a provider blip, an aborted launch. Add `--dry-run true` to list what would go first.
+
+`delete` refuses a run that is promoted (`src/benchmark-levels/<levelId>` exists), one the publication manifest still lists, one with published provenance under `benchmark/manifests/`, and any run whose state is not `gate-failed`, `dnf`, `controller-failure`, or `incomplete`. It never edits a plan file: drop or re-slot the row yourself.
 
 ## Promotion
 
