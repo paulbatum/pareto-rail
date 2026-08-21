@@ -12,7 +12,7 @@ Set per configuration in the plan row's `stage` block: `model`, `effort`, `timeo
 
 agy bakes the reasoning tier into the model id rather than taking a separate flag. The adapter composes the id from the benchmark's `--effort` value and fails the stage if the composed id is absent from `agy models` for the account, so the tier is audited rather than assumed. Which tiers exist is a property of the account's published list, not of this document.
 
-`agy models` prints display labels to a terminal but canonical ids when piped, which is how the adapter reads it.
+`agy models` prints display labels to a terminal. Piped, each line is the canonical id, a tab, and the label, so the adapter takes the first tab-separated field; an earlier release printed the id alone and still parses.
 
 ## Invocation
 

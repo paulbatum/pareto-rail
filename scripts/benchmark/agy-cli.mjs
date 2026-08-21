@@ -86,7 +86,9 @@ async function main() {
   await fs.writeFile(path.join(outputDirectory, 'model-catalog.txt'), catalog.stdout, 'utf8');
   await fs.writeFile(path.join(outputDirectory, 'model-catalog.stderr.log'), catalog.stderr, 'utf8');
   const modelId = `${model}-${effort}`;
-  const catalogIds = catalog.stdout.split('\n').map((line) => line.trim()).filter(Boolean);
+  // A piped `agy models` line is the canonical id, then a tab, then the display label. Earlier agy
+  // releases printed the id alone, so take the first tab-separated field and both formats parse.
+  const catalogIds = catalog.stdout.split('\n').map((line) => line.split('\t')[0].trim()).filter(Boolean);
   const modelInCatalog = catalogIds.includes(modelId);
   if (!modelInCatalog) {
     fail(`agy does not publish the model id "${modelId}" for this account. Available: ${catalogIds.join(', ') || '(none reported)'}.`);
