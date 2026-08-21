@@ -19,6 +19,28 @@ export const COMPACTION_CONTINUATION_MESSAGE = 'Your session was compacted and t
 // only stops a pathological loop where every resume dies immediately.
 export const MAX_COMPACTION_CONTINUATIONS = 30;
 
+// Sent when an adapter resumes a session that ended on an empty completion. The entrant produced no
+// text and issued no tool call in that turn, so it is told only that the turn was interrupted; naming
+// a provider or a bug would put something in its context that the other entrants never receive.
+export const EMPTY_COMPLETION_CONTINUATION_MESSAGE = 'Your previous turn was interrupted before it produced anything. You have been resumed in the same session and your worktree is untouched. Continue the assignment from where you left off and finish it per the original instructions.';
+
+// Bound on the empty-completion retry. Each retry costs one API call when it fails immediately, so a
+// low bound is enough to ride out a transient provider fault without masking a persistent one.
+export const MAX_EMPTY_COMPLETION_CONTINUATIONS = 5;
+
+// A turn can end with an assistant message that carries no content, no tool call, and zero usage,
+// while the harness reads it as the agent settling and exits zero. The stage then looks complete with
+// the entrant's task unfinished. Observed against OpenRouter, where the request behind the empty
+// message does not appear in the provider's own logs.
+export function emptyCompletion(message) {
+  if (!message || message.stopReason !== 'stop') return null;
+  if ((message.content ?? []).length !== 0) return null;
+  const usage = message.usage ?? {};
+  const total = (usage.input ?? 0) + (usage.output ?? 0) + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0);
+  if (total !== 0) return null;
+  return { reason: 'assistant message carried no content and zero usage', responseId: message.responseId ?? null };
+}
+
 // A headless run ends at its first threshold compaction: the harness treats the session as idle while
 // compaction runs, tears the connection down, and exits zero with the entrant's task half finished
 // (https://github.com/PrimeIntellect-ai/prime-agent/issues/674). The stage looks complete and is not,

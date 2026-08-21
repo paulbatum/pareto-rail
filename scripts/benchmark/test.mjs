@@ -22,7 +22,7 @@ import {
 } from '../level-footprint.mjs';
 import { createWorktree, derivePayload, sealEvaluatedCommit } from './admin.mjs';
 import { deleteRun, pruneRun } from './manage-run.mjs';
-import { compactionTruncation, sha256 } from './common.mjs';
+import { compactionTruncation, emptyCompletion, sha256 } from './common.mjs';
 
 const exec = promisify(execFile);
 
@@ -435,6 +435,18 @@ assert.match(extractPiUsage(piUsageEvent([
   { type: 'compaction_end', reason: 'threshold' },
   { type: 'agent_settled' },
 ]), 'k3').truncation, /ended at a threshold compaction/);
+
+// A turn ending with a content-free, zero-usage assistant message is the empty completion the adapter
+// resumes through. The fixture holds the closing events of the run that hit it, verbatim.
+const emptyCompletionEvents = await fs.readFile(path.join(process.cwd(), 'scripts/benchmark/fixtures/pi-empty-completion.jsonl'), 'utf8');
+const emptyCompletionUsage = extractPiUsage(emptyCompletionEvents, 'stealth/ox-alpha');
+assert.equal(emptyCompletionUsage.emptyCompletion?.responseId, 'gen-1787350197-sGCamnggljRfrVPn8P1J');
+assert.equal(emptyCompletionUsage.finalMessage, '', 'an empty completion leaves no final message');
+// The neighbouring shapes must not be swept up with it.
+assert.equal(extractPiUsage(piUsageEvent([]), 'k3').emptyCompletion, undefined, 'a turn that produced text is not an empty completion');
+assert.equal(emptyCompletion({ stopReason: 'stop', content: [], usage: { input: 100, output: 0 } }), null, 'a billed turn is not an empty completion');
+assert.equal(emptyCompletion({ stopReason: 'toolUse', content: [], usage: { input: 0, output: 0 } }), null, 'a tool-use turn is not an empty completion');
+assert.equal(emptyCompletion({ stopReason: 'error', content: [], usage: { input: 0, output: 0 } }), null, 'a provider error is handled as a dead stage, not a retry');
 
 // Prime Agent persists in pi's session format and is priced through the same view, prefix and all.
 const primeAgentCost = summarizeCost('prime-agent-cli', piReport);

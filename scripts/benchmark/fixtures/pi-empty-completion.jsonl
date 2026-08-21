@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"01a02637-29c4-7e6c-a29d-a5b83809c6f2","timestamp":"2026-08-21T21:25:44.516Z","cwd":"/tmp/pareto-rail-run-y5zd577spu"}
+{"type":"message_end","message":{"role":"assistant","content":[],"api":"openai-completions","provider":"openrouter","model":"stealth/ox-alpha","usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"stop","timestamp":1787350196925,"responseId":"gen-1787350197-sGCamnggljRfrVPn8P1J","rawStopReason":"stop"}}
+{"type":"turn_end","message":{"role":"assistant","content":[],"api":"openai-completions","provider":"openrouter","model":"stealth/ox-alpha","usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"stop","timestamp":1787350196925,"responseId":"gen-1787350197-sGCamnggljRfrVPn8P1J","rawStopReason":"stop"},"toolResults":[]}
+{"type":"agent_end"}
+{"type":"agent_settled"}

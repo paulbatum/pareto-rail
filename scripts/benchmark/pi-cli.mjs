@@ -11,6 +11,9 @@ import {
   assertOnlyOptions,
   assertPrivateOrExternalPath,
   COMPACTION_CONTINUATION_MESSAGE,
+  EMPTY_COMPLETION_CONTINUATION_MESSAGE,
+  MAX_EMPTY_COMPLETION_CONTINUATIONS,
+  emptyCompletion,
   compactionTruncation,
   fail,
   MANUAL_RESUME_MESSAGE,
@@ -289,6 +292,37 @@ async function main() {
   };
   await continueThroughCompaction();
 
+  // A turn that ends on an empty completion left the assignment unfinished, so the adapter resumes the
+  // same session rather than handing the controller a stage that looks complete. Unlike the compaction
+  // loop it does not stop when a round makes no tool call: an empty turn makes none by definition, and
+  // treating that as "nothing left to do" would accept the very stop being repaired. It gives up at
+  // MAX_EMPTY_COMPLETION_CONTINUATIONS and leaves the outcome to the gates.
+  const emptyCompletionContinuations = [];
+  while (turn.usage.emptyCompletion && emptyCompletionContinuations.length < MAX_EMPTY_COMPLETION_CONTINUATIONS && remainingTime(deadline) > 0 && turn.result.code === 0) {
+    const { reason, responseId } = turn.usage.emptyCompletion;
+    console.warn(`pi ended a turn on an empty completion (${reason}${responseId ? `, responseId ${responseId}` : ''}). Resuming the same session (round ${round + 1}).`);
+    const startedAt = new Date().toISOString();
+    round += 1;
+    turn = await runTurn({
+      executable: piBin,
+      args: [...sharedArgs, '--session', sessionId],
+      cwd: worktree,
+      input: EMPTY_COMPLETION_CONTINUATION_MESSAGE,
+      timeoutSeconds: remainingTimeoutSeconds(deadline),
+      outputDirectory,
+      cliVersion,
+      model,
+      expectedSessionId: sessionId,
+      round,
+      env: childEnv,
+    });
+    eventLogs.push({ path: roundEventLog(round), droppedLines: turn.result.droppedLines });
+    await fs.writeFile(finalMessage, turn.usage.finalMessage, 'utf8');
+    emptyCompletionContinuations.push({ round, reason, responseId, startedAt, finishedAt: turn.finishedAt, exitCode: turn.result.code, toolCalls: turn.usage.toolCalls });
+    // A compaction stop can land inside a recovered round, so repair it before testing the next one.
+    if (turn.result.code === 0) await continueThroughCompaction();
+  }
+
   const resumes = [];
   let finalSpend;
   if (budgetUsd !== undefined && turn.result.code === 0 && !turn.usage.truncation) {
@@ -337,9 +371,10 @@ async function main() {
   const rollout = await captureRollout(sessionId, outputDirectory);
   const truncation = compactionSettled ? null : turn.usage.truncation ?? null;
   await writeJson(path.join(outputDirectory, 'result.json'), {
-    result: truncation ? 'truncated' : turn.result.code === 0 ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
+    result: truncation ? 'truncated' : turn.usage.emptyCompletion ? 'empty-completion' : turn.result.code === 0 ? 'completed' : turn.result.timedOut ? 'timed-out' : 'failed',
     ...(truncation ? { truncation } : {}),
     ...(compactionContinuations.length > 0 ? { compactionContinuations, compactionSettled, compactionWorkaround: 'https://github.com/PrimeIntellect-ai/prime-agent/issues/674' } : {}),
+    ...(emptyCompletionContinuations.length > 0 ? { emptyCompletionContinuations, emptyCompletionCleared: !turn.usage.emptyCompletion } : {}),
     exitCode: turn.result.code,
     timedOut: turn.result.timedOut,
     sessionId: turn.usage.sessionId,
@@ -357,7 +392,10 @@ async function main() {
     ...(budgetSummary ? { budget: { path: 'budget.json' } } : {}),
   });
 
-  if (truncation) {
+  if (turn.usage.emptyCompletion) {
+    console.error(`pi ended on an empty completion after ${emptyCompletionContinuations.length} resume${emptyCompletionContinuations.length === 1 ? '' : 's'}: ${turn.usage.emptyCompletion.reason}. The session is intact, so resume it with --continue-stage true rather than relaunching.`);
+    process.exitCode = 1;
+  } else if (truncation) {
     console.error(`pi stopped before the entrant finished: ${truncation}. Automatic continuation did not clear it after ${compactionContinuations.length} round${compactionContinuations.length === 1 ? '' : 's'}; the session is intact, so resume it with --continue-stage true rather than relaunching.`);
     process.exitCode = 1;
   } else if (turn.result.code !== 0) process.exitCode = turn.result.code || 1;
@@ -497,6 +535,7 @@ export function extractUsage(eventLog, model, expectedSessionId) {
   return {
     sessionId: session.id,
     ...(compactionTruncation(events) ? { truncation: compactionTruncation(events) } : {}),
+    ...(emptyCompletion(lastMessage) ? { emptyCompletion: emptyCompletion(lastMessage) } : {}),
     toolCalls,
     // Matched against the cost summary's per-model rows in the runner's stage split.
     initResolvedModel: assistant.at(-1).message.model ?? model,

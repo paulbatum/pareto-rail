@@ -73,6 +73,10 @@ npm run benchmark:run -- --resume benchmark/private/runs/<runId> --continue-stag
 
 **This is a workaround and should be deleted once the upstream issue is fixed.** It repairs a stop pi should not have made, and nothing else: an entrant that chooses to stop is never continued, which is what separates it from the budget protocol. Budget rows are continued by the budget protocol as usual, and a budget round cut short by a compaction is repaired before its spend is measured.
 
+**A turn can end on an empty completion.** The provider returns an assistant message with no content blocks, no tool call, and zero usage, at `stopReason: "stop"`. pi reads that as the agent settling and exits zero, so the stage again looks complete with the entrant's work unfinished — 23 seconds into one observed run and 44 minutes into another. The message still carries a `responseId`, and for the observed runs OpenRouter's own logs hold no record of the request behind it while they do hold the request before it, so where the empty message originates is not yet established.
+
+The adapter detects it from the final assistant message and resumes the same session, telling the entrant only that its previous turn was interrupted before it produced anything. Each retry warns on the console, writes the usual round-suffixed artifacts, and is recorded in `result.json` under `emptyCompletionContinuations`, with `emptyCompletionCleared` reporting whether the retries worked. Unlike the compaction loop it does not stop when a round makes no tool call, because an empty turn makes none by definition and stopping there would accept the very stop being repaired. It gives up after `MAX_EMPTY_COMPLETION_CONTINUATIONS` rounds, and the stage is then failed as `empty-completion` with the session left intact for `--continue-stage`.
+
 pi also has an operator-invoked same-session recovery for an interrupted process, `--continue-stage`, described under "Resume and recovery" in the controller README. It writes round-suffixed records and is not something the controller does automatically.
 
 ## Cost
