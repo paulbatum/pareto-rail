@@ -12,7 +12,9 @@ type Listener = () => void;
 export type MatchError =
   | { kind: 'missing' }
   | { kind: 'same'; id: string }
-  | { kind: 'unknown'; ids: readonly string[] };
+  | { kind: 'unknown'; ids: readonly string[] }
+  /** `/match?model=<slug>` named a model with no level to match against. */
+  | { kind: 'no-model'; slug: string };
 
 const CUSTOM_THEME: BenchmarkTheme = {
   id: 'custom',

@@ -9,6 +9,7 @@ import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
 import { CompareCard, RevealCards, VersusGrid, VoteButtons } from '../components/matchup';
 import type { AppRoute } from '../router';
+import { matchupForModel } from '../model-match';
 import { GameFrame } from '../components/LazyGameFrame';
 import { loadRankLevel } from '../rank-level';
 
@@ -21,15 +22,34 @@ type MatchPageProps = {
 
 const CASUAL_NOTE = 'This is a casual match. Your pick is not recorded and does not affect any rankings.';
 
+/** Level ids the site can actually launch, shared by the model draw and the picker. */
+function playableLevelIds(): ReadonlySet<string> {
+  return new Set(benchmarkLevelCatalog.map((level) => level.id));
+}
+
 function matchPath(a: string, b: string): string {
   return `/match?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`;
 }
 
 export function MatchPage({ route, onNavigate }: MatchPageProps) {
-  const controller = useMemo(() => customMatchControllerFor(route.a, route.b), [route.a, route.b]);
+  // `?model=<slug>` names one side and leaves the pair to a draw. The draw is
+  // held for the life of the mount, so a re-render never redeals it, and the
+  // address bar is rewritten to the concrete pair — that is the link worth
+  // sharing, and reloading it replays the same match instead of drawing a new one.
+  const [drawn] = useState(() => (route.model !== undefined && route.a === undefined && route.b === undefined
+    ? matchupForModel(route.model, { playable: playableLevelIds() })
+    : null));
+  const a = route.a ?? drawn?.a;
+  const b = route.b ?? drawn?.b;
+  const controller = useMemo(() => customMatchControllerFor(a, b), [a, b]);
   const [, refresh] = useState(0);
   const [launch, setLaunch] = useState<MatchLaunch | null>(null);
 
+  useEffect(() => {
+    // replaceState rather than navigate(): this runs on the child's first commit,
+    // before App has subscribed to popstate, so a dispatched event would be lost.
+    if (drawn) window.history.replaceState({}, '', matchPath(drawn.a, drawn.b));
+  }, [drawn]);
   useEffect(() => controller.subscribe(() => refresh((value) => value + 1)), [controller]);
   useEffect(() => {
     setLaunch(route.playSide ? controller.launch(route.playSide) : null);
@@ -41,8 +61,11 @@ export function MatchPage({ route, onNavigate }: MatchPageProps) {
     controller.completeRun(side, summary.score);
   }, [controller, route.playSide]);
 
+  if (route.model !== undefined && a === undefined) {
+    return <MatchSetupPage error={{ kind: 'no-model', slug: route.model }} onNavigate={onNavigate} />;
+  }
   if (!controller.valid) return <MatchSetupPage error={controller.error!} onNavigate={onNavigate} />;
-  if (launch) return <MatchGame launch={launch} backPath={matchPath(route.a!, route.b!)} onNavigate={onNavigate} onRunEnd={handleRunEnd} />;
+  if (launch) return <MatchGame launch={launch} backPath={matchPath(a!, b!)} onNavigate={onNavigate} onRunEnd={handleRunEnd} />;
   return <MatchContent controller={controller} state={controller.state!} onNavigate={onNavigate} />;
 }
 
@@ -138,7 +161,9 @@ function MatchSetupPage({ error, onNavigate }: { error: MatchError; onNavigate: 
     ? null
     : error.kind === 'same'
       ? `A match needs two different levels, but both sides point at “${error.id}”.`
-      : `These level ids aren’t in the catalog: ${error.ids.join(', ')}.`;
+      : error.kind === 'no-model'
+        ? `No theme holds both a level by “${error.slug}” and one by another model, so there is nothing to match it against.`
+        : `These level ids aren’t in the catalog: ${error.ids.join(', ')}.`;
   return (
     <section className="page-panel rank-panel">
       <p className="eyebrow">Custom match</p>
@@ -146,7 +171,7 @@ function MatchSetupPage({ error, onNavigate }: { error: MatchError; onNavigate: 
       <p className="lede">Pick two levels to play head-to-head, then reveal which model built each. Nothing here is recorded — it’s just for fun.</p>
       {notice && <p className="match-pick-error" role="alert">{notice}</p>}
       <MatchPicker onNavigate={onNavigate} />
-      <p className="match-url-hint">Prefer a link? Use <code>/match?a=&lt;level-id&gt;&amp;b=&lt;level-id&gt;</code> — browse ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>.</p>
+      <p className="match-url-hint">Prefer a link? Use <code>/match?a=&lt;level-id&gt;&amp;b=&lt;level-id&gt;</code> — browse ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>. <code>/match?model=&lt;model&gt;</code> draws one for you: one side is that model, the theme and the opponent are random.</p>
     </section>
   );
 }

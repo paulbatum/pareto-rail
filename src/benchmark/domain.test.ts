@@ -10,6 +10,7 @@ import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type
 import { configurationGroupResolver } from './identity';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { CustomMatchController } from '../app/match';
+import { matchupForModel, modelMatchPath, modelSlug, modelsWithMatchups } from '../app/model-match';
 import { parseRoute, routePath } from '../app/router';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import { ComparisonStateMachine } from './state';
@@ -68,6 +69,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testVoteValidationIsCatalogWide();
   await testApisAndStateMachine();
   testMatchRouteParsing();
+  testModelMatchupDraw();
   testCustomMatchController();
   testCustomMatchPlaysPersist();
 }
@@ -118,14 +120,46 @@ function testCustomMatchPlaysPersist(): void {
 
 function testMatchRouteParsing(): void {
   const parse = (search: string) => parseRoute({ pathname: '/match', search } as Location);
-  assert.deepEqual(parse('?a=lv-x&b=lv-y'), { kind: 'match', a: 'lv-x', b: 'lv-y', playSide: undefined });
-  assert.deepEqual(parse('?a=lv-x&b=lv-y&play=b'), { kind: 'match', a: 'lv-x', b: 'lv-y', playSide: 'b' });
+  assert.deepEqual(parse('?a=lv-x&b=lv-y'), { kind: 'match', a: 'lv-x', b: 'lv-y', model: undefined, playSide: undefined });
+  assert.deepEqual(parse('?a=lv-x&b=lv-y&play=b'), { kind: 'match', a: 'lv-x', b: 'lv-y', model: undefined, playSide: 'b' });
+  // `model` names one side and leaves the pair to the page's draw.
+  assert.deepEqual(parse('?model=ox-alpha'), { kind: 'match', a: undefined, b: undefined, model: 'ox-alpha', playSide: undefined });
   // `play` is only honoured for the two sides; anything else is dropped.
   const droppedPlay = parse('?a=lv-x&b=lv-y&play=c');
   assert.equal(droppedPlay.kind === 'match' ? droppedPlay.playSide : 'unreachable', undefined);
   // Missing params still resolve to the match route so the page can explain the shape.
-  assert.deepEqual(parse(''), { kind: 'match', a: undefined, b: undefined, playSide: undefined });
+  assert.deepEqual(parse(''), { kind: 'match', a: undefined, b: undefined, model: undefined, playSide: undefined });
   assert.equal(routePath({ kind: 'match', a: 'lv-x', b: 'lv-y' }), '/match');
+}
+
+function testModelMatchupDraw(): void {
+  assert.equal(modelSlug('GPT-5.6 Sol'), 'gpt-5-6-sol');
+  assert.equal(modelSlug('Ox Alpha'), 'ox-alpha');
+  assert.equal(modelMatchPath('Ox Alpha'), '/match?model=ox-alpha');
+
+  const entrant = (levelId: string, themeId: string, modelName: string): RankCatalogEntrant =>
+    ({ levelId, themeId, configurationId: `${modelSlug(modelName)}-solo`, modelName, workflowName: 'solo', generationCost: 1 });
+  const catalog: RankCatalog = {
+    generatedAt: 'test',
+    themes: [{ id: 'th-a', title: 'A', summary: 'S', prompt: 'P' }, { id: 'th-b', title: 'B', summary: 'S', prompt: 'P' }],
+    entrants: [
+      entrant('lv-mine-a', 'th-a', 'Ox Alpha'),
+      entrant('lv-theirs-a', 'th-a', 'Other Model'),
+      // th-b holds the model alone, so it can never be drawn.
+      entrant('lv-mine-b', 'th-b', 'Ox Alpha'),
+      entrant('lv-unplayable', 'th-b', 'Other Model'),
+    ],
+  };
+  const playable = new Set(['lv-mine-a', 'lv-theirs-a', 'lv-mine-b']);
+  const draw = (random: () => number) => matchupForModel('ox-alpha', { catalog, playable, random });
+
+  // The only theme holding both is th-a, and the last draw decides the sides.
+  assert.deepEqual(draw(() => 0), { a: 'lv-mine-a', b: 'lv-theirs-a' });
+  assert.deepEqual(draw(() => 0.9), { a: 'lv-theirs-a', b: 'lv-mine-a' });
+  assert.equal(matchupForModel('no-such-model', { catalog, playable, random: () => 0 }), null);
+  // With the opponent unplayable, th-b has nothing to offer either.
+  assert.equal(matchupForModel('ox-alpha', { catalog, playable: new Set(['lv-mine-b']), random: () => 0 }), null);
+  assert.deepEqual([...modelsWithMatchups({ catalog, playable })].sort(), ['Other Model', 'Ox Alpha']);
 }
 
 function testCustomMatchController(): void {

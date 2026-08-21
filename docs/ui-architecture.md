@@ -8,15 +8,27 @@ Client-side via the History API (`src/app/router.ts`). An unrecognized path reso
 
 **Upgrade on navigation** — a long-open tab silently picks up new deploys. `src/app/update-check.ts` polls the build-emitted `/version.json` (on tab-visible and a slow interval) and flags when its commit differs from the one baked into the bundle; on the next genuine user push navigation (not a `replace` canonicalization), `navigate()` does a full document load instead of a pushState so the browser fetches the fresh bundle. No UI or prompt. Disabled in dev, where HMR keeps the bundle current.
 
+## The home page
+
+The "Featuring" list is hand-maintained copy in `src/app/featured-models.md`, not a projection of the catalog; `docs`-worthy rules for its format live in that file's own prose.
+
+Below the two start cards sits one conditional callout, shown while a featured model has playable levels and no published price. `unpricedModels` and `modelsWithMatchups` (`src/app/model-match.ts`) decide that from the catalog, so the callout appears and disappears on its own as costs are published. Its button is a `/match?model=<slug>` link, which is the only way a visitor meets an unpriced model's levels — the ranked scheduler never serves them.
+
 ## The `/levels` pages
 
 `/levels` browses every level as a thumbnail gallery; `/levels/data` shows the catalog tree and full run records. Both are driven by the rank catalog and the built-in registry, so a benchmark level reaches these pages by being published to the catalog.
+
+The category filter has five chips. `built-in`, `ranked`, `retired` and `experimental` come from the registry and the catalog's scheduling flags; `stealth` is derived from an entrant publishing no `generationCost`, which is what keeps it out of matchups. Built-in, ranked and stealth are pressed by default.
 
 ## The `/match` page
 
 `/match?a=<level-id>&b=<level-id>` is a casual, shareable head-to-head. It mirrors the `/rank` flow — play both anonymous levels, vote which felt better, then the identities, cost, and run details are revealed. Plays are remembered on the device: completed runs, best scores, and last-played are persisted by `CustomMatchController` (`src/app/match.ts`) through the same shared local `BenchmarkLocalStore` `levelRuns` that `/rank` uses, so a level played in a match counts as played on `/rank` and vice versa. The vote and reveal are **never** persisted and the personal curve is untouched. An in-tab factory cache (`customMatchControllerFor`) carries the in-flight match — including reveal state — across the page remounts a route change triggers; a refresh after voting returns to `ready-to-vote` (plays survive, the pick does not). The page states before the vote and on the reveal that the pick is never recorded.
 
-Eligibility is deliberately broader than the ranked scheduler: any entrant in the rank catalog resolves via `findCatalogEntrant`, including retired entrants and entrants of retired or experimental themes (which `schedulingPool` excludes). When both sides share a theme the header shows it; when they differ, each card shows its own theme title and prompt.
+`/match?model=<slug>` names one side and leaves the pair to a draw: `matchupForModel` (`src/app/model-match.ts`) picks a theme the model entered, one of its levels there, an opponent level built by a different model in the same theme, and which side each takes. The slug is the model's catalog name lowercased with every run of other characters folded to one hyphen (`Ox Alpha` → `ox-alpha`). `MatchPage` holds the draw for the life of the mount and rewrites the address bar to the drawn pair with `history.replaceState` — the concrete pair is the link worth sharing, and reloading it replays that match instead of drawing a new one. It uses `replaceState` rather than `navigate`, because the effect runs on the child's first commit, before `App` has subscribed to `popstate`. A slug no theme can pair renders the picker above a notice.
+
+A `?model=` link has no `a`/`b` for `middleware.ts` to build a card from, so it falls through to the site's default social card — the pair is not decided until the page runs.
+
+Eligibility is deliberately broader than the ranked scheduler: any entrant in the rank catalog resolves via `findCatalogEntrant`, including retired entrants, entrants of retired or experimental themes, and entrants with no cost (all of which `schedulingPool` excludes). The model draw has the same breadth. When both sides share a theme the header shows it; when they differ, each card shows its own theme title and prompt.
 
 Visiting `/match` with missing parameters (and, above a short notice, the `same`/`unknown` error cases) renders a blind level picker instead of the URL-shape instructions. It reuses the levels-gallery theme bands but shows every playable catalog entrant with no category filter — retired and experimental themes included — and each card shows only the thumbnail and level id, never the model or cost, so the person building the match can still play it blind. The first pick is side A and the second is side B (a third replaces B); once both are chosen an action bar starts the match or copies the absolute share link. Selection is transient React state, consistent with the rest of the page.
 

@@ -104,6 +104,14 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
    its own across both columns. */
 .hero-models li.has-note { grid-column: 1 / -1; }
 .hero-models .model-note { color: var(--muted); font-size: 13px; letter-spacing: .02em; }
+/* The unranked model's callout: the flag colour ties it to the flagged entry in
+   the list above, and the copy and its action sit on one row until the panel is
+   too narrow to hold both. */
+.home-stealth { display: flex; align-items: center; justify-content: space-between; gap: clamp(16px, 3vw, 40px); flex-wrap: wrap; width: 100%; max-width: 880px; margin: clamp(16px, 2vw, 28px) auto 8px; padding: clamp(14px, 1.6vw, 20px) clamp(16px, 2vw, 26px); background: var(--card); border: 1px solid var(--hairline); border-left: 2px solid var(--flag); }
+.home-stealth h2 { margin: 0 0 8px; font-size: clamp(17px, 1.7vw, 21px); }
+.home-stealth-copy { flex: 1 1 300px; min-width: 0; }
+.home-stealth p { max-width: 48ch; margin: 0; color: var(--body); line-height: 1.55; }
+.home-stealth .button { flex: 0 0 auto; }
 @media (prefers-reduced-motion: no-preference) {
   .hero-models li.is-new { animation: new-flag-pulse 2.8s ease-in-out infinite; }
 }

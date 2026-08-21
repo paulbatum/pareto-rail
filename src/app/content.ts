@@ -7,6 +7,13 @@ export const homeCopy = {
     heading: 'Featuring',
     newTag: 'New',
   },
+  /** Shown only while a featured model has levels but no published price, which
+   * is what keeps it out of ranked matchups. */
+  stealth: {
+    title: (name: string) => `${name} is not in ranked matchups yet`,
+    body: 'Its price is not published, so we can\u2019t place it on the pareto chart, but you can play the levels now.',
+    action: (name: string) => `Play ${name} head to head`,
+  },
   reference: {
     eyebrow: 'Recommended first',
     title: 'Play the reference level',

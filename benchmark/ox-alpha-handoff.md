@@ -8,7 +8,7 @@
 - Both entrants publish without a `generationCost`, which keeps them out of the scheduling pool. No scheduling flag holds them out, so pricing the model is all it takes to admit them.
 - The levels page files them under its `stealth` category: shown by default, playable, badged "Stealth", and priced as "Not priced".
 - The model id sits in `UNPRICED_MODELS` in `scripts/benchmark/run.mjs`, so a further run on it also records an unavailable cost.
-- The home page names Ox Alpha with a note that it is unranked.
+- The home page names Ox Alpha in its "Featuring" list and carries a callout saying it is not in ranked matchups yet, whose button opens `/match?model=ox-alpha` — a head-to-head against a random opponent, which is how a visitor reaches these levels at all. The callout is derived from the missing cost, so it disappears by itself once the model is priced.
 
 ## When the model is named and priced
 
