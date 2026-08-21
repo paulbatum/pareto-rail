@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-26T04:19:57.301Z",
+  "generatedAt": "2026-08-21T02:26:28.398Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -97,6 +97,14 @@
       "primaryModel": "gemini-3.6-flash",
       "effort": "high",
       "workflowSummary": "One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+    },
+    {
+      "id": "pi-kimi-k3-max",
+      "modelName": "Kimi K3",
+      "workflowName": "solo",
+      "primaryModel": "k3",
+      "effort": "max",
+      "workflowSummary": "One fresh unattended pi session driving Kimi K3 on Moonshot's own subscription endpoint. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "pi-openrouter-kimi-k3-max",
@@ -908,6 +916,40 @@
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
     {
+      "levelId": "broadside-b2o2",
+      "themeId": "broadside",
+      "configurationId": "pi-kimi-k3-max",
+      "modelName": "Kimi K3",
+      "workflowName": "solo",
+      "generationCost": 24.61023498,
+      "linesOfCode": 5080,
+      "run": {
+        "generationWallTimeSeconds": 52753.535,
+        "totalWallTimeSeconds": 2415408.744,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "pi",
+          "version": "0.80.10"
+        },
+        "models": [
+          {
+            "modelName": "k3",
+            "role": "solo",
+            "inputTokens": 2462239,
+            "outputTokens": 492720,
+            "cacheReadTokens": 62243332,
+            "cacheWriteTokens": 0,
+            "usageSource": "ccusage",
+            "costUsd": 24.61023498
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-b2o2/hero.avif",
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
+    },
+    {
       "levelId": "broadside-b3fk",
       "themeId": "broadside",
       "configurationId": "codex-sol-high-b20",
@@ -1681,6 +1723,40 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-s8dw/hero.avif",
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    },
+    {
+      "levelId": "strandline-sk9q",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-kimi-k3-max",
+      "modelName": "Kimi K3",
+      "workflowName": "solo",
+      "generationCost": 20.8299408,
+      "linesOfCode": 3782,
+      "run": {
+        "generationWallTimeSeconds": 10895.97,
+        "totalWallTimeSeconds": 11607.376,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "pi",
+          "version": "0.80.10"
+        },
+        "models": [
+          {
+            "modelName": "moonshotai/kimi-k3",
+            "role": "solo",
+            "inputTokens": 709704,
+            "outputTokens": 209846,
+            "cacheReadTokens": 51843796,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed",
+            "costUsd": 20.8299408
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-sk9q/hero.avif",
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },

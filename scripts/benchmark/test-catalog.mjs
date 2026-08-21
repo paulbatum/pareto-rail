@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateThumbnail } from './generate-thumbnails.mjs';
-import { buildCatalog, PUBLISHED_CONFIGURATIONS } from './export-rank-catalog.mjs';
+import { buildCatalog, configurationLabels, PUBLISHED_CONFIGURATIONS } from './export-rank-catalog.mjs';
 import { benchmarkLevelFootprint } from '../level-footprint.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -14,9 +14,12 @@ const dryRun = await generateThumbnail({ level: 'mass-driver-wo4m', entrant: 'op
 for (const expected of ['--thumbnails 4', '--seed 424242', '--immortal true', '--projectiles false', '--fidelity auto', '--width 1280', '--height 720']) assert.ok(dryRun.command.includes(expected), `missing ${expected}`);
 assert.equal(dryRun.metadata.immortal, true);
 assert.equal(dryRun.metadata.projectiles, false);
-// The publication scope is one flat set now; Kimi stays labeled but withheld.
+// The publication scope is one flat set that a configuration must be listed in.
 assert.ok(PUBLISHED_CONFIGURATIONS.has('claude-fable-5-high'), 'a published configuration is in scope');
-assert.equal(PUBLISHED_CONFIGURATIONS.has('pi-openrouter-kimi-k3-max'), false, 'the withheld Kimi configuration is out of scope');
+assert.equal(PUBLISHED_CONFIGURATIONS.has('not-a-configuration'), false, 'an unlisted configuration is out of scope');
+for (const configurationId of PUBLISHED_CONFIGURATIONS) {
+  assert.ok(configurationLabels[configurationId], `scoped configuration ${configurationId} carries a public label`);
+}
 
 // Rank-catalog exporter gates on the publication scope and on level promotion: an
 // unlabeled configuration is withheld with a warning, and a theme whose entrants

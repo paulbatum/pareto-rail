@@ -11,7 +11,7 @@ const outputPath = path.join(levelsRoot, '..', 'benchmark', 'rank-catalog.json')
 const publicationPath = path.join(privateRoot, 'publication.json');
 const featuredModelsPath = path.join(root, 'src/app/featured-models.md');
 
-const configurationLabels = {
+export const configurationLabels = {
   'claude-fable-5-high': {
     modelName: 'Claude Fable 5',
     workflowName: 'solo',
@@ -96,6 +96,13 @@ const configurationLabels = {
     effort: 'high',
     workflowSummary: 'One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
+  'pi-kimi-k3-max': {
+    modelName: 'Kimi K3',
+    workflowName: 'solo',
+    primaryModel: 'k3',
+    effort: 'max',
+    workflowSummary: 'One fresh unattended pi session driving Kimi K3 on Moonshot\'s own subscription endpoint. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'pi-openrouter-kimi-k3-max': {
     modelName: 'Kimi K3',
     workflowName: 'solo',
@@ -109,8 +116,6 @@ const configurationLabels = {
 // label above and is listed here. The two gates stay separate so labeling a
 // configuration (its identity) never republishes it on its own. A configuration
 // missing from this set is warned and withheld; its entrants never enter the pool.
-// Kimi is withheld until its full level set exists — its label stays; add its id
-// here to publish it.
 export const PUBLISHED_CONFIGURATIONS = new Set([
   'claude-fable-5-high',
   'claude-fable-5-opus-delegation',
@@ -123,6 +128,8 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'codex-sol-high-b20',
   'codex-sol-max',
   'agy-gemini-3-6-flash-high',
+  'pi-kimi-k3-max',
+  'pi-openrouter-kimi-k3-max',
 ]);
 
 const delegationIntroduction = 'Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.';
