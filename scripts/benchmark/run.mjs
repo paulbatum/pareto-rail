@@ -279,9 +279,13 @@ async function main() {
       const stageDirectory = path.join(outputDirectory, adapter.stageDir);
       const launch = await optionalJson(path.join(outputDirectory, 'stage-launch.json'));
       if (launch) {
-        if (launch.exitCode === 0) return { exitCode: 0 };
+        // `--continue-stage` is an explicit operator instruction and is honored even when the recorded
+        // stage exited zero, because a stage can exit zero without the entrant having finished: pi
+        // reads an empty completion as the agent settling and returns success. Ordering the exit-code
+        // check first would refuse the recovery in exactly the case that needs it.
+        if (!continueStage && launch.exitCode === 0) return { exitCode: 0 };
         const recovery = await optionalJson(path.join(outputDirectory, 'recovery.json'));
-        if (recovery?.policy === 'completed entrant work accepted; normal sealing and gates resumed') return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
+        if (!continueStage && recovery?.policy === 'completed entrant work accepted; normal sealing and gates resumed') return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
         if (continueStage) {
           const round = await nextContinuationRound(stageDirectory);
           const originalLaunchPath = path.join(outputDirectory, 'stage-launch-round-0.json');
@@ -294,6 +298,11 @@ async function main() {
           await writeCommandRecord(roundLaunchPath, [process.execPath, ...stageArgs], stage);
           await writeCommandRecord(path.join(outputDirectory, 'stage-launch.json'), [process.execPath, ...stageArgs], stage);
           if (stage.code !== 0) fail(`${adapter.harnessName} continuation stage failed; its worktree and artifacts were preserved for the next resumption.`);
+          // The entrant has worked since any earlier seal, so a recorded evaluated commit and the
+          // payload derived from it describe a worktree that no longer exists. Drop them and let the
+          // seal and payload checkpoints derive them again; the gate record keys off the evaluated
+          // commit, so it invalidates itself.
+          for (const stale of ['evaluated.json', 'payload.json']) await fs.rm(path.join(outputDirectory, stale), { force: true });
           return { exitCode: 0 };
         }
         if (options['accept-stage-output'] === 'true') {
