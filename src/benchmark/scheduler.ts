@@ -79,11 +79,16 @@ function selectCoveragePhase(
 ): PairCandidate | null {
   // A participant's very first comparison in this catalog version is the
   // featured pairing, hosted by a participant-salted theme so first
-  // impressions spread across all of them. Later matchups spread across
-  // the pool instead of repeating the pairing per theme.
+  // impressions spread across all of them. Featured themes are drawn from
+  // first; a featured pairing that only exists outside them still opens the
+  // session, because the featured configurations outrank the theme
+  // preference. Later matchups spread across the pool instead of repeating
+  // the pairing per theme.
   if (!hasVersionHistory) {
-    const featuredPair = candidates
-      .filter((candidate) => candidate.a.featured === true && candidate.b.featured === true)
+    const featuredThemeIds = new Set(catalog.themes.filter((theme) => theme.featured).map((theme) => theme.id));
+    const featuredPairs = candidates.filter((candidate) => candidate.a.featured === true && candidate.b.featured === true);
+    const inFeaturedTheme = featuredPairs.filter((candidate) => featuredThemeIds.has(candidate.themeId));
+    const featuredPair = (inFeaturedTheme.length > 0 ? inFeaturedTheme : featuredPairs)
       .sort((left, right) => participantOrder(participantId, left.id) - participantOrder(participantId, right.id)
         || compareIds(left.id, right.id))[0] ?? null;
     if (featuredPair) return featuredPair;

@@ -9,6 +9,10 @@ import type { BenchmarkDataClass, BenchmarkRunMetrics, BenchmarkTheme } from './
 export interface RankCatalogTheme extends BenchmarkTheme {
   retired?: boolean;
   experimental?: boolean;
+  /** A theme the scheduler draws a new participant's opening comparison from.
+   * It changes nothing else: an unfeatured theme is scheduled, played, and
+   * ranked exactly as before, it just does not make a first impression. */
+  featured?: boolean;
 }
 
 export interface RankCatalogConfiguration {

@@ -42,6 +42,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testStorageUndo();
   testSchedulerCoverage();
   testFeaturedFirstMatchup();
+  testFeaturedThemePreference();
   testFeaturedThemeCoverage();
   testNewcomerAnchoring();
   testCoverageSpreadsAcrossThemes();
@@ -400,6 +401,24 @@ function testFeaturedFirstMatchup(): void {
     assert.equal(featuredOpeners, 1, 'the featured pairing opens one theme only, not every theme');
   }
   assert.ok(openerThemes.size > 1, 'the featured opener theme varies across participants');
+}
+
+function testFeaturedThemePreference(): void {
+  const base = makeSchedulerCatalog(4, 3, false, [0, 1]);
+  const featured: SchedulingPool = { ...base, themes: base.themes.map((theme) => theme.id === 'theme-b' ? { ...theme, featured: true } : theme) };
+  for (let index = 0; index < 20; index += 1) {
+    const opener = nextScheduledMatchup(featured, `featured-theme-${index}`, { judged: [] });
+    assert.equal(opener?.themeId, 'theme-b', 'the opener comes from the featured theme');
+  }
+  // A featured theme that holds no featured pairing does not hold the opener
+  // back: the featured configurations outrank the theme preference.
+  const withoutPair: SchedulingPool = { ...featured, entrants: base.entrants.filter((entrant) => !(entrant.themeId === 'theme-b' && entrant.featured === true)) };
+  for (let index = 0; index < 20; index += 1) {
+    const opener = nextScheduledMatchup(withoutPair, `unfeatured-theme-${index}`, { judged: [] });
+    assert.notEqual(opener?.themeId, 'theme-b');
+    const entrants = [opener!.levelIdA, opener!.levelIdB].map((levelId) => withoutPair.entrants.find((entrant) => entrant.levelId === levelId)!);
+    assert.equal(entrants.every((entrant) => entrant.featured === true), true, 'the opener is still a featured pairing');
+  }
 }
 
 function testFeaturedThemeCoverage(): void {
@@ -793,6 +812,7 @@ function testFeaturedOpener(): void {
     const first = nextScheduledMatchup(pool, `opener-participant-${index}`, { judged: [] });
     assert.ok(first);
     assert.equal(retiredThemes.has(first!.themeId), false, 'the featured opener never comes from a retired theme');
+    assert.equal(findCatalogTheme(rankCatalog, first!.themeId)?.featured === true, true, 'the featured opener comes from a featured theme');
     const ea = findCatalogEntrant(rankCatalog, first!.levelIdA);
     const eb = findCatalogEntrant(rankCatalog, first!.levelIdB);
     assert.equal(ea?.featured === true && eb?.featured === true, true, 'the opener is a featured pairing');
