@@ -78,8 +78,13 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   if (actualGallery !== expectedGallery) failures.push('docs/level-gallery.md is not regenerated from the current level.md cards. Run npm run gallery.');
 
   const occlusionWarnings = occlusionReports.flatMap((report) => report.warnings.map((warning) => ({ report, warning })));
-  if (occlusionWarnings.length > 0) {
-    failures.push(`Target occlusion check found ${occlusionWarnings.length} warning${occlusionWarnings.length === 1 ? '' : 's'}. Run npm run check:occlusion -- --level ${level.id} for details.`);
+  const occlusionFailures = occlusionReports.filter((report) => report.failed);
+  if (occlusionFailures.length > 0) {
+    for (const report of occlusionFailures) {
+      failures.push(`Target occlusion check failed: ${report.failureReason}. Run npm run check:occlusion -- --level ${level.id} for details.`);
+    }
+  } else if (occlusionWarnings.length > 0) {
+    warnings.push(`Target occlusion check found ${occlusionWarnings.length} warning${occlusionWarnings.length === 1 ? '' : 's'} below the failure threshold. Run npm run check:occlusion -- --level ${level.id} for details.`);
   }
 
   type PerfGate = { name: string; status: string; detail: string };
@@ -133,7 +138,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   lines.push('');
   lines.push(formatEngineDefaultsReport(result.engineDefaults));
   lines.push('');
-  lines.push(`target occlusion warnings: ${occlusionWarnings.length}`);
+  lines.push(`target occlusion warnings: ${occlusionWarnings.length}, failing levels: ${occlusionFailures.length}`);
   lines.push(`performance gate failures: ${perfFailures.length}, over authoring budget: ${perfMarginal.length}`);
   lines.push(`audio configuration failures: ${audioConfigErrors.length}`);
   lines.push(`spawn centerness/distance warnings: ${spawnWarningCount}`);
@@ -164,8 +169,11 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
       lines.push('');
       const occlusionReport = occlusionReports[0];
       lines.push(formatReports(occlusionReports, {
-        threshold: occlusionReport?.threshold ?? 0.05,
+        threshold: occlusionReport?.threshold ?? 0,
         sampleStep: occlusionReport?.sampleStep ?? 0.1,
+        minOccludedSeconds: occlusionReport?.minOccludedSeconds,
+        severeOccludedSeconds: occlusionReport?.severeOccludedSeconds,
+        warningTargetRatio: occlusionReport?.warningTargetRatio,
         policy: 'perfect',
         json: false,
       }));

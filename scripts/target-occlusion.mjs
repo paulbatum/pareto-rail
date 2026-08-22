@@ -9,7 +9,13 @@ const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 720;
 const DEFAULT_DT = 1 / 60;
 const DEFAULT_SAMPLE_STEP = 0.1;
-const DEFAULT_THRESHOLD = 0.05;
+// A target warns when it is blocked for at least DEFAULT_MIN_OCCLUDED_SECONDS. The
+// ratio is an opt-in extra filter, so its default admits any occluded target.
+const DEFAULT_THRESHOLD = 0;
+const DEFAULT_MIN_OCCLUDED_SECONDS = 2;
+const DEFAULT_SEVERE_OCCLUDED_SECONDS = 8;
+const DEFAULT_MIN_WARNING_TARGETS = 3;
+const DEFAULT_WARNING_TARGET_RATIO = 0.05;
 const DEFAULT_SEED = 20260704;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -30,8 +36,7 @@ async function main() {
   if (options.json) console.log(JSON.stringify(reports, null, 2));
   else console.log(formatReports(reports, options));
 
-  const warningCount = reports.reduce((sum, report) => sum + report.warnings.length, 0);
-  if (warningCount > 0 && options.fail) process.exitCode = 1;
+  if (reports.some((report) => report.failed) && options.fail) process.exitCode = 1;
 }
 
 export async function analyzeOcclusionLevels(levels, options = {}) {
@@ -94,6 +99,9 @@ async function analyzeLevel(browser, baseUrl, level, options) {
       threshold: options.threshold,
       minOnscreenSamples: options.minOnscreenSamples,
       minOccludedSeconds: options.minOccludedSeconds,
+      severeOccludedSeconds: options.severeOccludedSeconds,
+      minWarningTargets: options.minWarningTargets,
+      warningTargetRatio: options.warningTargetRatio,
       includeTargetsAsOccluders: options.includeTargetsAsOccluders,
       policy: options.policy,
     });
@@ -135,7 +143,10 @@ function defaultOptions() {
     sampleStep: DEFAULT_SAMPLE_STEP,
     threshold: DEFAULT_THRESHOLD,
     minOnscreenSamples: 3,
-    minOccludedSeconds: DEFAULT_SAMPLE_STEP,
+    minOccludedSeconds: DEFAULT_MIN_OCCLUDED_SECONDS,
+    severeOccludedSeconds: DEFAULT_SEVERE_OCCLUDED_SECONDS,
+    minWarningTargets: DEFAULT_MIN_WARNING_TARGETS,
+    warningTargetRatio: DEFAULT_WARNING_TARGET_RATIO,
     seed: DEFAULT_SEED,
     includeTargetsAsOccluders: false,
     policy: 'perfect',
@@ -190,7 +201,6 @@ function parseArgs(argv) {
       case 'sample-step':
       case 'sampleStep':
         parsed.sampleStep = readPositiveNumber(value, `--${key}`);
-        parsed.minOccludedSeconds = parsed.sampleStep;
         break;
       case 'threshold':
         parsed.threshold = readNonNegativeNumber(value, '--threshold');
@@ -202,6 +212,18 @@ function parseArgs(argv) {
       case 'min-occluded-seconds':
       case 'minOccludedSeconds':
         parsed.minOccludedSeconds = readNonNegativeNumber(value, `--${key}`);
+        break;
+      case 'severe-occluded-seconds':
+      case 'severeOccludedSeconds':
+        parsed.severeOccludedSeconds = readNonNegativeNumber(value, `--${key}`);
+        break;
+      case 'min-warning-targets':
+      case 'minWarningTargets':
+        parsed.minWarningTargets = readPositiveInteger(value, `--${key}`);
+        break;
+      case 'warning-target-ratio':
+      case 'warningTargetRatio':
+        parsed.warningTargetRatio = readNonNegativeNumber(value, `--${key}`);
         break;
       case 'seed':
         parsed.seed = readInteger(value, '--seed');
@@ -220,19 +242,27 @@ function parseArgs(argv) {
 
 export function formatReports(reports, options) {
   const lines = [];
-  lines.push(`Target occlusion check (threshold ${(options.threshold * 100).toFixed(1)}% of on-screen target lifetime, sample ${options.sampleStep.toFixed(3)}s, policy ${options.policy})`);
+  const minOccludedSeconds = options.minOccludedSeconds ?? DEFAULT_MIN_OCCLUDED_SECONDS;
+  const severeOccludedSeconds = options.severeOccludedSeconds ?? DEFAULT_SEVERE_OCCLUDED_SECONDS;
+  lines.push(`Target occlusion check (warn at ${minOccludedSeconds.toFixed(1)}s occluded per target, fail at ${severeOccludedSeconds.toFixed(1)}s on one target or a warning spread across ${(options.warningTargetRatio ?? DEFAULT_WARNING_TARGET_RATIO) * 100}% of targets, sample ${options.sampleStep.toFixed(3)}s, policy ${options.policy})`);
   for (const report of reports) {
-    const worst = [...report.targets].sort((a, b) => b.occludedRatio - a.occludedRatio)[0];
+    const worst = [...report.targets].sort((a, b) => b.occludedSeconds - a.occludedSeconds)[0];
     const warningLabel = report.warnings.length === 0 ? 'ok' : `${report.warnings.length} warning${report.warnings.length === 1 ? '' : 's'}`;
-    const worstLabel = worst ? `, worst ${labelTarget(worst)} ${(worst.occludedRatio * 100).toFixed(1)}%` : '';
+    const worstLabel = worst ? `, worst ${labelTarget(worst)} ${worst.occludedSeconds.toFixed(1)}s (${(worst.occludedRatio * 100).toFixed(1)}%)` : '';
+    const glyph = report.failed ? '✗' : report.warnings.length === 0 ? '✓' : '⚠';
     lines.push('');
-    lines.push(`${report.warnings.length === 0 ? '✓' : '⚠'} ${report.level.title}: ${warningLabel} across ${report.targets.length} targets${worstLabel}`);
+    lines.push(`${glyph} ${report.level.title}: ${warningLabel} across ${report.targets.length} targets${worstLabel}`);
+    if (report.failureReason) lines.push(`  FAIL: ${report.failureReason}`);
     for (const warning of report.warnings.slice(0, options.json ? report.warnings.length : 12)) {
       const first = warning.firstOccludedAt === null ? 'unknown' : `${warning.firstOccludedAt.toFixed(1)}s`;
-      lines.push(`  #${warning.enemyId} ${labelTarget(warning)}: ${(warning.occludedRatio * 100).toFixed(1)}% occluded (${warning.occludedSeconds.toFixed(1)}s / ${warning.onscreenSeconds.toFixed(1)}s), first ${first}, occluder ${warning.worstOccluder ?? 'unknown'}`);
+      lines.push(`  #${warning.enemyId} ${labelTarget(warning)}: ${warning.occludedSeconds.toFixed(1)}s occluded of ${warning.onscreenSeconds.toFixed(1)}s on-screen (${(warning.occludedRatio * 100).toFixed(1)}%), first ${first}, occluder ${warning.worstOccluder ?? 'unknown'}`);
     }
     if (report.warnings.length > 12) lines.push(`  … ${report.warnings.length - 12} more warnings`);
   }
+  const warned = reports.filter((report) => report.warnings.length > 0).length;
+  const failed = reports.filter((report) => report.failed).length;
+  lines.push('');
+  lines.push(`${reports.length} level${reports.length === 1 ? '' : 's'} checked, ${warned} with warnings, ${failed} failing.`);
   return lines.join('\n');
 }
 
@@ -270,6 +300,6 @@ function pathToFileUrl(filePath) {
 }
 
 function printHelpAndExit() {
-  console.log(`Usage: npm run check:occlusion -- [--all | --level <id> | --levels a,b]\n\nOptions:\n  --threshold <ratio>              Warning ratio, default ${DEFAULT_THRESHOLD}\n  --sample-step <seconds>          Occlusion sample interval, default ${DEFAULT_SAMPLE_STEP}\n  --dt <seconds>                   Runtime simulation step, default ${DEFAULT_DT}\n  --min-onscreen-samples <count>   Ignore very brief on-screen targets, default 3\n  --min-occluded-seconds <seconds> Ignore one-frame grazes, default sample-step\n  --include-targets-as-occluders   Count other targets as occluding geometry\n  --policy <perfect|none>          Drive the run, default perfect\n  --json                           Print JSON reports\n  --no-fail                        Exit zero even when warnings are found`);
+  console.log(`Usage: npm run check:occlusion -- [--all | --level <id> | --levels a,b]\n\nOptions:\n  --min-occluded-seconds <seconds> Per-target warning floor, default ${DEFAULT_MIN_OCCLUDED_SECONDS}\n  --severe-occluded-seconds <sec>  One target this occluded fails the level, default ${DEFAULT_SEVERE_OCCLUDED_SECONDS}\n  --min-warning-targets <count>    Warning targets needed to fail a level, default ${DEFAULT_MIN_WARNING_TARGETS}\n  --warning-target-ratio <ratio>   Fraction of targets that must warn to fail, default ${DEFAULT_WARNING_TARGET_RATIO}\n  --threshold <ratio>              Extra occluded-ratio filter, default ${DEFAULT_THRESHOLD}\n  --sample-step <seconds>          Occlusion sample interval, default ${DEFAULT_SAMPLE_STEP}\n  --dt <seconds>                   Runtime simulation step, default ${DEFAULT_DT}\n  --min-onscreen-samples <count>   Ignore very brief on-screen targets, default 3\n  --include-targets-as-occluders   Count other targets as occluding geometry\n  --policy <perfect|none>          Drive the run, default perfect\n  --json                           Print JSON reports\n  --no-fail                        Exit zero even when a level fails`);
   process.exit(0);
 }

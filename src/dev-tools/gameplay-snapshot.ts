@@ -30,6 +30,9 @@ type OcclusionOptions = {
   threshold?: number;
   minOnscreenSamples?: number;
   minOccludedSeconds?: number;
+  severeOccludedSeconds?: number;
+  minWarningTargets?: number;
+  warningTargetRatio?: number;
   includeTargetsAsOccluders?: boolean;
   policy?: 'none' | 'perfect';
 };
@@ -53,10 +56,18 @@ type OcclusionReport = {
   level: { id: string; title: string; duration: number | null };
   threshold: number;
   sampleStep: number;
+  minOccludedSeconds: number;
+  severeOccludedSeconds: number;
+  minWarningTargets: number;
+  warningTargetRatio: number;
+  requiredWarningTargets: number;
   dt: number;
   elapsed: number;
   targets: OcclusionTargetReport[];
   warnings: OcclusionTargetReport[];
+  severe: OcclusionTargetReport[];
+  failed: boolean;
+  failureReason: string | null;
 };
 
 type PerfStepOptions = {
@@ -151,6 +162,16 @@ declare global {
 const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 720;
 const DEFAULT_DT = 1 / 60;
+// Tuned against a full-corpus measurement: of 5856 targets across 77 levels only 8
+// were occluded at all and the longest block was 0.5s. The duration floor sits well
+// above that noise and well below the tens of seconds this check exists to catch.
+const DEFAULT_MIN_OCCLUDED_SECONDS = 2;
+const DEFAULT_SEVERE_OCCLUDED_SECONDS = 8;
+const DEFAULT_MIN_WARNING_TARGETS = 3;
+const DEFAULT_WARNING_TARGET_RATIO = 0.05;
+// The duration floor decides a warning on its own. The ratio stays available as a
+// stricter opt-in, so its default admits every target with any occlusion.
+const DEFAULT_OCCLUSION_THRESHOLD = 0;
 const SCRATCH_CANVAS = document.createElement('canvas');
 const SCRATCH_CONTEXT = SCRATCH_CANVAS.getContext('2d', { willReadFrequently: true });
 const OCCLUSION_RAYCASTER = new Raycaster();
@@ -405,9 +426,12 @@ async function analyzeTargetOcclusion(options: OcclusionOptions): Promise<Occlus
 
   const dt = readOptionPositiveNumber(options.dt, fixedDt, 'dt');
   const sampleStep = readOptionPositiveNumber(options.sampleStep, 0.1, 'sampleStep');
-  const threshold = readOptionNonNegativeNumber(options.threshold, 0.05, 'threshold');
+  const threshold = readOptionNonNegativeNumber(options.threshold, DEFAULT_OCCLUSION_THRESHOLD, 'threshold');
   const minOnscreenSamples = readOptionPositiveInteger(options.minOnscreenSamples, 3, 'minOnscreenSamples');
-  const minOccludedSeconds = readOptionNonNegativeNumber(options.minOccludedSeconds, sampleStep, 'minOccludedSeconds');
+  const minOccludedSeconds = readOptionNonNegativeNumber(options.minOccludedSeconds, DEFAULT_MIN_OCCLUDED_SECONDS, 'minOccludedSeconds');
+  const severeOccludedSeconds = readOptionNonNegativeNumber(options.severeOccludedSeconds, DEFAULT_SEVERE_OCCLUDED_SECONDS, 'severeOccludedSeconds');
+  const minWarningTargets = readOptionPositiveInteger(options.minWarningTargets, DEFAULT_MIN_WARNING_TARGETS, 'minWarningTargets');
+  const warningTargetRatio = readOptionNonNegativeNumber(options.warningTargetRatio, DEFAULT_WARNING_TARGET_RATIO, 'warningTargetRatio');
   const includeTargetsAsOccluders = options.includeTargetsAsOccluders === true;
   const policy = options.policy ?? 'perfect';
   let nextSampleAt = 0;
@@ -433,14 +457,35 @@ async function analyzeTargetOcclusion(options: OcclusionOptions): Promise<Occlus
     && target.occludedRatio > threshold
   ));
 
+  // One target blocked long enough on its own is a defect, and so is a spread of
+  // shorter blocks across many targets. Either condition fails the level; a lone
+  // warning below the severe duration does not.
+  const severe = warnings.filter((target) => target.occludedSeconds >= severeOccludedSeconds);
+  const requiredWarningTargets = Math.max(minWarningTargets, Math.ceil(warningTargetRatio * targets.length));
+  const prevalent = warnings.length >= requiredWarningTargets;
+  let failureReason: string | null = null;
+  if (severe.length > 0) {
+    failureReason = `${severe.length} target${severe.length === 1 ? '' : 's'} occluded for at least ${severeOccludedSeconds}s`;
+  } else if (prevalent) {
+    failureReason = `${warnings.length} of ${targets.length} targets warned, at or above the ${requiredWarningTargets}-target failure count`;
+  }
+
   return {
     level: { id: selectedLevel.id, title: selectedLevel.title, duration: runDuration },
     threshold,
     sampleStep,
+    minOccludedSeconds,
+    severeOccludedSeconds,
+    minWarningTargets,
+    warningTargetRatio,
+    requiredWarningTargets,
     dt,
     elapsed: roundSeconds(currentElapsed),
     targets,
     warnings,
+    severe,
+    failed: failureReason !== null,
+    failureReason,
   };
 }
 

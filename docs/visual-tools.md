@@ -142,16 +142,24 @@ npm run check:occlusion -- --all
 npm run check:occlusion -- --level deluge --no-fail
 ```
 
-By default the tool drives a simple perfect lock-on policy, then warns when a target center is blocked for more than 5% of its on-screen lifetime. It raycasts the scene graph and never renders a frame, so it always takes the software path and needs no GPU browser. `npm run check:floor -- --level <level-id>` runs this default occlusion pass for the selected level; use `check:occlusion` directly when you need all levels, JSON, alternate thresholds, or a non-failing diagnostic run. The tool ignores projectiles, the reticle, letters, other targets, non-depth-writing effects, and objects with `userData.raildIgnoreOcclusion = true` on themselves or an ancestor. Useful options:
+By default the tool drives a simple perfect lock-on policy and samples every 0.1s. A target warns when scenery blocks its center for at least 2 seconds. A level fails when either condition holds: one target is blocked for at least 8 seconds, or the warning targets number at least 3 and at least 5% of the level's targets. A brief pass-behind therefore warns at most and never fails a level — the check exists to catch scenery that blocks targets for tens of seconds.
+
+It raycasts the scene graph and never renders a frame, so it always takes the software path and needs no GPU browser. `npm run check:floor -- --level <level-id>` runs this default occlusion pass for the selected level; occlusion warnings below the failure conditions are reported there as warnings, not failures. Use `check:occlusion` directly when you need all levels, JSON, stricter settings, or a non-failing diagnostic run. The tool ignores projectiles, the reticle, letters, other targets, non-depth-writing effects, and objects with `userData.raildIgnoreOcclusion = true` on themselves or an ancestor. Useful options:
 
 ```sh
---threshold 0.05                # maximum occluded ratio
+--min-occluded-seconds 2        # per-target warning floor in seconds
+--severe-occluded-seconds 8     # one target this occluded fails the level
+--min-warning-targets 3         # warning targets needed to fail a level
+--warning-target-ratio 0.05     # fraction of targets that must warn to fail
+--threshold 0                   # extra occluded-ratio filter on each warning
 --sample-step 0.1               # seconds between occlusion samples
 --include-targets-as-occluders  # count enemy-on-enemy overlap too
 --policy none                   # sample without auto-locking targets
 --json                          # machine-readable report
 --no-fail                       # print warnings without a failing exit code
 ```
+
+To sweep for anything at all, lower the floor: `npm run check:occlusion -- --all --min-occluded-seconds 0.1 --no-fail`.
 
 ## Reference comparison kit
 
