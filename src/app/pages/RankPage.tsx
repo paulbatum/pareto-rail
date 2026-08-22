@@ -214,7 +214,7 @@ function PersonalCurve({ controller }: { controller: RankController }) {
       chartDescription: 'Scatter plot of your preference rating by mean output tokens. Higher ratings are better and fewer output tokens are better.',
       ratingTerm: 'Preference',
     }} />
-    <CurveTable points={curve.points.filter((point) => point.comparisons > 0)} caption="Every configuration you have judged" ratingTerm="Preference" />
+    <CurveTable points={curve.points.filter((point) => point.comparisons > 0)} caption="Your scoreboard" ratingTerm="Preference" />
     <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} /></details>
   </section>;
 }

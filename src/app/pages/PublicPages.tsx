@@ -13,7 +13,7 @@ import { featuredModels } from '../featured-models';
 import { modelMatchPath, modelsWithMatchups, unpricedModels } from '../model-match';
 import { RouteLink } from '../components/RouteLink';
 import { Markdown, markdownRegion } from '../components/Markdown';
-import { COST_AXIS, CurveChartFigure, CurveLegend, CurveTable, curveDomain, layoutCurveChart, ratedCurvePoints } from '../components/curve-chart';
+import { COST_AXIS, CurveChartFigure, CurveLegend, CurveTable, OUTPUT_TOKENS_AXIS, curveDomain, layoutCurveChart, ratedCurvePoints } from '../components/curve-chart';
 import { OWNER_PARTICIPANT_PREFIX, loadLeaderboardResults, personalCurveFromLocalHistory, type LeaderboardResults } from '../leaderboard';
 import type { PersonalCurve } from '../../benchmark/personal-curve';
 
@@ -227,7 +227,7 @@ function LeaderboardResultsView({ results }: { results: LeaderboardResults }) {
   // Read once per mount: local history only changes on /rank, and a stale read
   // would put a chart on screen that no longer matches the rank page.
   const [personal] = useState(personalCurveFromLocalHistory);
-  const layout = layoutCurveChart(ratedCurvePoints(results.curve));
+  const communityPoints = ratedCurvePoints(results.curve);
   const canCompare = ratedCurvePoints(personal).length >= 2;
   return (
     <div className="curve-panel">
@@ -241,12 +241,19 @@ function LeaderboardResultsView({ results }: { results: LeaderboardResults }) {
       {comparing && <CurveComparison results={results} personal={personal} onClose={() => setComparing(false)} />}
       <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels and across everyone who has voted. The best trade-offs move toward the <strong>upper left</strong>: higher preference at lower generation cost.</p>
       <CurveLegend />
-      <CurveChartFigure layout={layout} labels={{
+      <CurveChartFigure layout={layoutCurveChart(communityPoints, COST_AXIS)} labels={{
+        title: 'Quality vs cost',
         ratingAxisTitle: 'Community preference rating',
         chartDescription: 'Scatter plot of community preference rating by measured generation cost. Higher ratings are better and lower costs are better.',
         ratingTerm: 'Preference',
       }} />
-      <CurveTable points={results.curve.points.filter((point) => point.comparisons > 0)} caption="Every configuration the community has judged" ratingTerm="Preference" />
+      <CurveChartFigure layout={layoutCurveChart(communityPoints, OUTPUT_TOKENS_AXIS)} labels={{
+        title: 'Quality vs output tokens',
+        ratingAxisTitle: 'Community preference rating',
+        chartDescription: 'Scatter plot of community preference rating by mean output tokens. Higher ratings are better and fewer output tokens are better.',
+        ratingTerm: 'Preference',
+      }} />
+      <CurveTable points={results.curve.points.filter((point) => point.comparisons > 0)} caption="Community scoreboard" ratingTerm="Preference" />
     </div>
   );
 }

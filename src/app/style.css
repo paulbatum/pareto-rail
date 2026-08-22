@@ -385,7 +385,9 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .legend-point.provisional { background: transparent; border: 1.5px dashed var(--muted); opacity: 1; }
 .curve-legend .best-direction { margin-left: auto; color: var(--accent); }
 .curve-figure { margin: 18px 0 0; }
-.curve-figure .chart-title { margin: 0; color: var(--ink); font: 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.curve-figure + .curve-figure { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--hairline); }
+.curve-figure .chart-title { margin: 0; color: var(--ink); font: 15px var(--mono); letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+.curve-figure .curve-chart-wrap { margin-top: 0; }
 .curve-chart-wrap { position: relative; width: 100%; margin: 12px 0 0; }
 .curve-chart { display: block; width: 100%; height: auto; overflow: visible; }
 .chart-grid line { stroke: var(--hairline); stroke-width: 1; }
@@ -419,7 +421,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 /* ---------- Curve table ---------- */
 .curve-table-wrap { overflow-x: auto; border-top: 1px solid var(--hairline); }
 .curve-table { width: 100%; border-collapse: collapse; font: 12.5px var(--mono); font-variant-numeric: tabular-nums; }
-.curve-table caption { padding: 17px 0 8px; color: var(--muted); text-align: left; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; }
+.curve-table caption { padding: 26px 0 14px; color: var(--ink); font: 15px var(--mono); letter-spacing: .14em; text-align: center; text-transform: uppercase; }
 .curve-table th, .curve-table td { padding: 13px 14px; text-align: right; border-bottom: 1px solid var(--hairline-2); white-space: nowrap; }
 .curve-table thead th { color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
 .curve-table th:first-child { padding-left: 0; text-align: left; }

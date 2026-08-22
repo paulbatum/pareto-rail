@@ -4,7 +4,7 @@ import { workflowQualifier } from '../../benchmark/identity';
 import { rankCatalog } from '../../benchmark/catalog';
 import { configurationGroupEfforts } from '../../benchmark/identity';
 
-export const CURVE_CHART = { width: 720, height: 410, left: 72, right: 24, top: 42, bottom: 68 } as const;
+export const CURVE_CHART = { width: 720, height: 378, left: 72, right: 24, top: 22, bottom: 56 } as const;
 
 /** The quantity a chart places its points on the horizontal axis by. Both charts
  * share the rating axis, so the axis is the only difference between them. */
@@ -159,7 +159,7 @@ export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout;
       <g className="chart-axes">
         <line x1={CURVE_CHART.left} y1={CURVE_CHART.top + plotHeight} x2={CURVE_CHART.left + plotWidth} y2={CURVE_CHART.top + plotHeight} />
         <line x1={CURVE_CHART.left} y1={CURVE_CHART.top} x2={CURVE_CHART.left} y2={CURVE_CHART.top + plotHeight} />
-        <text className="axis-title" x={CURVE_CHART.left + plotWidth / 2} y={CURVE_CHART.height - 10} textAnchor="middle">{axis.title}</text>
+        <text className="axis-title" x={CURVE_CHART.left + plotWidth / 2} y={CURVE_CHART.top + plotHeight + 42} textAnchor="middle">{axis.title}</text>
         <text className="axis-title" x="17" y={CURVE_CHART.top + plotHeight / 2} textAnchor="middle" transform={`rotate(-90 17 ${CURVE_CHART.top + plotHeight / 2})`}>{labels.ratingAxisTitle}</text>
       </g>
       {frontierPath && <path className="frontier-line" d={frontierPath} />}
