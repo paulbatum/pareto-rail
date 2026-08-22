@@ -191,10 +191,16 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
     lines.push('');
     lines.push(`Floor check FAILED with ${failures.length} failing check${failures.length === 1 ? '' : 's'}:`);
     for (const failure of failures) lines.push(`✗ [${severityOf(failure)}] ${failure}`);
+    const critical = failures.some((f) => severityOf(f).startsWith('CRITICAL'));
+    lines.push('');
+    // This is deliberately the final line of the output: authors trim logs
+    // with `tail`, and this verdict must survive any trim.
+    lines.push(`FLOOR VERDICT: REJECT — if submitted in its current state, this level will NOT be accepted${critical ? ' (it crashes on mount)' : ''}. Fix every ✗ above and re-run.`);
     console.error(lines.join('\n'));
     process.exitCode = 1;
   } else {
     lines.push('All floor checks passed.');
+    lines.push('FLOOR VERDICT: ACCEPT — if submitted in its current state, this level will be accepted.');
     console.log(lines.join('\n'));
   }
 }
