@@ -155,6 +155,7 @@ const COST_SOURCES = {
 // unavailable: the token counts stand, the dollar figure does not exist. Remove the entry once the
 // model is named and priced, then restate the affected runs from their retained token counts.
 const UNPRICED_MODELS = new Map([
+  ['thinkingmachines/inkling:free', 'OpenRouter publishes thinkingmachines/inkling:free at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure would come from a fallback rate card rather than from any charge.'],
   ['stealth/ox-alpha', 'OpenRouter publishes stealth/ox-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge.'],
 ]);
 
