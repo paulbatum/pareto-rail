@@ -7,12 +7,12 @@ export const homeCopy = {
     heading: 'Featuring',
     newTag: 'New',
   },
-  /** Shown only while a featured model has levels but no published price, which
-   * is what keeps it out of ranked matchups. */
+  /** Shown only while a featured model has levels in ranked play and no published
+   * price. */
   stealth: {
-    title: (name: string) => `${name} is not in ranked matchups yet`,
-    body: 'Its price is not published, so we can\u2019t place it on the pareto chart, but you can play the levels now.',
-    action: (name: string) => `Play ${name} head to head`,
+    title: (name: string) => `${name} is ranked without a price`,
+    body: 'Its model publishes no price, so the quality vs cost chart leaves it out and the quality vs output tokens chart carries it. Your votes on its levels count like any other.',
+    action: 'Compare two levels',
   },
   reference: {
     eyebrow: 'Recommended first',

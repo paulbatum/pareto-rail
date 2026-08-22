@@ -4,7 +4,8 @@ import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, RevealPayload, VoteVerdict } from '../../benchmark/types';
 import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { entrantLabel } from '../../benchmark/identity';
-import { COST_AXIS, CURVE_CHART, CurveChartFigure, CurveLegend, CurveTable, OUTPUT_TOKENS_AXIS, layoutCurveChart, ratedCurvePoints, type CurveChartLayout, type PlottedCurvePoint } from '../components/curve-chart';
+import { CurveChartFigure, CurveLegend, CurveTable } from '../components/curve-chart';
+import { COST_AXIS, CURVE_CHART, OUTPUT_TOKENS_AXIS, layoutCurveChart, ratedCurvePoints, type CurveChartLayout, type PlottedCurvePoint } from '../components/curve-layout';
 import { CatalogBenchmarkApi, type CompletedMatchup } from '../../benchmark/catalog-api';
 import { findCatalogTheme, rankCatalog } from '../../benchmark/catalog';
 import { BenchmarkLocalStore } from '../../benchmark/storage';
@@ -191,29 +192,33 @@ function PersonalCurve({ controller }: { controller: RankController }) {
 
   const costLayout = layoutCurveChart(plottedPoints, COST_AXIS);
   const tokenLayout = layoutCurveChart(plottedPoints, OUTPUT_TOKENS_AXIS);
+  // Two placed points are what an axis needs for a domain at all. The cost axis
+  // has many, so this guards the empty case rather than an expected one.
+  const showCostChart = costLayout.plotted.length >= 2;
+  const showTokenChart = tokenLayout.plotted.length >= 2;
 
   return <section className="curve-panel" aria-labelledby="personal-curve-title">
     <div className="curve-heading">
       <div><p className="eyebrow">Personal results</p><h2 id="personal-curve-title">Your Pareto Frontier</h2></div>
       <div className="curve-heading-actions">
         <span className="curve-status">{curveStatusNarrative(curve)}</span>
-        <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('chart', costLayout)} />
+        <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('chart', showCostChart ? costLayout : undefined)} />
       </div>
     </div>
     <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels. The best trade-offs move toward the <strong>upper left</strong>: higher personal preference at lower generation cost.</p>
     <CurveLegend />
-    <CurveChartFigure layout={costLayout} labels={{
+    {showCostChart && <CurveChartFigure layout={costLayout} labels={{
       title: 'Quality vs cost',
       ratingAxisTitle: 'Your preference rating',
       chartDescription: 'Scatter plot of your preference rating by measured generation cost. Higher ratings are better and lower costs are better.',
       ratingTerm: 'Preference',
-    }} />
-    <CurveChartFigure layout={tokenLayout} labels={{
+    }} />}
+    {showTokenChart && <CurveChartFigure layout={tokenLayout} labels={{
       title: 'Quality vs output tokens',
       ratingAxisTitle: 'Your preference rating',
       chartDescription: 'Scatter plot of your preference rating by mean output tokens. Higher ratings are better and fewer output tokens are better.',
       ratingTerm: 'Preference',
-    }} />
+    }} />}
     <CurveTable points={curve.points.filter((point) => point.comparisons > 0)} caption="Your scoreboard" ratingTerm="Preference" />
     <details className="verdict-details"><summary>All your verdicts ({judgedMatchups.length})</summary><VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} /></details>
   </section>;
@@ -280,7 +285,7 @@ function debugPointLine(point: PersonalRatingPoint | PlottedCurvePoint, index: n
     `config=${point.configurationId}`,
     `label=${point.modelName}/${point.workflowName}`,
     `rating=${point.rating === undefined ? '-' : point.rating.toFixed(4)}`,
-    `meanCost=${point.meanCost.toFixed(6)}`,
+    `meanCost=${point.meanCost === undefined ? '-' : point.meanCost.toFixed(6)}`,
     `meanOutputTokens=${point.meanOutputTokens.toFixed(0)}`,
     `comparisons=${point.comparisons}`,
     `required=${point.comparisonsRequired}`,

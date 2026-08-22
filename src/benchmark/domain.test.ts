@@ -6,7 +6,7 @@ import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
 import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, revealFromVote } from './catalog-api';
 import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
 import { mapVerdict, type ComparisonState, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
-import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type PricedCatalogEntrant, type RankCatalogTheme, type SchedulingPool } from './catalog';
+import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type RankCatalogTheme, type SchedulingPool } from './catalog';
 import { configurationGroupResolver } from './identity';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { CustomMatchController } from '../app/match';
@@ -16,6 +16,7 @@ import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import { ComparisonStateMachine } from './state';
 import { BENCHMARK_PARTICIPANT_ID_KEY, BENCHMARK_STORAGE_VERSION, BenchmarkLocalStore, createMemoryStorage, type StorageEnvelope } from './storage';
 import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve';
+import { COST_AXIS, OUTPUT_TOKENS_AXIS, layoutCurveChart, ratedCurvePoints } from '../app/components/curve-layout';
 
 declare const process: { argv: string[]; exitCode?: number } | undefined;
 
@@ -64,6 +65,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testRetiredEntrantReveal();
   testPersonalCurveCatalogExcludesRetired();
   testProviderVariantsShareOnePoint();
+  testUnpricedEntrantsRank();
   await testReloadPreservesMatchupAndPlayState();
   await testCatalogChangesRefreshReveals();
   testVoteValidationIsCatalogWide();
@@ -479,7 +481,7 @@ function testCoverageSpreadsAcrossThemes(): void {
 }
 
 function unevenThemePool(): SchedulingPool {
-  const entrant = (themeId: string, index: number): PricedCatalogEntrant => ({
+  const entrant = (themeId: string, index: number): RankCatalogEntrant => ({
     levelId: `${themeId}-${index}`,
     themeId,
     configurationId: `configuration-${index}`,
@@ -641,7 +643,7 @@ function testNewcomerStaysOffFrontier(): void {
   const newcomer = curve.points.find((point) => point.configurationId === 'configuration-0')!;
   const weakest = curve.points.find((point) => point.configurationId === 'configuration-1')!;
   assert.equal(newcomer.comparisons, 2);
-  assert.ok(newcomer.meanCost < weakest.meanCost, 'the newcomer is the cheapest configuration');
+  assert.ok(newcomer.meanCost! < weakest.meanCost!, 'the newcomer is the cheapest configuration');
   assert.ok(newcomer.rating! > weakest.rating!, 'regularization rates the barely-tested newcomer above a well-measured loser');
   assert.equal(newcomer.status, 'provisional');
   assert.equal(newcomer.frontier, false, 'a newcomer does not anchor the frontier on two comparisons');
@@ -677,7 +679,7 @@ function testRetiredEntrantsNotScheduled(): void {
   assert.ok(next);
   assert.equal([next!.levelIdA, next!.levelIdB].includes('retired-theme-a1b2'), false, 'retired entrants must not be scheduled');
 
-  function entrant(levelId: string, configurationId: string, retired = false): PricedCatalogEntrant {
+  function entrant(levelId: string, configurationId: string, retired = false): RankCatalogEntrant {
     return { levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost: 1, ...(retired ? { retired: true } : {}) };
   }
 }
@@ -886,7 +888,7 @@ function testPersonalCurveCatalogExcludesRetired(): void {
   // configuration the participant actually judged. A configuration living only on
   // retired entrants stays out unless it was judged.
   const theme = { id: 'curve-theme', title: 'Curve', summary: 'S', prompt: 'P' };
-  const entrant = (levelId: string, configurationId: string, generationCost: number, retired = false): PricedCatalogEntrant => ({ levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost, ...(retired ? { retired: true } : {}) });
+  const entrant = (levelId: string, configurationId: string, generationCost: number, retired = false): RankCatalogEntrant => ({ levelId, themeId: theme.id, configurationId, modelName: configurationId, workflowName: 'solo', generationCost, ...(retired ? { retired: true } : {}) });
   const catalog: RankCatalog = {
     generatedAt: 'test',
     themes: [theme],
@@ -936,6 +938,64 @@ function testProviderVariantsShareOnePoint(): void {
   assert.equal(pooled.comparisons, 2, 'both votes were not credited to the pooled point');
   assert.equal(pooled.wins, 2, 'the pooled point did not carry both wins');
   assert.equal(pooled.meanCost, 15, 'costs were not averaged across the pooled configurations');
+}
+
+/** A model published without a price is scheduled, voted on, and rated like any
+ * other. Its point carries no mean cost, so the cost chart leaves it out and the
+ * output-tokens chart carries it. */
+function testUnpricedEntrantsRank(): void {
+  const theme: RankCatalogTheme = { id: 'unpriced-theme', title: 'Unpriced', summary: 'S', prompt: 'P' };
+  const entrant = (levelId: string, configurationId: string, generationCost?: number): RankCatalogEntrant => ({
+    levelId,
+    themeId: theme.id,
+    configurationId,
+    modelName: configurationId,
+    workflowName: 'solo',
+    ...(generationCost === undefined ? {} : { generationCost }),
+    run: { generationWallTimeSeconds: 1, totalWallTimeSeconds: 1, result: 'submitted', orchestrationTreatment: 'solo', models: [{ modelName: configurationId, role: 'solo', inputTokens: 0, outputTokens: 1000 }] },
+  });
+  const catalog: RankCatalog = {
+    generatedAt: 'test',
+    themes: [theme],
+    entrants: [entrant('unpriced-level', 'unpriced', undefined), entrant('priced-level', 'priced', 4)],
+  };
+
+  const pool = schedulingPool(catalog);
+  assert.ok(pool.entrants.some((item) => item.levelId === 'unpriced-level'), 'an entrant with no cost must be in the scheduling pool');
+  const served = nextScheduledMatchup(pool, 'unpriced-participant');
+  assert.ok(served, 'the scheduler served no matchup');
+  assert.ok([served!.levelIdA, served!.levelIdB].includes('unpriced-level'), 'the served pair must include the unpriced entrant');
+
+  const history = [historyEntry('unpriced-vote', 'unpriced', 'priced', 'a', undefined, 4)];
+  const curve = recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(catalog, history) });
+  const unpricedPoint = curve.points.find((point) => point.configurationId === 'unpriced')!;
+  assert.equal(unpricedPoint.comparisons, 1, 'the vote on the unpriced entrant was not counted');
+  assert.notEqual(unpricedPoint.rating, undefined, 'the unpriced entrant was not rated');
+  assert.equal(unpricedPoint.meanCost, undefined, 'an unpriced contributor must leave the point without a mean cost');
+
+  const rated = ratedCurvePoints(curve);
+  const costPlotted = layoutCurveChart(rated, COST_AXIS).plotted.map((point) => point.configurationId);
+  const tokenPlotted = layoutCurveChart(rated, OUTPUT_TOKENS_AXIS).plotted.map((point) => point.configurationId);
+  assert.equal(costPlotted.includes('unpriced'), false, 'the cost chart plotted a point with no cost');
+  assert.deepEqual(layoutCurveChart(rated, COST_AXIS).omittedLabels, ['unpriced'], 'the cost chart did not name what it omitted');
+  assert.ok(tokenPlotted.includes('unpriced'), 'the output-tokens chart dropped a rated point');
+  assert.deepEqual(layoutCurveChart(rated, OUTPUT_TOKENS_AXIS).omittedLabels, [], 'the output-tokens chart omitted a point it can place');
+
+  // A rating group pooling a priced and an unpriced configuration reports no mean
+  // cost rather than the mean of its priced half.
+  const pooled = recomputePersonalCurve(
+    [historyEntry('pooled-vote', 'half-priced', 'priced', 'a', undefined, 4)],
+    {
+      catalog: [
+        { configurationId: 'half-priced', modelName: 'Half', workflowName: 'solo', generationCost: 6 },
+        { configurationId: 'half-unpriced', modelName: 'Half', workflowName: 'solo' },
+        { configurationId: 'priced', modelName: 'Priced', workflowName: 'solo', generationCost: 4 },
+      ],
+      groupIdFor: (configurationId) => (configurationId.startsWith('half-') ? 'half' : configurationId),
+    },
+  );
+  assert.equal(pooled.points.find((point) => point.configurationId === 'half')?.meanCost, undefined, 'a pooled point reported a mean over its priced half');
+  assert.equal(pooled.points.find((point) => point.configurationId === 'priced')?.meanCost, 4, 'a wholly priced point lost its mean cost');
 }
 
 async function testReloadPreservesMatchupAndPlayState(): Promise<void> {
@@ -1079,7 +1139,7 @@ function curveFromJudged(catalog: SchedulingPool, judged: readonly Judged[]) {
   return recomputePersonalCurve(history, { catalog: catalog.entrants });
 }
 
-function historyEntry(matchupId: string, aConfigurationId: string, bConfigurationId: string, relative: RelativeOutcome, aCost = costForId(aConfigurationId), bCost = costForId(bConfigurationId)): PersonalHistoryEntry {
+function historyEntry(matchupId: string, aConfigurationId: string, bConfigurationId: string, relative: RelativeOutcome, aCost: number | undefined = costForId(aConfigurationId), bCost: number | undefined = costForId(bConfigurationId)): PersonalHistoryEntry {
   const vote: MatchupVote = {
     matchupId,
     aEntrantId: `${aConfigurationId}-level`,
@@ -1089,12 +1149,14 @@ function historyEntry(matchupId: string, aConfigurationId: string, bConfiguratio
     playCounts: { a: 1, b: 1 },
     submittedAt: '',
   };
-  return { vote, a: { configurationId: aConfigurationId, modelName: aConfigurationId, workflowName: 'solo', generationCost: aCost }, b: { configurationId: bConfigurationId, modelName: bConfigurationId, workflowName: 'solo', generationCost: bCost } };
+  const side = (configurationId: string, cost: number | undefined) =>
+    ({ configurationId, modelName: configurationId, workflowName: 'solo', ...(cost === undefined ? {} : { generationCost: cost }) });
+  return { vote, a: side(aConfigurationId, aCost), b: side(bConfigurationId, bCost) };
 }
 
 function makeSchedulerCatalog(configurations: number, themeCount: number, sameConfiguration = false, featuredConfigurations: readonly number[] = [], slotPrefix = ''): SchedulingPool {
   const themes: RankCatalogTheme[] = Array.from({ length: themeCount }, (_, index) => ({ id: `${slotPrefix ? `${slotPrefix}-` : ''}theme-${String.fromCharCode(97 + index)}`, title: `Theme ${index}`, summary: 'S', prompt: 'P' }));
-  const entrants: PricedCatalogEntrant[] = themes.flatMap((theme) => Array.from({ length: configurations }, (_, index) => ({
+  const entrants: RankCatalogEntrant[] = themes.flatMap((theme) => Array.from({ length: configurations }, (_, index) => ({
     levelId: `${theme.id}-${index}`,
     themeId: theme.id,
     configurationId: sameConfiguration ? 'shared' : `configuration-${index}`,

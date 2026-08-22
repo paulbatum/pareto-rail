@@ -5,7 +5,7 @@ export interface PersonalCurveCatalogEntry {
   configurationId: string;
   modelName: string;
   workflowName: string;
-  generationCost: number;
+  generationCost?: number;
   run?: BenchmarkRunMetrics;
   featured?: boolean;
 }
@@ -22,7 +22,7 @@ export interface PersonalHistoryEntrant {
   configurationId?: string;
   modelName?: string;
   workflowName?: string;
-  generationCost: number;
+  generationCost?: number;
   run?: BenchmarkRunMetrics;
 }
 
@@ -42,7 +42,10 @@ export interface PersonalRatingPoint {
   workflowName: string;
   label: string;
   rating?: number;
-  meanCost: number;
+  /** Mean generation cost across this point's levels. Undefined when any level it
+   * covers has no cost, so a pooled point never reports a mean over its priced
+   * half. A point without a mean cost has no position on the cost chart. */
+  meanCost?: number;
   /** Mean output tokens across this configuration's levels. 0 when no level it
    * covers reported per-model usage. */
   meanOutputTokens: number;
@@ -162,19 +165,19 @@ export function predictedWinProbability(strengthA: number, strengthB: number): n
 export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[], options: PersonalRatingOptions = {}): PersonalCurve {
   const catalog = options.catalog ?? [];
   const groupIdFor = options.groupIdFor ?? ((configurationId: string) => configurationId);
-  const catalogCosts = new Map<string, number[]>();
+  const catalogCosts = new Map<string, CostTally>();
   const catalogTokens = new Map<string, number[]>();
   const catalogLabels = new Map<string, { modelName: string; workflowName: string }>();
   for (const entry of catalog) {
     const id = groupIdFor(entry.configurationId);
-    catalogCosts.set(id, [...(catalogCosts.get(id) ?? []), entry.generationCost]);
+    addCost(catalogCosts, id, entry.generationCost);
     const tokens = runOutputTokens(entry.run);
     if (tokens !== undefined) catalogTokens.set(id, [...(catalogTokens.get(id) ?? []), tokens]);
     addLabel(catalogLabels, id, { modelName: entry.modelName, workflowName: entry.workflowName });
   }
 
   const seenIds = new Set<string>();
-  const observedCosts = new Map<string, number[]>();
+  const observedCosts = new Map<string, CostTally>();
   const observedTokens = new Map<string, number[]>();
   const labels = new Map<string, { modelName: string; workflowName: string }>();
   const rawStats = new Map<string, RawPointStats>();
@@ -217,17 +220,18 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   const establishedIds = new Set([...seenIds].filter((id) => (rawStats.get(id)?.comparisons ?? 0) >= required && mainComponent.has(id)));
 
   const points = [...configurationIds].map((configurationId): PersonalRatingPoint => {
-    const label = catalogLabels.get(configurationId) ?? labels.get(configurationId) ?? displayLabelFor({ generationCost: 0 }, configurationId);
-    const costs = catalogCosts.get(configurationId) ?? observedCosts.get(configurationId) ?? [];
+    const label = catalogLabels.get(configurationId) ?? labels.get(configurationId) ?? displayLabelFor({}, configurationId);
+    const costs = catalogCosts.get(configurationId) ?? observedCosts.get(configurationId);
     const tokens = catalogTokens.get(configurationId) ?? observedTokens.get(configurationId) ?? [];
     const stats = rawStats.get(configurationId) ?? { wins: 0, ties: 0, losses: 0, comparisons: 0 };
+    const cost = meanCost(costs);
     return {
       configurationId,
       modelName: label.modelName,
       workflowName: label.workflowName,
       label: entrantLabel({ modelName: label.modelName, workflowName: label.workflowName }),
       ...(seenIds.has(configurationId) ? { rating: ratings.get(configurationId) } : {}),
-      meanCost: mean(costs),
+      ...(cost === undefined ? {} : { meanCost: cost }),
       meanOutputTokens: mean(tokens),
       comparisons: stats.comparisons,
       wins: stats.wins,
@@ -243,8 +247,8 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   // is otherwise guaranteed a place on it whenever it is the cheapest entry —
   // nothing can dominate the cheapest point — so a model with two comparisons
   // would anchor the curve on the strength of the prior alone.
-  const establishedPoints = points.filter((point) => establishedIds.has(point.configurationId) && point.rating !== undefined)
-    .map((point) => ({ ...point, rating: point.rating! }));
+  const establishedPoints = points.filter((point) => establishedIds.has(point.configurationId) && point.rating !== undefined && point.meanCost !== undefined)
+    .map((point) => ({ ...point, rating: point.rating!, meanCost: point.meanCost! }));
   const frontierIds = new Set(paretoFrontier(establishedPoints).map((point) => point.configurationId));
   for (const point of points) point.frontier = frontierIds.has(point.configurationId);
 
@@ -261,14 +265,8 @@ export function personalHistoryFromReveals(votes: readonly MatchupVote[], reveal
   const byMatchup = new Map(reveals.map((reveal) => [reveal.matchupId, reveal]));
   return votes.flatMap((vote) => {
     const reveal = byMatchup.get(vote.matchupId);
-    // The fit places every comparison on the cost axis, so a comparison with an
-    // unpriced side has no position on it and is dropped.
-    if (!reveal || reveal.a.generationCost === undefined || reveal.b.generationCost === undefined) return [];
-    return [{
-      vote,
-      a: historyEntrantFromReveal(reveal.a, reveal.a.generationCost),
-      b: historyEntrantFromReveal(reveal.b, reveal.b.generationCost),
-    }];
+    if (!reveal) return [];
+    return [{ vote, a: historyEntrantFromReveal(reveal.a), b: historyEntrantFromReveal(reveal.b) }];
   });
 }
 
@@ -279,15 +277,35 @@ export function paretoFrontier<T extends { meanCost: number; rating: number }>(p
     && (other.meanCost < point.meanCost || other.rating > point.rating)));
 }
 
+/** The costs a point pools, and whether any contributor supplied none. One
+ * unpriced contributor leaves the whole point without a mean cost, so a pooled
+ * point never reports a mean over its priced half. */
+interface CostTally {
+  costs: number[];
+  unpriced: boolean;
+}
+
+function addCost(tallies: Map<string, CostTally>, id: string, cost: number | undefined): void {
+  const tally = tallies.get(id) ?? { costs: [], unpriced: false };
+  if (cost === undefined) tally.unpriced = true;
+  else tally.costs.push(cost);
+  tallies.set(id, tally);
+}
+
+function meanCost(tally: CostTally | undefined): number | undefined {
+  if (!tally || tally.unpriced || tally.costs.length === 0) return undefined;
+  return mean(tally.costs);
+}
+
 function addObservedPoint(
   configurationId: string,
   entrant: PersonalHistoryEntrant,
-  observedCosts: Map<string, number[]>,
+  observedCosts: Map<string, CostTally>,
   observedTokens: Map<string, number[]>,
   labels: Map<string, { modelName: string; workflowName: string }>,
   rawStats: Map<string, RawPointStats>,
 ): void {
-  observedCosts.set(configurationId, [...(observedCosts.get(configurationId) ?? []), entrant.generationCost]);
+  addCost(observedCosts, configurationId, entrant.generationCost);
   const tokens = runOutputTokens(entrant.run);
   if (tokens !== undefined) observedTokens.set(configurationId, [...(observedTokens.get(configurationId) ?? []), tokens]);
   addLabel(labels, configurationId, displayLabelFor(entrant, configurationId));
@@ -333,12 +351,12 @@ function mainComparisonComponent(nodeIds: readonly string[], comparisons: readon
   return new Set(components[0]?.ids ?? []);
 }
 
-function historyEntrantFromReveal(entrant: RevealPayload['a'], generationCost: number): PersonalHistoryEntrant {
+function historyEntrantFromReveal(entrant: RevealPayload['a']): PersonalHistoryEntrant {
   return {
     configurationId: entrant.configurationId ?? `${entrant.modelName}::${entrant.workflowName}`,
     modelName: entrant.modelName,
     workflowName: entrant.workflowName,
-    generationCost,
+    ...(entrant.generationCost === undefined ? {} : { generationCost: entrant.generationCost }),
     run: entrant.run,
   };
 }

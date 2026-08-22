@@ -79,17 +79,16 @@ function historyFromPairs(pairs: readonly AggregatePair[]): PersonalHistoryEntry
   return history;
 }
 
-// A vote against an entrant whose run carries no cost is dropped here: the curve
-// places every comparison on the cost axis, and this one has no position on it.
+// A vote on an entrant whose run carries no cost counts toward the fit like any
+// other. The entrant is rated; it only has no position on the cost chart.
 function historyEntrant(levelId: string) {
   const entrant = findCatalogEntrant(rankCatalog, levelId);
-  if (!entrant || entrant.generationCost === undefined) return null;
-  const generationCost = entrant.generationCost;
+  if (!entrant) return null;
   return {
     configurationId: entrant.configurationId,
     modelName: entrant.modelName,
     workflowName: entrant.workflowName,
-    generationCost,
+    ...(entrant.generationCost === undefined ? {} : { generationCost: entrant.generationCost }),
   };
 }
 

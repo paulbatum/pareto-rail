@@ -30,9 +30,10 @@ export interface RankCatalogEntrant {
   configurationId: string;
   modelName: string;
   workflowName: string;
-  /** The run's measured generation cost. Absent when the run could not be priced — a model
-   * published without a price leaves token counts and no dollar figure. An entrant without a
-   * cost is never scheduled, because cost is one of the two axes a matchup is voted on. */
+  /** The run's measured generation cost. Absent when the model publishes no price, which
+   * leaves the run with token counts and no dollar figure. Such an entrant is scheduled,
+   * voted on, and rated like any other; it has no position on the cost chart, so that chart
+   * omits it and names what it omitted. */
   generationCost?: number;
   /** Non-blank lines of authored TypeScript in the level's promoted source tree.
    * A deterministic size proxy derived from committed source (not measured during
@@ -51,14 +52,6 @@ export interface RankCatalogEntrant {
   materialsCommit?: string;
 }
 
-/** A catalog entrant whose run carries a cost. The scheduler serves only these, so
- * everything derived from a matchup — reveals, curve points — can read the cost directly. */
-export type PricedCatalogEntrant = RankCatalogEntrant & { generationCost: number };
-
-export function pricedEntrants(entrants: readonly RankCatalogEntrant[]): readonly PricedCatalogEntrant[] {
-  return entrants.filter((entrant): entrant is PricedCatalogEntrant => entrant.generationCost !== undefined);
-}
-
 export interface RankCatalog {
   generatedAt: string;
   configurations?: readonly RankCatalogConfiguration[];
@@ -70,7 +63,7 @@ export interface RankCatalog {
  * persisted: the pair the scheduler serves is recorded by level ids alone. */
 export interface SchedulingPool {
   themes: readonly RankCatalogTheme[];
-  entrants: readonly PricedCatalogEntrant[];
+  entrants: readonly RankCatalogEntrant[];
   configurations?: readonly RankCatalogConfiguration[];
 }
 
@@ -82,14 +75,13 @@ export function allCatalogThemes(catalog: RankCatalog): readonly RankCatalogThem
   return catalog.themes;
 }
 
-/** The pool the scheduler draws matchups from: every non-retired, priced entrant
- * of every rankable theme. Retired and experimental themes, retired entrants, and
- * entrants whose run carries no cost stay in the catalog (gallery, past votes)
- * but never enter a new matchup. */
+/** The pool the scheduler draws matchups from: every non-retired entrant of every
+ * rankable theme. Retired and experimental themes and retired entrants stay in the
+ * catalog (gallery, past votes) but never enter a new matchup. */
 export function schedulingPool(catalog: RankCatalog): SchedulingPool {
   const themes = catalog.themes.filter((theme) => !theme.retired && !theme.experimental);
   const scheduledThemeIds = new Set(themes.map((theme) => theme.id));
-  const entrants = pricedEntrants(catalog.entrants).filter((entrant) => !entrant.retired && scheduledThemeIds.has(entrant.themeId));
+  const entrants = catalog.entrants.filter((entrant) => !entrant.retired && scheduledThemeIds.has(entrant.themeId));
   return { themes, entrants, configurations: catalog.configurations };
 }
 

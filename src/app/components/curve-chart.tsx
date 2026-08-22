@@ -1,130 +1,7 @@
 import { useRef, useState } from 'react';
-import { paretoFrontier, type PersonalCurve, type PersonalRatingPoint } from '../../benchmark/personal-curve';
+import type { PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { workflowQualifier } from '../../benchmark/identity';
-import { rankCatalog } from '../../benchmark/catalog';
-import { configurationGroupEfforts } from '../../benchmark/identity';
-
-export const CURVE_CHART = { width: 720, height: 378, left: 72, right: 24, top: 22, bottom: 56 } as const;
-
-/** The quantity a chart places its points on the horizontal axis by. Both charts
- * share the rating axis, so the axis is the only difference between them. */
-export interface CurveAxis {
-  id: string;
-  value: (point: PersonalRatingPoint) => number;
-  /** Axis title drawn under the plot. */
-  title: string;
-  /** Tick label, e.g. `$12` or `240k`. */
-  formatTick: (value: number) => string;
-  /** Tooltip and table figure, e.g. `$12.40` or `239,120`. */
-  formatValue: (value: number) => string;
-}
-
-export const COST_AXIS: CurveAxis = {
-  id: 'cost',
-  value: (point) => point.meanCost,
-  title: 'Measured generation cost (USD)',
-  formatTick: (value) => `$${formatCostTick(value)}`,
-  formatValue: (value) => `$${value.toFixed(2)}`,
-};
-
-export const OUTPUT_TOKENS_AXIS: CurveAxis = {
-  id: 'output-tokens',
-  value: (point) => point.meanOutputTokens,
-  title: 'Mean output tokens',
-  formatTick: formatTokenTick,
-  formatValue: (value) => Math.round(value).toLocaleString('en-US'),
-};
-
-export type PlottedCurvePoint = PersonalRatingPoint & {
-  rating: number;
-  x: number;
-  y: number;
-  labelY: number;
-};
-
-/** Everything the chart is drawn from: axis domains, placed points, and the
- * frontier path. Kept separate from the rendering so the rank page's debug
- * export can describe exactly what was drawn. */
-export interface CurveChartLayout {
-  axis: CurveAxis;
-  xMax: number;
-  xTicks: readonly number[];
-  ratingMin: number;
-  ratingMax: number;
-  ratingTicks: readonly number[];
-  plotted: readonly PlottedCurvePoint[];
-  frontierPath: string | null;
-}
-
-// A point is keyed by its rating group, and a chart shown from a fixture catalog
-// is keyed by configuration id, so both resolve here.
-const configurationEfforts = new Map([
-  ...(rankCatalog.configurations ?? []).map((configuration) => [configuration.id, configuration.effort] as const),
-  ...configurationGroupEfforts(rankCatalog.configurations),
-]);
-
-/** The reasoning effort a configuration ran at, as a parenthetical suffix for
- * model names on the results chart and table. */
-export function effortSuffix(configurationId: string): string | null {
-  const effort = configurationEfforts.get(configurationId);
-  return effort ? `(${effort.charAt(0).toUpperCase()}${effort.slice(1)})` : null;
-}
-
-export function ratedCurvePoints(curve: PersonalCurve): (PersonalRatingPoint & { rating: number })[] {
-  return curve.points.filter((point): point is PersonalRatingPoint & { rating: number } => point.rating !== undefined);
-}
-
-/** Axis ticks two charts can share so their points are read against the same
- * scale. Derived from the union of both point sets. */
-export interface CurveDomain {
-  xTicks: readonly number[];
-  ratingTicks: readonly number[];
-}
-
-export function curveDomain(points: readonly (PersonalRatingPoint & { rating: number })[], axis: CurveAxis = COST_AXIS): CurveDomain {
-  return {
-    xTicks: ticksFromZero(Math.max(...points.map((point) => axis.value(point)), 1), 4),
-    ratingTicks: boundedTicks(Math.min(...points.map((point) => point.rating)), Math.max(...points.map((point) => point.rating)), 4),
-  };
-}
-
-export function layoutCurveChart(
-  points: readonly (PersonalRatingPoint & { rating: number })[],
-  axis: CurveAxis = COST_AXIS,
-  domain: CurveDomain = curveDomain(points, axis),
-): CurveChartLayout {
-  const { xTicks, ratingTicks } = domain;
-  const xMax = xTicks.at(-1) ?? 1;
-  const ratingMin = ratingTicks[0] ?? 950;
-  const ratingMax = ratingTicks.at(-1) ?? 1050;
-  const plotWidth = CURVE_CHART.width - CURVE_CHART.left - CURVE_CHART.right;
-  const plotHeight = CURVE_CHART.height - CURVE_CHART.top - CURVE_CHART.bottom;
-  // The frontier is drawn for the axis in view: a configuration that wins on cost
-  // need not win on tokens. Both charts draw it through established points only,
-  // the same rule the curve fit applies.
-  const frontierIds = new Set(paretoFrontier(points
-    .filter((point) => point.status === 'established')
-    .map((point) => ({ configurationId: point.configurationId, meanCost: axis.value(point), rating: point.rating })))
-    .map((point) => point.configurationId));
-  const plotted = spreadCurveLabels(points.map((point) => ({
-    ...point,
-    frontier: frontierIds.has(point.configurationId),
-    x: CURVE_CHART.left + (axis.value(point) / xMax) * plotWidth,
-    y: CURVE_CHART.top + ((ratingMax - point.rating) / (ratingMax - ratingMin)) * plotHeight,
-    labelY: 0,
-  })));
-  const frontier = plotted.filter((point) => point.frontier).sort((left, right) => left.x - right.x);
-  return {
-    axis,
-    xMax,
-    xTicks,
-    ratingMin,
-    ratingMax,
-    ratingTicks,
-    plotted,
-    frontierPath: frontier.length > 1 ? `M${frontier.map((point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join('L')}` : null,
-  };
-}
+import { CURVE_CHART, OUTPUT_TOKENS_AXIS, pointName, type CurveChartLayout } from './curve-layout';
 
 export interface CurveChartLabels {
   /** Heading above the plot, e.g. "Quality vs cost". */
@@ -167,7 +44,7 @@ export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout;
         {plotted.map((point) => {
           const labelOnLeft = point.x > CURVE_CHART.width * .62;
           const labelX = point.x + (labelOnLeft ? -14 : 14);
-          return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. ${axis.title}: ${axis.formatValue(axis.value(point))}. ${evidenceText(point)}. Status: ${statusLabel(point.status)}.${point.frontier ? ' On the Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
+          return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. ${axis.title}: ${axis.formatValue(point.axisValue)}. ${evidenceText(point)}. Status: ${statusLabel(point.status)}.${point.frontier ? ' On the Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
             <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
             <circle cx={point.x} cy={point.y} r={point.frontier ? 8 : 6} />
           </g>;
@@ -181,20 +58,25 @@ export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout;
           const labelOnLeft = point.x > CURVE_CHART.width * .62;
           const labelX = point.x + (labelOnLeft ? -14 : 14);
           const qualifier = workflowQualifier(point.workflowName);
-          const effort = effortSuffix(point.configurationId);
-          return <text key={point.configurationId} className={`point-label${point.status === 'provisional' ? ' provisional' : ''}`} x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{effort ? `${point.modelName} ${effort}` : point.modelName}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>;
+          return <text key={point.configurationId} className={`point-label${point.status === 'provisional' ? ' provisional' : ''}`} x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{pointName(point)}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>;
         })}
       </g>
     </svg>
     {active && <div className={`curve-tooltip${active.x > CURVE_CHART.width * .62 ? ' align-right' : ''}`} style={{ left: `${active.x / CURVE_CHART.width * 100}%`, top: `${active.y / CURVE_CHART.height * 100}%` }} role="status">
-      <strong>{effortSuffix(active.configurationId) ? `${active.modelName} ${effortSuffix(active.configurationId)}` : active.modelName}</strong>{workflowQualifier(active.workflowName) && <span>{workflowQualifier(active.workflowName)}</span>}
-      <dl><div><dt>{labels.ratingTerm}</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>${active.meanCost.toFixed(2)}</dd></div><div><dt>Mean output</dt><dd>{OUTPUT_TOKENS_AXIS.formatValue(active.meanOutputTokens)}</dd></div><div><dt>Evidence</dt><dd>{evidenceText(active)}</dd></div></dl>
+      <strong>{pointName(active)}</strong>{workflowQualifier(active.workflowName) && <span>{workflowQualifier(active.workflowName)}</span>}
+      <dl><div><dt>{labels.ratingTerm}</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>{active.meanCost === undefined ? 'Not priced' : `$${active.meanCost.toFixed(2)}`}</dd></div><div><dt>Mean output</dt><dd>{OUTPUT_TOKENS_AXIS.formatValue(active.meanOutputTokens)}</dd></div><div><dt>Evidence</dt><dd>{evidenceText(active)}</dd></div></dl>
       <p>{statusLabel(active.status)} · {placementText(active)}</p>
     </div>}
   </div>;
 
-  if (!labels.title) return chart;
-  return <figure className="curve-figure"><figcaption className="chart-title">{labels.title}</figcaption>{chart}</figure>;
+  // The note is inside the figure so a screen reader reaching the plot also
+  // reaches what the plot left out; the plot's own aria-label cannot carry it,
+  // because the omitted points are not in the image it describes.
+  const omissionNote = layout.omittedLabels.length > 0
+    ? <p className="curve-omission">{axis.describeOmitted(layout.omittedLabels)}</p>
+    : null;
+  if (!labels.title) return omissionNote ? <figure className="curve-figure">{chart}{omissionNote}</figure> : chart;
+  return <figure className="curve-figure"><figcaption className="chart-title">{labels.title}</figcaption>{chart}{omissionNote}</figure>;
 }
 
 export function CurveLegend() {
@@ -204,14 +86,13 @@ export function CurveLegend() {
 export function CurveTable({ points, caption, ratingTerm }: { points: readonly PersonalRatingPoint[]; caption: string; ratingTerm: string }) {
   const ordered = [...points].sort((left, right) => (right.rating ?? -Infinity) - (left.rating ?? -Infinity) || left.configurationId.localeCompare(right.configurationId));
   const ratingRange = valueRange(ordered.flatMap((point) => (point.rating === undefined ? [] : [point.rating])));
-  const costRange = valueRange(ordered.map((point) => point.meanCost));
+  const costRange = valueRange(ordered.flatMap((point) => (point.meanCost === undefined ? [] : [point.meanCost])));
   const tokenRange = valueRange(ordered.map((point) => point.meanOutputTokens));
   return <div className="curve-table-wrap"><table className="curve-table"><caption>{caption}</caption><thead><tr><th scope="col">Model</th><th scope="col">Matches</th><th scope="col">Record</th><th scope="col">{ratingTerm}</th><th scope="col">Mean cost</th><th scope="col">Mean output tokens</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
     const record = point.comparisons === 0
       ? <span aria-label="No comparisons yet">—</span>
       : <span aria-label={recordAriaLabel(point)}><span className="record-wins">{point.wins}</span>–<span className="record-ties">{point.ties}</span>–<span className="record-losses">{point.losses}</span></span>;
-    const effort = effortSuffix(point.configurationId);
-    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{point.comparisons}</td><td className="record-cell">{record}</td><td style={point.rating === undefined ? undefined : { color: rampColor('--value-high', ratingRange(point.rating)) }}>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td style={{ color: rampColor('--value-costly', costRange(point.meanCost)) }}>${point.meanCost.toFixed(2)}</td><td style={{ color: rampColor('--value-costly', tokenRange(point.meanOutputTokens)) }}>{OUTPUT_TOKENS_AXIS.formatValue(point.meanOutputTokens)}</td><td className={point.frontier ? 'frontier-status' : ''}>{point.frontier ? 'Frontier' : statusLabel(point.status)}</td></tr>;
+    return <tr key={point.configurationId}><th scope="row"><strong>{pointName(point)}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{point.comparisons}</td><td className="record-cell">{record}</td><td style={point.rating === undefined ? undefined : { color: rampColor('--value-high', ratingRange(point.rating)) }}>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td style={point.meanCost === undefined ? undefined : { color: rampColor('--value-costly', costRange(point.meanCost)) }}>{point.meanCost === undefined ? '—' : `$${point.meanCost.toFixed(2)}`}</td><td style={{ color: rampColor('--value-costly', tokenRange(point.meanOutputTokens)) }}>{OUTPUT_TOKENS_AXIS.formatValue(point.meanOutputTokens)}</td><td className={point.frontier ? 'frontier-status' : ''}>{point.frontier ? 'Frontier' : statusLabel(point.status)}</td></tr>;
   })}</tbody></table></div>;
 }
 
@@ -276,44 +157,3 @@ function recordAriaLabel(point: PersonalRatingPoint): string {
   return `${count(point.wins, 'win', 'wins')}, ${count(point.ties, 'tie', 'ties')}, ${count(point.losses, 'loss', 'losses')}`;
 }
 
-function ticksFromZero(maximum: number, intervals: number): number[] {
-  const step = niceStep(maximum / intervals);
-  const upper = Math.ceil(maximum / step) * step;
-  return Array.from({ length: Math.round(upper / step) + 1 }, (_, index) => index * step);
-}
-
-function boundedTicks(minimum: number, maximum: number, intervals: number): number[] {
-  const paddedMin = minimum - 24;
-  const paddedMax = maximum + 24;
-  const step = niceStep((paddedMax - paddedMin) / intervals);
-  const lower = Math.floor(paddedMin / step) * step;
-  const upper = Math.ceil(paddedMax / step) * step;
-  return Array.from({ length: Math.round((upper - lower) / step) + 1 }, (_, index) => lower + index * step);
-}
-
-function niceStep(value: number): number {
-  const power = Math.pow(10, Math.floor(Math.log10(Math.max(value, .001))));
-  const normalized = value / power;
-  return (normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10) * power;
-}
-
-function formatCostTick(value: number): string { return value < 10 && value % 1 !== 0 ? value.toFixed(1) : value.toFixed(0); }
-
-function formatTokenTick(value: number): string {
-  if (value === 0) return '0';
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`;
-  if (value >= 1000) return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`;
-  return value.toFixed(0);
-}
-
-function spreadCurveLabels<T extends PlottedCurvePoint>(points: T[]): T[] {
-  const ordered = [...points].sort((a, b) => a.y - b.y);
-  let prior = CURVE_CHART.top - 32;
-  for (const point of ordered) {
-    point.labelY = Math.max(point.y - 7, prior + 32);
-    prior = point.labelY;
-  }
-  const overflow = Math.max(0, prior - (CURVE_CHART.height - CURVE_CHART.bottom - 12));
-  if (overflow) for (const point of ordered) point.labelY -= overflow;
-  return points;
-}

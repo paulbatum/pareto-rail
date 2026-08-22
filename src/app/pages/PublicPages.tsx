@@ -10,10 +10,11 @@ import { nextScheduledMatchup } from '../../benchmark/scheduler';
 import { BenchmarkLocalStore } from '../../benchmark/storage';
 import { homeCopy } from '../content';
 import { featuredModels } from '../featured-models';
-import { modelMatchPath, modelsWithMatchups, unpricedModels } from '../model-match';
+import { modelsWithMatchups, unpricedModels } from '../model-match';
 import { RouteLink } from '../components/RouteLink';
 import { Markdown, markdownRegion } from '../components/Markdown';
-import { COST_AXIS, CurveChartFigure, CurveLegend, CurveTable, OUTPUT_TOKENS_AXIS, curveDomain, layoutCurveChart, ratedCurvePoints } from '../components/curve-chart';
+import { CurveChartFigure, CurveLegend, CurveTable } from '../components/curve-chart';
+import { COST_AXIS, OUTPUT_TOKENS_AXIS, curveDomain, layoutCurveChart, ratedCurvePoints } from '../components/curve-layout';
 import { OWNER_PARTICIPANT_PREFIX, loadLeaderboardResults, personalCurveFromLocalHistory, type LeaderboardResults } from '../leaderboard';
 import type { PersonalCurve } from '../../benchmark/personal-curve';
 
@@ -23,9 +24,9 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
   // mount so it cannot change under them mid-view. Derived rather than named:
   // naming ids here leaked other entrants' ids into every entrant checkout.
   const [rankPreviewHeroes] = useState(scheduledPreviewHeroes);
-  // The callout names an unpriced model — one the ranking cannot place — and only
-  // when it also has an opponent to be played against. It disappears on its own
-  // once the model is priced and enters ranked matchups.
+  // The callout names a featured model that publishes no price, and only when a
+  // theme pairs one of its levels against another model's, which is what a ranked
+  // comparison needs. It disappears on its own once the model is priced.
   const stealthModel = useMemo(() => {
     const playable = new Set(benchmarkLevelCatalog.map((level) => level.id));
     const unpriced = unpricedModels({ playable });
@@ -103,7 +104,7 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
             <h2>{homeCopy.stealth.title(stealthModel)}</h2>
             <p>{homeCopy.stealth.body}</p>
           </div>
-          <RouteLink className="button primary" href={modelMatchPath(stealthModel)} onNavigate={onNavigate}>{homeCopy.stealth.action(stealthModel)}</RouteLink>
+          <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>{homeCopy.stealth.action}</RouteLink>
         </section>
       )}
     </>
@@ -229,6 +230,8 @@ function LeaderboardResultsView({ results }: { results: LeaderboardResults }) {
   const [personal] = useState(personalCurveFromLocalHistory);
   const communityPoints = ratedCurvePoints(results.curve);
   const canCompare = ratedCurvePoints(personal).length >= 2;
+  const costLayout = layoutCurveChart(communityPoints, COST_AXIS);
+  const tokenLayout = layoutCurveChart(communityPoints, OUTPUT_TOKENS_AXIS);
   return (
     <div className="curve-panel">
       <div className="curve-heading">
@@ -241,18 +244,18 @@ function LeaderboardResultsView({ results }: { results: LeaderboardResults }) {
       {comparing && <CurveComparison results={results} personal={personal} onClose={() => setComparing(false)} />}
       <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels and across everyone who has voted. The best trade-offs move toward the <strong>upper left</strong>: higher preference at lower generation cost.</p>
       <CurveLegend />
-      <CurveChartFigure layout={layoutCurveChart(communityPoints, COST_AXIS)} labels={{
+      {costLayout.plotted.length >= 2 && <CurveChartFigure layout={costLayout} labels={{
         title: 'Quality vs cost',
         ratingAxisTitle: 'Community preference rating',
         chartDescription: 'Scatter plot of community preference rating by measured generation cost. Higher ratings are better and lower costs are better.',
         ratingTerm: 'Preference',
-      }} />
-      <CurveChartFigure layout={layoutCurveChart(communityPoints, OUTPUT_TOKENS_AXIS)} labels={{
+      }} />}
+      {tokenLayout.plotted.length >= 2 && <CurveChartFigure layout={tokenLayout} labels={{
         title: 'Quality vs output tokens',
         ratingAxisTitle: 'Community preference rating',
         chartDescription: 'Scatter plot of community preference rating by mean output tokens. Higher ratings are better and fewer output tokens are better.',
         ratingTerm: 'Preference',
-      }} />
+      }} />}
       <CurveTable points={results.curve.points.filter((point) => point.comparisons > 0)} caption="Community scoreboard" ratingTerm="Preference" />
     </div>
   );
@@ -267,6 +270,8 @@ function CurveComparison({ results, personal, onClose }: { results: LeaderboardR
   const communityPoints = ratedCurvePoints(results.curve);
   const personalPoints = ratedCurvePoints(personal);
   const domain = curveDomain([...communityPoints, ...personalPoints]);
+  const communityLayout = layoutCurveChart(communityPoints, COST_AXIS, domain);
+  const personalLayout = layoutCurveChart(personalPoints, COST_AXIS, domain);
 
   useEffect(() => {
     closeButton.current?.focus();
@@ -286,19 +291,19 @@ function CurveComparison({ results, personal, onClose }: { results: LeaderboardR
       <div className="curve-compare-grid">
         <article>
           <h3>Community<span>{leaderboardNarrative(results)}</span></h3>
-          <CurveChartFigure layout={layoutCurveChart(communityPoints, COST_AXIS, domain)} labels={{
+          {communityLayout.plotted.length >= 2 && <CurveChartFigure layout={communityLayout} labels={{
             ratingAxisTitle: 'Community preference rating',
             chartDescription: 'Scatter plot of community preference rating by measured generation cost.',
             ratingTerm: 'Preference',
-          }} />
+          }} />}
         </article>
         <article>
           <h3>Yours<span>{personal.comparisonCount} of your comparisons · {personal.establishedCount} ranked</span></h3>
-          <CurveChartFigure layout={layoutCurveChart(personalPoints, COST_AXIS, domain)} labels={{
+          {personalLayout.plotted.length >= 2 && <CurveChartFigure layout={personalLayout} labels={{
             ratingAxisTitle: 'Your preference rating',
             chartDescription: 'Scatter plot of your own preference rating by measured generation cost.',
             ratingTerm: 'Preference',
-          }} />
+          }} />}
         </article>
       </div>
     </section>

@@ -43,9 +43,9 @@ const REFERENCE_LEVEL_IDS = new Set(['crystal-corridor', 'helios']);
  * hand-made levels; the other four name why a benchmark level is or is not in
  * matchups — `ranked` is live in matchups, `retired` is finished history,
  * `experimental` is a new theme being shown off before it enters ranking, and
- * `stealth` is a level whose model is published without a price, so it has no
- * position on the cost axis to be ranked on. The default view shows built-ins,
- * ranked and stealth levels; retired and experimental are opt-in. */
+ * `stealth` is a level whose model is published without a price, so it is ranked
+ * but has no position on the cost chart. The default view shows built-ins, ranked
+ * and stealth levels; retired and experimental are opt-in. */
 type LevelCategory = 'built-in' | 'ranked' | 'stealth' | 'retired' | 'experimental';
 
 const CATEGORY_ORDER: readonly LevelCategory[] = ['built-in', 'ranked', 'stealth', 'retired', 'experimental'];

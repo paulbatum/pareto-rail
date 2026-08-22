@@ -29,8 +29,8 @@ export interface ModelMatchupOptions {
  * slug gives.
  *
  * The draw is over the whole catalog rather than the scheduling pool: a custom
- * match is casual and records nothing, so retired, experimental and unpriced
- * entrants are all eligible — the same breadth the `/match` picker offers.
+ * match is casual and records nothing, so retired and experimental entrants are
+ * eligible too — the same breadth the `/match` picker offers.
  */
 export function matchupForModel(slug: string, options: ModelMatchupOptions): { a: string; b: string } | null {
   const catalog = options.catalog ?? rankCatalog;
@@ -52,8 +52,8 @@ export function matchupForModel(slug: string, options: ModelMatchupOptions): { a
   return random() < 0.5 ? { a: mine, b: theirs } : { a: theirs, b: mine };
 }
 
-/** Models with a playable level and no priced entrant anywhere in the catalog,
- * which is what holds them out of ranked matchups. */
+/** Models with a playable level and no priced entrant anywhere in the catalog.
+ * Such a model is ranked like any other; it has no position on the cost chart. */
 export function unpricedModels(options: ModelMatchupOptions): ReadonlySet<string> {
   const catalog = options.catalog ?? rankCatalog;
   const playableEntrants = catalog.entrants.filter((entrant) => options.playable.has(entrant.levelId));

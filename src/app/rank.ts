@@ -3,7 +3,7 @@ import {
   personalHistoryFromReveals,
   type PersonalHistoryEntry,
 } from '../benchmark/personal-curve';
-import { allCatalogEntrants, pricedEntrants, schedulingPool, rankCatalog, type PricedCatalogEntrant, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
+import { allCatalogEntrants, schedulingPool, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
 import { configurationGroupResolver } from '../benchmark/identity';
 import { assignmentFromVote, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, type CompletedMatchup } from '../benchmark/catalog-api';
 import { ComparisonStateMachine } from '../benchmark/state';
@@ -21,13 +21,13 @@ import type {
 export type RankLaunch = { side: MatchupSide; levelId: string };
 type Listener = () => void;
 
-export function selectPersonalCurveCatalog(catalog: RankCatalog, history: readonly PersonalHistoryEntry[]): readonly PricedCatalogEntrant[] {
+export function selectPersonalCurveCatalog(catalog: RankCatalog, history: readonly PersonalHistoryEntry[]): readonly RankCatalogEntrant[] {
   const configurationIds = new Set(schedulingPool(catalog).entrants.map((entrant) => entrant.configurationId));
   for (const entry of history) {
     if (entry.a.configurationId) configurationIds.add(entry.a.configurationId);
     if (entry.b.configurationId) configurationIds.add(entry.b.configurationId);
   }
-  return pricedEntrants(allCatalogEntrants(catalog)).filter((entrant) => configurationIds.has(entrant.configurationId));
+  return allCatalogEntrants(catalog).filter((entrant) => configurationIds.has(entrant.configurationId));
 }
 
 /** Participant-facing benchmark controller. It owns workflow state and API

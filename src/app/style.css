@@ -388,6 +388,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-figure + .curve-figure { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--hairline); }
 .curve-figure .chart-title { margin: 0; color: var(--ink); font: 15px var(--mono); letter-spacing: .14em; text-align: center; text-transform: uppercase; }
 .curve-figure .curve-chart-wrap { margin-top: 0; }
+.curve-omission { margin: 8px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
 .curve-chart-wrap { position: relative; width: 100%; margin: 12px 0 0; }
 .curve-chart { display: block; width: 100%; height: auto; overflow: visible; }
 .chart-grid line { stroke: var(--hairline); stroke-width: 1; }

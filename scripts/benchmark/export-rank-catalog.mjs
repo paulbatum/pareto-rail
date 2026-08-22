@@ -34,7 +34,6 @@ export const configurationLabels = {
     primaryModel: 'gpt-5.6-sol',
     effort: 'high',
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
-    featured: true,
   },
   'codex-sol-max': {
     modelName: 'GPT-5.6 Sol',
@@ -42,7 +41,6 @@ export const configurationLabels = {
     primaryModel: 'gpt-5.6-sol',
     effort: 'max',
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
-    featured: true,
   },
   'codex-sol-terra-delegation': {
     modelName: 'GPT-5.6 Sol',
@@ -109,6 +107,7 @@ export const configurationLabels = {
     primaryModel: 'stealth/ox-alpha',
     effort: 'high',
     workflowSummary: 'One fresh unattended pi session driving Ox Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+    featured: true,
   },
   'pi-kimi-k3-max': {
     modelName: 'Kimi K3',
@@ -201,7 +200,8 @@ function runManifest(entrant) {
 
 // The run's cost, or null when the run could not be priced at all — a model published without a
 // price leaves token counts and no dollar figure. A null cost publishes as an absent
-// `generationCost`, which keeps the entrant out of matchups and off the cost curve.
+// `generationCost`, which keeps the entrant off the cost chart. It is scheduled and rated
+// like any other.
 function generationCost(entrant, manifest) {
   if (manifest.cost?.status === 'unavailable') return null;
   let total = 0;

@@ -12,13 +12,13 @@ Client-side via the History API (`src/app/router.ts`). An unrecognized path reso
 
 The "Featuring" list is hand-maintained copy in `src/app/featured-models.md`, not a projection of the catalog; `docs`-worthy rules for its format live in that file's own prose.
 
-Below the two start cards sits one conditional callout, shown while a featured model has playable levels and no published price. `unpricedModels` and `modelsWithMatchups` (`src/app/model-match.ts`) decide that from the catalog, so the callout appears and disappears on its own as costs are published. Its button is a `/match?model=<slug>` link, which is the only way a visitor meets an unpriced model's levels — the ranked scheduler never serves them.
+Below the two start cards sits one conditional callout, shown while a featured model has playable levels and no published price. `unpricedModels` and `modelsWithMatchups` (`src/app/model-match.ts`) decide that from the catalog, so the callout appears and disappears on its own as costs are published. It says the model is in ranked play and is charted against output tokens rather than against cost, and its button is a `/rank` link, the only path that records a vote.
 
 ## The `/levels` pages
 
 `/levels` browses every level as a thumbnail gallery; `/levels/data` shows the catalog tree and full run records. Both are driven by the rank catalog and the built-in registry, so a benchmark level reaches these pages by being published to the catalog.
 
-The category filter has five chips. `built-in`, `ranked`, `retired` and `experimental` come from the registry and the catalog's scheduling flags; `stealth` is derived from an entrant publishing no `generationCost`, which is what keeps it out of matchups. Built-in, ranked and stealth are pressed by default.
+The category filter has five chips. `built-in`, `ranked`, `retired` and `experimental` come from the registry and the catalog's scheduling flags; `stealth` is derived from an entrant publishing no `generationCost`, which keeps it off the cost chart while it is scheduled and ranked like any other. Built-in, ranked and stealth are pressed by default.
 
 ## The `/match` page
 
@@ -28,7 +28,7 @@ The category filter has five chips. `built-in`, `ranked`, `retired` and `experim
 
 A `?model=` link has no `a`/`b` for `middleware.ts` to build a card from, so it falls through to the site's default social card — the pair is not decided until the page runs.
 
-Eligibility is deliberately broader than the ranked scheduler: any entrant in the rank catalog resolves via `findCatalogEntrant`, including retired entrants, entrants of retired or experimental themes, and entrants with no cost (all of which `schedulingPool` excludes). The model draw has the same breadth. When both sides share a theme the header shows it; when they differ, each card shows its own theme title and prompt.
+Eligibility is deliberately broader than the ranked scheduler: any entrant in the rank catalog resolves via `findCatalogEntrant`, including retired entrants and entrants of retired or experimental themes, all of which `schedulingPool` excludes. The model draw has the same breadth. When both sides share a theme the header shows it; when they differ, each card shows its own theme title and prompt.
 
 Visiting `/match` with missing parameters (and, above a short notice, the `same`/`unknown` error cases) renders a blind level picker instead of the URL-shape instructions. It reuses the levels-gallery theme bands but shows every playable catalog entrant with no category filter — retired and experimental themes included — and each card shows only the thumbnail and level id, never the model or cost, so the person building the match can still play it blind. The first pick is side A and the second is side B (a third replaces B); once both are chosen an action bar starts the match or copies the absolute share link. Selection is transient React state, consistent with the rest of the page.
 
@@ -36,7 +36,7 @@ The route is `robots: noindex` (see `applyRouteHead` in `src/app/seo.ts`) becaus
 
 ## The `/leaderboard` page
 
-The community counterpart to the personal results on `/rank`, and the same chart: `src/app/components/curve-chart.tsx` owns the quality-vs-cost scatter, the frontier line, the legend, and the results table, and both pages render it with their own wording. `src/app/leaderboard.ts` fetches the server tally from `/api/rank/aggregate` (see `docs/backend.md`), expands each pair's counts back into individual comparisons, and runs the same Bradley-Terry fit the rank controller uses, so a configuration is held off the frontier here for exactly the reasons it would be there. The page falls back to the warming-up empty state whenever fewer than two configurations have a rating.
+The community counterpart to the personal results on `/rank`, and the same chart: `src/app/components/curve-chart.tsx` owns the quality-vs-cost scatter, the frontier line, the legend, and the results table, and both pages render it with their own wording. Its axes and geometry live in `src/app/components/curve-layout.ts`, which a test can import without a browser; `curve-chart.tsx` renders what that module lays out. A chart plots only the points its axis has a value for and prints a note naming the rest: an entrant whose model publishes no price is on the output-tokens chart and named under the cost chart. `src/app/leaderboard.ts` fetches the server tally from `/api/rank/aggregate` (see `docs/backend.md`), expands each pair's counts back into individual comparisons, and runs the same Bradley-Terry fit the rank controller uses, so a configuration is held off the frontier here for exactly the reasons it would be there. The page falls back to the warming-up empty state whenever fewer than two configurations have a rating.
 
 Above the results sits a call to action asking for votes and linking to `/rank`, in place of the warming-up empty state that stood there before there was data. The vote count itself lives in the status chip on the results panel.
 
