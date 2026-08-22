@@ -541,6 +541,42 @@
       ]
     },
     {
+      "runId": "run-a7pqr4gm2o",
+      "levelId": "speedsolve-nfof",
+      "themeId": "speedsolve",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-a7pqr4gm2o/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 7555441,
+          "sha256": "8da6b4672919e0c96b8ffa54f5c13e4c175c962f37b66d9981a1908faa434d03"
+        },
+        {
+          "path": "runs/run-a7pqr4gm2o/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 34661670,
+          "sha256": "6d81931ec370758abf8ffa14b01c1a067bcbc507d7a265ac026e9ab124b89655"
+        }
+      ]
+    },
+    {
+      "runId": "run-aoefz3t98p",
+      "levelId": "strandline-o848",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-aoefz3t98p/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 6955584,
+          "sha256": "542debe30fd4c43b85a5bd01bbe6d50f1951985b322cfd4cc7fe2aa95415ae17"
+        },
+        {
+          "path": "runs/run-aoefz3t98p/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 34257545,
+          "sha256": "9873184c9d3301ce8c2a1b82b67b0488cb5e805481072399483502e9d6cd09a3"
+        }
+      ]
+    },
+    {
       "runId": "run-c340azfgk0vd",
       "levelId": "mass-driver-9281",
       "themeId": "mass-driver",
@@ -592,6 +628,24 @@
           "path": "runs/run-gucf476jvkqr/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 1607701,
           "sha256": "df8a8206446471ccd24b4c94be98d517c9645f7e14da60bd9fff6d31df022266"
+        }
+      ]
+    },
+    {
+      "runId": "run-iz2agir3l4",
+      "levelId": "thermal-ink-v1d2",
+      "themeId": "thermal-ink",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-iz2agir3l4/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 4822006,
+          "sha256": "f334ed08fef289a7672f6ab44758c1ae9491cc6067ebf673e97d0044311ec828"
+        },
+        {
+          "path": "runs/run-iz2agir3l4/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 23404411,
+          "sha256": "2990c08f52aeb27547f04cf18543603869f2137cf4f78c8bd5036b5f511e0da6"
         }
       ]
     },
@@ -1025,6 +1079,24 @@
           "path": "runs/run-xixwfev1c60s/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 11679491,
           "sha256": "9340488884bae795eafc4711451d9679baea8fecc492fe3666bd7116684bee27"
+        }
+      ]
+    },
+    {
+      "runId": "run-y5zd577spu",
+      "levelId": "broadside-7hin",
+      "themeId": "broadside",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-y5zd577spu/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 4347587,
+          "sha256": "fb5c08ac500f1e4ce01f41fc07a6397fe073d994dfaf4ff18b1a7a332643f87f"
+        },
+        {
+          "path": "runs/run-y5zd577spu/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 3438779,
+          "sha256": "bcbbb0856df2ef00661f8745e2ba67bd99f502cd4aec52718ec2b24d993a0740"
         }
       ]
     },
