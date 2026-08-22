@@ -1,0 +1,9 @@
+{
+  "id": "speedsolve-nfof",
+  "title": "Speedsolve",
+  "contentImages": {
+    "overview": "/level-content/speedsolve-nfof/overview.png",
+    "start": "/level-content/speedsolve-nfof/start.png",
+    "hero": "/level-content/speedsolve-nfof/hero.png"
+  }
+}
