@@ -62,6 +62,17 @@ const RAIL = createBroadsideRail();
 
 const records = createPendingVisualRecords<Group, EnemyRecord>({
   createRecord: (mesh) => ({ mesh, born: null, lockRing: null }),
+  // Every enemy mesh owns its geometries and materials (the shared lock
+  // bracket lives on record.lockRing, detached before deletion), so a full
+  // traversal dispose is safe.
+  disposeRecord(record) {
+    record.mesh.traverse((child) => {
+      const mesh = child as Mesh;
+      mesh.geometry?.dispose();
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const material of materials) material?.dispose();
+    });
+  },
 });
 const projectileRecords = createPendingVisualRecords<Object3D, Object3D>({ createRecord: (mesh) => mesh });
 
@@ -214,6 +225,17 @@ export function setReticleActive(reticle: Object3D, active: boolean, lockCount: 
 
 let pendingExplosions: Array<{ at: number; position: Vector3 }> = [];
 
+const BRACKET_GEOMETRY = new RingGeometry(1.3, 1.38, 4, 1, 0, Math.PI / 2);
+const bracketMaterials = new Map<number, MeshBasicMaterial>();
+function lockBracketMaterial(color: Color): MeshBasicMaterial {
+  let material = bracketMaterials.get(color.getHex());
+  if (!material) {
+    material = createAdditiveBasicMaterial({ color: hdr(color, 1.3), side: DoubleSide });
+    bracketMaterials.set(color.getHex(), material);
+  }
+  return material;
+}
+
 export function installVisualEventHandlers(bus: EventBus, _scene: Scene) {
   bus.on('spawn', ({ enemyId, worldPosition }) => {
     const record = records.claim(enemyId);
@@ -226,11 +248,9 @@ export function installVisualEventHandlers(bus: EventBus, _scene: Scene) {
     if (record && !record.lockRing) {
       const ring = new Group();
       const color = colorForLockCount(lockCount, [ICE, GOLD, MAGENTA]);
+      const material = lockBracketMaterial(color);
       for (let i = 0; i < 4; i += 1) {
-        const corner = new Mesh(
-          new RingGeometry(1.3, 1.38, 4, 1, 0, Math.PI / 2),
-          createAdditiveBasicMaterial({ color: hdr(color, 1.3), side: DoubleSide }),
-        );
+        const corner = new Mesh(BRACKET_GEOMETRY, material);
         corner.rotation.z = (i * Math.PI) / 2 + Math.PI / 4;
         ring.add(corner);
       }
@@ -280,11 +300,11 @@ export function installVisualEventHandlers(bus: EventBus, _scene: Scene) {
       record.lockRing.removeFromParent();
       record.lockRing = null;
     }
-    records.delete(enemyId);
+    records.delete(enemyId, { dispose: true });
   });
 
   bus.on('miss', ({ enemyId, worldPosition }) => {
-    records.delete(enemyId);
+    records.delete(enemyId, { dispose: true });
     burstSparks(worldPosition, hdr(CRIMSON, 0.5), 4, 2.6);
   });
 
@@ -370,7 +390,7 @@ function pointAlongFlagship(seconds: number): Vector3 {
 
 function maybeCannonSalvo(isDownbeat: boolean) {
   if (!isDownbeat || !environment) return;
-  if (lastRunProgress < progressAt(11.9) || lastRunProgress > progressAt(16.2)) return;
+  if (lastRunProgress < progressAt(22.4) || lastRunProgress > progressAt(30.1)) return;
   const anchors = environment.muzzleAnchors;
   const index = Math.floor(Math.random() * anchors.length);
   const frame = sampleRailFrame(RAIL, lastRunProgress);
@@ -416,7 +436,7 @@ function maybeCrossfire() {
   if (!environment) return;
   const p = lastRunProgress;
   const inWindow = (a: number, b: number) => p >= progressAt(a) && p <= progressAt(b);
-  if (!(inWindow(3.5, 12) || inWindow(17.5, 31.4))) return;
+  if (!(inWindow(6.6, 22.4) || inWindow(32.8, 58.9))) return;
   if (Math.random() > 0.75) return;
   const frame = sampleRailFrame(RAIL, p);
   const side = Math.random() < 0.5 ? -1 : 1;

@@ -43,12 +43,9 @@ export function createFlagship(bus: EventBus, fireBolt: (context: BroadsideUpdat
     conduitsSpawned = 0;
     shieldsDown = false;
     destroyed = false;
-    armed = false;
-    conduitEntries = [];
-    for (const entry of pendingConduitLockReset.splice(0)) entry.lockable = false;
+    // Timeline entries are shared across runs; put the shield back up.
+    for (const entry of conduitEntries) entry.lockable = false;
   });
-
-  const pendingConduitLockReset: BroadsideSpawnEntry[] = [];
 
   bus.on('spawn', ({ enemyId, kind }) => {
     if (!armed) return;
@@ -102,22 +99,21 @@ export function createFlagship(bus: EventBus, fireBolt: (context: BroadsideUpdat
       flagshipTime + BROADSIDE_7HIN_TIME.bar(value - BROADSIDE_7HIN_BARS.flagship, beat);
 
     const generators: BroadsideSpawnEntry[] = [
-      { time: bar(24.25), kind: 'generator', hitPoints: 2, data: { role: 'generator', index: 0, lead: 5.4, x: -7.5, y: 3.5 } },
-      { time: bar(24.4), kind: 'generator', hitPoints: 2, data: { role: 'generator', index: 1, lead: 5.4, x: 0.5, y: 5.5 } },
-      { time: bar(24.55), kind: 'generator', hitPoints: 2, data: { role: 'generator', index: 2, lead: 5.4, x: 8.5, y: 2 } },
+      { time: bar(24.25), kind: 'generator', hitStages: [1, 1], data: { role: 'generator', index: 0, lead: 4.9, x: -7.5, y: 3.5 } },
+      { time: bar(24.4), kind: 'generator', hitStages: [1, 1], data: { role: 'generator', index: 1, lead: 4.9, x: 0.5, y: 5.5 } },
+      { time: bar(24.55), kind: 'generator', hitStages: [1, 1], data: { role: 'generator', index: 2, lead: 4.9, x: 8.5, y: 2 } },
     ];
     const pointDefense: BroadsideSpawnEntry[] = [
-      { time: bar(24.8), kind: 'pdturret', hitPoints: 1, data: { role: 'pd', index: 0, lead: 4.6, x: -4, y: -2.5 } },
-      { time: bar(24.95), kind: 'pdturret', hitPoints: 1, data: { role: 'pd', index: 1, lead: 4.6, x: 5, y: 4.5 } },
-      { time: bar(26.1), kind: 'pdturret', hitPoints: 1, data: { role: 'pd', index: 2, lead: 4.4, x: 0, y: 0.5 } },
+      { time: bar(24.8), kind: 'pdturret', hitPoints: 1, data: { role: 'pd', index: 0, lead: 4.2, x: -4, y: -2.5 } },
+      { time: bar(24.95), kind: 'pdturret', hitPoints: 1, data: { role: 'pd', index: 1, lead: 4.2, x: 5, y: 4.5 } },
+      { time: bar(26.1), kind: 'pdturret', hitPoints: 1, data: { role: 'pd', index: 2, lead: 4.0, x: 0, y: 0.5 } },
     ];
     const conduits: BroadsideSpawnEntry[] = [
-      { time: bar(29.15), kind: 'conduit', hitPoints: 2, lockable: false, data: { role: 'conduit', index: 0, lead: 6, x: -4.2, y: 0.4 } },
-      { time: bar(29.3), kind: 'conduit', hitPoints: 2, lockable: false, data: { role: 'conduit', index: 1, lead: 6, x: 0, y: 1.2 } },
-      { time: bar(29.45), kind: 'conduit', hitPoints: 2, lockable: false, data: { role: 'conduit', index: 2, lead: 6, x: 4.2, y: 0.4 } },
+      { time: bar(28.7), kind: 'conduit', hitPoints: 1, lockable: false, data: { role: 'conduit', index: 0, lead: 5, x: -4.2, y: 0.4 } },
+      { time: bar(28.85), kind: 'conduit', hitPoints: 1, lockable: false, data: { role: 'conduit', index: 1, lead: 5, x: 0, y: 1.2 } },
+      { time: bar(29), kind: 'conduit', hitPoints: 1, lockable: false, data: { role: 'conduit', index: 2, lead: 5, x: 4.2, y: 0.4 } },
     ];
     conduitEntries = conduits;
-    pendingConduitLockReset.push(...conduits);
     return [...generators, ...pointDefense, ...conduits];
   }
 

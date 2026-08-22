@@ -35,8 +35,8 @@ import { CYAN, EMBER, FOE_HULL, FRIEND_HULL, GOLD, hdr, ICE, MAGENTA, VOID } fro
 // running lights carry the color.
 
 const BAR_SECONDS = 1.875;
-const TRENCH_FROM = 52.1;
-const TRENCH_TO = 58.9;
+const TRENCH_FROM = 54.8;
+const TRENCH_TO = 59.45;
 const TRENCH_TOP = 11;
 const TRENCH_BOTTOM = -2.6;
 const TRENCH_WALL_X = 5.4;
@@ -297,7 +297,7 @@ export function createTrench(curve: CatmullRomCurve3): { group: Group; conductor
   for (const side of [-1, 1]) {
     const post = new Mesh(new BoxGeometry(1.2, TRENCH_TOP - TRENCH_BOTTOM + 3.2, 1.2), slabMaterial);
     post.position.copy(mouth.position)
-      .addScaledVector(mouth.right, side * (TRENCH_WALL_X + 0.9))
+      .addScaledVector(mouth.right, side * (TRENCH_WALL_X + 2.2))
       .addScaledVector(mouth.up, (TRENCH_TOP + TRENCH_BOTTOM) / 2);
     group.add(post);
     const lampMaterial = createAdditiveBasicMaterial({ color: hdr(GOLD, 1.3), side: DoubleSide });
@@ -409,11 +409,13 @@ export function createDebrisField(curve: CatmullRomCurve3): ScatterField {
         new BoxGeometry(2 + makeRng() * 5, 1 + makeRng() * 2.4, 2 + makeRng() * 6),
         new MeshBasicMaterial({ color: 0x0b0709 }),
       );
+      chunk.name = 'debris';
       group.add(chunk);
       const wire = new LineSegments(
         new BoxGeometry(2.1 + makeRng() * 5, 1.1 + makeRng() * 2.4, 2.1 + makeRng() * 6),
         createAdditiveBasicMaterial({ color: hdr(makeRng() < 0.5 ? EMBER : MAGENTA, 0.4), opacity: 0.8 }),
       );
+      wire.name = 'debris';
       group.add(wire);
       group.rotation.set(makeRng() * Math.PI, makeRng() * Math.PI, makeRng() * Math.PI);
       group.userData.spin = (makeRng() - 0.5) * 0.4;
@@ -421,10 +423,10 @@ export function createDebrisField(curve: CatmullRomCurve3): ScatterField {
     },
     place(_placeIndex, placeRng) {
       const angle = placeRng() * Math.PI * 2;
-      const distance = 16 + placeRng() * 26;
+      const distance = 24 + placeRng() * 22;
       return {
         u: placeRng(),
-        offset: new Vector3(Math.cos(angle) * distance, Math.sin(angle) * distance * 0.6, (placeRng() - 0.5) * 30),
+        offset: new Vector3(Math.cos(angle) * distance, Math.sin(angle) * distance * 0.6, (placeRng() - 0.5) * 20),
       };
     },
     onUpdate(item, dt) {
@@ -459,27 +461,29 @@ export function createBroadsideEnvironment(scene: Scene): BroadsideEnvironment {
   push({ fromTime: -4, toTime: 3.6, right: 0, up: -11, halfW: 27, halfH: 5.5, faction: 'friend', seed: 101, frames: 16 });
 
   // The gap: opposing ship lines forming the canyon (bars 4-8).
-  push({ fromTime: 3.2, toTime: 8.8, right: -27, up: 6, halfW: 13, halfH: 9, faction: 'foe', seed: 202, frames: 16 });
-  push({ fromTime: 3.8, toTime: 9.4, right: 27, up: -5, halfW: 14, halfH: 8, faction: 'friend', seed: 303, frames: 16 });
+  push({ fromTime: 6.6, toTime: 15.9, right: -32, up: 6, halfW: 13, halfH: 9, faction: 'foe', seed: 202, frames: 16 });
+  push({ fromTime: 7.5, toTime: 16.9, right: 31, up: -5, halfW: 14, halfH: 8, faction: 'friend', seed: 303, frames: 16 });
 
   // The broadside cruiser flanking bars 12-16; its guns fire with the beat.
-  push({ fromTime: 11.4, toTime: 16.6, right: 17, up: -1, halfW: 9, halfH: 5.5, faction: 'friend', seed: 404, frames: 18, bowTaper: true });
+  push({ fromTime: 21.6, toTime: 30.9, right: 19, up: -1, halfW: 9, halfH: 5.5, faction: 'friend', seed: 404, frames: 18, bowTaper: true });
 
   // Distant enemy line on the far side of the broadside.
-  push({ fromTime: 12, toTime: 16.4, right: -58, up: 16, halfW: 9, halfH: 4, faction: 'foe', seed: 505, frames: 10, dim: 0.7 });
-  push({ fromTime: 12.4, toTime: 16.2, right: -66, up: -12, halfW: 8, halfH: 3.5, faction: 'foe', seed: 606, frames: 10, dim: 0.6 });
+  push({ fromTime: 22.5, toTime: 30.75, right: -58, up: 16, halfW: 9, halfH: 4, faction: 'foe', seed: 505, frames: 10, dim: 0.7 });
+  push({ fromTime: 23.3, toTime: 30.4, right: -66, up: -12, halfW: 8, halfH: 3.5, faction: 'foe', seed: 606, frames: 10, dim: 0.6 });
 
   // The belly warship over bars 18-22 (the rail skims under its keel).
-  push({ fromTime: 17.4, toTime: 22.6, right: -2, up: 16, halfW: 15, halfH: 6.5, faction: 'foe', seed: 707, frames: 18 });
+  push({ fromTime: 32.8, toTime: 42.2, right: -2, up: 16, halfW: 15, halfH: 6.5, faction: 'foe', seed: 707, frames: 18 });
 
   // The enemy flagship: vast, parallel to the rail, trench cut into its keel.
-  push({ fromTime: 23.4, toTime: 31.6, right: 10, up: 22, halfW: 24, halfH: 8, faction: 'foe', seed: 808, frames: 26 });
+  push({ fromTime: 44, toTime: 59.25, right: 10, up: 22, halfW: 24, halfH: 8, faction: 'foe', seed: 808, frames: 26 });
 
   // Burning escorts in the pull-out vista.
-  push({ fromTime: 30.6, toTime: 33.4, right: -38, up: 20, halfW: 9, halfH: 4, faction: 'foe', seed: 909, frames: 10, dim: 0.8 });
-  push({ fromTime: 31, toTime: 33.8, right: -52, up: -8, halfW: 8, halfH: 3.5, faction: 'foe', seed: 910, frames: 10, dim: 0.7 });
+  push({ fromTime: 57, toTime: 59.9, right: -38, up: 20, halfW: 9, halfH: 4, faction: 'foe', seed: 909, frames: 10, dim: 0.8 });
+  push({ fromTime: 57.6, toTime: 59.95, right: -52, up: -8, halfW: 8, halfH: 3.5, faction: 'foe', seed: 910, frames: 10, dim: 0.7 });
 
   const trench = createTrench(curve);
+  trench.group.name = 'trench';
+  trench.group.traverse((child) => { if ((child as Mesh).isMesh && !child.name) child.name = 'trench'; });
 
   const debris = createDebrisField(curve);
   root.add(debris.group, trench.group);
@@ -487,7 +491,7 @@ export function createBroadsideEnvironment(scene: Scene): BroadsideEnvironment {
   // Muzzle anchors along the cruiser's left flank, aimed across the rail.
   const muzzleAnchors: Vector3[] = [];
   for (let i = 0; i < 8; i += 1) {
-    const seconds = 12 + (i / 7) * 4.2;
+    const seconds = 22.5 + (i / 7) * 7;
     const frame = sampleRailFrame(curve, progressAt(seconds));
     muzzleAnchors.push(
       frame.position.clone()
@@ -496,6 +500,12 @@ export function createBroadsideEnvironment(scene: Scene): BroadsideEnvironment {
     );
   }
 
+  ships.forEach((ship, i) => {
+    ship.group.name = `ship-${i}-${ship.faction}`;
+    ship.group.traverse((child) => {
+      if (child instanceof Mesh && !child.name) child.name = ship.group.name;
+    });
+  });
   for (const ship of ships) root.add(ship.group);
   scene.add(root);
   return { root, ships, trenchConductors: trench.conductorMaterials, debris, muzzleAnchors };

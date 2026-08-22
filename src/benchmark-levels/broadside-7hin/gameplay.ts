@@ -9,7 +9,7 @@ import {
 import type { LockOnEnemyUpdate, LockOnRunnerLevel, LockOnSpawnEntry } from '../../engine/lock-on-runner';
 import { offsetFromRail } from '../../engine/rail';
 import { createSpeedProfile } from '../../engine/speed-profile';
-import { formation, section, sortTimeline } from '../../engine/spawn-patterns';
+import { formation, sortTimeline } from '../../engine/spawn-patterns';
 import type { EventBus } from '../../events';
 import { createFlagship, type Flagship } from './flagship';
 import {
@@ -146,83 +146,66 @@ const wave = (
   kind: Extract<BroadsideEnemyKind, 'dart' | 'gunship' | 'weaver' | 'battery'>,
   pattern: WaveData['pattern'],
   offsets: Array<[number, number]>,
-  lead = 4.2,
+  lead = 3.7,
 ): BroadsideSpawnEntry[] =>
   formation(time.bar(barValue, beat), WAVE_STAGGER, offsets, ([x, y], index) => ({
     kind,
-    hitPoints: kind === 'battery' ? 2 : 1,
+    ...(kind === 'battery' ? { hitStages: [1, 1] } : {}),
     data: { role: 'wave', lead, pattern, x, y, phase: index * 1.71 + barValue * 0.83 },
   }));
 
 function createBroadsideTimeline(flagship: Flagship): BroadsideSpawnEntry[] {
   return [
     // --- Launch (bars 0-4): scouts peel off the deck as the fanfare lands.
-    ...section(BROADSIDE_7HIN_MARKERS.launch,
-      wave(2, 0, 'dart', 'weave', [[-5, 1], [-2, 3], [2, 3], [5, 1]], 4.4),
-      wave(3.5, 0, 'dart', 'weave', [[-7, -2], [0, 4], [7, -2]], 4.4),
-    ),
+    ...wave(2, 0, 'dart', 'weave', [[-5, -1], [-2, 3], [2, -2], [5, 2]], 3.9),
+    ...wave(3.5, 0, 'dart', 'weave', [[-7, -2], [0, 4], [7, -2]], 3.9),
 
     // --- The gap (bars 4-8): first swarms knotted between the ship lines.
-    ...section(BROADSIDE_7HIN_MARKERS.theGap,
-      wave(4.5, 0, 'weaver', 'helix', [[-6, 2], [0, 3.5], [6, 2]], 4.4),
-      wave(5.5, 0, 'dart', 'weave', [[-8, 0], [-4, 3], [0, 4.5], [4, 3], [8, 0]], 4.2),
-      wave(6.5, 0, 'gunship', 'strafe', [[-9, 3], [9, -2]], 4.8),
-      wave(7.25, 0, 'dart', 'weave', [[-6, -2], [-2, 4], [2, -3], [6, 3]], 4.2),
-    ),
+    ...wave(4.5, 0, 'weaver', 'helix', [[-6, 2], [0, 3.5], [6, 2]], 3.9),
+    ...wave(5.5, 0, 'dart', 'weave', [[-8, -2], [-4, 3], [0, 4.5], [4, -1], [8, 1]], 3.7),
+    ...wave(6.5, 0, 'gunship', 'strafe', [[-9, 3], [9, -2]], 4.2),
+    ...wave(7.25, 0, 'dart', 'weave', [[-6, -2], [-2, 4], [2, -3], [6, 3]], 3.7),
 
     // --- Corkscrew (bars 8-12): hard banks, full-width spread.
-    ...section(BROADSIDE_7HIN_MARKERS.corkscrew,
-      wave(8.25, 0, 'weaver', 'helix', [[-8, 3], [-3, -3], [3, 3], [8, -3]], 4.0),
-      wave(9.25, 0, 'dart', 'weave', [[-10, 1], [-5, 4], [0, -3], [2, 5], [7, 2], [11, -1]], 4.0),
-      wave(10.25, 0, 'gunship', 'strafe', [[-11, 2], [11, -2]], 4.4),
-      wave(10.5, 2, 'dart', 'weave', [[-7, -3], [0, 3], [7, 4]], 4.0),
-      wave(11.25, 0, 'weaver', 'helix', [[-5, 4], [1, -2], [6, 3]], 3.8),
-      wave(11.75, 0, 'dart', 'weave', [[-11, 2], [-6, -2], [-1, 4], [4, -3], [9, 2]], 3.8),
-    ),
+    ...wave(8.25, 0, 'weaver', 'helix', [[-8, 3], [-3, -3], [3, 3], [8, -3]], 3.2),
+    ...wave(9.25, 0, 'dart', 'weave', [[-10, 1], [-5, 4], [0, -3], [2, 5], [7, 2], [11, -1]], 3.2),
+    ...wave(10.25, 0, 'gunship', 'strafe', [[-11, 2], [11, -2]], 3.9),
+    ...wave(10.5, 2, 'dart', 'weave', [[-7, -3], [0, 3], [7, 4]], 3.2),
+    ...wave(11.25, 0, 'weaver', 'helix', [[-5, 4], [1, -2], [6, 3]], 3.4),
+    ...wave(11.75, 0, 'dart', 'weave', [[-11, 2], [-6, -2], [-1, 4], [4, -3], [9, 2]], 3.4),
 
     // --- Broadside run (bars 12-16): pace eases onto the set piece; the
     // cruiser's guns do the talking while light opposition sweeps through.
-    ...section(BROADSIDE_7HIN_MARKERS.broadside,
-      wave(12.5, 0, 'gunship', 'strafe', [[-12, 2], [0, 5.5], [12, 1]], 4.4),
-      wave(13.5, 0, 'dart', 'weave', [[-9, -2], [-4, 3], [1, 4], [6, -1], [11, 2]], 4.0),
-      wave(14.5, 0, 'weaver', 'helix', [[-8, 3], [-2, -3], [4, 3], [10, -2]], 3.8),
-      wave(15.5, 0, 'dart', 'weave', [[-6, 2], [0, -3], [6, 3]], 3.6),
-    ),
+    ...wave(12.5, 0, 'gunship', 'strafe', [[-12, -1], [-5, 5.5], [0, -2]], 3.9),
+    ...wave(13.5, 0, 'dart', 'weave', [[-9, -2], [-4, 3], [1, 4], [6, -1], [11, 2]], 3.2),
+    ...wave(14.5, 0, 'weaver', 'helix', [[-8, 3], [-3, -3], [1, 3], [-6, -2]], 3.4),
+    ...wave(15.5, 0, 'dart', 'weave', [[-6, 2], [0, -3], [4, 3]], 3.2),
 
     // --- Eye of the battle (bars 16-18): near silence, one drifting wing.
-    ...section(BROADSIDE_7HIN_MARKERS.eyeOfBattle,
-      wave(16.75, 0, 'dart', 'weave', [[-4, 2], [0, 3.5], [4, 2]], 4.8),
-    ),
+    ...wave(16.75, 0, 'dart', 'weave', [[-4, -2], [0, 3], [4, -1]], 4.2),
 
     // --- Belly run (bars 18-22): rake the warship's turrets while its
     // escort darts drop off the hull.
-    ...section(BROADSIDE_7HIN_MARKERS.bellyRun,
-      wave(18.25, 0, 'battery', 'hold', [[-5, 5.5], [5, 5.5]], 5.2),
-      wave(19, 0, 'dart', 'weave', [[-8, 1], [-3, -3], [2, 3], [7, 2]], 4.2),
-      wave(20, 0, 'battery', 'hold', [[-8, 6], [2, 5]], 5.0),
-      wave(20.75, 0, 'gunship', 'strafe', [[-10, -2], [10, 3]], 4.4),
-      wave(21.5, 0, 'dart', 'weave', [[-9, 3], [-4, -2], [1, 4], [6, 1], [11, -2]], 4.0),
-    ),
+    ...wave(18.25, 0, 'battery', 'hold', [[-5, 5.5], [5, 5.5]], 4.6),
+    ...wave(19, 0, 'dart', 'weave', [[-8, 1], [-3, -3], [2, 3], [7, 2]], 3.7),
+    ...wave(20, 0, 'battery', 'hold', [[-8, 6], [2, 5]], 4.4),
+    ...wave(20.75, 0, 'gunship', 'strafe', [[-10, -2], [10, 3]], 3.9),
+    ...wave(21.5, 0, 'dart', 'weave', [[-9, 3], [-4, -2], [1, 4], [6, 1], [11, -2]], 3.2),
 
     // --- Approach (bars 22-24): the escort screen masses before the reveal.
-    ...section(BROADSIDE_7HIN_MARKERS.approach,
-      wave(22.25, 0, 'dart', 'weave', [[-10, 2], [-5, 4], [0, -3], [5, 3], [10, 1]], 4.0),
-      wave(23, 0, 'weaver', 'helix', [[-7, -2], [-2, 4], [3, -3], [8, 3]], 3.8),
-      wave(23.25, 2, 'gunship', 'strafe', [[-12, 1], [12, -1]], 4.2),
-      wave(23.75, 0, 'dart', 'weave', [[-6, 3], [0, -2], [6, 4]], 3.6),
-    ),
+    ...wave(22.25, 0, 'dart', 'weave', [[-10, 2], [-5, 4], [0, -3], [5, 3], [10, 1]], 3.2),
+    ...wave(23, 0, 'weaver', 'helix', [[-7, -2], [-2, 4], [3, -3], [8, 3]], 3.4),
+    ...wave(23.25, 2, 'gunship', 'strafe', [[-12, 1], [12, -1]], 3.7),
+    ...wave(23.75, 0, 'dart', 'weave', [[-6, 3], [0, -2], [6, 4]], 3.2),
 
     // --- Flagship fight (bars 24-32): authored by the boss controller —
     // shield generators, point-defense emitters, and trench conduits.
-    ...section(BROADSIDE_7HIN_MARKERS.flagship,
-      flagship.entries(BROADSIDE_7HIN_MARKERS.flagship),
+    ...flagship.entries(BROADSIDE_7HIN_MARKERS.flagship),
 
-      // Escort waves ride the come-around as the shield falls (bars 27-29).
-      wave(27.25, 0, 'dart', 'weave', [[-9, 2], [-4, 4], [1, -2], [6, 3], [11, 1]], 4.2),
-      wave(28, 0, 'gunship', 'strafe', [[-10, 3], [10, -2]], 4.4),
-      wave(28.25, 2, 'dart', 'weave', [[-6, -3], [0, 4], [6, -1]], 4.0),
-      wave(28.75, 0, 'dart', 'weave', [[-4, 3], [2, -2], [8, 3]], 3.8),
-    ),
+// Escort waves ride the come-around as the shield falls (bars 27-29).
+    ...wave(27, 0, 'dart', 'weave', [[-4, 2], [0, 4], [4, -2], [2, -4]], 3.4),
+    ...wave(27.4, 0, 'gunship', 'strafe', [[-4, 4], [4, -2]], 3),
+    ...wave(27.5, 0, 'dart', 'weave', [[-4, -3], [0, 4], [4, -1]], 2.2),
   ];
 }
 
@@ -299,10 +282,10 @@ export function createBroadsideGameplay(bus: EventBus): LockOnRunnerLevel<Broads
 
     if (data.pattern === 'strafe' || data.pattern === 'hold') {
       const fire = context.enemyState(() => ({
-        nextAt: data.pattern === 'hold' ? 1.5 + (enemy.id % 3) * 0.35 : 1.3 + (enemy.id % 3) * 0.3,
+        nextAt: data.pattern === 'hold' ? 1.9 + (enemy.id % 3) * 0.4 : 1.5 + (enemy.id % 3) * 0.35,
       }));
       if (age >= fire.nextAt) {
-        fire.nextAt = age + (data.pattern === 'hold' ? 2.3 : 2.9);
+        fire.nextAt = age + (data.pattern === 'hold' ? 3.4 : 3.8);
         fireBolt(context, enemy.mesh.position.clone(), data.pattern === 'hold' ? 0 : 0.5);
       }
     }
@@ -345,10 +328,10 @@ export function createBroadsideGameplay(bus: EventBus): LockOnRunnerLevel<Broads
     }
 
     steerHomingShot(data.position, data.velocity, hostileShotAimPoint(camera, data.position), age, dt, {
-      baseSpeed: 6,
-      maxSpeed: 13,
-      accel: 3.4,
-      turnRate: 2.0,
+      baseSpeed: 5.5,
+      maxSpeed: 11.5,
+      accel: 3.0,
+      turnRate: 1.7,
     });
 
     enemy.mesh.position.copy(data.position);
@@ -360,9 +343,11 @@ export function createBroadsideGameplay(bus: EventBus): LockOnRunnerLevel<Broads
     duration: BROADSIDE_7HIN_RUN_DURATION,
     bpm: BROADSIDE_7HIN_BPM,
     playerHealth: BROADSIDE_PLAYER_HEALTH,
+    lockRadiusNdc: 0.13,
     createRail: createBroadsideRail,
     spawnTimeline: timeline,
     easeRunProgress: speedProfile.runProgress,
+    updateAttractCamera: updateBroadsideAttractCamera,
     updateEnemy(context) {
       const data = context.enemy.entry.data;
       if (data.role === 'wave') return updateWave(context, data);
@@ -382,10 +367,10 @@ export function createBroadsideGameplay(bus: EventBus): LockOnRunnerLevel<Broads
     scoreForVolley: (results) => (results.length === 6 && results.every((result) => result.killed) ? 500 : 0),
     rankForRun(score, kills, totalEnemies) {
       const clearRate = totalEnemies === 0 ? 0 : kills / totalEnemies;
-      if (score >= 12500 && clearRate >= 0.88 && hitsTaken === 0) return 'GRAND ADMIRAL';
-      if (score >= 9000 && clearRate >= 0.74) return 'VICE ADMIRAL';
-      if (score >= 6000 && clearRate >= 0.56) return 'CAPTAIN';
-      if (score >= 3000 && clearRate >= 0.36) return 'COMMANDER';
+      if (score >= 14000 && clearRate >= 0.95 && hitsTaken === 0) return 'GRAND ADMIRAL';
+      if (score >= 10000 && clearRate >= 0.78) return 'VICE ADMIRAL';
+      if (score >= 6500 && clearRate >= 0.58) return 'CAPTAIN';
+      if (score >= 3200 && clearRate >= 0.36) return 'COMMANDER';
       return 'ENSIGN';
     },
     detailsForRun() {
