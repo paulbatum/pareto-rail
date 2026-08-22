@@ -1,0 +1,27 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level thermal-ink-v1d2
+
+Thermal Ink floor check
+duration 60.0s; spawned kinds 7: arm, buoy, core, drifter, gob, hatchling, inkcloud
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC; reticle visual 0.057 NDC = 0.67x lock radius, no reticle scaling
+  words: start "START" (5), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 2
+reticle warnings: 0
+start/replay word warnings: 0
+
+Warnings:
+- Average enemy destruction distance is slightly high (47.4m, warning threshold 45.0m). Consider spawning enemies closer.
+- Enemy destruction concentration in screen center is slightly high (62.8%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.

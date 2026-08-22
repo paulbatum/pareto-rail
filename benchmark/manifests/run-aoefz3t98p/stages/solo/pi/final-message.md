@@ -1,0 +1,29 @@
+All gates green. Final state verified — here's the handoff summary.
+
+---
+
+## Strandline (`strandline-o848`) — handoff
+
+**What was built** — a 60-second one-shot benchmark level under `src/benchmark-levels/strandline-o848/` (16 in-scope paths, scope gate passes):
+
+- **Arc** (96 BPM, 24 bars = exactly 60.0 s): *the strands* (drift tutorial) → *open water* swing-wide at bar 8 with the bell-reveal flash → *dive back* into a thickening forest → *the parent* at bar 16 → *clean water*, where the kill triggers the pull-back: camera falls away, `cleanUniform` washes the violet blight out of every strand, D-major bloom resolves.
+- **Enemies**: claspers (hinged shells that shudder latched, then gape open and swoop), drifters (two-hit pulsing bells), skeins (zigzag weavers) + boss set — 4 web panels fed by 4 scheduled brood waves, broodling swarms that dive into the swim corridor, homing nettles, and the parent itself (`hitStages [3,2]`, panic-frenzy broods once exposed). Three-plus distinct silhouettes/motions, choreographed against bars, not evenly spaced.
+- **Boss rule**: a panel is uncuttable while its brood wave lives; starve it and the webbing withers into a tearable remnant. Three withered panels bare the parent. Killing it starts the serene pull-back and blight-cleanse.
+- **Music/action integration** via `createBeatLevelAudio` + `createScore`: per-section player timbres, transport-quantized locks/fires, per-section melodic kill lanes, boss chip that grows with damage, ducked finale, ambient attract arrangement. Trace export `traceStrandlineAudio` shows sections landing where designed (arp/sub at 20 s, ticks/stabs at 32.5 s, lead theme at 40 s).
+- **Visuals**: merged strand forest + crown roots with traveling bioluminescence bands and blight tint (TSL), fog-defying bell that glows through hundreds of metres before resolving, marine snow drifting upward, god-ray shafts, underwater particle language (buoyant motes, pressure rings), pearl/gold player identity vs. sickly violet parasites, 5×7 cell-chain glyphs for STRAND/RELEASE.
+
+**Verified headlessly**
+- `npm run typecheck`, `npm run build` — pass
+- `npm run check:floor -- --level strandline-o848` — **all checks pass** (occlusion 0 warnings, perf gates, audio config, duration, gallery card)
+- `npm run simulate` — perfect/imperfect policies complete; **S rank reachable with the parent killed** (imperfect policy: S, 18 400); event coverage complete including `stage`
+- `npm run check:benchmark-scope --base HEAD` — valid
+- Gameplay snapshots (SwiftShader fallback) reviewed at 8/22/24/43/53/58 s; fixed what they exposed (boss geometry outside the lock cone, over-bright crown roots washing out the outro, slab-like light shafts)
+
+**Known warning-band items (non-failing)**: average destruction distance ~53 m and screen-center concentration ~59 % sit above the *warning* thresholds but below the failure gates.
+
+**Needs human eyes (no WebGPU headless here)** — final visual/audio quality is unverified on real hardware. Priority list for a playtest:
+1. The bell reveal at bar 8 (~20 s) — does the bell read as "a green moon filling the view"?
+2. Strand pulse vs. beat, and bloom-slider-at-zero legibility of targets and letters.
+3. The parent fight (~40–55 s): panel/brood legibility, exposure callout, nettle fairness with a 4-point hull.
+4. The post-kill pull-back — camera drift, cleanse surge, and the D-major resolution landing with the summary.
+5. Mix balance: pulse kick vs. bells, and whether kill-melody runs cut through the pads.

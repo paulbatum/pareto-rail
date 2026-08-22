@@ -1,0 +1,22 @@
+{
+  "runId": "run-iz2agir3l4",
+  "slotId": "v1d2",
+  "levelId": "thermal-ink-v1d2",
+  "themeId": "thermal-ink",
+  "themePath": "benchmark/themes/thermal-ink.md",
+  "configurationId": "pi-openrouter-ox-alpha-high",
+  "recipePath": "benchmark/recipes/pi-cli.md",
+  "kind": "benchmark",
+  "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "stealth/ox-alpha",
+    "provider": "openrouter",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v3",
+  "baselinePolicy": "scrubbed",
+  "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+  "levelTitle": "Thermal Ink"
+}

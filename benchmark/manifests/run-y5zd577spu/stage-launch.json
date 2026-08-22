@@ -1,0 +1,32 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-y5zd577spu",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-y5zd577spu/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-y5zd577spu/stages/solo/pi",
+    "--model",
+    "stealth/ox-alpha",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter",
+    "--sandbox",
+    "false",
+    "--resume-round",
+    "1"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-08-22T01:13:11.332Z",
+  "finishedAt": "2026-08-22T01:46:53.487Z",
+  "wallTimeSeconds": 1967.720897959,
+  "stdoutSha256": "de2edbf6a97aabefc5beaba93aca648fc73e6adebde8e1cc610ae0da22997aa2",
+  "stderrSha256": "fea1a1036f38105e594c7e21722ff0e8d88bf56f223115b83d0e06069e9ec272",
+  "stdout": "{\"sessionId\":\"01a02637-29c4-7e6c-a29d-a5b83809c6f2\",\"usage\":{\"inputTokens\":154262,\"outputTokens\":4860,\"cacheReadTokens\":708992,\"cacheWriteTokens\":0,\"reasoningTokens\":0,\"vendorFields\":{\"modelUsage\":{\"stealth/ox-alpha\":{\"outputTokens\":4860,\"costUSD\":0.27942762}}}},\"wallTimeSeconds\":267.760606384}\n",
+  "stderr": "pi ended a turn on an empty completion (assistant message carried no content and zero usage, responseId gen-1787361423-fdU6dBV8wrl6CiJ4cpDi). Resuming the same session (round 2).\npi ended a turn on an empty completion (assistant message carried no content and zero usage, responseId gen-1787361872-UOteSAfYtyRTf1e56OK3). Resuming the same session (round 3).\n[workaround] pi stopped early: the session ended at a threshold compaction. Resuming the same session (round 4). This works around https://github.com/PrimeIntellect-ai/prime-agent/issues/674 and should be removed once that is fixed.\n"
+}

@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-a7pqr4gm2o",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-a7pqr4gm2o/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-a7pqr4gm2o/stages/solo/pi",
+    "--model",
+    "stealth/ox-alpha",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter",
+    "--sandbox",
+    "false"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-08-21T23:32:00.933Z",
+  "finishedAt": "2026-08-22T01:10:29.867Z",
+  "wallTimeSeconds": 5775.372159553,
+  "stdoutSha256": "c1efa5696672f450d20e9c8b526d7ac4927a08d2f5f6f6756c325ea90f862d83",
+  "stderrSha256": "995b75acbbc41957e7ca7f3d9d8064a44916c8a403356ba9abe3bb1e7cfaddff",
+  "stdout": "{\"sessionId\":\"01a026aa-cf0c-7f26-9299-c0a995d1c00c\",\"usage\":{\"inputTokens\":312652,\"outputTokens\":1928,\"cacheReadTokens\":87488,\"cacheWriteTokens\":0,\"reasoningTokens\":0,\"vendorFields\":{\"modelUsage\":{\"stealth/ox-alpha\":{\"outputTokens\":1928,\"costUSD\":0.31872947999999995}}}},\"wallTimeSeconds\":195.22392401400023}\n",
+  "stderr": "pi ended a turn on an empty completion (assistant message carried no content and zero usage, responseId gen-1787360826-KR4sNN9nw0N5iEr1Zoaq). Resuming the same session (round 1).\n"
+}

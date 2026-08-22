@@ -1,0 +1,22 @@
+{
+  "runId": "run-a7pqr4gm2o",
+  "slotId": "nfof",
+  "levelId": "speedsolve-nfof",
+  "themeId": "speedsolve",
+  "themePath": "benchmark/themes/speedsolve.md",
+  "configurationId": "pi-openrouter-ox-alpha-high",
+  "recipePath": "benchmark/recipes/pi-openrouter-ox-alpha-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "stealth/ox-alpha",
+    "provider": "openrouter",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "1f62c1a9e4defd63df805f5a51ac5a558384dd14",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Speedsolve"
+}

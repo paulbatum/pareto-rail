@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T07:31:21.442Z",
+  "generatedAt": "2026-08-22T02:42:39.683Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -932,6 +932,38 @@
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
     {
+      "levelId": "broadside-7hin",
+      "themeId": "broadside",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "modelName": "Ox Alpha",
+      "workflowName": "solo",
+      "linesOfCode": 3257,
+      "run": {
+        "generationWallTimeSeconds": 4619.137,
+        "totalWallTimeSeconds": 15694.88,
+        "result": "completed",
+        "orchestrationTreatment": "unavailable",
+        "harness": {
+          "name": "pi",
+          "version": "0.84.2"
+        },
+        "models": [
+          {
+            "modelName": "stealth/ox-alpha",
+            "role": "solo",
+            "inputTokens": 1153957,
+            "outputTokens": 143428,
+            "cacheReadTokens": 19664000,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed"
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-7hin/hero.avif",
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "ae92bab0a91369a568d5b3b04273c2e209a64131"
+    },
+    {
       "levelId": "broadside-b2o2",
       "themeId": "broadside",
       "configurationId": "pi-kimi-k3-max",
@@ -1505,6 +1537,38 @@
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
     },
     {
+      "levelId": "strandline-o848",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "modelName": "Ox Alpha",
+      "workflowName": "solo",
+      "linesOfCode": 3408,
+      "run": {
+        "generationWallTimeSeconds": 3132.716,
+        "totalWallTimeSeconds": 3205.261,
+        "result": "completed",
+        "orchestrationTreatment": "unavailable",
+        "harness": {
+          "name": "pi",
+          "version": "0.84.2"
+        },
+        "models": [
+          {
+            "modelName": "stealth/ox-alpha",
+            "role": "solo",
+            "inputTokens": 574162,
+            "outputTokens": 110867,
+            "cacheReadTokens": 25303680,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed"
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-o848/hero.avif",
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "ae92bab0a91369a568d5b3b04273c2e209a64131"
+    },
+    {
       "levelId": "strandline-os1a",
       "themeId": "strandline",
       "configurationId": "claude-opus-4-8-high",
@@ -1843,6 +1907,38 @@
       "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+    },
+    {
+      "levelId": "speedsolve-nfof",
+      "themeId": "speedsolve",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "modelName": "Ox Alpha",
+      "workflowName": "solo",
+      "linesOfCode": 3424,
+      "run": {
+        "generationWallTimeSeconds": 5773.164,
+        "totalWallTimeSeconds": 5933.643,
+        "result": "completed",
+        "orchestrationTreatment": "unavailable",
+        "harness": {
+          "name": "pi",
+          "version": "0.84.2"
+        },
+        "models": [
+          {
+            "modelName": "stealth/ox-alpha",
+            "role": "solo",
+            "inputTokens": 4943489,
+            "outputTokens": 142931,
+            "cacheReadTokens": 26407744,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed"
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/speedsolve-nfof/hero.avif",
+      "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+      "materialsCommit": "1f62c1a9e4defd63df805f5a51ac5a558384dd14"
     },
     {
       "levelId": "speedsolve-p4tn",
@@ -2286,6 +2382,38 @@
       "thumbnailPath": "/level-content/thermal-ink-t6nv/hero.avif",
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "thermal-ink-v1d2",
+      "themeId": "thermal-ink",
+      "configurationId": "pi-openrouter-ox-alpha-high",
+      "modelName": "Ox Alpha",
+      "workflowName": "solo",
+      "linesOfCode": 4343,
+      "run": {
+        "generationWallTimeSeconds": 3858.734,
+        "totalWallTimeSeconds": 3888.659,
+        "result": "completed",
+        "orchestrationTreatment": "unavailable",
+        "harness": {
+          "name": "pi",
+          "version": "0.84.2"
+        },
+        "models": [
+          {
+            "modelName": "stealth/ox-alpha",
+            "role": "solo",
+            "inputTokens": 837115,
+            "outputTokens": 139305,
+            "cacheReadTokens": 23984576,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed"
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/thermal-ink-v1d2/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
     {
       "levelId": "thermal-ink-yk97",

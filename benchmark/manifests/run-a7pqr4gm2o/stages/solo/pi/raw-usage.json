@@ -1,0 +1,26 @@
+{
+  "sessionId": "01a026aa-cf0c-7f26-9299-c0a995d1c00c",
+  "emptyCompletion": {
+    "reason": "assistant message carried no content and zero usage",
+    "responseId": "gen-1787360826-KR4sNN9nw0N5iEr1Zoaq"
+  },
+  "toolCalls": 218,
+  "initResolvedModel": "stealth/ox-alpha",
+  "assistantMessageCount": 216,
+  "finalMessage": "",
+  "normalized": {
+    "inputTokens": 4630837,
+    "outputTokens": 141003,
+    "cacheReadTokens": 26320256,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/ox-alpha": {
+          "outputTokens": 141003,
+          "costUSD": 9.174548109999995
+        }
+      }
+    }
+  }
+}

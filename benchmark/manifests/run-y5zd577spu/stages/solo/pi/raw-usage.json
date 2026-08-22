@@ -1,0 +1,22 @@
+{
+  "sessionId": "01a02637-29c4-7e6c-a29d-a5b83809c6f2",
+  "toolCalls": 77,
+  "initResolvedModel": "stealth/ox-alpha",
+  "assistantMessageCount": 57,
+  "finalMessage": "",
+  "normalized": {
+    "inputTokens": 486444,
+    "outputTokens": 105062,
+    "cacheReadTokens": 5669952,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/ox-alpha": {
+          "outputTokens": 105062,
+          "costUSD": 1.7895621199999996
+        }
+      }
+    }
+  }
+}

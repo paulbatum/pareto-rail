@@ -1,0 +1,40 @@
+{
+  "result": "completed",
+  "emptyCompletionContinuations": [
+    {
+      "round": 1,
+      "reason": "assistant message carried no content and zero usage",
+      "responseId": "gen-1787360826-KR4sNN9nw0N5iEr1Zoaq",
+      "startedAt": "2026-08-22T01:07:09.489Z",
+      "finishedAt": "2026-08-22T01:10:29.735Z",
+      "exitCode": 0,
+      "toolCalls": 6
+    }
+  ],
+  "emptyCompletionCleared": true,
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "01a026aa-cf0c-7f26-9299-c0a995d1c00c",
+  "usageSha256": "eba8e926bc48dcac39475b3755af18101d1cf3761b3bbe9d60332a31992854c6",
+  "eventLogSha256": "9c3e573180e5c713057e3d5184db9fbb7718dcdfd863702d36c79dd14d65b855",
+  "stderrSha256": "f4d1030a5f88e92e566d15faf7b0ab8bf77a194a5f6148b684678834006ba826",
+  "eventLog": {
+    "retained": "all events except message_update",
+    "droppedLines": 45026,
+    "files": [
+      {
+        "path": "events.jsonl",
+        "droppedLines": 44472
+      },
+      {
+        "path": "events-resume-1.jsonl",
+        "droppedLines": 554
+      }
+    ]
+  },
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-a7pqr4gm2o/harness-home/sessions/--tmp-pareto-rail-run-a7pqr4gm2o--/2026-08-21T23-32-03-468Z_01a026aa-cf0c-7f26-9299-c0a995d1c00c.jsonl",
+    "sha256": "8da6b4672919e0c96b8ffa54f5c13e4c175c962f37b66d9981a1908faa434d03"
+  }
+}

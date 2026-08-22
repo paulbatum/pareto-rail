@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-iz2agir3l4",
+  "slotId": "v1d2",
+  "configuration": {
+    "id": "pi-openrouter-ox-alpha-high"
+  },
+  "theme": {
+    "id": "thermal-ink",
+    "path": "benchmark/themes/thermal-ink.md",
+    "sha256": "e73f34c0e5245c1d99f9e882650f3b83bbcddfdce3638a24ef1b28e3b759f979"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-cli.md",
+    "sha256": "5fcb9e6686bcf1b1e697f36434da3eab5674e28b7550c2442d57f2ebd6a3bf1b"
+  },
+  "controller": {
+    "commit": "0a6e43802df0722756da2ffe7e29ea2a8e8520dc"
+  },
+  "timing": {
+    "startedAt": "2026-08-21T17:50:20.651Z",
+    "finishedAt": "2026-08-21T18:55:09.310Z",
+    "wallTimeSeconds": 3888.659
+  },
+  "stages": [
+    {
+      "id": "stealth/ox-alpha",
+      "role": "solo",
+      "model": {
+        "provider": "pi provider openrouter",
+        "snapshotId": "stealth/ox-alpha"
+      },
+      "promptSha256": "4eddbd4bf7c96445694021295005778a2053415310144c69a065dfd7697685f3",
+      "harness": {
+        "name": "pi",
+        "version": "0.84.2"
+      },
+      "sessionId": "01a02572-2b4d-784b-8cfc-27d9335b3045",
+      "rolloutArtifactSha256": "f334ed08fef289a7672f6ab44758c1ae9491cc6067ebf673e97d0044311ec828",
+      "outputArtifactSha256": "2990c08f52aeb27547f04cf18543603869f2137cf4f78c8bd5036b5f511e0da6",
+      "startedAt": "2026-08-21T17:50:33.587Z",
+      "finishedAt": "2026-08-21T18:54:52.321Z",
+      "wallTimeSeconds": 3858.733837983,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 837115,
+        "outputTokens": 139305,
+        "cacheReadInputTokens": 23984576
+      },
+      "pricing": {
+        "status": "unavailable",
+        "reason": "OpenRouter publishes stealth/ox-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge."
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "unavailable",
+    "unavailableReason": "OpenRouter publishes stealth/ox-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge.",
+    "orchestrationTreatment": "unavailable",
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "stealth/ox-alpha",
+        "usageSource": "agreed",
+        "inputTokens": 837115,
+        "outputTokens": 139305,
+        "cacheReadTokens": 23984576,
+        "cacheWriteTokens": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.386648787,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 4.027953571,
+      "outputSha256": "c3d1e0611bf366617f5829a9cca70f64e13dbfc5efe5382c36cf8f1fdcd3dae6"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level thermal-ink-v1d2 --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.0391186230000003,
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level thermal-ink-v1d2",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 8.695403718000001,
+      "outputSha256": "80ac24d5baab56a3fb822709a420c4384b97e3accee7e9b4457f66cd1993a512"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "thermal-ink-v1d2",
+    "title": "Thermal Ink",
+    "evaluated": {
+      "commit": "6fa858f6189a985934d39f291a9ff096ec946461",
+      "branch": "benchmark-run-run-iz2agir3l4"
+    },
+    "payload": {
+      "commit": "2c21ad84d4e1c6ccbd40df2c0e82fe2542f9ca5d",
+      "branch": "benchmark-payload-run-iz2agir3l4"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

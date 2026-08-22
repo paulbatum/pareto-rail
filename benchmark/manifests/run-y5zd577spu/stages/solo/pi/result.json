@@ -1,0 +1,73 @@
+{
+  "result": "completed",
+  "compactionContinuations": [
+    {
+      "round": 4,
+      "reason": "the session ended at a threshold compaction",
+      "startedAt": "2026-08-22T01:42:17.785Z",
+      "finishedAt": "2026-08-22T01:46:53.312Z",
+      "exitCode": 0,
+      "toolCalls": 21
+    }
+  ],
+  "compactionSettled": false,
+  "compactionWorkaround": "https://github.com/PrimeIntellect-ai/prime-agent/issues/674",
+  "emptyCompletionContinuations": [
+    {
+      "round": 2,
+      "reason": "assistant message carried no content and zero usage",
+      "responseId": "gen-1787361423-fdU6dBV8wrl6CiJ4cpDi",
+      "startedAt": "2026-08-22T01:20:03.768Z",
+      "finishedAt": "2026-08-22T01:27:32.020Z",
+      "exitCode": 0,
+      "toolCalls": 17
+    },
+    {
+      "round": 3,
+      "reason": "assistant message carried no content and zero usage",
+      "responseId": "gen-1787361872-UOteSAfYtyRTf1e56OK3",
+      "startedAt": "2026-08-22T01:27:32.024Z",
+      "finishedAt": "2026-08-22T01:42:17.777Z",
+      "exitCode": 0,
+      "toolCalls": 30
+    }
+  ],
+  "emptyCompletionCleared": true,
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "01a02637-29c4-7e6c-a29d-a5b83809c6f2",
+  "usageSha256": "56f4b52b44bbbb6d0472a16afa1a5d69299f46275e3e59bbd8a761c430a72c80",
+  "eventLogSha256": "8fe12450ea41bda01a0a427e10c1f4fd8004256cb9e75c9be7992c17a9d6b349",
+  "stderrSha256": "f4d1030a5f88e92e566d15faf7b0ab8bf77a194a5f6148b684678834006ba826",
+  "eventLog": {
+    "retained": "all events except message_update",
+    "droppedLines": 14113,
+    "files": [
+      {
+        "path": "events.jsonl",
+        "droppedLines": 0
+      },
+      {
+        "path": "events-resume-1.jsonl",
+        "droppedLines": 2269
+      },
+      {
+        "path": "events-resume-2.jsonl",
+        "droppedLines": 2908
+      },
+      {
+        "path": "events-resume-3.jsonl",
+        "droppedLines": 6630
+      },
+      {
+        "path": "events-resume-4.jsonl",
+        "droppedLines": 2306
+      }
+    ]
+  },
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-y5zd577spu/harness-home/sessions/--tmp-pareto-rail-run-y5zd577spu--/2026-08-21T21-25-44-516Z_01a02637-29c4-7e6c-a29d-a5b83809c6f2.jsonl",
+    "sha256": "fb5c08ac500f1e4ce01f41fc07a6397fe073d994dfaf4ff18b1a7a332643f87f"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "runId": "run-y5zd577spu",
+  "slotId": "7hin",
+  "levelId": "broadside-7hin",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "pi-openrouter-ox-alpha-high",
+  "recipePath": "benchmark/recipes/pi-openrouter-ox-alpha-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "stealth/ox-alpha",
+    "provider": "openrouter",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "ae92bab0a91369a568d5b3b04273c2e209a64131",
+  "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
+  "levelTitle": "Broadside"
+}

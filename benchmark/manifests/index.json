@@ -184,6 +184,18 @@
       "configurationId": "claude-opus-4-8-high-b20"
     },
     {
+      "runId": "run-a7pqr4gm2o",
+      "levelId": "speedsolve-nfof",
+      "themeId": "speedsolve",
+      "configurationId": "pi-openrouter-ox-alpha-high"
+    },
+    {
+      "runId": "run-aoefz3t98p",
+      "levelId": "strandline-o848",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-ox-alpha-high"
+    },
+    {
       "runId": "run-c340azfgk0vd",
       "levelId": "mass-driver-9281",
       "themeId": "mass-driver",
@@ -201,6 +213,12 @@
       "levelId": "mass-driver-esvz",
       "themeId": "mass-driver",
       "configurationId": "claude-fable-5-high-b20"
+    },
+    {
+      "runId": "run-iz2agir3l4",
+      "levelId": "thermal-ink-v1d2",
+      "themeId": "thermal-ink",
+      "configurationId": "pi-openrouter-ox-alpha-high"
     },
     {
       "runId": "run-pnpwjrxhz8uu",
@@ -346,6 +364,12 @@
       "levelId": "skyhook-snxd",
       "themeId": "skyhook",
       "configurationId": "claude-fable-5-high"
+    },
+    {
+      "runId": "run-y5zd577spu",
+      "levelId": "broadside-7hin",
+      "themeId": "broadside",
+      "configurationId": "pi-openrouter-ox-alpha-high"
     },
     {
       "runId": "sol-b20-broadside-b3fk",

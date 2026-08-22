@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "f16adc5c3a6bcfe0ee0549bf5e58ddc5acc8554233fd2765612250c4bc65a4e4"
+  },
+  "theme": {
+    "path": "benchmark/themes/strandline.md",
+    "sha256": "31621cb405a2b293bf0f7026add0b462312e75c44dfcea3a8549b1fd9616bff1"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-openrouter-ox-alpha-high.md",
+    "sha256": "b1cd4c4a7ba5e8030c05cc5f71fcfb97954766b276900a4f56ec6ead16c86a8c"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/run-aoefz3t98p/rendered-assignment.md",
+    "sha256": "3b7b583d44be69b95fc50ea4e20c39624030239f3745a123ea881b22c9dd1315"
+  },
+  "baseRendering": {
+    "sha256": "3b7b583d44be69b95fc50ea4e20c39624030239f3745a123ea881b22c9dd1315"
+  }
+}

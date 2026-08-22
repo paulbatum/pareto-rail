@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-aoefz3t98p",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-aoefz3t98p/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-aoefz3t98p/stages/solo/pi",
+    "--model",
+    "stealth/ox-alpha",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter",
+    "--sandbox",
+    "false"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-08-21T22:11:43.061Z",
+  "finishedAt": "2026-08-21T23:04:38.477Z",
+  "wallTimeSeconds": 3135.136956068,
+  "stdoutSha256": "943480f2f3ab3f7e60d50d3765dd73723e33ed3b250cf7b72de0f52fa6fa33d2",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"01a02661-4c02-7f0f-b503-993de083a5a0\",\"usage\":{\"inputTokens\":574162,\"outputTokens\":110867,\"cacheReadTokens\":25303680,\"cacheWriteTokens\":0,\"reasoningTokens\":0,\"vendorFields\":{\"modelUsage\":{\"stealth/ox-alpha\":{\"outputTokens\":110867,\"costUSD\":5.0375107}}}},\"wallTimeSeconds\":3132.715589691}\n",
+  "stderr": ""
+}
