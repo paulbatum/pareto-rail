@@ -1,4 +1,9 @@
 {
   "id": "strandline-o848",
-  "title": "Strandline"
+  "title": "Strandline",
+  "contentImages": {
+    "overview": "/level-content/strandline-o848/overview.avif",
+    "start": "/level-content/strandline-o848/start.avif",
+    "hero": "/level-content/strandline-o848/hero.avif"
+  }
 }
