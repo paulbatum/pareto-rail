@@ -1,16 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mitLicense from '../../../LICENSE?raw';
 import thirdPartyNotices from '../../../THIRD_PARTY_NOTICES.md?raw';
 import aboutContent from '../about.md?raw';
 import readme from '../../../README.md?raw';
-import { levelMetadatas, benchmarkLevelCatalog } from '../../levels';
+import { levelMetadatas } from '../../levels';
 import { findCatalogEntrant, rankCatalog, schedulingPool } from '../../benchmark/catalog';
 import { completedMatchupsFromVotes } from '../../benchmark/catalog-api';
 import { nextScheduledMatchup } from '../../benchmark/scheduler';
 import { BenchmarkLocalStore } from '../../benchmark/storage';
 import { homeCopy } from '../content';
 import { featuredModels } from '../featured-models';
-import { modelsWithMatchups, unpricedModels } from '../model-match';
 import { RouteLink } from '../components/RouteLink';
 import { Markdown, markdownRegion } from '../components/Markdown';
 import { CurveChartFigure, CurveLegend, CurveTable } from '../components/curve-chart';
@@ -24,15 +23,6 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
   // mount so it cannot change under them mid-view. Derived rather than named:
   // naming ids here leaked other entrants' ids into every entrant checkout.
   const [rankPreviewHeroes] = useState(scheduledPreviewHeroes);
-  // The callout names a featured model that publishes no price, and only when a
-  // theme pairs one of its levels against another model's, which is what a ranked
-  // comparison needs. It disappears on its own once the model is priced.
-  const stealthModel = useMemo(() => {
-    const playable = new Set(benchmarkLevelCatalog.map((level) => level.id));
-    const unpriced = unpricedModels({ playable });
-    const matchable = modelsWithMatchups({ playable });
-    return featuredModels.map((model) => model.name).find((name) => unpriced.has(name) && matchable.has(name)) ?? null;
-  }, []);
 
   return (
     <>
@@ -98,15 +88,6 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
           </RouteLink>
         </article>
       </section>
-      {stealthModel && (
-        <section className="home-stealth">
-          <div className="home-stealth-copy">
-            <h2>{homeCopy.stealth.title(stealthModel)}</h2>
-            <p>{homeCopy.stealth.body}</p>
-          </div>
-          <RouteLink className="button primary" href="/rank" onNavigate={onNavigate}>{homeCopy.stealth.action}</RouteLink>
-        </section>
-      )}
     </>
   );
 }

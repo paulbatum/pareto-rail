@@ -7,13 +7,6 @@ export const homeCopy = {
     heading: 'Featuring',
     newTag: 'New',
   },
-  /** Shown only while a featured model has levels in ranked play and no published
-   * price. */
-  stealth: {
-    title: (name: string) => `${name} is ranked without a price`,
-    body: 'Its model publishes no price, so the quality vs cost chart leaves it out and the quality vs output tokens chart carries it. Your votes on its levels count like any other.',
-    action: 'Compare two levels',
-  },
   reference: {
     eyebrow: 'Recommended first',
     title: 'Play the reference level',

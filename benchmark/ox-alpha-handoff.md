@@ -19,7 +19,7 @@
 - The configuration is featured, so it takes part in the pairs a first-time visitor's opening comparison is drawn from.
 - The levels page files its levels under the `stealth` category: shown by default, playable, badged "Stealth", and priced as "Not priced".
 - The model id sits in `UNPRICED_MODELS` in `scripts/benchmark/run.mjs`, so a further run on it also records an unavailable cost.
-- The home page names Ox Alpha in its "Featuring" list and carries a callout saying it is ranked without a price, whose button opens `/rank`. The callout is derived from the missing cost, so it disappears by itself once the model is priced.
+- The home page names Ox Alpha in its "Featuring" list. Nothing else on that page singles the model out.
 
 ## When the model is named and priced
 

@@ -6,10 +6,6 @@ export function modelSlug(modelName: string): string {
   return modelName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-export function modelMatchPath(modelName: string): string {
-  return `/match?model=${encodeURIComponent(modelSlug(modelName))}`;
-}
-
 export interface ModelMatchupOptions {
   /** Level ids whose module is present, so the pair is playable. The caller
    * supplies it: this module stays clear of the level registry, which only a
@@ -50,22 +46,6 @@ export function matchupForModel(slug: string, options: ModelMatchupOptions): { a
   const theirs = pick(inTheme.filter((entrant) => !isModel(entrant)).map((entrant) => entrant.levelId).sort(), random);
   if (mine === null || theirs === null) return null;
   return random() < 0.5 ? { a: mine, b: theirs } : { a: theirs, b: mine };
-}
-
-/** Models with a playable level and no priced entrant anywhere in the catalog.
- * Such a model is ranked like any other; it has no position on the cost chart. */
-export function unpricedModels(options: ModelMatchupOptions): ReadonlySet<string> {
-  const catalog = options.catalog ?? rankCatalog;
-  const playableEntrants = catalog.entrants.filter((entrant) => options.playable.has(entrant.levelId));
-  const priced = new Set(catalog.entrants.filter((entrant) => entrant.generationCost !== undefined).map((entrant) => entrant.modelName));
-  return new Set(playableEntrants.map((entrant) => entrant.modelName).filter((name) => !priced.has(name)));
-}
-
-/** Every model name in the catalog that a `/match?model=` link can be built for. */
-export function modelsWithMatchups(options: ModelMatchupOptions): ReadonlySet<string> {
-  const catalog = options.catalog ?? rankCatalog;
-  const names = new Set(catalog.entrants.map((entrant) => entrant.modelName));
-  return new Set([...names].filter((name) => matchupForModel(modelSlug(name), { ...options, random: () => 0 }) !== null));
 }
 
 function pick<T>(items: readonly T[], random: () => number): T | null {

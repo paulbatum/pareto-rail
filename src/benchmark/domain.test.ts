@@ -10,7 +10,7 @@ import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type
 import { configurationGroupResolver } from './identity';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { CustomMatchController } from '../app/match';
-import { matchupForModel, modelMatchPath, modelSlug, modelsWithMatchups } from '../app/model-match';
+import { matchupForModel, modelSlug } from '../app/model-match';
 import { parseRoute, routePath } from '../app/router';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import { ComparisonStateMachine } from './state';
@@ -137,7 +137,6 @@ function testMatchRouteParsing(): void {
 function testModelMatchupDraw(): void {
   assert.equal(modelSlug('GPT-5.6 Sol'), 'gpt-5-6-sol');
   assert.equal(modelSlug('Ox Alpha'), 'ox-alpha');
-  assert.equal(modelMatchPath('Ox Alpha'), '/match?model=ox-alpha');
 
   const entrant = (levelId: string, themeId: string, modelName: string): RankCatalogEntrant =>
     ({ levelId, themeId, configurationId: `${modelSlug(modelName)}-solo`, modelName, workflowName: 'solo', generationCost: 1 });
@@ -161,7 +160,6 @@ function testModelMatchupDraw(): void {
   assert.equal(matchupForModel('no-such-model', { catalog, playable, random: () => 0 }), null);
   // With the opponent unplayable, th-b has nothing to offer either.
   assert.equal(matchupForModel('ox-alpha', { catalog, playable: new Set(['lv-mine-b']), random: () => 0 }), null);
-  assert.deepEqual([...modelsWithMatchups({ catalog, playable })].sort(), ['Other Model', 'Ox Alpha']);
 }
 
 function testCustomMatchController(): void {

@@ -12,8 +12,6 @@ Client-side via the History API (`src/app/router.ts`). An unrecognized path reso
 
 The "Featuring" list is hand-maintained copy in `src/app/featured-models.md`, not a projection of the catalog; `docs`-worthy rules for its format live in that file's own prose.
 
-Below the two start cards sits one conditional callout, shown while a featured model has playable levels and no published price. `unpricedModels` and `modelsWithMatchups` (`src/app/model-match.ts`) decide that from the catalog, so the callout appears and disappears on its own as costs are published. It says the model is in ranked play and is charted against output tokens rather than against cost, and its button is a `/rank` link, the only path that records a vote.
-
 ## The `/levels` pages
 
 `/levels` browses every level as a thumbnail gallery; `/levels/data` shows the catalog tree and full run records. Both are driven by the rank catalog and the built-in registry, so a benchmark level reaches these pages by being published to the catalog.
