@@ -1,10 +1,39 @@
 import { useRef, useState } from 'react';
-import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
+import { paretoFrontier, type PersonalCurve, type PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { workflowQualifier } from '../../benchmark/identity';
 import { rankCatalog } from '../../benchmark/catalog';
 import { configurationGroupEfforts } from '../../benchmark/identity';
 
 export const CURVE_CHART = { width: 720, height: 410, left: 72, right: 24, top: 42, bottom: 68 } as const;
+
+/** The quantity a chart places its points on the horizontal axis by. Both charts
+ * share the rating axis, so the axis is the only difference between them. */
+export interface CurveAxis {
+  id: string;
+  value: (point: PersonalRatingPoint) => number;
+  /** Axis title drawn under the plot. */
+  title: string;
+  /** Tick label, e.g. `$12` or `240k`. */
+  formatTick: (value: number) => string;
+  /** Tooltip and table figure, e.g. `$12.40` or `239,120`. */
+  formatValue: (value: number) => string;
+}
+
+export const COST_AXIS: CurveAxis = {
+  id: 'cost',
+  value: (point) => point.meanCost,
+  title: 'Measured generation cost (USD)',
+  formatTick: (value) => `$${formatCostTick(value)}`,
+  formatValue: (value) => `$${value.toFixed(2)}`,
+};
+
+export const OUTPUT_TOKENS_AXIS: CurveAxis = {
+  id: 'output-tokens',
+  value: (point) => point.meanOutputTokens,
+  title: 'Mean output tokens',
+  formatTick: formatTokenTick,
+  formatValue: (value) => Math.round(value).toLocaleString('en-US'),
+};
 
 export type PlottedCurvePoint = PersonalRatingPoint & {
   rating: number;
@@ -17,8 +46,9 @@ export type PlottedCurvePoint = PersonalRatingPoint & {
  * frontier path. Kept separate from the rendering so the rank page's debug
  * export can describe exactly what was drawn. */
 export interface CurveChartLayout {
-  costMax: number;
-  costTicks: readonly number[];
+  axis: CurveAxis;
+  xMax: number;
+  xTicks: readonly number[];
   ratingMin: number;
   ratingMax: number;
   ratingTicks: readonly number[];
@@ -47,34 +77,47 @@ export function ratedCurvePoints(curve: PersonalCurve): (PersonalRatingPoint & {
 /** Axis ticks two charts can share so their points are read against the same
  * scale. Derived from the union of both point sets. */
 export interface CurveDomain {
-  costTicks: readonly number[];
+  xTicks: readonly number[];
   ratingTicks: readonly number[];
 }
 
-export function curveDomain(points: readonly (PersonalRatingPoint & { rating: number })[]): CurveDomain {
+export function curveDomain(points: readonly (PersonalRatingPoint & { rating: number })[], axis: CurveAxis = COST_AXIS): CurveDomain {
   return {
-    costTicks: ticksFromZero(Math.max(...points.map((point) => point.meanCost), 1), 4),
+    xTicks: ticksFromZero(Math.max(...points.map((point) => axis.value(point)), 1), 4),
     ratingTicks: boundedTicks(Math.min(...points.map((point) => point.rating)), Math.max(...points.map((point) => point.rating)), 4),
   };
 }
 
-export function layoutCurveChart(points: readonly (PersonalRatingPoint & { rating: number })[], domain: CurveDomain = curveDomain(points)): CurveChartLayout {
-  const { costTicks, ratingTicks } = domain;
-  const costMax = costTicks.at(-1) ?? 1;
+export function layoutCurveChart(
+  points: readonly (PersonalRatingPoint & { rating: number })[],
+  axis: CurveAxis = COST_AXIS,
+  domain: CurveDomain = curveDomain(points, axis),
+): CurveChartLayout {
+  const { xTicks, ratingTicks } = domain;
+  const xMax = xTicks.at(-1) ?? 1;
   const ratingMin = ratingTicks[0] ?? 950;
   const ratingMax = ratingTicks.at(-1) ?? 1050;
   const plotWidth = CURVE_CHART.width - CURVE_CHART.left - CURVE_CHART.right;
   const plotHeight = CURVE_CHART.height - CURVE_CHART.top - CURVE_CHART.bottom;
+  // The frontier is drawn for the axis in view: a configuration that wins on cost
+  // need not win on tokens. Both charts draw it through established points only,
+  // the same rule the curve fit applies.
+  const frontierIds = new Set(paretoFrontier(points
+    .filter((point) => point.status === 'established')
+    .map((point) => ({ configurationId: point.configurationId, meanCost: axis.value(point), rating: point.rating })))
+    .map((point) => point.configurationId));
   const plotted = spreadCurveLabels(points.map((point) => ({
     ...point,
-    x: CURVE_CHART.left + (point.meanCost / costMax) * plotWidth,
+    frontier: frontierIds.has(point.configurationId),
+    x: CURVE_CHART.left + (axis.value(point) / xMax) * plotWidth,
     y: CURVE_CHART.top + ((ratingMax - point.rating) / (ratingMax - ratingMin)) * plotHeight,
     labelY: 0,
   })));
   const frontier = plotted.filter((point) => point.frontier).sort((left, right) => left.x - right.x);
   return {
-    costMax,
-    costTicks,
+    axis,
+    xMax,
+    xTicks,
     ratingMin,
     ratingMax,
     ratingTicks,
@@ -84,7 +127,9 @@ export function layoutCurveChart(points: readonly (PersonalRatingPoint & { ratin
 }
 
 export interface CurveChartLabels {
-  /** Y axis title, e.g. "Your preference rating · higher is better →". */
+  /** Heading above the plot, e.g. "Quality vs cost". */
+  title?: string;
+  /** Y axis title, e.g. "Your preference rating". */
   ratingAxisTitle: string;
   /** Screen-reader description of the whole plot. */
   chartDescription: string;
@@ -94,17 +139,17 @@ export interface CurveChartLabels {
 
 export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout; labels: CurveChartLabels }) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const { costMax, ratingMin, ratingMax, costTicks, ratingTicks, plotted, frontierPath } = layout;
+  const { axis, xMax, ratingMin, ratingMax, xTicks, ratingTicks, plotted, frontierPath } = layout;
   const plotWidth = CURVE_CHART.width - CURVE_CHART.left - CURVE_CHART.right;
   const plotHeight = CURVE_CHART.height - CURVE_CHART.top - CURVE_CHART.bottom;
   const active = plotted.find((point) => point.configurationId === activeId) ?? null;
 
-  return <div className="curve-chart-wrap">
+  const chart = <div className="curve-chart-wrap">
     <svg className="curve-chart" viewBox={`0 0 ${CURVE_CHART.width} ${CURVE_CHART.height}`} role="img" aria-label={labels.chartDescription}>
       <g className="chart-grid">
-        {costTicks.map((tick) => {
-          const x = CURVE_CHART.left + (tick / costMax) * plotWidth;
-          return <g key={`cost-${tick}`}><line x1={x} y1={CURVE_CHART.top} x2={x} y2={CURVE_CHART.top + plotHeight} /><text x={x} y={CURVE_CHART.top + plotHeight + 24} textAnchor="middle">${formatCostTick(tick)}</text></g>;
+        {xTicks.map((tick) => {
+          const x = CURVE_CHART.left + (tick / xMax) * plotWidth;
+          return <g key={`x-${tick}`}><line x1={x} y1={CURVE_CHART.top} x2={x} y2={CURVE_CHART.top + plotHeight} /><text x={x} y={CURVE_CHART.top + plotHeight + 24} textAnchor="middle">{axis.formatTick(tick)}</text></g>;
         })}
         {ratingTicks.map((tick) => {
           const y = CURVE_CHART.top + ((ratingMax - tick) / (ratingMax - ratingMin)) * plotHeight;
@@ -114,7 +159,7 @@ export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout;
       <g className="chart-axes">
         <line x1={CURVE_CHART.left} y1={CURVE_CHART.top + plotHeight} x2={CURVE_CHART.left + plotWidth} y2={CURVE_CHART.top + plotHeight} />
         <line x1={CURVE_CHART.left} y1={CURVE_CHART.top} x2={CURVE_CHART.left} y2={CURVE_CHART.top + plotHeight} />
-        <text className="axis-title" x={CURVE_CHART.left + plotWidth / 2} y={CURVE_CHART.height - 10} textAnchor="middle">Measured generation cost (USD) · lower is better ←</text>
+        <text className="axis-title" x={CURVE_CHART.left + plotWidth / 2} y={CURVE_CHART.height - 10} textAnchor="middle">{axis.title}</text>
         <text className="axis-title" x="17" y={CURVE_CHART.top + plotHeight / 2} textAnchor="middle" transform={`rotate(-90 17 ${CURVE_CHART.top + plotHeight / 2})`}>{labels.ratingAxisTitle}</text>
       </g>
       {frontierPath && <path className="frontier-line" d={frontierPath} />}
@@ -122,7 +167,7 @@ export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout;
         {plotted.map((point) => {
           const labelOnLeft = point.x > CURVE_CHART.width * .62;
           const labelX = point.x + (labelOnLeft ? -14 : 14);
-          return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. Mean cost $${point.meanCost.toFixed(2)}. ${evidenceText(point)}. Status: ${statusLabel(point.status)}.${point.frontier ? ' On the Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
+          return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. ${axis.title}: ${axis.formatValue(axis.value(point))}. ${evidenceText(point)}. Status: ${statusLabel(point.status)}.${point.frontier ? ' On the Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
             <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
             <circle cx={point.x} cy={point.y} r={point.frontier ? 8 : 6} />
           </g>;
@@ -143,10 +188,13 @@ export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout;
     </svg>
     {active && <div className={`curve-tooltip${active.x > CURVE_CHART.width * .62 ? ' align-right' : ''}`} style={{ left: `${active.x / CURVE_CHART.width * 100}%`, top: `${active.y / CURVE_CHART.height * 100}%` }} role="status">
       <strong>{effortSuffix(active.configurationId) ? `${active.modelName} ${effortSuffix(active.configurationId)}` : active.modelName}</strong>{workflowQualifier(active.workflowName) && <span>{workflowQualifier(active.workflowName)}</span>}
-      <dl><div><dt>{labels.ratingTerm}</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>${active.meanCost.toFixed(2)}</dd></div><div><dt>Evidence</dt><dd>{evidenceText(active)}</dd></div></dl>
+      <dl><div><dt>{labels.ratingTerm}</dt><dd>{active.rating.toFixed(0)}</dd></div><div><dt>Mean cost</dt><dd>${active.meanCost.toFixed(2)}</dd></div><div><dt>Mean output</dt><dd>{OUTPUT_TOKENS_AXIS.formatValue(active.meanOutputTokens)}</dd></div><div><dt>Evidence</dt><dd>{evidenceText(active)}</dd></div></dl>
       <p>{statusLabel(active.status)} · {placementText(active)}</p>
     </div>}
   </div>;
+
+  if (!labels.title) return chart;
+  return <figure className="curve-figure"><figcaption className="chart-title">{labels.title}</figcaption>{chart}</figure>;
 }
 
 export function CurveLegend() {
@@ -157,12 +205,13 @@ export function CurveTable({ points, caption, ratingTerm }: { points: readonly P
   const ordered = [...points].sort((left, right) => (right.rating ?? -Infinity) - (left.rating ?? -Infinity) || left.configurationId.localeCompare(right.configurationId));
   const ratingRange = valueRange(ordered.flatMap((point) => (point.rating === undefined ? [] : [point.rating])));
   const costRange = valueRange(ordered.map((point) => point.meanCost));
-  return <div className="curve-table-wrap"><table className="curve-table"><caption>{caption}</caption><thead><tr><th scope="col">Model</th><th scope="col">Matches</th><th scope="col">Record</th><th scope="col">{ratingTerm}</th><th scope="col">Mean cost</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
+  const tokenRange = valueRange(ordered.map((point) => point.meanOutputTokens));
+  return <div className="curve-table-wrap"><table className="curve-table"><caption>{caption}</caption><thead><tr><th scope="col">Model</th><th scope="col">Matches</th><th scope="col">Record</th><th scope="col">{ratingTerm}</th><th scope="col">Mean cost</th><th scope="col">Mean output tokens</th><th scope="col">Status</th></tr></thead><tbody>{ordered.map((point) => {
     const record = point.comparisons === 0
       ? <span aria-label="No comparisons yet">—</span>
       : <span aria-label={recordAriaLabel(point)}><span className="record-wins">{point.wins}</span>–<span className="record-ties">{point.ties}</span>–<span className="record-losses">{point.losses}</span></span>;
     const effort = effortSuffix(point.configurationId);
-    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{point.comparisons}</td><td className="record-cell">{record}</td><td style={point.rating === undefined ? undefined : { color: rampColor('--value-high', ratingRange(point.rating)) }}>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td style={{ color: rampColor('--value-costly', costRange(point.meanCost)) }}>${point.meanCost.toFixed(2)}</td><td className={point.frontier ? 'frontier-status' : ''}>{point.frontier ? 'Frontier' : statusLabel(point.status)}</td></tr>;
+    return <tr key={point.configurationId}><th scope="row"><strong>{effort ? `${point.modelName} ${effort}` : point.modelName}</strong><WorkflowQualifier workflowName={point.workflowName} /></th><td>{point.comparisons}</td><td className="record-cell">{record}</td><td style={point.rating === undefined ? undefined : { color: rampColor('--value-high', ratingRange(point.rating)) }}>{point.rating === undefined ? '—' : point.rating.toFixed(0)}</td><td style={{ color: rampColor('--value-costly', costRange(point.meanCost)) }}>${point.meanCost.toFixed(2)}</td><td style={{ color: rampColor('--value-costly', tokenRange(point.meanOutputTokens)) }}>{OUTPUT_TOKENS_AXIS.formatValue(point.meanOutputTokens)}</td><td className={point.frontier ? 'frontier-status' : ''}>{point.frontier ? 'Frontier' : statusLabel(point.status)}</td></tr>;
   })}</tbody></table></div>;
 }
 
@@ -249,6 +298,13 @@ function niceStep(value: number): number {
 }
 
 function formatCostTick(value: number): string { return value < 10 && value % 1 !== 0 ? value.toFixed(1) : value.toFixed(0); }
+
+function formatTokenTick(value: number): string {
+  if (value === 0) return '0';
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`;
+  return value.toFixed(0);
+}
 
 function spreadCurveLabels<T extends PlottedCurvePoint>(points: T[]): T[] {
   const ordered = [...points].sort((a, b) => a.y - b.y);

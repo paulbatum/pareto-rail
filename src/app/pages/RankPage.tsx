@@ -4,7 +4,7 @@ import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, RevealPayload, VoteVerdict } from '../../benchmark/types';
 import type { PersonalCurve, PersonalRatingPoint } from '../../benchmark/personal-curve';
 import { entrantLabel } from '../../benchmark/identity';
-import { CURVE_CHART, CurveChartFigure, CurveLegend, CurveTable, layoutCurveChart, ratedCurvePoints, type CurveChartLayout, type PlottedCurvePoint } from '../components/curve-chart';
+import { COST_AXIS, CURVE_CHART, CurveChartFigure, CurveLegend, CurveTable, OUTPUT_TOKENS_AXIS, layoutCurveChart, ratedCurvePoints, type CurveChartLayout, type PlottedCurvePoint } from '../components/curve-chart';
 import { CatalogBenchmarkApi, type CompletedMatchup } from '../../benchmark/catalog-api';
 import { findCatalogTheme, rankCatalog } from '../../benchmark/catalog';
 import { BenchmarkLocalStore } from '../../benchmark/storage';
@@ -145,11 +145,11 @@ function PersonalCurve({ controller }: { controller: RankController }) {
   const copyDebugData = async (stage: CurveDebugStage, chart?: CurveChartLayout) => {
     const judgments = controller.judgedMatchups;
     const lines = [
-      `PARETO RAIL PERSONAL CURVE DEBUG v4 | stage=${stage} | exported=${new Date().toISOString()} | comparisons=${curve.comparisonCount} | configurations=${curve.points.length}`,
+      `PARETO RAIL PERSONAL CURVE DEBUG v5 | stage=${stage} | exported=${new Date().toISOString()} | comparisons=${curve.comparisonCount} | configurations=${curve.points.length}`,
       'ALGORITHM | regularized Bradley-Terry | anchor=1 | pseudo-result=tie | rating=1000+400log10(strength)',
       `THRESHOLD | comparisonsRequired=${curve.comparisonsRequired} | established=${curve.establishedCount} | rule=max(3, ceil(0.8 * median comparisons))`,
       ...(chart
-        ? [`CHART | size=${CURVE_CHART.width}x${CURVE_CHART.height} | costDomain=0..${chart.costMax} | costTicks=${chart.costTicks.join(',')} | ratingDomain=${chart.ratingMin}..${chart.ratingMax} | ratingTicks=${chart.ratingTicks.join(',')}`]
+        ? [`CHART | size=${CURVE_CHART.width}x${CURVE_CHART.height} | xAxis=${chart.axis.id} | xDomain=0..${chart.xMax} | xTicks=${chart.xTicks.join(',')} | ratingDomain=${chart.ratingMin}..${chart.ratingMax} | ratingTicks=${chart.ratingTicks.join(',')}`]
         : ['VERDICTS | chart=not-rendered']),
       'CURRENT MATCHUP',
       ...debugCurrentMatchup(controller),
@@ -189,21 +189,29 @@ function PersonalCurve({ controller }: { controller: RankController }) {
     <VerdictLog matchups={judgedMatchups} onUndo={() => controller.undoLastVerdict()} />
   </section>;
 
-  const layout = layoutCurveChart(plottedPoints);
+  const costLayout = layoutCurveChart(plottedPoints, COST_AXIS);
+  const tokenLayout = layoutCurveChart(plottedPoints, OUTPUT_TOKENS_AXIS);
 
   return <section className="curve-panel" aria-labelledby="personal-curve-title">
     <div className="curve-heading">
       <div><p className="eyebrow">Personal results</p><h2 id="personal-curve-title">Your Pareto Frontier</h2></div>
       <div className="curve-heading-actions">
         <span className="curve-status">{curveStatusNarrative(curve)}</span>
-        <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('chart', layout)} />
+        <CopyDebugButton status={copyStatus} onCopy={() => void copyDebugData('chart', costLayout)} />
       </div>
     </div>
     <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels. The best trade-offs move toward the <strong>upper left</strong>: higher personal preference at lower generation cost.</p>
     <CurveLegend />
-    <CurveChartFigure layout={layout} labels={{
-      ratingAxisTitle: 'Your preference rating · higher is better →',
+    <CurveChartFigure layout={costLayout} labels={{
+      title: 'Quality vs cost',
+      ratingAxisTitle: 'Your preference rating',
       chartDescription: 'Scatter plot of your preference rating by measured generation cost. Higher ratings are better and lower costs are better.',
+      ratingTerm: 'Preference',
+    }} />
+    <CurveChartFigure layout={tokenLayout} labels={{
+      title: 'Quality vs output tokens',
+      ratingAxisTitle: 'Your preference rating',
+      chartDescription: 'Scatter plot of your preference rating by mean output tokens. Higher ratings are better and fewer output tokens are better.',
       ratingTerm: 'Preference',
     }} />
     <CurveTable points={curve.points.filter((point) => point.comparisons > 0)} caption="Every configuration you have judged" ratingTerm="Preference" />
@@ -273,6 +281,7 @@ function debugPointLine(point: PersonalRatingPoint | PlottedCurvePoint, index: n
     `label=${point.modelName}/${point.workflowName}`,
     `rating=${point.rating === undefined ? '-' : point.rating.toFixed(4)}`,
     `meanCost=${point.meanCost.toFixed(6)}`,
+    `meanOutputTokens=${point.meanOutputTokens.toFixed(0)}`,
     `comparisons=${point.comparisons}`,
     `required=${point.comparisonsRequired}`,
     `wins=${point.wins}`,

@@ -384,12 +384,14 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .legend-point.frontier { width: 9px; height: 9px; background: var(--accent); box-shadow: none; }
 .legend-point.provisional { background: transparent; border: 1.5px dashed var(--muted); opacity: 1; }
 .curve-legend .best-direction { margin-left: auto; color: var(--accent); }
+.curve-figure { margin: 18px 0 0; }
+.curve-figure .chart-title { margin: 0; color: var(--ink); font: 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
 .curve-chart-wrap { position: relative; width: 100%; margin: 12px 0 0; }
 .curve-chart { display: block; width: 100%; height: auto; overflow: visible; }
 .chart-grid line { stroke: var(--hairline); stroke-width: 1; }
 .chart-grid text { fill: var(--muted); font: 10px var(--mono); }
 .chart-axes line { stroke: var(--ink); stroke-width: 1; }
-.chart-axes .axis-title { fill: var(--muted); font: 10px var(--mono); letter-spacing: .1em; }
+.chart-axes .axis-title { fill: var(--muted); font: 8px var(--mono); letter-spacing: .08em; }
 .curve-chart .frontier-line { fill: none; stroke: var(--accent); stroke-dasharray: 5 4; stroke-width: 1.5; filter: none; }
 .curve-point { cursor: help; outline: none; }
 .curve-point circle { fill: var(--ink); stroke: var(--paper); stroke-width: 2; transition: r 140ms ease, stroke 140ms ease; }

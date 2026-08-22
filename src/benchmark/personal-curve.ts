@@ -1,12 +1,21 @@
 import { entrantLabel } from './identity.js';
-import type { MatchupVote, RevealPayload, RelativeOutcome } from './types';
+import type { BenchmarkRunMetrics, MatchupVote, RevealPayload, RelativeOutcome } from './types';
 
 export interface PersonalCurveCatalogEntry {
   configurationId: string;
   modelName: string;
   workflowName: string;
   generationCost: number;
+  run?: BenchmarkRunMetrics;
   featured?: boolean;
+}
+
+/** Output tokens the run billed across every model it used, or undefined when the
+ * run reported no per-model usage. Reasoning tokens are already counted in each
+ * model's output figure. */
+export function runOutputTokens(run: BenchmarkRunMetrics | undefined): number | undefined {
+  if (!run || run.models.length === 0) return undefined;
+  return run.models.reduce((sum, model) => sum + model.outputTokens, 0);
 }
 
 export interface PersonalHistoryEntrant {
@@ -14,6 +23,7 @@ export interface PersonalHistoryEntrant {
   modelName?: string;
   workflowName?: string;
   generationCost: number;
+  run?: BenchmarkRunMetrics;
 }
 
 export interface PersonalHistoryEntry {
@@ -33,6 +43,9 @@ export interface PersonalRatingPoint {
   label: string;
   rating?: number;
   meanCost: number;
+  /** Mean output tokens across this configuration's levels. 0 when no level it
+   * covers reported per-model usage. */
+  meanOutputTokens: number;
   comparisons: number;
   wins: number;
   ties: number;
@@ -150,15 +163,19 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   const catalog = options.catalog ?? [];
   const groupIdFor = options.groupIdFor ?? ((configurationId: string) => configurationId);
   const catalogCosts = new Map<string, number[]>();
+  const catalogTokens = new Map<string, number[]>();
   const catalogLabels = new Map<string, { modelName: string; workflowName: string }>();
   for (const entry of catalog) {
     const id = groupIdFor(entry.configurationId);
     catalogCosts.set(id, [...(catalogCosts.get(id) ?? []), entry.generationCost]);
+    const tokens = runOutputTokens(entry.run);
+    if (tokens !== undefined) catalogTokens.set(id, [...(catalogTokens.get(id) ?? []), tokens]);
     addLabel(catalogLabels, id, { modelName: entry.modelName, workflowName: entry.workflowName });
   }
 
   const seenIds = new Set<string>();
   const observedCosts = new Map<string, number[]>();
+  const observedTokens = new Map<string, number[]>();
   const labels = new Map<string, { modelName: string; workflowName: string }>();
   const rawStats = new Map<string, RawPointStats>();
   const comparisons: BradleyTerryComparison[] = [];
@@ -168,8 +185,8 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
     const bId = groupIdFor(configurationIdFor(entry.b));
     seenIds.add(aId);
     seenIds.add(bId);
-    addObservedPoint(aId, entry.a, observedCosts, labels, rawStats);
-    addObservedPoint(bId, entry.b, observedCosts, labels, rawStats);
+    addObservedPoint(aId, entry.a, observedCosts, observedTokens, labels, rawStats);
+    addObservedPoint(bId, entry.b, observedCosts, observedTokens, labels, rawStats);
     if (aId === bId) continue;
 
     comparisons.push({ aConfigurationId: aId, bConfigurationId: bId, relative: entry.vote.relative });
@@ -202,6 +219,7 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
   const points = [...configurationIds].map((configurationId): PersonalRatingPoint => {
     const label = catalogLabels.get(configurationId) ?? labels.get(configurationId) ?? displayLabelFor({ generationCost: 0 }, configurationId);
     const costs = catalogCosts.get(configurationId) ?? observedCosts.get(configurationId) ?? [];
+    const tokens = catalogTokens.get(configurationId) ?? observedTokens.get(configurationId) ?? [];
     const stats = rawStats.get(configurationId) ?? { wins: 0, ties: 0, losses: 0, comparisons: 0 };
     return {
       configurationId,
@@ -210,6 +228,7 @@ export function recomputePersonalCurve(history: readonly PersonalHistoryEntry[],
       label: entrantLabel({ modelName: label.modelName, workflowName: label.workflowName }),
       ...(seenIds.has(configurationId) ? { rating: ratings.get(configurationId) } : {}),
       meanCost: mean(costs),
+      meanOutputTokens: mean(tokens),
       comparisons: stats.comparisons,
       wins: stats.wins,
       ties: stats.ties,
@@ -264,10 +283,13 @@ function addObservedPoint(
   configurationId: string,
   entrant: PersonalHistoryEntrant,
   observedCosts: Map<string, number[]>,
+  observedTokens: Map<string, number[]>,
   labels: Map<string, { modelName: string; workflowName: string }>,
   rawStats: Map<string, RawPointStats>,
 ): void {
   observedCosts.set(configurationId, [...(observedCosts.get(configurationId) ?? []), entrant.generationCost]);
+  const tokens = runOutputTokens(entrant.run);
+  if (tokens !== undefined) observedTokens.set(configurationId, [...(observedTokens.get(configurationId) ?? []), tokens]);
   addLabel(labels, configurationId, displayLabelFor(entrant, configurationId));
   if (!rawStats.has(configurationId)) rawStats.set(configurationId, { wins: 0, ties: 0, losses: 0, comparisons: 0 });
 }
@@ -317,6 +339,7 @@ function historyEntrantFromReveal(entrant: RevealPayload['a'], generationCost: n
     modelName: entrant.modelName,
     workflowName: entrant.workflowName,
     generationCost,
+    run: entrant.run,
   };
 }
 

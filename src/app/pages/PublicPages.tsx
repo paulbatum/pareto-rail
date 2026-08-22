@@ -13,7 +13,7 @@ import { featuredModels } from '../featured-models';
 import { modelMatchPath, modelsWithMatchups, unpricedModels } from '../model-match';
 import { RouteLink } from '../components/RouteLink';
 import { Markdown, markdownRegion } from '../components/Markdown';
-import { CurveChartFigure, CurveLegend, CurveTable, curveDomain, layoutCurveChart, ratedCurvePoints } from '../components/curve-chart';
+import { COST_AXIS, CurveChartFigure, CurveLegend, CurveTable, curveDomain, layoutCurveChart, ratedCurvePoints } from '../components/curve-chart';
 import { OWNER_PARTICIPANT_PREFIX, loadLeaderboardResults, personalCurveFromLocalHistory, type LeaderboardResults } from '../leaderboard';
 import type { PersonalCurve } from '../../benchmark/personal-curve';
 
@@ -242,7 +242,7 @@ function LeaderboardResultsView({ results }: { results: LeaderboardResults }) {
       <p className="curve-intro">Each plotted point is a model and workflow configuration, aggregated across its generated levels and across everyone who has voted. The best trade-offs move toward the <strong>upper left</strong>: higher preference at lower generation cost.</p>
       <CurveLegend />
       <CurveChartFigure layout={layout} labels={{
-        ratingAxisTitle: 'Community preference rating · higher is better →',
+        ratingAxisTitle: 'Community preference rating',
         chartDescription: 'Scatter plot of community preference rating by measured generation cost. Higher ratings are better and lower costs are better.',
         ratingTerm: 'Preference',
       }} />
@@ -279,16 +279,16 @@ function CurveComparison({ results, personal, onClose }: { results: LeaderboardR
       <div className="curve-compare-grid">
         <article>
           <h3>Community<span>{leaderboardNarrative(results)}</span></h3>
-          <CurveChartFigure layout={layoutCurveChart(communityPoints, domain)} labels={{
-            ratingAxisTitle: 'Community preference rating · higher is better →',
+          <CurveChartFigure layout={layoutCurveChart(communityPoints, COST_AXIS, domain)} labels={{
+            ratingAxisTitle: 'Community preference rating',
             chartDescription: 'Scatter plot of community preference rating by measured generation cost.',
             ratingTerm: 'Preference',
           }} />
         </article>
         <article>
           <h3>Yours<span>{personal.comparisonCount} of your comparisons · {personal.establishedCount} ranked</span></h3>
-          <CurveChartFigure layout={layoutCurveChart(personalPoints, domain)} labels={{
-            ratingAxisTitle: 'Your preference rating · higher is better →',
+          <CurveChartFigure layout={layoutCurveChart(personalPoints, COST_AXIS, domain)} labels={{
+            ratingAxisTitle: 'Your preference rating',
             chartDescription: 'Scatter plot of your own preference rating by measured generation cost.',
             ratingTerm: 'Preference',
           }} />
