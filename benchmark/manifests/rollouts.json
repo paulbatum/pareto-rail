@@ -1281,6 +1281,63 @@
           "sha256": "692362158072b86fe6c4ec1277c6df9ab944dfc6cc455be3fb5d12075964ab78"
         }
       ]
+    },
+    {
+      "runId": "smoke-inkling-free-h7ra",
+      "levelId": "strandline-h7ra",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-inkling-free-smoke",
+      "disposition": "rehearsal",
+      "files": [
+        {
+          "path": "runs/smoke-inkling-free-h7ra/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 573509,
+          "sha256": "69ac9c0a3cc534b87b21122c3767254dcb520cd37e73f03a016ebc45b84f8bb1"
+        },
+        {
+          "path": "runs/smoke-inkling-free-h7ra/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 2699517,
+          "sha256": "3036107394027ac4f13dc83f8eb3c34203072a63fb7c79fa6885bc4b2a30f265"
+        }
+      ]
+    },
+    {
+      "runId": "smoke-inkling-free-k2se",
+      "levelId": "strandline-k2se",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-inkling-free-smoke",
+      "disposition": "rehearsal",
+      "files": [
+        {
+          "path": "runs/smoke-inkling-free-k2se/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 571799,
+          "sha256": "5fc05ab3d383664abf77eabc65beffd5fe140ab6789d727dd5025597f1271741"
+        },
+        {
+          "path": "runs/smoke-inkling-free-k2se/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 2610068,
+          "sha256": "d92abb4870632c63638b5e69d642a3a0179c8a49046ae95ce23c0f8e0551f22a"
+        }
+      ]
+    },
+    {
+      "runId": "smoke-inkling-free-m9tw",
+      "levelId": "strandline-m9tw",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-inkling-free-smoke",
+      "disposition": "rehearsal",
+      "files": [
+        {
+          "path": "runs/smoke-inkling-free-m9tw/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 519836,
+          "sha256": "e2447a80d9ffe550a5b8050874ceaef79077aff6c6a8e05d9b43a4d1a3a4c6bb"
+        },
+        {
+          "path": "runs/smoke-inkling-free-m9tw/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 2493023,
+          "sha256": "ad50c66bf2f978f9cc4e62fe49e4c38d85cd1acceafe174e7899967a10920b65"
+        }
+      ]
     }
   ]
 }

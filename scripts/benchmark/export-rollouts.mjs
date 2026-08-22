@@ -151,16 +151,28 @@ function gzipTo(destAbs, buffer) {
 }
 
 function datasetCard(index) {
-  const rows = index.runs.map((run) => {
+  const ranked = index.runs.filter((run) => run.disposition !== 'rehearsal');
+  const rehearsed = index.runs.filter((run) => run.disposition === 'rehearsal');
+  const row = (run) => {
     const mb = (run.files.reduce((s, f) => s + f.rawBytes, 0) / 1048576).toFixed(1);
     const link = `[\`${run.runId}\`](https://huggingface.co/datasets/${DATASET}/tree/main/runs/${run.runId})`;
     return `| ${link} | ${run.themeId} | ${run.configurationId}${run.retired ? ' (retired)' : ''} | ${mb} |`;
-  });
-  const runTable = [
+  };
+  const table = (title, runs) => [
+    `## ${title}`, '',
     '| run | theme | configuration | transcript MB |',
     '| :-- | :-- | :-- | --: |',
-    ...rows,
+    ...runs.map(row),
   ].join('\n');
+  const sections = [];
+  if (ranked.length > 0) sections.push(table('Runs', ranked));
+  if (rehearsed.length > 0) {
+    sections.push(
+      table('Rehearsal runs (never ranked; kept as failure examples)', rehearsed),
+      '',
+      'Rehearsal runs are unattended generation attempts that were never part of the ranked pool. They are published exactly as captured, including the gate failures that ended them.',
+    );
+  }
   return `---
 license: mit
 pretty_name: Pareto Rail benchmark rollouts
@@ -181,9 +193,7 @@ runs/<run-id>/stages/<stage>/<harness>/final-message.md   # the agent's closing 
 
 Each \`rollout.jsonl\` is a raw Claude Code, Codex, or Pi session file, so it opens directly in the Hub's [agent trace viewer](https://huggingface.co/docs/hub/agent-traces); \`assignment.md\` and \`final-message.md\` are plain markdown. Transcripts are exactly as captured: agent screenshots taken during the run are embedded as base64. \`rollouts.json\` here (also committed in the main repository under \`benchmark/manifests/\`) maps each run to its level, theme, and configuration and records the size and sha256 of every transcript's uncompressed bytes, so a download can be verified (after gunzip, for the gzipped event streams).
 
-## Runs
-
-${runTable}
+${sections.join('\n\n')}
 `;
 }
 
@@ -193,6 +203,11 @@ function main() {
   const publication = JSON.parse(fs.readFileSync(publicationPath, 'utf8'));
   if (!Array.isArray(publication.entrants)) throw new Error('Publication has no entrants array.');
   const entrants = [...publication.entrants].sort((a, b) => a.runId.localeCompare(b.runId));
+  // Rehearsal rows are listed separately from entrants: their transcripts ship
+  // on the same terms (same scans, same index) but they never entered the
+  // results pool, so the card marks them and nothing downstream treats them
+  // as ranked evidence.
+  const rehearsals = [...(publication.rehearsals ?? [])].sort((a, b) => a.runId.localeCompare(b.runId));
 
   const index = { dataset: DATASET, baseUrl: `https://huggingface.co/datasets/${DATASET}/resolve/main`, runs: [] };
   const allHits = [];
@@ -243,6 +258,49 @@ function main() {
       themeId: entrant.themeId,
       configurationId: entrant.configurationId,
       ...(entrant.retired ? { retired: true } : {}),
+      files,
+    });
+  }
+
+  for (const rehearsal of rehearsals) {
+    const runDir = path.join(runsRoot, rehearsal.runId);
+    if (!fs.existsSync(runDir)) throw new Error(`Rehearsal ${rehearsal.levelId} references missing run directory ${rehearsal.runId}.`);
+    const transcripts = collectTranscripts(runDir);
+    if (transcripts.length === 0) throw new Error(`Run ${rehearsal.runId} has no transcripts.`);
+    const files = [];
+    for (const { rel, abs } of transcripts) {
+      const buffer = fs.readFileSync(abs);
+      allHits.push(...scanLines(buffer.toString('utf8'), path.join(rehearsal.runId, rel)));
+      leakScan(scanner, buffer, path.join(rehearsal.runId, rel));
+      const isRollout = path.basename(rel) === 'rollout.jsonl';
+      const datasetPath = path.join('runs', rehearsal.runId, isRollout ? rel : `${rel}.gz`);
+      if (isRollout) {
+        const dest = path.join(stagingRoot, datasetPath);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, buffer);
+      } else {
+        gzipTo(path.join(stagingRoot, datasetPath), buffer);
+      }
+      files.push({
+        path: datasetPath,
+        rawBytes: buffer.length,
+        sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
+      });
+    }
+    for (const { rel, abs } of collectPreviews(runDir)) {
+      const buffer = fs.readFileSync(abs);
+      allHits.push(...scanLines(buffer.toString('utf8'), path.join(rehearsal.runId, rel)));
+      leakScan(scanner, buffer, path.join(rehearsal.runId, rel));
+      const dest = path.join(stagingRoot, 'runs', rehearsal.runId, rel);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.writeFileSync(dest, buffer);
+    }
+    index.runs.push({
+      runId: rehearsal.runId,
+      levelId: rehearsal.levelId,
+      themeId: rehearsal.themeId,
+      configurationId: rehearsal.configurationId,
+      disposition: 'rehearsal',
       files,
     });
   }
