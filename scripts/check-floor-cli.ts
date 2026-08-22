@@ -162,9 +162,15 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   }
 
   if (failures.length) {
-    lines.push('');
-    lines.push('Failures:');
-    for (const failure of failures) lines.push(`- ${failure}`);
+    // Details first, verdict last: authors (and models) routinely trim output
+    // with `tail`, and the failure summary must survive that trim. Each
+    // failure carries a severity because they are not peers — a rejected
+    // score configuration means the level throws on mount, while a budget
+    // miss means it runs but over a limit.
+    const severityOf = (failure: string) =>
+      failure.startsWith('Audio configuration validation failed') || failure.includes('does not export createAudio')
+        ? 'CRITICAL (the level will not mount)'
+        : 'FAILURE';
     if (occlusionReports.length > 0) {
       lines.push('');
       const occlusionReport = occlusionReports[0];
@@ -182,6 +188,9 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
       lines.push('');
       lines.push(formatPerformanceReports(perfReports));
     }
+    lines.push('');
+    lines.push(`Floor check FAILED with ${failures.length} failing check${failures.length === 1 ? '' : 's'}:`);
+    for (const failure of failures) lines.push(`✗ [${severityOf(failure)}] ${failure}`);
     console.error(lines.join('\n'));
     process.exitCode = 1;
   } else {
