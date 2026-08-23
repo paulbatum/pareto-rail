@@ -173,6 +173,20 @@ function datasetCard(index) {
       'Rehearsal runs are unattended generation attempts that were never part of the ranked pool. They are published exactly as captured, including the gate failures that ended them.',
     );
   }
+  if (index.diagnostics?.length > 0) {
+    const rows = index.diagnostics.map((diagnostic) => {
+      const link = `[\`${diagnostic.id}\`](https://huggingface.co/datasets/${DATASET}/tree/main/diagnostics/${diagnostic.id})`;
+      return `| ${link} | ${diagnostic.model} | ${diagnostic.status} | ${diagnostic.reason} |`;
+    });
+    sections.push([
+      '## Diagnostics (not benchmark runs)', '',
+      '| id | model | status | reason |',
+      '| :-- | :-- | :-- | :-- |',
+      ...rows,
+      '',
+      'Diagnostics are preserved agent sessions that were stopped or otherwise invalid before producing a benchmark result. They are not ranked evidence.',
+    ].join('\n'));
+  }
   return `---
 license: mit
 pretty_name: Pareto Rail benchmark rollouts
@@ -208,8 +222,9 @@ function main() {
   // results pool, so the card marks them and nothing downstream treats them
   // as ranked evidence.
   const rehearsals = [...(publication.rehearsals ?? [])].sort((a, b) => a.runId.localeCompare(b.runId));
+  const diagnostics = [...(publication.diagnostics ?? [])].sort((a, b) => a.id.localeCompare(b.id));
 
-  const index = { dataset: DATASET, baseUrl: `https://huggingface.co/datasets/${DATASET}/resolve/main`, runs: [] };
+  const index = { dataset: DATASET, baseUrl: `https://huggingface.co/datasets/${DATASET}/resolve/main`, runs: [], diagnostics: [] };
   const allHits = [];
   fs.rmSync(stagingRoot, { recursive: true, force: true });
 
@@ -305,6 +320,40 @@ function main() {
     });
   }
 
+  for (const diagnostic of diagnostics) {
+    if (!diagnostic.runId || !diagnostic.sourcePath) throw new Error(`Diagnostic ${diagnostic.id} needs runId and sourcePath.`);
+    const runDir = path.join(runsRoot, diagnostic.runId);
+    const source = path.resolve(runDir, diagnostic.sourcePath);
+    if (!source.startsWith(`${path.resolve(runDir)}${path.sep}`) || !fs.existsSync(source)) {
+      throw new Error(`Diagnostic ${diagnostic.id} references missing or unsafe sourcePath ${diagnostic.sourcePath}.`);
+    }
+    const buffer = fs.readFileSync(source);
+    const datasetPath = path.join('diagnostics', diagnostic.id, path.basename(diagnostic.sourcePath));
+    const scanPath = path.join(diagnostic.id, path.basename(diagnostic.sourcePath));
+    allHits.push(...scanLines(buffer.toString('utf8'), scanPath));
+    leakScan(scanner, buffer, scanPath);
+    const dest = path.join(stagingRoot, datasetPath);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, buffer);
+
+    const metadata = {
+      id: diagnostic.id,
+      runId: diagnostic.runId,
+      status: diagnostic.status,
+      reason: diagnostic.reason,
+      model: diagnostic.model,
+      provider: diagnostic.provider,
+      files: [{
+        path: datasetPath,
+        rawBytes: buffer.length,
+        sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
+      }],
+    };
+    const metadataPath = path.join('diagnostics', diagnostic.id, 'metadata.json');
+    fs.writeFileSync(path.join(stagingRoot, metadataPath), `${JSON.stringify(metadata, null, 2)}\n`);
+    index.diagnostics.push(metadata);
+  }
+
   if (allHits.length > 0) {
     throw new Error(`Secrets scan found credential-shaped content in transcripts:\n${allHits.map((h) => `  ${h}`).join('\n')}`);
   }
@@ -314,8 +363,9 @@ function main() {
   fs.writeFileSync(path.join(stagingRoot, 'rollouts.json'), indexText);
   fs.writeFileSync(path.join(stagingRoot, 'README.md'), datasetCard(index));
 
-  const rawTotal = index.runs.reduce((s, r) => s + r.files.reduce((t, f) => t + f.rawBytes, 0), 0);
-  console.log(`Staged transcripts for ${index.runs.length} runs into ${path.relative(root, stagingRoot)} (${(rawTotal / 1048576).toFixed(0)} MB raw, both secret scans clean).`);
+  const rawTotal = index.runs.reduce((s, r) => s + r.files.reduce((t, f) => t + f.rawBytes, 0), 0)
+    + index.diagnostics.reduce((s, d) => s + d.files.reduce((t, f) => t + f.rawBytes, 0), 0);
+  console.log(`Staged ${index.runs.length} runs and ${index.diagnostics.length} diagnostics into ${path.relative(root, stagingRoot)} (${(rawTotal / 1048576).toFixed(0)} MB raw, both secret scans clean).`);
   console.log(`Wrote ${path.relative(root, indexPath)}.`);
 
   if (upload) {
