@@ -7,7 +7,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
-import { assertSiblingSharedInputs, codexNetworkAccess, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
+import { assertSiblingSharedInputs, codexNetworkAccess, costBasisFor, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, unpricedReasonFor, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
 import { collectSessionView, counterUnavailableReason, harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { summarizeAgyCost } from './tokscale-cost.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
@@ -27,6 +27,12 @@ import { compactionTruncation, emptyCompletion, sha256 } from './common.mjs';
 const exec = promisify(execFile);
 
 const hash = (character) => character.repeat(64);
+
+assert.equal(unpricedReasonFor(['thinkingmachines/inkling:free']), null);
+assert.match(unpricedReasonFor(['stealth/ox-alpha']), /bills nothing/);
+assert.equal(costBasisFor(['thinkingmachines/inkling:free']), 'rate-card');
+assert.equal(costBasisFor(['thinkingmachines/inkling']), 'metered');
+assert.equal(costBasisFor(['gemini-3.6-flash'], { usesTokscale: true }), 'rate-card');
 
 const rendered = renderAssignment('id={{LEVEL_ID}} title={{LEVEL_TITLE}} theme={{THEME}}', {
   levelId: 'cinder-a1b2',

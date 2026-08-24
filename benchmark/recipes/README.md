@@ -101,7 +101,7 @@ Add a plan row. Add a roster line saying what it is for. That is the whole proce
 
 Write a mechanism document only if you are adding a harness, or a behavior that changes what the entrant sees. If you find yourself copying an existing document and changing a model name, the thing you are adding is a knob, and it does not want a document.
 
-Before a configuration's first eligible run, commit its adapter and the mechanisms it composes, and record the materials commit in the private plan. After it has run, a behavior-changing edit is a new configuration identity — the ranking pools votes by configuration id, so reusing an id asserts "same intervention". Do not silently pool a changed configuration with its earlier execution.
+Before a configuration's first eligible run, commit its adapter and the mechanisms it composes, and record the materials commit in the private plan. After it has run, a behavior-changing edit is a new configuration identity — the ranking pools votes by configuration id, so reusing an id asserts "same intervention". A provider's free access route does not create a new identity when it serves the same model with the same harness, effort, and behavior; the run record preserves the exact model id and records rate-card cost separately. Do not silently pool a changed configuration with its earlier execution.
 
 ## Provenance and the `recipe` field
 

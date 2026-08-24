@@ -145,8 +145,8 @@ const ADAPTERS = {
 // which is the only basis available for a subscription. Both appear in the manifest so two figures
 // are never silently treated as the same kind of number.
 const COST_SOURCES = {
-  ccusage: { tool: 'ccusage', basis: 'metered', commandFor: (view) => `ccusage ${view} session --json` },
-  tokscale: { tool: 'tokscale', basis: 'rate-card', commandFor: () => 'tokscale models --home <run harness home> --json' },
+  ccusage: { tool: 'ccusage', commandFor: (view) => `ccusage ${view} session --json` },
+  tokscale: { tool: 'tokscale', commandFor: () => 'tokscale models --home <run harness home> --json' },
 };
 
 // A cloaked model is published without a price. The provider bills nothing for it, and a harness
@@ -155,9 +155,13 @@ const COST_SOURCES = {
 // unavailable: the token counts stand, the dollar figure does not exist. Remove the entry once the
 // model is named and priced, then restate the affected runs from their retained token counts.
 const UNPRICED_MODELS = new Map([
-  ['thinkingmachines/inkling:free', 'OpenRouter publishes thinkingmachines/inkling:free at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure would come from a fallback rate card rather than from any charge.'],
   ['stealth/ox-alpha', 'OpenRouter publishes stealth/ox-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge.'],
 ]);
+
+// A free access route can still serve a model whose ordinary route has a published price. ccusage
+// values those tokens from that rate card, as it values subscription-backed usage, rather than
+// claiming the provider charged the operator.
+const RATE_CARD_MODELS = new Set(['thinkingmachines/inkling:free']);
 
 // The reason this run cannot be priced, or null when every model it ran carries a price.
 export function unpricedReasonFor(modelNames) {
@@ -166,6 +170,10 @@ export function unpricedReasonFor(modelNames) {
     if (reason) return reason;
   }
   return null;
+}
+
+export function costBasisFor(modelNames, { usesTokscale = false } = {}) {
+  return usesTokscale || modelNames.some((modelName) => RATE_CARD_MODELS.has(modelName)) ? 'rate-card' : 'metered';
 }
 
 const CHECKPOINTS = ['inputs', 'worktree', 'setup', 'stage', 'seal', 'gates', 'payload', 'manifest'];
@@ -823,6 +831,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
     );
   for (const warning of reconciliationWarnings(cost.reconciliation)) console.warn(warning);
   const costSource = COST_SOURCES[usesTokscale ? 'tokscale' : 'ccusage'];
+  const costBasis = costBasisFor([definition.stage.model, ...cost.models.map((model) => model.modelName)], { usesTokscale });
   const costToolVersion = usesTokscale ? await tokscaleVersion() : await ccusageVersion();
   const finishedAt = new Date().toISOString();
   const rolloutArtifactSha256 = await hashIfPresent(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
@@ -859,7 +868,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
           status: 'measured',
           totalUsd: cost.totalUsd,
           orchestrationTreatment: definition.delegation ? 'included' : 'none',
-          costSource: { tool: costSource.tool, version: costToolVersion, view: cost.view, command: costSource.commandFor(cost.view), basis: costSource.basis },
+          costSource: { tool: costSource.tool, version: costToolVersion, view: cost.view, command: costSource.commandFor(cost.view), basis: costBasis },
         }),
       reconciliation: cost.reconciliation,
       models: cost.models.map((model) => ({
