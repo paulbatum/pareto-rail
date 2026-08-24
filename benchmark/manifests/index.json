@@ -50,6 +50,12 @@
       "configurationId": "claude-fable-5-high"
     },
     {
+      "runId": "inkling-high-strandline-de7d",
+      "levelId": "strandline-de7d",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-inkling-high"
+    },
+    {
       "runId": "kimi-k3-max-strandline-sk9q",
       "levelId": "strandline-sk9q",
       "themeId": "strandline",

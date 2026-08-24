@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "f16adc5c3a6bcfe0ee0549bf5e58ddc5acc8554233fd2765612250c4bc65a4e4"
+  },
+  "theme": {
+    "path": "benchmark/themes/strandline.md",
+    "sha256": "31621cb405a2b293bf0f7026add0b462312e75c44dfcea3a8549b1fd9616bff1"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-openrouter-inkling-high.md",
+    "sha256": "fa1d443c40b3f874c06ca007d40909fc3e6b1c9a0794a853542ff2bc7e19b7b9"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/inkling-high-strandline-de7d/rendered-assignment.md",
+    "sha256": "c252d15f9374b078ed3a307c13733576337f13542c0883ad8691b79e3fd1e7f9"
+  },
+  "baseRendering": {
+    "sha256": "c252d15f9374b078ed3a307c13733576337f13542c0883ad8691b79e3fd1e7f9"
+  }
+}

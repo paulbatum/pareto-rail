@@ -1,0 +1,24 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "01a03598-6a46-7186-a122-272dc254f2b1",
+  "usageSha256": "a39e3baf4c4241dd844fca73176d63937f82d304ce45f316f503db39f2497088",
+  "eventLogSha256": "78530ef908566df74a0462dc1fc550e2827aa2fdcea96351c67bdaf81aa9a512",
+  "stderrSha256": "36bdf6e9b8d7d6c1971e30186b193a13b574b597c826c313d729d4c22cf37849",
+  "eventLog": {
+    "retained": "all events except message_update",
+    "droppedLines": 1307,
+    "files": [
+      {
+        "path": "events.jsonl",
+        "droppedLines": 1307
+      }
+    ]
+  },
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/inkling-high-strandline-de7d/harness-home/sessions/--tmp-pareto-rail-inkling-high-strandline-de7d--/2026-08-24T21-06-16-262Z_01a03598-6a46-7186-a122-272dc254f2b1.jsonl",
+    "sha256": "5b8694e5a921172252caa019ed79da0bce53411cce333022864c1e7a793209c0"
+  }
+}

@@ -1,0 +1,26 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level strandline-de7d
+
+Strandline floor check
+duration 60.0s; spawned kinds 4: brood, clinger, crown, dart
+event coverage missing: playerhit
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp
+    gapThirtyseconds=2
+    releaseShare=0.75
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.6
+  action SFX snap: overridden grid (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC
+  identity hooks declared: playerHealth
+  identity hooks [default]: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, allowLockUndo, detailsForRun
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.
+FLOOR VERDICT: ACCEPT — if submitted in its current state, this level will be accepted.

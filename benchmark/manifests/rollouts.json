@@ -148,6 +148,24 @@
       ]
     },
     {
+      "runId": "inkling-high-strandline-de7d",
+      "levelId": "strandline-de7d",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-inkling-high",
+      "files": [
+        {
+          "path": "runs/inkling-high-strandline-de7d/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 462995,
+          "sha256": "5b8694e5a921172252caa019ed79da0bce53411cce333022864c1e7a793209c0"
+        },
+        {
+          "path": "runs/inkling-high-strandline-de7d/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 2046805,
+          "sha256": "78530ef908566df74a0462dc1fc550e2827aa2fdcea96351c67bdaf81aa9a512"
+        }
+      ]
+    },
+    {
       "runId": "kimi-k3-max-strandline-sk9q",
       "levelId": "strandline-sk9q",
       "themeId": "strandline",

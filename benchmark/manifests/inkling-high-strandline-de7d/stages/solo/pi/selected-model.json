@@ -1,0 +1,5 @@
+{
+  "model": "thinkingmachines/inkling:free",
+  "provider": "openrouter",
+  "selectedThinkingLevel": "high"
+}

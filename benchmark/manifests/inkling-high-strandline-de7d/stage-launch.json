@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-inkling-high-strandline-de7d",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/inkling-high-strandline-de7d/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/inkling-high-strandline-de7d/stages/solo/pi",
+    "--model",
+    "thinkingmachines/inkling:free",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter",
+    "--sandbox",
+    "false"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-08-24T21:06:13.220Z",
+  "finishedAt": "2026-08-24T21:15:36.340Z",
+  "wallTimeSeconds": 516.292647538,
+  "stdoutSha256": "e6ed75dbd6192475cd676f7b499153ca4c78f8a91340c9b0746be8e94093d77d",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"01a03598-6a46-7186-a122-272dc254f2b1\",\"usage\":{\"inputTokens\":76091,\"outputTokens\":32864,\"cacheReadTokens\":6421504,\"cacheWriteTokens\":0,\"reasoningTokens\":10607,\"vendorFields\":{\"modelUsage\":{\"thinkingmachines/inkling:free\":{\"outputTokens\":32864,\"costUSD\":1.2311830900000003}}}},\"wallTimeSeconds\":513.948035463}\n",
+  "stderr": ""
+}

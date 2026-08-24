@@ -1,0 +1,26 @@
+{
+  "executable": "pi",
+  "arguments": [
+    "--print",
+    "--mode",
+    "json",
+    "--approve",
+    "--offline",
+    "--no-extensions",
+    "--thinking",
+    "high",
+    "--model",
+    "thinkingmachines/inkling:free",
+    "--provider",
+    "openrouter"
+  ],
+  "cliVersion": "0.84.2",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-inkling-high-strandline-de7d",
+  "startedAt": "2026-08-24T21:06:15.512Z",
+  "finishedAt": "2026-08-24T21:15:36.288Z",
+  "wallTimeSeconds": 513.948035463,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

@@ -109,6 +109,13 @@ export const configurationLabels = {
     workflowSummary: 'One fresh unattended pi session driving Ox Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
     featured: true,
   },
+  'pi-openrouter-inkling-high': {
+    modelName: 'Inkling',
+    workflowName: 'solo',
+    primaryModel: 'thinkingmachines/inkling',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended pi session driving Inkling over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'pi-kimi-k3-max': {
     modelName: 'Kimi K3',
     workflowName: 'solo',
@@ -143,6 +150,7 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'agy-gemini-3-6-flash-high',
   'agy-gemini-3-7-flash-high',
   'pi-openrouter-ox-alpha-high',
+  'pi-openrouter-inkling-high',
   'pi-kimi-k3-max',
   'pi-openrouter-kimi-k3-max',
 ]);

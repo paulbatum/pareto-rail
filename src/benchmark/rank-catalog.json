@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-22T19:20:43.427Z",
+  "generatedAt": "2026-08-24T21:22:10.299Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -112,6 +112,14 @@
       "effort": "high",
       "workflowSummary": "One fresh unattended pi session driving Ox Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
       "featured": true
+    },
+    {
+      "id": "pi-openrouter-inkling-high",
+      "modelName": "Inkling",
+      "workflowName": "solo",
+      "primaryModel": "thinkingmachines/inkling",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended pi session driving Inkling over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "pi-kimi-k3-max",
@@ -1532,6 +1540,40 @@
       "thumbnailPath": "/level-content/mass-driver-detailed-uk78/hero.avif",
       "entrantBaseline": "4bc00a921882971dc6dbc8467b5dc35a0a18f3c1",
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
+    },
+    {
+      "levelId": "strandline-de7d",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-inkling-high",
+      "modelName": "Inkling",
+      "workflowName": "solo",
+      "generationCost": 1.23118309,
+      "linesOfCode": 661,
+      "run": {
+        "generationWallTimeSeconds": 513.948,
+        "totalWallTimeSeconds": 597.654,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "pi",
+          "version": "0.84.2"
+        },
+        "models": [
+          {
+            "modelName": "thinkingmachines/inkling:free",
+            "role": "solo",
+            "inputTokens": 76091,
+            "outputTokens": 32864,
+            "cacheReadTokens": 6421504,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed",
+            "costUsd": 1.23118309
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-de7d/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "3b1e16f56a93ac8251813adc4f83cf8b4b47ae70"
     },
     {
       "levelId": "strandline-o848",

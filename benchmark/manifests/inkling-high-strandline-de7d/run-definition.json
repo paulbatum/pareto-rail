@@ -1,0 +1,22 @@
+{
+  "runId": "inkling-high-strandline-de7d",
+  "slotId": "de7d",
+  "levelId": "strandline-de7d",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "pi-openrouter-inkling-high",
+  "recipePath": "benchmark/recipes/pi-openrouter-inkling-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "thinkingmachines/inkling:free",
+    "provider": "openrouter",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "3b1e16f56a93ac8251813adc4f83cf8b4b47ae70",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Strandline"
+}

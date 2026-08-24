@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "inkling-high-strandline-de7d",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-08-24T21:16:09.078Z",
+      "data": {
+        "source": {
+          "runId": "inkling-high-strandline-de7d",
+          "slotId": "de7d",
+          "themeId": "strandline",
+          "levelId": "strandline-de7d",
+          "title": "Strandline",
+          "materialsCommit": "3b1e16f56a93ac8251813adc4f83cf8b4b47ae70",
+          "evaluatedCommit": "8fd07fcc086bf854ffb296898535725b9ff4677e",
+          "payloadCommit": "859cfe827285693ba36a1df6b51f4a6b5b4764c7",
+          "manifestSha256": "92cc732117b66680744620cf8ebe42fe4b50d7d1323c8a99a68e894e87e580e3",
+          "definitionSha256": "03ade7ac0d147c6b55724506352542389f2cd8f938dc4f3f6f5159b8ec9cc9c1",
+          "evaluatedSha256": "6b4836728a6032df40ce73fae24363697219325bcd1dfcb07cb928c1c3f109d3",
+          "payloadSha256": "e4e5136ba7bf4a7ad832877e1477413d89f5dc6865b1c8a6308b00a18342dbfe",
+          "payloadDiffSha256": "cdf9fc8cb9a9b725743441206092ad84460bcda67ab99ccaf4867924823124b2",
+          "sourcePath": "src/benchmark-levels/strandline-de7d/",
+          "destinationPath": "src/benchmark-levels/strandline-de7d/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/strandline-de7d",
+              "promotedPath": "src/benchmark-levels/strandline-de7d",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/strandline-de7d",
+              "promotedPath": "public/level-content/strandline-de7d",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "38cca21bba8157026e270eddd784548e2e668982"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-08-24T21:16:09.149Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/strandline-de7d/",
+            "files": 6,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-08-24T21:16:09.151Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-08-24T21:16:09.197Z",
+      "data": {
+        "destination": "src/benchmark-levels/strandline-de7d/",
+        "verifiedFiles": 6
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-08-24T21:17:50.913Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 26.182566569,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "eb39dc1b91952369017d0c10ffe957e13399740ef336902980143b324b1587ec",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 31.149465557999996,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-de7d --base 38cca21bba8157026e270eddd784548e2e668982",
+            "exitCode": 0,
+            "stdoutSha256": "51f87d0265c825d58fc88b8d61e2d606bfc6a84d068959857b5281de75f87d51",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04909981700000208,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level strandline-de7d",
+            "exitCode": 0,
+            "stdoutSha256": "540362422504997fbae0d84e0f51caaf679c764d3980fe7daa3b64fc5cd36aea",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 35.378413525000006,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-08-24T21:17:51.016Z",
+      "data": {
+        "promotionCommit": "1fc5f785d56fb9b1fa4690120a470469abc5282d",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-08-24T21:17:51.017Z",
+  "source": {
+    "runId": "inkling-high-strandline-de7d",
+    "slotId": "de7d",
+    "themeId": "strandline",
+    "levelId": "strandline-de7d",
+    "title": "Strandline",
+    "materialsCommit": "3b1e16f56a93ac8251813adc4f83cf8b4b47ae70",
+    "evaluatedCommit": "8fd07fcc086bf854ffb296898535725b9ff4677e",
+    "payloadCommit": "859cfe827285693ba36a1df6b51f4a6b5b4764c7",
+    "manifestSha256": "92cc732117b66680744620cf8ebe42fe4b50d7d1323c8a99a68e894e87e580e3",
+    "definitionSha256": "03ade7ac0d147c6b55724506352542389f2cd8f938dc4f3f6f5159b8ec9cc9c1",
+    "evaluatedSha256": "6b4836728a6032df40ce73fae24363697219325bcd1dfcb07cb928c1c3f109d3",
+    "payloadSha256": "e4e5136ba7bf4a7ad832877e1477413d89f5dc6865b1c8a6308b00a18342dbfe",
+    "payloadDiffSha256": "cdf9fc8cb9a9b725743441206092ad84460bcda67ab99ccaf4867924823124b2",
+    "sourcePath": "src/benchmark-levels/strandline-de7d/",
+    "destinationPath": "src/benchmark-levels/strandline-de7d/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/strandline-de7d",
+        "promotedPath": "src/benchmark-levels/strandline-de7d",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/strandline-de7d",
+        "promotedPath": "public/level-content/strandline-de7d",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "38cca21bba8157026e270eddd784548e2e668982"
+  },
+  "promotionCommit": "1fc5f785d56fb9b1fa4690120a470469abc5282d"
+}
