@@ -399,8 +399,8 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .curve-point:hover circle, .curve-point:focus circle, .curve-point.active circle { r: 10px; stroke: var(--ink); filter: none; }
 .curve-point.frontier:hover circle, .curve-point.frontier:focus circle, .curve-point.frontier.active circle { r: 11px; stroke: var(--accent-tint); filter: none; }
 .point-label.provisional { opacity: .72; }
-.point-label { fill: var(--ink); font: 600 12px var(--sans); pointer-events: none; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
-.point-label tspan + tspan { fill: var(--muted); font: 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.point-label { fill: var(--ink); font: 600 9px var(--sans); pointer-events: none; paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
+.point-label tspan + tspan { fill: var(--muted); font: 7px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .label-leader { stroke: var(--ghost); stroke-width: 1; pointer-events: none; }
 .curve-point.frontier .label-leader { stroke: var(--accent); }
 .curve-tooltip { position: absolute; z-index: 3; width: 290px; padding: 14px; color: var(--ink); background: var(--card); border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--hairline); pointer-events: none; transform: translate(13px, calc(-100% - 13px)); }

@@ -42,10 +42,9 @@ export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout;
       {frontierPath && <path className="frontier-line" d={frontierPath} />}
       <g className="curve-points">
         {plotted.map((point) => {
-          const labelOnLeft = point.x > CURVE_CHART.width * .62;
-          const labelX = point.x + (labelOnLeft ? -14 : 14);
+          const labelX = point.x + (point.labelOnLeft ? -14 : 14);
           return <g key={point.configurationId} className={`curve-point${point.frontier ? ' frontier' : ''}${point.status === 'provisional' ? ' provisional' : ''}${activeId === point.configurationId ? ' active' : ''}`} tabIndex={0} role="button" aria-label={`${point.label}. Rating ${point.rating.toFixed(0)}. ${axis.title}: ${axis.formatValue(point.axisValue)}. ${evidenceText(point)}. Status: ${statusLabel(point.status)}.${point.frontier ? ' On the Pareto frontier.' : ''}`} onMouseEnter={() => setActiveId(point.configurationId)} onMouseLeave={() => setActiveId(null)} onFocus={() => setActiveId(point.configurationId)} onBlur={() => setActiveId(null)} onClick={() => setActiveId(activeId === point.configurationId ? null : point.configurationId)}>
-            <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
+            <line className="label-leader" x1={point.x} y1={point.y} x2={labelX + (point.labelOnLeft ? 4 : -4)} y2={point.labelY - 4} />
             <circle cx={point.x} cy={point.y} r={point.frontier ? 8 : 6} />
           </g>;
         })}
@@ -55,10 +54,9 @@ export function CurveChartFigure({ layout, labels }: { layout: CurveChartLayout;
           where the labels are the only way to tell them apart. */}
       <g className="curve-labels">
         {plotted.map((point) => {
-          const labelOnLeft = point.x > CURVE_CHART.width * .62;
-          const labelX = point.x + (labelOnLeft ? -14 : 14);
+          const labelX = point.x + (point.labelOnLeft ? -14 : 14);
           const qualifier = workflowQualifier(point.workflowName);
-          return <text key={point.configurationId} className={`point-label${point.status === 'provisional' ? ' provisional' : ''}`} x={labelX} y={point.labelY} textAnchor={labelOnLeft ? 'end' : 'start'}><tspan>{pointName(point)}</tspan>{qualifier && <tspan x={labelX} dy="14">{qualifier}</tspan>}</text>;
+          return <text key={point.configurationId} className={`point-label${point.status === 'provisional' ? ' provisional' : ''}`} x={labelX} y={point.labelY} textAnchor={point.labelOnLeft ? 'end' : 'start'}><tspan>{pointName(point)}</tspan>{qualifier && <tspan x={labelX} dy="10">{qualifier}</tspan>}</text>;
         })}
       </g>
     </svg>
