@@ -10,6 +10,9 @@ const levelsRoot = path.join(root, 'src/benchmark-levels');
 const outputPath = path.join(levelsRoot, '..', 'benchmark', 'rank-catalog.json');
 const publicationPath = path.join(privateRoot, 'publication.json');
 const featuredModelsPath = path.join(root, 'src/app/featured-models.md');
+const publicModelNames = new Map([
+  ['stealth/ox-alpha', 'z-ai/glm-5.3-flash'],
+]);
 
 export const configurationLabels = {
   'claude-fable-5-high': {
@@ -102,11 +105,11 @@ export const configurationLabels = {
     workflowSummary: 'One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
   'pi-openrouter-ox-alpha-high': {
-    modelName: 'Ox Alpha',
+    modelName: 'GLM 5.3 Flash',
     workflowName: 'solo',
-    primaryModel: 'stealth/ox-alpha',
+    primaryModel: 'z-ai/glm-5.3-flash',
     effort: 'high',
-    workflowSummary: 'One fresh unattended pi session driving Ox Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+    workflowSummary: 'One fresh unattended pi session driving GLM 5.3 Flash over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
     featured: true,
   },
   'pi-openrouter-inkling-high': {
@@ -231,7 +234,7 @@ function runMetrics(entrant, manifest, labels) {
   }
   const firstModel = manifest.cost.models[0]?.modelName;
   const models = manifest.cost.models.map((model) => ({
-    modelName: model.modelName,
+    modelName: publicModelNames.get(model.modelName) ?? model.modelName,
     role: labels.workflowName === 'solo' ? 'solo' : model.modelName === firstModel ? 'orchestrate' : 'implement',
     inputTokens: model.inputTokens ?? 0,
     outputTokens: model.outputTokens ?? 0,

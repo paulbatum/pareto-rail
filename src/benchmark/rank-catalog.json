@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T21:56:08.441Z",
+  "generatedAt": "2026-08-26T17:40:03.905Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -106,11 +106,11 @@
     },
     {
       "id": "pi-openrouter-ox-alpha-high",
-      "modelName": "Ox Alpha",
+      "modelName": "GLM 5.3 Flash",
       "workflowName": "solo",
-      "primaryModel": "stealth/ox-alpha",
+      "primaryModel": "z-ai/glm-5.3-flash",
       "effort": "high",
-      "workflowSummary": "One fresh unattended pi session driving Ox Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
+      "workflowSummary": "One fresh unattended pi session driving GLM 5.3 Flash over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
       "featured": true
     },
     {
@@ -942,27 +942,29 @@
       "levelId": "broadside-7hin",
       "themeId": "broadside",
       "configurationId": "pi-openrouter-ox-alpha-high",
-      "modelName": "Ox Alpha",
+      "modelName": "GLM 5.3 Flash",
       "workflowName": "solo",
+      "generationCost": 0.83472755,
       "linesOfCode": 3257,
       "run": {
         "generationWallTimeSeconds": 4619.137,
         "totalWallTimeSeconds": 15694.88,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.84.2"
         },
         "models": [
           {
-            "modelName": "stealth/ox-alpha",
+            "modelName": "z-ai/glm-5.3-flash",
             "role": "solo",
             "inputTokens": 1153957,
             "outputTokens": 143428,
             "cacheReadTokens": 19664000,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 0.83472755
           }
         ]
       },
@@ -1580,27 +1582,29 @@
       "levelId": "strandline-o848",
       "themeId": "strandline",
       "configurationId": "pi-openrouter-ox-alpha-high",
-      "modelName": "Ox Alpha",
+      "modelName": "GLM 5.3 Flash",
       "workflowName": "solo",
+      "generationCost": 0.9006682,
       "linesOfCode": 3408,
       "run": {
         "generationWallTimeSeconds": 3132.716,
         "totalWallTimeSeconds": 3205.261,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.84.2"
         },
         "models": [
           {
-            "modelName": "stealth/ox-alpha",
+            "modelName": "z-ai/glm-5.3-flash",
             "role": "solo",
             "inputTokens": 574162,
             "outputTokens": 110867,
             "cacheReadTokens": 25303680,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 0.9006682
           }
         ]
       },
@@ -1951,27 +1955,29 @@
       "levelId": "speedsolve-nfof",
       "themeId": "speedsolve",
       "configurationId": "pi-openrouter-ox-alpha-high",
-      "modelName": "Ox Alpha",
+      "modelName": "GLM 5.3 Flash",
       "workflowName": "solo",
+      "generationCost": 1.60522117,
       "linesOfCode": 3424,
       "run": {
         "generationWallTimeSeconds": 5773.164,
         "totalWallTimeSeconds": 5933.643,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.84.2"
         },
         "models": [
           {
-            "modelName": "stealth/ox-alpha",
+            "modelName": "z-ai/glm-5.3-flash",
             "role": "solo",
             "inputTokens": 4943489,
             "outputTokens": 142931,
             "cacheReadTokens": 26407744,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 1.60522117
           }
         ]
       },
@@ -2120,27 +2126,29 @@
       "levelId": "vespers-1izg",
       "themeId": "vespers",
       "configurationId": "pi-openrouter-ox-alpha-high",
-      "modelName": "Ox Alpha",
+      "modelName": "GLM 5.3 Flash",
       "workflowName": "solo",
+      "generationCost": 1.54083977,
       "linesOfCode": 3168,
       "run": {
         "generationWallTimeSeconds": 2117.036,
         "totalWallTimeSeconds": 2194.088,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.84.2"
         },
         "models": [
           {
-            "modelName": "stealth/ox-alpha",
+            "modelName": "z-ai/glm-5.3-flash",
             "role": "solo",
             "inputTokens": 6037563,
             "outputTokens": 131098,
             "cacheReadTokens": 18988544,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 1.54083977
           }
         ]
       },
@@ -2425,27 +2433,29 @@
       "levelId": "thermal-ink-v1d2",
       "themeId": "thermal-ink",
       "configurationId": "pi-openrouter-ox-alpha-high",
-      "modelName": "Ox Alpha",
+      "modelName": "GLM 5.3 Flash",
       "workflowName": "solo",
+      "generationCost": 0.91475703,
       "linesOfCode": 4343,
       "run": {
         "generationWallTimeSeconds": 3858.734,
         "totalWallTimeSeconds": 3888.659,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.84.2"
         },
         "models": [
           {
-            "modelName": "stealth/ox-alpha",
+            "modelName": "z-ai/glm-5.3-flash",
             "role": "solo",
             "inputTokens": 837115,
             "outputTokens": 139305,
             "cacheReadTokens": 23984576,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 0.91475703
           }
         ]
       },
@@ -2570,27 +2580,29 @@
       "levelId": "tinker-ball-gnff",
       "themeId": "tinker-ball",
       "configurationId": "pi-openrouter-ox-alpha-high",
-      "modelName": "Ox Alpha",
+      "modelName": "GLM 5.3 Flash",
       "workflowName": "solo",
+      "generationCost": 1.89075112,
       "linesOfCode": 3513,
       "run": {
         "generationWallTimeSeconds": 2413.967,
         "totalWallTimeSeconds": 2502.422,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.84.2"
         },
         "models": [
           {
-            "modelName": "stealth/ox-alpha",
+            "modelName": "z-ai/glm-5.3-flash",
             "role": "solo",
             "inputTokens": 7215804,
             "outputTokens": 131234,
             "cacheReadTokens": 24758784,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 1.89075112
           }
         ]
       },

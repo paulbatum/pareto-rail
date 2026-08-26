@@ -10,6 +10,7 @@ import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mj
 import { assertSiblingSharedInputs, codexNetworkAccess, costBasisFor, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, unpricedReasonFor, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
 import { collectSessionView, counterUnavailableReason, harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { summarizeAgyCost } from './tokscale-cost.mjs';
+import { rateCardCost } from './rate-card.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 import { extractUsage } from './prime-agent-cli.mjs';
@@ -29,10 +30,12 @@ const exec = promisify(execFile);
 const hash = (character) => character.repeat(64);
 
 assert.equal(unpricedReasonFor(['thinkingmachines/inkling:free']), null);
-assert.match(unpricedReasonFor(['stealth/ox-alpha']), /bills nothing/);
+assert.equal(unpricedReasonFor(['stealth/ox-alpha']), null);
+assert.equal(costBasisFor(['stealth/ox-alpha']), 'rate-card');
 assert.equal(costBasisFor(['thinkingmachines/inkling:free']), 'rate-card');
 assert.equal(costBasisFor(['thinkingmachines/inkling']), 'metered');
 assert.equal(costBasisFor(['gemini-3.6-flash'], { usesTokscale: true }), 'rate-card');
+assert.equal(rateCardCost({ inputTokens: 1_000_000, outputTokens: 1_000_000, cacheReadTokens: 1_000_000 }), 0.68);
 
 const rendered = renderAssignment('id={{LEVEL_ID}} title={{LEVEL_TITLE}} theme={{THEME}}', {
   levelId: 'cinder-a1b2',

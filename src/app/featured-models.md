@@ -31,5 +31,5 @@ put it last.
 - Gemini 3.7 Flash
 - Kimi K3
 - [Inkling](https://openrouter.ai/thinkingmachines/inkling) (retired)
-- [Ox Alpha](https://openrouter.ai/stealth/ox-alpha) — a stealth model on OpenRouter (new)
+- [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash) — a fast coding model from Z.ai (new)
 - Gemini 3.6 Flash (retired)

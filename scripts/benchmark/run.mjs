@@ -18,6 +18,7 @@ import {
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, counterUnavailableReason, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { measureAgyRunCost, tokscaleVersion } from './tokscale-cost.mjs';
+import { applyRateCard, RATE_CARD_MODELS } from './rate-card.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
@@ -149,26 +150,11 @@ const COST_SOURCES = {
   tokscale: { tool: 'tokscale', commandFor: () => 'tokscale models --home <run harness home> --json' },
 };
 
-// A cloaked model is published without a price. The provider bills nothing for it, and a harness
-// that has no catalog entry for the id prices the session from a fallback rate card, so the figure
-// it reports describes no charge anyone incurred. A run on such a model records its cost as
-// unavailable: the token counts stand, the dollar figure does not exist. Remove the entry once the
-// model is named and priced, then restate the affected runs from their retained token counts.
-const UNPRICED_MODELS = new Map([
-  ['stealth/ox-alpha', 'OpenRouter publishes stealth/ox-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge.'],
-]);
+// A free or discounted access route can still serve a model whose ordinary route has a published
+// price. Its recorded cost uses that rate card rather than claiming the provider charged the operator.
 
-// A free access route can still serve a model whose ordinary route has a published price. ccusage
-// values those tokens from that rate card, as it values subscription-backed usage, rather than
-// claiming the provider charged the operator.
-const RATE_CARD_MODELS = new Set(['thinkingmachines/inkling:free']);
-
-// The reason this run cannot be priced, or null when every model it ran carries a price.
+// Every currently supported model has a price, so no run is excluded from the cost axis.
 export function unpricedReasonFor(modelNames) {
-  for (const modelName of modelNames) {
-    const reason = UNPRICED_MODELS.get(modelName);
-    if (reason) return reason;
-  }
   return null;
 }
 
@@ -817,18 +803,19 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
   if (Boolean(definition.stage.budget) !== Boolean(budget)) fail('Stage budget summary presence does not match the run definition.');
   // Cost starts from ccusage reading this run's isolated home: it parses the persisted rollouts
   // (parent + any delegated subagent threads) and prices with its own maintained rate DB. Replay
-  // can under-report output, so it is cross-checked against the harness's own counter.
+  // can under-report output, so it is cross-checked against the harness's own counter. The rate-card
+  // override below replaces any temporary or free-route price after that reconciliation.
   const commandRecord = commandRecords[0];
   // tokscale-priced harnesses publish no counter of their own, so there is nothing to cross-check the
   // decode against; reconcileCost records that as `unavailable` rather than claiming agreement.
   const usesTokscale = adapter.costMeasurement === 'tokscale';
   const cost = usesTokscale
     ? reconcileCost(await measureAgyRunCost({ home: harnessHome }), null)
-    : reconcileCost(
+    : applyRateCard(reconcileCost(
       await measureRunCost({ adapter: definition.stage.adapter, home: harnessHome }),
       harnessCountersForRounds(definition.stage.adapter, await loadRoundUsages(outputDirectory, adapter)),
       { reason: counterUnavailableReason(definition.stage.adapter) },
-    );
+    ));
   for (const warning of reconciliationWarnings(cost.reconciliation)) console.warn(warning);
   const costSource = COST_SOURCES[usesTokscale ? 'tokscale' : 'ccusage'];
   const costBasis = costBasisFor([definition.stage.model, ...cost.models.map((model) => model.modelName)], { usesTokscale });
@@ -838,7 +825,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
   const stageResult = stageLaunch.exitCode === 0 ? 'completed' : (commandRecord.timedOut ? 'timed-out' : 'failed');
   const unpricedReason = unpricedReasonFor([definition.stage.model, ...cost.models.map((model) => model.modelName)]);
   if (unpricedReason) console.warn(`Cost recorded as unavailable: ${unpricedReason}`);
-  const stages = buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget, costTool: costSource.tool, unpricedReason });
+  const stages = buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget, costTool: costSource.tool, costBasis, unpricedReason });
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -893,7 +880,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
 // When per-model cost is unavailable (Codex), the run collapses to a single stage carrying the run
 // total. All stage entries share the one session id and sum the active wall time of every invocation;
 // the prompt hashes attach to the parent.
-function buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null, costTool = 'ccusage', unpricedReason = null }) {
+function buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null, costTool = 'ccusage', costBasis = 'metered', unpricedReason = null }) {
   const commandRecord = commandRecords[0];
   const lastCommand = commandRecords.at(-1);
   const continuationRounds = commandRecords.length - 1;
@@ -907,6 +894,7 @@ function buildStages({ definition, adapter, cost, commandRecords, usage, rendere
   const delegationPromptSha256 = renderedMeta.delegation?.sha256;
   const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, entrantSandbox: entrantSandboxEnabled(definition), ...(sandboxUnavailable(definition) ? { sandboxUnavailable: true } : {}), ...(continuationRounds > 0 ? { continuationRounds } : {}), ...(budget ? { budget } : {}) };
   const delegated = Boolean(definition.delegation) && cost.models.length > 1;
+  const pricingSource = costBasis === 'rate-card' ? 'rate-card' : costTool;
 
   if (cost.perModelCostAvailable && cost.models.length >= 1) {
     const parentModel = usage.initResolvedModel ?? definition.stage.model;
@@ -922,7 +910,7 @@ function buildStages({ definition, adapter, cost, commandRecords, usage, rendere
         usage: stageUsage(model),
         pricing: unpricedReason
           ? { status: 'unavailable', reason: unpricedReason }
-          : { status: 'measured', costUsd: model.costUsd ?? 0, source: model.usageSource === 'harness-counter' ? 'harness-counter' : costTool },
+          : { status: 'measured', costUsd: model.costUsd ?? 0, source: costBasis === 'rate-card' ? pricingSource : model.usageSource === 'harness-counter' ? 'harness-counter' : pricingSource },
       };
     });
   }
@@ -937,7 +925,7 @@ function buildStages({ definition, adapter, cost, commandRecords, usage, rendere
     usage: stageUsage(cost.totals),
     pricing: unpricedReason
       ? { status: 'unavailable', reason: unpricedReason }
-      : { status: 'measured', costUsd: cost.totalUsd, source: costTool },
+      : { status: 'measured', costUsd: cost.totalUsd, source: pricingSource },
   }];
 }
 

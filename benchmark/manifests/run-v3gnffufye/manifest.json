@@ -62,15 +62,16 @@
         "cacheReadInputTokens": 24758784
       },
       "pricing": {
-        "status": "unavailable",
-        "reason": "OpenRouter publishes stealth/ox-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge."
+        "status": "measured",
+        "costUsd": 1.89075112,
+        "source": "rate-card"
       }
     }
   ],
   "cost": {
     "currency": "USD",
-    "status": "unavailable",
-    "orchestrationTreatment": "unavailable",
+    "status": "measured",
+    "orchestrationTreatment": "none",
     "reconciliation": {
       "status": "agreed",
       "source": "harness result event modelUsage"
@@ -82,10 +83,18 @@
         "inputTokens": 7215804,
         "outputTokens": 131234,
         "cacheReadTokens": 24758784,
-        "cacheWriteTokens": 0
+        "cacheWriteTokens": 0,
+        "costUsd": 1.89075112
       }
     ],
-    "unavailableReason": "OpenRouter publishes stealth/ox-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge."
+    "totalUsd": 1.89075112,
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "pi",
+      "command": "ccusage pi session --json",
+      "basis": "rate-card"
+    }
   },
   "gates": [
     {
