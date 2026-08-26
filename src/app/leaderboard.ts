@@ -1,5 +1,6 @@
 import { findCatalogEntrant, rankCatalog } from '../benchmark/catalog';
 import { completedMatchupsFromVotes } from '../benchmark/catalog-api';
+import { configurationGroupResolver } from '../benchmark/identity';
 import { personalHistoryFromReveals, recomputePersonalCurve, type PersonalCurve, type PersonalHistoryEntry } from '../benchmark/personal-curve';
 import { BenchmarkLocalStore } from '../benchmark/storage';
 import { selectPersonalCurveCatalog } from './rank';
@@ -45,7 +46,7 @@ export async function loadLeaderboardResults(options: LeaderboardOptions = {}): 
 
   const history = historyFromPairs(body.pairs);
   return {
-    curve: recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history) }),
+    curve: recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history), groupIdFor: configurationGroupResolver(rankCatalog.configurations) }),
     votes: body.votes ?? history.length,
     participants: body.participants ?? 0,
     latestVoteAt: body.latestVoteAt ?? null,
@@ -58,7 +59,7 @@ export async function loadLeaderboardResults(options: LeaderboardOptions = {}): 
 export function personalCurveFromLocalHistory(): PersonalCurve {
   const matchups = completedMatchupsFromVotes(rankCatalog, new BenchmarkLocalStore().snapshot.history);
   const history = personalHistoryFromReveals(matchups.map((item) => item.vote), matchups.map((item) => item.reveal));
-  return recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history) });
+  return recomputePersonalCurve(history, { catalog: selectPersonalCurveCatalog(rankCatalog, history), groupIdFor: configurationGroupResolver(rankCatalog.configurations) });
 }
 
 /** Expand each pair's tally back into one comparison per vote. The fit only
