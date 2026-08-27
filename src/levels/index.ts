@@ -70,7 +70,6 @@ export const levelMetadatas: LevelMetadata[] = [
     },
   },
   { id: 'rush', title: 'Rush', kind: 'technical' },
-  { id: 'pyre', title: 'Pyre', kind: 'technical' },
 ];
 
 const builtInLoaders: Record<string, () => Promise<LevelDefinition>> = {
@@ -79,7 +78,6 @@ const builtInLoaders: Record<string, () => Promise<LevelDefinition>> = {
   'prism-bloom': async () => (await import('./prism')).prismBloomLevel,
   rezdle: async () => (await import('./rezdle')).rezdleLevel,
   rush: async () => (await import('./rush')).rushLevel,
-  pyre: async () => (await import('./pyre')).pyreLevel,
 };
 
 export const builtInLevelCatalog: BuiltInLevelCatalogEntry[] = levelMetadatas.map((metadata) => ({

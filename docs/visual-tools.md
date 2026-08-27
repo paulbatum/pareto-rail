@@ -176,19 +176,19 @@ npm run refcompare -- grid tmp/inspiration/reference.png --horizon 781
 `stack` puts both full frames one above the other at a matched width — the fastest read on framing, horizon height, and overall massing.
 
 ```sh
-npm run refcompare -- stack tmp/inspiration/reference.png snapshots/gameplay/pyre-5s-full.png
+npm run refcompare -- stack tmp/inspiration/reference.png snapshots/gameplay/crystal-corridor-5s-full.png
 ```
 
 `blend` ghosts the reference over the render at 50%. Anything misaligned shows as doubled edges, which locates a drift that stacked panels hide.
 
 ```sh
-npm run refcompare -- blend tmp/inspiration/reference.png snapshots/gameplay/pyre-5s-full.png
+npm run refcompare -- blend tmp/inspiration/reference.png snapshots/gameplay/crystal-corridor-5s-full.png
 ```
 
 `compare` stacks the *same region* from both images, reference on top, enlarged. This is the working loop for one feature at a time. Both frames are scaled to the reference resolution first, so one region rectangle reads the same on each.
 
 ```sh
-npm run refcompare -- compare tmp/inspiration/reference.png snapshots/gameplay/pyre-5s-full.png --region gate:600,760,800,320 --grid
+npm run refcompare -- compare tmp/inspiration/reference.png snapshots/gameplay/crystal-corridor-5s-full.png --region gate:600,760,800,320 --grid
 ```
 
 `crop` cuts named regions out of one image and enlarges them, for close reading without a counterpart.
@@ -200,15 +200,15 @@ npm run refcompare -- crop tmp/inspiration/reference.png --region trench:600,760
 `sample` prints the hex colour and luminance at named pixels, across any number of images; with two it also prints the luminance delta. Later images are scaled to the first one's resolution. Sample the raw captures, not `grid` output — a grid line lands on every hundredth pixel and poisons the reading. `--points <file.json>` takes a reusable `{ "name": [x, y] }` list.
 
 ```sh
-npm run refcompare -- sample tmp/inspiration/reference.png snapshots/gameplay/pyre-5s-full.png --at "trench hot=980,900" --at 400,1040
+npm run refcompare -- sample tmp/inspiration/reference.png snapshots/gameplay/crystal-corridor-5s-full.png --at "trench hot=980,900" --at 400,1040
 ```
 
 `flicker` finds z-fighting and shimmer, which are temporal and so invisible in a single still. Capture two frames a small time-step apart yourself, then diff them:
 
 ```sh
-npm run snapshot:gameplay -- --level pyre --time 5 --seed 424242 --out tmp/ref-compare/frames
-npm run snapshot:gameplay -- --level pyre --time 5.05 --seed 424242 --out tmp/ref-compare/frames
-npm run refcompare -- flicker tmp/ref-compare/frames/pyre-5s-full.png tmp/ref-compare/frames/pyre-5p05s-full.png --ignore 0,940,1920,140
+npm run snapshot:gameplay -- --level crystal-corridor --time 5 --seed 424242 --out tmp/ref-compare/frames
+npm run snapshot:gameplay -- --level crystal-corridor --time 5.05 --seed 424242 --out tmp/ref-compare/frames
+npm run refcompare -- flicker tmp/ref-compare/frames/crystal-corridor-5s-full.png tmp/ref-compare/frames/crystal-corridor-5p05s-full.png --ignore 0,940,1920,140
 ```
 
 Keep the step small — a fifth of a second already moves the rail camera far enough that parallax dominates the diff. The report clusters changed pixels into regions and labels each one by how densely it is filled: `speckle` is sparse high-contrast change spread over a wide box, the signature of coplanar surfaces flipping; `solid` is a dense coherent blob, which is ordinary animation. Pass `--ignore <l,t,w,h>` for regions that are meant to move (enemies, effects, HUD), repeatable. `--threshold` sets the per-pixel channel delta that counts as change, `--json` emits the report machine-readably, and the heatmap image draws every changed pixel over a dimmed frame with the reported regions boxed.

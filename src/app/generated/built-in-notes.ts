@@ -36,9 +36,4 @@ export const builtInLevelNotes: Record<string, BuiltInLevelNotes> = {
     builderNotes: ["Rush is a technical showcase of the engine tools that keep enemies readable when player speed is high — `createRailPacer` (`src/engine/rail-pacer.ts`) and `createSpeedProfile` (`src/engine/speed-profile.ts`), exercised in `gameplay.ts`. Read it only if your level runs fast enough that fixed rail anchors fall outside the fog at spawn. It is not a reference for visuals, music, or overall level design."],
     linesOfCode: 1429,
   },
-  "pyre": {
-    intro: "A frozen plain under an overhead megastructure, looking down into a sunken city that burns. The run opens held on that view, then arcs slowly around the front of the pit to show the massing from the flanks and from above.",
-    builderNotes: [],
-    linesOfCode: 1197,
-  },
 };
