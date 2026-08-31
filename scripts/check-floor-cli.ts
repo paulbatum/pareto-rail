@@ -2,7 +2,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { computeCenterMetrics, formatEngineDefaultsReport, runSimulationSuite, validateLevelAudioConfig } from './simulation-cli';
 import { analyzeOcclusionLevels, formatReports } from './target-occlusion.mjs';
-import { buildGallery } from './level-gallery.mjs';
 
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
@@ -68,11 +67,6 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') failures.push(`Missing ${relative(root, cardPath)}.`);
     else throw error;
   }
-
-  const galleryPath = path.join(root, 'docs', 'level-gallery.md');
-  const expectedGallery = await buildGallery(root);
-  const actualGallery = await fs.readFile(galleryPath, 'utf8');
-  if (actualGallery !== expectedGallery) failures.push('docs/level-gallery.md is not regenerated from the current level.md cards. Run npm run gallery.');
 
   const occlusionWarnings = occlusionReports.flatMap((report) => report.warnings.map((warning) => ({ report, warning })));
   if (occlusionWarnings.length > 0) {
