@@ -289,6 +289,7 @@ kbd { padding: 2px 7px; color: var(--muted); border: 1px solid var(--hairline); 
 .reveal-tag { position: absolute; top: 18px; right: 18px; z-index: 2; padding: 5px 9px; color: var(--paper); background: var(--accent); font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
 .reveal-card.is-rejected .reveal-tag { color: var(--muted); background: transparent; border: 1px solid var(--hairline); }
 .reveal-card .identity { color: var(--body-text); font-size: 12px; letter-spacing: .04em; }
+.reveal-card .identity-effort { color: var(--muted); }
 .reveal-card .cost { display: grid; gap: 5px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--hairline-2); }
 .reveal-card .cost-value { color: var(--ink); font-size: clamp(26px, 4vw, 34px); font-weight: 800; line-height: 1; letter-spacing: -.03em; text-shadow: none; }
 .reveal-card.is-picked .cost-value { color: var(--accent); }

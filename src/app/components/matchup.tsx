@@ -49,12 +49,13 @@ export function RevealCards({ reveal, sideAnnotation }: { reveal: RevealPayload;
   const card = (side: MatchupSide) => {
     const entrant = reveal[side];
     const marker = revealMarker(reveal.vote.verdict, side);
+    const effort = effortFor(entrant);
     return <article className={`reveal-card${marker.className}`}>
       {marker.label && <span className="reveal-tag">{marker.label}</span>}
       <LevelThumbnail side={side} path={entrant.thumbnailPath} />
       <h2>Level {side.toUpperCase()}</h2>
       {sideAnnotation?.(side)}
-      <p className="identity">{entrantLabel({ modelName: entrant.modelName, snapshotLabel: entrant.snapshotLabel, workflowName: entrant.workflowName })}</p>
+      <p className="identity">{entrantLabel({ modelName: entrant.modelName, snapshotLabel: entrant.snapshotLabel, workflowName: entrant.workflowName })}{effort ? <span className="identity-effort"> · {effort} effort</span> : null}</p>
       {entrant.generationCost === undefined
         ? <p className="cost"><strong className="cost-value">Not priced</strong><span className="cost-label">this model is published without a price</span></p>
         : <p className="cost"><strong className="cost-value">${entrant.generationCost.toFixed(2)}</strong><span className="cost-label">measured generation cost</span></p>}
@@ -107,6 +108,13 @@ export function revealMarker(verdict: VoteVerdict, side: MatchupSide): { classNa
   if (verdict === 'both-bad') return { className: ' is-rejected', label: 'Not preferred' };
   const picked = verdict === 'a-better' ? 'a' : 'b';
   return picked === side ? { className: ' is-picked', label: 'Your pick' } : { className: '', label: null };
+}
+
+/** The reasoning effort the level was generated at, from the entrant's
+ * configuration. Absent for an entrant whose configuration the catalog no
+ * longer carries. */
+function effortFor(entrant: RevealPayload['a']): string | undefined {
+  return configurationFor(entrant.configurationId)?.effort;
 }
 
 function configurationFor(configurationId?: string): RankCatalogConfiguration | undefined {
