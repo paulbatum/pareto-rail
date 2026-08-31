@@ -1,0 +1,21 @@
+{
+  "runId": "run-d3ae0a81fc",
+  "slotId": "4797",
+  "levelId": "vespers-4797",
+  "themeId": "vespers",
+  "themePath": "benchmark/themes/vespers.md",
+  "configurationId": "codex-luna-max",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-luna",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v3",
+  "baselinePolicy": "scrubbed",
+  "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+  "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+  "levelTitle": "Vespers"
+}

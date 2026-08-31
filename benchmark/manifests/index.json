@@ -53,7 +53,8 @@
       "runId": "inkling-high-strandline-de7d",
       "levelId": "strandline-de7d",
       "themeId": "strandline",
-      "configurationId": "pi-openrouter-inkling-high"
+      "configurationId": "pi-openrouter-inkling-high",
+      "retired": true
     },
     {
       "runId": "kimi-k3-max-strandline-sk9q",
@@ -146,6 +147,12 @@
       "configurationId": "claude-opus-5-high"
     },
     {
+      "runId": "run-0035ce280d",
+      "levelId": "skyhook-7631",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-max"
+    },
+    {
       "runId": "run-0cafsiuauv6e",
       "levelId": "mass-driver-vyxj",
       "themeId": "mass-driver",
@@ -178,10 +185,28 @@
       "retired": true
     },
     {
+      "runId": "run-6e06255f1b",
+      "levelId": "broadside-806f",
+      "themeId": "broadside",
+      "configurationId": "codex-sol-max"
+    },
+    {
+      "runId": "run-6eb31f58cc",
+      "levelId": "thermal-ink-8448",
+      "themeId": "thermal-ink",
+      "configurationId": "codex-luna-max"
+    },
+    {
       "runId": "run-6m3dhz1loblr",
       "levelId": "skyhook-9uib",
       "themeId": "skyhook",
       "configurationId": "codex-sol-high"
+    },
+    {
+      "runId": "run-75d4db88d9",
+      "levelId": "tinker-ball-8bf3",
+      "themeId": "tinker-ball",
+      "configurationId": "codex-luna-max"
     },
     {
       "runId": "run-770j1pokdphe",
@@ -206,6 +231,24 @@
       "levelId": "mass-driver-9281",
       "themeId": "mass-driver",
       "configurationId": "codex-sol-high-b20"
+    },
+    {
+      "runId": "run-cc9f4ac46f",
+      "levelId": "mass-driver-def9",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-max"
+    },
+    {
+      "runId": "run-cfdddf9471",
+      "levelId": "strandline-542f",
+      "themeId": "strandline",
+      "configurationId": "codex-sol-max"
+    },
+    {
+      "runId": "run-d3ae0a81fc",
+      "levelId": "vespers-4797",
+      "themeId": "vespers",
+      "configurationId": "codex-luna-max"
     },
     {
       "runId": "run-eztdwig5twea",

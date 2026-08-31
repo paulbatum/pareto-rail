@@ -1,0 +1,28 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level thermal-ink-8448
+
+Thermal Ink floor check
+duration 60.0s; spawned kinds 6: arm, bolt, cable, core, ink-cloud, scavenger
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.24
+  action SFX snap: overridden grid (enabled, 2×32nd grid)
+  lock radius: 0.085 NDC (engine default 0.085); reticle visual 0.074 NDC = 0.87x lock radius, no reticle scaling
+  words: start "START!" (6), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, easeRunProgress, updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+reticle warnings: 0
+start/replay word warnings: 0
+All floor checks passed.

@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-cc9f4ac46f",
+  "slotId": "def9",
+  "configuration": {
+    "id": "codex-sol-max"
+  },
+  "theme": {
+    "id": "mass-driver",
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "baseline": {
+    "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "65172df10ae05cb49f7e60e6faa73b646417d854"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d935202d5ac0610164be8484e3160a82674dda5a4509dcca83e469e9464e59f3"
+  },
+  "controller": {
+    "commit": "4abf2f1620e36efc026edcd145a69ca927db71c9"
+  },
+  "timing": {
+    "startedAt": "2026-08-31T00:20:48.059Z",
+    "finishedAt": "2026-08-31T01:13:31.800Z",
+    "wallTimeSeconds": 3163.741
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "c52d708f29f559fc27577cb803f2f254c95eb9a014838b8a0cdc6f7491ad13f6",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.145.0"
+      },
+      "sessionId": "01a05530-c00a-76f3-8e53-91cee3ed341e",
+      "rolloutArtifactSha256": "1e18ff16579b9a90337cc292fd87bdeffa8be050d536e1ca30c777e2cf645da4",
+      "outputArtifactSha256": "ffbd1a4c0de50f02848efeb5772d615a8c5e2583161097151c0b1f32dabed6bc",
+      "startedAt": "2026-08-31T00:20:51.849Z",
+      "finishedAt": "2026-08-31T01:13:16.815Z",
+      "wallTimeSeconds": 3085.7902030040004,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 479800,
+        "outputTokens": 127909,
+        "cacheReadInputTokens": 18874240,
+        "reasoningTokens": 57944
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 12.027076000000001,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 12.027076000000001,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 479800,
+        "outputTokens": 127909,
+        "cacheReadTokens": 18874240,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 57944
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.8638270699999997,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.7699079820000002,
+      "outputSha256": "eb3935f6caab5d7691eb0e315d00ffd859f20d80b7a4eecdb4ca71e10252c284"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-def9 --base 65172df10ae05cb49f7e60e6faa73b646417d854",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.04180248399999982,
+      "outputSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-def9",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 8.871283175,
+      "outputSha256": "9e0c7a1a077984180608b2c8d249ffb07426a575cffe1b5ebb762800c68bfe23"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "mass-driver-def9",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "2464d80b6ede76460274c2149b5b77404d80784e",
+      "branch": "benchmark-run-run-cc9f4ac46f"
+    },
+    "payload": {
+      "commit": "09ab4037a13458f5530ea0325c15a321c8bd7377",
+      "branch": "benchmark-payload-run-cc9f4ac46f"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "notes": "Promotion audit accepted. Findings cover harness skill instructions, local benchmark validation tooling, and a listing of benchmark-level paths; they show no reads of another entrant's source. The transcript contains no web events."
+  }
+}

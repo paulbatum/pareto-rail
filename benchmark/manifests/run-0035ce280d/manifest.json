@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-0035ce280d",
+  "slotId": "7631",
+  "configuration": {
+    "id": "codex-sol-max"
+  },
+  "theme": {
+    "id": "skyhook",
+    "path": "benchmark/themes/skyhook.md",
+    "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+  },
+  "baseline": {
+    "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d935202d5ac0610164be8484e3160a82674dda5a4509dcca83e469e9464e59f3"
+  },
+  "controller": {
+    "commit": "579b9d5d2f6db7d929eaa8c9c0a83fe6ebada70c"
+  },
+  "timing": {
+    "startedAt": "2026-08-31T01:47:41.404Z",
+    "finishedAt": "2026-08-31T02:22:48.606Z",
+    "wallTimeSeconds": 2107.202
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-sol"
+      },
+      "promptSha256": "a21e1639c18721eefc7207bbeee8da7aff22ea122345d08c4d75598d73b5fe5c",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.145.0"
+      },
+      "sessionId": "01a05580-49c4-7602-b8e5-fe323ea54ec7",
+      "rolloutArtifactSha256": "44e47139c17c7f1a88f44c99c54951b751922dd7c423e3bfcb14a706dae3d420",
+      "outputArtifactSha256": "361f531003742e164b465eecf98a2f6b8da35678dbaa60f78e488be5a1dc369c",
+      "startedAt": "2026-08-31T01:47:44.701Z",
+      "finishedAt": "2026-08-31T02:22:38.250Z",
+      "wallTimeSeconds": 2050.440682197,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 274979,
+        "outputTokens": 94138,
+        "cacheReadInputTokens": 12344448,
+        "reasoningTokens": 32642
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 7.9204552,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 7.9204552,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-sol",
+        "inputTokens": 274979,
+        "outputTokens": 94138,
+        "cacheReadTokens": 12344448,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 32642
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.449444815,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.683451509,
+      "outputSha256": "5618b04b19d9aed4a74be8b054021c714b8d3d03db07278a4f81a4121510b278"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-7631 --base b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.033641461999999595,
+      "outputSha256": "4d819287dd191c0fe6f2165d8d0c302d18af362f513f441ec167130407207e49"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level skyhook-7631",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.3105797830000006,
+      "outputSha256": "91b86a2cb31db4fb9bad85a60200d35a69da00635ecd8a73f98d41e019913979"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "skyhook-7631",
+    "title": "Skyhook",
+    "evaluated": {
+      "commit": "6ab23a1d43b20d1368f1b3a42bad26389db15a65",
+      "branch": "benchmark-run-run-0035ce280d"
+    },
+    "payload": {
+      "commit": "0384a819dce8dd13b91dd04d5f54413b10364ea6",
+      "branch": "benchmark-payload-run-0035ce280d"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "notes": "Promotion audit accepted. Findings are reads of harness skill instructions and checks for the local Chrome executable; they expose no external level material. The transcript contains no web events."
+  }
+}

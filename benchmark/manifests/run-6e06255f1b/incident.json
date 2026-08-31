@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "incident": "2026-07-baseline-contamination",
+  "note": "The v2 baseline contained prior benchmark levels and benchmark infrastructure.",
+  "auditVerdict": "cross-theme-reads-retained",
+  "auditNote": "The audit reports benchmark-level source reads, but every named level belongs to another theme. The transcript names hull-run, mass-driver, and skyhook levels; it names no prior broadside level and contains no web events. The standing incident policy retains cross-theme reads as equivalent in kind to the built-in reference material. The outside-worktree skill read does not expose level material."
+}

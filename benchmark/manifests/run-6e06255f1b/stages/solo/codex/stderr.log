@@ -1,0 +1,5 @@
+2026-08-31T00:48:04.952562Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-run-6e06255f1b/src/benchmark-levels/broadside-806f/visuals/index.ts:
+  const mesh = new Mesh(new RingGeometry(0.65, 0.9, 36), material);
+2026-08-31T00:49:56.940916Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-run-6e06255f1b/src/benchmark-levels/broadside-806f/level.md:
+Armored bombers demand staged volleys, shield generators fall in a deliberate close pass, and three two-stage power systems end the flagship.
+2026-08-31T00:54:08.203783Z ERROR codex_core::tools::router: error=unable to locate image at `/tmp/broadside-806f-content-review/broadside-806f-thumbnails-8-3p75s-to-56p25s-full.png`: No such file or directory (os error 2)

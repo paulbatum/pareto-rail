@@ -13,11 +13,13 @@ Use this workflow for a built-in level or an integrated benchmark level that nee
 
 Store them at `public/level-content/<level-id>/`. Connect the paths through `contentImages`: use `src/levels/index.ts` for a built-in level, or that level's `src/benchmark-levels/<level-id>/level.json` descriptor for a benchmark level.
 
-## Images the level already has
+## Images an entrant shipped
 
-A benchmark entrant may ship its own images, which arrive with the promoted level. Backfill only what is missing: produce the images that are absent.
+A benchmark entrant may ship its own images, which arrive with the promoted level. Replace all three by running the workflow below.
 
-The hero is the one exception, and only as a flag rather than an edit. Judge a provided hero against the selection rules below, and if it fails them — no legible focal point, dominated by dead space, a clipped or transitional frame — say so in your report and describe what a better moment would show. Leave the file in place regardless; replacing it is the operator's decision, not yours.
+The entrant sandbox sets `PARETO_RENDER_MODE=software`, so an entrant renders on SwiftShader through three.js's WebGL2 backend. That backend runs neither the bloom nor the emissive passes the game ships, and it can drop emissive geometry from the frame entirely, so an entrant's images can show a darker and emptier level than a player sees.
+
+View the entrant's three images before you replace them, and report where your renders differ from them. That difference tells the operator what the software path lost.
 
 ## Workflow
 

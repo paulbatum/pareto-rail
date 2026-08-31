@@ -1,0 +1,21 @@
+{
+  "template": {
+    "path": "benchmark/prompts/level-assignment.md",
+    "sha256": "f16adc5c3a6bcfe0ee0549bf5e58ddc5acc8554233fd2765612250c4bc65a4e4"
+  },
+  "theme": {
+    "path": "benchmark/themes/broadside.md",
+    "sha256": "26b45de49b732d66b6dd68c6d97c053519f755e0e7543cf97a368a31794e8376"
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d935202d5ac0610164be8484e3160a82674dda5a4509dcca83e469e9464e59f3"
+  },
+  "rendering": {
+    "path": "/home/pbatum/vibes/raild/benchmark/private/runs/run-6e06255f1b/rendered-assignment.md",
+    "sha256": "a8282f2871ce8db60d29e335a6f24213f7c88c4fd59dcde5ead8d21dab2b3055"
+  },
+  "baseRendering": {
+    "sha256": "a8282f2871ce8db60d29e335a6f24213f7c88c4fd59dcde5ead8d21dab2b3055"
+  }
+}

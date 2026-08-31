@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-d3ae0a81fc",
+  "slotId": "4797",
+  "configuration": {
+    "id": "codex-luna-max"
+  },
+  "theme": {
+    "id": "vespers",
+    "path": "benchmark/themes/vespers.md",
+    "sha256": "c0866c43804268b700a568a31382462e4e50b2500b99bd2148d88924e0adc83f"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d935202d5ac0610164be8484e3160a82674dda5a4509dcca83e469e9464e59f3"
+  },
+  "controller": {
+    "commit": "579b9d5d2f6db7d929eaa8c9c0a83fe6ebada70c"
+  },
+  "timing": {
+    "startedAt": "2026-08-31T01:47:44.420Z",
+    "finishedAt": "2026-08-31T02:16:47.219Z",
+    "wallTimeSeconds": 1742.799
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-luna"
+      },
+      "promptSha256": "d81e5dad51bdd528b5ca4a142d0f2f13dad744beb37cf41a34d705014f783ad5",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.145.0"
+      },
+      "sessionId": "01a05580-7084-7f32-a8ab-bd519fd6ed03",
+      "rolloutArtifactSha256": "a893185f8c38fd4239b011eec958cb3208edbe77131d9ee9bd783b7b528d97b3",
+      "outputArtifactSha256": "75238af084976415ba4eb9828d1fb67ad748dfd45868392d8af2e72b7f73490d",
+      "startedAt": "2026-08-31T01:47:54.283Z",
+      "finishedAt": "2026-08-31T02:16:34.559Z",
+      "wallTimeSeconds": 1685.3144465340001,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 309829,
+        "outputTokens": 78150,
+        "cacheReadInputTokens": 14909824,
+        "reasoningTokens": 36006
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 0.45394228000000003,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 0.45394228000000003,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-luna",
+        "inputTokens": 309829,
+        "outputTokens": 78150,
+        "cacheReadTokens": 14909824,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 36006
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7168812720000002,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.5188802720000005,
+      "outputSha256": "f0e3bf7b3e79033036451190b76a63f349a9cab79ef69712a524cb881dc01d8d"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-4797 --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03612888099999964,
+      "outputSha256": "1b88e5e64f298db97f3a3ec6dae9f24b1c4ae9ea079e72df09b1233a0ce9a9e3"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level vespers-4797",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.83802878,
+      "outputSha256": "b665b12e3b894a2be0de4f5723a0305e1c4d5d437f0525205f3eba5db751b927"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "vespers-4797",
+    "title": "Vespers",
+    "evaluated": {
+      "commit": "204a5fd242033c1d59f8986694594034c2f3ce35",
+      "branch": "benchmark-run-run-d3ae0a81fc"
+    },
+    "payload": {
+      "commit": "1e17840e72959645adf103d1791f48240bbeeba0",
+      "branch": "benchmark-payload-run-d3ae0a81fc"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "notes": "Promotion audit clean. The transcript contains no findings or web events."
+  }
+}

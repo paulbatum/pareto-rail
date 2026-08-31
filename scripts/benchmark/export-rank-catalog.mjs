@@ -45,6 +45,13 @@ export const configurationLabels = {
     effort: 'max',
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
+  'codex-luna-max': {
+    modelName: 'GPT-5.6 Luna',
+    workflowName: 'solo',
+    primaryModel: 'gpt-5.6-luna',
+    effort: 'max',
+    workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'codex-sol-terra-delegation': {
     modelName: 'GPT-5.6 Sol',
     workflowName: 'delegated',
@@ -150,6 +157,7 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'claude-opus-5-high',
   'codex-sol-high-b20',
   'codex-sol-max',
+  'codex-luna-max',
   'agy-gemini-3-6-flash-high',
   'agy-gemini-3-7-flash-high',
   'pi-openrouter-ox-alpha-high',

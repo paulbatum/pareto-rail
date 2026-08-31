@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-75d4db88d9",
+  "slotId": "8bf3",
+  "configuration": {
+    "id": "codex-luna-max"
+  },
+  "theme": {
+    "id": "tinker-ball",
+    "path": "benchmark/themes/tinker-ball.md",
+    "sha256": "b9c846813d00dda166372ee7a298d6fa8bb5428e432a8988994126c1adcebc47"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d935202d5ac0610164be8484e3160a82674dda5a4509dcca83e469e9464e59f3"
+  },
+  "controller": {
+    "commit": "579b9d5d2f6db7d929eaa8c9c0a83fe6ebada70c"
+  },
+  "timing": {
+    "startedAt": "2026-08-31T01:47:47.782Z",
+    "finishedAt": "2026-08-31T02:17:36.219Z",
+    "wallTimeSeconds": 1788.437
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-5.6-luna"
+      },
+      "promptSha256": "b0a48b76502fba12aca810c4c97cad1088a59afc10c4811243babb7c8539f088",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.145.0"
+      },
+      "sessionId": "01a05580-8379-7790-a37a-f59762322457",
+      "rolloutArtifactSha256": "7e785779e9ffb15996a280c9291c4ab93825b1f84fe225331a89bf5c6b4ed9f2",
+      "outputArtifactSha256": "2567509d3d44e34a224491fa46c0d1eb27ec4b9afeee9d23288fcb08f0ece0c4",
+      "startedAt": "2026-08-31T01:47:59.697Z",
+      "finishedAt": "2026-08-31T02:17:22.841Z",
+      "wallTimeSeconds": 1728.210171749,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 348641,
+        "outputTokens": 77358,
+        "cacheReadInputTokens": 9390848,
+        "reasoningTokens": 30485
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 0.35037476,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 0.35037476,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-5.6-luna",
+        "inputTokens": 348641,
+        "outputTokens": 77358,
+        "cacheReadTokens": 9390848,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 30485
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.648097362,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.4395194329999996,
+      "outputSha256": "ad0b72ddbb8f9787ee19c63aafc27c7d1c35786de42c5b1250d6eacca84ae981"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-8bf3 --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.036347082000000225,
+      "outputSha256": "1b88e5e64f298db97f3a3ec6dae9f24b1c4ae9ea079e72df09b1233a0ce9a9e3"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level tinker-ball-8bf3",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.015321279999999,
+      "outputSha256": "ffb044b3a3a7bfc1ef994a566adfb3c6f06b4a13ed64bd616c7878361515a765"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "tinker-ball-8bf3",
+    "title": "Tinker Ball",
+    "evaluated": {
+      "commit": "5dc7a3ec156b9023dfbbc8544f5cdfa1db0c942c",
+      "branch": "benchmark-run-run-75d4db88d9"
+    },
+    "payload": {
+      "commit": "ab1dc71811e9994144b1c7064edbe2e3013501ac",
+      "branch": "benchmark-payload-run-75d4db88d9"
+    }
+  },
+  "disposition": {
+    "status": "playable",
+    "notes": "Promotion audit accepted. The sole outside-worktree finding is a parser false positive for an awk scope-check command; the command does not read the home directory. The transcript contains no web events."
+  }
+}

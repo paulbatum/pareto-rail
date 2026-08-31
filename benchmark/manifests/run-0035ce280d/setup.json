@@ -1,0 +1,14 @@
+{
+  "command": [
+    "npm",
+    "ci"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-08-31T01:47:41.683Z",
+  "finishedAt": "2026-08-31T01:47:44.517Z",
+  "wallTimeSeconds": 2.8339648189999997,
+  "stdoutSha256": "d88570bc999ab3bf92e03371a7db99a4d0d3d79722f8742e07f780058b6b0b0d",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "\nadded 53 packages in 3s\n",
+  "stderr": ""
+}

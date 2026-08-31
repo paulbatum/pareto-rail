@@ -1,0 +1,13 @@
+2026-08-31T02:05:28.802076Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-run-75d4db88d9/src/benchmark-levels/tinker-ball-8bf3/visuals/index.ts:
+    const pool = new Mesh(new CircleGeometrySafe(4.6, 40), new MeshBasicMaterial({
+2026-08-31T02:06:16.472461Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-run-75d4db88d9/src/benchmark-levels/tinker-ball-8bf3/visuals/index.ts:
+  bus.on('hit', ({ enemyId, projectileId, worldPosition, lethal, stageCompleted }) => {
+    projectiles.delete(projectileId);
+    pulse(scene, worldPosition, lethal ? GOLD : CORAL, lethal ? 3.0 : 1.8, lethal ? 0.4 : 0.24);
+    if (stageCompleted && !lethal) {
+      const record = enemies.get(enemyId);
+      if (record) spawnDismantleDebris(scene, record.kind, worldPosition, 2, false);
+    }
+  });
+2026-08-31T02:09:05.282294Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-run-75d4db88d9/src/benchmark-levels/tinker-ball-8bf3/visuals/index.ts:
+    projectiles.delete(projectileId);

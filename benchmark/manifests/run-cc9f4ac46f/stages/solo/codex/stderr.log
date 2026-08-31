@@ -1,0 +1,4 @@
+2026-08-31T00:54:35.489702Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-run-cc9f4ac46f/src/benchmark-levels/mass-driver-def9/gameplay.ts:
+type PacedData = {
+  engagement: RailLead;
+};

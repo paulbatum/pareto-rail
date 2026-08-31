@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-cc9f4ac46f",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-08-31T02:51:51.339Z",
+      "data": {
+        "source": {
+          "runId": "run-cc9f4ac46f",
+          "slotId": "def9",
+          "themeId": "mass-driver",
+          "levelId": "mass-driver-def9",
+          "title": "Mass Driver",
+          "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04",
+          "evaluatedCommit": "2464d80b6ede76460274c2149b5b77404d80784e",
+          "payloadCommit": "09ab4037a13458f5530ea0325c15a321c8bd7377",
+          "manifestSha256": "c70550425424e71709dc46d8996cbb1052cc592cd68640db266c988d29cc8437",
+          "definitionSha256": "e4a229a3711d3a2a158229a0853864de33759128358cd9df77921f7bf84c3364",
+          "evaluatedSha256": "c8bff5b4fa8d9f7ae465c4a9d1f4a65d2cb62be618e2bed4d644ed511c0c2929",
+          "payloadSha256": "f0234532321f8e3b04b6a77bd4fffef294fa3581095d46e509513d63532ab94c",
+          "payloadDiffSha256": "c6e88e884f032b6200c0978aa3d66de09300bd412518534c23ff8e2e47d651b0",
+          "sourcePath": "src/benchmark-levels/mass-driver-def9/",
+          "destinationPath": "src/benchmark-levels/mass-driver-def9/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/mass-driver-def9",
+              "promotedPath": "src/benchmark-levels/mass-driver-def9",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/mass-driver-def9",
+              "promotedPath": "public/level-content/mass-driver-def9",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "dff8145bf357427f7167a9cb603d5b01bfc936ea"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-08-31T02:51:51.462Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/mass-driver-def9/",
+            "files": 13,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-08-31T02:51:51.464Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-08-31T02:51:51.536Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-def9/",
+        "verifiedFiles": 13
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-08-31T02:53:07.192Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.210699145,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "6e24d9416059506c2fed84381fd0058306dae808206eee710d812000ce1ac851",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 28.2547618,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-def9 --base dff8145bf357427f7167a9cb603d5b01bfc936ea",
+            "exitCode": 0,
+            "stdoutSha256": "109ac033528a29e635a5e8ab91e3c822a6c53f6dcfb01eb194ccddf788f9809f",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.04937501699999848,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-def9",
+            "exitCode": 0,
+            "stdoutSha256": "4ad68383be09d29a53d8d5c201b7db0019e16fb4c1d32ddffbe027a15891e4cf",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 40.75389297299999,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-08-31T02:53:07.273Z",
+      "data": {
+        "promotionCommit": "13394e7e8239f3b83cf395ba58587bb903f14d0d",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-08-31T02:53:07.274Z",
+  "source": {
+    "runId": "run-cc9f4ac46f",
+    "slotId": "def9",
+    "themeId": "mass-driver",
+    "levelId": "mass-driver-def9",
+    "title": "Mass Driver",
+    "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04",
+    "evaluatedCommit": "2464d80b6ede76460274c2149b5b77404d80784e",
+    "payloadCommit": "09ab4037a13458f5530ea0325c15a321c8bd7377",
+    "manifestSha256": "c70550425424e71709dc46d8996cbb1052cc592cd68640db266c988d29cc8437",
+    "definitionSha256": "e4a229a3711d3a2a158229a0853864de33759128358cd9df77921f7bf84c3364",
+    "evaluatedSha256": "c8bff5b4fa8d9f7ae465c4a9d1f4a65d2cb62be618e2bed4d644ed511c0c2929",
+    "payloadSha256": "f0234532321f8e3b04b6a77bd4fffef294fa3581095d46e509513d63532ab94c",
+    "payloadDiffSha256": "c6e88e884f032b6200c0978aa3d66de09300bd412518534c23ff8e2e47d651b0",
+    "sourcePath": "src/benchmark-levels/mass-driver-def9/",
+    "destinationPath": "src/benchmark-levels/mass-driver-def9/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/mass-driver-def9",
+        "promotedPath": "src/benchmark-levels/mass-driver-def9",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/mass-driver-def9",
+        "promotedPath": "public/level-content/mass-driver-def9",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "dff8145bf357427f7167a9cb603d5b01bfc936ea"
+  },
+  "promotionCommit": "13394e7e8239f3b83cf395ba58587bb903f14d0d"
+}

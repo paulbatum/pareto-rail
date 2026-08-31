@@ -1,0 +1,21 @@
+{
+  "runId": "run-6eb31f58cc",
+  "slotId": "8448",
+  "levelId": "thermal-ink-8448",
+  "themeId": "thermal-ink",
+  "themePath": "benchmark/themes/thermal-ink.md",
+  "configurationId": "codex-luna-max",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-luna",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v3",
+  "baselinePolicy": "scrubbed",
+  "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+  "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+  "levelTitle": "Thermal Ink"
+}

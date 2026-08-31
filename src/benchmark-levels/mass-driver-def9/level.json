@@ -1,4 +1,9 @@
 {
   "id": "mass-driver-def9",
-  "title": "Mass Driver"
+  "title": "Mass Driver",
+  "contentImages": {
+    "overview": "/level-content/mass-driver-def9/overview.avif",
+    "start": "/level-content/mass-driver-def9/start.avif",
+    "hero": "/level-content/mass-driver-def9/hero.avif"
+  }
 }

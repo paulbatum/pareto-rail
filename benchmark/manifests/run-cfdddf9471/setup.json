@@ -1,0 +1,14 @@
+{
+  "command": [
+    "npm",
+    "ci"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-08-31T00:21:03.992Z",
+  "finishedAt": "2026-08-31T00:21:12.220Z",
+  "wallTimeSeconds": 7.584543326000001,
+  "stdoutSha256": "8f009063382e55f753c319654332883b2c4a969f3481afa0b2064e13bb18141f",
+  "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+  "stdout": "\n> pareto-rail@0.0.0 postinstall\n> prisma generate\n\n\n✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 38ms\n\n\nadded 172 packages in 8s\n",
+  "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma schema loaded from prisma/schema.prisma.\n"
+}

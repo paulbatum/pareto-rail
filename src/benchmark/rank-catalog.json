@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-26T17:40:03.905Z",
+  "generatedAt": "2026-08-31T03:32:04.936Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -33,6 +33,14 @@
       "modelName": "GPT-5.6 Sol",
       "workflowName": "solo",
       "primaryModel": "gpt-5.6-sol",
+      "effort": "max",
+      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+    },
+    {
+      "id": "codex-luna-max",
+      "modelName": "GPT-5.6 Luna",
+      "workflowName": "solo",
+      "primaryModel": "gpt-5.6-luna",
       "effort": "max",
       "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
@@ -434,6 +442,39 @@
       "materialsCommit": "d5ad9b92060a4a1be619bc4cd3d67d86a678877b"
     },
     {
+      "levelId": "mass-driver-def9",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-max",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 12.027076,
+      "linesOfCode": 2720,
+      "run": {
+        "generationWallTimeSeconds": 3085.79,
+        "totalWallTimeSeconds": 3163.741,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 479800,
+            "outputTokens": 127909,
+            "cacheReadTokens": 18874240,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 57944
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/mass-driver-def9/hero.avif",
+      "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
+      "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04"
+    },
+    {
       "levelId": "mass-driver-esvz",
       "themeId": "mass-driver",
       "configurationId": "claude-fable-5-high-b20",
@@ -646,6 +687,39 @@
       "thumbnailPath": "/level-content/skyhook-560p/hero.avif",
       "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
       "materialsCommit": "996413056f3482c3f98c37c7716cd4523d513271"
+    },
+    {
+      "levelId": "skyhook-7631",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-max",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 7.9204552,
+      "linesOfCode": 2999,
+      "run": {
+        "generationWallTimeSeconds": 2050.441,
+        "totalWallTimeSeconds": 2107.202,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 274979,
+            "outputTokens": 94138,
+            "cacheReadTokens": 12344448,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 32642
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-7631/hero.avif",
+      "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04"
     },
     {
       "levelId": "skyhook-81u5",
@@ -972,6 +1046,39 @@
       "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "ae92bab0a91369a568d5b3b04273c2e209a64131"
+    },
+    {
+      "levelId": "broadside-806f",
+      "themeId": "broadside",
+      "configurationId": "codex-sol-max",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 8.7703984,
+      "linesOfCode": 2443,
+      "run": {
+        "generationWallTimeSeconds": 2199.351,
+        "totalWallTimeSeconds": 2263.252,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 390718,
+            "outputTokens": 95872,
+            "cacheReadTokens": 13225216,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 31864
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-806f/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
     {
       "levelId": "broadside-b2o2",
@@ -1542,6 +1649,39 @@
       "thumbnailPath": "/level-content/mass-driver-detailed-uk78/hero.avif",
       "entrantBaseline": "4bc00a921882971dc6dbc8467b5dc35a0a18f3c1",
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
+    },
+    {
+      "levelId": "strandline-542f",
+      "themeId": "strandline",
+      "configurationId": "codex-sol-max",
+      "modelName": "GPT-5.6 Sol",
+      "workflowName": "solo",
+      "generationCost": 8.8957272,
+      "linesOfCode": 2239,
+      "run": {
+        "generationWallTimeSeconds": 1881.629,
+        "totalWallTimeSeconds": 1945.793,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-sol",
+            "role": "solo",
+            "inputTokens": 299235,
+            "outputTokens": 83292,
+            "cacheReadTokens": 15082368,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 28371
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-542f/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
     {
       "levelId": "strandline-de7d",
@@ -2158,6 +2298,39 @@
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
     {
+      "levelId": "vespers-4797",
+      "themeId": "vespers",
+      "configurationId": "codex-luna-max",
+      "modelName": "GPT-5.6 Luna",
+      "workflowName": "solo",
+      "generationCost": 0.45394228,
+      "linesOfCode": 1516,
+      "run": {
+        "generationWallTimeSeconds": 1685.314,
+        "totalWallTimeSeconds": 1742.799,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-luna",
+            "role": "solo",
+            "inputTokens": 309829,
+            "outputTokens": 78150,
+            "cacheReadTokens": 14909824,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 36006
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/vespers-4797/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
+    },
+    {
       "levelId": "vespers-c8vr",
       "themeId": "vespers",
       "configurationId": "agy-gemini-3-6-flash-high",
@@ -2361,6 +2534,39 @@
       "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "thermal-ink-8448",
+      "themeId": "thermal-ink",
+      "configurationId": "codex-luna-max",
+      "modelName": "GPT-5.6 Luna",
+      "workflowName": "solo",
+      "generationCost": 0.3652726,
+      "linesOfCode": 2310,
+      "run": {
+        "generationWallTimeSeconds": 1911.173,
+        "totalWallTimeSeconds": 1971.125,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-luna",
+            "role": "solo",
+            "inputTokens": 357271,
+            "outputTokens": 89894,
+            "cacheReadTokens": 9297280,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 37868
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/thermal-ink-8448/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
     {
       "levelId": "thermal-ink-sxom",
@@ -2573,6 +2779,39 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-7umh/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
+    },
+    {
+      "levelId": "tinker-ball-8bf3",
+      "themeId": "tinker-ball",
+      "configurationId": "codex-luna-max",
+      "modelName": "GPT-5.6 Luna",
+      "workflowName": "solo",
+      "generationCost": 0.35037476,
+      "linesOfCode": 1686,
+      "run": {
+        "generationWallTimeSeconds": 1728.21,
+        "totalWallTimeSeconds": 1788.437,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-luna",
+            "role": "solo",
+            "inputTokens": 348641,
+            "outputTokens": 77358,
+            "cacheReadTokens": 9390848,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 30485
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-8bf3/hero.avif",
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },

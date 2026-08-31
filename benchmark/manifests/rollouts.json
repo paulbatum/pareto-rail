@@ -152,6 +152,7 @@
       "levelId": "strandline-de7d",
       "themeId": "strandline",
       "configurationId": "pi-openrouter-inkling-high",
+      "retired": true,
       "files": [
         {
           "path": "runs/inkling-high-strandline-de7d/stages/solo/pi/rollout.jsonl",
@@ -436,6 +437,24 @@
       ]
     },
     {
+      "runId": "run-0035ce280d",
+      "levelId": "skyhook-7631",
+      "themeId": "skyhook",
+      "configurationId": "codex-sol-max",
+      "files": [
+        {
+          "path": "runs/run-0035ce280d/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 3286873,
+          "sha256": "44e47139c17c7f1a88f44c99c54951b751922dd7c423e3bfcb14a706dae3d420"
+        },
+        {
+          "path": "runs/run-0035ce280d/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 441738,
+          "sha256": "361f531003742e164b465eecf98a2f6b8da35678dbaa60f78e488be5a1dc369c"
+        }
+      ]
+    },
+    {
       "runId": "run-0cafsiuauv6e",
       "levelId": "mass-driver-vyxj",
       "themeId": "mass-driver",
@@ -523,6 +542,42 @@
       ]
     },
     {
+      "runId": "run-6e06255f1b",
+      "levelId": "broadside-806f",
+      "themeId": "broadside",
+      "configurationId": "codex-sol-max",
+      "files": [
+        {
+          "path": "runs/run-6e06255f1b/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 6147294,
+          "sha256": "17ee0d1a853cee7754e8028684e446b807461795847194825e7bebd03463c17e"
+        },
+        {
+          "path": "runs/run-6e06255f1b/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 1880010,
+          "sha256": "47d7f3af2655d474ae692a2fb895bb7bf815a14c78e3d45c6b0d8a0f44e1e19f"
+        }
+      ]
+    },
+    {
+      "runId": "run-6eb31f58cc",
+      "levelId": "thermal-ink-8448",
+      "themeId": "thermal-ink",
+      "configurationId": "codex-luna-max",
+      "files": [
+        {
+          "path": "runs/run-6eb31f58cc/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 7725129,
+          "sha256": "d089d335db07ee3a4fbf4e5aad2be1fdf358b2dab5b81915115a01a1bd95e40b"
+        },
+        {
+          "path": "runs/run-6eb31f58cc/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 773067,
+          "sha256": "96678baec03ed512f4526c9cf17d1293c2a9dd15fca9ebe02a8ca94cd1c190e4"
+        }
+      ]
+    },
+    {
       "runId": "run-6m3dhz1loblr",
       "levelId": "skyhook-9uib",
       "themeId": "skyhook",
@@ -537,6 +592,24 @@
           "path": "runs/run-6m3dhz1loblr/stages/solo/codex/events.jsonl.gz",
           "rawBytes": 250704,
           "sha256": "8c511b4471d66cb475e45a9a23db31388278ce9b361c37bd4132d89999699751"
+        }
+      ]
+    },
+    {
+      "runId": "run-75d4db88d9",
+      "levelId": "tinker-ball-8bf3",
+      "themeId": "tinker-ball",
+      "configurationId": "codex-luna-max",
+      "files": [
+        {
+          "path": "runs/run-75d4db88d9/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 8132677,
+          "sha256": "7e785779e9ffb15996a280c9291c4ab93825b1f84fe225331a89bf5c6b4ed9f2"
+        },
+        {
+          "path": "runs/run-75d4db88d9/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 856604,
+          "sha256": "2567509d3d44e34a224491fa46c0d1eb27ec4b9afeee9d23288fcb08f0ece0c4"
         }
       ]
     },
@@ -609,6 +682,60 @@
           "path": "runs/run-c340azfgk0vd/stages/solo/codex/events.jsonl.gz",
           "rawBytes": 339185,
           "sha256": "62bb83ef9fb90101f757cabcb74d0bb07bc60f5d29b41dcf0f65fba6e96e59ea"
+        }
+      ]
+    },
+    {
+      "runId": "run-cc9f4ac46f",
+      "levelId": "mass-driver-def9",
+      "themeId": "mass-driver",
+      "configurationId": "codex-sol-max",
+      "files": [
+        {
+          "path": "runs/run-cc9f4ac46f/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 3481037,
+          "sha256": "1e18ff16579b9a90337cc292fd87bdeffa8be050d536e1ca30c777e2cf645da4"
+        },
+        {
+          "path": "runs/run-cc9f4ac46f/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 1142037,
+          "sha256": "ffbd1a4c0de50f02848efeb5772d615a8c5e2583161097151c0b1f32dabed6bc"
+        }
+      ]
+    },
+    {
+      "runId": "run-cfdddf9471",
+      "levelId": "strandline-542f",
+      "themeId": "strandline",
+      "configurationId": "codex-sol-max",
+      "files": [
+        {
+          "path": "runs/run-cfdddf9471/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 14105825,
+          "sha256": "2b8ff5e9cf9b91a95219bffaa7f59bdaa0a954ef15876cad2649413d0500d231"
+        },
+        {
+          "path": "runs/run-cfdddf9471/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 742648,
+          "sha256": "45b3fcc59c20808c399ff8118df9effe8f734ea4c18d95a6967606f277736622"
+        }
+      ]
+    },
+    {
+      "runId": "run-d3ae0a81fc",
+      "levelId": "vespers-4797",
+      "themeId": "vespers",
+      "configurationId": "codex-luna-max",
+      "files": [
+        {
+          "path": "runs/run-d3ae0a81fc/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 6633944,
+          "sha256": "a893185f8c38fd4239b011eec958cb3208edbe77131d9ee9bd783b7b528d97b3"
+        },
+        {
+          "path": "runs/run-d3ae0a81fc/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 711415,
+          "sha256": "75238af084976415ba4eb9828d1fb67ad748dfd45868392d8af2e72b7f73490d"
         }
       ]
     },
