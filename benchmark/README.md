@@ -1,104 +1,125 @@
 # Pareto Rail level-generation benchmark
 
-Multiple agent configurations each build a complete, playable rail-shooter level from the same theme prompt — unattended, in one shot. Visitors to the site play pairs of these levels blind on the Rank page, vote, and see the results as a quality-versus-cost Pareto curve. This directory holds the benchmark's inputs, records, and operating procedures.
+Pareto Rail measures how well coding-agent configurations build complete browser rail-shooter levels in one unattended run. Configurations receive a shared level assignment and one of the benchmark themes. Visitors play two levels from the same theme without seeing who made them, vote, and then see the configurations and their measured generation costs. The site plots the resulting quality ratings against cost.
 
-Two roles appear throughout these documents and mean different things. The **owner** is the person the benchmark belongs to: they decide what runs, they vote on the site like any visitor, and the host, accounts, and clone are theirs. The **agent** is whatever drives the harness and reports back — in practice a coding agent, occasionally the owner at a terminal. The distinction matters most for blindness: the agent knows everything and the owner must not.
+This directory contains the benchmark inputs, operating procedures, public provenance, and private run records.
 
-## How a run works
+## Terms
 
-One deterministic command takes a plan row from an isolated entrant checkout through stage, seal, four gates, payload, and a cost-measured manifest. To see what has already run and what is still pending, start with `npm run benchmark:status`, which joins the plan files and any run schedule to the executed artifacts and answers that in one view (detailed under Inspecting results below). `benchmark/controller/README.md` is the operations page: the run command, the plan-file shape, resume and recovery, the failure policy, regate, promotion, and catalog publishing. Local run artifacts are kept under `benchmark/private/runs/<run-id>/`. Some artifacts are published to [hugging face](https://huggingface.co/datasets/paulbatum/pareto-rail-rollouts).
+- A **configuration** is the intervention being measured: a plan row that selects a harness, model, effort, provider, budget, delegation behavior, and other execution settings. `recipes/README.md` documents the roster and the mechanisms configurations compose.
+- A **theme** is the creative assignment shared by the configurations compared within one matchup group.
+- An **entrant** is the level produced by one benchmark run.
+- The **owner** decides what runs and votes on the site. The host, accounts, and repository clone belong to the owner.
+- The **agent** operates the benchmark harness and reports results. The agent can inspect configuration identities; the owner must remain blind until they say they have voted on that theme.
 
-## Sandboxing
+## Run lifecycle
 
-Where the harness supports it, an entrant runs under an OS-level boundary: its checkout is the only writable tree, the primary repository and every other run's checkout are unreadable, and tool execution has no external network egress. This closes by construction the cross-run read that disqualified `sol-high-mdd-v3qf` ([the incident record](incidents/2026-07-baseline-contamination.md)).
+Start with:
 
-Not every harness can be confined, and from v3 that is a warning rather than a bar. Such a run proceeds unisolated, the runner says so at launch, and its manifest records the condition — so the record distinguishes an entrant that was not isolated by policy from one that could not be, and a run never claims a boundary it did not have. The contamination audit is the control on those runs, the same footing open-policy rows have always had.
+```sh
+npm run benchmark:status
+```
 
-Which harnesses are confined, how each reaches the boundary, when it activates, and what the host needs are the operations page's: `benchmark/controller/README.md`, "Entrant sandbox".
+The command joins private plans and schedules with live and archived run records. It reports runs that are pending, playable but not promoted, or complete.
 
-## Design principles
+A benchmark run then follows this lifecycle:
 
-A few rules keep this system small and honest:
+1. The controller reads one row from a private plan.
+2. It creates an entrant checkout at the recorded baseline commit and renders the assignment from the recorded materials commit.
+3. The selected harness builds the level in that checkout.
+4. The controller seals the output and runs the typecheck, build, scope, and level-floor gates.
+5. It records the inputs, commits, harness output, disposition, usage, and cost in the run record.
+6. An accepted run is promoted into the application and added to the publication manifest.
+7. Catalog, provenance, and rollout exports publish the entrant and its evidence.
 
-- **Prefer simple.** Every record, gate, and policy adds complexity, so make sure its jusified. If a git commit already pins something, don't write a freeze file on top of it. If the process changes, delete the redundant machinery, its still there in the git history.
-- Any fairness question should be answerable after the fact from what was captured: the rendered prompt, the sealed commit, the transcript, the measured cost. Pre-launch checks exist only to avoid wasting an expensive run.
-- **Be strict only where it matters.** What an entrant sees or is judged by can't be redone — generation runs are expensive and unrepeatable. Everything else (gates, bookkeeping, publishing) is deterministic and replayable, so a recorded commit hash is enough.
-- **Fix worries by construction where possible; use judgment otherwise.** The isolated entrant checkout removes a whole class of contamination concerns with zero policy text. Where construction can't help, judgment is exercised in the moment and recorded as a plain note — no pre-declared taxonomies.
-- **Preserve blindness by saying less, not by building more.** Voters are kept blind mechanically by the site; the owner is kept blind by what the agent running the benchmark chooses not to report. Withholding an identity costs nothing, so withhold it — until the owner says they have voted on that theme, after which it is theirs to know. Don't contort the system's design around blindness beyond that.
+Local records live under `benchmark/private/runs/<run-id>/`. See [`controller/README.md`](controller/README.md) for plan files, launch commands, monitoring, recovery, adjudication, promotion, publishing, and cleanup.
 
-## Cost
+## Fairness and blindness
 
-Runs mostly use paid subscriptions rather than API billing. Cost is measured after the run by [ccusage](https://github.com/ccusage/ccusage) (pinned in `package.json`), which reads the run's isolated harness home and prices the persisted rollouts — parent and any delegated subagents — with its own maintained rate database. Two accepted gaps are documented rather than estimated: a small Claude auxiliary-model share (~0.2%, no transcript) and Codex's missing per-model cost split (its run totals stand).
+Configurations compared on one theme receive equivalent theme text and shared assignment text. The opaque level id differs per entrant, and a configuration may receive a mechanism-specific addition such as the delegation addendum because that mechanism is part of the intervention being measured. Each run records the rendered assignment and its inputs.
 
-Pricing the persisted rollouts assumes the rollouts are complete, and they are not always. Claude Code writes one line per content block and updates the line's usage when the message finalizes; a message that never finalizes keeps the small snapshot taken at message start, so replaying the transcript under-reports its output. Subagent threads are where this has shown up — one delegated run recorded a 37k-character thinking block as two output tokens. So the runner cross-checks ccusage against the harness's own counter (Claude's terminal result event carries a per-model `modelUsage` tallied from the API responses themselves) and records the outcome in `cost.reconciliation`, with each row's winner in `cost.models[].usageSource`. The direction of a gap identifies the faulty source: a counter above replay is replay having lost a message, and the counter is taken; a counter below replay cannot be explained that way, so replay stands and the run is flagged `suspect` for a human. Runs measured before this cross-check existed were restated in place from their retained artifacts by `npm run benchmark:reconcile-cost` (never re-measured), which moved published v1 cost up by $1.88 in total. That tool leaves an already-reconciled run alone unless `--recompute true` asks it to redo one whose record was computed under a rule since corrected. A run with no terminal result event — a timeout — has no counter and stays `unavailable`, so its figures keep whatever bias replay gave them.
+The private plan pins two commits:
 
-A resumed stage raises the question of what each round's counter covers, and the harnesses differ. Codex restates the whole session every round, so its final round is the run's counter and its rounds are never summed. Claude and pi instead report only what that invocation spent, so their rounds are summed. This is measured rather than assumed, and the measurement is the same each time: on every multi-round run on record, a Codex final round equals ccusage's replay of the session transcript, while summed Claude and pi rounds do. (pi reaches the same place differently — each `message_end` carries one API call's usage, so its adapter sums within an invocation before the controller sums across rounds.) Getting this wrong is visible rather than silent: comparing one round against a whole-session replay reads as a counter far below replay, which is the `suspect` signal below.
+- The **materials commit** supplies the assignment template, theme, and mechanism documents.
+- The **entrant baseline** supplies the repository that the entrant can inspect and modify.
 
-A zero-charge or discounted route for a model with a published price is valued from that model's rate card, just as subscription-backed usage is. The manifest records `basis: "rate-card"` so the reported value is not mistaken for a charge. A model published without any price cannot be valued this way. A run on such a model records `cost.status: "unavailable"` with the reason, keeps its token counts, and carries no dollar figure at any level. The rank catalog then publishes that entrant with no `generationCost`. Such an entrant is scheduled, voted on, and rated like every other, and its votes count toward the fit. What it has no position on is the cost axis: its point carries no mean cost, so the quality-vs-cost chart leaves it out and prints a note naming what it left out, while the quality-vs-output-tokens chart plots it. A rating group pools several configurations, and one unpriced contributor leaves the whole pooled point without a mean cost, so no point ever reports a mean over its priced half.
+Matchups compare entrants only within the same theme. The publication manifest records which entrant baselines that theme accepts, so conditions can differ between themes without creating a direct vote between those conditions. Published provenance discloses the materials and baseline commits used by each entrant.
 
-### Pricing a model that could not be priced
+When a harness supports confinement, the entrant sandbox makes the entrant checkout the only writable tree, hides the primary repository and other run checkouts, and blocks external network access while preserving the local access required by the checks. A harness that cannot provide this boundary runs unisolated. The runner warns before launch and records that condition in the run manifest.
 
-Follow this when a previously unpriced model gains a published price. `benchmark/ox-alpha-handoff.md` records the completed GLM 5.3 Flash repricing as an example.
+Every promoted run receives a transcript-based contamination review. The audit can find recorded reads, copies, and network activity, but it cannot prove that no unrecorded access occurred. The sandbox contract, host requirements, audit command, and promotion decision procedure belong to [`controller/README.md`](controller/README.md). Known failures and their corrective actions are recorded under [`incidents/`](incidents/).
 
-1. Delete the model's entry from `UNPRICED_MODELS` in `scripts/benchmark/run.mjs`.
-2. Restate each affected run from its retained token counts — never re-measure, since the session was never charged. Multiply `cost.models[]` tokens by the published input, output, and cache-read rates, then write `cost.status: "measured"`, `cost.totalUsd`, per-model `costUsd`, each stage's `pricing`, and a `costSource` carrying `basis: "rate-card"`. The basis is `rate-card` rather than `metered` because no charge was levied, which is the same footing the tokscale-priced rows stand on — see `recipes/agy-cli.md`.
-3. Rename the model wherever it is displayed: `modelName` in `configurationLabels` (`scripts/benchmark/export-rank-catalog.mjs`), the bullet in `src/app/featured-models.md`, and the configuration's row in `recipes/README.md`. The configuration id never changes — `docs/compat.md` holds it immutable because production votes reference it.
-4. Re-export and verify: `npm run benchmark:export-provenance`, `npm run benchmark:export-rank-catalog`, then `npm run typecheck`, `npm run build`, and the test scripts. The entrants' points move onto the cost chart as soon as they publish a cost. Their ranking does not change: they were already scheduled and rated, and every vote already cast on them already counted.
+Visitors remain blind until they vote. The site reveals model, workflow, and measured cost only after the vote. The agent operating the benchmark must also withhold the mapping between opaque level ids and configurations from the owner until the owner says they have voted on that theme.
 
+## Judgment and ratings
 
-A pi stage's `events.jsonl` is the retained event stream rather than a verbatim copy of the harness's stdout: pi's `message_update` events each repeat the whole message built so far instead of the new delta, so keeping them grows the log with the square of a message's length — a five-minute stage emitted 251MB of them against a 172KB session file. They are dropped as they stream, since each is superseded by the `message_end` closing its message with the final content and usage, and the count dropped is recorded alongside the log. The complete transcript remains the session file, which is captured as the run's rollout artifact and is the same file ccusage replays.
+A visitor plays two entrants from the same theme and selects one verdict:
 
-ccusage scopes to a run's isolated home by environment variable for Claude and Codex, but its pi view takes an explicit `--pi-path` sessions directory instead; the cost module carries that difference per harness so every view is still measured against one run's rollouts and nothing else. Costs are not uniformly subscription-priced: a pi configuration reaches its model through a selectable provider, so an OpenRouter-backed configuration bills real metered API spend while a subscription-backed one does not. Because `orchestrationTreatment` and the subscription caveat differ between those, a pi configuration's billing path is a property of its recipe, not of the harness.
+- **A is better**
+- **B is better**
+- **Both are good**
+- **Both are bad**
 
-## Budget
+The first two verdicts provide a preference between configurations. The two ties record positive or negative sentiment but do not change their relative ordering.
 
-Some configurations use a soft USD task budget to calibrate effort (the `-b20` recipes): the entrant is told a budget exists, receives relative spend notices in 25% increments, and is resumed in the same harness session while it keeps submitting under 75% of the budget. Resumes are not limited to a small fixed count; the submit fraction is the stopping condition, bounded by the remaining wall-clock time and a defensive round backstop that no honest run should reach. The controller polls the run's isolated home with ccusage. Claude and Codex deliver notices through command hooks; pi loads only a controller-owned extension that steers the same notice after a tool finishes. The budget is guidance, not a cap; exceeding it never kills a run.
+The site fits a regularized Bradley–Terry rating per configuration from the visitor's preferences. A configuration can join the displayed Pareto frontier after its comparison count reaches both thresholds:
 
-## Inspecting results
+- at least 80% of the median comparison count; and
+- at least three comparisons.
 
-`npm run benchmark:status` is the first stop for the current picture: it joins every private plan file and any run schedule to the executed artifacts — live and archived — and reports what is left, splitting runs into pending (planned but not yet completed, including not-started), needs-promotion (playable but unpromoted), and ran. `npm run benchmark:results` is the per-run-artifact detail view, summarizing the records under `benchmark/private/runs`: lifecycle state, gates, stage and controller elapsed time, cost, and manifest completeness, without parsing entrant prose or raw logs. It is blind by default — run ids and dispositions only, no configuration or model columns — so its output is safe to repeat as-is. `--theme <id>` and `--format json|csv` narrow or reshape the output, `--runs <path>` points at another run-artifact directory, and `--unblind` reveals configuration and model identities. Recorded incidents add a compact marker, and a disqualification marker changes only the displayed state; manifests remain untouched. `npm run benchmark:manage -- status` gives the same picture keyed to lifecycle and promotion state; see the operations page for archive, unarchive, and prune.
+The chart still shows configurations below the threshold but marks them as provisional. It also excludes a disconnected comparison group from the frontier until votes connect that group to the main comparison graph. A configuration represented on only one theme remains limited by the comparisons available in that theme, so the benchmark must run it on more themes before additional voting can provide broader coverage.
 
-`npm run benchmark:contamination` audits retained tool-call transcripts for reads or copies from other benchmark levels, benchmark infrastructure, paths outside the entrant worktree, and web activity. Web events are informational for review; self-lookups of the repository or benchmark identities are violations, while a run with other web activity is marked `needs-web-review`. It is heuristic evidence rather than proof of a clean run: only recorded tool calls and literal shell commands are visible, so the tool proves presence of evidence, not absence of contamination. Directory listings are reported separately, and obvious URLs, device paths, `node_modules`, one-off `/tmp` scratch files, built-in level content under `public/level-content/`, and the run's own artifact directory under `benchmark/private/runs/<runId>/` are ignored while repository-shaped `/tmp` paths and outside `cd` commands remain evidence. The audit reads the run's `baselinePolicy`: on a scrubbed run the monitored roots hold nothing but the shared scaffold, the built-in levels, and the entrant's own level, so surveying a root — or a glob that can only expand inside one — is not evidence, while naming another level explicitly still is, whether or not the path resolved. `--run <id>` or `--json` narrows or reshapes the audit. The July 2026 v2 baseline incident is recorded in [the incident record](incidents/2026-07-baseline-contamination.md).
+Votes are stored anonymously as salted participant hashes and append-only, idempotent records. Existing votes remain attached to immutable theme, level, and configuration identifiers.
 
-## Judgment
+## Generation cost
 
-Judgment is blind pairwise play on the public site. A visitor is assigned two levels from the same theme, must play both, and votes one of four verdicts: **A is better**, **B is better**, **both are good**, or **both are bad**. The first two are decisive preferences; the ties carry positive or negative sentiment that is reported separately but never changes the relative ordering. Model, workflow, and measured cost are revealed only after the vote. The owner is a voter too: level ids are opaque (`<theme-id>-<slot>`) and the level-to-configuration mapping lives only in the private plan.
+Generation cost is the benchmark's valuation of the model usage captured for a run. It can include the primary agent and delegated subagents when their transcripts are part of the run's isolated harness record. A reported dollar value does not necessarily equal a charge paid by the owner: configurations can use subscriptions, metered APIs, discounted routes, or rate-card valuation.
 
-Each visitor's votes fit a regularized Bradley–Terry model per configuration, plotted against mean measured generation cost as a personal Pareto curve with an explicit frontier. Votes are also recorded anonymously (salted participant hashes, idempotent, append-only) in a Postgres backend for future aggregate results.
+The run manifest records the evidence needed to interpret the result:
 
-A configuration's rating only counts once it has been compared about as often as the rest of the field — at least 80% of the median comparison count, and never fewer than three. Configurations below that bar are drawn on the chart but held off the frontier and labelled as too early to call, and so are configurations whose comparisons form an island never matched against the main body. Both exclusions exist because the regularization deliberately pulls a thinly-compared rating toward the middle: a configuration with two losses scores above one with seven, and the cheapest configuration on a chart can never be dominated, so a newcomer would otherwise anchor the frontier on the strength of the prior alone. A configuration run on only one theme is capped by the number of entrants that theme has and stays provisional until it is run on more — the shortfall is evidence the benchmark has to generate, not votes the visitor has to cast.
+- token counts and available per-model detail;
+- the pricing tool and pricing basis;
+- the selected usage source;
+- reconciliation between transcript-derived usage and an independent harness counter when the harness provides one; and
+- an explicit reason when a cost is unavailable.
 
-## Promotion and publishing
+A configuration without an available dollar value remains eligible for scheduling, voting, and rating. Its votes contribute to quality ratings, but it has no point on the cost axis. A pooled rating also has no mean cost when any contributing configuration is unpriced.
 
-A playable run is promoted with `npm run benchmark:promote -- --run <run-id>`, which materializes its payload under `src/benchmark-levels/<id>/`, runs the four checks, and commits. Before promoting, execute `npm run benchmark:contamination -- --run <runId> --json`, review every `web` event against the entrant's output for plausible reuse of external level material, and record the reviewer's verdict in the promotion decision. A `web-self-lookup` or any other violation blocks promotion pending the agent's review. Promotion does not produce the level's public content images: each promoted level still needs the three-image pass (the `level-content-images` skill) before catalog export, which fails on any level whose descriptor lacks `contentImages`. To see which promoted levels still need the pass, enumerate descriptors rather than inferring from promotion order: `grep -L contentImages src/benchmark-levels/*/level.json`. `npm run benchmark:export-rank-catalog` then projects the publication manifest (`benchmark/private/publication.json`, the hand-edited list of published themes and entrants) into the checked-in `src/benchmark/rank-catalog.json`. Each live entrant record also carries `linesOfCode`, a deterministic size proxy the export derives by counting non-blank lines of authored TypeScript in the promoted level's source tree — not a run-time measurement, so it is recomputed on every export rather than captured or backfilled. Returning visitors keep their old judgments: entrants never leave the catalog — retirement flags them instead — and a personal curve pools evidence by configuration id, so reusing a configuration id asserts "same intervention" and connects the comparison graph. Publishing a run also publishes its record: `npm run benchmark:export-provenance` materializes the per-run honesty record under `benchmark/manifests/`, and `npm run benchmark:export-rollouts -- --upload` pushes the secret-scanned full transcripts to the public Hugging Face dataset. A published entrant is pinned to commits that mainline never reaches — its run branches, its baseline, its materials commit — so publishing also means tagging those commits and pushing the tags. All of these commands, the tagging scheme, and the tests to run after publishing are detailed on the operations page.
+The manifest is the record of the result. Its `controller.commit` identifies the controller and adapter source that performed the calculation, including transcript discovery, resumed-session accounting, and source selection. See [`schemas/run-manifest.schema.json`](schemas/run-manifest.schema.json) for the record shape, [`recipes/`](recipes/) for harness-specific evidence and limitations, and [`manifests/`](manifests/) for published run records.
 
-## The published catalog
+## Published evidence
 
-The site's catalog is one flat set of themes and entrants. A matchup always pairs two entrants of the same theme, so fairness is a per-theme property: the publication manifest declares each theme's accepted entrant-baseline commits — distinct commits may be listed as equivalent when nothing an entrant sees differs materially — and the export rejects a live entrant generated on any other baseline. Conditions may differ between themes without distorting the ranking, since votes never compare across themes. Each published entrant carries its provenance — the entrant baseline and materials commit, copied from its run manifest — as disclosure, not verification.
+Publishing preserves enough evidence to inspect what an entrant received, produced, and cost:
 
-Which matchup a visitor gets is decided per visitor from their own vote history alone — there is no shared queue and no randomness, so the same history always yields the same matchup. A theme's claim on the next comparison is capped at the two unseen levels a wholly fresh pairing needs, rather than counting every unseen level: ranking by the raw count orders themes by how many entrants they hold, so the largest theme wins every time and a configuration that appears only in a small theme is never compared at all. Themes with an equal claim are ordered per participant, so visitors in the same position open in different themes and aggregate coverage is not concentrated on one sequence.
+- the rendered assignment and its inputs;
+- the materials and entrant-baseline commits;
+- the sealed output and payload records;
+- gate results and the promotion decision;
+- any incident note;
+- harness command, usage, and final-message records; and
+- the measured or unavailable cost record.
 
-A visitor with no vote history opens on a pairing whose two sides are both `featured` configurations, so the featured set decides which configurations a first-time visitor compares before any other. `featured` is declared per configuration in `configurationLabels` (`scripts/benchmark/export-rank-catalog.mjs`) and the export copies it onto that configuration's entrants; the levels page marks those entrants too. Two featured configurations that share no theme yield no such pairing, and the opener falls through to ordinary coverage — so check which themes the featured configurations overlap on before changing the set.
+`npm run benchmark:export-provenance` writes the repository-sized subset under [`manifests/`](manifests/). Full transcripts are published separately in the [Pareto Rail rollouts dataset](https://huggingface.co/datasets/paulbatum/pareto-rail-rollouts), with hashes recorded in `manifests/rollouts.json`. Credential-bearing harness state and private controller records are not published.
 
-Which theme hosts that opener is steered by a `featured` flag on the theme, declared in the publication manifest (`benchmark/private/publication.json`) and copied through by the export. The scheduler draws the opener from a featured theme when a featured pairing exists in one, so the themes a first-time visitor sees are chosen rather than whatever the salt lands on. The theme flag ranks below the configuration flag: when the featured configurations overlap only on unfeatured themes, the opener comes from one of those themes anyway. Featuring a theme changes nothing after the opener — an unfeatured theme is scheduled, played, and ranked as before.
-
-Scheduling state is a `retired` flag at two grains. A retired theme stays in the gallery and keeps counting past votes but never enters a new matchup; a retired entrant inside an active theme likewise stays as visible history (superseded configurations, for example). A theme may instead carry an `experimental` flag, which is the same scheduling exclusion at the other end of the life cycle: a new theme shown in the gallery for play before it is admitted to ranking. The pool the scheduler draws from is derived — every non-retired entrant of every theme that is neither retired nor experimental — and votes record theme and level ids alone, so any recorded vote resolves against the catalog for as long as it exists. An entrant publishing without a `generationCost` is in that pool like any other; the only thing it lacks is a position on the cost chart — see "Cost".
+The run's evaluated output, payload, materials, and entrant baseline can live outside mainline history. The publishing procedure therefore also preserves their commits under benchmark tags. See [`controller/README.md`](controller/README.md) for the export, scanning, tagging, and verification commands.
 
 ## Versions
 
-"v1" and "v2" name eras of the benchmark's machinery and configuration roster, not divisions of the published catalog. Version 1 is finished; its machinery and its freeze record are retrievable at the `benchmark-v1` git tag, while its published runs remain live provenance under `manifests/`. Current runs are pinned by the private plan's materials and baseline commits.
+Version names such as `v1` and `v2` identify eras of the controller and configuration roster, not separate published rankings. Current plans pin their materials and entrant-baseline commits. The `benchmark-v1` tag retains the first version's machinery and freeze record, while its published entrants remain part of the live provenance set.
 
-## Directory map
+## Documentation map
 
-- `controller/` — the operations page for running, resuming, and managing runs.
-- `prompts/` — the shared assignment template and delegation addendum, with rendering rules.
-- `themes/` — theme texts and authoring guidance.
-- `examples/` — exemplar theme texts used by rehearsal and smoke runs.
-- `recipes/` — the mechanisms a configuration is built from (one document per harness, plus the budget and delegation behaviors) and the roster of configurations that compose them. The configuration is the intervention being measured; it is defined by its plan row, not by a file per combination.
-- `schemas/` — the run-manifest record format written by the runner.
-- `manifests/` — public per-run provenance for every published entrant, written by `benchmark:export-provenance`.
-- `analysis/` — committed rollout analysis packages that drive the site's `/analysis` view.
-- `ox-alpha-handoff.md` — the completed Ox Alpha to GLM 5.3 Flash identity and pricing update.
-- `private/` (ignored) — the plan, run records, raw logs, archives, and retired outputs.
+| Need | Document |
+| --- | --- |
+| Run, monitor, recover, adjudicate, promote, or publish | [`controller/README.md`](controller/README.md) |
+| Understand or add a configuration | [`recipes/README.md`](recipes/README.md) |
+| Inspect a harness or cross-cutting mechanism | [`recipes/`](recipes/) |
+| Understand prompt rendering | [`prompts/README.md`](prompts/README.md) |
+| Write or select a theme | [`themes/README.md`](themes/README.md) |
+| Interpret the run-manifest record | [`schemas/README.md`](schemas/README.md) |
+| Inspect public provenance and transcript indexes | [`manifests/README.md`](manifests/README.md) |
+| Inspect rollout analysis packages | [`analysis/README.md`](analysis/README.md) |
+| Review known benchmark failures | [`incidents/`](incidents/) |
+| Understand rehearsal-only prompt exemplars | [`examples/README.md`](examples/README.md) |
 
-Each directory's README is the authoritative contract for the artifacts it holds.
+Each directory README owns the standing contract for the artifacts in that directory. Historical run behavior comes from the commits and artifacts recorded for that run, not from the current working tree.
