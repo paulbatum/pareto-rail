@@ -112,6 +112,7 @@ Version names such as `v1` and `v2` identify eras of the controller and configur
 | Need | Document |
 | --- | --- |
 | Run, monitor, recover, adjudicate, promote, or publish | [`controller/README.md`](controller/README.md) |
+| Change controller components | [`controller/development.md`](controller/development.md) |
 | Understand or add a configuration | [`recipes/README.md`](recipes/README.md) |
 | Inspect a harness or cross-cutting mechanism | [`recipes/`](recipes/) |
 | Understand prompt rendering | [`prompts/README.md`](prompts/README.md) |
