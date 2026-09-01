@@ -21,6 +21,7 @@ export const configurationLabels = {
     primaryModel: 'claude-fable-5',
     effort: 'high',
     workflowSummary: 'One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+    featured: true,
   },
   'claude-fable-5-opus-delegation': {
     modelName: 'Claude Fable 5',
@@ -74,7 +75,6 @@ export const configurationLabels = {
     primaryModel: 'claude-opus-5',
     effort: 'high',
     workflowSummary: 'One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
-    featured: true,
   },
   'claude-fable-5-1-high': {
     modelName: 'Claude Fable 5.1',
@@ -125,7 +125,6 @@ export const configurationLabels = {
     primaryModel: 'z-ai/glm-5.3-flash',
     effort: 'high',
     workflowSummary: 'One fresh unattended pi session driving GLM 5.3 Flash over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
-    featured: true,
   },
   'pi-openrouter-inkling-high': {
     modelName: 'Inkling',

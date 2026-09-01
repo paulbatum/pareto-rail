@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T19:15:01.021Z",
+  "generatedAt": "2026-09-01T19:32:22.316Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -7,7 +7,8 @@
       "workflowName": "solo",
       "primaryModel": "claude-fable-5",
       "effort": "high",
-      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
+      "featured": true
     },
     {
       "id": "claude-fable-5-opus-delegation",
@@ -69,8 +70,7 @@
       "workflowName": "solo",
       "primaryModel": "claude-opus-5",
       "effort": "high",
-      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
-      "featured": true
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "claude-fable-5-1-high",
@@ -127,8 +127,7 @@
       "workflowName": "solo",
       "primaryModel": "z-ai/glm-5.3-flash",
       "effort": "high",
-      "workflowSummary": "One fresh unattended pi session driving GLM 5.3 Flash over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
-      "featured": true
+      "workflowSummary": "One fresh unattended pi session driving GLM 5.3 Flash over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "pi-openrouter-inkling-high",
@@ -446,7 +445,6 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-d8qz/hero.avif",
-      "featured": true,
       "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
       "materialsCommit": "d5ad9b92060a4a1be619bc4cd3d67d86a678877b"
     },
@@ -615,6 +613,7 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-vyxj/hero.avif",
+      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -871,7 +870,6 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-k5rw/hero.avif",
-      "featured": true,
       "entrantBaseline": "65172df10ae05cb49f7e60e6faa73b646417d854",
       "materialsCommit": "d5ad9b92060a4a1be619bc4cd3d67d86a678877b"
     },
@@ -1018,6 +1016,7 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-snxd/hero.avif",
+      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -1087,7 +1086,6 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-7hin/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "ae92bab0a91369a568d5b3b04273c2e209a64131"
     },
@@ -1222,6 +1220,7 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-b4kd/hero.avif",
+      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
@@ -1289,7 +1288,6 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-b7tm/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "dbd1bded34a1293e08a4bb765b0bae870866df4c"
     },
@@ -1426,6 +1424,7 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-detailed-k4wz/hero.avif",
+      "featured": true,
       "entrantBaseline": "e036b4253f95b6c7b6f8077f05098b4f2df012e6",
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
     },
@@ -1458,6 +1457,7 @@
           }
         ]
       },
+      "featured": true,
       "retired": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
@@ -1793,7 +1793,6 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-o848/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "ae92bab0a91369a568d5b3b04273c2e209a64131"
     },
@@ -1930,7 +1929,6 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-s3vn/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "dbd1bded34a1293e08a4bb765b0bae870866df4c"
     },
@@ -1998,6 +1996,7 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-s7ah/hero.avif",
+      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
@@ -2166,7 +2165,6 @@
         ]
       },
       "thumbnailPath": "/level-content/speedsolve-nfof/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "1f62c1a9e4defd63df805f5a51ac5a558384dd14"
     },
@@ -2201,7 +2199,6 @@
         ]
       },
       "thumbnailPath": "/level-content/speedsolve-p4tn/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "4673765e0155cd1052d163becfc70fa2845ee195"
     },
@@ -2236,6 +2233,7 @@
         ]
       },
       "thumbnailPath": "/level-content/speedsolve-q7ld/hero.avif",
+      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "4673765e0155cd1052d163becfc70fa2845ee195"
     },
@@ -2337,7 +2335,6 @@
         ]
       },
       "thumbnailPath": "/level-content/vespers-1izg/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -2473,7 +2470,6 @@
         ]
       },
       "thumbnailPath": "/level-content/vespers-p6bt/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
@@ -2541,6 +2537,7 @@
         ]
       },
       "thumbnailPath": "/level-content/vespers-t5xw/hero.avif",
+      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
@@ -2575,7 +2572,6 @@
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-4xmh/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
@@ -2710,7 +2706,6 @@
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-v1d2/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -2745,6 +2740,7 @@
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-yk97/hero.avif",
+      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
@@ -2789,6 +2785,7 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-6fh9/hero.avif",
+      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
@@ -2890,7 +2887,6 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-gnff/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -2925,7 +2921,6 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-nirz/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },

@@ -32,5 +32,5 @@ put it last.
 - Gemini 3.7 Flash
 - Kimi K3
 - [Inkling](https://openrouter.ai/thinkingmachines/inkling) (retired)
-- [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash) — a fast coding model from Z.ai (new)
+- [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash)
 - Gemini 3.6 Flash (retired)
