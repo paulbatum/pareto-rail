@@ -257,6 +257,12 @@
       "configurationId": "codex-luna-max"
     },
     {
+      "runId": "run-eee6tklrqf",
+      "levelId": "strandline-be4y",
+      "themeId": "strandline",
+      "configurationId": "claude-fable-5-1-high"
+    },
+    {
       "runId": "run-eztdwig5twea",
       "levelId": "mass-driver-wo4m",
       "themeId": "mass-driver",

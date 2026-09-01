@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/claude-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-eee6tklrqf",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-eee6tklrqf/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-eee6tklrqf/stages/solo/claude",
+    "--model",
+    "claude-fable-5-1",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--sandbox",
+    "false"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-09-01T19:14:58.397Z",
+  "finishedAt": "2026-09-01T20:14:54.813Z",
+  "wallTimeSeconds": 3596.416185795,
+  "stdoutSha256": "79d7b97b814b5f3c6ce45318926cf8f6428b8ed8a1cd3c08a8a4db2cb631ef23",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"886c190c-3750-4f00-b79c-775df0df860e\",\"usage\":{\"inputTokens\":18752307,\"outputTokens\":278295,\"cacheReadInputTokens\":18717708,\"cacheWriteInputTokens\":643581,\"vendorFields\":{\"totalCostUsd\":31.813369,\"durationMs\":3594803,\"durationApiMs\":3363442,\"numTurns\":124,\"stopReason\":\"end_turn\",\"subtype\":\"success\",\"modelUsage\":{\"claude-haiku-4-5-20251001\":{\"inputTokens\":1517,\"outputTokens\":13,\"cacheReadInputTokens\":0,\"cacheCreationInputTokens\":0,\"webSearchRequests\":0,\"costUSD\":0.0015819999999999999,\"contextWindow\":200000,\"maxOutputTokens\":32000,\"thinkingTokens\":0,\"canonicalModel\":\"claude-haiku-4-5\",\"provider\":\"firstParty\",\"costBasis\":\"list\"},\"claude-fable-5-1\":{\"inputTokens\":34599,\"outputTokens\":278295,\"cacheReadInputTokens\":18717708,\"cacheCreationInputTokens\":643581,\"webSearchRequests\":0,\"costUSD\":31.811787000000002,\"contextWindow\":1000000,\"maxOutputTokens\":64000,\"thinkingTokens\":131533,\"canonicalModel\":\"claude-fable-5-1\",\"provider\":\"firstParty\",\"costBasis\":\"list\"}}}},\"wallTimeSeconds\":3596.0789886949997}\n",
+  "stderr": ""
+}

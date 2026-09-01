@@ -1,0 +1,21 @@
+{
+  "runId": "run-eee6tklrqf",
+  "slotId": "be4y",
+  "levelId": "strandline-be4y",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "claude-fable-5-1-high",
+  "recipePath": "benchmark/recipes/claude-fable-5-1-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-fable-5-1",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "f799e7b79a758bd95bc51804548acb6868139d8e",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Strandline"
+}

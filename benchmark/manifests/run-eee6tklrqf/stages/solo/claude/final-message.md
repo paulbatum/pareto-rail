@@ -1,0 +1,14 @@
+Strandline is complete and every headless gate passes.
+
+**What was built** in `src/benchmark-levels/strandline-be4y/` (the only source directory touched, plus the regenerated `docs/level-gallery.md`):
+
+- **World and rail.** One jellyfish in one world frame: a translucent additive bell with radial canals, gold gonad lobes and a rim frill; about 110 swaying strands merged into a single shader that runs green-gold bioluminescence down their length; light shafts and plankton for depth. The rail spirals up through the strand curtain, swings wide and charges straight at the bell so it fills the view around bar 9.8, dives back under the rim, and ends on a straight approach to the crown. Every clamped parasite sits on a real host strand that goes violet around it and washes clean when it dies.
+- **Enemies.** Ticks that latch, let go on a beat and swim in; darters crossing the full frame; spinners corkscrewing down a strand and spitting interceptable spores; two-stage sacs; and the Parent at the crown with three webs, each fed by a pumped brood. Volleys at the webbed Parent are denied with a web-flare and a thread-pluck sound; clear all three broods and it bares, tears loose in two stages, or burrows in at bar 22.
+- **Coda.** On the Parent's death the camera dollies straight back down the approach line to the vista the attract screen uses, while a cleanse wave runs white light out from the crown along every strand and the fog clears.
+- **Music.** 96 BPM in E major, 24 bars is exactly 60 s. The arrangement gains a layer per act, turns sour under a drone for the crown, and each brood cleared restores a layer; locks, shots, chips and kills are transport-quantized from the live chord with per-act kill lanes.
+
+**Verified here:** typecheck, production build, benchmark scope (17 paths), audio trace, and `check:floor` (simulation, target occlusion, performance, audio config, gallery) all pass. Under the simulator's perfect policy the Parent is torn loose at 49 s and the run rates A; distance and centerness warnings are zero.
+
+**Fixed along the way:** origin-anchored water dome clipping at the 500-unit far plane (showed as a dark disc), per-spawn geometry allocation failing the perf growth gate, the first brood orbiting inside the crown bulb, and the simulator stalling on an unlockable boss.
+
+**Needs human eyes.** WSL2 cannot render WebGPU, so stills came from the SwiftShader fallback and the mix is unheard. Check first: the bell filling the view at bar 9.8, host strands and violet parasites with bloom at zero, the three webs dying back one brood at a time, the shielded-volley feedback not feeling spammy, and whether the pull-back after the kill lands on the whole animal.

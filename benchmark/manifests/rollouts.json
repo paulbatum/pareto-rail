@@ -758,6 +758,24 @@
       ]
     },
     {
+      "runId": "run-eee6tklrqf",
+      "levelId": "strandline-be4y",
+      "themeId": "strandline",
+      "configurationId": "claude-fable-5-1-high",
+      "files": [
+        {
+          "path": "runs/run-eee6tklrqf/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 10979985,
+          "sha256": "88e3b18bc2ed898df1f95e05fd7070192c232fc43677db891ea11bdd971a7bac"
+        },
+        {
+          "path": "runs/run-eee6tklrqf/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 10966936,
+          "sha256": "34c01b18433a8000bfd6e3b5a121a0bb75358da6a7e929504fff9e859a34d63f"
+        }
+      ]
+    },
+    {
       "runId": "run-eztdwig5twea",
       "levelId": "mass-driver-wo4m",
       "themeId": "mass-driver",

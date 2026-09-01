@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T19:32:22.316Z",
+  "generatedAt": "2026-09-01T20:28:25.303Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1726,6 +1726,41 @@
       "thumbnailPath": "/level-content/strandline-542f/hero.avif",
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
+    },
+    {
+      "levelId": "strandline-be4y",
+      "themeId": "strandline",
+      "configurationId": "claude-fable-5-1-high",
+      "modelName": "Claude Fable 5.1",
+      "workflowName": "solo",
+      "generationCost": 31.811787,
+      "linesOfCode": 4666,
+      "run": {
+        "generationWallTimeSeconds": 3596.079,
+        "totalWallTimeSeconds": 3620.789,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.257"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5-1",
+            "role": "solo",
+            "inputTokens": 34599,
+            "outputTokens": 278295,
+            "cacheReadTokens": 18717708,
+            "cacheWriteTokens": 643581,
+            "usageSource": "agreed",
+            "costUsd": 31.811787
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-be4y/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "f799e7b79a758bd95bc51804548acb6868139d8e"
     },
     {
       "levelId": "strandline-de7d",
