@@ -76,6 +76,14 @@ export const configurationLabels = {
     workflowSummary: 'One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
     featured: true,
   },
+  'claude-fable-5-1-high': {
+    modelName: 'Claude Fable 5.1',
+    workflowName: 'solo',
+    primaryModel: 'claude-fable-5-1',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+    featured: true,
+  },
   'claude-fable-5-high-b20': {
     modelName: 'Claude Fable 5',
     workflowName: 'solo, $20 budget',
@@ -155,6 +163,7 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'claude-opus-4-8-high',
   'claude-opus-4-8-high-b20',
   'claude-opus-5-high',
+  'claude-fable-5-1-high',
   'codex-sol-high-b20',
   'codex-sol-max',
   'codex-luna-max',

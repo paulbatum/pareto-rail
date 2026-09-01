@@ -24,6 +24,7 @@ alone — a marker, a note, or a link never changes it.
 The order here is the order on the home page. A retired entry renders nowhere, so
 put it last.
 
+- Claude Fable 5.1 (new)
 - Claude Opus 5
 - Claude Fable 5
 - Claude Opus 4.8
