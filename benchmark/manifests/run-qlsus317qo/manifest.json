@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-qlsus317qo",
+  "slotId": "2j6o",
+  "configuration": {
+    "id": "claude-fable-5-1-high"
+  },
+  "theme": {
+    "id": "skyhook",
+    "path": "benchmark/themes/skyhook.md",
+    "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+  },
+  "baseline": {
+    "materialsCommit": "fd8b118f2448cbb194e67ef9d5869c5b4a371656",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-fable-5-1-high.md",
+    "sha256": "3fbe30903341e0c685be04f0a0c22111ddf7b6515db9dbe0983ccdc7c7555063"
+  },
+  "controller": {
+    "commit": "beb4cbbb9a6a7aff0329bce74fb8672d654769c5"
+  },
+  "timing": {
+    "startedAt": "2026-09-01T20:20:02.880Z",
+    "finishedAt": "2026-09-01T21:32:11.042Z",
+    "wallTimeSeconds": 4328.162
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5-1",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5-1"
+      },
+      "promptSha256": "65524e7caa9c63fe37ceeb15fcff96eecd9153c06bc3862630ec130db2d4f020",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.257 (Claude Code)"
+      },
+      "sessionId": "aff0b683-ebff-4467-abba-b15cde432e2d",
+      "rolloutArtifactSha256": "f81b5d6da6953b7d74ed62af86ec3c219e4a25671810c7e8fc610e04d222d81d",
+      "outputArtifactSha256": "ca0c2533cd5f477c65722d8f9aeddb25b0e148f8e50118202620c9e80fbc67c4",
+      "startedAt": "2026-09-01T20:20:06.047Z",
+      "finishedAt": "2026-09-01T21:31:57.445Z",
+      "wallTimeSeconds": 4311.39761457,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 39661,
+        "outputTokens": 356544,
+        "cacheReadInputTokens": 33283543,
+        "cacheWriteInputTokens": 704183
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 40.62835575000001,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 40.62835575000001,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5-1",
+        "usageSource": "agreed",
+        "costUsd": 40.62835575000001,
+        "inputTokens": 39661,
+        "outputTokens": 356544,
+        "cacheReadTokens": 33283543,
+        "cacheWriteTokens": 704183
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.53944421,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.7208262869999994,
+      "outputSha256": "707e201f90abbf693ee68fd672130d87708097e8e858d1fa6a18b8e77919b060"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-2j6o --base b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.037560105999999906,
+      "outputSha256": "e30c7370c3bc887837bdf116995dabff7c505773a6b53ab9dd5a47219076f026"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level skyhook-2j6o",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 8.300324019,
+      "outputSha256": "4d2871c5a155f68e3c2170a8c85369a833f289b404bf08f7ad7f5efc449b02e1"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "skyhook-2j6o",
+    "title": "Skyhook",
+    "evaluated": {
+      "commit": "2f0fd2e1d06db7aa5d1cf824bd244338ff0c2d1e",
+      "branch": "benchmark-run-run-qlsus317qo"
+    },
+    "payload": {
+      "commit": "5b8df0b293ca820b92fbf5bce377ab1363c1ee9f",
+      "branch": "benchmark-payload-run-qlsus317qo"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

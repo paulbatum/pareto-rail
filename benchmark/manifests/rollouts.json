@@ -849,6 +849,24 @@
       ]
     },
     {
+      "runId": "run-qlsus317qo",
+      "levelId": "skyhook-2j6o",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-1-high",
+      "files": [
+        {
+          "path": "runs/run-qlsus317qo/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 6671121,
+          "sha256": "f81b5d6da6953b7d74ed62af86ec3c219e4a25671810c7e8fc610e04d222d81d"
+        },
+        {
+          "path": "runs/run-qlsus317qo/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 6750509,
+          "sha256": "ca0c2533cd5f477c65722d8f9aeddb25b0e148f8e50118202620c9e80fbc67c4"
+        }
+      ]
+    },
+    {
       "runId": "run-qsgvgteqxgn0",
       "levelId": "mass-driver-7rkv",
       "themeId": "mass-driver",

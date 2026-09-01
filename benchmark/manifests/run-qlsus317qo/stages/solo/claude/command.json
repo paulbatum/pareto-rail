@@ -1,0 +1,29 @@
+{
+  "executable": "claude",
+  "arguments": [
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--model",
+    "claude-fable-5-1",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--session-id",
+    "aff0b683-ebff-4467-abba-b15cde432e2d"
+  ],
+  "cliVersion": "2.1.257 (Claude Code)",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-qlsus317qo",
+  "startedAt": "2026-09-01T20:20:06.047Z",
+  "finishedAt": "2026-09-01T21:31:57.445Z",
+  "wallTimeSeconds": 4311.39761457,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

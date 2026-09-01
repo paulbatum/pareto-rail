@@ -288,6 +288,12 @@
       "configurationId": "codex-sol-high-b20"
     },
     {
+      "runId": "run-qlsus317qo",
+      "levelId": "skyhook-2j6o",
+      "themeId": "skyhook",
+      "configurationId": "claude-fable-5-1-high"
+    },
+    {
       "runId": "run-qsgvgteqxgn0",
       "levelId": "mass-driver-7rkv",
       "themeId": "mass-driver",

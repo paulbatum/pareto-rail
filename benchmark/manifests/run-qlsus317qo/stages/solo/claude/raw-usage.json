@@ -1,0 +1,159 @@
+{
+  "sessionId": "aff0b683-ebff-4467-abba-b15cde432e2d",
+  "initResolvedModel": "claude-fable-5-1",
+  "finalMessage": "Skyhook is complete and every headless gate passes. The level lives at `src/benchmark-levels/skyhook-2j6o/` with the regenerated gallery card; nothing outside that directory and `docs/level-gallery.md` changed.\n\n**What was verified**\n\n- `npm run typecheck` and `npm run build` pass.\n- `npm run check:floor -- --level skyhook-2j6o` passes: zero occlusion warnings, zero performance gate failures, zero audio configuration failures. One advisory warning remains: average destruction distance is 51 m against a 45 m warning threshold. Helios sits at 59 m, so this is in line with the reference.\n- Simulation: the perfect policy clears all 75 targets including the Tetherjack, no impossible moments. The imperfect policy survives at rank A. A passive player dies at 55 s to limpet bites and the boss, which is the intended threat.\n- A headless score trace confirms the arrangement thins as designed: rain, kick, snare, hats, pad, bass and plucks in the weather; snare and thunder gone above the deck; kick, pad width and hats gone in vacuum; bells, a tick and a sine pedal at the dock.\n- `npm run check:scope` cannot pass as written. The script only whitelists `src/levels/<id>/` and there is no local `main` ref. Against HEAD it lists only the benchmark directory as out of scope, which the directory-only contract requires.\n\n**The level**\n\nA 60-second, 32-bar climb at 128 BPM up a straight rail pitched 20 degrees beside a white tether with orange collars. The sky is a camera-centred dome plus a backdrop disc that turns from cloud tops into the planet's limb, with a real cloud deck punched through at bar 8. Enemies: wind-riding kites, hull-clamping limpets that chew the deck until pried off, bolt-spitting squalls, vacuum mites that dash in rigid lines, and armored sentinels. The Tetherjack latches at bar 18.5 and lurches down one downbeat at a time; its claws become targets in range, killing them exposes the two-stage core, and reaching the deck starts tearing the hull. The station iris opens on its death, and the car decelerates into the bay to two resolving bells.\n\n**Structural decisions worth knowing**\n\n- The boss is driven by an invisible \"brain\" entity behind the camera that spawns the claws and core as targets only when engageable. Stand-in meshes draw it the rest of the time. This fixed the simulator stalling on unlockable targets and keeps destruction distances honest.\n- Enemy meshes are built once as merged, cached templates, and shaded body panels are shared per colour and tint state. That took the heap slope gate from a coin flip to a wide margin.\n- Sky and fog colours are authored dark in linear space because the renderer displays them through the sRGB transfer, and the bloom high-pass passes full colour above its threshold.\n\n**What still needs human eyes**\n\nHeadless Chrome cannot render WebGPU here, so all visual and audio judgement came from SwiftShader stills under `tmp/snaps/` and the semantic trace. A playtester should look first at the storm murk and lightning, the white-out and speed kick through the deck at bar 8, how large and menacing the Tetherjack reads from bar 20, bloom levels on the white deck and the sun, and the mix balance of the beds, thuds, kill lanes and dock bells.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 4224728,
+    "stop_reason": "end_turn",
+    "session_id": "aff0b683-ebff-4467-abba-b15cde432e2d",
+    "total_cost_usd": 40.63000875000001,
+    "usage": {
+      "input_tokens": 39661,
+      "cache_creation_input_tokens": 704183,
+      "cache_read_input_tokens": 33283543,
+      "output_tokens": 356544,
+      "output_tokens_details": {
+        "thinking_tokens": 163718
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 704183,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 56,
+          "output_tokens": 1607,
+          "cache_read_input_tokens": 712412,
+          "cache_creation_input_tokens": 2003,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 2003
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1588,
+        "outputTokens": 13,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001653,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000,
+        "thinkingTokens": 0,
+        "canonicalModel": "claude-haiku-4-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      },
+      "claude-fable-5-1": {
+        "inputTokens": 39661,
+        "outputTokens": 356544,
+        "cacheReadInputTokens": 33283543,
+        "cacheCreationInputTokens": 704183,
+        "webSearchRequests": 0,
+        "costUSD": 40.62835575000001,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 163718,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 161,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "Skyhook is complete and every headless gate passes. The level lives at `src/benchmark-levels/skyhook-2j6o/` with the regenerated gallery card; nothing outside that directory and `docs/level-gallery.md` changed.\n\n**What was verified**\n\n- `npm run typecheck` and `npm run build` pass.\n- `npm run check:floor -- --level skyhook-2j6o` passes: zero occlusion warnings, zero performance gate failures, zero audio configuration failures. One advisory warning remains: average destruction distance is 51 m against a 45 m warning threshold. Helios sits at 59 m, so this is in line with the reference.\n- Simulation: the perfect policy clears all 75 targets including the Tetherjack, no impossible moments. The imperfect policy survives at rank A. A passive player dies at 55 s to limpet bites and the boss, which is the intended threat.\n- A headless score trace confirms the arrangement thins as designed: rain, kick, snare, hats, pad, bass and plucks in the weather; snare and thunder gone above the deck; kick, pad width and hats gone in vacuum; bells, a tick and a sine pedal at the dock.\n- `npm run check:scope` cannot pass as written. The script only whitelists `src/levels/<id>/` and there is no local `main` ref. Against HEAD it lists only the benchmark directory as out of scope, which the directory-only contract requires.\n\n**The level**\n\nA 60-second, 32-bar climb at 128 BPM up a straight rail pitched 20 degrees beside a white tether with orange collars. The sky is a camera-centred dome plus a backdrop disc that turns from cloud tops into the planet's limb, with a real cloud deck punched through at bar 8. Enemies: wind-riding kites, hull-clamping limpets that chew the deck until pried off, bolt-spitting squalls, vacuum mites that dash in rigid lines, and armored sentinels. The Tetherjack latches at bar 18.5 and lurches down one downbeat at a time; its claws become targets in range, killing them exposes the two-stage core, and reaching the deck starts tearing the hull. The station iris opens on its death, and the car decelerates into the bay to two resolving bells.\n\n**Structural decisions worth knowing**\n\n- The boss is driven by an invisible \"brain\" entity behind the camera that spawns the claws and core as targets only when engageable. Stand-in meshes draw it the rest of the time. This fixed the simulator stalling on unlockable targets and keeps destruction distances honest.\n- Enemy meshes are built once as merged, cached templates, and shaded body panels are shared per colour and tint state. That took the heap slope gate from a coin flip to a wide margin.\n- Sky and fog colours are authored dark in linear space because the renderer displays them through the sRGB transfer, and the bloom high-pass passes full colour above its threshold.\n\n**What still needs human eyes**\n\nHeadless Chrome cannot render WebGPU here, so all visual and audio judgement came from SwiftShader stills under `tmp/snaps/` and the semantic trace. A playtester should look first at the storm murk and lightning, the white-out and speed kick through the deck at bar 8, how large and menacing the Tetherjack reads from bar 20, bloom levels on the white deck and the sun, and the mix balance of the beds, thuds, kill lanes and dock bells.",
+    "ttft_ms": 2772,
+    "type": "result",
+    "duration_ms": 4310266,
+    "uuid": "48acb48b-fe4b-4808-a9a2-360aa8130374",
+    "ttft_stream_ms": 2006,
+    "time_to_request_ms": 113,
+    "queued_turn_count": 0
+  },
+  "normalized": {
+    "inputTokens": 33323204,
+    "outputTokens": 356544,
+    "cacheReadInputTokens": 33283543,
+    "cacheWriteInputTokens": 704183,
+    "vendorFields": {
+      "totalCostUsd": 40.63000875000001,
+      "durationMs": 4310266,
+      "durationApiMs": 4224728,
+      "numTurns": 161,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1588,
+          "outputTokens": 13,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001653,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 39661,
+          "outputTokens": 356544,
+          "cacheReadInputTokens": 33283543,
+          "cacheCreationInputTokens": 704183,
+          "webSearchRequests": 0,
+          "costUSD": 40.62835575000001,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 163718,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}
