@@ -23,6 +23,12 @@ const runsRoot = path.join(privateRoot, 'runs');
 const publicationPath = path.join(privateRoot, 'publication.json');
 const stagingRoot = path.join(root, 'tmp/rollouts-export');
 const indexPath = path.join(root, 'benchmark/manifests/rollouts.json');
+const leakConfigPath = path.join(root, 'scripts/benchmark/betterleaks.toml');
+// The scan cache lives beside the private run records it describes: gitignored,
+// outside the staging tree so it can never be uploaded, and absent from a fresh
+// clone — where its absence means every transcript is scanned.
+const scanCachePath = path.join(privateRoot, 'rollout-scan-cache.json');
+const SCAN_CACHE_VERSION = 1;
 
 const TRANSCRIPT_FILES = ['rollout.jsonl', 'events.jsonl'];
 const SUBAGENT_ROLLOUT_DIRECTORY = 'subagent-rollouts';
@@ -68,7 +74,7 @@ function leakScan(scanner, buffer, rel) {
   // The repo config only carries an Expr filter for a known transcript false
   // positive; Expr filters are betterleaks-only, so gitleaks runs bare.
   const configArgs = path.basename(scanner) === 'betterleaks'
-    ? ['-c', path.join(root, 'scripts/benchmark/betterleaks.toml')]
+    ? ['-c', leakConfigPath]
     : [];
   const result = spawnSync(scanner, ['stdin', '--no-banner', '--exit-code', '9', ...configArgs], {
     input: buffer,
@@ -91,6 +97,80 @@ function scanLines(text, rel) {
     }
   });
   return hits;
+}
+
+// Held at module scope so the cache is written even when a scan fails partway:
+// only clean verdicts are stored, so the work already done is kept.
+let activeScanCache = null;
+
+function scannerVersion(scanner) {
+  const probe = spawnSync(scanner, ['version'], { encoding: 'utf8' });
+  if (probe.error || probe.status !== 0) throw new Error(`Could not read ${path.basename(scanner)} version.`);
+  return `${probe.stdout}${probe.stderr}`.trim();
+}
+
+// One fingerprint covers everything that decides a verdict except the scanned
+// bytes: the scanner and its version, the leak-scanner config, the in-repo
+// regexes, and the two functions that apply them. Change any of these and the
+// fingerprint changes, which discards every cached verdict. Hashing the inputs
+// is what makes that automatic — nothing has to remember to bump a number.
+function rulesetFingerprint(scanner) {
+  const material = JSON.stringify({
+    cacheVersion: SCAN_CACHE_VERSION,
+    scanner: path.basename(scanner),
+    scannerVersion: scannerVersion(scanner),
+    leakConfig: crypto.createHash('sha256').update(fs.readFileSync(leakConfigPath)).digest('hex'),
+    patterns: SECRET_PATTERNS.map((p) => [p.name, p.re.source, p.re.flags]),
+    scanLines: scanLines.toString(),
+    leakScan: leakScan.toString(),
+  });
+  return crypto.createHash('sha256').update(material).digest('hex');
+}
+
+function loadScanCache(fingerprint, rescan) {
+  const cache = { fingerprint, clean: new Set(), reused: 0, scans: 0, dirty: false };
+  if (rescan || !fs.existsSync(scanCachePath)) return cache;
+  try {
+    const stored = JSON.parse(fs.readFileSync(scanCachePath, 'utf8'));
+    // A stored fingerprint that does not match the current one means the cached
+    // verdicts were produced by different rules, so none of them are reused.
+    if (stored.fingerprint === fingerprint && Array.isArray(stored.clean)) {
+      for (const hash of stored.clean) cache.clean.add(hash);
+    }
+  } catch {
+    // An unreadable cache scans everything, which is the safe direction.
+  }
+  return cache;
+}
+
+function saveScanCache(cache) {
+  if (!cache.dirty) return;
+  const payload = { fingerprint: cache.fingerprint, clean: [...cache.clean].sort() };
+  fs.mkdirSync(path.dirname(scanCachePath), { recursive: true });
+  fs.writeFileSync(scanCachePath, `${JSON.stringify(payload, null, 2)}\n`);
+  cache.dirty = false;
+}
+
+// Scans one buffer and returns its sha256, which the index also records. A
+// buffer whose hash is already cached under the current ruleset fingerprint
+// scanned clean before, so it is not scanned again. A hash enters the cache
+// only after both scans pass, so a hit or a scanner failure leaves the file
+// uncached and it is rescanned next time.
+function scanBuffer(scanner, buffer, rel, cache, allHits) {
+  const digest = crypto.createHash('sha256').update(buffer).digest('hex');
+  if (cache.clean.has(digest)) {
+    cache.reused += 1;
+    return digest;
+  }
+  cache.scans += 1;
+  const hits = scanLines(buffer.toString('utf8'), rel);
+  allHits.push(...hits);
+  leakScan(scanner, buffer, rel);
+  if (hits.length === 0) {
+    cache.clean.add(digest);
+    cache.dirty = true;
+  }
+  return digest;
 }
 
 function collectTranscripts(runDir) {
@@ -213,7 +293,10 @@ ${sections.join('\n\n')}
 
 function main() {
   const upload = process.argv.includes('--upload');
+  const rescan = process.argv.includes('--rescan');
   const scanner = findLeakScanner();
+  const cache = loadScanCache(rulesetFingerprint(scanner), rescan);
+  activeScanCache = cache;
   const publication = JSON.parse(fs.readFileSync(publicationPath, 'utf8'));
   if (!Array.isArray(publication.entrants)) throw new Error('Publication has no entrants array.');
   const entrants = [...publication.entrants].sort((a, b) => a.runId.localeCompare(b.runId));
@@ -236,8 +319,7 @@ function main() {
     const files = [];
     for (const { rel, abs } of transcripts) {
       const buffer = fs.readFileSync(abs);
-      allHits.push(...scanLines(buffer.toString('utf8'), path.join(entrant.runId, rel)));
-      leakScan(scanner, buffer, path.join(entrant.runId, rel));
+      const sha256 = scanBuffer(scanner, buffer, path.join(entrant.runId, rel), cache, allHits);
       // rollout.jsonl is the harness-native session file, which the Hub's
       // agent-trace viewer renders as long as it stays a raw .jsonl; the
       // supplementary event stream ships gzipped.
@@ -253,7 +335,7 @@ function main() {
       files.push({
         path: datasetPath,
         rawBytes: buffer.length,
-        sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
+        sha256,
       });
     }
     // Small browsable plaintext next to the archives, so the dataset can be
@@ -261,8 +343,7 @@ function main() {
     // the rendered assignment (the prompt) and each stage's final message.
     for (const { rel, abs } of collectPreviews(runDir)) {
       const buffer = fs.readFileSync(abs);
-      allHits.push(...scanLines(buffer.toString('utf8'), path.join(entrant.runId, rel)));
-      leakScan(scanner, buffer, path.join(entrant.runId, rel));
+      scanBuffer(scanner, buffer, path.join(entrant.runId, rel), cache, allHits);
       const dest = path.join(stagingRoot, 'runs', entrant.runId, rel);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.writeFileSync(dest, buffer);
@@ -285,8 +366,7 @@ function main() {
     const files = [];
     for (const { rel, abs } of transcripts) {
       const buffer = fs.readFileSync(abs);
-      allHits.push(...scanLines(buffer.toString('utf8'), path.join(rehearsal.runId, rel)));
-      leakScan(scanner, buffer, path.join(rehearsal.runId, rel));
+      const sha256 = scanBuffer(scanner, buffer, path.join(rehearsal.runId, rel), cache, allHits);
       const isRollout = path.basename(rel) === 'rollout.jsonl';
       const datasetPath = path.join('runs', rehearsal.runId, isRollout ? rel : `${rel}.gz`);
       if (isRollout) {
@@ -299,13 +379,12 @@ function main() {
       files.push({
         path: datasetPath,
         rawBytes: buffer.length,
-        sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
+        sha256,
       });
     }
     for (const { rel, abs } of collectPreviews(runDir)) {
       const buffer = fs.readFileSync(abs);
-      allHits.push(...scanLines(buffer.toString('utf8'), path.join(rehearsal.runId, rel)));
-      leakScan(scanner, buffer, path.join(rehearsal.runId, rel));
+      scanBuffer(scanner, buffer, path.join(rehearsal.runId, rel), cache, allHits);
       const dest = path.join(stagingRoot, 'runs', rehearsal.runId, rel);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.writeFileSync(dest, buffer);
@@ -330,8 +409,7 @@ function main() {
     const buffer = fs.readFileSync(source);
     const datasetPath = path.join('diagnostics', diagnostic.id, path.basename(diagnostic.sourcePath));
     const scanPath = path.join(diagnostic.id, path.basename(diagnostic.sourcePath));
-    allHits.push(...scanLines(buffer.toString('utf8'), scanPath));
-    leakScan(scanner, buffer, scanPath);
+    const sha256 = scanBuffer(scanner, buffer, scanPath, cache, allHits);
     const dest = path.join(stagingRoot, datasetPath);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, buffer);
@@ -346,7 +424,7 @@ function main() {
       files: [{
         path: datasetPath,
         rawBytes: buffer.length,
-        sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
+        sha256,
       }],
     };
     const metadataPath = path.join('diagnostics', diagnostic.id, 'metadata.json');
@@ -366,6 +444,7 @@ function main() {
   const rawTotal = index.runs.reduce((s, r) => s + r.files.reduce((t, f) => t + f.rawBytes, 0), 0)
     + index.diagnostics.reduce((s, d) => s + d.files.reduce((t, f) => t + f.rawBytes, 0), 0);
   console.log(`Staged ${index.runs.length} runs and ${index.diagnostics.length} diagnostics into ${path.relative(root, stagingRoot)} (${(rawTotal / 1048576).toFixed(0)} MB raw, both secret scans clean).`);
+  console.log(`Scanned ${cache.scans} files; reused ${cache.reused} cached clean verdicts${rescan ? ' (--rescan: cache ignored)' : ''}.`);
   console.log(`Wrote ${path.relative(root, indexPath)}.`);
 
   if (upload) {
@@ -383,4 +462,6 @@ try {
 } catch (error) {
   console.error(`Rollout export failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
+} finally {
+  if (activeScanCache) saveScanCache(activeScanCache);
 }

@@ -315,9 +315,29 @@ npm run benchmark:export-rollouts -- --upload
 
 The command stages compressed transcripts under `tmp/rollouts-export/`, scans them for credentials with the built-in checks and betterleaks or gitleaks, uploads them to the Hugging Face dataset, and updates `benchmark/manifests/rollouts.json`. Install one supported leak scanner on `PATH` or under `~/.local/bin`, and authenticate `hf` with write access before upload. Omit `--upload` to stage and scan without publishing.
 
+The two scans dominate the export's running time, so the command records a clean verdict for each scanned file in `benchmark/private/rollout-scan-cache.json`. Each verdict is keyed on the sha256 of the scanned bytes together with a fingerprint of the scan rules: the scanner name, the scanner version, `scripts/benchmark/betterleaks.toml`, the `SECRET_PATTERNS` regexes, and the `scanLines` and `leakScan` functions in `scripts/benchmark/export-rollouts.mjs`. A file is skipped only when its bytes and the current fingerprint both match a stored verdict, so a change to any rule input discards the whole cache and every file is scanned again. A missing or unreadable cache file also scans everything. Only clean verdicts are stored: a file that produced a hit, or that a scanner failed on, is never cached. The command prints how many files it scanned and how many cached verdicts it reused.
+
+Pass `--rescan` to ignore the stored verdicts and scan every file again. Use it to confirm a clean export independently of the cache.
+
+The cache is gitignored, holds only hashes, and is never part of the staged upload.
+
 The publication manifest can also list rehearsal transcripts and explicitly selected diagnostic sessions. These affect only the rollout export; they do not publish an entrant or provenance record.
 
 Commit the catalog, public provenance, rollout index, promoted content images, and any public copy changes together.
+
+### Keep transcript uploads incremental
+
+The dataset tracks `*.gz` in Git LFS by a wildcard rule, and Hugging Face adds a per-path LFS rule whenever a file crosses 10 MB. A `rollout.jsonl` under that size stays a regular git file, so every upload resends it in full. Adding a wildcard rule for `*.jsonl` to the dataset's `.gitattributes` puts every transcript in LFS, after which an upload transfers only the files whose bytes changed.
+
+Make that edit once, on the dataset itself; the export does not stage `.gitattributes`.
+
+```sh
+hf download paulbatum/pareto-rail-rollouts .gitattributes --repo-type dataset --local-dir tmp/hf-attrs
+echo '*.jsonl filter=lfs diff=lfs merge=lfs -text' >> tmp/hf-attrs/.gitattributes
+hf upload paulbatum/pareto-rail-rollouts tmp/hf-attrs/.gitattributes .gitattributes --repo-type dataset
+```
+
+Keep the per-path rules already in the file. The first upload after this change rewrites the existing `.jsonl` files as LFS pointers, so it transfers all of them once; later uploads send only new transcripts.
 
 ## Preserve pinned commits
 
