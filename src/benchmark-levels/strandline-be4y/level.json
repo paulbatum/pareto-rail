@@ -1,4 +1,9 @@
 {
   "id": "strandline-be4y",
-  "title": "Strandline"
+  "title": "Strandline",
+  "contentImages": {
+    "overview": "/level-content/strandline-be4y/overview.avif",
+    "start": "/level-content/strandline-be4y/start.avif",
+    "hero": "/level-content/strandline-be4y/hero.avif"
+  }
 }
