@@ -1,0 +1,159 @@
+{
+  "sessionId": "f41b7de7-7a79-417b-8bd3-92568f2713fb",
+  "initResolvedModel": "claude-fable-5-1",
+  "finalMessage": "Broadside is complete and passes every headless gate. The level lives in `src/benchmark-levels/broadside-6m7m/` with the regenerated gallery as the only other change.\n\n**What was built**\n\n- **Rail and world.** The rail is authored as knots with bar times, so the camera is exactly at the deck lip, the cruiser flank, the warship belly, the flagship flank, and the trench on their beats. It catapults off our flagship's deck, banks through the crossfire with a full barrel roll on bars 6 and 7, runs the friendly cruiser's flank at 55 units per second under scripted broadsides, drifts through a quiet eye, runs the enemy warship's belly, passes the flagship flank, loops around its bow into a trench on the spine, then climbs out and swings around to frame the whole battle for the final second.\n- **Enemies.** Darts cross the screen in knots, wasps corkscrew in camera-relative helixes that follow you through banks and the roll, two-hit hunters hold station and lunge to fire bolts, and two-hit turrets slide past rooted to the warship keel. Bolts fly ahead of the rail and drift into its path so they are readable and interceptable at this speed.\n- **Boss.** Four two-hit shield generators on the flagship flank with point defense, then three three-hit cores in the trench. Cores are lockable at any time, but while the shield holds the release swats those shots away and the rest of the volley still fires. Killing all cores triggers the flagship break-up, the enemy line scattering, and the D major victory theme.\n- **Visuals.** A nebula sphere backlights everything. Both fleets are merged low-poly hulls with a rim shader, window strips, engine discs, and instanced tracer duels fired on the beat. Signal-plaque letters spell LAUNCH and SORTIE.\n- **Audio.** A 112 BPM procedural orchestra in seven movements. Locks are pizzicato on the live chord, releases are brass stabs, and kills play a solo trumpet reading a per-movement lane.\n\n**Verification**\n\n| Check | Result |\n|---|---|\n| typecheck, build | pass |\n| check:floor | ACCEPT (one warning: 35.8% center concentration) |\n| occlusion, perf, audio config | clean |\n| scope vs HEAD | valid, 17 paths |\n| simulate perfect / imperfect | S at 25236, A at 18784 |\n| simulate no-fire | hull dies at 31 s, so bolts land |\n\n**What needs human eyes**\n\nWSL2 cannot render WebGPU, so I judged the look from SwiftShader snapshots and darkened the sky, rims, engines, and shield after the first pass came out overexposed. A playtester should check first: bloom-zero legibility of the obsidian craft against the nebula, whether the barrel roll is fun rather than disorienting, the shield-swat feedback on cores, the pull-out framing at bar 28, and the orchestral mix balance between timpani, tremolo strings, and the solo trumpet.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 2491686,
+    "stop_reason": "end_turn",
+    "session_id": "f41b7de7-7a79-417b-8bd3-92568f2713fb",
+    "total_cost_usd": 21.894500499999996,
+    "usage": {
+      "input_tokens": 5625,
+      "cache_creation_input_tokens": 451678,
+      "cache_read_input_tokens": 9827754,
+      "output_tokens": 206922,
+      "output_tokens_details": {
+        "thinking_tokens": 88635
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 451678,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 56,
+          "output_tokens": 1152,
+          "cache_read_input_tokens": 459541,
+          "cache_creation_input_tokens": 2369,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 2369
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 1592,
+        "outputTokens": 12,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.001652,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000,
+        "thinkingTokens": 0,
+        "canonicalModel": "claude-haiku-4-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      },
+      "claude-fable-5-1": {
+        "inputTokens": 5625,
+        "outputTokens": 206922,
+        "cacheReadInputTokens": 9827754,
+        "cacheCreationInputTokens": 451678,
+        "webSearchRequests": 0,
+        "costUSD": 21.892848499999996,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 88635,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 84,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "Broadside is complete and passes every headless gate. The level lives in `src/benchmark-levels/broadside-6m7m/` with the regenerated gallery as the only other change.\n\n**What was built**\n\n- **Rail and world.** The rail is authored as knots with bar times, so the camera is exactly at the deck lip, the cruiser flank, the warship belly, the flagship flank, and the trench on their beats. It catapults off our flagship's deck, banks through the crossfire with a full barrel roll on bars 6 and 7, runs the friendly cruiser's flank at 55 units per second under scripted broadsides, drifts through a quiet eye, runs the enemy warship's belly, passes the flagship flank, loops around its bow into a trench on the spine, then climbs out and swings around to frame the whole battle for the final second.\n- **Enemies.** Darts cross the screen in knots, wasps corkscrew in camera-relative helixes that follow you through banks and the roll, two-hit hunters hold station and lunge to fire bolts, and two-hit turrets slide past rooted to the warship keel. Bolts fly ahead of the rail and drift into its path so they are readable and interceptable at this speed.\n- **Boss.** Four two-hit shield generators on the flagship flank with point defense, then three three-hit cores in the trench. Cores are lockable at any time, but while the shield holds the release swats those shots away and the rest of the volley still fires. Killing all cores triggers the flagship break-up, the enemy line scattering, and the D major victory theme.\n- **Visuals.** A nebula sphere backlights everything. Both fleets are merged low-poly hulls with a rim shader, window strips, engine discs, and instanced tracer duels fired on the beat. Signal-plaque letters spell LAUNCH and SORTIE.\n- **Audio.** A 112 BPM procedural orchestra in seven movements. Locks are pizzicato on the live chord, releases are brass stabs, and kills play a solo trumpet reading a per-movement lane.\n\n**Verification**\n\n| Check | Result |\n|---|---|\n| typecheck, build | pass |\n| check:floor | ACCEPT (one warning: 35.8% center concentration) |\n| occlusion, perf, audio config | clean |\n| scope vs HEAD | valid, 17 paths |\n| simulate perfect / imperfect | S at 25236, A at 18784 |\n| simulate no-fire | hull dies at 31 s, so bolts land |\n\n**What needs human eyes**\n\nWSL2 cannot render WebGPU, so I judged the look from SwiftShader snapshots and darkened the sky, rims, engines, and shield after the first pass came out overexposed. A playtester should check first: bloom-zero legibility of the obsidian craft against the nebula, whether the barrel roll is fun rather than disorienting, the shield-swat feedback on cores, the pull-out framing at bar 28, and the orchestral mix balance between timpani, tremolo strings, and the solo trumpet.",
+    "ttft_ms": 2230,
+    "type": "result",
+    "duration_ms": 2692982,
+    "uuid": "9224e565-9bae-4a6c-a63f-93ebf9c99682",
+    "ttft_stream_ms": 1450,
+    "time_to_request_ms": 98,
+    "queued_turn_count": 0
+  },
+  "normalized": {
+    "inputTokens": 9833379,
+    "outputTokens": 206922,
+    "cacheReadInputTokens": 9827754,
+    "cacheWriteInputTokens": 451678,
+    "vendorFields": {
+      "totalCostUsd": 21.894500499999996,
+      "durationMs": 2692982,
+      "durationApiMs": 2491686,
+      "numTurns": 84,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 1592,
+          "outputTokens": 12,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001652,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 5625,
+          "outputTokens": 206922,
+          "cacheReadInputTokens": 9827754,
+          "cacheCreationInputTokens": 451678,
+          "webSearchRequests": 0,
+          "costUSD": 21.892848499999996,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 88635,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

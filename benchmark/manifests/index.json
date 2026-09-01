@@ -165,6 +165,12 @@
       "configurationId": "claude-opus-4-8-high-b20"
     },
     {
+      "runId": "run-3ge34otdha",
+      "levelId": "broadside-6m7m",
+      "themeId": "broadside",
+      "configurationId": "claude-fable-5-1-high"
+    },
+    {
       "runId": "run-3wx1zsc87lp9",
       "levelId": "skyhook-p46c",
       "themeId": "skyhook",

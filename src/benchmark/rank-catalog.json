@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T18:12:16.443Z",
+  "generatedAt": "2026-09-01T19:15:01.021Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1020,6 +1020,41 @@
       "thumbnailPath": "/level-content/skyhook-snxd/hero.avif",
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "broadside-6m7m",
+      "themeId": "broadside",
+      "configurationId": "claude-fable-5-1-high",
+      "modelName": "Claude Fable 5.1",
+      "workflowName": "solo",
+      "generationCost": 21.8928485,
+      "linesOfCode": 3677,
+      "run": {
+        "generationWallTimeSeconds": 2694.036,
+        "totalWallTimeSeconds": 2720.042,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.257"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5-1",
+            "role": "solo",
+            "inputTokens": 5625,
+            "outputTokens": 206922,
+            "cacheReadTokens": 9827754,
+            "cacheWriteTokens": 451678,
+            "usageSource": "agreed",
+            "costUsd": 21.8928485
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-6m7m/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "f799e7b79a758bd95bc51804548acb6868139d8e"
     },
     {
       "levelId": "broadside-7hin",

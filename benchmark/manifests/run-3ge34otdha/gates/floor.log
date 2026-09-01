@@ -1,0 +1,29 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level broadside-6m7m
+
+Broadside floor check
+duration 60.0s; spawned kinds 7: bolt, core, dart, generator, hunter, turret, wasp
+event coverage missing: stage
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.2
+  action SFX snap: overridden grid (enabled, 32nd grid)
+  lock radius: 0.1 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, validateRelease, rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 1
+
+Warnings:
+- Enemy destruction concentration in screen center is slightly high (35.8%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.
+FLOOR VERDICT: ACCEPT — if submitted in its current state, this level will be accepted.

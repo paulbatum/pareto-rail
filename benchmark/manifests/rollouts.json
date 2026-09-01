@@ -486,6 +486,24 @@
       ]
     },
     {
+      "runId": "run-3ge34otdha",
+      "levelId": "broadside-6m7m",
+      "themeId": "broadside",
+      "configurationId": "claude-fable-5-1-high",
+      "files": [
+        {
+          "path": "runs/run-3ge34otdha/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 5202805,
+          "sha256": "723bf320a9974ae95898f6b920b449c306c688e684406bd5912a2beb906130a4"
+        },
+        {
+          "path": "runs/run-3ge34otdha/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 5223925,
+          "sha256": "837a1fcb35b45db33c6e300793f04fc693171b5868082443e265ea08a06c5956"
+        }
+      ]
+    },
+    {
       "runId": "run-3wx1zsc87lp9",
       "levelId": "skyhook-p46c",
       "themeId": "skyhook",
