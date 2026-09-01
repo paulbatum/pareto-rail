@@ -1,4 +1,9 @@
 {
   "id": "broadside-6m7m",
-  "title": "Broadside"
+  "title": "Broadside",
+  "contentImages": {
+    "overview": "/level-content/broadside-6m7m/overview.avif",
+    "start": "/level-content/broadside-6m7m/start.avif",
+    "hero": "/level-content/broadside-6m7m/hero.avif"
+  }
 }
