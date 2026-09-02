@@ -12,6 +12,7 @@ import { selectPersonalCurveCatalog } from '../app/rank';
 import { CustomMatchController } from '../app/match';
 import { matchableThemeIds, matchupForModel, modelPickerEntries, modelSlug } from '../app/model-match';
 import { parseRoute, routePath } from '../app/router';
+import { cardQuery } from '../../middleware';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import type { RemoteVotePayload } from './remote-recorder';
 import { ComparisonStateMachine } from './state';
@@ -73,6 +74,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testVoteValidationIsCatalogWide();
   await testApisAndStateMachine();
   testMatchRouteParsing();
+  testSocialCardQuery();
   testModelMatchupDraw();
   testCustomMatchController();
   testCustomMatchPlaysPersist();
@@ -203,6 +205,24 @@ function testMatchRouteParsing(): void {
   // Missing params still resolve to the match route so the page can explain the shape.
   assert.deepEqual(parse(''), { kind: 'match', a: undefined, b: undefined, model: undefined, vs: undefined, playSide: undefined });
   assert.equal(routePath({ kind: 'match', a: 'lv-x', b: 'lv-y' }), '/match');
+}
+
+/** Which match links the edge middleware gives a social card, and the query it
+ * builds. Both link shapes get one; anything else falls through to the site's
+ * default card. */
+function testSocialCardQuery(): void {
+  const query = (search: string) => cardQuery(new URLSearchParams(search));
+  assert.equal(query('a=lv-x&b=lv-y'), 'a=lv-x&b=lv-y');
+  // Extra parameters ride along on a shared link without changing the card.
+  assert.equal(query('a=lv-x&b=lv-y&play=a'), 'a=lv-x&b=lv-y');
+  assert.equal(query('model=ox-alpha'), 'model=ox-alpha');
+  assert.equal(query('model=ox-alpha&vs=ox-beta'), 'model=ox-alpha&vs=ox-beta');
+  // Half a pair, a malformed id, and a bare /match name no card.
+  assert.equal(query('a=lv-x'), null);
+  assert.equal(query('a=LV-X&b=lv-y'), null);
+  assert.equal(query(''), null);
+  // A malformed opponent names no model, so the page refuses the link too.
+  assert.equal(query('model=ox-alpha&vs=Ox Beta'), null);
 }
 
 function testModelMatchupDraw(): void {

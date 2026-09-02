@@ -88,6 +88,17 @@ const ADAPTERS = {
     modelProvider: (definition) => `pi provider ${definition.stage.provider ?? 'default'}`,
     homeEnvVar: 'PI_CODING_AGENT_DIR',
     credential: { sourceRelative: '.pi/agent/auth.json', dest: 'auth.json' },
+    // pi reads each model's context and max-output limits from its home's model store. A per-run home
+    // starts without one, and the stage runs `--offline` so pi never refreshes it, leaving it to fall
+    // back to a 4096-token output cap on any model it has no entry for. A reasoning-heavy model then
+    // spends a whole turn's allowance on reasoning, returns a truncated message with no tool call, and
+    // pi ends the session with the entrant's work unfinished. Copying the operator's store gives the
+    // stage the real limits.
+    supportFiles: [{
+      sourceRelative: '.pi/agent/models-store.json',
+      dest: 'models-store.json',
+      hint: 'Run `pi --list-models` on the operator account to populate it.',
+    }],
     // pi takes the provider per invocation rather than from the home's config, and a benchmark stage
     // must pin it rather than inherit whatever the operator last selected.
     stageArgs: (definition) => [
@@ -797,6 +808,14 @@ async function prepareHarnessHome(adapter, outputDirectory) {
     fail(`Could not copy the operator credential ${credentialSource} into the per-run home: ${error instanceof Error ? error.message : String(error)}`);
   }
   await fs.chmod(credentialDest, 0o600);
+  for (const file of adapter.supportFiles ?? []) {
+    const source = path.join(os.homedir(), file.sourceRelative);
+    try {
+      await fs.copyFile(source, path.join(home, file.dest));
+    } catch (error) {
+      fail(`Could not copy ${source} into the per-run home: ${error instanceof Error ? error.message : String(error)}. ${file.hint}`);
+    }
+  }
   return home;
 }
 

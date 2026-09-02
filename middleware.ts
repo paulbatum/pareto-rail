@@ -1,17 +1,23 @@
 import { next } from '@vercel/edge';
 
-// Vercel Edge Middleware: gives shared `/match?a=<id>&b=<id>` links a dynamic
-// social card. Social crawlers don't run JS, so without this they'd receive the
-// SPA's static index.html with the generic default og:image. For a well-formed
-// match link, this fetches the deployment's index.html and rewrites the head so
-// og:image/twitter:image point at the composite `/api/og/match` card and the
-// unfurl text matches what the client-side head sync (src/app/seo.ts) produces.
+// Vercel Edge Middleware: gives shared `/match` links a dynamic social card.
+// Social crawlers don't run JS, so without this they'd receive the SPA's static
+// index.html with the generic default og:image. For a well-formed match link,
+// this fetches the deployment's index.html and rewrites the head so
+// og:image/twitter:image point at the `/api/og/match` card and the unfurl text
+// matches what the client-side head sync (src/app/seo.ts) produces.
 //
-// It runs before the SPA rewrite in vercel.json. The matcher scopes it to /match
-// only, so every other route is untouched; /match without valid a/b params (and
-// any failure) falls through to the normal SPA response via next().
+// Two link shapes get a card. `?a=<id>&b=<id>` names both levels. `?model=<slug>`
+// names one model and leaves the pair to a draw, with an optional `&vs=<slug>`
+// naming the other model. Either way the rewritten og:url carries the link's own
+// parameters, because crawlers cache a card against og:url and a bare one would
+// make every match share whichever card was scraped first.
+//
+// It runs before the SPA rewrite in vercel.json. The matcher scopes it to the
+// match route, so every other route is untouched; a /match URL naming neither
+// shape (and any failure) falls through to the normal SPA response via next().
 
-export const config = { matcher: '/match' };
+export const config = { matcher: ['/match', '/match/'] };
 
 const SITE_ORIGIN = 'https://paretorail.com';
 const SLUG = /^[a-z0-9-]{1,64}$/;
@@ -54,9 +60,7 @@ function rewriteOne(html: string, pattern: RegExp, replacement: string, label: s
 }
 
 // `canonicalUrl` is the bare `/match` (the route's canonical, indexable-facing
-// identity); `shareUrl` carries the a/b params. They differ on purpose: social
-// crawlers cache a card against `og:url`, so a bare `og:url` would make every
-// matchup share whichever card was scraped first.
+// identity); `shareUrl` carries the link's own parameters.
 function rewriteHead(html: string, cardUrl: string, canonicalUrl: string, shareUrl: string): string {
   let out = html;
   out = rewriteOne(out, /<title>[\s\S]*?<\/title>/, `<title>${escapeText(MATCH_TITLE)}</title>`, '<title>');
@@ -93,20 +97,36 @@ function rewriteHead(html: string, cardUrl: string, canonicalUrl: string, shareU
   return out;
 }
 
+/** The parameters a card is built from, or null when this URL names neither
+ * link shape. Both shapes end in the same query string on the share URL and on
+ * the card URL, so the two can never drift apart. */
+export function cardQuery(params: URLSearchParams): string | null {
+  const a = params.get('a') ?? '';
+  const b = params.get('b') ?? '';
+  if (SLUG.test(a) && SLUG.test(b)) return `a=${a}&b=${b}`;
+
+  const model = params.get('model') ?? '';
+  if (!SLUG.test(model)) return null;
+  // A present-but-malformed `vs` names no model, so the page will refuse the
+  // link. Card nothing rather than promise a match that will not open.
+  const versus = params.get('vs');
+  if (versus === null) return `model=${model}`;
+  return SLUG.test(versus) ? `model=${model}&vs=${versus}` : null;
+}
+
 export default async function middleware(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
-    const a = url.searchParams.get('a') ?? '';
-    const b = url.searchParams.get('b') ?? '';
-    if (!SLUG.test(a) || !SLUG.test(b)) return next();
+    const query = cardQuery(url.searchParams);
+    if (query === null) return next();
 
     const indexRes = await fetch(new URL('/index.html', url.origin));
     if (!indexRes.ok) return next();
     const html = await indexRes.text();
 
-    const cardUrl = `${SITE_ORIGIN}/api/og/match?a=${a}&b=${b}`;
+    const cardUrl = `${SITE_ORIGIN}/api/og/match?${query}`;
     const canonicalUrl = `${SITE_ORIGIN}/match`;
-    const shareUrl = `${canonicalUrl}?a=${a}&b=${b}`;
+    const shareUrl = `${canonicalUrl}?${query}`;
     const rewritten = rewriteHead(html, cardUrl, canonicalUrl, shareUrl);
 
     return new Response(rewritten, {

@@ -527,6 +527,17 @@ export function extractUsage(eventLog, model, expectedSessionId) {
     fail(`pi ended on a provider error: ${lastMessage.errorMessage ?? 'final assistant message carried stopReason "error" with no errorMessage'}`);
   }
 
+  // A turn that exhausts its output allowance comes back with `stopReason: "length"`, and when that
+  // truncation leaves no tool call pi ends the agent loop rather than continuing the turn — so the
+  // stage is a half-built worktree wearing a completion, exactly as a provider error is. Fail it for
+  // the same reason. This is deliberately not repaired by resuming the session: a truncated turn
+  // means the model's output allowance is wrong for the configuration, which is worth surfacing
+  // rather than working around.
+  if (lastMessage.stopReason === 'length' && !lastMessage.content?.some((block) => block?.type === 'toolCall')) {
+    const usage = lastMessage.usage ?? {};
+    fail(`pi ended on a truncated turn: the final assistant message hit its output limit at ${usage.output ?? 'an unknown number of'} output tokens (${usage.reasoning ?? 0} reasoning) and made no tool call. Check the model's max output in the stage's model-catalog.txt.`);
+  }
+
   const finalMessage = lastMessage.content
     ?.filter((block) => block?.type === 'text')
     .map((block) => block.text)
