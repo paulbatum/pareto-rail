@@ -161,6 +161,14 @@ Artifacts and checkpoints are written under `benchmark/private/runs/<run-id>/`. 
 
 Rows are independent. A failure or pending owner decision on one row does not block other planned rows.
 
+### Do not detach the command
+
+The command runs in the foreground until the row finishes, which takes minutes to hours. It writes the run manifest at its last checkpoint, so this process exiting is the signal that the row is done.
+
+An agent that launches it must let its own tool run the command and watch it. Do not wrap it in `nohup`, and do not append `&`. Either one detaches the controller from the tool that started it, so the tool reports the wrapping shell's exit instead of the controller's. The agent then reads a finished run as still live, and reports that to the owner.
+
+When the tool offers a background mode, pass the plain command to it. When it does not, poll `benchmark/private/runs/<run-id>/controller-state.json`: every checkpoint reads `completed` when the row is done.
+
 ## Monitor a live run
 
 Use `npm run benchmark:status` or `npm run benchmark:manage -- status` for controller state. Do not start a second controller or resume process against a run that still has a live process; concurrent processes can corrupt its worktree or session.
