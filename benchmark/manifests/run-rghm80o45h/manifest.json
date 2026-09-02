@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "run-rghm80o45h",
+  "slotId": "u5oa",
+  "configuration": {
+    "id": "agy-gemini-3-8-flash-high"
+  },
+  "theme": {
+    "id": "strandline",
+    "path": "benchmark/themes/strandline.md",
+    "sha256": "31621cb405a2b293bf0f7026add0b462312e75c44dfcea3a8549b1fd9616bff1"
+  },
+  "baseline": {
+    "materialsCommit": "93577d3a8c7f18d7c682676e3722a00e370b1924",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "bce6a97aa046c8b675661966f55da2ff218ee30d"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "src/benchmark-levels/domain.test.ts",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/hull-run-cvs3",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/hull-run-ns5n",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-7rkv",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-9281",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-bczy",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-esvz",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-vyxj",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-wo4m",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-81u5",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-9uib",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-lkor",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-snxd",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/test-fixtures",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "public/level-content/hull-run-cvs3",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/hull-run-ns5n",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-7rkv",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-bczy",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-vyxj",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-wo4m",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-81u5",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-9uib",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-lkor",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-snxd",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "docs/level-gallery.md",
+          "reason": "the generated gallery still contains benchmark level content"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/agy-cli.md",
+    "sha256": "50f39a2708d06d3e98935a1fc7799dbcdab64581f8a5e624307126044e906f07"
+  },
+  "controller": {
+    "commit": "b15b62416c9cacd1b5af8afac4569c8be83a3a73"
+  },
+  "timing": {
+    "startedAt": "2026-09-02T17:00:50.085Z",
+    "finishedAt": "2026-09-02T17:15:20.355Z",
+    "wallTimeSeconds": 870.27
+  },
+  "stages": [
+    {
+      "id": "gemini-3.8-flash",
+      "role": "solo",
+      "model": {
+        "provider": "Google Antigravity subscription",
+        "snapshotId": "gemini-3.8-flash"
+      },
+      "promptSha256": "3c37aa504ac80889a29cf23d780ac4b9f563575ac6bb035fbe1e7095b9bac3d7",
+      "harness": {
+        "name": "Antigravity CLI",
+        "version": "1.1.24"
+      },
+      "sessionId": "7f8288a6-095e-43a6-8234-9ef4d84c3807",
+      "rolloutArtifactSha256": "ec09fc0b90acb29d22098cb3c94c234b1e3e96e59872e785cd028c7261cdddc8",
+      "outputArtifactSha256": "f8573d7908e2a226efc3f95a16a36f3d911f4fc00195e9967ab0923be503d3c3",
+      "startedAt": "2026-09-02T17:01:05.470Z",
+      "finishedAt": "2026-09-02T17:15:07.423Z",
+      "wallTimeSeconds": 798.327926214,
+      "result": "completed",
+      "entrantSandbox": false,
+      "sandboxUnavailable": true,
+      "usage": {
+        "inputTokens": 1395184,
+        "outputTokens": 38417,
+        "cacheReadInputTokens": 16877343,
+        "reasoningTokens": 66600
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 1.3530012375,
+        "source": "rate-card"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 1.3530012375,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "tokscale",
+      "version": "4.7.0",
+      "view": "antigravity-cli",
+      "command": "tokscale models --home <run harness home> --json",
+      "basis": "rate-card"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gemini-3.8-flash",
+        "costUsd": 1.3530012375,
+        "inputTokens": 1395184,
+        "outputTokens": 38417,
+        "cacheReadTokens": 16877343,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 66600
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.699405694,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.7540814680000003,
+      "outputSha256": "97a3afda6d38b214738ed1b1fb82d9b5574b414833066c593b44c8afcb8f1edd"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-u5oa --base bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.048028293999999735,
+      "outputSha256": "0b0a2040f096e30c28abdc977a849890c9e8d42b6b81a346281c9952802a5209"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level strandline-u5oa",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.914194349,
+      "outputSha256": "03b8d5625c6e073f14395c4b4395c8dbd0fdd1e258ed4adf8a9d416068a01d00"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "strandline-u5oa",
+    "title": "Strandline",
+    "evaluated": {
+      "commit": "08a6d7204fe0da417bc2883e221c12ee1ba51551",
+      "branch": "benchmark-run-run-rghm80o45h"
+    },
+    "payload": {
+      "commit": "02a8277d0492a39ec47dcdbbbd82642615006f1b",
+      "branch": "benchmark-payload-run-rghm80o45h"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

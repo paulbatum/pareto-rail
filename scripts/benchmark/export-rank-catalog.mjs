@@ -119,6 +119,13 @@ export const configurationLabels = {
     effort: 'high',
     workflowSummary: 'One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
+  'agy-gemini-3-8-flash-high': {
+    modelName: 'Gemini 3.8 Flash',
+    workflowName: 'solo',
+    primaryModel: 'gemini-3.8-flash',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'pi-openrouter-ox-alpha-high': {
     modelName: 'GLM 5.3 Flash',
     workflowName: 'solo',
@@ -168,6 +175,7 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'codex-luna-max',
   'agy-gemini-3-6-flash-high',
   'agy-gemini-3-7-flash-high',
+  'agy-gemini-3-8-flash-high',
   'pi-openrouter-ox-alpha-high',
   'pi-openrouter-inkling-high',
   'pi-kimi-k3-max',

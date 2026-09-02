@@ -1,0 +1,23 @@
+{
+  "executable": "agy",
+  "arguments": [
+    "--model",
+    "gemini-3.8-flash-high",
+    "--dangerously-skip-permissions",
+    "--add-dir",
+    "/tmp/pareto-rail-run-rghm80o45h",
+    "--print-timeout",
+    "43200s",
+    "--print",
+    "<rendered-assignment sha256:3c37aa504ac80889a29cf23d780ac4b9f563575ac6bb035fbe1e7095b9bac3d7>"
+  ],
+  "cliVersion": "1.1.24",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-rghm80o45h",
+  "startedAt": "2026-09-02T17:01:05.470Z",
+  "finishedAt": "2026-09-02T17:15:07.423Z",
+  "wallTimeSeconds": 798.327926214,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

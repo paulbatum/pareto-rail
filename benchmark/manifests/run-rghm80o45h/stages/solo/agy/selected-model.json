@@ -1,0 +1,6 @@
+{
+  "requestedModel": "gemini-3.8-flash",
+  "selectedReasoningEffort": "high",
+  "resolvedModelId": "gemini-3.8-flash-high",
+  "modelInCatalog": true
+}

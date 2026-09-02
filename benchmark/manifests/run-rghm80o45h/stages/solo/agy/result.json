@@ -1,0 +1,25 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "7f8288a6-095e-43a6-8234-9ef4d84c3807",
+  "eventLogSha256": "f8573d7908e2a226efc3f95a16a36f3d911f4fc00195e9967ab0923be503d3c3",
+  "finalMessageSha256": "ee0842680d06d3692662246f497626dca5eec3c7dc73f5593c5e9919d00004e5",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "transcript": {
+      "captured": true,
+      "format": "jsonl",
+      "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-rghm80o45h/harness-home/.gemini/antigravity-cli/brain/7f8288a6-095e-43a6-8234-9ef4d84c3807/.system_generated/logs/transcript_full.jsonl",
+      "sha256": "ec09fc0b90acb29d22098cb3c94c234b1e3e96e59872e785cd028c7261cdddc8",
+      "steps": 289
+    },
+    "conversation": {
+      "captured": true,
+      "format": "sqlite",
+      "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-rghm80o45h/harness-home/.gemini/antigravity-cli/conversations/7f8288a6-095e-43a6-8234-9ef4d84c3807.db",
+      "sha256": "d5379023fcee07d23db47ee1d41666b7bf9cd92a95f7efac58b7153d63e1cf8e",
+      "replayable": false
+    }
+  }
+}

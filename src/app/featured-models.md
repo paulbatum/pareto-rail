@@ -29,6 +29,7 @@ put it last.
 - Claude Fable 5
 - Claude Opus 4.8
 - GPT-5.6 Sol
+- Gemini 3.8 Flash (new)
 - Gemini 3.7 Flash
 - Kimi K3
 - [Inkling](https://openrouter.ai/thinkingmachines/inkling) (retired)

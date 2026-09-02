@@ -916,6 +916,24 @@
       ]
     },
     {
+      "runId": "run-rghm80o45h",
+      "levelId": "strandline-u5oa",
+      "themeId": "strandline",
+      "configurationId": "agy-gemini-3-8-flash-high",
+      "files": [
+        {
+          "path": "runs/run-rghm80o45h/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 578104,
+          "sha256": "ec09fc0b90acb29d22098cb3c94c234b1e3e96e59872e785cd028c7261cdddc8"
+        },
+        {
+          "path": "runs/run-rghm80o45h/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 398,
+          "sha256": "f8573d7908e2a226efc3f95a16a36f3d911f4fc00195e9967ab0923be503d3c3"
+        }
+      ]
+    },
+    {
       "runId": "run-uitiw02p99w9",
       "levelId": "skyhook-ggl2",
       "themeId": "skyhook",

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T02:02:35.560Z",
+  "generatedAt": "2026-09-02T18:09:57.633Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -118,6 +118,14 @@
       "modelName": "Gemini 3.7 Flash",
       "workflowName": "solo",
       "primaryModel": "gemini-3.7-flash",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+    },
+    {
+      "id": "agy-gemini-3-8-flash-high",
+      "modelName": "Gemini 3.8 Flash",
+      "workflowName": "solo",
+      "primaryModel": "gemini-3.8-flash",
       "effort": "high",
       "workflowSummary": "One fresh unattended Antigravity CLI session driving Gemini on a Google subscription. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
@@ -2136,6 +2144,40 @@
       "thumbnailPath": "/level-content/strandline-sk9q/hero.avif",
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    },
+    {
+      "levelId": "strandline-u5oa",
+      "themeId": "strandline",
+      "configurationId": "agy-gemini-3-8-flash-high",
+      "modelName": "Gemini 3.8 Flash",
+      "workflowName": "solo",
+      "generationCost": 1.35300124,
+      "linesOfCode": 2158,
+      "run": {
+        "generationWallTimeSeconds": 798.328,
+        "totalWallTimeSeconds": 870.27,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Antigravity CLI",
+          "version": "1.1.24"
+        },
+        "models": [
+          {
+            "modelName": "gemini-3.8-flash",
+            "role": "solo",
+            "inputTokens": 1395184,
+            "outputTokens": 38417,
+            "cacheReadTokens": 16877343,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 66600,
+            "costUsd": 1.35300124
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-u5oa/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "93577d3a8c7f18d7c682676e3722a00e370b1924"
     },
     {
       "levelId": "purse-pursuit-svok",
