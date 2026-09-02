@@ -23,7 +23,8 @@ export interface RemoteVotePayload {
 /**
  * The wire form of a completed vote. The idempotency key names the submission
  * rather than the pair, so a retry of this payload writes nothing while a later
- * vote on the same pair is stored as a new, superseding one.
+ * vote on the same pair is stored as a new, superseding one. The key is built
+ * once here and carried in the payload, so every retry sends the same one.
  */
 export function remoteVotePayload(assignment: MatchupAssignment, vote: MatchupVote, store: BenchmarkLocalStore): RemoteVotePayload {
   const snapshot = store.snapshot;
@@ -41,7 +42,7 @@ export function remoteVotePayload(assignment: MatchupAssignment, vote: MatchupVo
     ...(bestScoreA !== undefined || bestScoreB !== undefined ? { bestScores: { ...(bestScoreA === undefined ? {} : { a: bestScoreA }), ...(bestScoreB === undefined ? {} : { b: bestScoreB }) } } : {}),
     assignedAt: assignment.assignedAt,
     clientSubmittedAt: vote.submittedAt,
-    idempotencyKey: `${assignment.matchupId}:${store.participantId}:${vote.submittedAt}`,
+    idempotencyKey: `${assignment.matchupId}:${store.participantId}:${vote.submittedAt}:${submissionToken()}`,
     source: vote.source,
   };
 }
@@ -148,6 +149,14 @@ export class RemoteVoteRecorder {
     this.loggedFailure = true;
     console.debug('Rank vote remote sync deferred');
   }
+}
+
+/** Separates two submissions the clock cannot: `submittedAt` has millisecond
+ * resolution, and two votes can land in one millisecond. */
+function submissionToken(): string {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi?.randomUUID) return cryptoApi.randomUUID().slice(0, 8);
+  return Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0');
 }
 
 function entryKey(payload: RemoteVotePayload): string {

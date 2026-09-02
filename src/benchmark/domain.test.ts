@@ -130,7 +130,7 @@ function testCustomMatchPlaysPersist(): void {
   assert.equal(posted[0]!.themeId, 'th');
   assert.equal(posted[0]!.matchupId, pairId('th', 'lv-a', 'lv-b'));
   assert.deepEqual(posted[0]!.bestScores, { a: 100, b: 250 });
-  assert.ok(posted[0]!.idempotencyKey?.endsWith(persisted.history[0]!.submittedAt), 'the idempotency key does not name this submission');
+  assert.ok(posted[0]!.idempotencyKey?.includes(persisted.history[0]!.submittedAt), 'the idempotency key does not name this submission');
 
   // A fresh controller for the same pair resumes at ready-to-vote from the shared runs.
   const resumed = new CustomMatchController('lv-a', 'lv-b', catalog, store(), outbox);
@@ -191,15 +191,17 @@ function testStoredVoteWithoutSourceReadsAsRanked(): void {
 
 function testMatchRouteParsing(): void {
   const parse = (search: string) => parseRoute({ pathname: '/match', search } as Location);
-  assert.deepEqual(parse('?a=lv-x&b=lv-y'), { kind: 'match', a: 'lv-x', b: 'lv-y', model: undefined, playSide: undefined });
-  assert.deepEqual(parse('?a=lv-x&b=lv-y&play=b'), { kind: 'match', a: 'lv-x', b: 'lv-y', model: undefined, playSide: 'b' });
+  assert.deepEqual(parse('?a=lv-x&b=lv-y'), { kind: 'match', a: 'lv-x', b: 'lv-y', model: undefined, vs: undefined, playSide: undefined });
+  assert.deepEqual(parse('?a=lv-x&b=lv-y&play=b'), { kind: 'match', a: 'lv-x', b: 'lv-y', model: undefined, vs: undefined, playSide: 'b' });
   // `model` names one side and leaves the pair to the page's draw.
-  assert.deepEqual(parse('?model=ox-alpha'), { kind: 'match', a: undefined, b: undefined, model: 'ox-alpha', playSide: undefined });
+  assert.deepEqual(parse('?model=ox-alpha'), { kind: 'match', a: undefined, b: undefined, model: 'ox-alpha', vs: undefined, playSide: undefined });
+  // `vs` names the other side, leaving the theme and the two levels to the draw.
+  assert.deepEqual(parse('?model=ox-alpha&vs=other-model'), { kind: 'match', a: undefined, b: undefined, model: 'ox-alpha', vs: 'other-model', playSide: undefined });
   // `play` is only honoured for the two sides; anything else is dropped.
   const droppedPlay = parse('?a=lv-x&b=lv-y&play=c');
   assert.equal(droppedPlay.kind === 'match' ? droppedPlay.playSide : 'unreachable', undefined);
   // Missing params still resolve to the match route so the page can explain the shape.
-  assert.deepEqual(parse(''), { kind: 'match', a: undefined, b: undefined, model: undefined, playSide: undefined });
+  assert.deepEqual(parse(''), { kind: 'match', a: undefined, b: undefined, model: undefined, vs: undefined, playSide: undefined });
   assert.equal(routePath({ kind: 'match', a: 'lv-x', b: 'lv-y' }), '/match');
 }
 
@@ -229,6 +231,37 @@ function testModelMatchupDraw(): void {
   assert.equal(matchupForModel('no-such-model', { catalog, playable, random: () => 0 }), null);
   // With the opponent unplayable, th-b has nothing to offer either.
   assert.equal(matchupForModel('ox-alpha', { catalog, playable: new Set(['lv-mine-b']), random: () => 0 }), null);
+
+  testNamedOpponentDraw();
+}
+
+/** `&vs=<slug>` pins the other side of the draw. */
+function testNamedOpponentDraw(): void {
+  const entrant = (levelId: string, themeId: string, modelName: string): RankCatalogEntrant =>
+    ({ levelId, themeId, configurationId: `${modelSlug(modelName)}-solo`, modelName, workflowName: 'solo', generationCost: 1 });
+  const catalog: RankCatalog = {
+    generatedAt: 'test',
+    themes: [{ id: 'th-a', title: 'A', summary: 'S', prompt: 'P' }, { id: 'th-b', title: 'B', summary: 'S', prompt: 'P' }],
+    entrants: [
+      entrant('lv-alpha-a', 'th-a', 'Ox Alpha'),
+      entrant('lv-beta-a', 'th-a', 'Ox Beta'),
+      entrant('lv-gamma-a', 'th-a', 'Ox Gamma'),
+      // th-b holds Alpha and Gamma but no Beta.
+      entrant('lv-alpha-b', 'th-b', 'Ox Alpha'),
+      entrant('lv-alpha-b2', 'th-b', 'Ox Alpha'),
+      entrant('lv-gamma-b', 'th-b', 'Ox Gamma'),
+    ],
+  };
+  const playable = new Set(catalog.entrants.map((item) => item.levelId));
+  const versus = (opponent: string, random: () => number) => matchupForModel('ox-alpha', { catalog, playable, opponent, random });
+
+  // th-a is the only theme holding both, so Gamma never enters the draw.
+  assert.deepEqual(versus('ox-beta', () => 0), { a: 'lv-alpha-a', b: 'lv-beta-a' });
+  assert.deepEqual(versus('ox-beta', () => 0.9), { a: 'lv-beta-a', b: 'lv-alpha-a' });
+  // An unknown opponent slug leaves no theme to draw from.
+  assert.equal(versus('no-such-model', () => 0), null);
+  // Both slugs naming one model draws two of its own levels, which only th-b has.
+  assert.deepEqual(versus('ox-alpha', () => 0), { a: 'lv-alpha-b', b: 'lv-alpha-b2' });
 }
 
 function testCustomMatchController(): void {

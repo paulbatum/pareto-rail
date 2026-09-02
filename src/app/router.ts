@@ -7,7 +7,7 @@ export type AppRoute =
   | { kind: 'play'; levelId: string; from?: LevelsView }
   | { kind: 'levels'; view: LevelsView }
   | { kind: 'rank'; playSide?: 'a' | 'b' }
-  | { kind: 'match'; a?: string; b?: string; model?: string; playSide?: 'a' | 'b' }
+  | { kind: 'match'; a?: string; b?: string; model?: string; vs?: string; playSide?: 'a' | 'b' }
   | { kind: 'analysis'; levelId?: string }
   | { kind: 'leaderboard' }
   | { kind: 'about' }
@@ -40,13 +40,15 @@ export function parseRoute(location: Location = window.location): AppRoute {
   if (path === '/match') {
     const params = new URLSearchParams(location.search);
     const play = params.get('play');
-    // `model` names one side and leaves the page to draw the pair; it is dropped
-    // from the URL as soon as the page resolves it to a concrete pair.
+    // `model` names one side and leaves the page to draw the pair, and `vs`
+    // names the other side; both are dropped from the URL as soon as the page
+    // resolves them to a concrete pair.
     return {
       kind: 'match',
       a: params.get('a') ?? undefined,
       b: params.get('b') ?? undefined,
       model: params.get('model') ?? undefined,
+      vs: params.get('vs') ?? undefined,
       playSide: play === 'a' || play === 'b' ? play : undefined,
     };
   }

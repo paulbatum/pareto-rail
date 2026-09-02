@@ -35,7 +35,7 @@ export function MatchPage({ route, onNavigate }: MatchPageProps) {
   // address bar is rewritten to the concrete pair — that is the link worth
   // sharing, and reloading it replays the same match instead of drawing a new one.
   const [drawn] = useState(() => (route.model !== undefined && route.a === undefined && route.b === undefined
-    ? matchupForModel(route.model, { playable: playableLevelIds() })
+    ? matchupForModel(route.model, { playable: playableLevelIds(), ...(route.vs === undefined ? {} : { opponent: route.vs }) })
     : null));
   const a = route.a ?? drawn?.a;
   const b = route.b ?? drawn?.b;
@@ -60,7 +60,7 @@ export function MatchPage({ route, onNavigate }: MatchPageProps) {
   }, [controller, route.playSide]);
 
   if (route.model !== undefined && a === undefined) {
-    return <MatchSetupPage error={{ kind: 'no-model', slug: route.model }} onNavigate={onNavigate} />;
+    return <MatchSetupPage error={{ kind: 'no-model', slug: route.model, ...(route.vs === undefined ? {} : { opponent: route.vs }) }} onNavigate={onNavigate} />;
   }
   if (!controller.valid) return <MatchSetupPage error={controller.error!} onNavigate={onNavigate} />;
   if (launch) return <MatchGame launch={launch} backPath={matchPath(a!, b!)} onNavigate={onNavigate} onRunEnd={handleRunEnd} />;
@@ -167,7 +167,9 @@ function MatchSetupPage({ error, onNavigate }: { error: MatchError; onNavigate: 
     : error.kind === 'same'
       ? `A match needs two different levels, but both sides point at “${error.id}”.`
       : error.kind === 'no-model'
-        ? `No theme holds both a level by “${error.slug}” and one by another model, so there is nothing to match it against.`
+        ? error.opponent === undefined
+          ? `No theme holds both a level by “${error.slug}” and one by another model, so there is nothing to match it against.`
+          : `No theme holds both a level by “${error.slug}” and one by “${error.opponent}”, so these two cannot be matched.`
         : `These level ids aren’t in the catalog: ${error.ids.join(', ')}.`;
   return (
     <section className="page-panel rank-panel">
@@ -176,7 +178,7 @@ function MatchSetupPage({ error, onNavigate }: { error: MatchError; onNavigate: 
       <p className="lede">Pick two levels to play head-to-head, then reveal which model built each. Two levels from the same theme make a match whose result counts toward the rankings.</p>
       {notice && <p className="match-pick-error" role="alert">{notice}</p>}
       <MatchPicker onNavigate={onNavigate} />
-      <p className="match-url-hint">Prefer a link? Use <code>/match?a=&lt;level-id&gt;&amp;b=&lt;level-id&gt;</code> — browse ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>. <code>/match?model=&lt;model&gt;</code> draws one for you: one side is that model, the theme and the opponent are random.</p>
+      <p className="match-url-hint">Prefer a link? Use <code>/match?a=&lt;level-id&gt;&amp;b=&lt;level-id&gt;</code> — browse ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>. <code>/match?model=&lt;model&gt;</code> draws one for you: one side is that model, the theme and the opponent are random. Add <code>&amp;vs=&lt;model&gt;</code> to name the other side too.</p>
     </section>
   );
 }
