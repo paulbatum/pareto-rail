@@ -6,7 +6,15 @@ const GLM_53_FLASH_RATES = Object.freeze({
   cacheRead: 0.03 / 1_000_000,
 });
 
+const MUSE_SPARK_1_3_RATES = Object.freeze({
+  input: 1.25 / 1_000_000,
+  output: 4.25 / 1_000_000,
+  cacheRead: 0.15 / 1_000_000,
+});
+
 export const RATE_CARD_MODELS = new Set([
+  'meta/muse-spark-1.3-contributor',
+  'meta/muse-spark-1.3',
   'thinkingmachines/inkling:free',
   'stealth/ox-alpha',
   'z-ai/glm-5.3-flash',
@@ -14,6 +22,8 @@ export const RATE_CARD_MODELS = new Set([
 
 const MODEL_RATES = new Map([
   ['stealth/ox-alpha', GLM_53_FLASH_RATES],
+  ['meta/muse-spark-1.3-contributor', MUSE_SPARK_1_3_RATES],
+  ['meta/muse-spark-1.3', MUSE_SPARK_1_3_RATES],
   ['z-ai/glm-5.3-flash', GLM_53_FLASH_RATES],
 ]);
 

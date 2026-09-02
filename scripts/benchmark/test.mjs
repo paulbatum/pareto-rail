@@ -36,6 +36,12 @@ assert.equal(costBasisFor(['thinkingmachines/inkling:free']), 'rate-card');
 assert.equal(costBasisFor(['thinkingmachines/inkling']), 'metered');
 assert.equal(costBasisFor(['gemini-3.6-flash'], { usesTokscale: true }), 'rate-card');
 assert.equal(rateCardCost({ inputTokens: 1_000_000, outputTokens: 1_000_000, cacheReadTokens: 1_000_000 }), 0.68);
+assert.equal(costBasisFor(['meta/muse-spark-1.3-contributor']), 'rate-card');
+assert.equal(unpricedReasonFor(['meta/muse-spark-1.3-contributor']), null);
+assert.equal(
+  rateCardCost({ inputTokens: 1_000_000, outputTokens: 1_000_000, cacheReadTokens: 1_000_000 }, 'meta/muse-spark-1.3-contributor'),
+  5.65,
+);
 
 const rendered = renderAssignment('id={{LEVEL_ID}} title={{LEVEL_TITLE}} theme={{THEME}}', {
   levelId: 'cinder-a1b2',

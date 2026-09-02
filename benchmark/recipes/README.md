@@ -66,6 +66,7 @@ Every configuration id, what it composes, and what it is for. Model and effort a
 | `pi-openrouter-ox-alpha-high` | `stealth/ox-alpha` @ high | — | The GLM 5.3 Flash configuration, reached through OpenRouter's former `stealth/ox-alpha` route. Its recorded runs use GLM 5.3 Flash's normal rate card: $0.15/M input, $0.50/M output, and $0.03/M cached input. |
 | `pi-openrouter-inkling-high` | `thinkingmachines/inkling` @ high, `openrouter` | — | Inkling through OpenRouter; zero-charge access routes are valued from the model's rate card. |
 | `pi-openrouter-inkling-high-b20` | `thinkingmachines/inkling` @ high, `openrouter` | budget $20 | Budget variant of the above. |
+| `pi-openrouter-muse-spark-1-3-high` | `meta/muse-spark-1.3` @ high, `openrouter` | — | Muse Spark 1.3, reached through OpenRouter's `meta/muse-spark-1.3-contributor` route. That route discounts the model in exchange for contributing prompts, so its recorded runs are valued from the standard route's rate card: $1.25/M input, $4.25/M output, and $0.15/M cached input. |
 | `pi-openrouter-kimi-k3-max` | `moonshotai/kimi-k3` @ max, `openrouter` | — | Kimi K3, metered. `max` is the model's only tier, standing in for the others' `high` rather than intensifying it. |
 | `pi-openrouter-kimi-k3-max-b20` | `moonshotai/kimi-k3` @ max, `openrouter` | budget $20 | Budget variant of the above. |
 

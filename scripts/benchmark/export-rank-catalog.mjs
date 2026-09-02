@@ -12,6 +12,7 @@ const publicationPath = path.join(privateRoot, 'publication.json');
 const featuredModelsPath = path.join(root, 'src/app/featured-models.md');
 const publicModelNames = new Map([
   ['stealth/ox-alpha', 'z-ai/glm-5.3-flash'],
+  ['meta/muse-spark-1.3-contributor', 'meta/muse-spark-1.3'],
 ]);
 
 export const configurationLabels = {
@@ -147,6 +148,13 @@ export const configurationLabels = {
     effort: 'max',
     workflowSummary: 'One fresh unattended pi session driving Kimi K3 on Moonshot\'s own subscription endpoint. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
+  'pi-openrouter-muse-spark-1-3-high': {
+    modelName: 'Muse Spark 1.3',
+    workflowName: 'solo',
+    primaryModel: 'meta/muse-spark-1.3',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended pi session driving Muse Spark 1.3 over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'pi-openrouter-kimi-k3-max': {
     modelName: 'Kimi K3',
     workflowName: 'solo',
@@ -180,6 +188,7 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'pi-openrouter-inkling-high',
   'pi-kimi-k3-max',
   'pi-openrouter-kimi-k3-max',
+  'pi-openrouter-muse-spark-1-3-high',
 ]);
 
 const delegationIntroduction = 'Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.';
