@@ -49,6 +49,8 @@ When a harness supports confinement, the entrant sandbox makes the entrant check
 
 Every promoted run receives a transcript-based contamination review. The audit can find recorded reads, copies, and network activity, but it cannot prove that no unrecorded access occurred. The sandbox contract, host requirements, audit command, and promotion decision procedure belong to [`controller/README.md`](controller/README.md). Known failures and their corrective actions are recorded under [`incidents/`](incidents/).
 
+What an entrant can read is set by its baseline, not by the audit. The v1 and v2 entrant baselines contain the benchmark levels promoted before them, so an entrant on a v1 or v2 theme can read another entrant's source. The audit reports those reads and the run record keeps them; they do not disqualify the run, because a level built for a different theme is the same kind of reference material the built-in levels provide. Reading a level built for the entrant's own theme is reuse of the assignment, and disqualifies the run. The v3 baselines are cut without prior entrants, so a v3 entrant has no other entrant's source to read.
+
 Visitors remain blind until they vote. The site reveals model, workflow, and measured cost only after the vote. The agent operating the benchmark must also withhold the mapping between opaque level ids and configurations from the owner until the owner says they have voted on that theme.
 
 ## Judgment and ratings

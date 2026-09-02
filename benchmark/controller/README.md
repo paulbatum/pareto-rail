@@ -267,7 +267,24 @@ Run the contamination audit before promotion:
 npm run benchmark:contamination -- --run <run-id> --json
 ```
 
-Review every finding. For each `web` event, compare the activity with the entrant output and decide whether external level material could have been reused. A `web-self-lookup` or another violation blocks promotion until the review resolves it. Record the verdict in the promotion decision.
+The audit prints `CONTAMINATED` whenever it has any finding, so that word does not decide the run. Decide it in two steps.
+
+First read `manifest.baseline.guard.violations` for the run. It names every path the launch guard found in the entrant baseline, which is what the entrant could reach:
+
+- A v1 or v2 baseline lists the benchmark levels promoted before it. A content read of one of them came from the tree the run was given.
+- A scrubbed baseline lists no promoted benchmark source. A content read of another entrant cannot have come from the tree, so find where it came from before promoting.
+
+Then classify each finding by the theme of the level that was read:
+
+| Finding | Decision |
+| --- | --- |
+| A read or copy of a level built for this run's own theme | Disqualify. The entrant reused work for its own assignment. |
+| A read of a level built for another theme | Promote. It is the same kind of reference the built-in levels provide. |
+| A `web-self-lookup`, or a read from outside the entrant checkout | Resolve before promoting. |
+
+For each `web` event, compare the activity with the entrant output and decide whether external level material could have been reused.
+
+Do not write a per-run incident note for a baseline exposure the guard already recorded; `benchmark/README.md` states that exposure per theme. Runs promoted before that rule carry such a note, and it stays. Write `incident.json` for a finding specific to the run, such as a disqualification.
 
 Promote an accepted run:
 
