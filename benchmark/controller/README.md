@@ -203,6 +203,10 @@ npm run benchmark:run -- \
 
 Use same-session continuation when the worktree contains useful entrant work and the previous process ended because of an expired credential, stream stall, quota interruption, reboot, or similar infrastructure failure. It preserves the entrant's context and worktree. A fresh relaunch would discard the session context.
 
+A stage killed while it ran records no stage launch, because the controller writes that record only after the harness process returns. Continuation still works: the Claude adapter reads the session identity from the transcript the run-local harness home holds, selecting the one that opens with this stage's assignment. It stops when the home holds no such transcript or holds several. The pi and Prime Agent adapters need the recorded result, so a stage of theirs that died before writing one has no session to continue.
+
+The killed round leaves no usage or event artifacts in its stage directory. Cost still comes from the harness home, which holds the whole session, and the continuation round supplies the command and event records the manifest needs.
+
 The controller refuses this option for budgeted stages, whose budget protocol owns continuation, and for harnesses without session re-entry. It performs one continuation request; it does not keep restarting the process automatically.
 
 For repeated Claude authentication failures, run `claude` interactively on the owner's account to refresh the stored credential before continuing. Resume recopies that credential into the isolated run home.

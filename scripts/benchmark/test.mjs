@@ -248,33 +248,85 @@ else console.log(JSON.stringify({ type: 'session', id: 'fake-session' }));
       /pi resume round 1 artifact events-resume-1\.jsonl already exists/,
     );
 
-    // A Claude stage resumes by re-entering the session its interrupted round recorded, so the round's
-    // artifacts must be clear and result.json must name a session to re-enter.
+    // A Claude stage resumes by re-entering the session its interrupted round used, so the round's
+    // artifacts must be clear and the session identity must come from either result.json or, when the
+    // round was killed before writing that record, the session persisted in the harness home.
     const claudeStage = path.join(temporary, 'claude-stage');
     await fs.mkdir(claudeStage, { recursive: true });
-    const claudeArgs = [
+    const claudeArgsFor = (stageDirectory) => [
       claudeAdapter,
       '--worktree', process.cwd(),
       '--prompt', promptPath,
-      '--out', claudeStage,
+      '--out', stageDirectory,
       '--model', 'fake-model',
       '--effort', 'low',
       '--timeout-seconds', '1',
       '--resume-round', '1',
     ];
+    const claudeArgs = claudeArgsFor(claudeStage);
+    const withoutHarnessHome = { ...process.env };
+    delete withoutHarnessHome.CLAUDE_CONFIG_DIR;
     await fs.writeFile(path.join(claudeStage, 'events-resume-1.jsonl'), '{}\n');
     await assert.rejects(
-      () => exec(process.execPath, claudeArgs, { cwd: process.cwd() }),
+      () => exec(process.execPath, claudeArgs, { cwd: process.cwd(), env: withoutHarnessHome }),
       /Claude resume round 1 artifact events-resume-1\.jsonl already exists/,
     );
     await fs.rm(path.join(claudeStage, 'events-resume-1.jsonl'));
     await assert.rejects(
-      () => exec(process.execPath, claudeArgs, { cwd: process.cwd() }),
-      /Missing the recorded Claude stage result needed to resume/,
+      () => exec(process.execPath, claudeArgs, { cwd: process.cwd(), env: withoutHarnessHome }),
+      /CLAUDE_CONFIG_DIR names no harness home/,
     );
+
+    // A killed round writes no result.json. The session it ran survives in the harness home, and only
+    // that session's transcript opens with this stage's assignment, so the adapter resumes it by name.
+    const harnessHome = path.join(temporary, 'harness-home');
+    const sessions = path.join(harnessHome, 'projects', '-tmp-entrant');
+    await fs.mkdir(sessions, { recursive: true });
+    const withHarnessHome = { ...process.env, CLAUDE_CONFIG_DIR: harnessHome };
+    const emptyHomeStage = path.join(temporary, 'claude-stage-empty-home');
+    await fs.mkdir(emptyHomeStage, { recursive: true });
+    await assert.rejects(
+      () => exec(process.execPath, claudeArgsFor(emptyHomeStage), { cwd: process.cwd(), env: withHarnessHome }),
+      /left no session to resume/,
+    );
+
+    const interruptedSession = '11111111-2222-3333-4444-555555555555';
+    const transcriptLine = (sessionId) => `${JSON.stringify({ type: 'queue-operation', sessionId, content: 'assignment\n' })}\n`;
+    await fs.writeFile(path.join(sessions, `${interruptedSession}.jsonl`), transcriptLine(interruptedSession));
+    // A delegated subagent thread lands in the same home but never carries the assignment, so it must
+    // not compete with the stage's own session.
+    await fs.writeFile(path.join(sessions, '99999999-8888-7777-6666-555555555555.jsonl'), transcriptLine('99999999-8888-7777-6666-555555555555').replace('assignment', 'delegated work'));
+    const fakeClaude = path.join(temporary, 'fake-claude.mjs');
+    await fs.writeFile(fakeClaude, `#!/usr/bin/env node
+if (process.argv.includes('--version')) console.log('fake-claude 1');
+`);
+    await fs.chmod(fakeClaude, 0o755);
+    const discoveredStage = path.join(temporary, 'claude-stage-discovered');
+    await fs.mkdir(discoveredStage, { recursive: true });
+    await assert.rejects(
+      () => exec(process.execPath, [...claudeArgsFor(discoveredStage), '--claude-bin', fakeClaude], { cwd: process.cwd(), env: withHarnessHome }),
+      /did not report a terminal result event/,
+      'the fake harness produces no result event; the recorded command still shows which session was resumed',
+    );
+    const resumedCommand = JSON.parse(await fs.readFile(path.join(discoveredStage, 'command-resume-1.json'), 'utf8'));
+    assert.ok(
+      resumedCommand.arguments.includes('--resume') && resumedCommand.arguments.includes(interruptedSession),
+      'the resumed round re-enters the session the interrupted round left in the harness home',
+    );
+
+    // Two sessions recording the same assignment leave no basis to choose between them.
+    await fs.writeFile(path.join(sessions, '22222222-2222-3333-4444-555555555555.jsonl'), transcriptLine('22222222-2222-3333-4444-555555555555'));
+    const ambiguousStage = path.join(temporary, 'claude-stage-ambiguous');
+    await fs.mkdir(ambiguousStage, { recursive: true });
+    await assert.rejects(
+      () => exec(process.execPath, claudeArgsFor(ambiguousStage), { cwd: process.cwd(), env: withHarnessHome }),
+      /Decide which one to resume/,
+    );
+
+    // A recorded result takes precedence over discovery, and must name the session it resumes.
     await fs.writeFile(path.join(claudeStage, 'result.json'), '{"result":"failed"}\n');
     await assert.rejects(
-      () => exec(process.execPath, claudeArgs, { cwd: process.cwd() }),
+      () => exec(process.execPath, claudeArgs, { cwd: process.cwd(), env: withHarnessHome }),
       /did not report a session identifier/,
     );
   } finally {

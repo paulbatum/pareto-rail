@@ -273,18 +273,25 @@ async function main() {
     await checkpoint(state, statePath, 'stage', async () => {
       const stageDirectory = path.join(outputDirectory, adapter.stageDir);
       const launch = await optionalJson(path.join(outputDirectory, 'stage-launch.json'));
-      if (launch) {
+      // The controller records a stage launch only after the harness process returns, so a stage killed
+      // while it ran leaves no record even though its session and worktree survive. `--continue-stage`
+      // therefore also accepts a stage whose directory exists without a launch record, and the adapter
+      // recovers the session identity from what the interrupted round persisted.
+      const interruptedStage = !launch && continueStage && await pathExists(stageDirectory);
+      if (launch || interruptedStage) {
         // `--continue-stage` is an explicit operator instruction and is honored even when the recorded
         // stage exited zero, because a stage can exit zero without the entrant having finished: pi
         // reads an empty completion as the agent settling and returns success. Ordering the exit-code
         // check first would refuse the recovery in exactly the case that needs it.
-        if (!continueStage && launch.exitCode === 0) return { exitCode: 0 };
+        if (launch && !continueStage && launch.exitCode === 0) return { exitCode: 0 };
         const recovery = await optionalJson(path.join(outputDirectory, 'recovery.json'));
-        if (!continueStage && recovery?.policy === 'completed entrant work accepted; normal sealing and gates resumed') return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
+        if (launch && !continueStage && recovery?.policy === 'completed entrant work accepted; normal sealing and gates resumed') return { exitCode: launch.exitCode, acceptedCompletedWorktree: true };
         if (continueStage) {
           const round = await nextContinuationRound(stageDirectory);
-          const originalLaunchPath = path.join(outputDirectory, 'stage-launch-round-0.json');
-          if (!await pathExists(originalLaunchPath)) await writeJson(originalLaunchPath, launch);
+          if (launch) {
+            const originalLaunchPath = path.join(outputDirectory, 'stage-launch-round-0.json');
+            if (!await pathExists(originalLaunchPath)) await writeJson(originalLaunchPath, launch);
+          }
           const roundLaunchPath = path.join(outputDirectory, `stage-launch-round-${round}.json`);
           await assertAbsent(roundLaunchPath, `stage launch round ${round} record`);
           await prepareHarnessHome(adapter, outputDirectory);
@@ -306,7 +313,7 @@ async function main() {
         }
         fail('The recorded stage failed. Resume with --accept-stage-output true only after verifying that the entrant completed its worktree.');
       }
-      if (continueStage) fail('--continue-stage requires a previously recorded stage launch.');
+      if (continueStage) fail('--continue-stage requires a recorded stage launch or an interrupted stage directory to continue from.');
       await prepareHarnessHome(adapter, outputDirectory);
       const stageArgs = buildStageArgs({ adapter, definition, worktree, inputs, stageDirectory });
       const stage = await withPeriodicRecoverySnapshots({ outputDirectory, runId: definition.runId, worktree }, () => command(process.execPath, stageArgs, ROOT, { allowFailure: true, env: { [adapter.homeEnvVar]: harnessHome } }));
@@ -419,6 +426,11 @@ async function checkpoint(state, statePath, id, action) {
 
 async function optionalJson(filePath) {
   try { return JSON.parse(await fs.readFile(filePath, 'utf8')); }
+  catch (error) { if (error?.code === 'ENOENT') return null; throw error; }
+}
+
+async function optionalFile(filePath) {
+  try { return await fs.readFile(filePath, 'utf8'); }
   catch (error) { if (error?.code === 'ENOENT') return null; throw error; }
 }
 
@@ -797,7 +809,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
     gitShow(materialsCommit, definition.recipePath),
     gitShow(materialsCommit, definition.themePath),
     readJson(path.join(outputDirectory, 'rendered-assignment.json')),
-    fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8'),
+    loadStageEventLog(outputDirectory, adapter),
     optionalJson(path.join(outputDirectory, adapter.stageDir, 'budget.json')),
   ]);
   if (Boolean(definition.stage.budget) !== Boolean(budget)) fail('Stage budget summary presence does not match the run definition.');
@@ -946,13 +958,33 @@ export async function loadRoundUsages(outputDirectory, adapter) {
   return readRecordedRounds(path.join(outputDirectory, adapter.stageDir), 'raw-usage');
 }
 
+// The stage's event log is round 0's, except when that round was killed before writing one: the latest
+// continuation round's log then stands for the stage in the hash the manifest records.
+async function loadStageEventLog(outputDirectory, adapter) {
+  const stagePath = path.join(outputDirectory, adapter.stageDir);
+  const direct = await optionalFile(path.join(stagePath, 'events.jsonl'));
+  if (direct !== null) return direct;
+  const rounds = (await fs.readdir(stagePath))
+    .map((name) => ({ name, round: Number(/^events-resume-(\d+)\.jsonl$/.exec(name)?.[1]) }))
+    .filter(({ round }) => Number.isInteger(round))
+    .sort((a, b) => a.round - b.round);
+  const latest = rounds.at(-1);
+  if (!latest) fail(`The stage recorded no event log under ${stagePath}.`);
+  return fs.readFile(path.join(stagePath, latest.name), 'utf8');
+}
+
+// Round 0 records no command when it was killed before the adapter could write one; the continuation
+// rounds that followed it then carry the stage's command evidence.
 async function loadRoundCommands(outputDirectory, adapter) {
-  const commands = [await readJson(path.join(outputDirectory, adapter.stageDir, 'command.json'))];
+  const commands = [];
+  const first = await optionalJson(path.join(outputDirectory, adapter.stageDir, 'command.json'));
+  if (first) commands.push(first);
   for (let round = 1; ; round += 1) {
     const commandRecord = await optionalJson(path.join(outputDirectory, adapter.stageDir, `command-resume-${round}.json`));
     if (!commandRecord) break;
     commands.push(commandRecord);
   }
+  if (commands.length === 0) fail(`The stage recorded no command for any round under ${path.join(outputDirectory, adapter.stageDir)}.`);
   return commands;
 }
 
@@ -962,7 +994,7 @@ async function loadStageUsage(outputDirectory, adapter, definition) {
   // the same session.
   const [recorded] = await loadRoundUsages(outputDirectory, adapter);
   if (recorded) return recorded;
-  const eventSource = await fs.readFile(path.join(outputDirectory, adapter.stageDir, 'events.jsonl'), 'utf8');
+  const eventSource = await loadStageEventLog(outputDirectory, adapter);
   for (const line of eventSource.split('\n')) {
     if (!line.trim()) continue;
     const event = JSON.parse(line);

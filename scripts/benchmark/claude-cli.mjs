@@ -16,13 +16,16 @@ import {
   parseArgs,
   parseResumeRound,
   pathInside,
-  readJson,
   requireOption,
   sha256,
   writeJson,
 } from './common.mjs';
 
 const EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max']);
+// The assignment opens the stage's session transcript, so its leading characters identify that session
+// among the transcripts in one harness home. Both constants only have to cover that opening record.
+const PROMPT_MATCH_LENGTH = 400;
+const TRANSCRIPT_HEAD_BYTES = 262_144;
 
 async function main() {
   // Disable 600s wait ceiling for background subagent tasks.
@@ -93,7 +96,7 @@ async function main() {
   // context and its half-built worktree rather than starting over against work it does not remember.
   const sessionId = resumeRound === undefined
     ? randomUUID()
-    : await readRecordedSessionId(outputDirectory);
+    : await recoverSessionId(outputDirectory, prompt);
   const finalMessage = path.join(outputDirectory, 'final-message.md');
   const printArgs = ['--print', '--output-format', 'stream-json', '--verbose'];
   const sharedArgs = [
@@ -334,15 +337,95 @@ async function assertRoundArtifactsAbsent(outputDirectory, round) {
 }
 
 // The interrupted round's result.json carries the session the harness actually used, which is the one
-// Claude Code can re-enter; a stage that died before writing it has no session to resume.
-async function readRecordedSessionId(outputDirectory) {
+// Claude Code can re-enter. The adapter writes that record only after the harness process returns, so a
+// round killed while it ran leaves none; the session itself survives in the run-local harness home, so
+// fall back to reading its identity from there.
+async function recoverSessionId(outputDirectory, prompt) {
   const resultPath = path.join(outputDirectory, 'result.json');
-  const record = await readJson(resultPath).catch(() => fail(`Missing the recorded Claude stage result needed to resume: ${resultPath}`));
-  const sessionId = record?.sessionId;
+  const record = await optionalJson(resultPath);
+  if (!record) return discoverInterruptedSession(prompt);
+  const sessionId = record.sessionId;
   if (typeof sessionId !== 'string' || sessionId.length === 0) {
     fail(`Recorded Claude stage result did not report a session identifier: ${resultPath}`);
   }
   return sessionId;
+}
+
+// Claude Code persists every session it runs under `<home>/projects/<encoded cwd>/<session id>.jsonl`,
+// including the subagent threads a stage delegates. Only the stage's own session opens with this run's
+// assignment, so matching the recorded prompt selects the parent session and rejects the subagent ones.
+// Requiring exactly one match keeps an ambiguous home from resuming an unrelated session.
+async function discoverInterruptedSession(prompt) {
+  const home = process.env.CLAUDE_CONFIG_DIR;
+  if (!home) fail('Cannot recover an interrupted Claude session: CLAUDE_CONFIG_DIR names no harness home.');
+  const projects = path.join(path.resolve(home), 'projects');
+  const needle = JSON.stringify(prompt.slice(0, PROMPT_MATCH_LENGTH)).slice(1, -1);
+  const matches = [];
+  for (const transcript of await transcriptPaths(projects)) {
+    const head = await readHead(transcript, TRANSCRIPT_HEAD_BYTES);
+    if (head.includes(needle)) matches.push(transcript);
+  }
+  if (matches.length === 0) {
+    fail(`No session under ${projects} recorded this stage's assignment, so the interrupted stage left no session to resume.`);
+  }
+  if (matches.length > 1) {
+    fail(`Several sessions under ${projects} recorded this stage's assignment: ${matches.join(', ')}. Decide which one to resume before continuing.`);
+  }
+  return sessionIdOf(matches[0]);
+}
+
+async function transcriptPaths(directory) {
+  let entries;
+  try {
+    entries = await fs.readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT') fail(`Missing Claude session directory: ${directory}`);
+    throw error;
+  }
+  const found = [];
+  for (const entry of entries) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) found.push(...await transcriptPaths(fullPath));
+    else if (entry.isFile() && entry.name.endsWith('.jsonl')) found.push(fullPath);
+  }
+  return found.sort();
+}
+
+async function readHead(target, bytes) {
+  const handle = await fs.open(target, 'r');
+  try {
+    const buffer = Buffer.alloc(bytes);
+    const { bytesRead } = await handle.read(buffer, 0, bytes, 0);
+    return buffer.subarray(0, bytesRead).toString('utf8');
+  } finally {
+    await handle.close();
+  }
+}
+
+// The transcript's file name is its session id; the records inside repeat it, so read one of those and
+// require the two to agree rather than trusting a file name alone.
+async function sessionIdOf(transcript) {
+  const named = path.basename(transcript, '.jsonl');
+  const head = await readHead(transcript, TRANSCRIPT_HEAD_BYTES);
+  for (const line of head.split('\n')) {
+    if (!line.trim()) continue;
+    let record;
+    try {
+      record = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const recorded = record?.sessionId ?? record?.session_id;
+    if (typeof recorded !== 'string' || recorded.length === 0) continue;
+    if (recorded !== named) fail(`Claude session ${transcript} records session id ${recorded}, which its file name does not match.`);
+    return recorded;
+  }
+  fail(`Claude session ${transcript} reports no session identifier.`);
+}
+
+async function optionalJson(filePath) {
+  try { return JSON.parse(await fs.readFile(filePath, 'utf8')); }
+  catch (error) { if (error?.code === 'ENOENT') return null; throw error; }
 }
 
 async function assertDirectory(target, label) {

@@ -108,7 +108,7 @@ Resume takes a run directory, reads `run-definition.json`, validates checkpoint 
 Two explicit stage overrides exist:
 
 - `--accept-stage-output true` accepts a failed stage's current worktree after an operator confirms the entrant completed its work.
-- `--continue-stage true` asks a supported adapter to re-enter the recorded session. It invalidates stale evaluated and payload records because the entrant can modify the worktree again.
+- `--continue-stage true` asks a supported adapter to re-enter the recorded session. It invalidates stale evaluated and payload records because the entrant can modify the worktree again. It accepts a stage directory with no launch record, since a killed stage writes none; the adapter then recovers the session identity from the harness home. Manifest projection reads the stage's command and event log from the earliest round that recorded them, so a round that recorded nothing does not block the manifest.
 
 Budgeted stages reject manual session continuation because the budget protocol owns their continuation sequence.
 
