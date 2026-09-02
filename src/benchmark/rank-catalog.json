@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T18:09:57.633Z",
+  "generatedAt": "2026-09-02T18:24:59.227Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1367,6 +1367,40 @@
       "thumbnailPath": "/level-content/broadside-b9mn/hero.avif",
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    },
+    {
+      "levelId": "broadside-fkio",
+      "themeId": "broadside",
+      "configurationId": "agy-gemini-3-8-flash-high",
+      "modelName": "Gemini 3.8 Flash",
+      "workflowName": "solo",
+      "generationCost": 1.79557601,
+      "linesOfCode": 2728,
+      "run": {
+        "generationWallTimeSeconds": 968.31,
+        "totalWallTimeSeconds": 1005.625,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Antigravity CLI",
+          "version": "1.1.24"
+        },
+        "models": [
+          {
+            "modelName": "gemini-3.8-flash",
+            "role": "solo",
+            "inputTokens": 1698405,
+            "outputTokens": 51510,
+            "cacheReadTokens": 23685077,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 92748,
+            "costUsd": 1.79557601
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-fkio/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "93577d3a8c7f18d7c682676e3722a00e370b1924"
     },
     {
       "levelId": "broadside-ob3c",

@@ -1,0 +1,6 @@
+{
+  "worktree": "/tmp/pareto-rail-run-rgtrifyd32",
+  "branch": "benchmark-run-run-rgtrifyd32",
+  "baselineCommit": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "layout": "standalone"
+}

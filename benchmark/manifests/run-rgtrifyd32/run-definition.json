@@ -1,0 +1,21 @@
+{
+  "runId": "run-rgtrifyd32",
+  "slotId": "fkio",
+  "levelId": "broadside-fkio",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "agy-gemini-3-8-flash-high",
+  "recipePath": "benchmark/recipes/agy-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "agy-cli",
+    "model": "gemini-3.8-flash",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "93577d3a8c7f18d7c682676e3722a00e370b1924",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Broadside"
+}

@@ -1,0 +1,23 @@
+{
+  "executable": "agy",
+  "arguments": [
+    "--model",
+    "gemini-3.8-flash-high",
+    "--dangerously-skip-permissions",
+    "--add-dir",
+    "/tmp/pareto-rail-run-rgtrifyd32",
+    "--print-timeout",
+    "43200s",
+    "--print",
+    "<rendered-assignment sha256:19fc98f52638fd38664834123c3f61d570fc6610d100bff7211f226e0fddcb6f>"
+  ],
+  "cliVersion": "1.1.24",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-rgtrifyd32",
+  "startedAt": "2026-09-02T17:59:44.835Z",
+  "finishedAt": "2026-09-02T18:16:05.322Z",
+  "wallTimeSeconds": 968.3095039189999,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

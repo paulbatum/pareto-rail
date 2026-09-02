@@ -934,6 +934,24 @@
       ]
     },
     {
+      "runId": "run-rgtrifyd32",
+      "levelId": "broadside-fkio",
+      "themeId": "broadside",
+      "configurationId": "agy-gemini-3-8-flash-high",
+      "files": [
+        {
+          "path": "runs/run-rgtrifyd32/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 752167,
+          "sha256": "cca8f54b030b8e831cba03ab02b14a35bb60851b4623e82109c570a2414ba316"
+        },
+        {
+          "path": "runs/run-rgtrifyd32/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 402,
+          "sha256": "913674e4dc16aefd077990eeda89352a42526cc39593218ff2a07ee78c6ddfbb"
+        }
+      ]
+    },
+    {
       "runId": "run-uitiw02p99w9",
       "levelId": "skyhook-ggl2",
       "themeId": "skyhook",
