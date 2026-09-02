@@ -758,6 +758,19 @@
       ]
     },
     {
+      "runId": "run-d6k9piovin",
+      "levelId": "speedsolve-n4v0",
+      "themeId": "speedsolve",
+      "configurationId": "claude-fable-5-1-high",
+      "files": [
+        {
+          "path": "runs/run-d6k9piovin/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 9150177,
+          "sha256": "b8312b22489099554de1736238b1916af7117a1810c9b7a25586592a89277025"
+        }
+      ]
+    },
+    {
       "runId": "run-eee6tklrqf",
       "levelId": "strandline-be4y",
       "themeId": "strandline",
