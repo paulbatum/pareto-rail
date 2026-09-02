@@ -56,6 +56,12 @@ const PROVIDER_EXTENSIONS = {
   'kimi-coding': path.join(os.homedir(), '.pi/agent/npm/node_modules/pi-provider-kimi-code/index.ts'),
 };
 
+// pi applies a 4096-token output default to any model its catalog does not cover, so a
+// reasoning-heavy turn is truncated mid-run and the session ends with the entrant's work unfinished.
+// The stage runs `--offline` and cannot look the model up for itself, so the controller reads the
+// published limits here, outside the entrant boundary, and declares them in the per-run home.
+const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
+
 const PROVIDER_QUOTA_WAIT = new Set(['kimi-coding']);
 const DEFAULT_QUOTA_WAIT_MS = 900_000;
 const DEFAULT_QUOTA_WAIT_MAX = 50;
@@ -120,6 +126,10 @@ async function main() {
     provider: provider ?? null,
     selectedThinkingLevel: effort,
   });
+
+  if (provider === 'openrouter' && !catalogListsModel(catalog.stdout, model)) {
+    await declareOpenRouterModel({ model, outputDirectory });
+  }
 
   const providerExtension = provider ? PROVIDER_EXTENSIONS[provider] : undefined;
   if (providerExtension) {
@@ -589,6 +599,61 @@ async function captureRollout(sessionId, outputDirectory) {
   } catch (error) {
     return { captured: false, reason: `Could not capture the pi session: ${error instanceof Error ? error.message : String(error)}` };
   }
+}
+
+// A model pi already knows is left alone: its catalog entry carries a reasoning level map and
+// compatibility flags this declaration does not reproduce, and the copied model store already gives
+// it the right limits. Only a model pi has never heard of is declared, and only from what OpenRouter
+// publishes for it — the fetched record is written beside the stage so the run shows what applied.
+export function catalogListsModel(catalog, model) {
+  return catalog.split('\n').some((line) => line.trim().split(/\s+/)[1] === model);
+}
+
+async function declareOpenRouterModel({ model, outputDirectory }) {
+  let listed;
+  try {
+    const response = await fetch(OPENROUTER_MODELS_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    listed = (await response.json()).data?.find((candidate) => candidate.id === model);
+  } catch (error) {
+    fail(`pi's model catalog does not cover ${model}, and the OpenRouter model list could not be read to supply its limits: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (!listed) fail(`pi's model catalog does not cover ${model}, and OpenRouter does not list it either.`);
+  const contextWindow = listed.context_length;
+  const maxTokens = listed.top_provider?.max_completion_tokens;
+  if (!contextWindow || !maxTokens) {
+    fail(`OpenRouter lists ${model} without both a context length and a maximum completion length, so pi would fall back to its 4096-token output default.`);
+  }
+  const reasoning = (listed.supported_parameters ?? []).some((parameter) => parameter === 'reasoning' || parameter === 'reasoning_effort');
+  const declaration = {
+    providers: {
+      openrouter: {
+        api: 'openai-completions',
+        baseUrl: 'https://openrouter.ai/api/v1',
+        models: [{
+          id: model,
+          name: listed.name ?? model,
+          reasoning,
+          // pi's own vocabulary, minus the two levels OpenRouter's reasoning effort has no value for.
+          ...(reasoning ? { thinkingLevelMap: { off: null, minimal: 'minimal', low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', max: null } } : {}),
+          input: (listed.architecture?.input_modalities ?? ['text']).filter((modality) => modality === 'text' || modality === 'image'),
+          contextWindow,
+          maxTokens,
+          compat: { thinkingFormat: 'openrouter' },
+        }],
+      },
+    },
+  };
+  await writeJson(path.join(piHome(), 'models.json'), declaration);
+  await writeJson(path.join(outputDirectory, 'model-declaration.json'), {
+    reason: `pi's model catalog does not cover ${model}`,
+    source: OPENROUTER_MODELS_URL,
+    fetchedAt: new Date().toISOString(),
+    contextWindow,
+    maxTokens,
+    declaration,
+  });
+  console.error(`pi's catalog does not cover ${model}; declared it from OpenRouter at ${contextWindow} context and ${maxTokens} max output.`);
 }
 
 export function piHome() {

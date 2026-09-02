@@ -14,7 +14,7 @@ import { rateCardCost } from './rate-card.mjs';
 import { createRecoverySnapshot, makePeriodicSnapshotter, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
 import { extractUsage } from './prime-agent-cli.mjs';
-import { extractUsage as extractPiUsage } from './pi-cli.mjs';
+import { catalogListsModel, extractUsage as extractPiUsage } from './pi-cli.mjs';
 import { entrantSandboxEnabled, sandboxUnavailable, sandboxWarning } from './entrant-sandbox.mjs';
 import { checkBenchmarkScope } from '../check-benchmark-scope.mjs';
 import {
@@ -524,6 +524,18 @@ assert.match(extractPiUsage(piUsageEvent([
   { type: 'compaction_end', reason: 'threshold' },
   { type: 'agent_settled' },
 ]), 'k3').truncation, /ended at a threshold compaction/);
+
+// The model declaration is written only for a model pi's catalog does not name. Matching the model
+// column and nothing else keeps a longer id that merely contains a shorter one from passing for it.
+const catalogText = [
+  'provider      model                     context  max-out  thinking  images',
+  'openrouter    meta/muse-spark-1.2       1.0M     943.7K   yes       yes',
+  'openrouter    moonshotai/kimi-k3        1.0M     131.1K   yes       yes',
+].join('\n');
+assert.equal(catalogListsModel(catalogText, 'meta/muse-spark-1.2'), true);
+assert.equal(catalogListsModel(catalogText, 'meta/muse-spark-1.3-contributor'), false);
+assert.equal(catalogListsModel(catalogText, 'meta/muse-spark-1.2-contributor'), false);
+assert.equal(catalogListsModel(catalogText, 'openrouter'), false, 'the provider column is not the model column');
 
 // A length stop that pi did not follow with a compaction is a dead stage: the turn spent its whole
 // output allowance, made no tool call, and pi ended the agent loop over an unfinished worktree. It is

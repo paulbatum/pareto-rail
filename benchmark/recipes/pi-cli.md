@@ -18,7 +18,12 @@ The adapter records the installed pi version at launch and captures the model ca
 
 pi's reasoning vocabulary includes `minimal` and `off`, which the other harnesses lack, and does not include Codex's `ultra`.
 
-pi reads each model's context window and maximum output from the model store in its home. A per-run home starts without one, and the stage runs `--offline`, so pi never fetches the current limits: it would fall back to a 4096-token output cap for every model it has no entry for. The controller therefore copies the operator's `models-store.json` into the per-run home alongside the credential, and fails before launch when that file is missing. Refresh it by running `pi --list-models` on the operator account. The stage's `model-catalog.txt` records the limits that were in force, so a `max-out` of `4.1K` there means the store did not cover the model.
+pi reads each model's context window and maximum output from the model store in its home. A per-run home starts without one, and the stage runs `--offline`, so pi never fetches the current limits: it would fall back to a 4096-token output cap for every model it has no entry for, which truncates a reasoning-heavy turn mid-run. Two controller steps prevent that:
+
+- The controller copies the operator's `models-store.json` into the per-run home alongside the credential, and fails before launch when that file is missing. Refresh it with `pi update --models`.
+- pi's catalog lags new models, and that store then covers the harness's own list only. So when an OpenRouter row names a model the captured catalog does not list, the adapter reads OpenRouter's published model list itself — from the controller, before pi starts, so the stage stays offline — and declares that one model in the per-run home's `models.json` with the context length and maximum completion length OpenRouter reports. The stage records what it fetched and wrote in `model-declaration.json`. A model the catalog already lists is left alone, because its catalog entry carries a reasoning level map and compatibility flags the declaration does not reproduce.
+
+The stage's `model-catalog.txt` records the limits that were in force, so a `max-out` of `4.1K` there means neither path covered the model.
 
 ## Invocation
 
