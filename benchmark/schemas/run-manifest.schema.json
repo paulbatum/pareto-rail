@@ -717,6 +717,37 @@
           "type": "integer",
           "minimum": 1
         },
+        "interruptedRounds": {
+          "type": "array",
+          "description": "Rounds that ran but recorded no completion, because the harness process was killed while they ran. Their work reached the entrant output and their tokens reached the measured cost, so the stage's startedAt covers them, while wallTimeSeconds sums only the rounds that reported a duration.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "round",
+              "evidence"
+            ],
+            "properties": {
+              "round": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "startedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastObservedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "evidence": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Where the round's recorded times come from."
+              }
+            }
+          }
+        },
         "entrantSandbox": {
           "type": "boolean"
         },

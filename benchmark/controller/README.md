@@ -205,7 +205,9 @@ Use same-session continuation when the worktree contains useful entrant work and
 
 A stage killed while it ran records no stage launch, because the controller writes that record only after the harness process returns. Continuation still works: the Claude adapter reads the session identity from the transcript the run-local harness home holds, selecting the one that opens with this stage's assignment. It stops when the home holds no such transcript or holds several. The pi and Prime Agent adapters need the recorded result, so a stage of theirs that died before writing one has no session to continue.
 
-The killed round leaves no usage or event artifacts in its stage directory. Cost still comes from the harness home, which holds the whole session, and the continuation round supplies the command and event records the manifest needs.
+The killed round leaves no usage or event artifacts in its stage directory. Cost still comes from the harness home, which holds the whole session, and the continuation round supplies the command and event records the manifest needs. The manifest lists the killed round under the stage's `interruptedRounds` and starts the stage at that round, while `wallTimeSeconds` sums only the rounds that reported a duration.
+
+A continued stage also splits the cost reconciliation: the harness counter covers the continuation round alone, while the transcript replay covers every round, so the two disagree and the record marks the comparison `suspect`. Read the replay as the stage's usage in that case.
 
 The controller refuses this option for budgeted stages, whose budget protocol owns continuation, and for harnesses without session re-entry. It performs one continuation request; it does not keep restarting the process automatically.
 

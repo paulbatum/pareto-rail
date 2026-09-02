@@ -7,7 +7,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { BUDGET_ASSIGNMENT_PARAGRAPH, renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { manifestErrors, resultFromArtifacts, shouldUnblind } from './results.mjs';
-import { assertSiblingSharedInputs, codexNetworkAccess, costBasisFor, dispositionFor, firstLevelOneHeading, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, unpricedReasonFor, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
+import { assertSiblingSharedInputs, codexNetworkAccess, costBasisFor, dispositionFor, firstLevelOneHeading, interruptedRounds, loadRoundUsages, manifestNeedsRefresh, nextContinuationRound, reusableGateRecord, synthesizeDefinition, unpricedReasonFor, validateEntrantBaseline, validatePlan, validateRunDefinition } from './run.mjs';
 import { collectSessionView, counterUnavailableReason, harnessCounters, harnessCountersForRounds, reconcileCost, reconciliationWarnings, summarizeCost } from './ccusage-cost.mjs';
 import { summarizeAgyCost } from './tokscale-cost.mjs';
 import { rateCardCost } from './rate-card.mjs';
@@ -156,6 +156,28 @@ try {
   assert.deepEqual(gapped.map((usage) => usage.round), [1, 3], 'round usage discovery survives rounds that recorded nothing');
 } finally {
   await fs.rm(continuationArtifacts, { recursive: true, force: true });
+}
+
+// A stage killed mid-round records no command for it, leaving a gap below the highest recorded round.
+// The stage still ran during that gap, so the manifest states the round and the times the session
+// reported while it ran.
+{
+  const recorded = [{ round: 1, startedAt: '2026-01-01T02:00:00.000Z', finishedAt: '2026-01-01T02:30:00.000Z' }];
+  const rollout = ['2026-01-01T00:05:00.000Z', '2026-01-01T00:50:00.000Z', '2026-01-01T02:10:00.000Z'];
+  assert.deepEqual(interruptedRounds(recorded, rollout), [{
+    round: 0,
+    startedAt: '2026-01-01T00:05:00.000Z',
+    lastObservedAt: '2026-01-01T00:50:00.000Z',
+    evidence: 'stage rollout timestamps; the round recorded no completion',
+  }], 'the interrupted round takes the session timestamps that precede the round which resumed it');
+
+  assert.deepEqual(interruptedRounds(recorded, []), [{
+    round: 0,
+    evidence: 'the round recorded neither a completion nor rollout timestamps',
+  }], 'a round the rollout says nothing about is still recorded as having run');
+
+  const complete = [{ round: 0, startedAt: '2026-01-01T00:00:00.000Z', finishedAt: '2026-01-01T01:00:00.000Z' }];
+  assert.deepEqual(interruptedRounds(complete, rollout), [], 'a stage whose rounds all recorded a command has no gap');
 }
 
 await assertContinuationOptionGuards();

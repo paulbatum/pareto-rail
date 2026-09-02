@@ -837,7 +837,7 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
   const stageResult = stageLaunch.exitCode === 0 ? 'completed' : (commandRecord.timedOut ? 'timed-out' : 'failed');
   const unpricedReason = unpricedReasonFor([definition.stage.model, ...cost.models.map((model) => model.modelName)]);
   if (unpricedReason) console.warn(`Cost recorded as unavailable: ${unpricedReason}`);
-  const stages = buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget, costTool: costSource.tool, costBasis, unpricedReason });
+  const stages = buildStages({ definition, adapter, cost, commandRecords, interruptedRoundRecords: interruptedRounds(commandRecords, await loadRolloutTimestamps(outputDirectory, adapter)), usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256: sha256(eventLog), stageResult, budget, costTool: costSource.tool, costBasis, unpricedReason });
   return {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -892,19 +892,23 @@ async function createManifest({ definition, materialsCommit, entrantBaseline, ba
 // When per-model cost is unavailable (Codex), the run collapses to a single stage carrying the run
 // total. All stage entries share the one session id and sum the active wall time of every invocation;
 // the prompt hashes attach to the parent.
-function buildStages({ definition, adapter, cost, commandRecords, usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null, costTool = 'ccusage', costBasis = 'metered', unpricedReason = null }) {
+function buildStages({ definition, adapter, cost, commandRecords, interruptedRoundRecords = [], usage, renderedMeta, rolloutArtifactSha256, outputArtifactSha256, stageResult = 'completed', budget = null, costTool = 'ccusage', costBasis = 'metered', unpricedReason = null }) {
   const commandRecord = commandRecords[0];
   const lastCommand = commandRecords.at(-1);
-  const continuationRounds = commandRecords.length - 1;
+  // The stage ran every round, recorded or interrupted, so its round count is the highest round number
+  // and its start is the earliest round start either kind of record reports. `wallTimeSeconds` stays the
+  // sum of the rounds that ran to completion, because an interrupted round never reported a duration.
+  const continuationRounds = Math.max(...commandRecords.map((record) => record.round), ...interruptedRoundRecords.map((record) => record.round));
   const harness = { name: adapter.harnessName, version: commandRecord.cliVersion };
+  const starts = [commandRecord.startedAt, ...interruptedRoundRecords.map((record) => record.startedAt)].filter(Boolean).sort();
   const timing = {
-    startedAt: commandRecord.startedAt,
+    startedAt: starts[0],
     finishedAt: lastCommand.finishedAt,
     wallTimeSeconds: commandRecords.reduce((total, record) => total + record.wallTimeSeconds, 0),
   };
   const promptSha256 = renderedMeta.rendering.sha256;
   const delegationPromptSha256 = renderedMeta.delegation?.sha256;
-  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, entrantSandbox: entrantSandboxEnabled(definition), ...(sandboxUnavailable(definition) ? { sandboxUnavailable: true } : {}), ...(continuationRounds > 0 ? { continuationRounds } : {}), ...(budget ? { budget } : {}) };
+  const shared = { harness, sessionId: usage.sessionId, ...(rolloutArtifactSha256 ? { rolloutArtifactSha256 } : {}), outputArtifactSha256, ...timing, result: stageResult, entrantSandbox: entrantSandboxEnabled(definition), ...(sandboxUnavailable(definition) ? { sandboxUnavailable: true } : {}), ...(continuationRounds > 0 ? { continuationRounds } : {}), ...(interruptedRoundRecords.length > 0 ? { interruptedRounds: interruptedRoundRecords } : {}), ...(budget ? { budget } : {}) };
   const delegated = Boolean(definition.delegation) && cost.models.length > 1;
   const pricingSource = costBasis === 'rate-card' ? 'rate-card' : costTool;
 
@@ -974,18 +978,60 @@ async function loadStageEventLog(outputDirectory, adapter) {
 }
 
 // Round 0 records no command when it was killed before the adapter could write one; the continuation
-// rounds that followed it then carry the stage's command evidence.
+// rounds that followed it then carry the stage's command evidence. Each record keeps its round number,
+// because a gap in the sequence is what identifies an interrupted round.
 async function loadRoundCommands(outputDirectory, adapter) {
   const commands = [];
   const first = await optionalJson(path.join(outputDirectory, adapter.stageDir, 'command.json'));
-  if (first) commands.push(first);
+  if (first) commands.push({ ...first, round: 0 });
   for (let round = 1; ; round += 1) {
     const commandRecord = await optionalJson(path.join(outputDirectory, adapter.stageDir, `command-resume-${round}.json`));
     if (!commandRecord) break;
-    commands.push(commandRecord);
+    commands.push({ ...commandRecord, round });
   }
   if (commands.length === 0) fail(`The stage recorded no command for any round under ${path.join(outputDirectory, adapter.stageDir)}.`);
   return commands;
+}
+
+// A round killed before the adapter recorded it leaves a gap in the round sequence. Its work reached the
+// entrant's output and its tokens reached the measured cost, so the manifest states that the round ran
+// and how long it was observed running, rather than omitting the time from the stage.
+//
+// `rolloutTimestamps` are the session's own timestamps, sorted. The ones falling in a gap belong to the
+// round that occupied it: they start no earlier than the previous recorded round finished and end before
+// the next recorded round started. A gap the rollout says nothing about is still recorded, without times.
+export function interruptedRounds(commandRecords, rolloutTimestamps) {
+  const recorded = new Map(commandRecords.map((record) => [record.round, record]));
+  const highestRound = Math.max(...recorded.keys());
+  const gaps = [];
+  for (let round = 0; round < highestRound; round += 1) {
+    if (recorded.has(round)) continue;
+    const previous = [...recorded.values()].filter((record) => record.round < round).sort((a, b) => a.round - b.round).at(-1);
+    const next = [...recorded.values()].filter((record) => record.round > round).sort((a, b) => a.round - b.round)[0];
+    const observed = rolloutTimestamps.filter((timestamp) => (
+      (!previous || timestamp >= previous.finishedAt) && timestamp < next.startedAt
+    ));
+    gaps.push({
+      round,
+      ...(observed.length > 0
+        ? { startedAt: observed[0], lastObservedAt: observed.at(-1), evidence: 'stage rollout timestamps; the round recorded no completion' }
+        : { evidence: 'the round recorded neither a completion nor rollout timestamps' }),
+    });
+  }
+  return gaps;
+}
+
+async function loadRolloutTimestamps(outputDirectory, adapter) {
+  const rollout = await optionalFile(path.join(outputDirectory, adapter.stageDir, 'rollout.jsonl'));
+  if (rollout === null) return [];
+  const timestamps = [];
+  for (const line of rollout.split('\n')) {
+    if (!line.trim()) continue;
+    let record;
+    try { record = JSON.parse(line); } catch { continue; }
+    if (typeof record?.timestamp === 'string') timestamps.push(record.timestamp);
+  }
+  return timestamps.sort();
 }
 
 async function loadStageUsage(outputDirectory, adapter, definition) {
