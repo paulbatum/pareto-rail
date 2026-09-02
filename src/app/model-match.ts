@@ -20,6 +20,33 @@ export interface ModelMatchupOptions {
   random?: () => number;
 }
 
+/** One model as the picker addresses it, counted over playable entrants only. */
+export interface ModelPickerEntry {
+  slug: string;
+  /** Every catalog name that folds to this slug, joined for display. One name in
+   * every case the published catalog has produced so far. */
+  modelName: string;
+  levelCount: number;
+  themeCount: number;
+}
+
+/**
+ * The themes a draw for these slugs can use: those holding a level by `slug` and
+ * a different level the opponent rule allows. Both slugs naming one model makes
+ * the two tests overlap, so this checks for a pair of distinct levels rather
+ * than a count on either side. An empty result means the link cannot be built.
+ */
+export function matchableThemeIds(slug: string, options: ModelMatchupOptions): string[] {
+  const catalog = options.catalog ?? rankCatalog;
+  const entrants = catalog.entrants.filter((entrant) => options.playable.has(entrant.levelId));
+  const isModel = (entrant: RankCatalogEntrant) => modelSlug(entrant.modelName) === slug;
+  const isOpponent = opponentTest(slug, options.opponent);
+  return [...new Set(entrants.filter(isModel).map((entrant) => entrant.themeId))]
+    .filter((themeId) => entrants.some((mine) => mine.themeId === themeId && isModel(mine)
+      && entrants.some((theirs) => theirs.themeId === themeId && isOpponent(theirs) && theirs.levelId !== mine.levelId)))
+    .sort();
+}
+
 /**
  * A head-to-head for one model, drawn at random: a theme the model entered, one
  * of its levels there, and an opponent level in the same theme. Which side the
@@ -34,24 +61,12 @@ export interface ModelMatchupOptions {
  */
 export function matchupForModel(slug: string, options: ModelMatchupOptions): { a: string; b: string } | null {
   const catalog = options.catalog ?? rankCatalog;
-  const playable = options.playable;
   const random = options.random ?? Math.random;
-  const opponentSlug = options.opponent;
-
-  const entrants = catalog.entrants.filter((entrant) => playable.has(entrant.levelId));
+  const entrants = catalog.entrants.filter((entrant) => options.playable.has(entrant.levelId));
   const isModel = (entrant: RankCatalogEntrant) => modelSlug(entrant.modelName) === slug;
-  const isOpponent = (entrant: RankCatalogEntrant) => (opponentSlug === undefined
-    ? !isModel(entrant)
-    : modelSlug(entrant.modelName) === opponentSlug);
+  const isOpponent = opponentTest(slug, options.opponent);
 
-  // A theme qualifies when it holds two different levels, one each side of the
-  // draw. Both slugs naming one model makes those tests overlap, so the pair of
-  // levels is what is checked rather than the count on either side.
-  const themeIds = [...new Set(entrants.filter(isModel).map((entrant) => entrant.themeId))]
-    .filter((themeId) => entrants.some((mine) => mine.themeId === themeId && isModel(mine)
-      && entrants.some((theirs) => theirs.themeId === themeId && isOpponent(theirs) && theirs.levelId !== mine.levelId)))
-    .sort();
-  const themeId = pick(themeIds, random);
+  const themeId = pick(matchableThemeIds(slug, options), random);
   if (themeId === null) return null;
 
   const inTheme = entrants.filter((entrant) => entrant.themeId === themeId);
@@ -62,6 +77,33 @@ export function matchupForModel(slug: string, options: ModelMatchupOptions): { a
   const theirs = pick(inTheme.filter((entrant) => isOpponent(entrant) && entrant.levelId !== mine).map((entrant) => entrant.levelId).sort(), random);
   if (theirs === null) return null;
   return random() < 0.5 ? { a: mine, b: theirs } : { a: theirs, b: mine };
+}
+
+/** Every model with a playable level, for the model builder to list. */
+export function modelPickerEntries(playable: ReadonlySet<string>, catalog: RankCatalog = rankCatalog): ModelPickerEntry[] {
+  const bySlug = new Map<string, { names: Set<string>; levels: Set<string>; themes: Set<string> }>();
+  for (const entrant of catalog.entrants) {
+    if (!playable.has(entrant.levelId)) continue;
+    const slug = modelSlug(entrant.modelName);
+    const entry = bySlug.get(slug) ?? { names: new Set<string>(), levels: new Set<string>(), themes: new Set<string>() };
+    entry.names.add(entrant.modelName);
+    entry.levels.add(entrant.levelId);
+    entry.themes.add(entrant.themeId);
+    bySlug.set(slug, entry);
+  }
+  return [...bySlug.entries()]
+    .map(([slug, entry]): ModelPickerEntry => ({
+      slug,
+      modelName: [...entry.names].sort().join(' / '),
+      levelCount: entry.levels.size,
+      themeCount: entry.themes.size,
+    }))
+    .sort((left, right) => left.modelName.localeCompare(right.modelName));
+}
+
+function opponentTest(slug: string, opponent: string | undefined): (entrant: RankCatalogEntrant) => boolean {
+  if (opponent === undefined) return (entrant) => modelSlug(entrant.modelName) !== slug;
+  return (entrant) => modelSlug(entrant.modelName) === opponent;
 }
 
 function pick<T>(items: readonly T[], random: () => number): T | null {

@@ -271,6 +271,19 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
 .match-pick-summary { margin: 0; color: var(--body-text); font-size: 13px; }
 .match-pick-summary .run-id { color: var(--ink); font: 600 12px var(--mono); }
 .match-pick-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.match-builder { margin-top: 4px; }
+.match-modes { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+.match-mode { appearance: none; padding: 8px 14px; color: var(--muted); background: var(--card); border: 1px solid var(--hairline); font: 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
+.match-mode:hover { color: var(--ink); }
+.match-mode[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); box-shadow: 4px 4px 0 var(--accent-tint); }
+.match-mode-blurb { max-width: 700px; margin: 0 0 4px; color: var(--soft-text); font-size: 13px; line-height: 1.55; }
+.match-model-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.match-model-grid .match-model-card { display: grid; align-content: start; gap: 7px; padding: 16px 16px 17px; }
+.match-model-card:disabled { cursor: not-allowed; opacity: .4; }
+.match-model-card:disabled:hover { border-color: var(--hairline); box-shadow: none; }
+.match-model-card .match-pick-badge { top: 12px; right: 12px; left: auto; }
+.match-model-name { color: var(--ink); font-size: 15px; font-weight: 600; }
+.match-model-meta { color: var(--muted); font: 11px var(--mono); letter-spacing: .06em; }
 .match-url-hint { margin: 24px 0 0; color: var(--muted); font-size: 12px; }
 .match-url-hint code { font-family: var(--mono); }
 .vote-heading { margin: 28px 0 14px; color: var(--ink); font-size: 22px; }
@@ -761,6 +774,8 @@ html:fullscreen .perf-overlay { display: none; }
   .catalog-rail { border-right: none; border-bottom: 1px solid var(--hairline); }
 }
 @media (max-width: 480px) { .levels-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .match-model-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .match-model-grid { grid-template-columns: 1fr; } }
 
 /* ---------- Spoiler splash ---------- */
 /* Rendered in place of the catalog until dismissed, nudging un-ranked

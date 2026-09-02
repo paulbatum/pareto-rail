@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { RunSummary } from '../../engine/scoring';
 import type { GameLaunchContext } from '../../game';
 import type { ComparisonState, MatchupSide, VoteVerdict } from '../../benchmark/types';
@@ -9,7 +9,7 @@ import { copyText } from '../clipboard';
 import { RouteLink } from '../components/RouteLink';
 import { CompareCard, RevealCards, VersusGrid, VoteButtons } from '../components/matchup';
 import type { AppRoute } from '../router';
-import { matchupForModel } from '../model-match';
+import { matchableThemeIds, matchupForModel, modelPickerEntries } from '../model-match';
 import { GameFrame } from '../components/LazyGameFrame';
 import { loadRankLevel } from '../rank-level';
 
@@ -27,6 +27,12 @@ function playableLevelIds(): ReadonlySet<string> {
 
 function matchPath(a: string, b: string): string {
   return `/match?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`;
+}
+
+/** The link that leaves the pair to a draw: one model, or two facing off. */
+function modelMatchPath(model: string, opponent?: string): string {
+  const versus = opponent === undefined ? '' : `&vs=${encodeURIComponent(opponent)}`;
+  return `/match?model=${encodeURIComponent(model)}${versus}`;
 }
 
 export function MatchPage({ route, onNavigate }: MatchPageProps) {
@@ -175,11 +181,119 @@ function MatchSetupPage({ error, onNavigate }: { error: MatchError; onNavigate: 
     <section className="page-panel rank-panel">
       <p className="eyebrow">Custom match</p>
       <h1>Build a custom match</h1>
-      <p className="lede">Pick two levels to play head-to-head, then reveal which model built each. Two levels from the same theme make a match whose result counts toward the rankings.</p>
+      <p className="lede">Two levels from the same theme make a match whose result counts toward the rankings. Pick the two levels yourself, or name the models and let the link draw them.</p>
       {notice && <p className="match-pick-error" role="alert">{notice}</p>}
-      <MatchPicker onNavigate={onNavigate} />
-      <p className="match-url-hint">Prefer a link? Use <code>/match?a=&lt;level-id&gt;&amp;b=&lt;level-id&gt;</code> — browse ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>. <code>/match?model=&lt;model&gt;</code> draws one for you: one side is that model, the theme and the opponent are random. Add <code>&amp;vs=&lt;model&gt;</code> to name the other side too.</p>
+      <MatchBuilder onNavigate={onNavigate} />
+      <p className="match-url-hint">Prefer to write the link? <code>/match?a=&lt;level-id&gt;&amp;b=&lt;level-id&gt;</code> names both levels — browse ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>. <code>/match?model=&lt;model&gt;</code> names one side and draws the rest, and <code>&amp;vs=&lt;model&gt;</code> names the other side; the same model on both sides faces two of its own levels.</p>
     </section>
+  );
+}
+
+type BuilderMode = 'levels' | 'models';
+
+const BUILDER_MODES: readonly { mode: BuilderMode; label: string; blurb: string }[] = [
+  { mode: 'levels', label: 'By level', blurb: 'Pick the two levels yourself. Cards show the thumbnail and the level id only, so you can still play the match without knowing who built either side.' },
+  { mode: 'models', label: 'By model', blurb: 'Pick one model for a random opponent, or two to face off. The theme and the levels are drawn when the link is opened, so the same link can serve different pairs to different people.' },
+];
+
+/** The two ways to build a match link. Both end in a pair of levels; they differ
+ * in whether this page resolves the pair or the link does. */
+function MatchBuilder({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const [mode, setMode] = useState<BuilderMode>('levels');
+  const active = BUILDER_MODES.find((entry) => entry.mode === mode)!;
+  return (
+    <div className="match-builder">
+      <div className="match-modes">
+        {BUILDER_MODES.map((entry) => (
+          <button key={entry.mode} type="button" className="match-mode" aria-pressed={entry.mode === mode} onClick={() => setMode(entry.mode)}>{entry.label}</button>
+        ))}
+      </div>
+      <p className="match-mode-blurb">{active.blurb}</p>
+      {mode === 'levels' ? <MatchPicker onNavigate={onNavigate} /> : <ModelPicker onNavigate={onNavigate} />}
+    </div>
+  );
+}
+
+/** The sticky bar both builders finish in: what the selection means, and the two
+ * things to do with it. The copy status resets whenever the link changes, so a
+ * "Link copied" label never outlives the link it referred to. */
+function PickBar({ summary, path, onNavigate }: { summary: ReactNode; path: string; onNavigate: (path: string) => void }) {
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
+  useEffect(() => { setCopyStatus('idle'); }, [path]);
+  const copy = async () => {
+    try {
+      await copyText(`${window.location.origin}${path}`);
+      setCopyStatus('copied');
+    } catch {
+      setCopyStatus('failed');
+    }
+  };
+  return (
+    <div className="match-pick-bar">
+      <p className="match-pick-summary">{summary}</p>
+      <div className="match-pick-actions">
+        <button className="button primary" type="button" onClick={() => onNavigate(path)}>Start match</button>
+        <button className="button" type="button" onClick={() => void copy()}>{copyStatus === 'copied' ? 'Link copied' : copyStatus === 'failed' ? 'Copy failed — try again' : 'Copy share link'}</button>
+      </div>
+    </div>
+  );
+}
+
+/** Model builder. A first pick blocks every model sharing no theme with it, so a
+ * pair the draw cannot resolve is never offered. */
+function ModelPicker({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const playable = useMemo(playableLevelIds, []);
+  const models = useMemo(() => modelPickerEntries(playable), [playable]);
+  const [selected, setSelected] = useState<readonly string[]>([]);
+  const [first, second] = selected;
+
+  // A model no other model shares a theme with has no match to open at all.
+  const unmatchable = useMemo(
+    () => new Set(models.filter((model) => matchableThemeIds(model.slug, { playable }).length === 0).map((model) => model.slug)),
+    [models, playable],
+  );
+  const blocked = useMemo(() => {
+    if (first === undefined) return unmatchable;
+    return new Set(models
+      .filter((model) => model.slug !== first && matchableThemeIds(first, { playable, opponent: model.slug }).length === 0)
+      .map((model) => model.slug));
+  }, [models, playable, first, unmatchable]);
+
+  const toggle = (slug: string) => {
+    setSelected((current) => {
+      if (current.includes(slug)) return current.filter((item) => item !== slug);
+      if (current.length < 2) return [...current, slug];
+      return [current[0]!, slug];
+    });
+  };
+
+  const nameFor = (slug: string) => models.find((model) => model.slug === slug)?.modelName ?? slug;
+
+  return (
+    <div className="match-picker">
+      <div className="match-model-grid">
+        {models.map((model) => {
+          const index = selected.indexOf(model.slug);
+          const disabled = index < 0 && blocked.has(model.slug);
+          return (
+            <button key={model.slug} type="button" className={`gallery-card match-pick-card match-model-card${index >= 0 ? ' is-selected' : ''}`}
+              aria-pressed={index >= 0} disabled={disabled} onClick={() => toggle(model.slug)}>
+              <span className="match-model-name">{model.modelName}</span>
+              <span className="match-model-meta">{model.levelCount} level{model.levelCount === 1 ? '' : 's'} · {model.themeCount} theme{model.themeCount === 1 ? '' : 's'}</span>
+              {index >= 0 && <b className="match-pick-badge">{index + 1}</b>}
+            </button>
+          );
+        })}
+      </div>
+      {first !== undefined && second === undefined && (
+        <PickBar path={modelMatchPath(first)} onNavigate={onNavigate}
+          summary={<>Model: <span className="run-id">{nameFor(first)}</span> · opponent drawn from the {matchableThemeIds(first, { playable }).length} theme{matchableThemeIds(first, { playable }).length === 1 ? '' : 's'} it shares with another model</>} />
+      )}
+      {first !== undefined && second !== undefined && (
+        <PickBar path={modelMatchPath(first, second)} onNavigate={onNavigate}
+          summary={<><span className="run-id">{nameFor(first)}</span> vs <span className="run-id">{nameFor(second)}</span> · drawn from the {matchableThemeIds(first, { playable, opponent: second }).length} theme{matchableThemeIds(first, { playable, opponent: second }).length === 1 ? '' : 's'} they share</>} />
+      )}
+    </div>
   );
 }
 
@@ -209,27 +323,17 @@ function pickerBands(): PickerBand[] {
 function MatchPicker({ onNavigate }: { onNavigate: (path: string) => void }) {
   const bands = useMemo(pickerBands, []);
   const [selected, setSelected] = useState<readonly string[]>([]);
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const toggle = (levelId: string) => {
-    setCopyStatus('idle');
     setSelected((current) => {
       if (current.includes(levelId)) return current.filter((id) => id !== levelId);
       if (current.length < 2) return [...current, levelId];
-      return [current[0], levelId];
+      return [current[0]!, levelId];
     });
   };
 
   const [a, b] = selected;
   const ready = selected.length === 2;
-  const copy = async () => {
-    try {
-      await copyText(`${window.location.origin}${matchPath(a, b)}`);
-      setCopyStatus('copied');
-    } catch {
-      setCopyStatus('failed');
-    }
-  };
 
   return (
     <div className="match-picker">
@@ -253,13 +357,8 @@ function MatchPicker({ onNavigate }: { onNavigate: (path: string) => void }) {
         </section>
       ))}
       {ready && (
-        <div className="match-pick-bar">
-          <p className="match-pick-summary">Level A: <span className="run-id">{a}</span> · Level B: <span className="run-id">{b}</span></p>
-          <div className="match-pick-actions">
-            <button className="button primary" type="button" onClick={() => onNavigate(matchPath(a, b))}>Start match</button>
-            <button className="button" type="button" onClick={() => void copy()}>{copyStatus === 'copied' ? 'Link copied' : copyStatus === 'failed' ? 'Copy failed — try again' : 'Copy share link'}</button>
-          </div>
-        </div>
+        <PickBar path={matchPath(a!, b!)} onNavigate={onNavigate}
+          summary={<>Level A: <span className="run-id">{a}</span> · Level B: <span className="run-id">{b}</span></>} />
       )}
     </div>
   );

@@ -10,7 +10,7 @@ import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type
 import { configurationGroupResolver } from './identity';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { CustomMatchController } from '../app/match';
-import { matchupForModel, modelSlug } from '../app/model-match';
+import { matchableThemeIds, matchupForModel, modelPickerEntries, modelSlug } from '../app/model-match';
 import { parseRoute, routePath } from '../app/router';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
 import type { RemoteVotePayload } from './remote-recorder';
@@ -262,6 +262,24 @@ function testNamedOpponentDraw(): void {
   assert.equal(versus('no-such-model', () => 0), null);
   // Both slugs naming one model draws two of its own levels, which only th-b has.
   assert.deepEqual(versus('ox-alpha', () => 0), { a: 'lv-alpha-b', b: 'lv-alpha-b2' });
+
+  // The themes a draw can use, which the model builder reads to block a pair it
+  // could not resolve.
+  assert.deepEqual(matchableThemeIds('ox-alpha', { catalog, playable, opponent: 'ox-beta' }), ['th-a']);
+  assert.deepEqual(matchableThemeIds('ox-alpha', { catalog, playable, opponent: 'ox-gamma' }), ['th-a', 'th-b']);
+  assert.deepEqual(matchableThemeIds('ox-alpha', { catalog, playable, opponent: 'ox-alpha' }), ['th-b']);
+  assert.deepEqual(matchableThemeIds('ox-beta', { catalog, playable, opponent: 'ox-gamma' }), ['th-a']);
+  assert.deepEqual(matchableThemeIds('ox-beta', { catalog, playable: new Set(['lv-beta-a']) }), []);
+
+  // The builder's model list counts playable levels only.
+  assert.deepEqual(modelPickerEntries(playable, catalog), [
+    { slug: 'ox-alpha', modelName: 'Ox Alpha', levelCount: 3, themeCount: 2 },
+    { slug: 'ox-beta', modelName: 'Ox Beta', levelCount: 1, themeCount: 1 },
+    { slug: 'ox-gamma', modelName: 'Ox Gamma', levelCount: 2, themeCount: 2 },
+  ]);
+  assert.deepEqual(modelPickerEntries(new Set(['lv-beta-a']), catalog), [
+    { slug: 'ox-beta', modelName: 'Ox Beta', levelCount: 1, themeCount: 1 },
+  ]);
 }
 
 function testCustomMatchController(): void {
