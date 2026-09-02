@@ -177,6 +177,12 @@
       "configurationId": "claude-fable-5-high-b20"
     },
     {
+      "runId": "run-4xhnb8cp9u",
+      "levelId": "broadside-9ima",
+      "themeId": "broadside",
+      "configurationId": "agy-gemini-3-7-flash-high"
+    },
+    {
       "runId": "run-5d1aac1gjbuv",
       "levelId": "skyhook-lkor",
       "themeId": "skyhook",

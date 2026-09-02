@@ -1,0 +1,21 @@
+{
+  "runId": "run-4xhnb8cp9u",
+  "slotId": "9ima",
+  "levelId": "broadside-9ima",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "agy-gemini-3-7-flash-high",
+  "recipePath": "benchmark/recipes/agy-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "agy-cli",
+    "model": "gemini-3.7-flash",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "93577d3a8c7f18d7c682676e3722a00e370b1924",
+  "levelTitle": "Broadside"
+}

@@ -1,0 +1,27 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level broadside-9ima
+
+WebSocket server error: Port 24678 is already in use
+Broadside floor check
+duration 60.0s; spawned kinds 6: bomber, core, dart, plasma, shield, turret
+event coverage missing: stage, playerhit
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=1
+    maxGridSeconds=0.65
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: 0.11 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, rankForRun, easeRunProgress, updateCameraEffects, playerHealth, detailsForRun
+  identity hooks [default]: scoreForVolley, validateRelease, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.
+FLOOR VERDICT: ACCEPT — if submitted in its current state, this level will be accepted.

@@ -522,6 +522,24 @@
       ]
     },
     {
+      "runId": "run-4xhnb8cp9u",
+      "levelId": "broadside-9ima",
+      "themeId": "broadside",
+      "configurationId": "agy-gemini-3-7-flash-high",
+      "files": [
+        {
+          "path": "runs/run-4xhnb8cp9u/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 759316,
+          "sha256": "80d6b08bba91e9e3e75e3a73a0353002f3aaa5131a9e8ea165481ccf1b4c6ff8"
+        },
+        {
+          "path": "runs/run-4xhnb8cp9u/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 399,
+          "sha256": "780949a227f578084e2dece52b18948510bd5b4a1602d57b8762258c565b90e8"
+        }
+      ]
+    },
+    {
       "runId": "run-5d1aac1gjbuv",
       "levelId": "skyhook-lkor",
       "themeId": "skyhook",

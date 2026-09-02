@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/agy-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-4xhnb8cp9u",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-4xhnb8cp9u/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-4xhnb8cp9u/stages/solo/agy",
+    "--model",
+    "gemini-3.7-flash",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--sandbox",
+    "false"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-09-02T19:55:25.740Z",
+  "finishedAt": "2026-09-02T20:13:45.787Z",
+  "wallTimeSeconds": 1100.047413459,
+  "stdoutSha256": "8aea89f4fca9fdc111f97c72af8a38627d6c4e8bdb900c46a001a8e5958b015f",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"bfde8962-3db1-482e-b560-72954a623384\",\"usage\":null,\"wallTimeSeconds\":1097.886141635}\n",
+  "stderr": ""
+}

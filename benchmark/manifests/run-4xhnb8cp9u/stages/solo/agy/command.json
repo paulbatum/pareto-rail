@@ -1,0 +1,23 @@
+{
+  "executable": "agy",
+  "arguments": [
+    "--model",
+    "gemini-3.7-flash-high",
+    "--dangerously-skip-permissions",
+    "--add-dir",
+    "/tmp/pareto-rail-run-4xhnb8cp9u",
+    "--print-timeout",
+    "43200s",
+    "--print",
+    "<rendered-assignment sha256:61eafb8e9db0eae235d24873a67b6ac4af318ee1098e40b840f010b4cf8297eb>"
+  ],
+  "cliVersion": "1.1.24",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-4xhnb8cp9u",
+  "startedAt": "2026-09-02T19:55:27.808Z",
+  "finishedAt": "2026-09-02T20:13:45.694Z",
+  "wallTimeSeconds": 1097.886141635,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}
