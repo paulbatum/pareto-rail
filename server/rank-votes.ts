@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
-import { RankDataClass, RankRelative, RankSentiment, RankVerdict, type PrismaClient } from '../src/generated/prisma/client.js';
+import { RankDataClass, RankRelative, RankSentiment, RankVerdict, RankVoteSource, type PrismaClient } from '../src/generated/prisma/client.js';
 import { compareIds } from '../src/benchmark/scheduler.js';
-import { mapVerdict, type VoteVerdict } from '../src/benchmark/types.js';
+import { mapVerdict, type VoteSource, type VoteVerdict } from '../src/benchmark/types.js';
 import { RANK_VOTE_SCHEMA_VERSION, type ValidatedRankVote, resolveDataClass } from './rank-vote-validation.js';
 
 export interface RankVoteResponse {
   ok: true;
+  /** True when a row with this idempotency key already existed, so nothing was written. */
   duplicate: boolean;
 }
 
@@ -41,9 +42,15 @@ const sentimentToPrisma = {
 
 const dataClassToPrisma = {
   eligible: RankDataClass.ELIGIBLE,
+  unranked: RankDataClass.UNRANKED,
   rehearsal: RankDataClass.REHEARSAL,
   development: RankDataClass.DEVELOPMENT,
 } as const;
+
+const sourceToPrisma: Record<VoteSource, RankVoteSource> = {
+  rank: RankVoteSource.RANK,
+  custom: RankVoteSource.CUSTOM,
+};
 
 export async function recordRankVote(input: ValidatedRankVote, prisma: PrismaClient, ip?: string): Promise<RankHandlerResult<RankVoteResponse>> {
   const mapping = mapVerdict(input.verdict);
@@ -79,7 +86,8 @@ export async function recordRankVote(input: ValidatedRankVote, prisma: PrismaCli
         playCountB: input.playCounts.b,
         bestScoreA: input.bestScores?.a,
         bestScoreB: input.bestScores?.b,
-        dataClass: dataClassToPrisma[resolveDataClass(input.aEntrant, input.bEntrant)],
+        dataClass: dataClassToPrisma[resolveDataClass(input.aEntrant, input.bEntrant, input.theme)],
+        source: sourceToPrisma[input.source],
         assignedAt: input.assignedAt ? new Date(input.assignedAt) : undefined,
         clientSubmittedAt: input.clientSubmittedAt ? new Date(input.clientSubmittedAt) : undefined,
         idempotencyKey: hashIdempotencyKey(input.idempotencyKey),
@@ -130,9 +138,10 @@ export function hashIp(ip: string | undefined, salt = process.env.PARTICIPANT_SA
 /**
  * One-way hash of the client-supplied idempotency key. The raw key embeds the
  * participant id, so it is never stored verbatim. Domain-separated from participant
- * and IP hashes so the three can't be cross-correlated. The column is never queried —
- * vote dedup rides on the (matchupId, participantHash) unique constraint — so hashing
- * has no functional effect.
+ * and IP hashes so the three can't be cross-correlated. The hashed column carries the
+ * unique constraint that makes an outbox retry insert nothing, so a client that sends
+ * no key can have a retry stored twice; the aggregate's newest-per-participant dedup
+ * keeps such a row out of the tally either way.
  */
 export function hashIdempotencyKey(key: string | undefined, salt = process.env.PARTICIPANT_SALT): string | undefined {
   if (key === undefined) return undefined;

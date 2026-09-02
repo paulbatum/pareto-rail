@@ -23,6 +23,7 @@ type Vote = {
   bestScoreA: number | null;
   bestScoreB: number | null;
   dataClass: string;
+  source: string | null;
   participantHash: string;
 };
 
@@ -106,7 +107,7 @@ app.innerHTML = `
           <thead>
             <tr>
               <th>Created</th><th>Theme</th><th>A level</th><th>B level</th><th>Verdict</th><th>Sentiment</th>
-              <th>Plays A/B</th><th>Best A/B</th><th>Class</th><th>Participant</th>
+              <th>Plays A/B</th><th>Best A/B</th><th>Class</th><th>Source</th><th>Participant</th>
             </tr>
           </thead>
           <tbody id="votes-body"></tbody>
@@ -281,7 +282,7 @@ function renderVotes(): void {
   if (visibleVotes.length === 0) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 10;
+    cell.colSpan = 11;
     cell.className = 'empty-cell';
     cell.textContent = filterHash ? 'No votes match this participant.' : 'No votes found.';
     row.append(cell);
@@ -300,6 +301,8 @@ function renderVotes(): void {
     appendCell(row, `${vote.playCountA} / ${vote.playCountB}`);
     appendCell(row, `${vote.bestScoreA ?? '—'} / ${vote.bestScoreB ?? '—'}`);
     appendCell(row, prettyValue(vote.dataClass));
+    // Rows written before the column existed carry no source; those were all ranked votes.
+    appendCell(row, prettyValue(vote.source ?? 'rank'));
     const hashCell = appendCell(row, shortHash(vote.participantHash));
     hashCell.title = vote.participantHash;
     hashCell.className = 'hash-cell';

@@ -15,7 +15,8 @@ const verdictToWire = {
 
 const relativeToWire = { A: 'a', B: 'b', TIE: 'tie' } as const;
 const sentimentToWire = { POSITIVE: 'positive', NEGATIVE: 'negative' } as const;
-const dataClassToWire = { ELIGIBLE: 'eligible', REHEARSAL: 'rehearsal', DEVELOPMENT: 'development' } as const;
+const dataClassToWire = { ELIGIBLE: 'eligible', UNRANKED: 'unranked', REHEARSAL: 'rehearsal', DEVELOPMENT: 'development' } as const;
+const sourceToWire = { RANK: 'rank', CUSTOM: 'custom' } as const;
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -42,6 +43,7 @@ async function main(): Promise<void> {
       relative: relativeToWire[vote.relative],
       sentiment: vote.sentiment ? sentimentToWire[vote.sentiment] : null,
       dataClass: dataClassToWire[vote.dataClass],
+      source: vote.source ? sourceToWire[vote.source] : null,
       assignedAt: vote.assignedAt?.toISOString() ?? null,
       clientSubmittedAt: vote.clientSubmittedAt?.toISOString() ?? null,
       createdAt: vote.createdAt.toISOString(),

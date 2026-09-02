@@ -29,8 +29,17 @@ enum RankSentiment {
 
 enum RankDataClass {
   ELIGIBLE    @map("eligible")
+  /// The pair's theme is not admitted to ranking yet, so the vote is stored but not tallied.
+  UNRANKED    @map("unranked")
   REHEARSAL   @map("rehearsal")
   DEVELOPMENT @map("development")
+}
+
+/// Which flow the participant voted from. Null on rows written before the column
+/// existed, which were all ranked votes.
+enum RankVoteSource {
+  RANK   @map("rank")
+  CUSTOM @map("custom")
 }
 
 model RankMatchup {
@@ -46,7 +55,7 @@ model RankMatchup {
 }
 
 model RankVote {
-  id                String         @id @default(uuid())
+  id                String          @id @default(uuid())
   matchupId         String
   participantHash   String
   schemaVersion     Int
@@ -60,14 +69,16 @@ model RankVote {
   bestScoreA        Int?
   bestScoreB        Int?
   dataClass         RankDataClass
+  source            RankVoteSource?
   assignedAt        DateTime?
   clientSubmittedAt DateTime?
-  createdAt         DateTime       @default(now())
+  createdAt         DateTime        @default(now())
   idempotencyKey    String?
   ipHash            String?
-  matchup           RankMatchup    @relation(fields: [matchupId], references: [id])
+  matchup           RankMatchup     @relation(fields: [matchupId], references: [id])
 
-  @@unique([matchupId, participantHash])
+  @@unique([idempotencyKey])
+  @@index([matchupId, participantHash])
   @@index([createdAt])
   @@index([ipHash])
 }

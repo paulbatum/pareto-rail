@@ -2,7 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { getAdminDatabase, AdminEnvironmentError } from '../server/admin-env.ts';
-import { RankDataClass, RankRelative, RankSentiment, RankVerdict } from '../src/generated/prisma/client.js';
+import { RankDataClass, RankRelative, RankSentiment, RankVerdict, RankVoteSource } from '../src/generated/prisma/client.js';
 
 const OUTPUT_DIR = path.resolve(process.cwd(), 'benchmark/private/votes');
 
@@ -17,9 +17,12 @@ const relativeFromWire = { a: RankRelative.A, b: RankRelative.B, tie: RankRelati
 const sentimentFromWire = { positive: RankSentiment.POSITIVE, negative: RankSentiment.NEGATIVE } as const;
 const dataClassFromWire = {
   eligible: RankDataClass.ELIGIBLE,
+  unranked: RankDataClass.UNRANKED,
   rehearsal: RankDataClass.REHEARSAL,
   development: RankDataClass.DEVELOPMENT,
 } as const;
+
+const sourceFromWire = { rank: RankVoteSource.RANK, custom: RankVoteSource.CUSTOM } as const;
 
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]', '0.0.0.0']);
 
@@ -47,6 +50,8 @@ async function main(): Promise<void> {
     relative: lookup(relativeFromWire, vote.relative, 'relative'),
     sentiment: vote.sentiment == null ? null : lookup(sentimentFromWire, vote.sentiment, 'sentiment'),
     dataClass: lookup(dataClassFromWire, vote.dataClass, 'dataClass'),
+    // Snapshots taken before the column existed carry no source; those were all ranked votes.
+    source: vote.source == null ? null : lookup(sourceFromWire, vote.source, 'source'),
     assignedAt: vote.assignedAt ? new Date(vote.assignedAt as string) : null,
     clientSubmittedAt: vote.clientSubmittedAt ? new Date(vote.clientSubmittedAt as string) : null,
     createdAt: new Date(vote.createdAt as string),

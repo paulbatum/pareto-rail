@@ -6,7 +6,7 @@ The vote-tracking backend persists ranking votes. The shared request handlers li
 
 - `POST /api/rank/votes` — records one vote.
 - `GET /api/rank/stats` — vote, matchup, and latest-vote counters.
-- `GET /api/rank/aggregate` — the tally the public leaderboard is drawn from: eligible votes only, collapsed to one row per level pair (`aWins`, `bWins`, `ties`) with the pair normalized to sorted level-id order. Entrant identity, cost, and model names are not returned; the client joins the pairs against the catalog it already ships and fits the same Bradley-Terry curve the `/rank` page uses for personal results. The optional `exclude=<hex prefix>` parameter drops votes whose participant hash starts with that prefix — the development-only owner filter on the leaderboard page uses it, and it changes nothing about how the tally is computed.
+- `GET /api/rank/aggregate` — the tally the public leaderboard is drawn from: eligible votes only, deduplicated to the newest vote per matchup and participant, then collapsed to one row per level pair (`aWins`, `bWins`, `ties`) with the pair normalized to sorted level-id order. Entrant identity, cost, and model names are not returned; the client joins the pairs against the catalog it already ships and fits the same Bradley-Terry curve the `/rank` page uses for personal results. The optional `exclude=<hex prefix>` parameter drops votes whose participant hash starts with that prefix — the development-only owner filter on the leaderboard page uses it, and it changes nothing about how the tally is computed.
 
 ## Local setup
 

@@ -124,6 +124,7 @@ async function readVotes(prisma: PrismaClient) {
       bestScoreA: true,
       bestScoreB: true,
       dataClass: true,
+      source: true,
       matchup: { select: { themeId: true } },
     },
   });

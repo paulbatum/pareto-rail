@@ -26,8 +26,11 @@ Deployed clients go stale: a tab left open posts the old payload shape, and the 
 
 - The server must keep accepting every payload shape it has ever accepted. New fields are optional; required fields are never added or removed. (`benchmarkVersion` was once required: the server accepts it forever and ignores its value.)
 - The server rejects unknown top-level keys with a 400, and the client outbox permanently drops entries on 4xx (except 429). Therefore new fields roll out server first, client in a later deploy — never the reverse.
+- A vote carries an optional `source` field naming the flow it was cast from: `rank` for the `/rank` schedule, `custom` for a `/match` pair. An absent field means `rank`, which is what every client deployed before custom matches recorded votes sends.
 - `PARTICIPANT_SALT` never rotates. Participant identity is `sha256(salt + participantId)`; a rotation makes every returning participant unrecognizable to vote dedup.
 
 ## Database
 
 Production migrations are additive only (new tables, new nullable columns, new indexes). Never rewrite or reinterpret existing vote rows; version-tag new semantics via `schemaVersion` instead.
+
+One participant can hold several votes on one matchup, because a custom match can serve a pair they already judged. Superseded votes are kept: the aggregate counts only the newest vote per matchup and participant, so a decision to drop custom votes later leaves the earlier ranked vote intact. Retry idempotency rides on the unique `idempotencyKey` column, which the client derives per submission.

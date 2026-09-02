@@ -1,7 +1,14 @@
 /** Public benchmark contracts.  Keep the pre-vote projection deliberately
  * smaller than the reveal projection: it must not contain identity or cost. */
 
-export type BenchmarkDataClass = 'eligible' | 'rehearsal' | 'development';
+/** How a vote may be used. `unranked` marks a vote on a theme that is not
+ * admitted to ranking yet: it is stored, but no leaderboard counts it. */
+export type BenchmarkDataClass = 'eligible' | 'unranked' | 'rehearsal' | 'development';
+
+/** Which flow a vote was cast from: the `/rank` schedule or a `/match` custom pair. */
+export type VoteSource = 'rank' | 'custom';
+export const VOTE_SOURCES: readonly VoteSource[] = ['rank', 'custom'];
+
 export type MatchupSide = 'a' | 'b';
 export type RelativeOutcome = MatchupSide | 'tie';
 export type TieSentiment = 'positive' | 'negative';

@@ -1,6 +1,6 @@
-import { allCatalogEntrants, allCatalogThemes, rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../src/benchmark/catalog.js';
+import { allCatalogEntrants, allCatalogThemes, rankCatalog, type RankCatalog, type RankCatalogEntrant, type RankCatalogTheme } from '../src/benchmark/catalog.js';
 import { pairId } from '../src/benchmark/scheduler.js';
-import type { BenchmarkDataClass, VoteVerdict } from '../src/benchmark/types.js';
+import { VOTE_SOURCES, type BenchmarkDataClass, type VoteSource, type VoteVerdict } from '../src/benchmark/types.js';
 
 export const RANK_VOTE_SCHEMA_VERSION = 2;
 export const MAX_RANK_VOTE_BODY_BYTES = 8 * 1024;
@@ -21,6 +21,7 @@ const TOP_LEVEL_KEYS = [
   'assignedAt',
   'clientSubmittedAt',
   'idempotencyKey',
+  'source',
 ] as const;
 
 type RankVoteBody = {
@@ -36,11 +37,16 @@ type RankVoteBody = {
   assignedAt?: string;
   clientSubmittedAt?: string;
   idempotencyKey?: string;
+  /** Absent from clients deployed before custom matches recorded votes; those
+   * were all ranked votes, so an absent field reads as `rank`. */
+  source?: VoteSource;
 };
 
 export type ValidatedRankVote = RankVoteBody & {
+  source: VoteSource;
   aEntrant: RankCatalogEntrant;
   bEntrant: RankCatalogEntrant;
+  theme: RankCatalogTheme;
 };
 
 export type RankVoteValidationResult =
@@ -86,6 +92,9 @@ export function validateRankVoteBody(value: unknown, catalog: RankCatalog = rank
   const idempotencyKey = optionalString(value.idempotencyKey);
   if (value.idempotencyKey !== undefined && !idempotencyKey) return invalid(400, 'Malformed idempotencyKey');
 
+  const source = value.source === undefined ? 'rank' : value.source;
+  if (typeof source !== 'string' || !VOTE_SOURCES.includes(source as VoteSource)) return invalid(400, 'Unknown vote source');
+
   const theme = allCatalogThemes(catalog).find((candidate) => candidate.id === themeId);
   const aEntrant = allCatalogEntrants(catalog).find((entrant) => entrant.levelId === aLevelId);
   const bEntrant = allCatalogEntrants(catalog).find((entrant) => entrant.levelId === bLevelId);
@@ -114,18 +123,25 @@ export function validateRankVoteBody(value: unknown, catalog: RankCatalog = rank
       ...(assignedAt ? { assignedAt } : {}),
       ...(clientSubmittedAt ? { clientSubmittedAt } : {}),
       ...(idempotencyKey ? { idempotencyKey } : {}),
+      source: source as VoteSource,
       aEntrant,
       bEntrant,
+      theme,
     },
   };
 }
 
-export function resolveDataClass(a: RankCatalogEntrant, b: RankCatalogEntrant): BenchmarkDataClass {
-  const strength: Record<BenchmarkDataClass, number> = { eligible: 0, rehearsal: 1, development: 2 };
+/**
+ * The data class stamped on a stored vote, taken as the strongest of the three
+ * inputs. An experimental theme is one the scheduler never serves, so the only
+ * way to vote on it is a custom match; such a vote is stored as `unranked` and
+ * no leaderboard counts it.
+ */
+export function resolveDataClass(a: RankCatalogEntrant, b: RankCatalogEntrant, theme: RankCatalogTheme): BenchmarkDataClass {
+  const strength: Record<BenchmarkDataClass, number> = { eligible: 0, unranked: 1, rehearsal: 2, development: 3 };
   const classOf = (entrant: RankCatalogEntrant): BenchmarkDataClass => entrant.dataClass && entrant.dataClass in strength ? entrant.dataClass : 'eligible';
-  const aClass = classOf(a);
-  const bClass = classOf(b);
-  return strength[aClass] >= strength[bClass] ? aClass : bClass;
+  const classes: BenchmarkDataClass[] = [classOf(a), classOf(b), theme.experimental === true ? 'unranked' : 'eligible'];
+  return classes.reduce((strongest, candidate) => (strength[candidate] > strength[strongest] ? candidate : strongest), 'eligible');
 }
 
 function parsePairOfInts(value: unknown, required: boolean): { a?: number; b?: number } | undefined {
