@@ -1295,6 +1295,24 @@
       ]
     },
     {
+      "runId": "run-x5xhv2p06h",
+      "levelId": "strandline-d9p1",
+      "themeId": "strandline",
+      "configurationId": "agy-gemini-3-7-flash-high",
+      "files": [
+        {
+          "path": "runs/run-x5xhv2p06h/stages/solo/agy/rollout.jsonl",
+          "rawBytes": 717234,
+          "sha256": "6d94fe68dd5a075a27d99c46febd3e87fe54f1bffcff3756496995e423ea0e94"
+        },
+        {
+          "path": "runs/run-x5xhv2p06h/stages/solo/agy/events.jsonl.gz",
+          "rawBytes": 398,
+          "sha256": "285344aacd3cb78ee9c5e124b2dc314831f6a8ef0e63ec7909e64ef59aed9035"
+        }
+      ]
+    },
+    {
       "runId": "run-xbd3e4ho3x7d",
       "levelId": "mass-driver-o9ok",
       "themeId": "mass-driver",

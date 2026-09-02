@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T18:57:04.751Z",
+  "generatedAt": "2026-09-02T20:15:39.783Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1838,6 +1838,40 @@
       "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "f799e7b79a758bd95bc51804548acb6868139d8e"
+    },
+    {
+      "levelId": "strandline-d9p1",
+      "themeId": "strandline",
+      "configurationId": "agy-gemini-3-7-flash-high",
+      "modelName": "Gemini 3.7 Flash",
+      "workflowName": "solo",
+      "generationCost": 1.42712171,
+      "linesOfCode": 2963,
+      "run": {
+        "generationWallTimeSeconds": 830.399,
+        "totalWallTimeSeconds": 868.938,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Antigravity CLI",
+          "version": "1.1.24"
+        },
+        "models": [
+          {
+            "modelName": "gemini-3.7-flash-exp-a",
+            "role": "solo",
+            "inputTokens": 1053899,
+            "outputTokens": 43195,
+            "cacheReadTokens": 20813589,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 90885,
+            "costUsd": 1.42712171
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-d9p1/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "93577d3a8c7f18d7c682676e3722a00e370b1924"
     },
     {
       "levelId": "strandline-de7d",
