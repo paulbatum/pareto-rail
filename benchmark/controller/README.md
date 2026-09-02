@@ -163,11 +163,11 @@ Rows are independent. A failure or pending owner decision on one row does not bl
 
 ### Do not detach the command
 
-The command runs in the foreground until the row finishes, which takes minutes to hours. It writes the run manifest at its last checkpoint, so this process exiting is the signal that the row is done.
+The command blocks until the row finishes, which takes minutes to hours, and writes the run manifest at its last checkpoint. Its exit is therefore the signal that the row is done, and its exit code carries the result.
 
-An agent that launches it must let its own tool run the command and watch it. Do not wrap it in `nohup`, and do not append `&`. Either one detaches the controller from the tool that started it, so the tool reports the wrapping shell's exit instead of the controller's. The agent then reads a finished run as still live, and reports that to the owner.
+Running it in a tool's background mode is correct and expected. What breaks is detaching it from that tool: do not wrap the command in `nohup`, and do not append `&`. Either one leaves the tool watching the wrapping shell, which exits within seconds, so the tool reports that exit as the command's. An agent reading that report treats a run still building as finished, or a finished run as still live.
 
-When the tool offers a background mode, pass the plain command to it. When it does not, poll `benchmark/private/runs/<run-id>/controller-state.json`: every checkpoint reads `completed` when the row is done.
+Pass the plain command to the tool and let the tool background it. When the tool has no background mode, poll `benchmark/private/runs/<run-id>/controller-state.json`: every checkpoint reads `completed` when the row is done.
 
 ## Monitor a live run
 
