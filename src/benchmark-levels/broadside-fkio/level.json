@@ -1,0 +1,9 @@
+{
+  "id": "broadside-fkio",
+  "title": "Broadside",
+  "contentImages": {
+    "overview": "/level-content/broadside-fkio/overview.png",
+    "start": "/level-content/broadside-fkio/start.png",
+    "hero": "/level-content/broadside-fkio/hero.png"
+  }
+}
