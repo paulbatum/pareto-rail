@@ -8,22 +8,24 @@ Every bullet below is a model, so this prose stays prose: a bullet anywhere in t
 file renders on the home page.
 
 A model belongs here once it is running the benchmark, which is earlier than its
-first level publishes. Five decorations are available, all optional. `(new)` after
-a name marks a recent arrival; drop it once the model stops being news. `(retired)`
-after a name takes a model off the home page that used to be on it, and `(unlisted)`
-after a name keeps a model off the home page that was never on it. Keep the line in
-both cases, because `benchmark:export-rank-catalog` compares this file against the
-models publishing levels, and either marker is how you tell it the omission is
-deliberate rather than copy that still needs writing. A name written as a markdown
-link gets a destination, which the home page renders as an external link. An em
-dash and a short phrase after a name add a note, and the home page gives an entry
-with a note its own full-width row, so keep notes rare.
+first level publishes. Four decorations are available, all optional. `(new)` after
+a name marks a recent arrival; drop it once the model stops being news. `(unlisted)`
+after a name keeps a model off the home page while its levels stay published,
+whether it was removed from the page or never shown there — keep the line, because
+`benchmark:export-rank-catalog` compares this file against the models publishing
+levels, and an unlisted name is how you tell it the omission is deliberate rather
+than copy that still needs writing. Unlisting is site copy only: whether a level
+still receives matchups is set by `retired` on its entry in the publication
+manifest, which is a separate decision. A name written as a markdown link gets a
+destination, which the home page renders as an external link. An em dash and a
+short phrase after a name add a note, and the home page gives an entry with a
+note its own full-width row, so keep notes rare.
 
 The name is what the catalog is reconciled against, so it stays the model's name
 alone — a marker, a note, or a link never changes it.
 
-The order here is the order on the home page. A retired or unlisted entry renders
-nowhere, so put it last.
+The order here is the order on the home page. An unlisted entry renders nowhere, so
+put it last.
 
 - Claude Fable 5.1 (new)
 - Claude Opus 5
@@ -33,7 +35,7 @@ nowhere, so put it last.
 - Gemini 3.8 Flash (new)
 - Gemini 3.7 Flash
 - Kimi K3
-- [Inkling](https://openrouter.ai/thinkingmachines/inkling) (retired)
+- [Inkling](https://openrouter.ai/thinkingmachines/inkling) (unlisted)
 - [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash)
-- Gemini 3.6 Flash (retired)
+- Gemini 3.6 Flash (unlisted)
 - GPT-5.6 Luna (unlisted)

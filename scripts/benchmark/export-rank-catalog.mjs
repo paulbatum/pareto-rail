@@ -454,11 +454,12 @@ export function buildCatalog(publication, generatedAt) {
 }
 
 // The home page names its models from hand-maintained copy, so a model can be
-// announced while it is still running and stay named after a retirement. Export
-// reports the drift and leaves the decision with the operator rather than
-// projecting the catalog into the copy. A `(retired)` name is an answer already
-// given — the model publishes levels the home page deliberately stops naming —
-// so it is silent in both directions.
+// announced while it is still running and stay named after it stops running.
+// Export reports the drift and leaves the decision with the operator rather than
+// projecting the catalog into the copy. An `(unlisted)` name is an answer already
+// given — the model publishes levels the home page deliberately does not name —
+// so it is silent in both directions. Unlisted is site copy only; it does not
+// affect matchups, which is what `retired` means on a theme or entrant.
 //
 // This parses the same file as src/app/featured-models.ts by the same rules;
 // change one and change the other.
@@ -466,13 +467,13 @@ function reportFeaturedModelDrift(catalog) {
   const listed = fs.readFileSync(featuredModelsPath, 'utf8').split('\n')
     .map((line) => /^-\s+(.*\S)\s*$/.exec(line.trim())?.[1])
     .filter((entry) => entry !== undefined)
-    .map((entry) => ({ entry, unnamed: /\((?:retired|unlisted)\)$/i.test(entry) }))
-    .map(({ entry, unnamed }) => ({ unnamed, name: entry.replace(/\s*\((?:new|retired|unlisted)\)$/i, '') }))
+    .map((entry) => ({ entry, unlisted: /\(unlisted\)$/i.test(entry) }))
+    .map(({ entry, unlisted }) => ({ unlisted, name: entry.replace(/\s*\((?:new|unlisted)\)$/i, '') }))
     // A name may carry a note after an em dash, and may be written as a markdown
     // link. The catalog knows the model by its name alone, so both come off here.
     .map((item) => ({ ...item, name: /^(.*?)\s+—\s+.*\S$/.exec(item.name)?.[1] ?? item.name }))
     .map((item) => ({ ...item, name: /^\[(.+)\]\(\S+\)$/.exec(item.name)?.[1] ?? item.name }));
-  const named = listed.filter((item) => !item.unnamed).map((item) => item.name);
+  const named = listed.filter((item) => !item.unlisted).map((item) => item.name);
   const acknowledged = new Set(listed.map((item) => item.name));
   const publishing = new Set(catalog.entrants
     .filter((entrant) => !entrant.retired)
