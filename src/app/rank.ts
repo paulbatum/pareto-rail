@@ -8,7 +8,7 @@ import { configurationGroupResolver } from '../benchmark/identity';
 import { assignmentFromVote, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, type CompletedMatchup } from '../benchmark/catalog-api';
 import { ComparisonStateMachine } from '../benchmark/state';
 import { BenchmarkLocalStore } from '../benchmark/storage';
-import { RemoteVoteRecorder, type RemoteVotePayload } from '../benchmark/remote-recorder';
+import { RemoteVoteRecorder, remoteVotePayload } from '../benchmark/remote-recorder';
 import type {
   BenchmarkApi,
   ComparisonState,
@@ -118,7 +118,7 @@ export class RankController {
     try {
       const submitting = this.machine.submit(verdict);
       const vote = await this.api.submitVote({ matchupId: submitting.assignment.matchupId, participantId: this.store.participantId, verdict, playCounts: submitting.playCounts });
-      this.remoteRecorder.record(remotePayload(submitting.assignment, vote, this.store));
+      this.remoteRecorder.record(remoteVotePayload(submitting.assignment, vote, this.store));
       const reveal = await this.api.reveal(submitting.assignment.matchupId, this.store.participantId);
       const revealed = this.machine.reveal({ ...reveal, vote });
       this.machine = new ComparisonStateMachine(revealed.assignment, revealed);
@@ -192,22 +192,3 @@ export class RankController {
   private emit() { for (const listener of this.listeners) listener(); }
 }
 
-function remotePayload(assignment: MatchupAssignment, vote: MatchupVote, store: BenchmarkLocalStore): RemoteVotePayload {
-  const snapshot = store.snapshot;
-  const scoreFor = (levelId: string): number | undefined => snapshot.levelRuns.find((run) => run.levelId === levelId)?.score;
-  const bestScoreA = scoreFor(assignment.a.playableRef);
-  const bestScoreB = scoreFor(assignment.b.playableRef);
-  return {
-    matchupId: assignment.matchupId,
-    participantId: store.participantId,
-    themeId: assignment.theme.id,
-    aLevelId: assignment.a.playableRef,
-    bLevelId: assignment.b.playableRef,
-    verdict: vote.verdict,
-    playCounts: { ...vote.playCounts },
-    ...(bestScoreA !== undefined || bestScoreB !== undefined ? { bestScores: { ...(bestScoreA === undefined ? {} : { a: bestScoreA }), ...(bestScoreB === undefined ? {} : { b: bestScoreB }) } } : {}),
-    assignedAt: assignment.assignedAt,
-    clientSubmittedAt: vote.submittedAt,
-    idempotencyKey: `${assignment.matchupId}:${store.participantId}`,
-  };
-}

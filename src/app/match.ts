@@ -1,10 +1,15 @@
 import { ComparisonStateMachine } from '../benchmark/state';
 import { findCatalogEntrant, findCatalogTheme, rankCatalog, type RankCatalog, type RankCatalogEntrant, type RankCatalogTheme } from '../benchmark/catalog';
 import { playCountsFor, revealFor } from '../benchmark/catalog-api';
+import { RemoteVoteRecorder, remoteVotePayload } from '../benchmark/remote-recorder';
+import { pairId } from '../benchmark/scheduler';
 import { BenchmarkLocalStore, type LevelRun } from '../benchmark/storage';
 import { mapVerdict, type BenchmarkTheme, type ComparisonState, type MatchupAssignment, type MatchupSide, type MatchupVote, type RevealPayload, type VoteVerdict } from '../benchmark/types';
 
 export type MatchLaunch = { side: MatchupSide; levelId: string };
+/** The part of {@link RemoteVoteRecorder} this controller uses, so a test can
+ * hand it a stub instead of one that posts. */
+type VoteOutbox = Pick<RemoteVoteRecorder, 'record'>;
 type Listener = () => void;
 
 /** Why the requested pair can't be played, for the page to render as a friendly
@@ -24,18 +29,24 @@ const CUSTOM_THEME: BenchmarkTheme = {
 };
 
 /**
- * Controller for the casual `/match` page. It mirrors the ranked comparison flow
- * (play both, vote, reveal) using {@link ComparisonStateMachine}. Plays are
- * remembered on the device — completed runs, best scores, and last-played — in
- * the same local {@link BenchmarkLocalStore} `levelRuns` that `/rank` uses, so a
- * level played here counts as played there and vice versa (the global play
- * semantics `playCountsFor` already has). The vote and reveal are never
- * persisted: the in-tab factory cache carries reveal state across navigation,
- * and a refresh after a vote returns to `ready-to-vote`.
+ * Controller for the `/match` page, where a visitor picks the pair. It mirrors
+ * the ranked comparison flow (play both, vote, reveal) using
+ * {@link ComparisonStateMachine}. Plays are remembered on the device — completed
+ * runs, best scores, and last-played — in the same local
+ * {@link BenchmarkLocalStore} `levelRuns` that `/rank` uses, so a level played
+ * here counts as played there and vice versa (the global play semantics
+ * `playCountsFor` already has).
  *
  * Eligibility is any catalog entrant resolved via {@link findCatalogEntrant} —
  * deliberately broader than the ranked scheduler, so retired entrants and
  * entrants of retired or experimental themes can be matched here.
+ *
+ * A vote on a pair that shares a theme is recorded exactly as a ranked vote is:
+ * written to local `history` under the canonical matchup id and posted to the
+ * vote API, tagged `custom` so the two flows stay separable in the stored data.
+ * A pair drawn from two different themes has no matchup id to record under, so
+ * that vote is held in the tab and never stored. {@link recordsVotes} says which
+ * case the page is in, so its copy can tell the visitor.
  */
 export class CustomMatchController {
   readonly error: MatchError | null;
@@ -46,11 +57,13 @@ export class CustomMatchController {
   readonly sharedTheme: RankCatalogTheme | null;
   private readonly catalog: RankCatalog;
   private readonly store: BenchmarkLocalStore | null;
+  private readonly remoteRecorder: VoteOutbox | null;
   private readonly listeners = new Set<Listener>();
   private machine: ComparisonStateMachine | null = null;
 
-  constructor(aId: string | undefined, bId: string | undefined, catalog: RankCatalog = rankCatalog, store?: BenchmarkLocalStore) {
+  constructor(aId: string | undefined, bId: string | undefined, catalog: RankCatalog = rankCatalog, store?: BenchmarkLocalStore, remoteRecorder?: VoteOutbox) {
     this.catalog = catalog;
+    this.remoteRecorder = remoteRecorder ?? null;
     if (!aId || !bId) {
       this.error = { kind: 'missing' };
       this.a = this.b = null;
@@ -79,10 +92,13 @@ export class CustomMatchController {
     this.a = a;
     this.b = b;
     this.store = store ?? new BenchmarkLocalStore();
+    this.remoteRecorder = remoteRecorder ?? new RemoteVoteRecorder();
     this.sharedTheme = a!.themeId === b!.themeId ? findCatalogTheme(catalog, a!.themeId) ?? null : null;
     const theme = this.sharedTheme ?? CUSTOM_THEME;
     const assignment: MatchupAssignment = {
-      matchupId: `custom:${a!.levelId}:${b!.levelId}`,
+      // A same-theme pair takes the canonical matchup id, so this vote lands on
+      // the same matchup a ranked comparison of the pair would.
+      matchupId: this.sharedTheme ? pairId(this.sharedTheme.id, a!.levelId, b!.levelId) : `custom:${a!.levelId}:${b!.levelId}`,
       theme,
       a: { playableRef: a!.levelId, ...(a!.thumbnailPath ? { thumbnailPath: a!.thumbnailPath } : {}) },
       b: { playableRef: b!.levelId, ...(b!.thumbnailPath ? { thumbnailPath: b!.thumbnailPath } : {}) },
@@ -99,6 +115,12 @@ export class CustomMatchController {
   }
 
   get valid(): boolean { return this.error === null; }
+  /** True when this pair's vote is stored. A cross-theme pair has no matchup id
+   * to store it under, so its vote stays in the tab. */
+  get recordsVotes(): boolean { return this.sharedTheme !== null; }
+  /** True when the pair's theme is not admitted to ranking yet, so the vote is
+   * stored but no leaderboard counts it. */
+  get themeIsUnranked(): boolean { return this.sharedTheme?.experimental === true; }
   get state(): ComparisonState | null { return this.machine?.state ?? null; }
   get assignment(): MatchupAssignment | null { return this.machine?.state.assignment ?? null; }
 
@@ -157,7 +179,12 @@ export class CustomMatchController {
       ...(mapping.sentiment ? { sentiment: mapping.sentiment } : {}),
       playCounts: { ...submitting.playCounts },
       submittedAt: new Date().toISOString(),
+      source: 'custom',
     };
+    if (this.recordsVotes && this.store) {
+      this.store.recordVote(vote);
+      this.remoteRecorder?.record(remoteVotePayload(submitting.assignment, vote, this.store));
+    }
     const reveal: RevealPayload = {
       matchupId: submitting.assignment.matchupId,
       a: revealFor(this.a),

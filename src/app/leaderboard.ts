@@ -104,5 +104,6 @@ function aggregateVote(relative: RelativeOutcome): MatchupVote {
     relative,
     playCounts: { a: 0, b: 0 },
     submittedAt: '',
+    source: 'rank',
   };
 }

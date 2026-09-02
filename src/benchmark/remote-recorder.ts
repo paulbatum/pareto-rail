@@ -1,5 +1,5 @@
-import type { KeyValueStorage } from './storage';
-import type { VoteVerdict } from './types';
+import type { BenchmarkLocalStore, KeyValueStorage } from './storage';
+import type { MatchupAssignment, MatchupVote, VoteSource, VoteVerdict } from './types';
 
 export const REMOTE_VOTE_OUTBOX_KEY = 'pareto-rail-rank-vote-outbox-v1';
 export const REMOTE_VOTE_OUTBOX_VERSION = 1;
@@ -17,6 +17,33 @@ export interface RemoteVotePayload {
   assignedAt?: string;
   clientSubmittedAt?: string;
   idempotencyKey?: string;
+  source?: VoteSource;
+}
+
+/**
+ * The wire form of a completed vote. The idempotency key names the submission
+ * rather than the pair, so a retry of this payload writes nothing while a later
+ * vote on the same pair is stored as a new, superseding one.
+ */
+export function remoteVotePayload(assignment: MatchupAssignment, vote: MatchupVote, store: BenchmarkLocalStore): RemoteVotePayload {
+  const snapshot = store.snapshot;
+  const scoreFor = (levelId: string): number | undefined => snapshot.levelRuns.find((run) => run.levelId === levelId)?.score;
+  const bestScoreA = scoreFor(assignment.a.playableRef);
+  const bestScoreB = scoreFor(assignment.b.playableRef);
+  return {
+    matchupId: assignment.matchupId,
+    participantId: store.participantId,
+    themeId: assignment.theme.id,
+    aLevelId: assignment.a.playableRef,
+    bLevelId: assignment.b.playableRef,
+    verdict: vote.verdict,
+    playCounts: { ...vote.playCounts },
+    ...(bestScoreA !== undefined || bestScoreB !== undefined ? { bestScores: { ...(bestScoreA === undefined ? {} : { a: bestScoreA }), ...(bestScoreB === undefined ? {} : { b: bestScoreB }) } } : {}),
+    assignedAt: assignment.assignedAt,
+    clientSubmittedAt: vote.submittedAt,
+    idempotencyKey: `${assignment.matchupId}:${store.participantId}:${vote.submittedAt}`,
+    source: vote.source,
+  };
 }
 
 interface RemoteVoteOutbox {

@@ -1,4 +1,4 @@
-import { mapVerdict, type MatchupVote, type VoteVerdict } from './types';
+import { mapVerdict, VOTE_SOURCES, type MatchupVote, type VoteSource, type VoteVerdict } from './types';
 
 export const BENCHMARK_STORAGE_KEY = 'pareto-rail-benchmark';
 export const BENCHMARK_PARTICIPANT_ID_KEY = 'pareto-rail-participant-id';
@@ -13,7 +13,9 @@ export interface LevelRun {
 
 export interface LocalBenchmarkData {
   participantId: string;
-  /** Raw votes are retained so display ratings can be recomputed later. */
+  /** Raw votes are retained so display ratings can be recomputed later. At most
+   * one vote per matchup: a custom match can serve a pair already judged, and
+   * the newer verdict replaces the older one. */
   history: MatchupVote[];
   /** Best local play results, independent of the benchmark catalog. */
   levelRuns: LevelRun[];
@@ -129,6 +131,15 @@ export class BenchmarkLocalStore {
     return this.save({ levelRuns: [...this.data.levelRuns.filter((item) => item.levelId !== levelId), run] });
   }
 
+  /**
+   * Store a judgment, replacing any earlier vote on the same matchup and placing
+   * the new one last. A custom match can serve a pair the ranked schedule
+   * already served, and only the newest verdict counts.
+   */
+  recordVote(vote: MatchupVote): LocalBenchmarkData {
+    return this.save({ history: [...this.data.history.filter((item) => item.matchupId !== vote.matchupId), vote] });
+  }
+
   /** Remove the newest local judgment for development-only correction tools. */
   undoLastVerdict(): MatchupVote | undefined {
     const undone = this.data.history.at(-1);
@@ -173,6 +184,9 @@ function normalizeHistory(value: unknown): MatchupVote[] {
       ...(mapping.sentiment ? { sentiment: mapping.sentiment } : {}),
       playCounts: { a: vote.playCounts.a, b: vote.playCounts.b },
       submittedAt: typeof vote.submittedAt === 'string' ? vote.submittedAt : '',
+      // Votes stored before custom matches were recorded carry no source, and
+      // ranked voting was the only way to write one.
+      source: VOTE_SOURCES.includes(vote.source as VoteSource) ? vote.source as VoteSource : 'rank',
     }];
   });
 }

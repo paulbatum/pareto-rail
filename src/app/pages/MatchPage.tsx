@@ -20,8 +20,6 @@ type MatchPageProps = {
   onNavigate: (path: string) => void;
 };
 
-const CASUAL_NOTE = 'This is a casual match. Your pick is not recorded and does not affect any rankings.';
-
 /** Level ids the site can actually launch, shared by the model draw and the picker. */
 function playableLevelIds(): ReadonlySet<string> {
   return new Set(benchmarkLevelCatalog.map((level) => level.id));
@@ -69,6 +67,13 @@ export function MatchPage({ route, onNavigate }: MatchPageProps) {
   return <MatchContent controller={controller} state={controller.state!} onNavigate={onNavigate} />;
 }
 
+/** What happens to the visitor's pick, which depends on the pair they chose. */
+function voteNote(controller: CustomMatchController): string {
+  if (!controller.recordsVotes) return 'These two levels come from different themes, so your pick is not recorded and does not affect any rankings.';
+  if (controller.themeIsUnranked) return 'This theme is not in the rankings yet, so your pick is saved but does not move any leaderboard.';
+  return 'Your pick is recorded and counts toward the rankings, the same as a comparison served on the Rank page.';
+}
+
 function MatchContent({ controller, state, onNavigate }: { controller: CustomMatchController; state: ComparisonState; onNavigate: (path: string) => void }) {
   const shared = controller.sharedTheme;
   const launch = (side: MatchupSide) => {
@@ -82,7 +87,7 @@ function MatchContent({ controller, state, onNavigate }: { controller: CustomMat
       {shared
         ? <><h1>{shared.title}</h1><p className="lede">“{shared.summary}”</p><details className="prompt-details"><summary>Read full prompt</summary><p>{shared.prompt}</p></details></>
         : <><h1>Custom match</h1><p className="lede">Two levels from different themes, played head-to-head.</p></>}
-      <p className="match-casual-note" role="note">{CASUAL_NOTE}</p>
+      <p className="match-casual-note" role="note">{voteNote(controller)}</p>
       <MatchStage controller={controller} state={state} crossTheme={!shared} onLaunch={launch} onVote={(verdict) => controller.submit(verdict)} onNavigate={onNavigate} />
     </section>
   );
@@ -121,7 +126,7 @@ function MatchStage({ controller, state, crossTheme, onLaunch, onVote, onNavigat
   const versusLayout = <VersusGrid a={card('a')} b={card('b')} />;
 
   if (state.kind === 'assignment') return versusLayout;
-  if (state.kind === 'playing-a' || state.kind === 'playing-b') return <div className="assignment-card"><h2>Level {state.kind === 'playing-a' ? 'A' : 'B'} is in progress</h2><p>Your run is remembered on this device, so it counts when it ends. Your pick is never recorded.</p></div>;
+  if (state.kind === 'playing-a' || state.kind === 'playing-b') return <div className="assignment-card"><h2>Level {state.kind === 'playing-a' ? 'A' : 'B'} is in progress</h2><p>Your run is remembered on this device, so it counts when it ends.</p></div>;
   if (state.kind === 'ready-to-vote') return <>{versusLayout}<h2 className="vote-heading">Which run felt better?</h2><VoteButtons onVote={onVote} /></>;
   if (state.kind === 'reveal') return <>
     <RevealCards reveal={state.reveal} sideAnnotation={themeAnnotation} />
@@ -168,7 +173,7 @@ function MatchSetupPage({ error, onNavigate }: { error: MatchError; onNavigate: 
     <section className="page-panel rank-panel">
       <p className="eyebrow">Custom match</p>
       <h1>Build a custom match</h1>
-      <p className="lede">Pick two levels to play head-to-head, then reveal which model built each. Nothing here is recorded — it’s just for fun.</p>
+      <p className="lede">Pick two levels to play head-to-head, then reveal which model built each. Two levels from the same theme make a match whose result counts toward the rankings.</p>
       {notice && <p className="match-pick-error" role="alert">{notice}</p>}
       <MatchPicker onNavigate={onNavigate} />
       <p className="match-url-hint">Prefer a link? Use <code>/match?a=&lt;level-id&gt;&amp;b=&lt;level-id&gt;</code> — browse ids on the <RouteLink href="/levels/data" onNavigate={onNavigate}>catalog data page</RouteLink>. <code>/match?model=&lt;model&gt;</code> draws one for you: one side is that model, the theme and the opponent are random.</p>

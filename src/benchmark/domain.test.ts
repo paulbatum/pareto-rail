@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { createDevelopmentFixtureApi, createFixtureCatalog } from './fixtures';
 import { CatalogBenchmarkApi, completedMatchupsFromVotes, exposureCountsFromVotes, playCountsFor, revealFromVote } from './catalog-api';
 import { compareIds, nextScheduledMatchup, pairId, parsePairId } from './scheduler';
-import { mapVerdict, type ComparisonState, type MatchupAssignment, type MatchupVote, type RelativeOutcome } from './types';
+import { mapVerdict, type ComparisonState, type MatchupAssignment, type MatchupVote, type RelativeOutcome, type VoteVerdict } from './types';
 import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type RankCatalog, type RankCatalogConfiguration, type RankCatalogEntrant, type RankCatalogTheme, type SchedulingPool } from './catalog';
 import { configurationGroupResolver } from './identity';
 import { selectPersonalCurveCatalog } from '../app/rank';
@@ -13,6 +13,7 @@ import { CustomMatchController } from '../app/match';
 import { matchupForModel, modelSlug } from '../app/model-match';
 import { parseRoute, routePath } from '../app/router';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
+import type { RemoteVotePayload } from './remote-recorder';
 import { ComparisonStateMachine } from './state';
 import { BENCHMARK_PARTICIPANT_ID_KEY, BENCHMARK_STORAGE_VERSION, BenchmarkLocalStore, createMemoryStorage, type StorageEnvelope } from './storage';
 import { recomputePersonalCurve, type PersonalHistoryEntry } from './personal-curve';
@@ -75,6 +76,8 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testModelMatchupDraw();
   testCustomMatchController();
   testCustomMatchPlaysPersist();
+  testUnrankedThemeVoteIsNotCounted();
+  testStoredVoteWithoutSourceReadsAsRanked();
 }
 
 /** A tiny catalog: two shared-theme entrants (`lv-a`, `lv-b`) and one in a
@@ -100,25 +103,90 @@ function testCustomMatchPlaysPersist(): void {
   // Match plays share the normal benchmark envelope (default key), so a fresh
   // store over the same storage reads what the match wrote.
   const store = () => new BenchmarkLocalStore(storage);
+  const posted: RemoteVotePayload[] = [];
+  const outbox = { record: (payload: RemoteVotePayload) => { posted.push(payload); } };
+  const playAndVote = (controller: CustomMatchController, verdict: VoteVerdict, scoreA: number, scoreB: number) => {
+    controller.launch('a');
+    controller.completeRun('a', scoreA);
+    controller.launch('b');
+    controller.completeRun('b', scoreB);
+    controller.submit(verdict);
+  };
 
-  const first = new CustomMatchController('lv-a', 'lv-b', catalog, store());
-  first.launch('a');
-  first.completeRun('a', 100);
-  first.launch('b');
-  first.completeRun('b', 250);
-  first.submit('a-better');
+  const first = new CustomMatchController('lv-a', 'lv-b', catalog, store(), outbox);
+  playAndVote(first, 'a-better', 100, 250);
 
-  // Plays are recorded to the shared levelRuns; the vote is never written to history.
+  // Plays go to the shared levelRuns and the verdict to the shared history,
+  // tagged with the flow it came from.
   const persisted = store().snapshot;
   assert.equal(persisted.levelRuns.find((run) => run.levelId === 'lv-a')?.score, 100);
   assert.equal(persisted.levelRuns.find((run) => run.levelId === 'lv-b')?.score, 250);
-  assert.equal(persisted.history.length, 0);
+  assert.equal(persisted.history.length, 1);
+  assert.equal(persisted.history[0]!.matchupId, pairId('th', 'lv-a', 'lv-b'));
+  assert.equal(persisted.history[0]!.source, 'custom');
+
+  assert.equal(posted.length, 1, 'the custom verdict was not posted to the vote API');
+  assert.equal(posted[0]!.source, 'custom');
+  assert.equal(posted[0]!.themeId, 'th');
+  assert.equal(posted[0]!.matchupId, pairId('th', 'lv-a', 'lv-b'));
+  assert.deepEqual(posted[0]!.bestScores, { a: 100, b: 250 });
+  assert.ok(posted[0]!.idempotencyKey?.endsWith(persisted.history[0]!.submittedAt), 'the idempotency key does not name this submission');
 
   // A fresh controller for the same pair resumes at ready-to-vote from the shared runs.
-  const resumed = new CustomMatchController('lv-a', 'lv-b', catalog, store());
+  const resumed = new CustomMatchController('lv-a', 'lv-b', catalog, store(), outbox);
   const resumedState: ComparisonState | null = resumed.state;
   assert.equal(resumedState?.kind, 'ready-to-vote');
   assert.equal(resumed.bestScore('lv-b'), 250);
+
+  // The same pair judged again keeps one vote: the newer verdict replaces the older.
+  playAndVote(resumed, 'b-better', 110, 260);
+  const afterRepeat = store().snapshot;
+  assert.equal(afterRepeat.history.length, 1, 'a repeat match left two votes on one matchup');
+  assert.equal(afterRepeat.history[0]!.verdict, 'b-better');
+  assert.equal(posted.length, 2, 'the repeat verdict was not posted');
+  assert.notEqual(posted[1]!.idempotencyKey, posted[0]!.idempotencyKey, 'the repeat reused the first submission key');
+
+  // A cross-theme pair has no matchup id to record under, so its verdict is not stored.
+  const cross = new CustomMatchController('lv-a', 'lv-c', catalog, store(), outbox);
+  playAndVote(cross, 'a-better', 120, 130);
+  assert.equal(store().snapshot.history.length, 1, 'a cross-theme verdict was stored');
+  assert.equal(posted.length, 2, 'a cross-theme verdict was posted');
+}
+
+/** A vote on a theme that is not admitted to ranking is stored, and left out of
+ * every curve fitted from local history. */
+function testUnrankedThemeVoteIsNotCounted(): void {
+  const catalog = customMatchCatalog();
+  const experimental: RankCatalog = {
+    ...catalog,
+    themes: catalog.themes.map((theme) => (theme.id === 'th' ? { ...theme, experimental: true } : theme)),
+  };
+  const storage = createMemoryStorage();
+  const store = () => new BenchmarkLocalStore(storage);
+  const posted: RemoteVotePayload[] = [];
+
+  const controller = new CustomMatchController('lv-a', 'lv-b', experimental, store(), { record: (payload) => { posted.push(payload); } });
+  assert.equal(controller.recordsVotes, true);
+  assert.equal(controller.themeIsUnranked, true);
+  controller.launch('a');
+  controller.completeRun('a', 100);
+  controller.launch('b');
+  controller.completeRun('b', 250);
+  controller.submit('a-better');
+
+  const history = store().snapshot.history;
+  assert.equal(history.length, 1, 'the vote was not stored');
+  assert.equal(posted.length, 1, 'the vote was not posted');
+  assert.equal(completedMatchupsFromVotes(experimental, history).length, 0, 'an unranked-theme vote reached the personal curve');
+}
+
+/** Votes stored before custom matches were recorded carry no source. */
+function testStoredVoteWithoutSourceReadsAsRanked(): void {
+  const storage = createMemoryStorage();
+  const legacy = { matchupId: 'th:lv-a__lv-b', aEntrantId: 'lv-a', bEntrantId: 'lv-b', verdict: 'a-better', relative: 'a', playCounts: { a: 1, b: 1 }, submittedAt: 'then' };
+  storage.setItem('legacy-source', JSON.stringify({ version: BENCHMARK_STORAGE_VERSION, data: { participantId: 'p', history: [legacy], levelRuns: [] } }));
+  const store = new BenchmarkLocalStore(storage, 'legacy-source');
+  assert.equal(store.snapshot.history[0]!.source, 'rank');
 }
 
 function testMatchRouteParsing(): void {
@@ -165,16 +233,23 @@ function testModelMatchupDraw(): void {
 
 function testCustomMatchController(): void {
   const catalog = customMatchCatalog();
+  // Its own store and a stub outbox, so this case neither shares history with
+  // another case nor reaches for the network.
+  const isolated = () => new BenchmarkLocalStore(createMemoryStorage());
+  const outbox = { record: () => {} };
 
   assert.deepEqual(new CustomMatchController(undefined, 'lv-a', catalog).error, { kind: 'missing' });
   assert.deepEqual(new CustomMatchController('lv-a', 'lv-a', catalog).error, { kind: 'same', id: 'lv-a' });
   assert.deepEqual(new CustomMatchController('lv-a', 'nope', catalog).error, { kind: 'unknown', ids: ['nope'] });
 
-  const shared = new CustomMatchController('lv-a', 'lv-b', catalog);
+  const shared = new CustomMatchController('lv-a', 'lv-b', catalog, isolated(), outbox);
   assert.equal(shared.valid, true);
   assert.equal(shared.sharedTheme?.id, 'th');
   assert.equal(shared.assignment?.theme.id, 'th');
-  assert.equal(shared.assignment?.matchupId, 'custom:lv-a:lv-b');
+  // A same-theme pair carries the canonical matchup id, so this vote lands on the
+  // matchup a ranked comparison of the same pair would.
+  assert.equal(shared.assignment?.matchupId, pairId('th', 'lv-a', 'lv-b'));
+  assert.equal(shared.recordsVotes, true);
 
   // A full match runs entirely in memory: play both, vote, reveal.
   shared.launch('a');
@@ -192,12 +267,13 @@ function testCustomMatchController(): void {
   assert.equal(revealState.reveal.b.generationCost, 2);
 
   // Cross-theme falls back to the synthetic placeholder but keeps each side's real theme available.
-  const cross = new CustomMatchController('lv-a', 'lv-c', catalog);
+  const cross = new CustomMatchController('lv-a', 'lv-c', catalog, isolated(), outbox);
   assert.equal(cross.valid, true);
   assert.equal(cross.sharedTheme, null);
   assert.equal(cross.assignment?.theme.id, 'custom');
   assert.equal(cross.themeForSide('a')?.id, 'th');
   assert.equal(cross.themeForSide('b')?.id, 'th2');
+  assert.equal(cross.recordsVotes, false);
 }
 
 function testPersonalCurve(): void {
@@ -364,7 +440,7 @@ function testPairIdCanonicalization(): void {
 
 function testStorageUndo(): void {
   const store = new BenchmarkLocalStore(createMemoryStorage(), 'undo');
-  const vote: MatchupVote = { matchupId: 'm', aEntrantId: 'a', bEntrantId: 'b', verdict: 'a-better', relative: 'a', playCounts: { a: 2, b: 1 }, submittedAt: 'now' };
+  const vote: MatchupVote = { matchupId: 'm', aEntrantId: 'a', bEntrantId: 'b', verdict: 'a-better', relative: 'a', playCounts: { a: 2, b: 1 }, submittedAt: 'now', source: 'rank' };
   store.save({ history: [vote] });
   const undone = store.undoLastVerdict();
   assert.equal(undone?.verdict, 'a-better');
@@ -756,6 +832,7 @@ function testRetiredThemesNeverScheduledButRevealable(): void {
     relative: 'a',
     playCounts: { a: 1, b: 1 },
     submittedAt: 'now',
+    source: 'rank',
   };
   const derived = completedMatchupsFromVotes(rankCatalog, [vote]);
   assert.equal(derived.length, 1, 'a vote on a retired theme still counts as judged history');
@@ -777,6 +854,7 @@ function testHistoricalVoteJudgedNeverReserved(): void {
     relative: 'a',
     playCounts: { a: 1, b: 1 },
     submittedAt: 'now',
+    source: 'rank',
   };
   assert.equal(completedMatchupsFromVotes(rankCatalog, [vote]).length, 1, 'a mass-driver pair vote counts as judged');
 
@@ -869,7 +947,7 @@ function testCatalogDerivedHistory(): void {
   const theme = version.themes[0]!;
   const a = version.entrants[0]!;
   const b = version.entrants[1]!;
-  const vote: MatchupVote = { matchupId: pairId(theme.id, a.levelId, b.levelId), aEntrantId: a.levelId, bEntrantId: b.levelId, verdict: 'a-better', relative: 'tie', playCounts: { a: 1, b: 1 }, submittedAt: 'now' };
+  const vote: MatchupVote = { matchupId: pairId(theme.id, a.levelId, b.levelId), aEntrantId: a.levelId, bEntrantId: b.levelId, verdict: 'a-better', relative: 'tie', playCounts: { a: 1, b: 1 }, submittedAt: 'now', source: 'rank' };
   const derived = completedMatchupsFromVotes(catalog, [vote]);
   assert.equal(derived.length, 1);
   assert.equal(derived[0]!.vote.relative, 'a', 'relative outcome is derived from the stored verdict');
@@ -894,6 +972,7 @@ function testRetiredEntrantReveal(): void {
     relative: 'a',
     playCounts: { a: 1, b: 1 },
     submittedAt: 'now',
+    source: 'rank',
   };
   const reveal = revealFromVote(rankCatalog, vote);
   assert.ok(reveal, 'a vote involving a retired entrant remains revealable');
@@ -1166,6 +1245,7 @@ function historyEntry(matchupId: string, aConfigurationId: string, bConfiguratio
     relative,
     playCounts: { a: 1, b: 1 },
     submittedAt: '',
+    source: 'rank',
   };
   const side = (configurationId: string, cost: number | undefined) =>
     ({ configurationId, modelName: configurationId, workflowName: 'solo', ...(cost === undefined ? {} : { generationCost: cost }) });

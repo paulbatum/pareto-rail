@@ -309,6 +309,7 @@ function schedulerCurve(catalog: SchedulingPool, judged: readonly SchedulerJudge
       relative,
       playCounts: { a: 1, b: 1 },
       submittedAt: '',
+      source: 'rank',
     };
     history.push({
       vote,

@@ -11,12 +11,24 @@ export interface CompletedMatchup {
 
 /** Rebuild catalog-derived reveal data from the vote log. Current catalog
  * metadata is deliberately used here, so changed thumbnails and other
- * published details are reflected after a reload. */
+ * published details are reflected after a reload. A vote on a theme that is not
+ * admitted to ranking is left out, so no curve is fitted to it; the server
+ * leaves the same vote out of the community tally. */
 export function completedMatchupsFromVotes(catalog: RankCatalog, votes: readonly MatchupVote[]): CompletedMatchup[] {
   return votes.flatMap((vote) => {
+    if (!countsTowardRanking(catalog, vote)) return [];
     const reveal = revealFromVote(catalog, vote);
     return reveal ? [{ matchupId: reveal.matchupId, vote: reveal.vote, reveal }] : [];
   });
+}
+
+/** An experimental theme is being shown off before it is admitted to ranking.
+ * The scheduler never serves one, so only a custom match can produce a vote on
+ * it, and no leaderboard counts that vote. */
+export function countsTowardRanking(catalog: RankCatalog, vote: MatchupVote): boolean {
+  const parsed = parsePairId(vote.matchupId);
+  const theme = parsed ? findCatalogTheme(catalog, parsed.themeId) : undefined;
+  return theme !== undefined && theme.experimental !== true;
 }
 
 export function exposureCountsFromVotes(catalog: RankCatalog, votes: readonly MatchupVote[]): Record<string, number> {
@@ -111,11 +123,6 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
   async submitVote(request: SubmitVoteRequest): Promise<MatchupVote> {
     this.requireParticipant(request.participantId);
     const assignment = this.assignmentFor(request.matchupId);
-    const prior = this.store.snapshot.history.find((vote) => vote.matchupId === request.matchupId);
-    if (prior) {
-      if (prior.verdict !== request.verdict) throw new Error('A matchup already has a different vote');
-      return prior;
-    }
     const counts = this.playCounts.get(request.matchupId) ?? playCountsFor(assignment, this.store.snapshot.levelRuns);
     if (counts.a < 1 || counts.b < 1 || request.playCounts.a < 1 || request.playCounts.b < 1) throw new Error('Both entrants must be played before voting');
     const a = findCatalogEntrant(this.catalog, assignment.a.playableRef);
@@ -131,9 +138,9 @@ export class CatalogBenchmarkApi implements BenchmarkApi {
       sentiment: mapping.sentiment,
       playCounts: { ...counts },
       submittedAt: new Date().toISOString(),
+      source: 'rank',
     };
-    const history = [...this.store.snapshot.history.filter((item) => item.matchupId !== request.matchupId), vote];
-    this.store.save({ history });
+    this.store.recordVote(vote);
     return vote;
   }
 

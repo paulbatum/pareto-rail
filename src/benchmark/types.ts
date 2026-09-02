@@ -100,6 +100,9 @@ export interface MatchupVote {
   sentiment?: TieSentiment;
   playCounts: PlayCounts;
   submittedAt: string;
+  /** Which flow cast this vote. Votes stored before custom matches were
+   * recorded carry no source and are read as `rank`. */
+  source: VoteSource;
 }
 
 export interface RevealPayload {

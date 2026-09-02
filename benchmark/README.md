@@ -73,6 +73,8 @@ The chart still shows configurations below the threshold but marks them as provi
 
 Votes are stored anonymously as salted participant hashes and append-only, idempotent records. Existing votes remain attached to immutable theme, level, and configuration identifiers.
 
+A vote comes from one of two flows, and each stored vote records which: the scheduled comparison on `/rank`, or a custom match on `/match`, where the visitor picks the pair. Ratings count both. A custom match can repeat a pair the same participant already judged, which the schedule never does; only that participant's newest vote on the pair counts, and the superseded vote stays in the table.
+
 ## Generation cost
 
 Generation cost is the benchmark's valuation of the model usage captured for a run. It can include the primary agent and delegated subagents when their transcripts are part of the run's isolated harness record. A reported dollar value does not necessarily equal a charge paid by the owner: configurations can use subscriptions, metered APIs, discounted routes, or rate-card valuation.

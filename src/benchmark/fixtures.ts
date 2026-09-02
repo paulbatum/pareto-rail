@@ -115,7 +115,7 @@ export class FixtureBenchmarkApi implements BenchmarkApi {
     const a = entrantForRef(this.catalog.entrants, assignment.a.playableRef);
     const b = entrantForRef(this.catalog.entrants, assignment.b.playableRef);
     const mapping = mapVerdict(request.verdict);
-    const vote: MatchupVote = { matchupId: request.matchupId, aEntrantId: a.entrantId, bEntrantId: b.entrantId, verdict: request.verdict, relative: mapping.relative, sentiment: mapping.sentiment, playCounts: { ...counts }, submittedAt: new Date().toISOString() };
+    const vote: MatchupVote = { matchupId: request.matchupId, aEntrantId: a.entrantId, bEntrantId: b.entrantId, verdict: request.verdict, relative: mapping.relative, sentiment: mapping.sentiment, playCounts: { ...counts }, submittedAt: new Date().toISOString(), source: 'rank' };
     this.votes.set(key, vote);
     return vote;
   }

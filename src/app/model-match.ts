@@ -24,9 +24,10 @@ export interface ModelMatchupOptions {
  * no theme holds both the model and another model, which is also what an unknown
  * slug gives.
  *
- * The draw is over the whole catalog rather than the scheduling pool: a custom
- * match is casual and records nothing, so retired and experimental entrants are
- * eligible too — the same breadth the `/match` picker offers.
+ * The draw is over the whole catalog rather than the scheduling pool, so retired
+ * and experimental entrants are eligible too — the same breadth the `/match`
+ * picker offers. Both sides come from one theme, so the vote the match produces
+ * is recorded like any other.
  */
 export function matchupForModel(slug: string, options: ModelMatchupOptions): { a: string; b: string } | null {
   const catalog = options.catalog ?? rankCatalog;
