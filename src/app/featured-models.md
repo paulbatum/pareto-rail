@@ -8,11 +8,12 @@ Every bullet below is a model, so this prose stays prose: a bullet anywhere in t
 file renders on the home page.
 
 A model belongs here once it is running the benchmark, which is earlier than its
-first level publishes. Four decorations are available, all optional. `(new)` after
+first level publishes. Five decorations are available, all optional. `(new)` after
 a name marks a recent arrival; drop it once the model stops being news. `(retired)`
-after a name takes the model off the home page while its levels stay published —
-keep the line, because `benchmark:export-rank-catalog` compares this file against
-the models publishing levels, and a retired name is how you tell it the omission is
+after a name takes a model off the home page that used to be on it, and `(unlisted)`
+after a name keeps a model off the home page that was never on it. Keep the line in
+both cases, because `benchmark:export-rank-catalog` compares this file against the
+models publishing levels, and either marker is how you tell it the omission is
 deliberate rather than copy that still needs writing. A name written as a markdown
 link gets a destination, which the home page renders as an external link. An em
 dash and a short phrase after a name add a note, and the home page gives an entry
@@ -21,8 +22,8 @@ with a note its own full-width row, so keep notes rare.
 The name is what the catalog is reconciled against, so it stays the model's name
 alone — a marker, a note, or a link never changes it.
 
-The order here is the order on the home page. A retired entry renders nowhere, so
-put it last.
+The order here is the order on the home page. A retired or unlisted entry renders
+nowhere, so put it last.
 
 - Claude Fable 5.1 (new)
 - Claude Opus 5
@@ -35,3 +36,4 @@ put it last.
 - [Inkling](https://openrouter.ai/thinkingmachines/inkling) (retired)
 - [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash)
 - Gemini 3.6 Flash (retired)
+- GPT-5.6 Luna (unlisted)

@@ -466,13 +466,13 @@ function reportFeaturedModelDrift(catalog) {
   const listed = fs.readFileSync(featuredModelsPath, 'utf8').split('\n')
     .map((line) => /^-\s+(.*\S)\s*$/.exec(line.trim())?.[1])
     .filter((entry) => entry !== undefined)
-    .map((entry) => ({ entry, retired: /\(retired\)$/i.test(entry) }))
-    .map(({ entry, retired }) => ({ retired, name: entry.replace(/\s*\((?:new|retired)\)$/i, '') }))
+    .map((entry) => ({ entry, unnamed: /\((?:retired|unlisted)\)$/i.test(entry) }))
+    .map(({ entry, unnamed }) => ({ unnamed, name: entry.replace(/\s*\((?:new|retired|unlisted)\)$/i, '') }))
     // A name may carry a note after an em dash, and may be written as a markdown
     // link. The catalog knows the model by its name alone, so both come off here.
     .map((item) => ({ ...item, name: /^(.*?)\s+—\s+.*\S$/.exec(item.name)?.[1] ?? item.name }))
     .map((item) => ({ ...item, name: /^\[(.+)\]\(\S+\)$/.exec(item.name)?.[1] ?? item.name }));
-  const named = listed.filter((item) => !item.retired).map((item) => item.name);
+  const named = listed.filter((item) => !item.unnamed).map((item) => item.name);
   const acknowledged = new Set(listed.map((item) => item.name));
   const publishing = new Set(catalog.entrants
     .filter((entrant) => !entrant.retired)
