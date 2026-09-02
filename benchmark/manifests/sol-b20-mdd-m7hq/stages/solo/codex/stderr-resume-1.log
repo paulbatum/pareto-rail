@@ -1,0 +1,17 @@
+2026-07-18T13:34:36.532016Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-sol-b20-mdd-m7hq/src/benchmark-levels/mass-driver-detailed-m7hq/gameplay.ts:
+    steerHomingShot(data.position, data.velocity, hostileShotAimPoint(context.camera, data.position, 2.6), context.age, dt, {
+      baseSpeed: 6.2,
+      maxSpeed: 18,
+      accel: 4.5,
+      accel: 4.5,
+      turnRate: 2.8,
+    });
+2026-07-18T13:38:47.079586Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /tmp/pareto-rail-sol-b20-mdd-m7hq/src/benchmark-levels/mass-driver-detailed-m7hq/audio.ts:
+  bus.on('runstart', () => {
+    interlockIds.clear();
+    interlockKills = 0;
+  });
+  bus.on('spawn', ({ enemyId, kind }) => {
+    if (kind === 'interlock') interlockIds.add(enemyId);
+    if (kind === 'interlock') interlockIds.add(enemyId);
+  });

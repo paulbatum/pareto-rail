@@ -1,0 +1,32 @@
+{
+  "executable": "pi",
+  "arguments": [
+    "--print",
+    "--mode",
+    "json",
+    "--approve",
+    "--offline",
+    "--no-extensions",
+    "--thinking",
+    "max",
+    "--model",
+    "k3",
+    "--provider",
+    "kimi-coding",
+    "--extension",
+    "/home/pbatum/.pi/agent/npm/node_modules/pi-provider-kimi-code/index.ts",
+    "--extension",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-quota-wait-extension.js",
+    "--session",
+    "019f7927-d1a6-739d-9bef-99c46295f230"
+  ],
+  "cliVersion": "0.80.10",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-kimi-k3-sub-broadside-b2o2",
+  "startedAt": "2026-08-16T05:35:03.703Z",
+  "finishedAt": "2026-08-16T05:46:44.802Z",
+  "wallTimeSeconds": 649.675651289,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

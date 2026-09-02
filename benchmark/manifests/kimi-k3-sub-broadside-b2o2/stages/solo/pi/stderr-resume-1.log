@@ -1,0 +1,7 @@
+[kimi-coding] auth refresh: requesting new access token
+[kimi-coding] auth refresh: new token persisted
+Warning: Model "k3" not found for provider "kimi-coding". Using custom model id.
+[kimi-coding] upstream error on first event, attempting refresh: 401: {"message":"The API Key appears to be invalid or may have expired. Please verify your credentials and try again.","type":"invalid_authentication_error"}
+[kimi-coding] auth refresh: requesting new access token
+[kimi-coding] auth refresh: new token persisted
+[kimi-coding] retrying stream with refreshed token

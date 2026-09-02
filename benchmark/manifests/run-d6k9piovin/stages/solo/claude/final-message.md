@@ -1,0 +1,14 @@
+The Speedsolve level is complete and every gate passes. Nothing further is needed from tools; here is the handoff.
+
+**What was built** in `src/benchmark-levels/speedsolve-n4v0/` (about 4,950 lines, plus three gallery images under `public/level-content/speedsolve-n4v0/` and the regenerated `docs/level-gallery.md`):
+
+- **One continuous boss fight.** A 27-cubie puzzle cube with real sticker-permutation math hangs at the arena centre while the rail orbits it. Six four-bar windows present six faces; the camera drifts at each station and swings to the next on the last three beats. The camera look is authored around the cube by extracting and re-applying the runner's edge-look rotation, so the engine hook stays intact.
+- **Solving is shooting.** Each window opens with a flurry of layer snaps that scramble wrong stickers into targets. Every kill snaps the face layer back, on the eighth-note grid, through a shared snap clock that the audio module owns and the gameplay converts to its own clock. A solved face falls away as loose cubies, exposing a three-lock gear hub with a speed bonus and a split-time callout. At bar 24 the shell blows off and the core spawns: armour from any unsolved faces, then a four-hit cage, then a six-hit heart. Its death resolves the music and ends the run on a bar line no earlier than 56 s.
+- **The swarm.** Darts sweep in front of the cube, orbiters ring the face, gunners lunge and fire interceptable homing cubies. Three-point hull.
+- **Score.** 120 BPM, 30 bars, a click-and-thock kit that shares its material with the cube snaps. Kill lanes per section over a rising C major progression, pentatonic lock ticks, a dominant pedal in the finale that resolves only when the core bursts. Layers are earned per hub destroyed, with a time floor so the build never stalls.
+
+**Verified headless:** typecheck, build, `check:benchmark-scope` (23 paths), `check:floor` ACCEPT (occlusion 0 warnings, perf gates pass, no centerness or distance warnings), `trace:audio`, and SwiftShader stills at eight points of the run plus the start and end screens. The perfect-policy simulation clears 84 of 89 targets and reaches rank S at 56 s.
+
+**Two engine quirks worth knowing.** The shared post pass passes bloom `threshold` and `radius` to three's `bloom()` in swapped order. My config compensates, with a comment, and `level.md` notes it. The headless simulator builds the runner from the gameplay module only, so the camera hooks live on the gameplay object.
+
+**Needs human eyes.** WSL2 cannot render WebGPU, so a playtest should check first: that layer snaps land audibly with the click track, that armed stickers and their white frames read against the pale void with bloom at zero, and that the bar-24 shell blow and the core burst land with enough weight. The REPLAY word overlaps the exposed mechanism slightly at run end, which the end panel covers in practice.

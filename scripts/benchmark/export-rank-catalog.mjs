@@ -242,8 +242,19 @@ function generationCost(entrant, manifest) {
   return total;
 }
 
+// The time a visitor compares entrants on is the time the model spent generating, so a round that ran
+// without recording a completion still counts. `wallTimeSeconds` covers only the rounds that reported a
+// duration, and the stage's `interruptedRounds` carry the window the session was observed running in.
+function stageGenerationSeconds(stage) {
+  const interrupted = (stage.interruptedRounds ?? []).reduce((total, round) => {
+    if (!round.startedAt || !round.lastObservedAt) return total;
+    return total + (Date.parse(round.lastObservedAt) - Date.parse(round.startedAt)) / 1_000;
+  }, 0);
+  return (stage.wallTimeSeconds ?? 0) + interrupted;
+}
+
 function runMetrics(entrant, manifest, labels) {
-  const generationWallTimeSeconds = Math.max(...manifest.stages.map((stage) => stage.wallTimeSeconds ?? 0));
+  const generationWallTimeSeconds = Math.max(...manifest.stages.map(stageGenerationSeconds));
   const totalWallTimeSeconds = manifest.timing?.wallTimeSeconds;
   if (!Number.isFinite(generationWallTimeSeconds) || !Number.isFinite(totalWallTimeSeconds)) {
     throw new Error(`Run ${entrant.runId} for entrant ${entrant.levelId} is missing timing data.`);

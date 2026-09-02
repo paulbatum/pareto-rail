@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T22:19:56.677Z",
+  "generatedAt": "2026-09-02T02:02:35.560Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -2203,6 +2203,41 @@
       "thumbnailPath": "/level-content/purse-pursuit-tahr/hero.avif",
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "6d3b6ec2c3f5661f0dcc30d6ce368a2d0da7a9b4"
+    },
+    {
+      "levelId": "speedsolve-n4v0",
+      "themeId": "speedsolve",
+      "configurationId": "claude-fable-5-1-high",
+      "modelName": "Claude Fable 5.1",
+      "workflowName": "solo",
+      "generationCost": 37.749724,
+      "linesOfCode": 4548,
+      "run": {
+        "generationWallTimeSeconds": 3950.148,
+        "totalWallTimeSeconds": 5137.066,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.258"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5-1",
+            "role": "solo",
+            "inputTokens": 2618,
+            "outputTokens": 285536,
+            "cacheReadTokens": 15473216,
+            "cacheWriteTokens": 978922,
+            "usageSource": "ccusage",
+            "costUsd": 37.749724
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/speedsolve-n4v0/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "e5541f86b66c38cf6446d41413243bc7aab12cc8"
     },
     {
       "levelId": "speedsolve-nfof",

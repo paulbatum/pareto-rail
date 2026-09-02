@@ -1,0 +1,21 @@
+{
+  "runId": "run-d6k9piovin",
+  "slotId": "n4v0",
+  "levelId": "speedsolve-n4v0",
+  "themeId": "speedsolve",
+  "themePath": "benchmark/themes/speedsolve.md",
+  "configurationId": "claude-fable-5-1-high",
+  "recipePath": "benchmark/recipes/claude-fable-5-1-high.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-fable-5-1",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "e5541f86b66c38cf6446d41413243bc7aab12cc8",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Speedsolve"
+}

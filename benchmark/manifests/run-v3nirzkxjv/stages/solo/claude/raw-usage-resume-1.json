@@ -1,0 +1,87 @@
+{
+  "sessionId": "9338a7f1-7e05-488a-a726-910df6f1c0fb",
+  "initResolvedModel": "claude-opus-5",
+  "finalMessage": "**Tinker Ball** is complete at `src/benchmark-levels/tinker-ball-nirz/` — 16 files, ~4.4k lines, nothing outside the assigned directory.\n\n## What it is\n\nA 60-second run (33 bars at 132 BPM, ending on a clean bar of coast) across one oversized worktable. You are a marble; scratches in the wood are the road. Glue monsters wear bodies of stolen supplies around visible black adhesive cores; shooting a core scatters its pieces onto the table ahead, loose pieces crawl into the lane you're following, and the ball welds them to its surface for the rest of the run. Three scales — marble, tennis ball, melon — carried by the rail climbing, the speed profile accelerating, and the clutter tier changing from buttons and pins to spools and erasers to jars and pencil cups.\n\n**Signature systems**\n- `visuals/pieces.ts` — the kill→scatter→herd→stick loop, all instanced (6 draw calls for a whole run's cargo). Stuck pieces keep their world size as the ball grows.\n- `gameplay.ts` — waves authored in screen fractions, converted to world offsets at build time from the level's own speed profile and rail length, so composition holds as the camera climbs and speeds up. Ground creatures are seated against the *table*, not the rail, so the horizon sinks through the frame as you grow.\n- `spill.ts` — the boss: three crusts over three cores over a heart. Nothing is ever unlockable; a premature release flashes whatever still protects the target and glazes the heart over for a beat. The bare heart only breaks under a volley carrying every lock it can hold.\n- `audio.ts` — bright workshop pop; kills read a hidden 32-step melody lane off the transport grid, locks climb a pentatonic, and each kill schedules a *pickup rattle* ~2.6 s later for when its pieces actually reach the ball.\n\n## Verified\n`typecheck`, `build`, `check:floor` (all gates pass; occlusion worst case 1.0%, all perf gates green), `check:occlusion`, `check:perf`, `simulate` across all four policies with full event coverage (perfect 63/76 rank A, imperfect ~55/76 rank A across seeds 1–3, no dead-air gaps), and `trace:audio`. The pick-up loop was exercised with a scratch driver since no headless tool both drives kills and renders — every non-stray piece welds on.\n\n## Two real bugs found and fixed during the pass\n- Scattered clutter and shadow bands were placed at *rail* height, not on the table (`scatterAlongRail` positions relative to the rail point, which climbs).\n- `MultiplyBlending` ignores `opacity` — black shadow quads multiplied the frame to zero, and stacked ones cut a hole through the table.\n\n## Needs human eyes\nNever rendered under WebGPU (headless Chrome here falls back to SwiftShader). A playtester should check the ball's framing along the bottom of the frame, black glue cores against dark wood with the bloom slider at zero, whether the accumulated cargo reads as recognisable supplies rather than confetti, and whether the spill fight reads as three layers of armour. Audio has only been verified structurally via the semantic trace, never listened to.",
+  "eventType": "result",
+  "raw": {
+    "is_error": false,
+    "duration_api_ms": 868737,
+    "num_turns": 76,
+    "stop_reason": "end_turn",
+    "session_id": "9338a7f1-7e05-488a-a726-910df6f1c0fb",
+    "total_cost_usd": 25.079429500000003,
+    "usage": {
+      "input_tokens": 144,
+      "cache_creation_input_tokens": 525483,
+      "cache_read_input_tokens": 36957959,
+      "output_tokens": 53796,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 525483,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-opus-5": {
+        "inputTokens": 144,
+        "outputTokens": 53796,
+        "cacheReadInputTokens": 36957959,
+        "cacheCreationInputTokens": 525483,
+        "webSearchRequests": 0,
+        "costUSD": 25.079429500000003,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "canonicalModel": "claude-opus-5",
+        "provider": "firstParty"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Tinker Ball** is complete at `src/benchmark-levels/tinker-ball-nirz/` — 16 files, ~4.4k lines, nothing outside the assigned directory.\n\n## What it is\n\nA 60-second run (33 bars at 132 BPM, ending on a clean bar of coast) across one oversized worktable. You are a marble; scratches in the wood are the road. Glue monsters wear bodies of stolen supplies around visible black adhesive cores; shooting a core scatters its pieces onto the table ahead, loose pieces crawl into the lane you're following, and the ball welds them to its surface for the rest of the run. Three scales — marble, tennis ball, melon — carried by the rail climbing, the speed profile accelerating, and the clutter tier changing from buttons and pins to spools and erasers to jars and pencil cups.\n\n**Signature systems**\n- `visuals/pieces.ts` — the kill→scatter→herd→stick loop, all instanced (6 draw calls for a whole run's cargo). Stuck pieces keep their world size as the ball grows.\n- `gameplay.ts` — waves authored in screen fractions, converted to world offsets at build time from the level's own speed profile and rail length, so composition holds as the camera climbs and speeds up. Ground creatures are seated against the *table*, not the rail, so the horizon sinks through the frame as you grow.\n- `spill.ts` — the boss: three crusts over three cores over a heart. Nothing is ever unlockable; a premature release flashes whatever still protects the target and glazes the heart over for a beat. The bare heart only breaks under a volley carrying every lock it can hold.\n- `audio.ts` — bright workshop pop; kills read a hidden 32-step melody lane off the transport grid, locks climb a pentatonic, and each kill schedules a *pickup rattle* ~2.6 s later for when its pieces actually reach the ball.\n\n## Verified\n`typecheck`, `build`, `check:floor` (all gates pass; occlusion worst case 1.0%, all perf gates green), `check:occlusion`, `check:perf`, `simulate` across all four policies with full event coverage (perfect 63/76 rank A, imperfect ~55/76 rank A across seeds 1–3, no dead-air gaps), and `trace:audio`. The pick-up loop was exercised with a scratch driver since no headless tool both drives kills and renders — every non-stray piece welds on.\n\n## Two real bugs found and fixed during the pass\n- Scattered clutter and shadow bands were placed at *rail* height, not on the table (`scatterAlongRail` positions relative to the rail point, which climbs).\n- `MultiplyBlending` ignores `opacity` — black shadow quads multiplied the frame to zero, and stacked ones cut a hole through the table.\n\n## Needs human eyes\nNever rendered under WebGPU (headless Chrome here falls back to SwiftShader). A playtester should check the ball's framing along the bottom of the frame, black glue cores against dark wood with the bloom slider at zero, whether the accumulated cargo reads as recognisable supplies rather than confetti, and whether the spill fight reads as three layers of armour. Audio has only been verified structurally via the semantic trace, never listened to.",
+    "ttft_ms": 7550,
+    "ttft_stream_ms": 7092,
+    "time_to_request_ms": 83,
+    "type": "result",
+    "duration_ms": 1330660,
+    "uuid": "95ba2406-94e5-4d7c-af42-971034ff1c0d"
+  },
+  "normalized": {
+    "inputTokens": 36958103,
+    "outputTokens": 53796,
+    "cacheReadInputTokens": 36957959,
+    "cacheWriteInputTokens": 525483,
+    "vendorFields": {
+      "totalCostUsd": 25.079429500000003,
+      "durationMs": 1330660,
+      "durationApiMs": 868737,
+      "numTurns": 76,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-opus-5": {
+          "inputTokens": 144,
+          "outputTokens": 53796,
+          "cacheReadInputTokens": 36957959,
+          "cacheCreationInputTokens": 525483,
+          "webSearchRequests": 0,
+          "costUSD": 25.079429500000003,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-opus-5",
+          "provider": "firstParty"
+        }
+      }
+    }
+  }
+}

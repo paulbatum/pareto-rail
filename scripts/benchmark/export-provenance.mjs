@@ -42,6 +42,12 @@ const STAGE_FILES = [
   'final-message.md',
   'stderr.log',
 ];
+// A continued stage writes one set of these per round, suffixed `-resume-<round>`. Publishing only the
+// unsuffixed names would hide every round after the first, and would leave a stage whose first round was
+// killed with no command or usage record at all. Stripping the suffix decides membership, so the
+// allowlist keeps naming one artifact per kind.
+const withoutRoundSuffix = (name) => name.replace(/-resume-\d+(?=\.[^.]+$)/, '');
+const isStageFile = (name) => STAGE_FILES.includes(withoutRoundSuffix(name));
 // gates/ keeps its manifest and the small per-gate logs; promotion-checks/ keeps
 // the per-check records. Both are matched by extension so a new gate or check is
 // carried without editing this file.
@@ -133,7 +139,9 @@ function collectRunFiles(runDir) {
       for (const harness of fs.readdirSync(stagePath).sort()) {
         const harnessPath = path.join(stagePath, harness);
         if (!fs.statSync(harnessPath).isDirectory()) continue;
-        for (const name of STAGE_FILES) take(path.join('stages', stage, harness, name));
+        for (const name of fs.readdirSync(harnessPath).sort()) {
+          if (isStageFile(name)) take(path.join('stages', stage, harness, name));
+        }
       }
     }
   }
@@ -193,7 +201,9 @@ export function assertNoDenylisted() {
   for (const rel of listFiles(manifestsRoot)) {
     const segments = rel.split(path.sep);
     const base = segments[segments.length - 1];
-    if (DENY_BASENAMES.has(base)) offenders.push(rel);
+    // A round-suffixed name is the same artifact as its unsuffixed form, so the safety net judges both
+    // by the same rule: `events-resume-1.jsonl` is bulk transcript exactly as `events.jsonl` is.
+    if (DENY_BASENAMES.has(base) || DENY_BASENAMES.has(withoutRoundSuffix(base))) offenders.push(rel);
     else if (segments.some((seg) => DENY_DIRNAMES.has(seg))) offenders.push(rel);
   }
   if (offenders.length > 0) {

@@ -1,0 +1,27 @@
+{
+  "sessionId": "01a02637-29c4-7e6c-a29d-a5b83809c6f2",
+  "truncation": "the session ended at a threshold compaction",
+  "emptyCompletion": {
+    "reason": "assistant message carried no content and zero usage",
+    "responseId": "gen-1787362672-E75x8okxXOex4TJyfRDy"
+  },
+  "toolCalls": 30,
+  "initResolvedModel": "stealth/ox-alpha",
+  "assistantMessageCount": 31,
+  "finalMessage": "",
+  "normalized": {
+    "inputTokens": 52305,
+    "outputTokens": 18391,
+    "cacheReadTokens": 7209472,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/ox-alpha": {
+          "outputTokens": 18391,
+          "costUSD": 1.2767692699999997
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "sessionId": "7cd38acc-81d4-4ee7-affd-abe034a92fcd",
+  "initResolvedModel": "claude-fable-5-1",
+  "finalMessage": "The Speedsolve level is complete and every gate passes. Nothing further is needed from tools; here is the handoff.\n\n**What was built** in `src/benchmark-levels/speedsolve-n4v0/` (about 4,950 lines, plus three gallery images under `public/level-content/speedsolve-n4v0/` and the regenerated `docs/level-gallery.md`):\n\n- **One continuous boss fight.** A 27-cubie puzzle cube with real sticker-permutation math hangs at the arena centre while the rail orbits it. Six four-bar windows present six faces; the camera drifts at each station and swings to the next on the last three beats. The camera look is authored around the cube by extracting and re-applying the runner's edge-look rotation, so the engine hook stays intact.\n- **Solving is shooting.** Each window opens with a flurry of layer snaps that scramble wrong stickers into targets. Every kill snaps the face layer back, on the eighth-note grid, through a shared snap clock that the audio module owns and the gameplay converts to its own clock. A solved face falls away as loose cubies, exposing a three-lock gear hub with a speed bonus and a split-time callout. At bar 24 the shell blows off and the core spawns: armour from any unsolved faces, then a four-hit cage, then a six-hit heart. Its death resolves the music and ends the run on a bar line no earlier than 56 s.\n- **The swarm.** Darts sweep in front of the cube, orbiters ring the face, gunners lunge and fire interceptable homing cubies. Three-point hull.\n- **Score.** 120 BPM, 30 bars, a click-and-thock kit that shares its material with the cube snaps. Kill lanes per section over a rising C major progression, pentatonic lock ticks, a dominant pedal in the finale that resolves only when the core bursts. Layers are earned per hub destroyed, with a time floor so the build never stalls.\n\n**Verified headless:** typecheck, build, `check:benchmark-scope` (23 paths), `check:floor` ACCEPT (occlusion 0 warnings, perf gates pass, no centerness or distance warnings), `trace:audio`, and SwiftShader stills at eight points of the run plus the start and end screens. The perfect-policy simulation clears 84 of 89 targets and reaches rank S at 56 s.\n\n**Two engine quirks worth knowing.** The shared post pass passes bloom `threshold` and `radius` to three's `bloom()` in swapped order. My config compensates, with a comment, and `level.md` notes it. The headless simulator builds the runner from the gameplay module only, so the camera hooks live on the gameplay object.\n\n**Needs human eyes.** WSL2 cannot render WebGPU, so a playtest should check first: that layer snaps land audibly with the click track, that armed stickers and their white frames read against the pale void with bloom at zero, and that the bar-24 shell blow and the core burst land with enough weight. The REPLAY word overlaps the exposed mechanism slightly at run end, which the end panel covers in practice.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 698078,
+    "stop_reason": "end_turn",
+    "session_id": "7cd38acc-81d4-4ee7-affd-abe034a92fcd",
+    "total_cost_usd": 15.101362499999995,
+    "usage": {
+      "input_tokens": 1044,
+      "cache_creation_input_tokens": 527589,
+      "cache_read_input_tokens": 8498570,
+      "output_tokens": 48290,
+      "output_tokens_details": {
+        "thinking_tokens": 26087
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 527589,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 56,
+          "output_tokens": 1032,
+          "cache_read_input_tokens": 534818,
+          "cache_creation_input_tokens": 3003,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 3003
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-fable-5-1": {
+        "inputTokens": 1044,
+        "outputTokens": 48290,
+        "cacheReadInputTokens": 8498570,
+        "cacheCreationInputTokens": 527589,
+        "webSearchRequests": 0,
+        "costUSD": 15.101362499999995,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 26087,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 46,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "The Speedsolve level is complete and every gate passes. Nothing further is needed from tools; here is the handoff.\n\n**What was built** in `src/benchmark-levels/speedsolve-n4v0/` (about 4,950 lines, plus three gallery images under `public/level-content/speedsolve-n4v0/` and the regenerated `docs/level-gallery.md`):\n\n- **One continuous boss fight.** A 27-cubie puzzle cube with real sticker-permutation math hangs at the arena centre while the rail orbits it. Six four-bar windows present six faces; the camera drifts at each station and swings to the next on the last three beats. The camera look is authored around the cube by extracting and re-applying the runner's edge-look rotation, so the engine hook stays intact.\n- **Solving is shooting.** Each window opens with a flurry of layer snaps that scramble wrong stickers into targets. Every kill snaps the face layer back, on the eighth-note grid, through a shared snap clock that the audio module owns and the gameplay converts to its own clock. A solved face falls away as loose cubies, exposing a three-lock gear hub with a speed bonus and a split-time callout. At bar 24 the shell blows off and the core spawns: armour from any unsolved faces, then a four-hit cage, then a six-hit heart. Its death resolves the music and ends the run on a bar line no earlier than 56 s.\n- **The swarm.** Darts sweep in front of the cube, orbiters ring the face, gunners lunge and fire interceptable homing cubies. Three-point hull.\n- **Score.** 120 BPM, 30 bars, a click-and-thock kit that shares its material with the cube snaps. Kill lanes per section over a rising C major progression, pentatonic lock ticks, a dominant pedal in the finale that resolves only when the core bursts. Layers are earned per hub destroyed, with a time floor so the build never stalls.\n\n**Verified headless:** typecheck, build, `check:benchmark-scope` (23 paths), `check:floor` ACCEPT (occlusion 0 warnings, perf gates pass, no centerness or distance warnings), `trace:audio`, and SwiftShader stills at eight points of the run plus the start and end screens. The perfect-policy simulation clears 84 of 89 targets and reaches rank S at 56 s.\n\n**Two engine quirks worth knowing.** The shared post pass passes bloom `threshold` and `radius` to three's `bloom()` in swapped order. My config compensates, with a comment, and `level.md` notes it. The headless simulator builds the runner from the gameplay module only, so the camera hooks live on the gameplay object.\n\n**Needs human eyes.** WSL2 cannot render WebGPU, so a playtest should check first: that layer snaps land audibly with the click track, that armed stickers and their white frames read against the pale void with bloom at zero, and that the bar-24 shell blow and the core burst land with enough weight. The REPLAY word overlaps the exposed mechanism slightly at run end, which the end panel covers in practice.",
+    "ttft_ms": 11739,
+    "type": "result",
+    "duration_ms": 972259,
+    "uuid": "0aa6eb7c-2fab-427a-abf5-3172444ab29d",
+    "ttft_stream_ms": 9834,
+    "time_to_request_ms": 65,
+    "queued_turn_count": 0
+  },
+  "normalized": {
+    "inputTokens": 8499614,
+    "outputTokens": 48290,
+    "cacheReadInputTokens": 8498570,
+    "cacheWriteInputTokens": 527589,
+    "vendorFields": {
+      "totalCostUsd": 15.101362499999995,
+      "durationMs": 972259,
+      "durationApiMs": 698078,
+      "numTurns": 46,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-fable-5-1": {
+          "inputTokens": 1044,
+          "outputTokens": 48290,
+          "cacheReadInputTokens": 8498570,
+          "cacheCreationInputTokens": 527589,
+          "webSearchRequests": 0,
+          "costUSD": 15.101362499999995,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 26087,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

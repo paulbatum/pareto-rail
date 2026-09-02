@@ -1,0 +1,22 @@
+{
+  "sessionId": "01a02637-29c4-7e6c-a29d-a5b83809c6f2",
+  "toolCalls": 21,
+  "initResolvedModel": "stealth/ox-alpha",
+  "assistantMessageCount": 20,
+  "finalMessage": "All gates pass. The level is complete — final summary:\n\n## `broadside-7hin` — Broadside: done\n\n**Root cause of the stuck boss fight (found & fixed):** the `runstart` handler reset `armed = false` (so boss spawns were ignored all run) and cleared `conduitEntries`, so killing all generators never fired `dropShields`. Also, every capital ship's placement time had been authored in bars but interpreted as seconds — the flagship sat mid-run instead of at the finale. Both fixed.\n\n**Other fixes this session**\n- Geometry-leak perf gate: enemy records now dispose meshes/materials on kill/miss; lock brackets share one ring geometry + cached materials (`visuals/index.ts`)\n- Occlusion (14 warnings → 0): pulled gap-canyon ships out to ±31/∓32, moved the broadside cruiser to right +19, kept broadside opposition on the open left, bunched escort waves into the shields-down moment with short leads, and trimmed the trench to hug the dive (54.8–59.45s); dropped a stray bar-28.75 dart wave that flew into the trench approach\n- Rank gates tightened: GRAND ADMIRAL now requires score ≥ 14000, ≥ 95% clear, and no damage\n- Wrote `level.md` identity card, generated the three content images (hero = generator fight at 48.8s), wired `contentImages` in `level.json`, regenerated the gallery\n\n**Final verification**\n| Gate | Result |\n|---|---|\n| `npm run typecheck` / `build` | ✓ |\n| Simulate — perfect | **109/109 kills, 15953 pts, GRAND ADMIRAL**, 0 impossible moments |\n| Simulate — imperfect (seed 1) | 103/109, VICE ADMIRAL (clean rank separation) |\n| Simulate — none | survives 60s, 3 player hits |\n| Occlusion | 0 warnings |\n| Performance gates | all 9 ✓ (geometry growth 2.0× vs 512 allowance) |\n| Audio config / trace | 0 failures; 1026 events, cannon salvos, heartbeat, finale fanfare |\n| Benchmark scope | valid (10 paths) |\n| `check:floor` | **All floor checks passed** |\n\nDirectory contains only `src/benchmark-levels/broadside-7hin/` (+ its `public/level-content/broadside-7hin/` images); `src/levels/index.ts` untouched. Remaining human step: a real WebGPU playtest for final visual/audio polish.",
+  "normalized": {
+    "inputTokens": 154262,
+    "outputTokens": 4860,
+    "cacheReadTokens": 708992,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/ox-alpha": {
+          "outputTokens": 4860,
+          "costUSD": 0.27942762
+        }
+      }
+    }
+  }
+}

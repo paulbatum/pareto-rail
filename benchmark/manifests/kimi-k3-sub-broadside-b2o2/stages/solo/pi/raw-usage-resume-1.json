@@ -1,0 +1,21 @@
+{
+  "sessionId": "019f7927-d1a6-739d-9bef-99c46295f230",
+  "initResolvedModel": "k3",
+  "assistantMessageCount": 93,
+  "finalMessage": "",
+  "normalized": {
+    "inputTokens": 498915,
+    "outputTokens": 52088,
+    "cacheReadTokens": 16831590,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 33238,
+    "vendorFields": {
+      "modelUsage": {
+        "k3": {
+          "outputTokens": 52088,
+          "costUSD": 3.6543570770000002
+        }
+      }
+    }
+  }
+}

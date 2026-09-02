@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v2",
+  "runId": "run-d6k9piovin",
+  "slotId": "n4v0",
+  "configuration": {
+    "id": "claude-fable-5-1-high"
+  },
+  "theme": {
+    "id": "speedsolve",
+    "path": "benchmark/themes/speedsolve.md",
+    "sha256": "5ab6f77afe7eadd9fa61c9f0218516a16967cf4aa526698060344154261c8b0b"
+  },
+  "baseline": {
+    "materialsCommit": "e5541f86b66c38cf6446d41413243bc7aab12cc8",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "bce6a97aa046c8b675661966f55da2ff218ee30d"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "src/benchmark-levels/domain.test.ts",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/hull-run-cvs3",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/hull-run-ns5n",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-7rkv",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-9281",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-bczy",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-esvz",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-vyxj",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/mass-driver-wo4m",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-81u5",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-9uib",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-lkor",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/skyhook-snxd",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "src/benchmark-levels/test-fixtures",
+          "reason": "contains material outside the cut-baseline scaffold (src/benchmark-levels/index.ts, src/benchmark-levels/catalog.ts, src/benchmark-levels/types.ts, src/benchmark-levels/validation.ts)"
+        },
+        {
+          "path": "public/level-content/hull-run-cvs3",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/hull-run-ns5n",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-7rkv",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-bczy",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-vyxj",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/mass-driver-wo4m",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-81u5",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-9uib",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-lkor",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "public/level-content/skyhook-snxd",
+          "reason": "content id is not a built-in level (built-ins from src/levels/index.ts: crystal-corridor, helios, prism-bloom, rezdle, rush)"
+        },
+        {
+          "path": "docs/level-gallery.md",
+          "reason": "the generated gallery still contains benchmark level content"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-fable-5-1-high.md",
+    "sha256": "3fbe30903341e0c685be04f0a0c22111ddf7b6515db9dbe0983ccdc7c7555063"
+  },
+  "controller": {
+    "commit": "13acd3518af393e6b0ea8bfa7ee14da0aefbb6fd"
+  },
+  "timing": {
+    "startedAt": "2026-09-02T00:31:36.376Z",
+    "finishedAt": "2026-09-02T01:57:13.442Z",
+    "wallTimeSeconds": 5137.066
+  },
+  "stages": [
+    {
+      "id": "claude-fable-5-1",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-fable-5-1"
+      },
+      "promptSha256": "3bff169815923f735b938300976c006c5112d71f08c095d2f3d2ca8c29caaf7b",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.258 (Claude Code)"
+      },
+      "sessionId": "7cd38acc-81d4-4ee7-affd-abe034a92fcd",
+      "rolloutArtifactSha256": "b8312b22489099554de1736238b1916af7117a1810c9b7a25586592a89277025",
+      "outputArtifactSha256": "5dedc44bf169e3054ed61f8efc64d9c326ec3ff835716d7f4b516af347fe1a8b",
+      "startedAt": "2026-09-02T00:31:52.212Z",
+      "finishedAt": "2026-09-02T01:49:04.620Z",
+      "wallTimeSeconds": 973.462685894,
+      "result": "completed",
+      "entrantSandbox": false,
+      "continuationRounds": 1,
+      "interruptedRounds": [
+        {
+          "round": 0,
+          "startedAt": "2026-09-02T00:31:52.212Z",
+          "lastObservedAt": "2026-09-02T01:21:28.897Z",
+          "evidence": "stage rollout timestamps; the round recorded no completion"
+        }
+      ],
+      "usage": {
+        "inputTokens": 2618,
+        "outputTokens": 285536,
+        "cacheReadInputTokens": 15473216,
+        "cacheWriteInputTokens": 978922
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 37.74972400000001,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 37.74972400000001,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "claude",
+      "command": "ccusage claude session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "suspect",
+      "source": "harness result event modelUsage",
+      "adjustments": [
+        {
+          "modelName": "claude-fable-5-1",
+          "replayOutputTokens": 285536,
+          "counterOutputTokens": 48290,
+          "resolution": "kept-replay"
+        }
+      ]
+    },
+    "models": [
+      {
+        "modelName": "claude-fable-5-1",
+        "usageSource": "ccusage",
+        "costUsd": 37.74972400000001,
+        "inputTokens": 2618,
+        "outputTokens": 285536,
+        "cacheReadTokens": 15473216,
+        "cacheWriteTokens": 978922
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.910811409,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.622176729,
+      "outputSha256": "92425631c158aeb4056d5b66a6e69a0de3d573dadf86feb45c543a20a298fed1"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level speedsolve-n4v0 --base bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.04078930900000068,
+      "outputSha256": "004cf585bdf15dc4ff123313102408681b0eae8efd7375db5ee4791876cb197f"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level speedsolve-n4v0",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 8.478256361,
+      "outputSha256": "56237ed87f2594f59ad1230ea99840b71d597147db59940d3dc01f0eaab90cec"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "speedsolve-n4v0",
+    "title": "Speedsolve",
+    "evaluated": {
+      "commit": "0323509adccc6cb8c19f8d0daed0525cf27658b2",
+      "branch": "benchmark-run-run-d6k9piovin"
+    },
+    "payload": {
+      "commit": "291023b2ce2aafd2ef200c8522e3919477eb4b1d",
+      "branch": "benchmark-payload-run-d6k9piovin"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}
