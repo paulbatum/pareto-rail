@@ -1,4 +1,6 @@
-import { rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog';
+// `.js` because this module is reachable from the api/ runtime graph, which
+// runs on native Node ESM. See docs/backend.md.
+import { rankCatalog, type RankCatalog, type RankCatalogEntrant } from '../benchmark/catalog.js';
 
 /** The slug a model is addressed by in `/match?model=<slug>`: its catalog name
  * lowercased, with every run of other characters folded to one hyphen. */
@@ -99,6 +101,32 @@ export function modelPickerEntries(playable: ReadonlySet<string>, catalog: RankC
       themeCount: entry.themes.size,
     }))
     .sort((left, right) => left.modelName.localeCompare(right.modelName));
+}
+
+/**
+ * Every level that can appear on either side of a draw for these slugs, ordered
+ * so that a caller taking the first few gets one from each theme before a second
+ * from any. The social card takes four, and levels of one theme look alike, so
+ * spreading across themes is what makes the card show the breadth of the pool.
+ * The order is fixed for a given pair, so the card a link unfurls to never
+ * changes between one crawler and the next.
+ */
+export function drawCandidateLevelIds(slug: string, options: ModelMatchupOptions): string[] {
+  const catalog = options.catalog ?? rankCatalog;
+  const entrants = catalog.entrants.filter((entrant) => options.playable.has(entrant.levelId));
+  const isModel = (entrant: RankCatalogEntrant) => modelSlug(entrant.modelName) === slug;
+  const isOpponent = opponentTest(slug, options.opponent);
+  const byTheme = matchableThemeIds(slug, options).map((themeId) => entrants
+    .filter((entrant) => entrant.themeId === themeId && (isModel(entrant) || isOpponent(entrant)))
+    .map((entrant) => entrant.levelId)
+    .sort());
+
+  const ordered: string[] = [];
+  for (let index = 0; ; index += 1) {
+    const round = byTheme.filter((levels) => levels.length > index).map((levels) => levels[index]!);
+    if (round.length === 0) return ordered;
+    ordered.push(...round);
+  }
 }
 
 function opponentTest(slug: string, opponent: string | undefined): (entrant: RankCatalogEntrant) => boolean {

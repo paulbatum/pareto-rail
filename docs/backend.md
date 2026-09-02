@@ -68,6 +68,17 @@ The carried participant id then posts local votes under the same identifier but 
 
 While the Vite dev server is running, `/dev/admin` provides a local-only page for inspecting vote rows, computing participant hashes, and resetting local or production vote data. The page and its API are mounted by dev-server middleware and are not included in production builds; its environment switcher reads local values from `.env` and production values from `.env.prod`. Treat the production delete controls as destructive and use them only when explicitly intended.
 
+## Social cards for match links
+
+`middleware.ts` rewrites the head of a shared `/match` link so crawlers, which do not run JS, get a card instead of the SPA's default metadata. `api/og/match.tsx` renders that card. Two link shapes are carded, and both files must agree on which: the middleware decides in `cardQuery`, and the card function repeats the same test on its own query string.
+
+- `?a=<id>&b=<id>` names both levels, so the card composites their two hero screenshots with a VS badge.
+- `?model=<slug>`, with an optional `&vs=<slug>`, leaves the pair to a draw made when the link opens. The card tiles four heroes from `drawCandidateLevelIds`, which orders the reachable levels one theme at a time so the four span as many themes as possible. A pool of exactly two levels admits one matchup, and gets the VS composite instead.
+
+Neither card carries model names, so a shared link previews what is in play without revealing who built which side.
+
+To see a card without deploying, build the site (heroes are generated into `dist/social/heroes/`), bundle the function with `npx esbuild api/og/match.tsx --bundle --format=esm --platform=node --outfile=tmp/og-card.mjs --external:@vercel/og --loader:.json=json`, then import its `GET` and call it with a `Request` whose origin serves `dist/`.
+
 ## Serverless import hygiene
 
 The `api/` functions run on Vercel under native Node ESM, which requires every runtime import to carry an explicit extension (`./foo.js`, not `./foo`). TypeScript's bundler resolution and Vite both tolerate extensionless specifiers, so `typecheck` and the client build will not catch a missing extension — but the serverless function fails to load at cold start and every request 500s. Any module reachable from `api/` (including shared files under `src/benchmark/` that the client also imports) must use `.js` on value imports; `import type` is erased and unaffected. `npm run check:serverless-imports` walks the value-import graph from the `api/` entry points and enforces this; it runs as part of `npm run build`.

@@ -10,7 +10,7 @@ import { findCatalogEntrant, findCatalogTheme, rankCatalog, schedulingPool, type
 import { configurationGroupResolver } from './identity';
 import { selectPersonalCurveCatalog } from '../app/rank';
 import { CustomMatchController } from '../app/match';
-import { matchableThemeIds, matchupForModel, modelPickerEntries, modelSlug } from '../app/model-match';
+import { drawCandidateLevelIds, matchableThemeIds, matchupForModel, modelPickerEntries, modelSlug } from '../app/model-match';
 import { parseRoute, routePath } from '../app/router';
 import { cardQuery } from '../../middleware';
 import { validateRankVoteBody } from '../../server/rank-vote-validation';
@@ -300,6 +300,18 @@ function testNamedOpponentDraw(): void {
   assert.deepEqual(modelPickerEntries(new Set(['lv-beta-a']), catalog), [
     { slug: 'ox-beta', modelName: 'Ox Beta', levelCount: 1, themeCount: 1 },
   ]);
+
+  // The social card's pool, ordered one level per theme before a second from
+  // any: th-a holds two candidates and th-b three, so the first four the card
+  // takes span both themes and both models.
+  assert.deepEqual(drawCandidateLevelIds('ox-alpha', { catalog, playable, opponent: 'ox-gamma' }),
+    ['lv-alpha-a', 'lv-alpha-b', 'lv-gamma-a', 'lv-alpha-b2', 'lv-gamma-b']);
+  // One theme, one level each: the pool admits a single matchup, which the card
+  // renders as the pair composite rather than a grid.
+  assert.deepEqual(drawCandidateLevelIds('ox-alpha', { catalog, playable, opponent: 'ox-beta' }), ['lv-alpha-a', 'lv-beta-a']);
+  // Without an opponent the pool is the model's levels and everyone else's.
+  assert.deepEqual(drawCandidateLevelIds('ox-beta', { catalog, playable }), ['lv-alpha-a', 'lv-beta-a', 'lv-gamma-a']);
+  assert.deepEqual(drawCandidateLevelIds('no-such-model', { catalog, playable }), []);
 }
 
 function testCustomMatchController(): void {
