@@ -510,20 +510,34 @@ assert.equal(extractUsage(usageEvent(0), 'gpt-5.6-luna').truncation, undefined);
 // runs the same continuation loop. The truncation case is the shape a real kimi run ended on: the
 // provider cut the assistant message off on a length stop, pi ended the agent loop, compacted, and
 // settled — an exit code of zero over an entrant that never finished.
-const piUsageEvent = (trailing) => eventLog([
+const piUsageEvent = (trailing, { stopReason = 'length' } = {}) => eventLog([
   { type: 'session', id: 'session-1' },
   { type: 'tool_execution_start', toolName: 'bash' },
-  assistantEnd({ stopReason: 'length', content: [{ type: 'text', text: '' }], usage: { input: 1, output: 1 }, model: 'k3' }),
+  assistantEnd({ stopReason, content: [{ type: 'text', text: '' }], usage: { input: 1, output: 1 }, model: 'k3' }),
   { type: 'agent_end' },
   ...trailing,
 ]);
-assert.equal(extractPiUsage(piUsageEvent([]), 'k3').truncation, undefined);
-assert.equal(extractPiUsage(piUsageEvent([]), 'k3').toolCalls, 1);
+assert.equal(extractPiUsage(piUsageEvent([], { stopReason: 'stop' }), 'k3').truncation, undefined);
+assert.equal(extractPiUsage(piUsageEvent([], { stopReason: 'stop' }), 'k3').toolCalls, 1);
 assert.match(extractPiUsage(piUsageEvent([
   { type: 'compaction_start', reason: 'threshold' },
   { type: 'compaction_end', reason: 'threshold' },
   { type: 'agent_settled' },
 ]), 'k3').truncation, /ended at a threshold compaction/);
+
+// A length stop that pi did not follow with a compaction is a dead stage: the turn spent its whole
+// output allowance, made no tool call, and pi ended the agent loop over an unfinished worktree. It is
+// failed rather than resumed, so an output allowance that is wrong for the model is visible.
+assert.throws(() => extractPiUsage(piUsageEvent([]), 'k3'), /truncated turn/);
+assert.doesNotThrow(
+  () => extractPiUsage(eventLog([
+    { type: 'session', id: 'session-1' },
+    { type: 'tool_execution_start', toolName: 'bash' },
+    assistantEnd({ stopReason: 'length', content: [{ type: 'toolCall', name: 'bash' }], usage: { input: 1, output: 1 }, model: 'k3' }),
+    { type: 'agent_end' },
+  ]), 'k3'),
+  'a truncated turn that still called a tool leaves pi work to continue',
+);
 
 // A turn ending with a content-free, zero-usage assistant message is the empty completion the adapter
 // resumes through. The fixture holds the closing events of the run that hit it, verbatim.
@@ -532,7 +546,7 @@ const emptyCompletionUsage = extractPiUsage(emptyCompletionEvents, 'stealth/ox-a
 assert.equal(emptyCompletionUsage.emptyCompletion?.responseId, 'gen-1787350197-sGCamnggljRfrVPn8P1J');
 assert.equal(emptyCompletionUsage.finalMessage, '', 'an empty completion leaves no final message');
 // The neighbouring shapes must not be swept up with it.
-assert.equal(extractPiUsage(piUsageEvent([]), 'k3').emptyCompletion, undefined, 'a turn that produced text is not an empty completion');
+assert.equal(extractPiUsage(piUsageEvent([], { stopReason: 'stop' }), 'k3').emptyCompletion, undefined, 'a turn that produced text is not an empty completion');
 assert.equal(emptyCompletion({ stopReason: 'stop', content: [], usage: { input: 100, output: 0 } }), null, 'a billed turn is not an empty completion');
 assert.equal(emptyCompletion({ stopReason: 'toolUse', content: [], usage: { input: 0, output: 0 } }), null, 'a tool-use turn is not an empty completion');
 assert.equal(emptyCompletion({ stopReason: 'error', content: [], usage: { input: 0, output: 0 } }), null, 'a provider error is handled as a dead stage, not a retry');

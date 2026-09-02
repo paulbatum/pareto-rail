@@ -532,8 +532,10 @@ export function extractUsage(eventLog, model, expectedSessionId) {
   // stage is a half-built worktree wearing a completion, exactly as a provider error is. Fail it for
   // the same reason. This is deliberately not repaired by resuming the session: a truncated turn
   // means the model's output allowance is wrong for the configuration, which is worth surfacing
-  // rather than working around.
-  if (lastMessage.stopReason === 'length' && !lastMessage.content?.some((block) => block?.type === 'toolCall')) {
+  // rather than working around. A length stop that pi followed with a compaction is left to the
+  // compaction continuation below, which already puts the entrant back to work.
+  const compaction = compactionTruncation(events);
+  if (!compaction && lastMessage.stopReason === 'length' && !lastMessage.content?.some((block) => block?.type === 'toolCall')) {
     const usage = lastMessage.usage ?? {};
     fail(`pi ended on a truncated turn: the final assistant message hit its output limit at ${usage.output ?? 'an unknown number of'} output tokens (${usage.reasoning ?? 0} reasoning) and made no tool call. Check the model's max output in the stage's model-catalog.txt.`);
   }
@@ -545,7 +547,7 @@ export function extractUsage(eventLog, model, expectedSessionId) {
 
   return {
     sessionId: session.id,
-    ...(compactionTruncation(events) ? { truncation: compactionTruncation(events) } : {}),
+    ...(compaction ? { truncation: compaction } : {}),
     ...(emptyCompletion(lastMessage) ? { emptyCompletion: emptyCompletion(lastMessage) } : {}),
     toolCalls,
     // Matched against the cost summary's per-model rows in the runner's stage split.

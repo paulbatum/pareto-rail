@@ -2,7 +2,7 @@
 
 The pi harness. One unattended pi process per stage, launched by the deterministic controller in the opaque entrant worktree, with its JSON event stream captured. The controller is a process runner, not a pi agent, so it contributes no model usage of its own.
 
-The adapter is `scripts/benchmark/pi-cli.mjs`, pinned by the plan's materials commit.
+The adapter is `scripts/benchmark/pi-cli.mjs`. The controller runs it from the controller checkout, and the manifest's `controller.commit` records the source that ran.
 
 pi differs from the other harnesses in one structural way: it reaches a model through a selectable provider, so a configuration pins `provider` alongside `model`, and the provider decides the billing path. A subscription-backed provider bills no metered spend; an OpenRouter-backed one bills real API spend. That difference propagates into `cost.orchestrationTreatment` and the subscription caveat, which is why a pi configuration's billing path is a property of the configuration rather than of this harness.
 
@@ -17,6 +17,8 @@ Set per configuration in the plan row's `stage` block, not here:
 The adapter records the installed pi version at launch and captures the model catalog as an audit record. That capture is audit-only and does not gate a run: pi's bundled `--list-models` catalog has repeatedly lagged models that are in fact reachable through a provider, so catalog absence is not evidence that a model will not run. Providers expose no dated snapshots.
 
 pi's reasoning vocabulary includes `minimal` and `off`, which the other harnesses lack, and does not include Codex's `ultra`.
+
+pi reads each model's context window and maximum output from the model store in its home. A per-run home starts without one, and the stage runs `--offline`, so pi never fetches the current limits: it would fall back to a 4096-token output cap for every model it has no entry for. The controller therefore copies the operator's `models-store.json` into the per-run home alongside the credential, and fails before launch when that file is missing. Refresh it by running `pi --list-models` on the operator account. The stage's `model-catalog.txt` records the limits that were in force, so a `max-out` of `4.1K` there means the store did not cover the model.
 
 ## Invocation
 
@@ -63,7 +65,9 @@ The retained `events.jsonl` is deliberately not a verbatim copy of stdout. pi's 
 
 A stage completes when pi exits zero, reports one session id, and its final assistant message reports usage. A nonzero exit, a timeout, a missing session id, missing usage, an unsupported effort, or a final assistant message carrying `stopReason: "error"` stops the run for controller-failure classification.
 
-**A headless session ends at its first threshold compaction** ([prime-agent#674](https://github.com/PrimeIntellect-ai/prime-agent/issues/674), filed against Prime Agent and shared by pi, which has the same print-mode idle wait). pi counts as idle while compaction runs, tears the connection down, and exits zero with the entrant's work half finished — so the stage looks complete and is not. The session shows one of two endings: a compaction after the agent loop's last end, or a post-compaction turn aborted with zero tokens. A provider that truncates an assistant message on a length stop reaches the same place, because pi ends the agent loop there rather than continuing the turn.
+A final assistant message carrying `stopReason: "length"` with no tool call stops the run the same way. The turn spent its whole output allowance without acting, and pi ends the agent loop there, so the stage holds an unfinished worktree behind a zero exit. The adapter does not resume it: a truncated turn means the configuration's output allowance is wrong for the model, and the run record should show that rather than hide it behind a retry. Read the stage's `model-catalog.txt` to see the allowance that applied.
+
+**A headless session ends at its first threshold compaction** ([prime-agent#674](https://github.com/PrimeIntellect-ai/prime-agent/issues/674), filed against Prime Agent and shared by pi, which has the same print-mode idle wait). pi counts as idle while compaction runs, tears the connection down, and exits zero with the entrant's work half finished — so the stage looks complete and is not. The session shows one of two endings: a compaction after the agent loop's last end, or a post-compaction turn aborted with zero tokens. A provider that truncates an assistant message on a length stop reaches the same place when pi compacts behind it.
 
 The adapter detects both and resumes the same session itself, which puts the entrant back where it was with its compacted context and its untouched worktree. Each continuation warns on the console, writes the usual round-suffixed artifacts, and is recorded in `result.json` under `compactionContinuations`. The loop stops when a resumed round does no tool work — an entrant with nothing left to do — and the stage is then a normal completion carrying `compactionSettled`. Wall clock bounds it as it bounds everything else, with a defensive round cap behind that; a stage that exhausts the cap is failed as `truncated`, and the session is still intact:
 
