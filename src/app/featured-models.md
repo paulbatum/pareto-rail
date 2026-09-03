@@ -27,6 +27,9 @@ alone — a marker, a note, or a link never changes it.
 The order here is the order on the home page. An unlisted entry renders nowhere, so
 put it last.
 
+A phone shows only the first four listed entries, so put the models that matter
+most at the top.
+
 Keep the page short: when a model's newer version arrives, unlist the versions it
 supersedes.
 

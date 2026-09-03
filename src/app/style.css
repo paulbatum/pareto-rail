@@ -539,6 +539,10 @@ html:fullscreen .perf-overlay { display: none; }
   .hero-models li.has-note { white-space: normal; gap: 4px 8px; }
   .hero-models .model-note { font-size: 12px; }
   .hero-models .new-tag { padding: 2px 6px 3px; font-size: 9px; }
+  /* A phone gives the stacked hero far less room than the desktop band, so the
+     list stops after two rows of the two-column grid. A noted entry spans both
+     columns, so it fills a row on its own and counts as two of the four. */
+  .hero-models li:nth-child(n + 5) { display: none; }
   /* Vertical space is scarce on phones, so the decorative tunnel steps aside. */
   .hero-graphic { display: none; }
   .info-grid, .reveal-grid { grid-template-columns: 1fr; }
