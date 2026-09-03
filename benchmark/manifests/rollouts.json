@@ -898,6 +898,24 @@
       ]
     },
     {
+      "runId": "run-n0i508zstz",
+      "levelId": "tinker-ball-72pr",
+      "themeId": "tinker-ball",
+      "configurationId": "pi-openrouter-muse-spark-1-3-high",
+      "files": [
+        {
+          "path": "runs/run-n0i508zstz/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 15260047,
+          "sha256": "9bfd9f7ce98ce8863dbcd557dbb20ad96da0d48bd98648a4046dd9324908e3a7"
+        },
+        {
+          "path": "runs/run-n0i508zstz/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 74878964,
+          "sha256": "bb0b60a587fb23028e1d48bae15eb9b62c2b248a1bd64d67a878a1bccb109bef"
+        }
+      ]
+    },
+    {
       "runId": "run-ng3zrmdjo4",
       "levelId": "broadside-amr2",
       "themeId": "broadside",
