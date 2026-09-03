@@ -58,8 +58,21 @@ async function main() {
   await fs.mkdir(outputDirectory, { recursive: true });
 
   const cliVersion = await runCommand(codexBin, ['--version'], { cwd: worktree });
-  const catalog = await runCommand(codexBin, ['debug', 'models', '--bundled'], { cwd: worktree });
-  const modelRecord = findModel(catalog.stdout, model);
+  let catalog = await runCommand(codexBin, ['debug', 'models', '--bundled'], { cwd: worktree });
+  let modelRecord = findModel(catalog.stdout, model, { required: false });
+  if (!modelRecord) {
+    const dynamicCatalog = await runCommand(codexBin, ['debug', 'models'], { cwd: worktree, allowFailure: true });
+    if (dynamicCatalog.code === 0) {
+      const dynamicRecord = findModel(dynamicCatalog.stdout, model, { required: false });
+      if (dynamicRecord) {
+        catalog = dynamicCatalog;
+        modelRecord = dynamicRecord;
+      }
+    }
+  }
+  if (!modelRecord) {
+    fail(`Model ${model} is not present in this Codex CLI model catalog.`);
+  }
   if (!modelRecord.supported_reasoning_levels?.some(({ effort: supported }) => supported === effort)) {
     fail(`Model ${model} does not support reasoning effort ${effort}.`);
   }
@@ -350,7 +363,7 @@ async function assertAbsent(target, label) {
   fail(`${label} already exists: ${target}`);
 }
 
-function findModel(source, model) {
+function findModel(source, model, { required = true } = {}) {
   let catalog;
   try {
     catalog = JSON.parse(source);
@@ -358,7 +371,7 @@ function findModel(source, model) {
     fail(`Codex model catalog was not valid JSON: ${error.message}`);
   }
   const record = catalog.models?.find(({ slug }) => slug === model);
-  if (!record) fail(`Model ${model} is not present in this Codex CLI model catalog.`);
+  if (!record && required) fail(`Model ${model} is not present in this Codex CLI model catalog.`);
   return record;
 }
 

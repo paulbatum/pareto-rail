@@ -56,6 +56,8 @@ Every configuration id, what it composes, and what it is for. Model and effort a
 | `codex-sol-terra-delegation` | `gpt-5.6-sol` @ high → `gpt-5.6-terra` | delegation | The Codex-side counterpart to the Claude delegation configuration. |
 | `codex-luna-high` | `gpt-5.6-luna` @ high | — | Luna on Codex; pairs with `pi-luna-high` to isolate harness. |
 | `codex-luna-max` | `gpt-5.6-luna` @ max | — | Reasoning effort against `codex-luna-high`, nothing else varied. |
+| `codex-astra-high` | `gpt-6-astra` @ high | — | GPT-6 Astra solo baseline on Codex. |
+| `codex-astra-max` | `gpt-6-astra` @ max | — | Reasoning effort against `codex-astra-high`, nothing else varied. |
 | `pi-luna-high` | `gpt-5.6-luna` @ high, `openai-codex` | — | The same model as `codex-luna-high` through a different harness. Harness is part of the intervention, so these are separate ids. |
 | `prime-agent-luna-max` | `gpt-5.6-luna` @ max, `openai-codex` | — | The same model again through Prime Agent, whose only tool is an IPython kernel and whose delegated subagents are sessions of their own. Runs unisolated, because its harness cannot be sandboxed: the contamination audit is its only control and the manifest records `sandboxUnavailable`. Its effort is `max` where the other luna rows are `high`, so a harness-only comparison needs a matching-effort row on either side. |
 | `agy-gemini-3-6-flash-high` | `gemini-3.6-flash` @ high | — | Gemini on the Antigravity subscription. Superseded by the row below and run on three themes only, so its rating stays under the comparison bar. Kept as the earlier generation's record. |
