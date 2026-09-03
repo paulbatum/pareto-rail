@@ -227,6 +227,12 @@
       "configurationId": "claude-opus-4-8-high-b20"
     },
     {
+      "runId": "run-8wimjyn2xr",
+      "levelId": "vespers-dade",
+      "themeId": "vespers",
+      "configurationId": "pi-openrouter-muse-spark-1-3-high"
+    },
+    {
       "runId": "run-9lv57gw08h",
       "levelId": "strandline-uzwm",
       "themeId": "strandline",

@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-8wimjyn2xr",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T02:55:44.061Z",
+      "data": {
+        "source": {
+          "runId": "run-8wimjyn2xr",
+          "slotId": "dade",
+          "themeId": "vespers",
+          "levelId": "vespers-dade",
+          "title": "Vespers",
+          "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+          "evaluatedCommit": "bc4a0b4347d67169b891afab635bb066a1fd6856",
+          "payloadCommit": "c8e6ac4b3e83d52d4461cc435b9813c4ad6f393f",
+          "manifestSha256": "c8130e5c14a4bd2b8a8149c259d8a003831580bc036392a42cd549ac7fbb211f",
+          "definitionSha256": "5e09124e84abd3827365d336416b66cc737e8b4e78ce7b50067efbadda7dc0e8",
+          "evaluatedSha256": "75f8d59148c2b03149b79977a1fe28779e6326ec3caa2905ca462d97866272b5",
+          "payloadSha256": "2b05fe9ade565f8492ae811eaf2f7629d4dad5c73c185a5f5b2247e07ca2a9fd",
+          "payloadDiffSha256": "a06ad17c00098cd9d5d7637a8987bc32465dbd022d9e54e3eac77c942c5f8c14",
+          "sourcePath": "src/benchmark-levels/vespers-dade/",
+          "destinationPath": "src/benchmark-levels/vespers-dade/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/vespers-dade",
+              "promotedPath": "src/benchmark-levels/vespers-dade",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/vespers-dade",
+              "promotedPath": "public/level-content/vespers-dade",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "bfcbde5a6055fd29d26da9cbc818c698ee314a24"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T02:55:44.140Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/vespers-dade/",
+            "files": 6,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/vespers-dade/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T02:55:44.143Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T02:55:44.199Z",
+      "data": {
+        "destination": "src/benchmark-levels/vespers-dade/",
+        "verifiedFiles": 9
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T02:57:11.064Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 5.053729891,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "2d059c0096ffcb064e7f62377e45780de889dd72bba01b321c296396f0dd52b5",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 35.166266407,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-dade --base bfcbde5a6055fd29d26da9cbc818c698ee314a24",
+            "exitCode": 0,
+            "stdoutSha256": "1b88e5e64f298db97f3a3ec6dae9f24b1c4ae9ea079e72df09b1233a0ce9a9e3",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.06278543300000455,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level vespers-dade",
+            "exitCode": 0,
+            "stdoutSha256": "84e9d988a285793e6035a86c25bab71eec8c3848a468522391203a2ec08e54b6",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 44.191861842,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T02:57:11.170Z",
+      "data": {
+        "promotionCommit": "0694ba24f0d487db6ccef504080de1cdb248e977",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-03T02:57:11.171Z",
+  "source": {
+    "runId": "run-8wimjyn2xr",
+    "slotId": "dade",
+    "themeId": "vespers",
+    "levelId": "vespers-dade",
+    "title": "Vespers",
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "evaluatedCommit": "bc4a0b4347d67169b891afab635bb066a1fd6856",
+    "payloadCommit": "c8e6ac4b3e83d52d4461cc435b9813c4ad6f393f",
+    "manifestSha256": "c8130e5c14a4bd2b8a8149c259d8a003831580bc036392a42cd549ac7fbb211f",
+    "definitionSha256": "5e09124e84abd3827365d336416b66cc737e8b4e78ce7b50067efbadda7dc0e8",
+    "evaluatedSha256": "75f8d59148c2b03149b79977a1fe28779e6326ec3caa2905ca462d97866272b5",
+    "payloadSha256": "2b05fe9ade565f8492ae811eaf2f7629d4dad5c73c185a5f5b2247e07ca2a9fd",
+    "payloadDiffSha256": "a06ad17c00098cd9d5d7637a8987bc32465dbd022d9e54e3eac77c942c5f8c14",
+    "sourcePath": "src/benchmark-levels/vespers-dade/",
+    "destinationPath": "src/benchmark-levels/vespers-dade/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/vespers-dade",
+        "promotedPath": "src/benchmark-levels/vespers-dade",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/vespers-dade",
+        "promotedPath": "public/level-content/vespers-dade",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "bfcbde5a6055fd29d26da9cbc818c698ee314a24"
+  },
+  "promotionCommit": "0694ba24f0d487db6ccef504080de1cdb248e977"
+}

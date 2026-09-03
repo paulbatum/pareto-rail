@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-8wimjyn2xr",
+  "slotId": "dade",
+  "configuration": {
+    "id": "pi-openrouter-muse-spark-1-3-high"
+  },
+  "theme": {
+    "id": "vespers",
+    "path": "benchmark/themes/vespers.md",
+    "sha256": "c0866c43804268b700a568a31382462e4e50b2500b99bd2148d88924e0adc83f"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-cli.md",
+    "sha256": "5fcb9e6686bcf1b1e697f36434da3eab5674e28b7550c2442d57f2ebd6a3bf1b"
+  },
+  "controller": {
+    "commit": "bfcbde5a6055fd29d26da9cbc818c698ee314a24"
+  },
+  "timing": {
+    "startedAt": "2026-09-03T02:26:20.816Z",
+    "finishedAt": "2026-09-03T02:55:22.701Z",
+    "wallTimeSeconds": 1741.885
+  },
+  "stages": [
+    {
+      "id": "meta/muse-spark-1.3-contributor",
+      "role": "solo",
+      "model": {
+        "provider": "pi provider openrouter",
+        "snapshotId": "meta/muse-spark-1.3-contributor"
+      },
+      "promptSha256": "7dd291c33057a42f1f76f6690148a3ce8dee53ff962cef2e575daca0e6637b38",
+      "harness": {
+        "name": "pi",
+        "version": "0.84.4"
+      },
+      "sessionId": "01a06516-e74b-7f8b-a2db-891aee2a3eb1",
+      "rolloutArtifactSha256": "a83cd267255ee8073461286581821b908434f717d10d58374695549625572556",
+      "outputArtifactSha256": "9ef673cf91510217513cd6b976fc413b84694e877812218b39ca57b933d7be62",
+      "startedAt": "2026-09-03T02:26:34.707Z",
+      "finishedAt": "2026-09-03T02:55:07.631Z",
+      "wallTimeSeconds": 1667.4627816250002,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 1297311,
+        "outputTokens": 104496,
+        "cacheReadInputTokens": 21024107
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 5.2193628,
+        "source": "rate-card"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 5.2193628,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "pi",
+      "command": "ccusage pi session --json",
+      "basis": "rate-card"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "meta/muse-spark-1.3-contributor",
+        "usageSource": "agreed",
+        "costUsd": 5.2193628,
+        "inputTokens": 1297311,
+        "outputTokens": 104496,
+        "cacheReadTokens": 21024107,
+        "cacheWriteTokens": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.844260541,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.685350849,
+      "outputSha256": "5159763b5e432b34a908ecb61773c955407348b6f5ed75cb9c39cd7e79190e65"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-dade --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03553849099999934,
+      "outputSha256": "1b88e5e64f298db97f3a3ec6dae9f24b1c4ae9ea079e72df09b1233a0ce9a9e3"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level vespers-dade",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.735967721,
+      "outputSha256": "ab73eb1e8af8e3ac2fac41422e23c691912c791cc42f6b1f47e2ff713c4cc6e6"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "vespers-dade",
+    "title": "Vespers",
+    "evaluated": {
+      "commit": "bc4a0b4347d67169b891afab635bb066a1fd6856",
+      "branch": "benchmark-run-run-8wimjyn2xr"
+    },
+    "payload": {
+      "commit": "c8e6ac4b3e83d52d4461cc435b9813c4ad6f393f",
+      "branch": "benchmark-payload-run-8wimjyn2xr"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

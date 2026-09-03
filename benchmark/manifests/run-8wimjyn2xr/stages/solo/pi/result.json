@@ -1,0 +1,24 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "01a06516-e74b-7f8b-a2db-891aee2a3eb1",
+  "usageSha256": "9f70b2f923995cbdf1cc6165cb45354c83602dc5e7f5296ec1409cb66166b6c7",
+  "eventLogSha256": "9ef673cf91510217513cd6b976fc413b84694e877812218b39ca57b933d7be62",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "eventLog": {
+    "retained": "all events except message_update",
+    "droppedLines": 1438,
+    "files": [
+      {
+        "path": "events.jsonl",
+        "droppedLines": 1438
+      }
+    ]
+  },
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-8wimjyn2xr/harness-home/sessions/--tmp-pareto-rail-run-8wimjyn2xr--/2026-09-03T02-26-34-955Z_01a06516-e74b-7f8b-a2db-891aee2a3eb1.jsonl",
+    "sha256": "a83cd267255ee8073461286581821b908434f717d10d58374695549625572556"
+  }
+}
