@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T18:27:40.970Z",
+  "generatedAt": "2026-09-03T20:41:37.843Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -3183,6 +3183,41 @@
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-yk97/hero.avif",
+      "featured": true,
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "tinker-ball-3ioa",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-fable-5-1-high",
+      "modelName": "Claude Fable 5.1",
+      "workflowName": "solo",
+      "generationCost": 36.01879925,
+      "linesOfCode": 4731,
+      "run": {
+        "generationWallTimeSeconds": 3921.935,
+        "totalWallTimeSeconds": 3965.797,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.259"
+        },
+        "models": [
+          {
+            "modelName": "claude-fable-5-1",
+            "role": "solo",
+            "inputTokens": 27548,
+            "outputTokens": 290297,
+            "cacheReadTokens": 31056757,
+            "cacheWriteTokens": 673214,
+            "usageSource": "agreed",
+            "costUsd": 36.01879925
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-3ioa/hero.avif",
       "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"

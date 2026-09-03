@@ -239,6 +239,12 @@
       "configurationId": "claude-opus-4-8-high-b20"
     },
     {
+      "runId": "run-8swex50r9h",
+      "levelId": "tinker-ball-3ioa",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-fable-5-1-high"
+    },
+    {
       "runId": "run-8wimjyn2xr",
       "levelId": "vespers-dade",
       "themeId": "vespers",

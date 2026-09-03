@@ -704,6 +704,24 @@
       ]
     },
     {
+      "runId": "run-8swex50r9h",
+      "levelId": "tinker-ball-3ioa",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-fable-5-1-high",
+      "files": [
+        {
+          "path": "runs/run-8swex50r9h/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 9609445,
+          "sha256": "71ab9ecd2187a173fdd728d9c466730c41bc7282c53277ac0078f70f22347dd7"
+        },
+        {
+          "path": "runs/run-8swex50r9h/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 9565471,
+          "sha256": "91d36987692c19e92501c0d58bb3d544c795143e1c3c361a3f48d75a6f49d6c5"
+        }
+      ]
+    },
+    {
       "runId": "run-8wimjyn2xr",
       "levelId": "vespers-dade",
       "themeId": "vespers",

@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-8swex50r9h",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T20:34:36.911Z",
+      "data": {
+        "source": {
+          "runId": "run-8swex50r9h",
+          "slotId": "3ioa",
+          "themeId": "tinker-ball",
+          "levelId": "tinker-ball-3ioa",
+          "title": "Tinker Ball",
+          "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+          "evaluatedCommit": "a9f204b14043b6e4ede21e9d9bbd8a5b4e3197b5",
+          "payloadCommit": "d6f0acae5c3bf63f54be2e20761f5e96122cdc34",
+          "manifestSha256": "921777de62a5811529c33393a8a3f728af683b3bcee92e9e48967aa36449476b",
+          "definitionSha256": "4444c9e9ebc0134cb4fe6e3752f1e350a310f70bacca97cbb74befff72c618d4",
+          "evaluatedSha256": "bf838023ac5f9c63f9462d79761af354580e46dc48c2476672480cf9633e293d",
+          "payloadSha256": "1297b2cf7e7771a7983ce354baaab3fcff4e13488a677f5c2c71587e7ca273eb",
+          "payloadDiffSha256": "b624d5f2b8c38b44a1f97ecea3aab931e2e730c0044da1e540f451d01b590726",
+          "sourcePath": "src/benchmark-levels/tinker-ball-3ioa/",
+          "destinationPath": "src/benchmark-levels/tinker-ball-3ioa/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/tinker-ball-3ioa",
+              "promotedPath": "src/benchmark-levels/tinker-ball-3ioa",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/tinker-ball-3ioa",
+              "promotedPath": "public/level-content/tinker-ball-3ioa",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "8b6b5d894be6cd14a1398de9ac56ac7e0c55e1a2"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T20:34:37.107Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/tinker-ball-3ioa/",
+            "files": 19,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/tinker-ball-3ioa/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T20:34:37.110Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T20:34:37.234Z",
+      "data": {
+        "destination": "src/benchmark-levels/tinker-ball-3ioa/",
+        "verifiedFiles": 22
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T20:36:24.697Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 7.028579562,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "97e6f56157b657c99595786864ec9acfb558e0564d602a0c72d7f59366cbe8aa",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 38.49200699800001,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-3ioa --base 8b6b5d894be6cd14a1398de9ac56ac7e0c55e1a2",
+            "exitCode": 0,
+            "stdoutSha256": "e30c7370c3bc887837bdf116995dabff7c505773a6b53ab9dd5a47219076f026",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.05394601999999577,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level tinker-ball-3ioa",
+            "exitCode": 0,
+            "stdoutSha256": "b247b8a3c83011e459d26e0bd4740a8ad82e40d148bcd4f04a48e16046855076",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 61.830956566000005,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T20:36:24.830Z",
+      "data": {
+        "promotionCommit": "144dd2ead487669ecff69ef161baf28279e2448e",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-03T20:36:24.832Z",
+  "source": {
+    "runId": "run-8swex50r9h",
+    "slotId": "3ioa",
+    "themeId": "tinker-ball",
+    "levelId": "tinker-ball-3ioa",
+    "title": "Tinker Ball",
+    "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719",
+    "evaluatedCommit": "a9f204b14043b6e4ede21e9d9bbd8a5b4e3197b5",
+    "payloadCommit": "d6f0acae5c3bf63f54be2e20761f5e96122cdc34",
+    "manifestSha256": "921777de62a5811529c33393a8a3f728af683b3bcee92e9e48967aa36449476b",
+    "definitionSha256": "4444c9e9ebc0134cb4fe6e3752f1e350a310f70bacca97cbb74befff72c618d4",
+    "evaluatedSha256": "bf838023ac5f9c63f9462d79761af354580e46dc48c2476672480cf9633e293d",
+    "payloadSha256": "1297b2cf7e7771a7983ce354baaab3fcff4e13488a677f5c2c71587e7ca273eb",
+    "payloadDiffSha256": "b624d5f2b8c38b44a1f97ecea3aab931e2e730c0044da1e540f451d01b590726",
+    "sourcePath": "src/benchmark-levels/tinker-ball-3ioa/",
+    "destinationPath": "src/benchmark-levels/tinker-ball-3ioa/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/tinker-ball-3ioa",
+        "promotedPath": "src/benchmark-levels/tinker-ball-3ioa",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/tinker-ball-3ioa",
+        "promotedPath": "public/level-content/tinker-ball-3ioa",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "8b6b5d894be6cd14a1398de9ac56ac7e0c55e1a2"
+  },
+  "promotionCommit": "144dd2ead487669ecff69ef161baf28279e2448e"
+}

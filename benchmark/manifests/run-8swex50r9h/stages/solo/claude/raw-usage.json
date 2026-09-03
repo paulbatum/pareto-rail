@@ -1,0 +1,131 @@
+{
+  "sessionId": "10dc21b6-f3c2-4e82-9ebe-1406c8fbef47",
+  "initResolvedModel": "claude-fable-5-1",
+  "finalMessage": "Tinker Ball is complete under `src/benchmark-levels/tinker-ball-3ioa/`, with gallery images under `public/level-content/tinker-ball-3ioa/`. Nothing else in the repo was touched.\n\n**What was built**\n\n- A 60.0 s run (32 bars at 128 BPM) across one worktable: marble (bars 0–7), tennis ball (8–15), melon (16–20), the Spill boss (21–29), spotless coast (30–31). The camera height and ball radius follow one profile, so the same table shrinks around you while clutter and enemies are built bigger per act.\n- Three glue creatures with distinct silhouettes and motion: button-and-spool beetles that scuttle in zigzags, pencil- or ruler-legged striders that trot in on stilts, and cardboard-winged snappers that swoop and spit lockable glue globs at a 3-point \"shine\" hull. Creatures assemble for 0.75 s before they can be locked.\n- Kills drop every body part as a physics piece that arcs onto the road ahead, bounces, and sticks to the rolling ball, which swerves toward debris. Pieces render through one instanced mesh per supply type with per-instance tints.\n- The Spill raises three shelled cores one at a time from a spreading black puddle; each broken shell showers the road, and the heart's death snaps the puddle away and reveals a clean patch the ball rolls through.\n- Score: bell mallets, clipped reed-organ stabs, bouncy synth bass, handclaps, and workshop percussion in D major, turning minor for the Spill and resolving to D. Locks, kills, boss chips, and every piece that sticks are quantized, harmony-aware notes.\n\n**Verified**\n\n- `npm run typecheck`, `npm run build`, and `npm run check:floor -- --level tinker-ball-3ioa` pass (occlusion, perf, audio config, spread, reticle all clean).\n- Simulation: perfect policy reaches rank S with the Spill snapped, imperfect reaches A, no dead-air gaps, every gameplay event fires.\n- Audio trace confirms sections, beats, and instruments across all 32 bars.\n- Snapshots were reviewed across the whole run, the attract screen, and the boss.\n\n**Not verifiable here**\n\n- `npm run check:benchmark-scope` cannot run in this checkout because `scripts/benchmark/protocol.mjs` is absent. `git status` shows only the two allowed directories as changed.\n- Headless WebGPU is unavailable, so lighting balance, bloom, and the audio mix were tuned from SwiftShader snapshots and traces. A human WebGPU playtest should look first at lamp glare behind the START word, glue darkness versus the warm wood, boss-core readability among the shells, and the mix level of the piece-sticking percussion.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 3511361,
+    "stop_reason": "end_turn",
+    "session_id": "10dc21b6-f3c2-4e82-9ebe-1406c8fbef47",
+    "total_cost_usd": 36.01879925,
+    "usage": {
+      "input_tokens": 27548,
+      "cache_creation_input_tokens": 673214,
+      "cache_read_input_tokens": 31056757,
+      "output_tokens": 290297,
+      "output_tokens_details": {
+        "thinking_tokens": 131061
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 673214,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 56,
+          "output_tokens": 950,
+          "cache_read_input_tokens": 689447,
+          "cache_creation_input_tokens": 957,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 957
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-fable-5-1": {
+        "inputTokens": 27548,
+        "outputTokens": 290297,
+        "cacheReadInputTokens": 31056757,
+        "cacheCreationInputTokens": 673214,
+        "webSearchRequests": 0,
+        "costUSD": 36.01879925,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 131061,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 155,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "Tinker Ball is complete under `src/benchmark-levels/tinker-ball-3ioa/`, with gallery images under `public/level-content/tinker-ball-3ioa/`. Nothing else in the repo was touched.\n\n**What was built**\n\n- A 60.0 s run (32 bars at 128 BPM) across one worktable: marble (bars 0–7), tennis ball (8–15), melon (16–20), the Spill boss (21–29), spotless coast (30–31). The camera height and ball radius follow one profile, so the same table shrinks around you while clutter and enemies are built bigger per act.\n- Three glue creatures with distinct silhouettes and motion: button-and-spool beetles that scuttle in zigzags, pencil- or ruler-legged striders that trot in on stilts, and cardboard-winged snappers that swoop and spit lockable glue globs at a 3-point \"shine\" hull. Creatures assemble for 0.75 s before they can be locked.\n- Kills drop every body part as a physics piece that arcs onto the road ahead, bounces, and sticks to the rolling ball, which swerves toward debris. Pieces render through one instanced mesh per supply type with per-instance tints.\n- The Spill raises three shelled cores one at a time from a spreading black puddle; each broken shell showers the road, and the heart's death snaps the puddle away and reveals a clean patch the ball rolls through.\n- Score: bell mallets, clipped reed-organ stabs, bouncy synth bass, handclaps, and workshop percussion in D major, turning minor for the Spill and resolving to D. Locks, kills, boss chips, and every piece that sticks are quantized, harmony-aware notes.\n\n**Verified**\n\n- `npm run typecheck`, `npm run build`, and `npm run check:floor -- --level tinker-ball-3ioa` pass (occlusion, perf, audio config, spread, reticle all clean).\n- Simulation: perfect policy reaches rank S with the Spill snapped, imperfect reaches A, no dead-air gaps, every gameplay event fires.\n- Audio trace confirms sections, beats, and instruments across all 32 bars.\n- Snapshots were reviewed across the whole run, the attract screen, and the boss.\n\n**Not verifiable here**\n\n- `npm run check:benchmark-scope` cannot run in this checkout because `scripts/benchmark/protocol.mjs` is absent. `git status` shows only the two allowed directories as changed.\n- Headless WebGPU is unavailable, so lighting balance, bloom, and the audio mix were tuned from SwiftShader snapshots and traces. A human WebGPU playtest should look first at lamp glare behind the START word, glue darkness versus the warm wood, boss-core readability among the shells, and the mix level of the piece-sticking percussion.",
+    "ttft_ms": 2053,
+    "type": "result",
+    "duration_ms": 3921014,
+    "uuid": "52ab33b6-2f91-40da-806a-7fd745dc6f51",
+    "ttft_stream_ms": 1627,
+    "time_to_request_ms": 59,
+    "queued_turn_count": 0
+  },
+  "normalized": {
+    "inputTokens": 31084305,
+    "outputTokens": 290297,
+    "cacheReadInputTokens": 31056757,
+    "cacheWriteInputTokens": 673214,
+    "vendorFields": {
+      "totalCostUsd": 36.01879925,
+      "durationMs": 3921014,
+      "durationApiMs": 3511361,
+      "numTurns": 155,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-fable-5-1": {
+          "inputTokens": 27548,
+          "outputTokens": 290297,
+          "cacheReadInputTokens": 31056757,
+          "cacheCreationInputTokens": 673214,
+          "webSearchRequests": 0,
+          "costUSD": 36.01879925,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 131061,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}
