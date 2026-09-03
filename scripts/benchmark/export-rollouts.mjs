@@ -70,22 +70,113 @@ function findLeakScanner() {
   );
 }
 
+// How many unbroken base64-alphabet characters must sit on each side of a
+// secret before it counts as spliced into a base64 blob. Same length as the
+// leak-scanner config's Expr filter uses.
+const BASE64_CONTEXT = 40;
+
+function isBase64Code(code) {
+  return (code >= 48 && code <= 57) // 0-9
+    || (code >= 65 && code <= 90) // A-Z
+    || (code >= 97 && code <= 122) // a-z
+    || code === 43 // +
+    || code === 47; // /
+}
+
+// True when text holds BASE64_CONTEXT base64-alphabet characters starting at
+// start and walking by step (-1 walks backwards).
+function hasBase64Run(text, start, step) {
+  for (let i = 0; i < BASE64_CONTEXT; i += 1) {
+    const at = start + i * step;
+    if (at < 0 || at >= text.length) return false;
+    if (!isBase64Code(text.charCodeAt(at))) return false;
+  }
+  return true;
+}
+
+// True when the secret occurs in the scanned text and every occurrence carries
+// a base64 run on both sides. A secret that occurs nowhere, or that has one
+// occurrence outside a base64 blob, returns false and the finding blocks.
+// This scans by index rather than building a RegExp: a secret can contain
+// regex metacharacters, which would make a built pattern fail to match and
+// wrongly report that the secret is not embedded.
+function embeddedInBase64(text, secret) {
+  if (typeof secret !== 'string' || secret.length === 0) return false;
+  let index = text.indexOf(secret);
+  if (index === -1) return false;
+  while (index !== -1) {
+    if (!hasBase64Run(text, index - 1, -1)) return false;
+    if (!hasBase64Run(text, index + secret.length, 1)) return false;
+    index = text.indexOf(secret, index + 1);
+  }
+  return true;
+}
+
+// Reads the scanner's JSON report. The scanner said it found leaks, so a
+// missing, empty, or unparseable report is a scan whose result cannot be
+// checked: that throws rather than passing the file.
+function readLeakReport(reportPath, scannerName, rel) {
+  let findings;
+  try {
+    findings = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+  } catch (error) {
+    throw new Error(`${scannerName} reported findings in ${rel} but its report could not be read: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (!Array.isArray(findings) || findings.length === 0) {
+    throw new Error(`${scannerName} reported findings in ${rel} but its report listed none.`);
+  }
+  return findings;
+}
+
 function leakScan(scanner, buffer, rel) {
-  // The repo config only carries an Expr filter for a known transcript false
-  // positive; Expr filters are betterleaks-only, so gitleaks runs bare.
-  const configArgs = path.basename(scanner) === 'betterleaks'
+  // The repo config only carries Expr filters for known transcript false
+  // positives; Expr filters are betterleaks-only, so gitleaks runs bare.
+  const scannerName = path.basename(scanner);
+  const configArgs = scannerName === 'betterleaks'
     ? ['-c', leakConfigPath]
     : [];
-  const result = spawnSync(scanner, ['stdin', '--no-banner', '--exit-code', '9', ...configArgs], {
-    input: buffer,
-    stdio: ['pipe', 'pipe', 'pipe'],
-    maxBuffer: 64 * 1024 * 1024,
-  });
-  if (result.status === 0) return;
-  if (result.status === 9) {
-    throw new Error(`${path.basename(scanner)} found credential-shaped content in ${rel}:\n${result.stdout}${result.stderr}`);
+  // The report can quote secret material, so it is written inside the repo's
+  // gitignored tmp/ and deleted before this function returns by any path.
+  fs.mkdirSync(path.join(root, 'tmp'), { recursive: true });
+  const reportDir = fs.mkdtempSync(path.join(root, 'tmp', 'leak-report-'));
+  const reportPath = path.join(reportDir, 'report.json');
+  try {
+    const result = spawnSync(scanner, ['stdin', '--no-banner', '--exit-code', '9', '-f', 'json', '-r', reportPath, ...configArgs], {
+      input: buffer,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    if (result.status === 0) return;
+    if (result.status !== 9) {
+      throw new Error(`${scannerName} failed on ${rel} (exit ${result.status}): ${result.stderr}`);
+    }
+    const findings = readLeakReport(reportPath, scannerName, rel);
+    // The config's base64 filter tests finding["line"], and the scanner reports
+    // an empty line for a finding inside a line too long to carry back, so the
+    // filter cannot suppress those. Re-apply the same test here against the
+    // bytes that were scanned. A finding that arrives with a line is one the
+    // scanner's own filter already saw and kept, so it blocks.
+    const text = buffer.toString('utf8');
+    const blocking = [];
+    let suppressed = 0;
+    for (const finding of findings) {
+      const line = typeof finding.Line === 'string' ? finding.Line : '';
+      if (line === '' && embeddedInBase64(text, finding.Secret)) {
+        suppressed += 1;
+        continue;
+      }
+      blocking.push(`${finding.RuleID ?? 'unknown-rule'} at line ${finding.StartLine ?? '?'}`);
+    }
+    if (blocking.length === 0) return;
+    // Findings are named by rule and line only: the message must never carry
+    // secret material.
+    throw new Error(
+      `${scannerName} found credential-shaped content in ${rel}: ${blocking.length} finding(s) blocked, `
+      + `${suppressed} suppressed as base64-embedded.\n${blocking.map((f) => `  ${f}`).join('\n')}`,
+    );
+  } finally {
+    fs.rmSync(reportDir, { recursive: true, force: true });
   }
-  throw new Error(`${path.basename(scanner)} failed on ${rel} (exit ${result.status}): ${result.stderr}`);
 }
 
 function scanLines(text, rel) {
@@ -111,7 +202,7 @@ function scannerVersion(scanner) {
 
 // One fingerprint covers everything that decides a verdict except the scanned
 // bytes: the scanner and its version, the leak-scanner config, the in-repo
-// regexes, and the two functions that apply them. Change any of these and the
+// regexes, and the functions that apply them. Change any of these and the
 // fingerprint changes, which discards every cached verdict. Hashing the inputs
 // is what makes that automatic — nothing has to remember to bump a number.
 function rulesetFingerprint(scanner) {
@@ -123,6 +214,8 @@ function rulesetFingerprint(scanner) {
     patterns: SECRET_PATTERNS.map((p) => [p.name, p.re.source, p.re.flags]),
     scanLines: scanLines.toString(),
     leakScan: leakScan.toString(),
+    leakScanHelpers: [BASE64_CONTEXT, isBase64Code, hasBase64Run, embeddedInBase64, readLeakReport]
+      .map((part) => part.toString()),
   });
   return crypto.createHash('sha256').update(material).digest('hex');
 }
