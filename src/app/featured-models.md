@@ -27,16 +27,19 @@ alone — a marker, a note, or a link never changes it.
 The order here is the order on the home page. An unlisted entry renders nowhere, so
 put it last.
 
+Keep the page short: when a model's newer version arrives, unlist the versions it
+supersedes.
+
 - Claude Fable 5.1 (new)
 - Claude Opus 5
-- Claude Fable 5
-- Claude Opus 4.8
 - GPT-5.6 Sol
 - Gemini 3.8 Flash (new)
-- Gemini 3.7 Flash
 - Kimi K3
-- [Muse Spark 1.3](https://openrouter.ai/meta/muse-spark-1.3) (new)
-- [Inkling](https://openrouter.ai/thinkingmachines/inkling) (unlisted)
-- [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash)
+- Muse Spark 1.3 (new)
+- GLM 5.3 Flash
+- Claude Fable 5 (unlisted)
+- Claude Opus 4.8 (unlisted)
+- Gemini 3.7 Flash (unlisted)
+- Inkling (unlisted)
 - Gemini 3.6 Flash (unlisted)
 - GPT-5.6 Luna (unlisted)
