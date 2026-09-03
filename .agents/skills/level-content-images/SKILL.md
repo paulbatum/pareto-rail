@@ -70,7 +70,15 @@ View the entrant's three images before you replace them, and report where your r
    npm run build
    ```
 
-   For a benchmark-level-only change, also run the appropriate benchmark scope gate. Commit the assets, metadata, and any tool or documentation changes together.
+   For a benchmark level, also confirm you wrote nothing outside that level's own directories:
+
+   ```sh
+   npm run check:benchmark-scope -- --level <level-id> --base HEAD --content-only
+   ```
+
+   Pass `--content-only` because this workflow can change the content directory alone. Without it the check demands a change under `src/benchmark-levels/<level-id>/`, which an images-only pass never touches, and fails with "contains no assigned output directory". Never add a source edit to satisfy that message.
+
+   Commit the assets, metadata, and any tool or documentation changes together.
 
 ## Selection rules
 

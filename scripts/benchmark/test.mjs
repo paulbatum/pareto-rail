@@ -1130,6 +1130,28 @@ try {
     await checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD' }),
     ['public/level-content/synthetic-a1b2/hero.avif', 'src/benchmark-levels/synthetic-a1b2/index.ts'],
   );
+  // Refreshing a promoted level's showcase images changes only the content
+  // directory. The default assertion rejects that shape because no level source
+  // changed; --content-only accepts it, and still rejects an empty diff.
+  await fs.rm(path.join(scopeRepo, 'src/benchmark-levels/synthetic-a1b2'), { recursive: true, force: true });
+  await assert.rejects(
+    () => checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD' }),
+    /no assigned output directory/,
+  );
+  assert.deepEqual(
+    await checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', allowContentOnly: true }),
+    ['public/level-content/synthetic-a1b2/hero.avif'],
+  );
+  await fs.rm(path.join(scopeRepo, 'public/level-content/synthetic-a1b2'), { recursive: true, force: true });
+  await assert.rejects(
+    () => checkBenchmarkScope({ root: scopeRepo, levelId: 'synthetic-a1b2', base: 'HEAD', allowContentOnly: true }),
+    /no assigned output directory/,
+  );
+  await fs.mkdir(path.join(scopeRepo, 'src/benchmark-levels/synthetic-a1b2'), { recursive: true });
+  await fs.writeFile(path.join(scopeRepo, 'src/benchmark-levels/synthetic-a1b2/index.ts'), 'synthetic\n');
+  await fs.mkdir(path.join(scopeRepo, 'public/level-content/synthetic-a1b2'), { recursive: true });
+  await fs.writeFile(path.join(scopeRepo, 'public/level-content/synthetic-a1b2/hero.avif'), 'binary\n');
+
   // Another level's content directory remains out of scope.
   await fs.mkdir(path.join(scopeRepo, 'public/level-content/other-z9z9'), { recursive: true });
   await fs.writeFile(path.join(scopeRepo, 'public/level-content/other-z9z9/hero.avif'), 'binary\n');

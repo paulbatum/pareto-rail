@@ -12,7 +12,7 @@ const execFileAsync = promisify(execFile);
 // entrant (src/benchmark-levels/<id>). This checker and level-footprint.mjs travel
 // together in the isolated entrant checkout, which is why the footprints live outside
 // scripts/benchmark: the scrub takes that directory with it.
-export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD', builtIn = false } = {}) {
+export async function checkBenchmarkScope({ root = process.cwd(), levelId, base = 'HEAD', builtIn = false, allowContentOnly = false } = {}) {
   if (!levelId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(levelId)) throw new Error('A safe benchmark level id is required.');
   const footprint = builtIn ? builtInLevelFootprint(levelId) : benchmarkLevelFootprint(levelId);
   const allowedRoots = [...footprint.roots];
@@ -27,8 +27,16 @@ export async function checkBenchmarkScope({ root = process.cwd(), levelId, base 
   const outOfScope = [...changed].filter((name) => !allowedShared.has(name) && !ownsPath(name));
   if (outOfScope.length) throw new Error(`Out-of-scope files for benchmark level '${levelId}':\n${outOfScope.join('\n')}`);
 
-  const requiredRoot = footprint.roots.find((rootEntry) => rootEntry.required);
-  if (!requiredRoot || ![...changed].some((name) => name.startsWith(`${requiredRoot.path}/`))) {
+  // A level build must change the level's own source directory, so demanding it
+  // catches a run that produced nothing at all. An operator refreshing a promoted
+  // level's showcase images changes only the content directory, which is in scope
+  // but not required, so that caller passes allowContentOnly and the content
+  // directory satisfies the assertion instead. Either way some owned directory
+  // must change: an empty diff never passes.
+  const requiredRoots = allowContentOnly
+    ? footprint.roots
+    : footprint.roots.filter((rootEntry) => rootEntry.required);
+  if (!requiredRoots.length || !requiredRoots.some((rootEntry) => [...changed].some((name) => name.startsWith(`${rootEntry.path}/`)))) {
     throw new Error(`Benchmark scope contains no assigned output directory for '${levelId}'.`);
   }
   return [...changed].sort();
@@ -51,6 +59,7 @@ function parseCli(args) {
     levelId: get('--level'),
     base: get('--base') ?? 'HEAD',
     builtIn: false,
+    allowContentOnly: args.includes('--content-only'),
     root: path.resolve(get('--root') ?? process.cwd()),
   };
 }
