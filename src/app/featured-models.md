@@ -35,6 +35,7 @@ put it last.
 - Gemini 3.8 Flash (new)
 - Gemini 3.7 Flash
 - Kimi K3
+- [Muse Spark 1.3](https://openrouter.ai/meta/muse-spark-1.3) (new)
 - [Inkling](https://openrouter.ai/thinkingmachines/inkling) (unlisted)
 - [GLM 5.3 Flash](https://openrouter.ai/z-ai/glm-5.3-flash)
 - Gemini 3.6 Flash (unlisted)
