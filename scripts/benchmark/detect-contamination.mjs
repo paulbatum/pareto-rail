@@ -367,10 +367,16 @@ export function classifyToolCall(call, { worktree, assignedLevelId, cwd = worktr
   const findings = [];
   const seen = new Set();
 
+  const callCwd = cwd ? path.resolve(cwd) : worktreeRoot;
+  // A shell command is recorded with the directory the harness started it in, not
+  // the directory a leading `cd` moved it to, so its later relative paths must be
+  // resolved from that target. directToolOperation returns null for shell activity.
+  const resolveFrom = operation === null && callCwd ? shellWorkingDirectory(source, callCwd) : callCwd;
+
   for (const candidate of candidates) {
     const info = inspectPath(candidate.raw, {
       worktree: worktreeRoot,
-      cwd: cwd ? path.resolve(cwd) : worktreeRoot,
+      cwd: resolveFrom,
       source,
     });
 
@@ -610,6 +616,21 @@ function trimPath(value) {
 function isUrlAt(text, start) {
   const prefix = text.slice(Math.max(0, start - 8), start).toLowerCase();
   return prefix.endsWith('http:') || prefix.endsWith('https:') || prefix.endsWith('file:');
+}
+
+/**
+ * The directory a shell command's relative paths resolve from: the target of a
+ * leading `cd`, or base when the command does not start with one. A cd whose
+ * argument is a variable, a glob, or a home path is left alone, because this
+ * cannot know where it lands; the caller's base then applies as before. A cd
+ * that leaves the worktree still resolves outside it, which is a finding.
+ */
+function shellWorkingDirectory(source, base) {
+  const match = /^\s*cd\s+("[^"$`\n]*"|'[^'\n]*'|[^\s;&|<>$`'"()\n]+)\s*(?:&&|;|\n)/.exec(source);
+  if (!match) return base;
+  const target = match[1].replace(/^(["'])(.*)\1$/, '$2');
+  if (!target || target.startsWith('~') || target.includes('*')) return base;
+  return path.resolve(base, target);
 }
 
 function inspectPath(rawPath, { worktree, cwd, source }) {
