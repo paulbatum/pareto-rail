@@ -1,0 +1,9 @@
+{
+  "id": "broadside-amr2",
+  "title": "Broadside",
+  "contentImages": {
+    "overview": "/level-content/broadside-amr2/overview.avif",
+    "start": "/level-content/broadside-amr2/start.avif",
+    "hero": "/level-content/broadside-amr2/hero.avif"
+  }
+}
