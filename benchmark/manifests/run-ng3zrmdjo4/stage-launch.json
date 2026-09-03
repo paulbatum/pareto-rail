@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-ng3zrmdjo4",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-ng3zrmdjo4/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-ng3zrmdjo4/stages/solo/pi",
+    "--model",
+    "meta/muse-spark-1.3-contributor",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter",
+    "--sandbox",
+    "false"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-09-03T01:34:00.380Z",
+  "finishedAt": "2026-09-03T01:59:28.049Z",
+  "wallTimeSeconds": 1491.369853895,
+  "stdoutSha256": "ad2530c9f1d45122a7a60475aebeaba7681dc191c8453b007ab76ada8d0f8c02",
+  "stderrSha256": "d5640c86df530644965dd69d395d76068adb11bcc01d6bcef817fa7661340ecb",
+  "stdout": "{\"sessionId\":\"01a064e6-c8be-741b-a312-c693cb0a9294\",\"usage\":{\"inputTokens\":927238,\"outputTokens\":106972,\"cacheReadTokens\":16158735,\"cacheWriteTokens\":0,\"reasoningTokens\":34954,\"vendorFields\":{\"modelUsage\":{\"meta/muse-spark-1.3-contributor\":{\"outputTokens\":106972,\"costUSD\":0.14643567000000002}}}},\"wallTimeSeconds\":1490.154490439}\n",
+  "stderr": "pi's catalog does not cover meta/muse-spark-1.3-contributor; declared it from OpenRouter at 1048576 context and 943718 max output.\n"
+}

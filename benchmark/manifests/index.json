@@ -300,6 +300,12 @@
       "configurationId": "pi-openrouter-ox-alpha-high"
     },
     {
+      "runId": "run-ng3zrmdjo4",
+      "levelId": "broadside-amr2",
+      "themeId": "broadside",
+      "configurationId": "pi-openrouter-muse-spark-1-3-high"
+    },
+    {
       "runId": "run-pnpwjrxhz8uu",
       "levelId": "skyhook-loyy",
       "themeId": "skyhook",
