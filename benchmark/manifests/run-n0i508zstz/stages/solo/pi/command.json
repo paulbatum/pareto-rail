@@ -1,0 +1,28 @@
+{
+  "executable": "pi",
+  "arguments": [
+    "--print",
+    "--mode",
+    "json",
+    "--approve",
+    "--offline",
+    "--no-extensions",
+    "--thinking",
+    "high",
+    "--model",
+    "meta/muse-spark-1.3-contributor",
+    "--provider",
+    "openrouter",
+    "--extension",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-sandbox-extension.js"
+  ],
+  "cliVersion": "0.84.4",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-n0i508zstz",
+  "startedAt": "2026-09-03T03:10:05.377Z",
+  "finishedAt": "2026-09-03T03:41:39.471Z",
+  "wallTimeSeconds": 1840.3292037869999,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

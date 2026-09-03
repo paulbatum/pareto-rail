@@ -1,0 +1,26 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level tinker-ball-72pr
+
+Tinker Ball floor check
+duration 60.0s; spawned kinds 5: beetle, bird, blob, boss-core, stilter
+event coverage missing: stage, playerhit
+
+Engine defaults:
+  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC; reticle visual 0.046 NDC = 0.54x lock radius, no reticle scaling
+  words: start "START!" (6), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForHit, scoreForKill, rankForRun, easeRunProgress, updateAttractCamera, detailsForRun
+  identity hooks [default]: scoreForVolley, validateRelease, updateCameraEffects, playerHealth, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 1
+reticle warnings: 0
+start/replay word warnings: 0
+
+Warnings:
+- Enemy destruction concentration in screen center is slightly high (38.8%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.

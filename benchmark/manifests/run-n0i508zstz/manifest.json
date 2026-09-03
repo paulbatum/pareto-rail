@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-n0i508zstz",
+  "slotId": "72pr",
+  "configuration": {
+    "id": "pi-openrouter-muse-spark-1-3-high"
+  },
+  "theme": {
+    "id": "tinker-ball",
+    "path": "benchmark/themes/tinker-ball.md",
+    "sha256": "b9c846813d00dda166372ee7a298d6fa8bb5428e432a8988994126c1adcebc47"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-cli.md",
+    "sha256": "5fcb9e6686bcf1b1e697f36434da3eab5674e28b7550c2442d57f2ebd6a3bf1b"
+  },
+  "controller": {
+    "commit": "2efd40de1c558d6932d5cbb648ab5e317025c2cb"
+  },
+  "timing": {
+    "startedAt": "2026-09-03T03:09:53.555Z",
+    "finishedAt": "2026-09-03T03:41:53.994Z",
+    "wallTimeSeconds": 1920.439
+  },
+  "stages": [
+    {
+      "id": "meta/muse-spark-1.3-contributor",
+      "role": "solo",
+      "model": {
+        "provider": "pi provider openrouter",
+        "snapshotId": "meta/muse-spark-1.3-contributor"
+      },
+      "promptSha256": "40f221f42ef47cc1ae387c34dbef6dac89558e54513e7e3c4f0c7fc9321d24c1",
+      "harness": {
+        "name": "pi",
+        "version": "0.84.4"
+      },
+      "sessionId": "01a0653e-bd40-7a92-97ed-05afe065c972",
+      "rolloutArtifactSha256": "9bfd9f7ce98ce8863dbcd557dbb20ad96da0d48bd98648a4046dd9324908e3a7",
+      "outputArtifactSha256": "bb0b60a587fb23028e1d48bae15eb9b62c2b248a1bd64d67a878a1bccb109bef",
+      "startedAt": "2026-09-03T03:10:05.377Z",
+      "finishedAt": "2026-09-03T03:41:39.471Z",
+      "wallTimeSeconds": 1840.3292037869999,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 2278712,
+        "outputTokens": 117910,
+        "cacheReadInputTokens": 21805242
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 6.6202938,
+        "source": "rate-card"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 6.6202938,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "pi",
+      "command": "ccusage pi session --json",
+      "basis": "rate-card"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "meta/muse-spark-1.3-contributor",
+        "usageSource": "agreed",
+        "costUsd": 6.6202938,
+        "inputTokens": 2278712,
+        "outputTokens": 117910,
+        "cacheReadTokens": 21805242,
+        "cacheWriteTokens": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7535005899999998,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.9347414839999995,
+      "outputSha256": "ac17e154b880c2c0be04b69a3eb826bef610d666fdf2aacb10050637f57eee32"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-72pr --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03514933699999983,
+      "outputSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level tinker-ball-72pr",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 5.57858345,
+      "outputSha256": "2a8c7370bde10c717593d831714062ec698b5825dfb6d62b271616bca8047cfc"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "tinker-ball-72pr",
+    "title": "Tinker Ball",
+    "evaluated": {
+      "commit": "cf42a6835ceffa674065ac9ce40b8c088ca76809",
+      "branch": "benchmark-run-run-n0i508zstz"
+    },
+    "payload": {
+      "commit": "26eeb471ed1322be0612658f4b59ca8e02c29188",
+      "branch": "benchmark-payload-run-n0i508zstz"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

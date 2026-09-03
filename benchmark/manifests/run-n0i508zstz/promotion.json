@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-n0i508zstz",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T03:42:42.068Z",
+      "data": {
+        "source": {
+          "runId": "run-n0i508zstz",
+          "slotId": "72pr",
+          "themeId": "tinker-ball",
+          "levelId": "tinker-ball-72pr",
+          "title": "Tinker Ball",
+          "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+          "evaluatedCommit": "cf42a6835ceffa674065ac9ce40b8c088ca76809",
+          "payloadCommit": "26eeb471ed1322be0612658f4b59ca8e02c29188",
+          "manifestSha256": "afa997481134bf48ee19e61c552154bfabd1f6cc6c38c12aa34b7c2ce2716da3",
+          "definitionSha256": "7e87c1eb2baf65ee7f5ac724fce2ebbbbd1fd43bb5391e22effb30b4017a9d2a",
+          "evaluatedSha256": "7320c36df32adf62a99557e62b74f803f4cfcadba4a9666594385f4518d2609f",
+          "payloadSha256": "1351405c58448a857824aebeae7b43712bdbe30015bd52783197f64adad1bb3f",
+          "payloadDiffSha256": "80877d8b80e0e7d253f748552b50f8c7d3f91a96cf84086f6a84649e6b83221c",
+          "sourcePath": "src/benchmark-levels/tinker-ball-72pr/",
+          "destinationPath": "src/benchmark-levels/tinker-ball-72pr/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/tinker-ball-72pr",
+              "promotedPath": "src/benchmark-levels/tinker-ball-72pr",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/tinker-ball-72pr",
+              "promotedPath": "public/level-content/tinker-ball-72pr",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "2efd40de1c558d6932d5cbb648ab5e317025c2cb"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T03:42:42.228Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/tinker-ball-72pr/",
+            "files": 12,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/tinker-ball-72pr/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T03:42:42.231Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T03:42:42.320Z",
+      "data": {
+        "destination": "src/benchmark-levels/tinker-ball-72pr/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T03:44:13.412Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 5.696749700000001,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "bf3d932163aa198c91a1e48e4303d2ce3ffd6a82e2a15afe86e120a5bfaa3438",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 37.536191667,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-72pr --base 2efd40de1c558d6932d5cbb648ab5e317025c2cb",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.0688339599999963,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level tinker-ball-72pr",
+            "exitCode": 0,
+            "stdoutSha256": "9e29b5a1ba376b3605971cebddb0c7eae319d1fb36253728737cfa56c1d6392c",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 44.781973592,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T03:44:13.518Z",
+      "data": {
+        "promotionCommit": "3a52c799ac101c407aab8b89e2f5f0eea10e19de",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-03T03:44:13.519Z",
+  "source": {
+    "runId": "run-n0i508zstz",
+    "slotId": "72pr",
+    "themeId": "tinker-ball",
+    "levelId": "tinker-ball-72pr",
+    "title": "Tinker Ball",
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "evaluatedCommit": "cf42a6835ceffa674065ac9ce40b8c088ca76809",
+    "payloadCommit": "26eeb471ed1322be0612658f4b59ca8e02c29188",
+    "manifestSha256": "afa997481134bf48ee19e61c552154bfabd1f6cc6c38c12aa34b7c2ce2716da3",
+    "definitionSha256": "7e87c1eb2baf65ee7f5ac724fce2ebbbbd1fd43bb5391e22effb30b4017a9d2a",
+    "evaluatedSha256": "7320c36df32adf62a99557e62b74f803f4cfcadba4a9666594385f4518d2609f",
+    "payloadSha256": "1351405c58448a857824aebeae7b43712bdbe30015bd52783197f64adad1bb3f",
+    "payloadDiffSha256": "80877d8b80e0e7d253f748552b50f8c7d3f91a96cf84086f6a84649e6b83221c",
+    "sourcePath": "src/benchmark-levels/tinker-ball-72pr/",
+    "destinationPath": "src/benchmark-levels/tinker-ball-72pr/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/tinker-ball-72pr",
+        "promotedPath": "src/benchmark-levels/tinker-ball-72pr",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/tinker-ball-72pr",
+        "promotedPath": "public/level-content/tinker-ball-72pr",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "2efd40de1c558d6932d5cbb648ab5e317025c2cb"
+  },
+  "promotionCommit": "3a52c799ac101c407aab8b89e2f5f0eea10e19de"
+}
