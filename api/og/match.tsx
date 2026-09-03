@@ -22,7 +22,11 @@ import { drawCandidateLevelIds } from '../../src/app/model-match.js';
 // a non-200 means an unknown id, and the card falls back to the default social
 // card rather than erroring. Text uses @vercel/og's bundled fallback font.
 
-export const config = { runtime: 'edge' };
+// This function runs on the Node runtime, not the edge one. `catalog.ts` reads
+// the catalog with a JSON import attribute (`with { type: 'json' }`), which the
+// Node runtime accepts and Vercel's edge bundler rejects with
+// `Expected ";" but found "with"` at deploy time.
+export const config = { runtime: 'nodejs' };
 
 const SLUG = /^[a-z0-9-]{1,64}$/;
 

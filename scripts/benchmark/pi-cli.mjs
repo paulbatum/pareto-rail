@@ -609,6 +609,10 @@ export function catalogListsModel(catalog, model) {
   return catalog.split('\n').some((line) => line.trim().split(/\s+/)[1] === model);
 }
 
+function perMillion(pricePerToken) {
+  return Number(pricePerToken ?? 0) * 1_000_000;
+}
+
 async function declareOpenRouterModel({ model, outputDirectory }) {
   let listed;
   try {
@@ -625,6 +629,9 @@ async function declareOpenRouterModel({ model, outputDirectory }) {
     fail(`OpenRouter lists ${model} without both a context length and a maximum completion length, so pi would fall back to its 4096-token output default.`);
   }
   const reasoning = (listed.supported_parameters ?? []).some((parameter) => parameter === 'reasoning' || parameter === 'reasoning_effort');
+  if (!Number(listed.pricing?.prompt) || !Number(listed.pricing?.completion)) {
+    fail(`OpenRouter lists ${model} without both an input and an output price, so pi would record every call as free and the run could not be measured.`);
+  }
   const declaration = {
     providers: {
       openrouter: {
@@ -637,6 +644,15 @@ async function declareOpenRouterModel({ model, outputDirectory }) {
           // pi's own vocabulary, minus the two levels OpenRouter's reasoning effort has no value for.
           ...(reasoning ? { thinkingLevelMap: { off: null, minimal: 'minimal', low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', max: null } } : {}),
           input: (listed.architecture?.input_modalities ?? ['text']).filter((modality) => modality === 'text' || modality === 'image'),
+          // pi records a per-call charge against these rates, and the cost measurement reads those
+          // charges back, so a declaration without them makes the whole run look free. OpenRouter
+          // publishes a price per token; pi's store holds a price per million.
+          cost: {
+            input: perMillion(listed.pricing?.prompt),
+            output: perMillion(listed.pricing?.completion),
+            cacheRead: perMillion(listed.pricing?.input_cache_read),
+            cacheWrite: perMillion(listed.pricing?.input_cache_write),
+          },
           contextWindow,
           maxTokens,
           compat: { thinkingFormat: 'openrouter' },
