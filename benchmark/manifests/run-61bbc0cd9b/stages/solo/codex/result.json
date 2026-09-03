@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "01a0669c-6018-7de1-98a9-6c8de3ac044b",
+  "usageSha256": "1158e2a90dcd960f57f8e24d598ca3a9bd282dda0613a6020f7b35a06edcbdfd",
+  "eventLogSha256": "aceaa68ed37ac82c10d8fda8d7c0a0c9589f78aed410e9d38152156a4d519e74",
+  "stderrSha256": "8efcc46e6d2866e4ef388a6b3f216f882fc699b497c5727ea9ebf7efa3abb4b3",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-61bbc0cd9b/harness-home/sessions/2026/09/03/rollout-2026-09-03T02-31-59-01a0669c-6018-7de1-98a9-6c8de3ac044b.jsonl",
+    "sha256": "97947393feb34142461c19bcfe07994ed974a16fe533a5e13a283369f5f87826"
+  }
+}

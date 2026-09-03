@@ -596,6 +596,24 @@
       ]
     },
     {
+      "runId": "run-61bbc0cd9b",
+      "levelId": "skyhook-v01u",
+      "themeId": "skyhook",
+      "configurationId": "codex-luna-max",
+      "files": [
+        {
+          "path": "runs/run-61bbc0cd9b/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 10301924,
+          "sha256": "97947393feb34142461c19bcfe07994ed974a16fe533a5e13a283369f5f87826"
+        },
+        {
+          "path": "runs/run-61bbc0cd9b/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 1391036,
+          "sha256": "aceaa68ed37ac82c10d8fda8d7c0a0c9589f78aed410e9d38152156a4d519e74"
+        }
+      ]
+    },
+    {
       "runId": "run-6e06255f1b",
       "levelId": "broadside-806f",
       "themeId": "broadside",
