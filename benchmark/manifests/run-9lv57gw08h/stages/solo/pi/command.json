@@ -1,0 +1,26 @@
+{
+  "executable": "pi",
+  "arguments": [
+    "--print",
+    "--mode",
+    "json",
+    "--approve",
+    "--offline",
+    "--no-extensions",
+    "--thinking",
+    "high",
+    "--model",
+    "meta/muse-spark-1.3-contributor",
+    "--provider",
+    "openrouter"
+  ],
+  "cliVersion": "0.84.4",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-9lv57gw08h",
+  "startedAt": "2026-09-03T00:06:49.919Z",
+  "finishedAt": "2026-09-03T00:37:36.624Z",
+  "wallTimeSeconds": 1811.257486893,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

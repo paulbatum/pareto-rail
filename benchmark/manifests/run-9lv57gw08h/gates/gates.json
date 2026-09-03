@@ -1,0 +1,41 @@
+{
+  "evaluatedCommit": "0e8bfe4f142490ee81f60c380e74f9f48a98f82d",
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 2.2667311359999998,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-9lv57gw08h/gates/typecheck.log",
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.7384630110000003,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-9lv57gw08h/gates/build.log",
+      "outputSha256": "56775ab96f706fa932d70c8003c330ef4e93e83ff9c6eddce5a7afc8fdbd9ca9"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-uzwm --base bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.04209281199999987,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-9lv57gw08h/gates/scope.log",
+      "outputSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level strandline-uzwm",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.985612823999999,
+      "logPath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-9lv57gw08h/gates/floor.log",
+      "outputSha256": "eef751ff30c6a2cb942011be2733d1baf9bd5877da5e8806c2e1d7f5bf8e9083"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "runId": "run-9lv57gw08h",
+  "slotId": "uzwm",
+  "levelId": "strandline-uzwm",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "pi-openrouter-muse-spark-1-3-high",
+  "recipePath": "benchmark/recipes/pi-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "meta/muse-spark-1.3-contributor",
+    "provider": "openrouter",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "149be2a4befac6738055b51fd1a983eb16a5e8ab",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Strandline"
+}

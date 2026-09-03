@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T20:24:20.420Z",
+  "generatedAt": "2026-09-03T00:47:32.288Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -152,6 +152,14 @@
       "primaryModel": "k3",
       "effort": "max",
       "workflowSummary": "One fresh unattended pi session driving Kimi K3 on Moonshot's own subscription endpoint. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+    },
+    {
+      "id": "pi-openrouter-muse-spark-1-3-high",
+      "modelName": "Muse Spark 1.3",
+      "workflowName": "solo",
+      "primaryModel": "meta/muse-spark-1.3",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended pi session driving Muse Spark 1.3 over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "pi-openrouter-kimi-k3-max",
@@ -2280,6 +2288,40 @@
       "thumbnailPath": "/level-content/strandline-u5oa/hero.avif",
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "93577d3a8c7f18d7c682676e3722a00e370b1924"
+    },
+    {
+      "levelId": "strandline-uzwm",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-muse-spark-1-3-high",
+      "modelName": "Muse Spark 1.3",
+      "workflowName": "solo",
+      "generationCost": 5.36613555,
+      "linesOfCode": 3371,
+      "run": {
+        "generationWallTimeSeconds": 1811.257,
+        "totalWallTimeSeconds": 1905.976,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "pi",
+          "version": "0.84.4"
+        },
+        "models": [
+          {
+            "modelName": "meta/muse-spark-1.3",
+            "role": "solo",
+            "inputTokens": 917273,
+            "outputTokens": 134509,
+            "cacheReadTokens": 24319207,
+            "cacheWriteTokens": 0,
+            "usageSource": "agreed",
+            "costUsd": 5.36613555
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-uzwm/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "149be2a4befac6738055b51fd1a983eb16a5e8ab"
     },
     {
       "levelId": "purse-pursuit-svok",

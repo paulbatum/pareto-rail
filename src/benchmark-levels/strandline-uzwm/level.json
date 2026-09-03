@@ -1,4 +1,9 @@
 {
   "id": "strandline-uzwm",
-  "title": "Strandline"
+  "title": "Strandline",
+  "contentImages": {
+    "hero": "/level-content/strandline-uzwm/hero.avif",
+    "overview": "/level-content/strandline-uzwm/overview.avif",
+    "start": "/level-content/strandline-uzwm/start.avif"
+  }
 }

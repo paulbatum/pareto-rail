@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-9lv57gw08h",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T00:39:02.788Z",
+      "data": {
+        "source": {
+          "runId": "run-9lv57gw08h",
+          "slotId": "uzwm",
+          "themeId": "strandline",
+          "levelId": "strandline-uzwm",
+          "title": "Strandline",
+          "materialsCommit": "149be2a4befac6738055b51fd1a983eb16a5e8ab",
+          "evaluatedCommit": "0e8bfe4f142490ee81f60c380e74f9f48a98f82d",
+          "payloadCommit": "bc2b4cbec51ba7e5f384979dab8f0606b384b2c2",
+          "manifestSha256": "96dc61f9aaa0b951573a1dee4b6544f7218ab9586c851b3d4d6b4334a103e172",
+          "definitionSha256": "b31a70bcc9c95823ed2d5292749d30b5554507bd85fc1442b43c2d03f61ea86d",
+          "evaluatedSha256": "0e2b154d9f17098727cf78f794e16970a898424b76f1d7308ad3b01623525991",
+          "payloadSha256": "ca8aab8c9bf86b3c7f667ef5753c03180ac88f2ab334c3edeeebd1c3a9a9fed9",
+          "payloadDiffSha256": "ba5e26b814978d7b9ed1ae9336eecf8c6696a9546db147d75fe953b1910b77ee",
+          "sourcePath": "src/benchmark-levels/strandline-uzwm/",
+          "destinationPath": "src/benchmark-levels/strandline-uzwm/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/strandline-uzwm",
+              "promotedPath": "src/benchmark-levels/strandline-uzwm",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/strandline-uzwm",
+              "promotedPath": "public/level-content/strandline-uzwm",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "2337f2868b91f449d61116148c3d8a96211178d2"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T00:39:02.913Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/strandline-uzwm/",
+            "files": 14,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T00:39:02.916Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T00:39:02.993Z",
+      "data": {
+        "destination": "src/benchmark-levels/strandline-uzwm/",
+        "verifiedFiles": 14
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T00:40:25.143Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 5.208146794999999,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "ba961811afefe1f7f7d6d4ce87d749b7764f2851509c3c97b534ea6899efb614",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 32.580335358000006,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-uzwm --base 2337f2868b91f449d61116148c3d8a96211178d2",
+            "exitCode": 0,
+            "stdoutSha256": "d54663e478206398e5990f80fd06d1f97b239465d61e95d47e9e3b1e539b5e22",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.054416307999999844,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level strandline-uzwm",
+            "exitCode": 0,
+            "stdoutSha256": "b4a71fa18f1922daae237cf90a2fd9c504db7c5472ea60551a38f4c7273d850c",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 42.196583266999994,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-03T00:40:25.239Z",
+      "data": {
+        "promotionCommit": "814273a1c69ea7cd64a9462caa74b6047b697b13",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-03T00:40:25.240Z",
+  "source": {
+    "runId": "run-9lv57gw08h",
+    "slotId": "uzwm",
+    "themeId": "strandline",
+    "levelId": "strandline-uzwm",
+    "title": "Strandline",
+    "materialsCommit": "149be2a4befac6738055b51fd1a983eb16a5e8ab",
+    "evaluatedCommit": "0e8bfe4f142490ee81f60c380e74f9f48a98f82d",
+    "payloadCommit": "bc2b4cbec51ba7e5f384979dab8f0606b384b2c2",
+    "manifestSha256": "96dc61f9aaa0b951573a1dee4b6544f7218ab9586c851b3d4d6b4334a103e172",
+    "definitionSha256": "b31a70bcc9c95823ed2d5292749d30b5554507bd85fc1442b43c2d03f61ea86d",
+    "evaluatedSha256": "0e2b154d9f17098727cf78f794e16970a898424b76f1d7308ad3b01623525991",
+    "payloadSha256": "ca8aab8c9bf86b3c7f667ef5753c03180ac88f2ab334c3edeeebd1c3a9a9fed9",
+    "payloadDiffSha256": "ba5e26b814978d7b9ed1ae9336eecf8c6696a9546db147d75fe953b1910b77ee",
+    "sourcePath": "src/benchmark-levels/strandline-uzwm/",
+    "destinationPath": "src/benchmark-levels/strandline-uzwm/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/strandline-uzwm",
+        "promotedPath": "src/benchmark-levels/strandline-uzwm",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/strandline-uzwm",
+        "promotedPath": "public/level-content/strandline-uzwm",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "2337f2868b91f449d61116148c3d8a96211178d2"
+  },
+  "promotionCommit": "814273a1c69ea7cd64a9462caa74b6047b697b13"
+}
