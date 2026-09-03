@@ -880,6 +880,24 @@
       ]
     },
     {
+      "runId": "run-ng3zrmdjo4",
+      "levelId": "broadside-amr2",
+      "themeId": "broadside",
+      "configurationId": "pi-openrouter-muse-spark-1-3-high",
+      "files": [
+        {
+          "path": "runs/run-ng3zrmdjo4/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 9073965,
+          "sha256": "a33bed991803a92dfda252b6f49e1fa80c330448c8d3238211f828725bf3333e"
+        },
+        {
+          "path": "runs/run-ng3zrmdjo4/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 44156730,
+          "sha256": "c2cb9b50833d1ab291976a297b6ebb19527cbca2faf5d52e53c0ad2c8047da32"
+        }
+      ]
+    },
+    {
       "runId": "run-pnpwjrxhz8uu",
       "levelId": "skyhook-loyy",
       "themeId": "skyhook",
