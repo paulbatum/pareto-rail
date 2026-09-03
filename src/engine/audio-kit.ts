@@ -2,6 +2,7 @@ import type { EventBus } from '../events';
 import type { LevelAudio } from './types';
 import type { AudioTraceSink, AudioTraceValue } from './audio-trace';
 import { createBrowserAudioContext, installAudioUnlock } from './audio-unlock';
+import { governOutput, type GovernedOutput } from './audio-output';
 import { emitBeatAt } from './music';
 
 /* How long an unsettled resume() may be outstanding before we treat the context as stuck. */
@@ -655,17 +656,20 @@ export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
   let musicVolume = clamp01(options.initialMusicVolume ?? options.initialVolume ?? 1);
   let sfxVolume = clamp01(options.initialSfxVolume ?? options.initialVolume ?? 1);
   let ctx: AudioContext | null = null;
+  let output: GovernedOutput | null = null;
   let intervalId = 0;
   let unlockGestureStart: (() => void) | null = null;
   let resumeStartedAt: number | null = null;
 
-  const scaledVolume = () => playerVolume * volumeScale;
   const scaledMusicVolume = () => musicVolume * volumeScale;
   const scaledSfxVolume = () => sfxVolume * volumeScale;
 
   const openContext = () => {
     const opened = createBrowserAudioContext();
     ctx = opened;
+    /* Govern the output before the level builds its graph: from here on the level's
+       `context.destination` is the gain node the player's volume drives. */
+    output = governOutput(opened, playerVolume);
     options.onCreateContext(opened, scaledMusicVolume(), scaledSfxVolume());
     if (options.schedulerMs !== undefined && options.onSchedule) {
       intervalId = window.setInterval(() => {
@@ -676,7 +680,10 @@ export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
   };
 
   const closeContext = (closing: AudioContext) => {
-    if (ctx === closing) ctx = null;
+    if (ctx === closing) {
+      ctx = null;
+      output = null;
+    }
     if (intervalId) {
       window.clearInterval(intervalId);
       intervalId = 0;
@@ -737,15 +744,12 @@ export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
   return {
     start,
     installGestureStart,
+    /* The master rides on the output gain rather than on the level's own graph, so it
+       governs a level that mishandles the music and effects volumes, and a level that
+       connects a voice straight to the speakers. */
     setMasterVolume(volume: number) {
       playerVolume = clamp01(volume);
-      musicVolume = playerVolume;
-      sfxVolume = playerVolume;
-      if (ctx) {
-        options.onVolumeChange?.(ctx, scaledVolume());
-        options.onMusicVolumeChange?.(ctx, scaledMusicVolume());
-        options.onSfxVolumeChange?.(ctx, scaledSfxVolume());
-      }
+      output?.setLevel(playerVolume);
     },
     getMasterVolume() {
       return playerVolume;
@@ -779,6 +783,7 @@ export function createLevelAudioKit(options: LevelAudioKitOptions): LevelAudio {
       }
       const closingContext = ctx;
       ctx = null;
+      output = null;
       if (closingContext) {
         options.onDispose?.(closingContext);
         void closingContext.close();

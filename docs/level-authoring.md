@@ -41,7 +41,7 @@ Start from `npm run scaffold -- --id <id> [--title <Title>] [--bpm <n>]` for a b
 
 1. Create `src/levels/<id>/index.ts` that exports a `LevelDefinition`.
 2. Declare one authoritative BPM constant for the level. Reference it from both the `LevelDefinition` and the runner config; audio should import the same constant instead of repeating the number.
-3. Implement `createAudio(bus)` in that level. The pause menu calls the returned volume, start, suspend, and dispose methods. For beat-driven levels, the expected audio spine uses `createBeatLevelAudio` to compose the mix bus, score epoch, transport, beat emission, and trace run; levels still supply `createScore`, `defineInstruments`, `createArrangement`, and all musical data. Raw `audio-kit` primitives remain available when a level needs custom synthesis or routing.
+3. Implement `createAudio(bus)` in that level. The pause menu calls the returned volume, start, suspend, and dispose methods. Mix the level at full loudness: the pause menu's volume slider drives a gain node the audio kit owns, placed in front of the speakers, and the kit hides it behind `context.destination`, so every connection a level makes passes through it. For beat-driven levels, the expected audio spine uses `createBeatLevelAudio` to compose the mix bus, score epoch, transport, beat emission, and trace run; levels still supply `createScore`, `defineInstruments`, `createArrangement`, and all musical data. Raw `audio-kit` primitives remain available when a level needs custom synthesis or routing.
 4. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`.
 5. Add the level to `src/levels/index.ts`.
 

@@ -6,8 +6,7 @@ function requireElement<T extends HTMLElement>(root: ParentNode, selector: strin
 
 export type PauseMenuOptions = {
   root: ParentNode;
-  initialMusicVolume: number;
-  initialSfxVolume: number;
+  initialVolume: number;
   initialBloom: number;
   initialMotionBlur: number;
   fullscreenAvailable: boolean;
@@ -15,8 +14,7 @@ export type PauseMenuOptions = {
   onOpen: () => void;
   onEndRun: () => void;
   onFullscreen: () => void;
-  onMusicVolume: (value: number) => void;
-  onSfxVolume: (value: number) => void;
+  onVolume: (value: number) => void;
   onBloom: (value: number) => void;
   onMotionBlur: (value: number) => void;
 };
@@ -31,13 +29,11 @@ export function createPauseMenu(options: PauseMenuOptions) {
   // Touch devices have no Escape key; this is their only way into the menu.
   const open = root.querySelector<HTMLButtonElement>('[data-pause="open"]');
   const fullscreen = requireElement<HTMLButtonElement>(root, '[data-pause="fullscreen"]');
-  const music = requireElement<HTMLInputElement>(root, '[data-pause="music"]');
-  const sfx = requireElement<HTMLInputElement>(root, '[data-pause="sfx"]');
+  const volume = requireElement<HTMLInputElement>(root, '[data-pause="volume"]');
   const bloom = requireElement<HTMLInputElement>(root, '[data-pause="bloom"]');
   const motionBlur = requireElement<HTMLInputElement>(root, '[data-pause="motion-blur"]');
 
-  music.value = `${Math.round(options.initialMusicVolume)}`;
-  sfx.value = `${Math.round(options.initialSfxVolume)}`;
+  volume.value = `${Math.round(options.initialVolume)}`;
   bloom.value = `${Math.round(options.initialBloom)}`;
   motionBlur.value = `${Math.round(options.initialMotionBlur)}`;
 
@@ -47,8 +43,7 @@ export function createPauseMenu(options: PauseMenuOptions) {
     fullscreen.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
   };
 
-  const onMusic = () => options.onMusicVolume(Number(music.value));
-  const onSfx = () => options.onSfxVolume(Number(sfx.value));
+  const onVolume = () => options.onVolume(Number(volume.value));
   const onBloom = () => options.onBloom(Number(bloom.value));
   const onMotionBlur = () => options.onMotionBlur(Number(motionBlur.value));
   resume.addEventListener('click', options.onResume);
@@ -56,7 +51,7 @@ export function createPauseMenu(options: PauseMenuOptions) {
   endRun?.addEventListener('click', options.onEndRun);
   fullscreen.addEventListener('click', options.onFullscreen);
   document.addEventListener('fullscreenchange', updateFullscreenText);
-  music.addEventListener('input', onMusic); sfx.addEventListener('input', onSfx);
+  volume.addEventListener('input', onVolume);
   bloom.addEventListener('input', onBloom); motionBlur.addEventListener('input', onMotionBlur);
 
   return {
@@ -70,7 +65,7 @@ export function createPauseMenu(options: PauseMenuOptions) {
       endRun?.removeEventListener('click', options.onEndRun);
       fullscreen.removeEventListener('click', options.onFullscreen);
       document.removeEventListener('fullscreenchange', updateFullscreenText);
-      music.removeEventListener('input', onMusic); sfx.removeEventListener('input', onSfx);
+      volume.removeEventListener('input', onVolume);
       bloom.removeEventListener('input', onBloom); motionBlur.removeEventListener('input', onMotionBlur);
     },
   };

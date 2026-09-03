@@ -182,9 +182,11 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     stack.add(() => bus.clear());
     const audio = level.createAudio(bus);
     stack.add(() => audio.dispose());
-    const legacyVolume = readStoredPercent('pareto-rail-volume', 50);
-    audio.setMusicVolume(readStoredPercent('pareto-rail-music-volume', legacyVolume) / 100);
-    audio.setSfxVolume(readStoredPercent('pareto-rail-sfx-volume', legacyVolume) / 100);
+    /* Levels play at their authored balance; the player's one volume rides on the audio
+       kit's output gain, which every level's audio passes through. */
+    audio.setMusicVolume(1);
+    audio.setSfxVolume(1);
+    audio.setMasterVolume(readStoredPercent('pareto-rail-volume', 50) / 100);
     setBloomLevel(readStoredPercent('pareto-rail-bloom', 100) / 100);
     setMotionBlurLevel(readStoredPercent('pareto-rail-motion-blur', 100) / 100);
     audio.installGestureStart(() => hud.setSoundActive(true));
@@ -207,16 +209,14 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const pauseMenu = createPauseMenu({
       root: host,
       fullscreenAvailable,
-      initialMusicVolume: audio.getMusicVolume() * 100,
-      initialSfxVolume: audio.getSfxVolume() * 100,
+      initialVolume: audio.getMasterVolume() * 100,
       initialBloom: getBloomLevel() * 100,
       initialMotionBlur: getMotionBlurLevel() * 100,
       onResume: () => setPaused(false),
       onOpen: () => setPaused(true),
       onEndRun: () => { bus.emit('runendrequest', undefined); setPaused(false); },
       onFullscreen: toggleFullscreen,
-      onMusicVolume: (value) => { localStorage.setItem('pareto-rail-music-volume', `${value}`); audio.setMusicVolume(value / 100); },
-      onSfxVolume: (value) => { localStorage.setItem('pareto-rail-sfx-volume', `${value}`); audio.setSfxVolume(value / 100); },
+      onVolume: (value) => { localStorage.setItem('pareto-rail-volume', `${value}`); audio.setMasterVolume(value / 100); },
       onBloom: (value) => { localStorage.setItem('pareto-rail-bloom', `${value}`); setBloomLevel(value / 100); },
       onMotionBlur: (value) => { localStorage.setItem('pareto-rail-motion-blur', `${value}`); setMotionBlurLevel(value / 100); },
     });

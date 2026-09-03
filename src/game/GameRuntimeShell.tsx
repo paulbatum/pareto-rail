@@ -91,12 +91,8 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
             <div className="pause-settings">
               <h2>Sound</h2>
               <label>
-                <span>Music</span>
-                <input data-pause="music" type="range" min="0" max="100" defaultValue="80" />
-              </label>
-              <label>
-                <span>Effects</span>
-                <input data-pause="sfx" type="range" min="0" max="100" defaultValue="80" />
+                <span>Volume</span>
+                <input data-pause="volume" type="range" min="0" max="100" defaultValue="50" />
               </label>
               <h2>Visual</h2>
               <label>
