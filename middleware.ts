@@ -59,9 +59,14 @@ function rewriteOne(html: string, pattern: RegExp, replacement: string, label: s
   return out;
 }
 
-// `canonicalUrl` is the bare `/match` (the route's canonical, indexable-facing
-// identity); `shareUrl` carries the link's own parameters.
-function rewriteHead(html: string, cardUrl: string, canonicalUrl: string, shareUrl: string): string {
+// The canonical and og:url both carry the link's own parameters. A canonical
+// pointing at the bare `/match` collapses every shared link onto one identity:
+// Twitter attributes a card to the canonical URL, and the bare `/match` names no
+// pair, so the middleware leaves it alone and it serves the site's default card.
+// Bare `/match` is what a crawler then shows for every match link. Search engines
+// are kept off these URLs by the noindex `src/app/seo.ts` sets, which they see
+// because they run the page's JS; social crawlers do not run it and do not index.
+function rewriteHead(html: string, cardUrl: string, shareUrl: string): string {
   let out = html;
   out = rewriteOne(out, /<title>[\s\S]*?<\/title>/, `<title>${escapeText(MATCH_TITLE)}</title>`, '<title>');
   out = rewriteOne(
@@ -70,7 +75,7 @@ function rewriteHead(html: string, cardUrl: string, canonicalUrl: string, shareU
     `<meta name="description" content="${escapeAttr(MATCH_DESCRIPTION)}" />`,
     'meta[name=description]',
   );
-  out = rewriteOne(out, /<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${escapeAttr(canonicalUrl)}" />`, 'link[rel=canonical]');
+  out = rewriteOne(out, /<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${escapeAttr(shareUrl)}" />`, 'link[rel=canonical]');
   const metaProperty = (property: string, content: string) =>
     rewriteOne(
       out,
@@ -125,9 +130,8 @@ export default async function middleware(request: Request): Promise<Response> {
     const html = await indexRes.text();
 
     const cardUrl = `${SITE_ORIGIN}/api/og/match?${query}`;
-    const canonicalUrl = `${SITE_ORIGIN}/match`;
-    const shareUrl = `${canonicalUrl}?${query}`;
-    const rewritten = rewriteHead(html, cardUrl, canonicalUrl, shareUrl);
+    const shareUrl = `${SITE_ORIGIN}/match?${query}`;
+    const rewritten = rewriteHead(html, cardUrl, shareUrl);
 
     return new Response(rewritten, {
       status: 200,
