@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T18:22:05.234Z",
+  "generatedAt": "2026-09-03T18:27:40.970Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -46,7 +46,7 @@
       "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
-      "id": "codex-astra-high",
+      "id": "codex-gpt-6-astra-high",
       "modelName": "GPT-6 Astra",
       "workflowName": "solo",
       "primaryModel": "gpt-6-astra",
@@ -55,7 +55,7 @@
       "featured": true
     },
     {
-      "id": "codex-astra-max",
+      "id": "codex-gpt-6-astra-max",
       "modelName": "GPT-6 Astra",
       "workflowName": "solo",
       "primaryModel": "gpt-6-astra",

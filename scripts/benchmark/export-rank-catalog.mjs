@@ -54,7 +54,7 @@ export const configurationLabels = {
     effort: 'max',
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
-  'codex-astra-high': {
+  'codex-gpt-6-astra-high': {
     modelName: 'GPT-6 Astra',
     workflowName: 'solo',
     primaryModel: 'gpt-6-astra',
@@ -62,7 +62,7 @@ export const configurationLabels = {
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
     featured: true,
   },
-  'codex-astra-max': {
+  'codex-gpt-6-astra-max': {
     modelName: 'GPT-6 Astra',
     workflowName: 'solo',
     primaryModel: 'gpt-6-astra',
@@ -197,8 +197,8 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'codex-sol-high-b20',
   'codex-sol-max',
   'codex-luna-max',
-  'codex-astra-high',
-  'codex-astra-max',
+  'codex-gpt-6-astra-high',
+  'codex-gpt-6-astra-max',
   'agy-gemini-3-6-flash-high',
   'agy-gemini-3-7-flash-high',
   'agy-gemini-3-8-flash-high',
