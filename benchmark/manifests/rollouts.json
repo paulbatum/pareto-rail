@@ -468,6 +468,24 @@
       ]
     },
     {
+      "runId": "run-0d447ea718",
+      "levelId": "broadside-61z2",
+      "themeId": "broadside",
+      "configurationId": "codex-luna-max",
+      "files": [
+        {
+          "path": "runs/run-0d447ea718/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 8900368,
+          "sha256": "36f3910833516f623651519281dddc236679df1765fe5093d331f7e10bb91434"
+        },
+        {
+          "path": "runs/run-0d447ea718/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 751497,
+          "sha256": "fcd91a0aead75e457e7d88395b2f2b4204f4a17e768a175131e644b64403d557"
+        }
+      ]
+    },
+    {
       "runId": "run-2dzleoxfhatr",
       "levelId": "mass-driver-rqki",
       "themeId": "mass-driver",

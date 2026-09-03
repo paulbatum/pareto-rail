@@ -159,6 +159,12 @@
       "configurationId": "claude-fable-5-high"
     },
     {
+      "runId": "run-0d447ea718",
+      "levelId": "broadside-61z2",
+      "themeId": "broadside",
+      "configurationId": "codex-luna-max"
+    },
+    {
       "runId": "run-2dzleoxfhatr",
       "levelId": "mass-driver-rqki",
       "themeId": "mass-driver",

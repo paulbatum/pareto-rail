@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T03:51:04.608Z",
+  "generatedAt": "2026-09-03T09:36:49.872Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1070,6 +1070,39 @@
       "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "broadside-61z2",
+      "themeId": "broadside",
+      "configurationId": "codex-luna-max",
+      "modelName": "GPT-5.6 Luna",
+      "workflowName": "solo",
+      "generationCost": 0.34917528,
+      "linesOfCode": 2289,
+      "run": {
+        "generationWallTimeSeconds": 1772.988,
+        "totalWallTimeSeconds": 1867.691,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.145.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-5.6-luna",
+            "role": "solo",
+            "inputTokens": 296824,
+            "outputTokens": 80841,
+            "cacheReadTokens": 9640064,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 28846
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-61z2/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
     {
       "levelId": "broadside-6m7m",

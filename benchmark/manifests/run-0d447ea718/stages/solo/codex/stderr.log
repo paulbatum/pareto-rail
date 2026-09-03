@@ -1,0 +1,1 @@
+2026-09-03T09:22:22.067710Z ERROR codex_core::tools::router: error=unable to locate image at `/tmp/broadside-61z2-content-review/broadside-61z2-thumbnails-8-3p75s-to-56p25s-full.png`: No such file or directory (os error 2)

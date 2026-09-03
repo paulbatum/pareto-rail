@@ -1,0 +1,21 @@
+{
+  "runId": "run-0d447ea718",
+  "slotId": "61z2",
+  "levelId": "broadside-61z2",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "codex-luna-max",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-5.6-luna",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Broadside"
+}
