@@ -1,0 +1,9 @@
+{
+  "id": "vespers-dade",
+  "title": "Vespers",
+  "contentImages": {
+    "overview": "/level-content/vespers-dade/overview.avif",
+    "start": "/level-content/vespers-dade/start.avif",
+    "hero": "/level-content/vespers-dade/hero.avif"
+  }
+}
