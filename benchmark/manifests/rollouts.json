@@ -668,6 +668,24 @@
       ]
     },
     {
+      "runId": "run-9lv57gw08h",
+      "levelId": "strandline-uzwm",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-muse-spark-1-3-high",
+      "files": [
+        {
+          "path": "runs/run-9lv57gw08h/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 8492667,
+          "sha256": "4ec16417664ab9cd030eb05e8204af0c51397c53f4acbd27e1c4092b8815afd4"
+        },
+        {
+          "path": "runs/run-9lv57gw08h/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 41005209,
+          "sha256": "cf211639ffb73be0a2419df79a7e5efd5507e68b1ac6ea77bf06f7d0e60d36f7"
+        }
+      ]
+    },
+    {
       "runId": "run-a7pqr4gm2o",
       "levelId": "speedsolve-nfof",
       "themeId": "speedsolve",
