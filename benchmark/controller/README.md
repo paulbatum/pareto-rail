@@ -328,6 +328,8 @@ Promotion validates the recorded run and payload, materializes the entrant under
 
 Promotion does not create the public showcase images. Run the `level-content-images` workflow for each promoted level before catalog export. The export rejects a descriptor without `contentImages.hero`.
 
+Delegate that workflow to one Opus subagent per level. The workflow renders and inspects dozens of candidate frames, and the operator needs only the three selected files to check the result. Give the subagent the level id and the skill name, and tell it to leave the commit to the operator. Then view the three AVIFs it wrote under `public/level-content/<level-id>/` and read its report on how they differ from the images the entrant shipped.
+
 ## Publish entrants and evidence
 
 Publishing uses `benchmark/private/publication.json` as the hand-edited list of public themes and entrants.
