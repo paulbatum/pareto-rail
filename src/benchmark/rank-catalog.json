@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T20:41:37.843Z",
+  "generatedAt": "2026-09-04T20:46:00.300Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1527,6 +1527,40 @@
       "thumbnailPath": "/level-content/broadside-b9mn/hero.avif",
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
+    },
+    {
+      "levelId": "broadside-e230",
+      "themeId": "broadside",
+      "configurationId": "codex-gpt-6-astra-high",
+      "modelName": "GPT-6 Astra",
+      "workflowName": "solo",
+      "generationCost": 5.282734,
+      "linesOfCode": 401,
+      "run": {
+        "generationWallTimeSeconds": 876.882,
+        "totalWallTimeSeconds": 907.144,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.153.2"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6-astra",
+            "role": "solo",
+            "inputTokens": 114997,
+            "outputTokens": 24062,
+            "cacheReadTokens": 2929664,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 5285
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-e230/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
     {
       "levelId": "broadside-fkio",
