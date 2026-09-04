@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T21:03:29.977Z",
+  "generatedAt": "2026-09-04T21:39:19.786Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -3242,6 +3242,40 @@
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-yk97/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
+    },
+    {
+      "levelId": "tinker-ball-034d",
+      "themeId": "tinker-ball",
+      "configurationId": "codex-gpt-6-astra-high",
+      "modelName": "GPT-6 Astra",
+      "workflowName": "solo",
+      "generationCost": 7.755478,
+      "linesOfCode": 745,
+      "run": {
+        "generationWallTimeSeconds": 1086.066,
+        "totalWallTimeSeconds": 1058.601,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.153.2"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6-astra",
+            "role": "solo",
+            "inputTokens": 228947,
+            "outputTokens": 28012,
+            "cacheReadTokens": 4065408,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 6568
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-034d/hero.avif",
+      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },

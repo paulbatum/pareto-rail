@@ -1,0 +1,3 @@
+2026-09-04T21:14:16.549447Z ERROR codex_core::tools::router: error=exec_command failed: ProcessFailed { message: "Network access to \"registry.npmjs.org\" was blocked: domain is not on the allowlist for the current sandbox mode." }
+2026-09-04T21:14:28.171492Z ERROR codex_core::tools::router: error=exec_command failed: ProcessFailed { message: "Network access to \"registry.npmjs.org\" was blocked: domain is not on the allowlist for the current sandbox mode." }
+2026-09-04T21:21:34.268037Z ERROR codex_core::tools::router: error=exec_command failed: ProcessFailed { message: "Network access to \"registry.npmjs.org\" was blocked: domain is not on the allowlist for the current sandbox mode." }

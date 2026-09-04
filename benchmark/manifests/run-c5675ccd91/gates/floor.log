@@ -1,0 +1,24 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level tinker-ball-034d
+
+WebSocket server error: Port 24678 is already in use
+Tinker Ball floor check
+duration 60.0s; spawned kinds 4: button-beetle, cardboard-bird, pencil-skater, spill-core
+event coverage missing: playerhit
+
+Engine defaults:
+  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: 0.16 NDC (engine default 0.085); reticle visual 0.081 NDC = 0.51x lock radius, no reticle scaling
+  words: start "START" (5), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, detailsForRun
+  identity hooks [default]: validateRelease, playerHealth, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+reticle warnings: 0
+start/replay word warnings: 0
+All floor checks passed.
