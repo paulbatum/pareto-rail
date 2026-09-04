@@ -1,0 +1,21 @@
+{
+  "runId": "run-f9ea692d4b",
+  "slotId": "8839",
+  "levelId": "strandline-8839",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "codex-gpt-6-astra-high",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-6-astra",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Strandline"
+}

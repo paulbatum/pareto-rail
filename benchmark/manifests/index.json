@@ -318,6 +318,12 @@
       "retired": true
     },
     {
+      "runId": "run-f9ea692d4b",
+      "levelId": "strandline-8839",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-astra-high"
+    },
+    {
       "runId": "run-gucf476jvkqr",
       "levelId": "mass-driver-esvz",
       "themeId": "mass-driver",

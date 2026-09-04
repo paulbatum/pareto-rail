@@ -34,6 +34,7 @@ Keep the page short: when a model's newer version arrives, unlist the versions i
 supersedes.
 
 - Claude Fable 5.1 (new)
+- GPT-6 Astra (new)
 - Claude Opus 5
 - GPT-5.6 Sol
 - Gemini 3.8 Flash (new)

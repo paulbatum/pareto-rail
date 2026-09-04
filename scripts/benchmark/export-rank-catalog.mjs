@@ -22,7 +22,6 @@ export const configurationLabels = {
     primaryModel: 'claude-fable-5',
     effort: 'high',
     workflowSummary: 'One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
-    featured: true,
   },
   'claude-fable-5-opus-delegation': {
     modelName: 'Claude Fable 5',

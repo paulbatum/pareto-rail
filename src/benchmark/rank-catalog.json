@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T20:46:00.300Z",
+  "generatedAt": "2026-09-04T21:03:29.977Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -7,8 +7,7 @@
       "workflowName": "solo",
       "primaryModel": "claude-fable-5",
       "effort": "high",
-      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
-      "featured": true
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "claude-fable-5-opus-delegation",
@@ -647,7 +646,6 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-vyxj/hero.avif",
-      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -1085,7 +1083,6 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-snxd/hero.avif",
-      "featured": true,
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
@@ -1423,7 +1420,6 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-b4kd/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
@@ -1695,7 +1691,6 @@
         ]
       },
       "thumbnailPath": "/level-content/mass-driver-detailed-k4wz/hero.avif",
-      "featured": true,
       "entrantBaseline": "e036b4253f95b6c7b6f8077f05098b4f2df012e6",
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
     },
@@ -1728,7 +1723,6 @@
           }
         ]
       },
-      "featured": true,
       "retired": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
@@ -1995,6 +1989,40 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-542f/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
+    },
+    {
+      "levelId": "strandline-8839",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-astra-high",
+      "modelName": "GPT-6 Astra",
+      "workflowName": "solo",
+      "generationCost": 7.015318,
+      "linesOfCode": 599,
+      "run": {
+        "generationWallTimeSeconds": 794.835,
+        "totalWallTimeSeconds": 2305.259,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.153.2"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6-astra",
+            "role": "solo",
+            "inputTokens": 153378,
+            "outputTokens": 20425,
+            "cacheReadTokens": 4460288,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 7952
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-8839/hero.avif",
+      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
@@ -2336,7 +2364,6 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-s7ah/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
@@ -2676,7 +2703,6 @@
         ]
       },
       "thumbnailPath": "/level-content/speedsolve-q7ld/hero.avif",
-      "featured": true,
       "entrantBaseline": "5305d890067cc4fab5063e27dfb3d424e3df1982",
       "materialsCommit": "4673765e0155cd1052d163becfc70fa2845ee195"
     },
@@ -3014,7 +3040,6 @@
         ]
       },
       "thumbnailPath": "/level-content/vespers-t5xw/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
@@ -3217,7 +3242,6 @@
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-yk97/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
@@ -3297,7 +3321,6 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-6fh9/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
