@@ -522,6 +522,24 @@
       ]
     },
     {
+      "runId": "run-3b834a0b56",
+      "levelId": "skyhook-b993",
+      "themeId": "skyhook",
+      "configurationId": "codex-gpt-6-astra-high",
+      "files": [
+        {
+          "path": "runs/run-3b834a0b56/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 6235844,
+          "sha256": "30d17c68cae0e942e1baae37c9eddaee1db765344432c6590e14df2219a71e98"
+        },
+        {
+          "path": "runs/run-3b834a0b56/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 548453,
+          "sha256": "88fab64d5311f85fe1a91bf29066d574384e1117b25b29b8791d6a3265ffe1f4"
+        }
+      ]
+    },
+    {
       "runId": "run-3ge34otdha",
       "levelId": "broadside-6m7m",
       "themeId": "broadside",
@@ -826,6 +844,24 @@
           "path": "runs/run-c340azfgk0vd/stages/solo/codex/events.jsonl.gz",
           "rawBytes": 339185,
           "sha256": "62bb83ef9fb90101f757cabcb74d0bb07bc60f5d29b41dcf0f65fba6e96e59ea"
+        }
+      ]
+    },
+    {
+      "runId": "run-c5675ccd91",
+      "levelId": "tinker-ball-034d",
+      "themeId": "tinker-ball",
+      "configurationId": "codex-gpt-6-astra-high",
+      "files": [
+        {
+          "path": "runs/run-c5675ccd91/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 6625787,
+          "sha256": "f9e7bf2e99b0fb4e144ff35f3ee6717b4b1eff3b168da344667a75b8ee909f76"
+        },
+        {
+          "path": "runs/run-c5675ccd91/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 394847,
+          "sha256": "038488edc6d2237aeba3a3268d17da6d9cbd72c7c43fe23461733a93e94e80ef"
         }
       ]
     },
