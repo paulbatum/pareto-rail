@@ -227,6 +227,12 @@
       "configurationId": "codex-sol-max"
     },
     {
+      "runId": "run-6e7654e49d",
+      "levelId": "broadside-63d6",
+      "themeId": "broadside",
+      "configurationId": "codex-gpt-6-astra-max"
+    },
+    {
       "runId": "run-6eb31f58cc",
       "levelId": "thermal-ink-8448",
       "themeId": "thermal-ink",
@@ -279,6 +285,12 @@
       "levelId": "strandline-o848",
       "themeId": "strandline",
       "configurationId": "pi-openrouter-ox-alpha-high"
+    },
+    {
+      "runId": "run-b82b6e4a1b",
+      "levelId": "strandline-b4d3",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-astra-max"
     },
     {
       "runId": "run-c340azfgk0vd",

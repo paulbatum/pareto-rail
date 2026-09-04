@@ -1,0 +1,21 @@
+{
+  "runId": "run-6e7654e49d",
+  "slotId": "63d6",
+  "levelId": "broadside-63d6",
+  "themeId": "broadside",
+  "themePath": "benchmark/themes/broadside.md",
+  "configurationId": "codex-gpt-6-astra-max",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-6-astra",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Broadside"
+}

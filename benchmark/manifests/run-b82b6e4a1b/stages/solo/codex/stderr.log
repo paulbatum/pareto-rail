@@ -1,0 +1,1 @@
+2026-09-04T23:00:49.867207Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid patch: multiple operations target /tmp/pareto-rail-run-b82b6e4a1b/src/benchmark-levels/strandline-b4d3/gameplay.ts

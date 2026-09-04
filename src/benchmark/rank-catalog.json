@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T21:49:36.647Z",
+  "generatedAt": "2026-09-04T23:56:28.415Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -1187,6 +1187,40 @@
       "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
     {
+      "levelId": "broadside-63d6",
+      "themeId": "broadside",
+      "configurationId": "codex-gpt-6-astra-max",
+      "modelName": "GPT-6 Astra",
+      "workflowName": "solo",
+      "generationCost": 15.200626,
+      "linesOfCode": 1214,
+      "run": {
+        "generationWallTimeSeconds": 2366.217,
+        "totalWallTimeSeconds": 2279.024,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.153.2"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6-astra",
+            "role": "solo",
+            "inputTokens": 471154,
+            "outputTokens": 65815,
+            "cacheReadTokens": 7198336,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 20757
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-63d6/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
+    },
+    {
       "levelId": "broadside-6m7m",
       "themeId": "broadside",
       "configurationId": "claude-fable-5-1-high",
@@ -2056,6 +2090,40 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-8839/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
+    },
+    {
+      "levelId": "strandline-b4d3",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-astra-max",
+      "modelName": "GPT-6 Astra",
+      "workflowName": "solo",
+      "generationCost": 10.82782,
+      "linesOfCode": 1247,
+      "run": {
+        "generationWallTimeSeconds": 2588.247,
+        "totalWallTimeSeconds": 2492.858,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.153.2"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6-astra",
+            "role": "solo",
+            "inputTokens": 209748,
+            "outputTokens": 69506,
+            "cacheReadTokens": 5255040,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 25091
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-b4d3/hero.avif",
       "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"

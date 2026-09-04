@@ -1,0 +1,26 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level broadside-63d6
+
+Broadside floor check
+duration 60.0s; spawned kinds 7: battery, bomber, generator, helix, raptor, reactor, shell
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=linear
+    gapThirtyseconds=2
+    releaseShare=0.35
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.09
+  action SFX snap: overridden grid (enabled, 32nd grid)
+  lock radius: 0.115 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.
+FLOOR VERDICT: ACCEPT — if submitted in its current state, this level will be accepted.

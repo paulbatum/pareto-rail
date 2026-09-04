@@ -1,0 +1,1 @@
+2026-09-04T23:00:29.770326Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid patch: multiple operations target /tmp/pareto-rail-run-6e7654e49d/src/benchmark-levels/broadside-63d6/gameplay.ts

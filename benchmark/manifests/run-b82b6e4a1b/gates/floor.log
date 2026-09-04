@@ -1,0 +1,27 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level strandline-b4d3
+
+WebSocket server error: Port 24678 is already in use
+Strandline floor check
+duration 60.0s; spawned kinds 5: brood, cyst, louse, parent, ribbon
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=0.18
+  action SFX snap: overridden grid (enabled, 32nd grid)
+  lock radius: 0.105 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, playerHealth, allowLockUndo, detailsForRun
+  identity hooks [default]: validateRelease
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.
+FLOOR VERDICT: ACCEPT — if submitted in its current state, this level will be accepted.
