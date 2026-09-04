@@ -1,0 +1,9 @@
+{
+  "id": "broadside-e230",
+  "title": "Broadside",
+  "contentImages": {
+    "hero": "/level-content/broadside-e230/hero.avif",
+    "overview": "/level-content/broadside-e230/overview.avif",
+    "start": "/level-content/broadside-e230/start.avif"
+  }
+}
