@@ -1,0 +1,13 @@
+{
+  "slug": "gpt-6-astra",
+  "displayName": "GPT-6-Astra",
+  "supportedReasoningEfforts": [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra"
+  ],
+  "selectedReasoningEffort": "high"
+}

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T21:39:19.786Z",
+  "generatedAt": "2026-09-04T21:49:36.647Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -871,6 +871,40 @@
       "thumbnailPath": "/level-content/skyhook-9uib/hero.avif",
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "skyhook-b993",
+      "themeId": "skyhook",
+      "configurationId": "codex-gpt-6-astra-high",
+      "modelName": "GPT-6 Astra",
+      "workflowName": "solo",
+      "generationCost": 8.922298,
+      "linesOfCode": 812,
+      "run": {
+        "generationWallTimeSeconds": 1581.887,
+        "totalWallTimeSeconds": 1519.972,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.153.2"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6-astra",
+            "role": "solo",
+            "inputTokens": 150596,
+            "outputTokens": 45297,
+            "cacheReadTokens": 5151488,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 14198
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-b993/hero.avif",
+      "featured": true,
+      "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04"
     },
     {
       "levelId": "skyhook-ggl2",

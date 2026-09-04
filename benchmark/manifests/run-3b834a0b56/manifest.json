@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-3b834a0b56",
+  "slotId": "b993",
+  "configuration": {
+    "id": "codex-gpt-6-astra-high"
+  },
+  "theme": {
+    "id": "skyhook",
+    "path": "benchmark/themes/skyhook.md",
+    "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+  },
+  "baseline": {
+    "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/codex-cli.md",
+    "sha256": "d935202d5ac0610164be8484e3160a82674dda5a4509dcca83e469e9464e59f3"
+  },
+  "controller": {
+    "commit": "15282bcb9e06944bc5e96fa091a84db2fdf03bca"
+  },
+  "timing": {
+    "startedAt": "2026-09-04T21:14:09.330Z",
+    "finishedAt": "2026-09-04T21:39:29.302Z",
+    "wallTimeSeconds": 1519.972
+  },
+  "stages": [
+    {
+      "id": "solo",
+      "role": "solo",
+      "model": {
+        "provider": "OpenAI Codex subscription",
+        "snapshotId": "gpt-6-astra"
+      },
+      "promptSha256": "157fbb81073edbf26c7987149dadd50ce10be132bd591d74615202b304207d41",
+      "harness": {
+        "name": "Codex CLI",
+        "version": "codex-cli 0.153.2"
+      },
+      "sessionId": "01a06e45-a73a-7640-b501-7f2262cf47f8",
+      "rolloutArtifactSha256": "30d17c68cae0e942e1baae37c9eddaee1db765344432c6590e14df2219a71e98",
+      "outputArtifactSha256": "88fab64d5311f85fe1a91bf29066d574384e1117b25b29b8791d6a3265ffe1f4",
+      "startedAt": "2026-09-04T21:14:12.716Z",
+      "finishedAt": "2026-09-04T21:39:19.172Z",
+      "wallTimeSeconds": 1581.887141308,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 150596,
+        "outputTokens": 45297,
+        "cacheReadInputTokens": 5151488,
+        "reasoningTokens": 14198
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 8.922298,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 8.922298,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "codex",
+      "command": "ccusage codex session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "unavailable",
+      "reason": "The harness reports no per-model counter to cross-check."
+    },
+    "models": [
+      {
+        "modelName": "gpt-6-astra",
+        "inputTokens": 150596,
+        "outputTokens": 45297,
+        "cacheReadTokens": 5151488,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 14198
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.524554952,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.7318281179999999,
+      "outputSha256": "d795136ce2722f75d718a996d660c024536c57f0b51ab0f146434eea3ec219fd"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-b993 --base b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03490816100000029,
+      "outputSha256": "4d819287dd191c0fe6f2165d8d0c302d18af362f513f441ec167130407207e49"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level skyhook-b993",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.570450252999999,
+      "outputSha256": "f3ef97ec1e84d34529686fa35d1123fde72fa4baa9eaa4ff1b3648644ee5952e"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "skyhook-b993",
+    "title": "Skyhook",
+    "evaluated": {
+      "commit": "0972b05fa3a4e969fb4c806944982fdd7273d285",
+      "branch": "benchmark-run-run-3b834a0b56"
+    },
+    "payload": {
+      "commit": "6fdc05d048fcabb5472ab1a5d424f8172c613059",
+      "branch": "benchmark-payload-run-3b834a0b56"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

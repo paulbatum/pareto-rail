@@ -177,6 +177,12 @@
       "configurationId": "claude-opus-4-8-high-b20"
     },
     {
+      "runId": "run-3b834a0b56",
+      "levelId": "skyhook-b993",
+      "themeId": "skyhook",
+      "configurationId": "codex-gpt-6-astra-high"
+    },
+    {
       "runId": "run-3ge34otdha",
       "levelId": "broadside-6m7m",
       "themeId": "broadside",
