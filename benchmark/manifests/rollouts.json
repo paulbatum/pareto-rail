@@ -486,6 +486,24 @@
       ]
     },
     {
+      "runId": "run-13d8958740",
+      "levelId": "broadside-e230",
+      "themeId": "broadside",
+      "configurationId": "codex-gpt-6-astra-high",
+      "files": [
+        {
+          "path": "runs/run-13d8958740/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 8742168,
+          "sha256": "f9b7f37be4d2d6ef557f5353d9d0f8a632a70db932162e081e5abe3eed617229"
+        },
+        {
+          "path": "runs/run-13d8958740/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 404993,
+          "sha256": "05cfbf511a909863e208118e2702cc780794d9fe5a7ffbad61747c5a7c0fd672"
+        }
+      ]
+    },
+    {
       "runId": "run-2dzleoxfhatr",
       "levelId": "mass-driver-rqki",
       "themeId": "mass-driver",
@@ -912,6 +930,24 @@
           "path": "runs/run-eztdwig5twea/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 10835882,
           "sha256": "b4563b1ecf81443db9c061e63d6f64754fc70339b46ea79ff9b92dd9870b7012"
+        }
+      ]
+    },
+    {
+      "runId": "run-f9ea692d4b",
+      "levelId": "strandline-8839",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-astra-high",
+      "files": [
+        {
+          "path": "runs/run-f9ea692d4b/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 12645446,
+          "sha256": "f9d4b79531909383e4728aaaa48a5155a4367145e5200b622d47e6e1b1c081d1"
+        },
+        {
+          "path": "runs/run-f9ea692d4b/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 403375,
+          "sha256": "db2abefcdca4747ca773c226aea32fa14173d49ffe3fc7fc7b32e3977e5e10c7"
         }
       ]
     },
