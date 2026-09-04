@@ -221,6 +221,38 @@ The controller refuses this option for budgeted stages, whose budget protocol ow
 
 For repeated Claude authentication failures, run `claude` interactively on the owner's account to refresh the stored credential before continuing. Resume recopies that credential into the isolated run home.
 
+### Restart a stage whose work cannot be recovered
+
+A killed stage leaves nothing to continue in two cases: its adapter is outside
+`CONTINUABLE_ADAPTERS` in `scripts/benchmark/run.mjs`, or its entrant worktree is
+gone. The worktree lives under `/tmp`, which does not survive a host reboot or an
+agent session ending, so check that the path in the run record's
+`worktree.json` still exists before planning a recovery.
+
+When the work cannot be recovered, run the planned row as a new run instead of
+resuming the existing record. Resuming reuses the run's harness home and stage
+tree, and that mixes the abandoned attempt into the run's published result two
+ways: the cost measurement reads the whole harness home, so the abandoned
+session's tokens are added to the entrant's cost, and the rollout export walks
+every `stages/<stage>/<harness>/` directory, so the abandoned transcript is
+published as the run's evidence.
+
+To restart a row as a new run, give it a new run id in the plan and launch it.
+Keep the killed run's record as the evidence of the failed attempt and adjudicate
+it as `infrastructure`.
+
+When a resume has already reused the record, separate the abandoned attempt from
+the measured one before the run reaches promotion:
+
+1. Move the abandoned session file out of `harness-home/sessions/`. Identify it by
+   its start timestamp: the surviving attempt's session is the one the live stage
+   is still writing.
+2. Move the abandoned attempt's stage directory out of `stages/`.
+3. Put both under `interrupted-attempts/` in the run record, which neither the
+   cost measurement nor the rollout export reads, and write down what happened.
+
+Do not delete either one. They are the evidence that the attempt was made.
+
 ## Investigate and adjudicate a failed run
 
 A failed gate records an `unadjudicated` disposition. The controller does not decide whether the entrant failed or the infrastructure denied it a fair attempt.
