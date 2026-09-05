@@ -23,6 +23,8 @@ type BucketReport = {
   p99FrameMs: number;
   maxFrameMs: number;
   frames: number;
+  /** Milliseconds the GPU spent on the frame, or null when the renderer does not track timestamps. */
+  gpuMs: number | null;
   counters: PerfCounters;
 };
 
@@ -54,6 +56,7 @@ class PerfOverlay {
   private readonly programs = new Int32Array(MAX_SECONDS);
   private readonly sceneObjects = new Int32Array(MAX_SECONDS);
   private readonly visibleObjects = new Int32Array(MAX_SECONDS);
+  private readonly gpuMs = new Float32Array(MAX_SECONDS);
   private readonly root: HTMLDivElement;
   private readonly label: HTMLDivElement;
   private readonly downloadButton: HTMLButtonElement;
@@ -130,6 +133,24 @@ class PerfOverlay {
     this.programs[second] = counters.programs ?? -1;
     this.sceneObjects[second] = counters.sceneObjects;
     this.visibleObjects[second] = counters.visibleObjects;
+    this.gpuMs[second] = this.readGpuMs();
+  }
+
+  /**
+   * The WebGPU backend fills `info.render.timestamp` only when the renderer was
+   * constructed with `trackTimestamp: true`, and only after the pending queries are
+   * resolved. When tracking is off this returns 0 and the overlay hides the column.
+   */
+  private readGpuMs() {
+    const renderer = this.renderer as WebGPURenderer & {
+      backend?: { trackTimestamp?: boolean };
+      resolveTimestampsAsync?: (type?: string) => Promise<number | undefined>;
+      info: { render: { timestamp?: number } };
+    };
+    if (renderer.backend?.trackTimestamp !== true) return 0;
+    void renderer.resolveTimestampsAsync?.('render').catch(() => undefined);
+    const timestamp = renderer.info.render.timestamp;
+    return Number.isFinite(timestamp) ? (timestamp as number) : 0;
   }
 
   private updateOverlay(second: number) {
@@ -137,7 +158,9 @@ class PerfOverlay {
     const avg = count > 0 ? this.bucketSum[second] / count : 0;
     const fps = avg > 0 ? 1000 / avg : 0;
     const worst = this.bucketMax[second];
-    this.label.textContent = `${fps.toFixed(0)} fps · worst ${worst.toFixed(1)} ms · calls ${this.calls[second]} · ${this.sparkline(second)}`;
+    const gpu = this.gpuMs[second];
+    const gpuText = gpu > 0 ? ` · gpu ${gpu.toFixed(1)} ms` : '';
+    this.label.textContent = `${fps.toFixed(0)} fps · worst ${worst.toFixed(1)} ms · calls ${this.calls[second]}${gpuText} · ${this.sparkline(second)}`;
   }
 
   private sparkline(second: number) {
@@ -166,6 +189,7 @@ class PerfOverlay {
         p99FrameMs: round(this.percentile(second, 0.99), 3),
         maxFrameMs: round(this.bucketMax[second], 3),
         frames,
+        gpuMs: this.gpuMs[second] > 0 ? round(this.gpuMs[second], 3) : null,
         counters: {
           calls: this.calls[second],
           triangles: this.triangles[second],

@@ -48,6 +48,37 @@ Every allowance above is the budget a level is **authored** to. A gate that deci
 
 The two-tier bar exists because a single threshold makes an author's local check and the benchmark gate the same coin flip: a level parked just under the line passes locally and fails the gate, or the reverse, on nothing the author changed. Reserving the margin means the number an author is asked to meet is strictly tighter than the number that can end a run, so landing near the budget costs a warning instead of a result.
 
+### Perf profiles
+
+A perf profile is a named set of gate budgets. Pick one with `--perf-profile <name>`:
+
+| Budget | `default` | `flagship` |
+| --- | --- | --- |
+| growth ratio | 1.35× | 1.6× |
+| retained heap | 16 MB | 32 MB |
+| draw calls, any sample | 500 | 1000 |
+| scene objects, any sample | 5000 | 10000 |
+| draw-call growth allowance | 64 | 128 |
+| object growth allowance | 128 | 256 |
+| geometry growth allowance | 512 | 1024 |
+| texture growth allowance | 8 | 16 |
+
+The `1.5×` gate margin applies to whichever profile is in force, so a `flagship` gate fails a run at 1500 draw calls.
+
+A level asks for a profile by setting `perfProfile: 'flagship'` on its `LevelDefinition`. `check:perf` reads that field from the level and uses it when the command line names no profile, so `check:floor -- --level <id>` holds the level to the profile it declares. `--perf-profile` overrides the declared profile, and any single budget flag below overrides both.
+
+Benchmark entrants are authored to `default`. The promotion tooling does not copy `perfProfile`, so a profile cannot travel with a benchmark level.
+
+### Measuring the post chain
+
+The gate renders with `fidelity=postless`, so bloom, motion blur, and any other post stage cost nothing in the numbers above. Pass `--fidelity full` to build the level's post chain instead. Combine it with `--gpu` to measure what the game ships:
+
+```sh
+npm run check:perf -- --level <level-id> --gpu --fidelity full
+```
+
+Read only the frame column from that run. The object and draw-call counts include the post chain's own passes, so they are not comparable with a `postless` run.
+
 Useful overrides:
 
 ```sh
@@ -60,12 +91,14 @@ Useful overrides:
 --object-growth-allowance 192
 --geometry-growth-allowance 768
 --texture-growth-allowance 16
+--perf-profile flagship
+--fidelity full
 --dt 0.0166667
 --seed 123
 --no-fail
 ```
 
-`npm run check:floor -- --level <level-id>` runs `check:perf` as a mandatory stage after the simulation and occlusion gates.
+`npm run check:floor -- --level <level-id>` runs `check:perf` as a mandatory stage after the simulation and occlusion gates. It accepts `--perf-profile <name>`, forwards it to that stage, and prints the profile in force in its report header.
 
 ## Real-hardware playtest overlay
 
@@ -78,6 +111,6 @@ https://<deployed>/?level=rush&perf=1
 
 Outside dev builds, no recorder or overlay is created without `perf=1`.
 
-The overlay records frame delta times into preallocated buffers and samples counters once per second. It displays current frames per second, the worst frame in the current second, a five-second sparkline, and current draw calls. Press the `perf json` button to download a JSON report at any time; on `runend` the overlay only logs the summary, it never downloads on its own.
+The overlay records frame delta times into preallocated buffers and samples counters once per second. It displays current frames per second, the worst frame in the current second, a five-second sparkline, and current draw calls. When the renderer was constructed with `trackTimestamp: true`, the overlay also reads `renderer.info.render.timestamp` and shows GPU milliseconds beside the draw calls; without timestamp tracking that reading stays hidden and the JSON report carries `gpuMs: null`. Press the `perf json` button to download a JSON report at any time; on `runend` the overlay only logs the summary, it never downloads on its own.
 
 The JSON report contains per-second frame buckets with average, p95, p99, and max frame milliseconds, plus the renderer and scene counters, level id, run duration, user agent, and timestamp. The overlay also prints a compact `console.table` summary for quick comparison during playtests.

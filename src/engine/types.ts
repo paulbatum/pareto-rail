@@ -89,6 +89,8 @@ export type LevelDefinition = {
   debugSelector?: LevelDebugSelector;
   render?: LevelRenderConfig;
   post?: LevelPostConfig;
+  /** Gate budgets `check:perf` and `check:floor` hold this level to. Defaults to `default`. */
+  perfProfile?: 'default' | 'flagship';
   markers?: Record<string, number>;
   sections?: Array<{ name: string; time: number }>;
   createAudio(bus: EventBus): LevelAudio;
