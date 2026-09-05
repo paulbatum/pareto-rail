@@ -22,6 +22,7 @@ Shared code lives in `src/engine/`:
 - `environment-kit.ts` contains lifecycle helpers for rail-relative scenery fields and atmosphere ramps. It owns placement/recycling bookkeeping and interpolation; levels still supply every mesh, color, count, distribution, and keyframe;
 - `camera-feel.ts` contains opt-in FOV kick/offset and trauma-shake primitives with no default bindings; levels decide every trigger and magnitude;
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting;
+- `post-stages.ts` builds the declarative screen-space stages a level lists in `post.stages`; `displaced-velocity.ts` builds a `positionNode` whose motion vectors stay correct under `post.velocityBuffer`;
 - `render-config.ts` applies a level's optional renderer-level state — tone mapping, exposure, shadow maps — and resolves the camera depth range every call site builds its camera from;
 - `edge-overlay.ts` builds inflated edge-line shells for meshes and instanced meshes as an authored visual style; levels choose the meshes, colors, and whether to use it at all;
 - `tsl-surface.ts` contains TSL node primitives for procedural surfaces: multi-octave fractal noise with anisotropic squash, Chebychev voronoi (per-cell random and distance-to-edge), a two-frequency plate-seam mask, and a color ramp. Node-in/node-out; levels own every material built from them. The voronoi helpers build large shader graphs — budget how many run per fragment;
@@ -276,7 +277,15 @@ To add god rays:
 
 The freecam does not redirect the god rays camera. `radialBlur` with `lightName` and `threshold` gives screen-space shafts from a bright object without shadows; the stage fades out while the object is off screen or behind the camera.
 
-With `velocityBuffer`, geometry displaced by a material `positionNode` gets a velocity equal to its displacement, so it smears every frame whether or not it moves. Each stage that samples the frame renders it to a texture first, one extra full-screen pass per such stage, and the god rays raymarch runs at half resolution by default. Measure with the `?perf=1` overlay on hardware; `check:perf` renders without the post chain.
+With `velocityBuffer`, three takes a vertex's previous position from the undisplaced geometry, so a plain `positionNode` that rotates or waves vertices reports the whole displacement as velocity and smears every frame, even at rest. Build such a `positionNode` with `displacedPosition` from `src/engine/displaced-velocity.ts` instead: it evaluates your displacement at the previous frame's clock value for the previous position, so only the change between frames becomes velocity. `displace` receives the vertex position after instancing, so an instanced gear rotates about a per-instance center it reads from an `instancedBufferAttribute`. The default clock is the renderer's frame time; pass `createDisplacementClock()` and call its `set(value)` each frame when the displacement follows a value the level owns.
+
+```ts
+import { displacedPosition } from '../../engine/displaced-velocity';
+
+material.positionNode = displacedPosition((position, clock) => rotateAbout(position, center, clock.mul(rate)));
+```
+
+Each stage that samples the frame renders it to a texture first, one extra full-screen pass per such stage, and the god rays raymarch runs at half resolution by default. Measure with the `?perf=1` overlay on hardware; `check:perf` renders without the post chain.
 
 ## Musical action audio
 
