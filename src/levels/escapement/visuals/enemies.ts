@@ -5,19 +5,20 @@ import {
   ConeGeometry,
   Curve,
   CylinderGeometry,
-  DirectionalLight,
   DoubleSide,
   Euler,
   ExtrudeGeometry,
   Float32BufferAttribute,
   Group,
-  HemisphereLight,
   LatheGeometry,
   MathUtils,
   Matrix4,
   Mesh,
+  MeshBasicMaterial,
   OctahedronGeometry,
+  PointLight,
   Quaternion,
+  Scene,
   Shape,
   SphereGeometry,
   TorusGeometry,
@@ -25,7 +26,9 @@ import {
   Vector2,
   Vector3,
 } from 'three';
+import type { WebGPURenderer } from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { bakeEnvironment, createGradientSky } from '../../../engine/environment-light';
 import { disposeObject3D } from '../../../engine/visual-kit';
 import {
   brassMaterial,
@@ -36,7 +39,7 @@ import {
   steelTwoSidedMaterial,
   type TargetPaint,
 } from './enemy-materials';
-import { LAMP_WARM, RUBY, STEEL_BLUE, VERDIGRIS, WHITE_HOT } from './palette';
+import { LAMP_WARM, RUBY, STEEL_BLUE, VERDIGRIS, VOID, WHITE_HOT } from './palette';
 
 // The Escapement roster. Every target is lit metal plus a verdigris or ruby
 // accent plus one solid white-hot spark. Silhouette and motion carry identity:
@@ -47,6 +50,10 @@ import { LAMP_WARM, RUBY, STEEL_BLUE, VERDIGRIS, WHITE_HOT } from './palette';
 // projects `mesh.position` to test the reticle, so the origin sits where the
 // player should aim. Gameplay owns position and facing; the rig animates only
 // its children.
+//
+// The spark is an unlit octahedron placed inside the silhouette, at the centre
+// of the read, so it shows from every angle. Its diameter is at least 8 percent
+// of the rig's height.
 
 export type EscapementEnemyKind = 'tarnish-mote' | 'burr' | 'oxide-tick' | 'ratchet' | 'jewel-wasp' | 'chime' | 'ruby-bolt';
 
@@ -84,7 +91,7 @@ const SPARK_GEOMETRIES = new Map<number, OctahedronGeometry>();
 function sparkGeometry(radius: number) {
   let geometry = SPARK_GEOMETRIES.get(radius);
   if (!geometry) {
-    geometry = new OctahedronGeometry(radius, 0);
+    geometry = new OctahedronGeometry(radius, 1);
     SPARK_GEOMETRIES.set(radius, geometry);
   }
   return geometry;
@@ -199,19 +206,40 @@ function addSpark(parent: Group, paint: TargetPaint, radius: number, position: [
 
 // ---- tarnish mote: a verdigris fleck, 0.6 m, that drifts --------------------------
 
-/** One hex flake with a chip on one side. Shared with the instanced swarm. */
-export const moteGeometry = once(() => mergeParts([
-  { geometry: new CylinderGeometry(0.3, 0.3, 0.035, 6) },
-  { geometry: new CylinderGeometry(0.13, 0.13, 0.03, 6), position: [0.3, 0.012, 0.13], rotation: [0, 0.4, 0] },
-]));
+const MOTE_RADIUS = 0.3;
+
+/** One cupped hex flake: the rim bends up a tenth of the radius. Shared with the instanced swarm. */
+export const moteGeometry = once(() => {
+  const outline = new Shape();
+  for (let i = 0; i < 6; i += 1) {
+    const angle = (i / 6) * Math.PI * 2;
+    const x = Math.cos(angle) * MOTE_RADIUS;
+    const y = Math.sin(angle) * MOTE_RADIUS;
+    if (i === 0) outline.moveTo(x, y);
+    else outline.lineTo(x, y);
+  }
+  outline.closePath();
+  const geometry = new ExtrudeGeometry(outline, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.012, bevelSegments: 1 });
+  geometry.rotateX(-Math.PI / 2);
+  const positions = geometry.getAttribute('position');
+  for (let i = 0; i < positions.count; i += 1) {
+    const x = positions.getX(i);
+    const z = positions.getZ(i);
+    const fraction = Math.hypot(x, z) / MOTE_RADIUS;
+    positions.setY(i, positions.getY(i) + MOTE_RADIUS * 0.1 * fraction * fraction);
+  }
+  positions.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+});
 
 export function createTarnishMote(): EnemyRig {
   const group = new Group();
   const paint = createTargetPaint();
   const body = new Group();
-  const flake = new Mesh(moteGeometry(), paint.accent('verdigris', DoubleSide));
-  body.add(flake);
-  addSpark(body, paint, 0.07, [0, 0.05, 0], 2.2);
+  body.add(new Mesh(moteGeometry(), paint.accent('verdigris', DoubleSide)));
+  // The spark sits through the flake's centre and shows from both faces.
+  addSpark(body, paint, 0.075, [0, 0.015, 0], 2.2);
   group.add(body);
 
   const { rig } = buildRig(group, 'tarnish-mote', VERDIGRIS, paint, (dt, clock) => {
@@ -296,8 +324,8 @@ export function createBurr(): EnemyRig {
   body.add(new Mesh(burrGeometry(), steelTwoSidedMaterial()));
   // A verdigris rim runs along the shaving's outer edge.
   body.add(new Mesh(burrRimGeometry(), paint.accent('verdigris')));
-  const head = burrCenter(0, new Vector3());
-  addSpark(body, paint, 0.1, [head.x, head.y, head.z], 2.6);
+  // The spark sits on the helix axis, inside the curl through a full tumble.
+  addSpark(body, paint, 0.13, [0, 0, 0], 2.6);
   group.add(body);
 
   const { rig } = buildRig(group, 'burr', STEEL_BLUE, paint, (dt) => {
@@ -310,35 +338,48 @@ export function createBurr(): EnemyRig {
 
 // ---- oxide tick: a six-legged mite, 1.2 m, that walks then leaps ------------------
 
-const TICK_LEG_SLOTS: Array<{ z: number; yaw: number; tripod: 0 | 1 }> = [
-  { z: 0.3, yaw: -0.55, tripod: 0 },
-  { z: 0.03, yaw: 0, tripod: 1 },
-  { z: -0.26, yaw: 0.55, tripod: 0 },
+const TICK_LEG_SLOTS: Array<{ z: number; yaw: number; tripod: 0 | 1; pair: 'front' | 'mid' | 'rear' }> = [
+  { z: 0.3, yaw: -0.55, tripod: 0, pair: 'front' },
+  { z: 0.03, yaw: 0, tripod: 1, pair: 'mid' },
+  { z: -0.26, yaw: 0.55, tripod: 0, pair: 'rear' },
 ];
+const TICK_HIP = { x: 0.3, y: -0.04 };
 
 const tickBodyGeometry = once(() => {
-  const thorax = new SphereGeometry(0.42, 10, 7);
+  const thorax = new SphereGeometry(0.42, 12, 8);
   thorax.scale(1, 0.55, 1.05);
-  const abdomen = new SphereGeometry(0.34, 10, 7);
+  const abdomen = new SphereGeometry(0.34, 12, 8);
   abdomen.scale(1, 0.62, 1.2);
-  const head = new SphereGeometry(0.18, 8, 6);
+  const head = new SphereGeometry(0.18, 10, 7);
   head.scale(1, 0.8, 1);
   return mergeParts([
     { geometry: thorax, position: [0, 0, 0.05] },
     { geometry: abdomen, position: [0, 0.02, -0.5] },
     { geometry: head, position: [0, 0.02, 0.5] },
-    { geometry: new ConeGeometry(0.035, 0.22, 5), position: [0.1, -0.06, 0.66], rotation: [1.3, 0, -0.35] },
-    { geometry: new ConeGeometry(0.035, 0.22, 5), position: [-0.1, -0.06, 0.66], rotation: [1.3, 0, 0.35] },
   ]);
 });
 
-/** One leg in its hip frame: femur out and up from the origin, tibia down to the foot. */
+// Verdigris crust: a hip socket inside the body at each leg root, and a ring of
+// tarnish at the head and abdomen seams.
+const tickCrustGeometry = once(() => {
+  const parts: Part[] = [
+    { geometry: new TorusGeometry(0.2, 0.035, 6, 18), position: [0, 0.02, 0.37] },
+    { geometry: new TorusGeometry(0.27, 0.035, 6, 20), position: [0, 0.01, -0.3] },
+  ];
+  for (const side of [1, -1]) {
+    for (const slot of TICK_LEG_SLOTS) {
+      parts.push({ geometry: new SphereGeometry(0.065, 8, 6), position: [side * TICK_HIP.x, TICK_HIP.y, slot.z] });
+    }
+  }
+  return mergeParts(parts);
+});
+
+/** One leg in its hip frame: femur out and up, tibia down to the foot, a hooked claw at the tip. */
 const tickLegGeometry = once(() => {
   const knee = new Vector3(0.3, 0.24, 0);
   const foot = new Vector3(0.5, -0.36, 0);
-  const femurLength = knee.length();
   const tibia = foot.clone().sub(knee);
-  const femur = new CylinderGeometry(0.028, 0.045, femurLength, 5);
+  const femur = new CylinderGeometry(0.028, 0.045, knee.length(), 5);
   const shin = new CylinderGeometry(0.016, 0.032, tibia.length(), 5);
   const femurAngle = Math.atan2(knee.x, knee.y);
   const shinAngle = Math.atan2(tibia.x, tibia.y);
@@ -346,6 +387,7 @@ const tickLegGeometry = once(() => {
     { geometry: femur, position: [knee.x / 2, knee.y / 2, 0], rotation: [0, 0, -femurAngle] },
     { geometry: new SphereGeometry(0.04, 6, 5), position: [knee.x, knee.y, knee.z] },
     { geometry: shin, position: [(knee.x + foot.x) / 2, (knee.y + foot.y) / 2, 0], rotation: [0, 0, -shinAngle] },
+    { geometry: new ConeGeometry(0.03, 0.14, 5), position: [foot.x + 0.02, foot.y - 0.06, 0], rotation: [0, 0, 2.6] },
   ]);
 });
 
@@ -354,19 +396,20 @@ export function createOxideTick(): OxideTickRig {
   const paint = createTargetPaint();
   const body = new Group();
   body.add(new Mesh(tickBodyGeometry(), oxideMaterial()));
-  // The single white-hot eye, forward and up, toward the player.
-  addSpark(body, paint, 0.1, [0, 0.14, 0.56], 2.8);
+  const crustMaterial = paint.accent('verdigris');
+  body.add(new Mesh(tickCrustGeometry(), crustMaterial));
+  // The single white-hot eye, set into the front of the head so it faces the rail.
+  addSpark(body, paint, 0.1, [0, 0.04, 0.6], 2.8);
 
-  const legMaterial = paint.accent('verdigris');
-  const legs: Array<{ pivot: Group; side: 1 | -1; tripod: 0 | 1; baseYaw: number }> = [];
+  const legs: Array<{ pivot: Group; side: 1 | -1; slot: (typeof TICK_LEG_SLOTS)[number]; baseYaw: number }> = [];
   for (const side of [1, -1] as const) {
     for (const slot of TICK_LEG_SLOTS) {
       const pivot = new Group();
-      pivot.position.set(side * 0.3, -0.04, slot.z);
+      pivot.position.set(side * TICK_HIP.x, TICK_HIP.y, slot.z);
       const baseYaw = side === 1 ? slot.yaw : Math.PI - slot.yaw;
-      pivot.add(new Mesh(tickLegGeometry(), legMaterial));
+      pivot.add(new Mesh(tickLegGeometry(), crustMaterial));
       body.add(pivot);
-      legs.push({ pivot, side, tripod: slot.tripod, baseYaw });
+      legs.push({ pivot, side, slot, baseYaw });
     }
   }
   group.add(body);
@@ -380,17 +423,20 @@ export function createOxideTick(): OxideTickRig {
     stretch = MathUtils.damp(stretch, gait === 'leap' ? 1 : 0, 16, dt);
     if (gait === 'walk') walkTime += dt;
     // Tripod gait: two sets of three legs alternate, each lifting on its swing.
+    // Raised: the front two pairs lift and the rear pair stays planted, so the
+    // crouch reads as a spring. Leap: every leg stretches back.
     for (const leg of legs) {
-      const cycle = walkTime * Math.PI * 2 * 2.6 + leg.tripod * Math.PI;
+      const cycle = walkTime * Math.PI * 2 * 2.6 + leg.slot.tripod * Math.PI;
       const walkLift = Math.max(0, Math.sin(cycle)) * 0.5 - 0.08;
       const walkSwing = Math.cos(cycle) * 0.32;
-      const lift = MathUtils.lerp(MathUtils.lerp(walkLift, 0.95, raise), -0.38, stretch);
-      const swing = MathUtils.lerp(MathUtils.lerp(walkSwing, 0.15, raise), -0.55, stretch);
+      const raisedLift = leg.slot.pair === 'rear' ? -0.3 : 0.95;
+      const raisedSwing = leg.slot.pair === 'rear' ? -0.3 : 0.3;
+      const lift = MathUtils.lerp(MathUtils.lerp(walkLift, raisedLift, raise), -0.38, stretch);
+      const swing = MathUtils.lerp(MathUtils.lerp(walkSwing, raisedSwing, raise), -0.55, stretch);
       leg.pivot.rotation.set(0, leg.baseYaw + swing * leg.side, lift);
     }
-    // Raised: the body rears back; leap: it stretches flat and forward.
-    body.rotation.x = -0.3 * raise + 0.12 * stretch;
-    body.position.y = 0.12 * raise - 0.05 * stretch;
+    body.rotation.x = -0.35 * raise + 0.12 * stretch;
+    body.position.y = 0.1 * raise - 0.05 * stretch;
   }, 0.95).rig as OxideTickRig;
   rig.setGait = (next) => {
     gait = next;
@@ -398,46 +444,81 @@ export function createOxideTick(): OxideTickRig {
   return rig;
 }
 
-// ---- ratchet: a pawl-shaped armour plate, 2 m, that steps on each beat -------------
+// ---- ratchet: a pawl, 2 m, that steps on each beat --------------------------------
 
-const RATCHET_OUTLINE: Array<[number, number]> = [
-  [-0.55, -0.35], [-0.7, 0.1], [-0.5, 0.5], [-0.1, 0.62], [0.45, 0.55], [0.85, 0.3], [1.05, -0.1],
-  [0.98, -0.45], [0.75, -0.55], [0.7, -0.25], [0.45, -0.05], [0.05, -0.25], [-0.2, -0.6],
-];
+// The lever runs from the pivot boss at the origin (the ruby pin, the lock
+// point) out along +x to the hardened tooth. Three riveted plates stack on the
+// lever's faces; each broken stage drops the outermost pair and the lever thins.
 const RATCHET_SCALE = 1.15;
-const RATCHET_DEPTH = 0.28;
+const RATCHET_BOSS_RADIUS = 0.42;
+const RATCHET_DEPTH = 0.3;
 
-const ratchetPawlGeometry = once(() => {
-  const shape = new Shape(RATCHET_OUTLINE.map(([x, y]) => new Vector2(x * RATCHET_SCALE, y * RATCHET_SCALE)));
-  const geometry = new ExtrudeGeometry(shape, {
+const ratchetLeverGeometry = once(() => {
+  const outline = new Shape();
+  const s = RATCHET_SCALE;
+  outline.moveTo(0, RATCHET_BOSS_RADIUS * s);
+  outline.lineTo(0.55 * s, 0.36 * s);
+  outline.lineTo(1.15 * s, 0.18 * s);
+  outline.lineTo(1.42 * s, 0.02 * s);
+  outline.lineTo(1.3 * s, -0.32 * s);
+  outline.lineTo(1.05 * s, -0.16 * s);
+  outline.lineTo(0.55 * s, -0.34 * s);
+  outline.lineTo(0, -RATCHET_BOSS_RADIUS * s);
+  outline.absarc(0, 0, RATCHET_BOSS_RADIUS * s, -Math.PI / 2, Math.PI / 2, true);
+  const geometry = new ExtrudeGeometry(outline, {
     depth: RATCHET_DEPTH,
     bevelEnabled: true,
     bevelThickness: 0.03,
     bevelSize: 0.03,
     bevelSegments: 1,
+    curveSegments: 10,
   });
   geometry.translate(0, 0, -RATCHET_DEPTH / 2);
   return geometry;
 });
 
-type ArmourSlot = { position: [number, number, number]; rotation: number; size: [number, number] };
+type RatchetPlateSpec = { from: number; to: number; halfHeight: number; layer: number };
 
-// Three plates riveted across the pawl's face: tip, arm, heel. Each break
-// shears the next one off and exposes the darker pawl beneath.
-const RATCHET_ARMOUR: ArmourSlot[] = [
-  { position: [0.92, -0.12, 0.2], rotation: -0.9, size: [0.34, 0.44] },
-  { position: [0.28, 0.3, 0.2], rotation: -0.3, size: [0.46, 0.36] },
-  { position: [-0.4, 0.05, 0.2], rotation: 0.4, size: [0.36, 0.5] },
+// Innermost first; stages break from the outermost inward.
+const RATCHET_PLATES: RatchetPlateSpec[] = [
+  { from: 0.38, to: 1.2, halfHeight: 0.26, layer: 0 },
+  { from: 0.48, to: 1.08, halfHeight: 0.2, layer: 1 },
+  { from: 0.58, to: 0.96, halfHeight: 0.15, layer: 2 },
 ];
 
-const ratchetPlateGeometries = once(() => RATCHET_ARMOUR.map((slot) => mergeParts([
-  { geometry: new BoxGeometry(slot.size[0], slot.size[1], 0.09) },
-  { geometry: new CylinderGeometry(0.045, 0.045, 0.06, 6), position: [slot.size[0] * 0.3, slot.size[1] * 0.3, 0.06], rotation: [Math.PI / 2, 0, 0] },
-  { geometry: new CylinderGeometry(0.045, 0.045, 0.06, 6), position: [-slot.size[0] * 0.3, -slot.size[1] * 0.3, 0.06], rotation: [Math.PI / 2, 0, 0] },
-])));
+function ratchetPlateGeometry(spec: RatchetPlateSpec) {
+  const s = RATCHET_SCALE;
+  const thickness = 0.08;
+  const z = RATCHET_DEPTH / 2 + thickness / 2 + spec.layer * thickness;
+  const outline = new Shape([
+    new Vector2(spec.from * s, spec.halfHeight * s),
+    new Vector2(spec.to * s, spec.halfHeight * 0.55 * s),
+    new Vector2(spec.to * s, -spec.halfHeight * 0.55 * s),
+    new Vector2(spec.from * s, -spec.halfHeight * s),
+  ]);
+  const plate = new ExtrudeGeometry(outline, { depth: thickness, bevelEnabled: false });
+  plate.translate(0, 0, -thickness / 2);
+  const parts: Part[] = [];
+  for (const side of [1, -1]) {
+    parts.push({ geometry: plate, position: [0, 0, side * z] });
+    for (let i = 0; i < 3; i += 1) {
+      const x = MathUtils.lerp(spec.from, spec.to, (i + 0.5) / 3) * s;
+      parts.push({
+        geometry: new CylinderGeometry(0.035, 0.035, 0.05, 6),
+        position: [x, 0, side * (z + thickness / 2)],
+        rotation: [Math.PI / 2, 0, 0],
+      });
+    }
+  }
+  return mergeParts(parts);
+}
 
-const ratchetCollarGeometry = once(() => new TorusGeometry(0.25, 0.05, 6, 18));
-const ratchetPinGeometry = once(() => new CylinderGeometry(0.17, 0.17, 0.62, 12));
+const ratchetPlateGeometries = once(() => RATCHET_PLATES.map(ratchetPlateGeometry));
+const ratchetCollarGeometry = once(() => mergeParts([
+  { geometry: new TorusGeometry(0.3, 0.06, 6, 20), position: [0, 0, RATCHET_DEPTH / 2 + 0.02] },
+  { geometry: new TorusGeometry(0.3, 0.06, 6, 20), position: [0, 0, -RATCHET_DEPTH / 2 - 0.02] },
+]));
+const ratchetPinGeometry = once(() => new CylinderGeometry(0.17, 0.17, 0.82, 12));
 
 type Shearing = { object: Group; velocity: Vector3; spin: Vector3; age: number };
 
@@ -460,26 +541,24 @@ export function createRatchet(): RatchetRig {
   const group = new Group();
   const paint = createTargetPaint();
   const body = new Group();
-  // The pawl beneath the plates is black oxide, so each sheared stage darkens the ratchet.
-  body.add(new Mesh(ratchetPawlGeometry(), oxideMaterial()));
-
-  const plates: Group[] = RATCHET_ARMOUR.map((slot, index) => {
+  body.add(new Mesh(ratchetLeverGeometry(), steelMaterial()));
+  const plates = ratchetPlateGeometries().map((geometry) => {
     const plate = new Group();
-    plate.position.set(...slot.position);
-    plate.rotation.z = slot.rotation;
-    plate.add(new Mesh(ratchetPlateGeometries()[index], steelMaterial()));
+    plate.add(new Mesh(geometry, steelMaterial()));
     body.add(plate);
     return plate;
   });
-
-  // The pin is the lock point: the group origin sits on it.
+  body.add(new Mesh(ratchetCollarGeometry(), brassMaterial()));
   const pin = new Mesh(ratchetPinGeometry(), paint.accent('ruby'));
   pin.rotation.x = Math.PI / 2;
   body.add(pin);
-  const collar = new Mesh(ratchetCollarGeometry(), brassMaterial());
-  collar.position.z = 0.24;
-  body.add(collar);
-  addSpark(body, paint, 0.09, [0, 0, 0.36], 2.6);
+  // The spark caps both ends of the pin, so it shows face-on and edge-on.
+  const sparkMaterial = paint.spark(2.6);
+  for (const side of [1, -1]) {
+    const cap = new Mesh(sparkGeometry(0.12), sparkMaterial);
+    cap.position.z = side * 0.42;
+    body.add(cap);
+  }
   group.add(body);
 
   let stage = 0;
@@ -492,13 +571,12 @@ export function createRatchet(): RatchetRig {
   rig.setStage = (next) => {
     const target = MathUtils.clamp(Math.round(next), 0, plates.length);
     while (stage < target) {
-      const plate = plates[stage];
+      const plate = plates[plates.length - 1 - stage];
       stage += 1;
-      const outward = new Vector3(plate.position.x, plate.position.y, 1).normalize();
       shearing.push({
         object: plate,
-        velocity: outward.multiplyScalar(3.2).add(new Vector3(0, 1.5, 0)),
-        spin: new Vector3(4 + stage, 3, 6),
+        velocity: new Vector3(2.5, 2.2, 0),
+        spin: new Vector3(3, 5 + stage, 2),
         age: 0,
       });
     }
@@ -514,21 +592,32 @@ const waspBodyGeometry = once(() => {
   return geometry;
 });
 
+// Collar seated against the head, head, mandibles, a stinger, and the hinge
+// block the vanes fold from.
 const waspBrassGeometry = once(() => mergeParts([
-  { geometry: new TorusGeometry(0.24, 0.06, 6, 16), position: [0, 0, 0.3] },
-  { geometry: new SphereGeometry(0.17, 8, 6), position: [0, 0.02, 0.66] },
-  { geometry: new ConeGeometry(0.03, 0.26, 5), position: [0.09, -0.06, 0.82], rotation: [1.35, 0, -0.4] },
-  { geometry: new ConeGeometry(0.03, 0.26, 5), position: [-0.09, -0.06, 0.82], rotation: [1.35, 0, 0.4] },
+  { geometry: new TorusGeometry(0.15, 0.045, 6, 16), position: [0, 0.01, 0.47] },
+  { geometry: new SphereGeometry(0.17, 10, 7), position: [0, 0.02, 0.64] },
+  { geometry: new ConeGeometry(0.03, 0.26, 5), position: [0.09, -0.06, 0.8], rotation: [1.35, 0, -0.4] },
+  { geometry: new ConeGeometry(0.03, 0.26, 5), position: [-0.09, -0.06, 0.8], rotation: [1.35, 0, 0.4] },
   { geometry: new ConeGeometry(0.05, 0.3, 6), position: [0, 0, -0.68], rotation: [-Math.PI / 2, 0, 0] },
+  { geometry: new BoxGeometry(0.26, 0.1, 0.22), position: [0, 0.23, 0.2] },
 ]));
 
-// A vane tapers from its root to its tip; the shape lies in the x-z plane with the root at the origin.
+// A vane with a fold along its length: the leading strip is flat and the
+// trailing strip is bent down, so no view sees the vane edge-on.
 const waspVaneGeometry = once(() => {
-  const outline = new Shape([new Vector2(0, -0.17), new Vector2(0.82, -0.05), new Vector2(0.86, 0.04), new Vector2(0, 0.2)]);
-  const geometry = new ExtrudeGeometry(outline, { depth: 0.02, bevelEnabled: false });
-  geometry.rotateX(-Math.PI / 2);
-  geometry.translate(0, 0, -0.06);
-  return geometry;
+  const leading = new ExtrudeGeometry(
+    new Shape([new Vector2(0, 0), new Vector2(0.86, 0.02), new Vector2(0.84, 0.16), new Vector2(0, 0.2)]),
+    { depth: 0.02, bevelEnabled: false },
+  );
+  leading.rotateX(-Math.PI / 2);
+  const trailing = new ExtrudeGeometry(
+    new Shape([new Vector2(0, -0.17), new Vector2(0.8, -0.06), new Vector2(0.86, 0.02), new Vector2(0, 0)]),
+    { depth: 0.02, bevelEnabled: false },
+  );
+  trailing.rotateX(-Math.PI / 2);
+  trailing.rotateX(0.55);
+  return mergeParts([{ geometry: leading }, { geometry: trailing }]);
 });
 
 export function createJewelWasp(): JewelWaspRig {
@@ -537,11 +626,12 @@ export function createJewelWasp(): JewelWaspRig {
   const body = new Group();
   body.add(new Mesh(waspBodyGeometry(), paint.accent('ruby', 0, true)));
   body.add(new Mesh(waspBrassGeometry(), brassMaterial()));
-  const spark = addSpark(body, paint, 0.09, [0, 0.12, 0.74], 2.8);
+  // The eye, set into the top front of the head so it also shows over the head from behind.
+  const spark = addSpark(body, paint, 0.13, [0, 0.12, 0.68], 2.8);
 
   const vanes = [1, -1].map((side) => {
     const hinge = new Group();
-    hinge.position.set(side * 0.16, 0.2, 0.28);
+    hinge.position.set(side * 0.12, 0.28, 0.2);
     // Swept back so the vanes show their faces from the front and below.
     hinge.rotation.set(0, side === 1 ? -0.35 : Math.PI + 0.35, 0);
     hinge.add(new Mesh(waspVaneGeometry(), brassMaterial()));
@@ -558,7 +648,7 @@ export function createJewelWasp(): JewelWaspRig {
     body.position.y = Math.sin(clock.time * Math.PI * 2 * 11) * 0.012 + Math.sin(clock.time * 2.1) * 0.05;
     body.rotation.z = Math.sin(clock.time * 1.7) * 0.08;
     state.heat = charge;
-    spark.scale.setScalar(1 + charge * 1.4);
+    spark.scale.setScalar(1 + charge * 1.2);
   }, 1.0).rig as JewelWaspRig;
   rig.setCharge = (next) => {
     charge = MathUtils.clamp(next, 0, 1);
@@ -587,6 +677,8 @@ export function createRubyBolt(): EnemyRig {
 // ---- chime: a small silver bell, 1 m, with a ruby clapper, that hangs and swings ---
 
 const CHIME_PIVOT_Y = 0.9;
+const CHIME_CLAPPER_TOP = 0.36;
+const CHIME_CLAPPER_LENGTH = 0.98;
 
 const chimeBellGeometry = once(() => new LatheGeometry([
   new Vector2(0.001, 0.5),
@@ -612,10 +704,11 @@ const chimeCrownGeometry = once(() => mergeParts([
   { geometry: new CylinderGeometry(0.05, 0.03, 0.06, 8), position: [0, CHIME_PIVOT_Y - 0.02, 0] },
 ]));
 
-// The clapper ball hangs just below the rim so its ruby shows from the rail.
+// The clapper: a ruby stem ending in a ruby ring that holds the spark, hung
+// just below the rim so both show from the rail.
 const chimeClapperGeometry = once(() => mergeParts([
-  { geometry: new CylinderGeometry(0.014, 0.014, 0.96, 6), position: [0, -0.48, 0] },
-  { geometry: new SphereGeometry(0.11, 10, 8), position: [0, -0.98, 0] },
+  { geometry: new CylinderGeometry(0.014, 0.014, CHIME_CLAPPER_LENGTH, 6), position: [0, -CHIME_CLAPPER_LENGTH / 2, 0] },
+  { geometry: new TorusGeometry(0.11, 0.04, 8, 16), position: [0, -CHIME_CLAPPER_LENGTH, 0] },
 ]));
 
 export function createChime(): EnemyRig {
@@ -628,10 +721,10 @@ export function createChime(): EnemyRig {
   hang.add(new Mesh(chimeBellGeometry(), silverMaterial()));
   hang.add(new Mesh(chimeCrownGeometry(), brassMaterial()));
   const clapper = new Group();
-  clapper.position.y = 0.36;
+  clapper.position.y = CHIME_CLAPPER_TOP;
   clapper.add(new Mesh(chimeClapperGeometry(), paint.accent('ruby')));
+  addSpark(clapper, paint, 0.09, [0, -CHIME_CLAPPER_LENGTH, 0], 2.6);
   hang.add(clapper);
-  addSpark(hang, paint, 0.085, [0, 0.66, 0], 2.4);
   pivot.add(hang);
   group.add(pivot);
 
@@ -647,17 +740,47 @@ export function createChime(): EnemyRig {
 
 // ---- preview harness --------------------------------------------------------------
 
-/** Warm lamp key from above, steel-blue fill from the side: the light the level gives targets. */
-export function previewLightRig(center: Vector3) {
+/**
+ * The level's lighting for a snapshot: the sky bake (warm lamp above,
+ * steel-blue sides, black below) attached as the scene environment on the
+ * first frame, plus the lamp as a point light. `radius` scales the lamp
+ * distance for a large subject.
+ */
+export function previewLightRig(center: Vector3, radius = 1) {
   const rig = new Group();
-  const key = new DirectionalLight(LAMP_WARM, 3.6);
-  key.position.copy(center).add(new Vector3(2, 6, 3));
-  key.target.position.copy(center);
-  const fill = new DirectionalLight(STEEL_BLUE, 1.1);
-  fill.position.copy(center).add(new Vector3(-5, 0.5, -3));
-  fill.target.position.copy(center);
-  const ambient = new HemisphereLight(STEEL_BLUE, new Color(0.02, 0.02, 0.03), 0.6);
-  rig.add(key, key.target, fill, fill.target, ambient);
+  const lamp = new PointLight(LAMP_WARM, 40 * radius * radius, 0, 2);
+  lamp.position.copy(center).add(new Vector3(1.5, 5, 2.5).multiplyScalar(radius));
+  rig.add(lamp);
+
+  // The snapshot harness owns the scene and renderer, so a probe mesh installs
+  // the bake from inside the first render: `scene.onBeforeRender` runs before
+  // the backend opens its render pass, where a nested PMREM render is safe.
+  const probe = new Mesh(new BoxGeometry(0.001, 0.001, 0.001), new MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
+  probe.frustumCulled = false;
+  let installed = false;
+  probe.onBeforeRender = (_renderer, scene) => {
+    if (installed) return;
+    installed = true;
+    let baked = false;
+    scene.onBeforeRender = (renderer) => {
+      if (baked) return;
+      baked = true;
+      const sky = createGradientSky({
+        zenith: LAMP_WARM.clone().multiplyScalar(0.9),
+        horizon: STEEL_BLUE.clone().multiplyScalar(0.55),
+        ground: VOID,
+        horizonWidth: 0.35,
+        sunDirection: new Vector3(0.2, 1, 0.35),
+        sunColor: LAMP_WARM,
+        sunIntensity: 30,
+        sunAngularRadius: 0.08,
+        haloAngularRadius: 0.6,
+        haloIntensity: 0.15,
+      });
+      bakeEnvironment(renderer as unknown as WebGPURenderer, () => sky.scene, { size: 128 }).attach(scene as Scene);
+    };
+  };
+  rig.add(probe);
   return rig;
 }
 
