@@ -601,6 +601,8 @@ function findOccluder(record: TargetRecord, includeTargetsAsOccluders: boolean):
   if (targetDistance <= 0.001) return null;
   RAY_DIRECTION.multiplyScalar(1 / targetDistance);
   OCCLUSION_RAYCASTER.set(CAMERA_WORLD, RAY_DIRECTION);
+  // Sprite.raycast reads the raycaster's camera; GPU particle systems add sprites to the scene.
+  OCCLUSION_RAYCASTER.camera = camera;
   OCCLUSION_RAYCASTER.near = camera.near;
   OCCLUSION_RAYCASTER.far = Math.max(camera.near, targetDistance - Math.max(1.5, targetDistance * 0.03));
 
