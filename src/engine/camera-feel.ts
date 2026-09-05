@@ -6,6 +6,11 @@ export type CameraFeelFovKickOptions = {
   decay?: number;
 };
 
+export type CameraFeelRollKickOptions = {
+  /** Exponential decay rate in 1/seconds. */
+  decay?: number;
+};
+
 export type CameraFeelFovOffsetOptions = {
   /** Exponential response rate in 1/seconds. Use Infinity for exact assignment this frame. */
   response?: number;
@@ -40,6 +45,8 @@ export type CameraFeelRestoreOptions = {
 export type CameraFeelRig = {
   readonly baseFov: number;
   kickFov(degrees: number, options?: CameraFeelFovKickOptions): void;
+  /** Add a roll offset that decays back to zero. Positive degrees tilt the horizon clockwise on screen. Independent of shake trauma. */
+  kickRoll(degrees: number, options?: CameraFeelRollKickOptions): void;
   setFovOffset(degrees: number, options?: CameraFeelFovOffsetOptions): void;
   shake(trauma: number, options?: CameraFeelShakeOptions): void;
   update(dt: number, options?: CameraFeelUpdateOptions): void;
@@ -47,12 +54,13 @@ export type CameraFeelRig = {
   dispose(): void;
 };
 
-type FovKick = {
+type Kick = {
   offset: number;
   decay: number;
 };
 
 const DEFAULT_FOV_KICK_DECAY = 4.2;
+const DEFAULT_ROLL_KICK_DECAY = 6;
 const DEFAULT_FOV_OFFSET_RESPONSE = Infinity;
 const DEFAULT_SHAKE_DECAY = 2.6;
 const DEFAULT_MAX_TRAUMA = 1;
@@ -66,7 +74,8 @@ const MAX_DT = 0.1;
 export function createCameraFeel(camera: PerspectiveCamera): CameraFeelRig {
   const baseFov = camera.fov;
   const baseQuaternion = camera.quaternion.clone();
-  const fovKicks: FovKick[] = [];
+  const fovKicks: Kick[] = [];
+  const rollKicks: Kick[] = [];
   const shakeEuler = new Euler();
   const shakeQuaternion = new Quaternion();
 
@@ -85,6 +94,11 @@ export function createCameraFeel(camera: PerspectiveCamera): CameraFeelRig {
   function kickFov(degrees: number, options: CameraFeelFovKickOptions = {}) {
     if (!Number.isFinite(degrees) || degrees === 0) return;
     fovKicks.push({ offset: degrees, decay: finiteOr(options.decay, DEFAULT_FOV_KICK_DECAY) });
+  }
+
+  function kickRoll(degrees: number, options: CameraFeelRollKickOptions = {}) {
+    if (!Number.isFinite(degrees) || degrees === 0) return;
+    rollKicks.push({ offset: MathUtils.degToRad(degrees), decay: finiteOr(options.decay, DEFAULT_ROLL_KICK_DECAY) });
   }
 
   function setFovOffset(degrees: number, options: CameraFeelFovOffsetOptions = {}) {
@@ -118,15 +132,7 @@ export function createCameraFeel(camera: PerspectiveCamera): CameraFeelRig {
       fovOffset += (requestedFovOffset - fovOffset) * MathUtils.clamp(alpha, 0, 1);
     }
 
-    let kickOffset = 0;
-    for (let i = fovKicks.length - 1; i >= 0; i -= 1) {
-      const kick = fovKicks[i];
-      kickOffset += kick.offset;
-      if (dt > 0) kick.offset *= Math.exp(-Math.max(0, kick.decay) * dt);
-      if (Math.abs(kick.offset) < 0.0001) fovKicks.splice(i, 1);
-    }
-
-    camera.fov = baseFov + fovOffset + kickOffset;
+    camera.fov = baseFov + fovOffset + sumAndDecayKicks(fovKicks, dt);
     camera.updateProjectionMatrix();
 
     requestedFovOffset = 0;
@@ -155,13 +161,14 @@ export function createCameraFeel(camera: PerspectiveCamera): CameraFeelRig {
     smoothYaw += (targetYaw - smoothYaw) * MathUtils.clamp(alpha, 0, 1);
     smoothRoll += (targetRoll - smoothRoll) * MathUtils.clamp(alpha, 0, 1);
 
-    shakeEuler.set(smoothPitch, smoothYaw, smoothRoll, 'XYZ');
+    shakeEuler.set(smoothPitch, smoothYaw, smoothRoll + sumAndDecayKicks(rollKicks, dt), 'XYZ');
     shakeQuaternion.setFromEuler(shakeEuler);
     camera.quaternion.multiply(shakeQuaternion);
   }
 
   function restore(options: CameraFeelRestoreOptions = {}) {
     fovKicks.length = 0;
+    rollKicks.length = 0;
     requestedFovOffset = 0;
     fovOffset = 0;
     trauma = 0;
@@ -183,12 +190,25 @@ export function createCameraFeel(camera: PerspectiveCamera): CameraFeelRig {
   return {
     baseFov,
     kickFov,
+    kickRoll,
     setFovOffset,
     shake,
     update,
     restore,
     dispose,
   };
+}
+
+/** Sum the live kicks, decay each one by `dt`, and drop the ones that have faded out. */
+function sumAndDecayKicks(kicks: Kick[], dt: number) {
+  let total = 0;
+  for (let i = kicks.length - 1; i >= 0; i -= 1) {
+    const kick = kicks[i];
+    total += kick.offset;
+    if (dt > 0) kick.offset *= Math.exp(-Math.max(0, kick.decay) * dt);
+    if (Math.abs(kick.offset) < 0.0001) kicks.splice(i, 1);
+  }
+  return total;
 }
 
 function finiteOr(value: number | undefined, fallback: number) {
