@@ -27,7 +27,8 @@ import {
 } from './choreography';
 import { ESCAPEMENT_BAR, ESCAPEMENT_BARS, ESCAPEMENT_BPM, ESCAPEMENT_DURATION, ESCAPEMENT_MARKERS, ESCAPEMENT_TIME, bar } from './timing';
 import { barrelCorridor } from './visuals/environment/barrel';
-import { BARREL_LAYOUT, DIAL_LAYOUT, PENDULUM_LAYOUT, RAIL_X, TRAIN_LAYOUT } from './visuals/environment/index';
+import { BARREL_LAYOUT, BOB_REST, DIAL_LAYOUT, PENDULUM_LAYOUT, RAIL_X, TRAIN_LAYOUT } from './visuals/environment/index';
+import { PENDULUM_RIDE_AIM_DROP, PENDULUM_RIDE_OFFSET } from './visuals/environment/pendulum';
 import { rimPoint } from './visuals/environment/train';
 
 // The Escapement run: 60 bars at 120 BPM. The rail leaves the mainspring
@@ -57,7 +58,7 @@ ESCAPEMENT_AUDIO_KINDS.boss = ['jewel', 'arbor'];
 
 // ---- rail ------------------------------------------------------------------
 
-type LegName = 'barrel' | 'train-a' | 'train-b' | 'train-c' | 'orrery' | 'strike' | 'climb' | 'hold' | 'free-run';
+type LegName = 'barrel' | 'train-a' | 'train-b' | 'train-c' | 'orrery' | 'strike' | 'ride' | 'free-run';
 
 type RailLeg = {
   name: LegName;
@@ -71,12 +72,12 @@ type RailLeg = {
 
 /** Where on the barrel corridor the run starts, as a fraction of the corridor arc. */
 const BARREL_START = 0.35;
-/** Camera station in front of the fork during the boss, in the bob's rest frame. */
-export const BOSS_STATION = new Vector3(RAIL_X, 430, -1338);
-/** World point the camera aims at during the boss: below the fork pivot so the escapement fills the top of the frame. */
-export const BOSS_AIM = PENDULUM_LAYOUT.mount.clone().add(new Vector3(0, -46, 0));
-/** Camera pitch above the rail tangent while riding the Train, so the wheel face stays below the frame. */
-const TRAIN_PITCH = 15 * DEG;
+/** Camera station on the bob for the Pendulum and the boss, in the bob's rest frame. */
+export const RIDE_STATION = BOB_REST.clone().add(PENDULUM_RIDE_OFFSET);
+/** World point the camera aims at from the bob: below the fork pivot so the escapement fills the top half of the frame. */
+export const BOSS_AIM = PENDULUM_LAYOUT.mount.clone().add(new Vector3(0, -PENDULUM_RIDE_AIM_DROP, 0));
+/** Camera pitch above the rail tangent while riding the Train, so the upper-tier wheels sit in the frame and the ridden face stays below it. */
+const TRAIN_PITCH = 5 * DEG;
 
 function corridorPoints() {
   const points: Vector3[] = [];
@@ -99,8 +100,8 @@ function rimArc(wheelIndex: number, includeEntry: boolean) {
   return points;
 }
 
+/** Two thirds of the leg in its first bar: the 2x speed spike at the Strike. */
 const strikeShape = (t: number) => (t < 1 / 3 ? 2 * t : 2 / 3 + 0.5 * (t - 1 / 3));
-const climbShape = (t: number) => 2 * t - t * t;
 const launchShape = (t: number) => t ** 1.4;
 
 function buildLegs(): RailLeg[] {
@@ -122,35 +123,26 @@ function buildLegs(): RailLeg[] {
     },
     {
       name: 'strike',
-      points: [new Vector3(RAIL_X, 14, -1240), new Vector3(RAIL_X, 70, -1300), new Vector3(RAIL_X, 130, -1332)],
+      points: [new Vector3(RAIL_X, 14, -1240), new Vector3(RAIL_X, 60, -1285), RIDE_STATION.clone()],
       endTime: bar(ESCAPEMENT_BARS.pendulum),
+      shape: strikeShape,
     },
     {
-      name: 'climb',
-      points: [
-        new Vector3(RAIL_X, 180, -1346),
-        new Vector3(RAIL_X, 250, -1350),
-        new Vector3(RAIL_X, 330, -1348),
-        new Vector3(RAIL_X, 395, -1342),
-        BOSS_STATION.clone(),
-      ],
-      endTime: bar(ESCAPEMENT_BARS.boss),
-      shape: climbShape,
-    },
-    {
-      name: 'hold',
-      points: [BOSS_STATION.clone().add(new Vector3(0, 1, -10)), BOSS_STATION.clone().add(new Vector3(0, 2, -20))],
+      // The bob carries the camera; the leg only drifts a little along the view so the frame keeps a tangent.
+      name: 'ride',
+      points: [RIDE_STATION.clone().add(new Vector3(0, 6, -7)), RIDE_STATION.clone().add(new Vector3(0, 12, -14))],
       endTime: bar(ESCAPEMENT_BARS.freeRun),
     },
     {
+      // Around the right edge of the pendulum plate (x up to 364 at z -1482), then the 20 degree climb to XII.
       name: 'free-run',
       points: [
-        new Vector3(230, 428, -1392),
-        new Vector3(330, 410, -1440),
-        new Vector3(400, 370, -1500),
-        new Vector3(392, 300, -1580),
-        new Vector3(300, 240, -1680),
-        new Vector3(175, 205, -1760),
+        new Vector3(210, 110, -1350),
+        new Vector3(340, 128, -1420),
+        new Vector3(430, 148, -1490),
+        new Vector3(400, 165, -1560),
+        new Vector3(280, 185, -1670),
+        new Vector3(170, 197, -1750),
         gateway,
         gateway.clone().add(new Vector3(0, 6, -150)),
       ],
@@ -259,8 +251,7 @@ const FIXED_PENDULUM: PendulumClock = { degreesAt: (time) => swingDegrees(time, 
  */
 export function createEscapementRail(pendulum: PendulumClock = FIXED_PENDULUM) {
   const train = { start: legNamed('train-a').startU, end: legNamed('train-c').endU };
-  const climb = legNamed('climb');
-  const hold = legNamed('hold');
+  const ride = legNamed('ride');
   const curve = new CatmullRomCurve3(RAIL.points.map((point) => point.clone()), false, 'catmullrom', 0.5);
   const parent = new Matrix4();
   const config: RailFrameConfig = {
@@ -279,19 +270,14 @@ export function createEscapementRail(pendulum: PendulumClock = FIXED_PENDULUM) {
         },
       },
       {
-        range: [climb.startU + (climb.endU - climb.startU) * 0.55, hold.endU],
+        range: [ride.startU, ride.endU],
         blend: 0.003,
-        target: (time) => {
-          const u = escapementRunProgress(time);
-          const ahead = sampleRailFrame(curve, Math.min(1, u + 0.025), time).position;
-          const k = MathUtils.smoothstep(time, bar(36), bar(ESCAPEMENT_BARS.boss));
-          return ahead.lerp(BOSS_AIM, k);
-        },
+        target: BOSS_AIM,
       },
     ],
     sections: [
       {
-        range: [climb.startU, hold.endU],
+        range: [ride.startU, ride.endU],
         blend: 0.001,
         parent: (time) => bobFrameMatrix(-pendulum.degreesAt(time) * DEG, parent),
       },
@@ -323,8 +309,6 @@ type Frame = ReturnType<typeof sampleRailFrame>;
 function aimLift(time: number) {
   const leg = legAt(time);
   if (leg.name === 'train-a' || leg.name === 'train-b' || leg.name === 'train-c') return Math.tan(TRAIN_PITCH);
-  if (leg.name === 'hold') return Math.tan(18 * DEG);
-  if (leg.name === 'climb') return Math.tan(18 * DEG) * MathUtils.smoothstep(time, bar(36), bar(ESCAPEMENT_BARS.boss));
   return 0;
 }
 
