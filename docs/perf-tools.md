@@ -100,6 +100,27 @@ Useful overrides:
 
 `npm run check:floor -- --level <level-id>` runs `check:perf` as a mandatory stage after the simulation and occlusion gates. It accepts `--perf-profile <name>`, forwards it to that stage, and prints the profile in force in its report header.
 
+## Frame-time probe
+
+`check:perf` samples one render per simulated second, so its frame column mixes steady-state cost with whatever compiled in that second. The probe separates them:
+
+```sh
+npm run perf:probe -- --level <level-id>
+npm run perf:probe -- --level <level-id> --times 5,20,90 --frames 36 --detail
+```
+
+At each time (default: the midpoint of every section the level declares) the probe steps the level there, then steps and renders `--frames` frames back to back and reports, per time, the median CPU milliseconds inside the level update and inside the render call, the first render after the step, and the median GPU milliseconds of all render passes and of all compute dispatches, read from timestamp queries. It runs on the GPU browser at 1280x720 by default; `--software` takes the SwiftShader path, where the GPU columns mean nothing.
+
+`--detail` prints every frame's render time with the renderer's pipeline and node-builder cache sizes. A frame whose sizes rise is a frame that compiled a shader; a size that falls and rises again across waves means the renderer evicted a shader and compiled it again (see `retainShaders` in `docs/level-authoring.md`).
+
+Three knobs remove one cost at a time, so two runs attribute it: `--hide <names>` sets the named scene objects invisible, `--drop-stages <types>` leaves those post stage types out of the chain, and `--no-velocity` builds the chain without the velocity buffer. Repeat the baseline run: another process on the same GPU moves the medians by a millisecond.
+
+## Running two render tools at once
+
+Every render tool opens the Windows browser on one debugging port and stops it by that port when it finishes, so two tools on the default port kill each other's browser. Set `PARETO_CAPTURE_PORT=<port>` in the environment of one of them to give it a browser of its own.
+
+The tools drive a run through one CDP call, which puppeteer abandons after its protocol timeout (180 seconds by default). A level that runs GPU compute on the software backend can need longer; set `PARETO_PROTOCOL_TIMEOUT_MS=<milliseconds>` or pass `--protocol-timeout <seconds>` to `check:perf`, `check:occlusion`, or `check:floor`.
+
 ## Real-hardware playtest overlay
 
 In dev builds (`npm run dev`) the overlay is on by default, in the top-left corner; pass `perf=0` to turn it off. In production builds it is off unless requested with `perf=1`:

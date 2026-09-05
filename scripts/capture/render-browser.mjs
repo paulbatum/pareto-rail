@@ -20,6 +20,19 @@ export const RENDER_MODES = ['gpu', 'software'];
    different port to run two capture tools at once. */
 export const DEFAULT_DEBUG_PORT = 9334;
 
+/**
+ * The debugging port a render tool uses when the caller names none. Two tools on one
+ * port share a browser profile, and stopping one kills the other's browser, so a
+ * parallel run sets `PARETO_CAPTURE_PORT` to a port of its own.
+ */
+export function defaultDebugPort() {
+  const configured = process.env.PARETO_CAPTURE_PORT;
+  if (configured === undefined || configured === '') return DEFAULT_DEBUG_PORT;
+  const port = Number(configured);
+  if (!Number.isInteger(port) || port <= 0) throw new Error(`PARETO_CAPTURE_PORT must be a positive integer, got ${configured}`);
+  return port;
+}
+
 const SOFTWARE_ARGS = [
   '--no-sandbox',
   '--disable-setuid-sandbox',
@@ -48,7 +61,7 @@ export function defaultRenderMode() {
  * Opens the browser the render tools drive. The caller closes it through `close()`.
  * `backend` is the three.js backend the pages should ask for.
  */
-export async function openRenderBrowser({ mode = defaultRenderMode(), width = 1280, height = 720, port = DEFAULT_DEBUG_PORT } = {}) {
+export async function openRenderBrowser({ mode = defaultRenderMode(), width = 1280, height = 720, port = defaultDebugPort() } = {}) {
   if (!RENDER_MODES.includes(mode)) throw new Error(`Unknown render mode: ${mode} (${RENDER_MODES.join(', ')})`);
 
   if (mode === 'software') {
