@@ -51,6 +51,13 @@ export type RailFrameConfig = {
    * frame, offered so roll, look targets, and sections can be used on it.
    */
   frame: 'parallel-transport' | 'world-up';
+  /**
+   * Parallel transport only. Rail distance in world units over which a
+   * transported frame that left a loop or twist tilted settles back to
+   * horizon-level, on stretches where the rail is not steep. Default 60.
+   * 0 keeps pure parallel transport, so a tilt picked up in a loop persists.
+   */
+  levelOver?: number;
   roll?: RailRollKey[];
   lookTargets?: RailLookTarget[];
   sections?: RailSection[];
@@ -73,6 +80,7 @@ type RailFrameState = AttachedRailFrame & {
 };
 
 const DEFAULT_BLEND_U = 0.02;
+const DEFAULT_LEVEL_OVER_UNITS = 60;
 const attachedFrames = new WeakMap<CatmullRomCurve3, RailFrameState>();
 
 /** Attaches an authored frame to a rail curve and returns the same curve. */
@@ -89,7 +97,7 @@ export function attachRailFrame<T extends CatmullRomCurve3>(curve: T, config: Ra
     config,
     time: 0,
     roll,
-    transport: config.frame === 'parallel-transport' ? buildTransportTable(curve) : undefined,
+    transport: config.frame === 'parallel-transport' ? buildTransportTable(curve, config.levelOver ?? DEFAULT_LEVEL_OVER_UNITS) : undefined,
   });
   return curve;
 }
@@ -99,12 +107,15 @@ export function getRailFrame(curve: CatmullRomCurve3): AttachedRailFrame | undef
   return attachedFrames.get(curve);
 }
 
-function buildTransportTable(curve: CatmullRomCurve3): TransportTable {
+function buildTransportTable(curve: CatmullRomCurve3, levelOverUnits: number): TransportTable {
   const length = curve.getLength();
   const count = MathUtils.clamp(Math.round(length / 2), 256, 4096);
+  const stepUnits = length / (count - 1);
+  const levelAlpha = levelOverUnits > 0 ? 1 - Math.exp(-stepUnits / levelOverUnits) : 0;
   const ups: Vector3[] = [];
   const tangent = new Vector3();
   const up = new Vector3();
+  const levelUp = new Vector3();
   for (let i = 0; i < count; i += 1) {
     tangent.copy(curve.getTangentAt(i / (count - 1))).normalize();
     if (i === 0) {
@@ -113,6 +124,14 @@ function buildTransportTable(curve: CatmullRomCurve3): TransportTable {
     }
     // Remove the tangent component from the previous up: the rotation-minimizing step.
     up.addScaledVector(tangent, -up.dot(tangent)).normalize();
+    if (levelAlpha > 0) {
+      // Pull toward the nearer of world up and world down, projected onto the
+      // tangent plane, scaled by how level the rail is here. A frame that is
+      // upside down at the top of a loop therefore stays upside down.
+      const flatness = 1 - tangent.y * tangent.y;
+      levelUp.copy(UP).multiplyScalar(up.y < 0 ? -1 : 1).addScaledVector(tangent, -tangent.y * (up.y < 0 ? -1 : 1));
+      if (levelUp.lengthSq() > 1e-6) up.lerp(levelUp.normalize(), levelAlpha * flatness).normalize();
+    }
     ups.push(up.clone());
   }
   return { ups };
