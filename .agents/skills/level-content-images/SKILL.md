@@ -36,6 +36,8 @@ View the entrant's three images before you replace them, and report where your r
    npm run snapshot:gameplay -- --level <level-id> --sheet --times <eight comma-separated seconds> --thumb-width 480 --columns 4 --out /tmp/<level-id>-content-review --fidelity full --seed 424242
    ```
 
+   The snapshot runtime never fires at targets, so a level whose world changes only when the player destroys something renders the same scene at every timestamp. When the eight candidates look alike, search the level module for a `debugValue` branch: a level that provides one plays its run under `--debug-value <value>`, and the sheet then shows an arc.
+
 3. Inspect that single sheet. Rank all eight frames by composition, readability, distinctive level identity, and lack of blown-out or empty space. Do **not** render full-size candidates before making this choice.
 4. Take the top-ranked timestamp as the hero. Take the next best four *distinct* moments as the overview. A hero timestamp may also appear in the overview if it remains one of the four strongest moments.
 5. Render only the selected hero at full resolution:
@@ -84,6 +86,7 @@ View the entrant's three images before you replace them, and report where your r
 
 - A hero must be legible at a glance and identify the level without explanatory text.
 - Favor a clear focal point, depth, and the level's signature enemy, set piece, or environment.
+- Judge the hero at gallery-card size as well as full size: downscale it to roughly 480x270 and confirm it still identifies the level and holds a focal point. A level meant to be dark stays dark — choose the frame that survives the downscale rather than a brighter moment that misrepresents the level.
 - Reject frames dominated by HUD-free dead space, clipped geometry, motion-transition artifacts, or large blown-out regions.
 - The overview should tell the run's visual arc. Choose different encounters or environments rather than four minor variants of one fight.
 - Re-run the review sheet with better explicit times only when none of its eight candidates are publishable. Do not browse a sequence of full-screen captures to search for a hero.
