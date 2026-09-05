@@ -627,7 +627,7 @@ export function createJewelWasp(): JewelWaspRig {
   body.add(new Mesh(waspBodyGeometry(), paint.accent('ruby', 0, true)));
   body.add(new Mesh(waspBrassGeometry(), brassMaterial()));
   // The eye, set into the top front of the head so it also shows over the head from behind.
-  const spark = addSpark(body, paint, 0.13, [0, 0.12, 0.68], 2.8);
+  const spark = addSpark(body, paint, 0.14, [0, 0.18, 0.62], 2.8);
 
   const vanes = [1, -1].map((side) => {
     const hinge = new Group();
