@@ -23,8 +23,8 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
       dt: options.dt,
       gapThreshold: options.gapThreshold,
     }),
-    analyzeOcclusionLevels([options.level], { dt: options.dt }),
-    analyzePerformanceLevels([options.level], { dt: options.dt, perfProfile: options.perfProfile }),
+    analyzeOcclusionLevels([options.level], { dt: options.dt, protocolTimeoutMs: options.protocolTimeoutMs }),
+    analyzePerformanceLevels([options.level], { dt: options.dt, perfProfile: options.perfProfile, protocolTimeoutMs: options.protocolTimeoutMs }),
   ]);
 
   const failures: string[] = [];
@@ -215,6 +215,7 @@ function parseArgs(argv: string[]) {
   let dt = 1 / 60;
   let gapThreshold = 4;
   let perfProfile = '';
+  let protocolTimeoutMs = 0;
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     const value = () => {
@@ -228,13 +229,16 @@ function parseArgs(argv: string[]) {
     else if (arg === '--dt') dt = Number(value());
     else if (arg === '--gap-threshold') gapThreshold = Number(value());
     else if (arg === '--perf-profile') perfProfile = value();
-    else if (arg === '-h' || arg === '--help') {
-      console.log('Usage: npm run check:floor -- --level <id> [--seed n] [--perf-profile default|flagship]');
+    else if (arg === '--protocol-timeout') {
+      protocolTimeoutMs = Number(value()) * 1000;
+      if (!Number.isFinite(protocolTimeoutMs) || protocolTimeoutMs <= 0) throw new Error('--protocol-timeout must be a positive number of seconds');
+    } else if (arg === '-h' || arg === '--help') {
+      console.log('Usage: npm run check:floor -- --level <id> [--seed n] [--perf-profile default|flagship] [--protocol-timeout seconds]');
       process.exit(0);
     } else throw new Error(`Unknown argument: ${arg}`);
   }
   if (!level) throw new Error('Missing --level <id>');
-  return { level, seed, dt, gapThreshold, perfProfile };
+  return { level, seed, dt, gapThreshold, perfProfile, protocolTimeoutMs };
 }
 
 function isNonTemplateCard(card: string, title: string) {

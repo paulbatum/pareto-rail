@@ -24,6 +24,7 @@ Shared code lives in `src/engine/`:
 - `post.ts` contains the shared bloom/vignette renderer and the player-facing bloom setting;
 - `post-stages.ts` builds the declarative screen-space stages a level lists in `post.stages`; `displaced-velocity.ts` builds a `positionNode` whose motion vectors stay correct under `post.velocityBuffer`;
 - `render-config.ts` applies a level's optional renderer-level state — tone mapping, exposure, shadow maps — and resolves the camera depth range every call site builds its camera from;
+- `shader-cache.ts` keeps compiled shaders alive (`retainCompiledShaders`, switched on by `render.retainShaders`) and draws a set of objects once behind the camera so their shaders compile before the run needs them (`warmUpShaders`);
 - `edge-overlay.ts` builds inflated edge-line shells for meshes and instanced meshes as an authored visual style; levels choose the meshes, colors, and whether to use it at all;
 - `tsl-surface.ts` contains TSL node primitives for procedural surfaces: multi-octave fractal noise with anisotropic squash, Chebychev voronoi (per-cell random and distance-to-edge), a two-frequency plate-seam mask, and a color ramp. Node-in/node-out; levels own every material built from them. The voronoi helpers build large shader graphs — budget how many run per fragment;
 - `height-haze.ts` contains an analytic height-falloff depth haze with an optional warm glow along sightlines through a hot region, wired as `scene.fogNode` so every material picks it up; all knobs are live uniforms.
@@ -210,7 +211,11 @@ Depth precision bounds how far you should go. three's WebGPU backend does **not*
 
 Tone mapping runs after the whole post chain, so the vignette and any `composeOutput` hook operate on linear HDR color and the curve sees their result. Bloom on HDR values behaves differently once a curve compresses the highlights: retune bloom strength and threshold rather than carrying over numbers from an untone-mapped level.
 
-`shadows` only switches the renderer's shadow maps on. The level still adds lights, sets `castShadow` on them, and sets `castShadow`/`receiveShadow` per mesh — and pays for the extra shadow passes, so check `check:perf` after enabling them.
+`shadows` only switches the renderer's shadow maps on. The level still adds lights, sets `castShadow` on them, and sets `castShadow`/`receiveShadow` per mesh — and pays for the extra shadow passes, so check `check:perf` after enabling them. A light whose casters never move can render its map once: set `light.shadow.autoUpdate = false` and `light.shadow.needsUpdate = true`.
+
+`retainShaders: true` keeps every compiled shader for the life of the renderer. three evicts a shader when the last mesh using it is disposed, so a level that disposes each enemy on its kill and spawns the same kind a bar later compiles that kind again on every wave: about 10 ms of JavaScript to rebuild the node graph plus a blocking driver compile of 20 to 100 ms. With retention each shader compiles once. The first compile still lands on the first spawn; to move it to the attract screen, hand one object of every kind the run spawns to `warmUpShaders(scene, objects)` from `src/engine/shader-cache.ts` in `createRuntime` and call its `update(camera)` each frame. Build those objects with the factories the run uses, since the renderer keys a shader on material settings, geometry layout, and lights. `npm run perf:probe -- --level <id> --detail` shows the compiles as frames where the pipeline cache size rises (`docs/perf-tools.md`).
+
+`softwareParticleCapacity` caps every GPU particle system while the renderer runs on the WebGL backend, which is the SwiftShader path `check:perf`, `check:occlusion`, and `check:floor` use. There the particle kernels run on the CPU over every slot each frame, and a 100k system makes each simulated second take tens of seconds, past the tools' protocol timeout. 0 turns particle compute off on that backend; the real pipeline is never affected.
 
 ## Post-processing
 

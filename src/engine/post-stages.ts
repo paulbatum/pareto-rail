@@ -277,6 +277,7 @@ function buildGodrays(config: GodraysStageConfig, input: LevelPostColorNode, con
   shadowLight.castShadow = true;
   renderer.shadowMap.enabled = true;
   const receiver = ensureShadowReceiver(scene);
+  const warmUpMaterial = new MeshStandardNodeMaterial();
 
   const uniforms: Record<string, PostStageUniform> = {};
   const color = colorParam(uniforms, 'color', config.color, [1, 1, 1]);
@@ -299,14 +300,23 @@ function buildGodrays(config: GodraysStageConfig, input: LevelPostColorNode, con
     uniforms,
     output,
     /* The node reads the light's shadow map when it builds, and three allocates that map
-       the first time a shadow-receiving material renders. One plain scene render does that. */
-    warmUp: () => renderer.render(scene, camera),
+       the first time a shadow-receiving material renders. One scene render does that. The
+       render uses one override material for every object, so it compiles two shaders (with
+       and without shadow sampling) instead of one per scene material in a variant the frame
+       never uses again; the shadow pass keeps its own depth material and the real casters. */
+    warmUp: () => {
+      const previousOverride = scene.overrideMaterial;
+      scene.overrideMaterial = warmUpMaterial;
+      renderer.render(scene, camera);
+      scene.overrideMaterial = previousOverride;
+    },
     dispose: () => {
       node.dispose();
       blurred?.dispose();
       scene.remove(receiver);
       receiver.geometry.dispose();
       (receiver.material as MeshStandardNodeMaterial).dispose();
+      warmUpMaterial.dispose();
     },
   };
 }

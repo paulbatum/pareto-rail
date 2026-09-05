@@ -85,6 +85,10 @@ export type LevelRenderConfig = {
   shadows?: { type?: LevelShadowMapType };
   /** Camera far plane in world units. Omit for the shared 500; raise it for a level whose vista needs real distance. */
   farPlane?: number;
+  /** Keep every compiled shader for the life of the renderer, so an enemy kind that is disposed and spawned again a bar later does not compile again. See src/engine/shader-cache.ts. */
+  retainShaders?: boolean;
+  /** Slot cap for every GPU particle system while the renderer runs on the WebGL software backend of the render tools; 0 turns their compute off there. Omit for no cap. */
+  softwareParticleCapacity?: number;
 };
 
 export type LevelDebugSelector = {

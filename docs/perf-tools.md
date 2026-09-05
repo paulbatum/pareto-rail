@@ -32,6 +32,16 @@ This gate stays on the software path by default, unlike the visual tools in `doc
 
 Pass `--gpu` when the frame column itself is the question — it samples the pipeline the game ships, and needs the setup described in `docs/visual-tools.md`.
 
+### What the frame column measures
+
+`--render` picks how the harness steps the run, and with it what the frame column means:
+
+- `sample` (the software default) steps a whole second without rendering, renders once, and reports that render's CPU time. It is the cheapest mode on SwiftShader. The stepped second queues every compute dispatch the level made without a frame between them, and the render then waits for that queue, so a level with GPU particles reads tens of seconds on the sample after a busy second. That number is an artifact of this mode, not a frame the game shows.
+- `all` renders every frame the same synchronous way and reports the per-second average, p95, p99, and maximum of the render's CPU time.
+- `realtime` (the `--gpu` default) steps one frame per animation frame and reports the wall-clock time between frames, which is what a player sees: a GPU that falls behind, or a driver still compiling a pipeline the frame needs, shows up as one long frame. The display refresh caps the floor at about 16.7 ms, so read this mode for hitches (`maxFrameMs` in the JSON) rather than for the median.
+
+The GPU browser compiles a render pipeline the first time a shader is drawn, in the GPU process, for 20 to 700 ms depending on the shader. The renderer's CPU time does not include it; the wall time between frames does. A level that spawns an enemy kind, disposes it, and spawns it again pays that compile on every wave unless it sets `render.retainShaders` (`docs/level-authoring.md`).
+
 ### Retained heap
 
 The heap column is read after a forced collection at every sample, so it is what the run is still holding rather than wherever the allocation sawtooth happened to be. This matters more than it sounds: sampling the raw heap measures uncollected garbage as much as retention, and whether a collection fires near a sample depends on how busy that stretch of the level is. A level that goes quiet in its final seconds gives the collector no reason to run, ends its last sample at the top of a sawtooth, and reads as though it leaked tens of megabytes when it retained a fraction of that. Collecting first removes the question, and makes the reading repeatable to a tenth of a megabyte across runs.
@@ -99,6 +109,27 @@ Useful overrides:
 ```
 
 `npm run check:floor -- --level <level-id>` runs `check:perf` as a mandatory stage after the simulation and occlusion gates. It accepts `--perf-profile <name>`, forwards it to that stage, and prints the profile in force in its report header.
+
+## Frame-time probe
+
+`check:perf` samples one render per simulated second, so its frame column mixes steady-state cost with whatever compiled in that second. The probe separates them:
+
+```sh
+npm run perf:probe -- --level <level-id>
+npm run perf:probe -- --level <level-id> --times 5,20,90 --frames 36 --detail
+```
+
+At each time (default: the midpoint of every section the level declares) the probe steps the level there, then steps and renders `--frames` frames back to back and reports, per time, the median CPU milliseconds inside the level update and inside the render call, the first render after the step, and the median GPU milliseconds of all render passes and of all compute dispatches, read from timestamp queries. It runs on the GPU browser at 1280x720 by default; `--software` takes the SwiftShader path, where the GPU columns mean nothing.
+
+`--detail` prints every frame's render time with the renderer's pipeline and node-builder cache sizes. A frame whose sizes rise is a frame that compiled a shader; a size that falls and rises again across waves means the renderer evicted a shader and compiled it again (see `retainShaders` in `docs/level-authoring.md`).
+
+Three knobs remove one cost at a time, so two runs attribute it: `--hide <names>` sets the named scene objects invisible, `--drop-stages <types>` leaves those post stage types out of the chain, and `--no-velocity` builds the chain without the velocity buffer. Repeat the baseline run: another process on the same GPU moves the medians by a millisecond.
+
+## Running two render tools at once
+
+Every render tool opens the Windows browser on one debugging port and stops it by that port when it finishes, so two tools on the default port kill each other's browser. Set `PARETO_CAPTURE_PORT=<port>` in the environment of one of them to give it a browser of its own.
+
+The tools drive a run through one CDP call, which puppeteer abandons after its protocol timeout (180 seconds by default). A level that runs GPU compute on the software backend can need longer; set `PARETO_PROTOCOL_TIMEOUT_MS=<milliseconds>` or pass `--protocol-timeout <seconds>` to `check:perf`, `check:occlusion`, or `check:floor`.
 
 ## Real-hardware playtest overlay
 

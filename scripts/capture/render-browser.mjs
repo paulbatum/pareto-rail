@@ -20,6 +20,19 @@ export const RENDER_MODES = ['gpu', 'software'];
    different port to run two capture tools at once. */
 export const DEFAULT_DEBUG_PORT = 9334;
 
+/**
+ * The debugging port a render tool uses when the caller names none. Two tools on one
+ * port share a browser profile, and stopping one kills the other's browser, so a
+ * parallel run sets `PARETO_CAPTURE_PORT` to a port of its own.
+ */
+export function defaultDebugPort() {
+  const configured = process.env.PARETO_CAPTURE_PORT;
+  if (configured === undefined || configured === '') return DEFAULT_DEBUG_PORT;
+  const port = Number(configured);
+  if (!Number.isInteger(port) || port <= 0) throw new Error(`PARETO_CAPTURE_PORT must be a positive integer, got ${configured}`);
+  return port;
+}
+
 const SOFTWARE_ARGS = [
   '--no-sandbox',
   '--disable-setuid-sandbox',
@@ -44,17 +57,40 @@ export function defaultRenderMode() {
   return readRenderMode(configured);
 }
 
+/* puppeteer abandons a CDP call after this long. A tool drives a whole run through one
+   call, and a level that runs GPU compute on SwiftShader can need more than the default. */
+export const DEFAULT_PROTOCOL_TIMEOUT_MS = 180_000;
+
+export function defaultProtocolTimeoutMs() {
+  const configured = process.env.PARETO_PROTOCOL_TIMEOUT_MS;
+  if (configured === undefined || configured === '') return DEFAULT_PROTOCOL_TIMEOUT_MS;
+  return readProtocolTimeoutMs(configured, 'PARETO_PROTOCOL_TIMEOUT_MS');
+}
+
+export function readProtocolTimeoutMs(value, label) {
+  const timeout = Number(value);
+  if (!Number.isFinite(timeout) || timeout <= 0) throw new Error(`${label} must be a positive number of milliseconds, got ${value}`);
+  return timeout;
+}
+
 /**
  * Opens the browser the render tools drive. The caller closes it through `close()`.
  * `backend` is the three.js backend the pages should ask for.
  */
-export async function openRenderBrowser({ mode = defaultRenderMode(), width = 1280, height = 720, port = DEFAULT_DEBUG_PORT } = {}) {
+export async function openRenderBrowser({
+  mode = defaultRenderMode(),
+  width = 1280,
+  height = 720,
+  port = defaultDebugPort(),
+  protocolTimeoutMs = defaultProtocolTimeoutMs(),
+} = {}) {
   if (!RENDER_MODES.includes(mode)) throw new Error(`Unknown render mode: ${mode} (${RENDER_MODES.join(', ')})`);
 
   if (mode === 'software') {
     const browser = await puppeteer.launch({
       headless: true,
       executablePath: findLinuxChrome(),
+      protocolTimeout: protocolTimeoutMs,
       args: SOFTWARE_ARGS,
       // Chrome probes the display even headless, and hangs there when WSLg's X socket is
       // present but dead — which reads as an unexplained navigation timeout.
@@ -70,7 +106,7 @@ export async function openRenderBrowser({ mode = defaultRenderMode(), width = 12
     throw new Error(`${error instanceof Error ? error.message : error}\n\n${SOFTWARE_HINT}`);
   }
 
-  const browser = await puppeteer.connect({ browserURL: launched.browserURL });
+  const browser = await puppeteer.connect({ browserURL: launched.browserURL, protocolTimeout: protocolTimeoutMs });
   return {
     browser,
     mode,

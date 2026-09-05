@@ -91,7 +91,9 @@ function createPlate(layout: PendulumLayout) {
   parts.push(nonIndexed(cockArm));
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
-  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 230, seamAniso: 1.6, tarnish: 0.35, roughness: 0.44, brushAxis: new Vector3(0, 1, 0) }));
+  // The plate faces the camera flat-on from the boss station; at roughness 0.44 it mirrors the warm zenith of
+  // the sky bake and reads as a beige wash, so it is rougher and more tarnished than the other brass.
+  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 230, seamAniso: 1.6, tarnish: 0.5, roughness: 0.62, brushAxis: new Vector3(0, 1, 0) }));
 }
 
 /** The mount arbor from the plate to the fork pivot, and the pendulum's pivot pin. */

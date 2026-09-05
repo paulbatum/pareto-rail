@@ -4,7 +4,7 @@ import type { RunSummary } from '../engine/scoring';
 import { GAME_FOV_DEGREES } from '../engine/lock-on-runner';
 import { createEventBus } from '../events';
 import { createPost, getBloomLevel, getMotionBlurLevel, setBloomLevel, setMotionBlurLevel } from '../engine/post';
-import { applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
+import { applyInitializedRenderConfig, applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
 import { getStartScreenTip } from '../ui/client-tip';
 import { installDevErrorOverlay } from '../ui/dev-error-overlay';
 import { createHud, showUnsupported } from '../ui/hud';
@@ -168,6 +168,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       return { dispose };
     }
     if (signal?.aborted || !host.isConnected) return abort();
+    applyInitializedRenderConfig(renderer, level.render);
     app.append(renderer.domElement);
 
     const scene = new Scene();
