@@ -26,6 +26,7 @@ import {
   vec3,
   vec4,
 } from 'three/tsl';
+import { createDisplacementClock, displacedPosition } from '../../../engine/displaced-velocity';
 import { fractalNoise, seams, type FloatNode, type Vec3Node } from '../../../engine/tsl-surface';
 import { BLACK_OXIDE, BRASS, BRASS_DARK, LAMP_WARM, STEEL_BLUE, STEEL_DARK, VERDIGRIS, VOID } from './palette';
 
@@ -42,6 +43,13 @@ export const strikeAge = uniform(1e4);
 export const strikeOrigin = uniform(new Vector3());
 /** Peak displacement of the strike wave in world units. 0 disables the wave. */
 export const strikeStrength = uniform(0);
+
+/**
+ * Displacement clock for the gear spin. The environment sets it from the
+ * integrated gear time once per frame, so the velocity pass sees only the
+ * rotation between frames and per-object motion blur follows the gears.
+ */
+export const gearDisplacementClock = createDisplacementClock(0);
 
 /** Wave-front speed in world units per second. */
 export const STRIKE_SPEED = 700;
@@ -73,13 +81,13 @@ function strikeOffsetWorld(world: Vec3Node): Vec3Node {
  * local position (the gear spin lives there); the strike wave then displaces the
  * result in world space and maps it back to local space.
  */
-export function environmentPositionNode(shape?: (local: Vec3Node) => Vec3Node): Vec3Node {
-  return Fn(() => {
-    const local = shape ? shape(positionLocal) : positionLocal;
+export function environmentPositionNode(shape?: (local: Vec3Node, clock: FloatNode) => Vec3Node): Vec3Node {
+  return displacedPosition((position, clock) => {
+    const local = shape ? shape(position, clock) : position;
     const world = modelWorldMatrix.mul(vec4(local, 1)).xyz;
     const displaced = world.add(strikeOffsetWorld(world));
     return modelWorldMatrixInverse.mul(vec4(displaced, 1)).xyz;
-  })();
+  }, gearDisplacementClock);
 }
 
 // ---- brushed metal ------------------------------------------------------------
@@ -103,8 +111,8 @@ export type MetalOptions = {
   patternPosition?: Vec3Node;
   /** Normal in the same space as `patternPosition`; defaults to the world normal. */
   patternNormal?: Vec3Node;
-  /** Runs on the local position before the strike displacement. */
-  shape?: (local: Vec3Node) => Vec3Node;
+  /** Runs on the local position before the strike displacement. `clock` is the gear displacement clock. */
+  shape?: (local: Vec3Node, clock: FloatNode) => Vec3Node;
   /** PMREM environment lighting plugs in here (`material.envNode`). */
   environmentNode?: Node;
 };

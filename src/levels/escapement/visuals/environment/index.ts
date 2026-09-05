@@ -2,6 +2,7 @@ import { ConeGeometry, Group, Mesh, PointLight, Scene, SphereGeometry, Vector3 }
 import type { Node } from 'three/webgpu';
 import { ESCAPEMENT_BAR, ESCAPEMENT_MARKERS, PENDULUM_PERIOD } from '../../timing';
 import { gearClock } from '../gears';
+import { gearDisplacementClock } from '../materials';
 import { applyEnvironmentNode, createBrassMaterial, createFill, createLamp, createLampMaterial, strikeAge, strikeOrigin, strikeStrength } from '../materials';
 import { barrelCorridor, barrelExit, createBarrel, type BarrelLayout } from './barrel';
 import { beginStrike, createBell, hammerLiftAt, type Bell, type BellLayout } from './bell';
@@ -257,6 +258,9 @@ export function createEscapementEnvironment(scene: Scene, options: EscapementEnv
       if (time < lastTime) {
         lastTime = time;
         gearClock.value = Math.max(0, time);
+        // Both clock samples take the new value, so the jump is not reported as motion.
+        gearDisplacementClock.set(gearClock.value);
+        gearDisplacementClock.set(gearClock.value);
         struck = false;
       }
       const dt = Math.max(0, time - lastTime);
@@ -272,6 +276,7 @@ export function createEscapementEnvironment(scene: Scene, options: EscapementEnv
         }
       }
       gearClock.value += dt * spinRate;
+      gearDisplacementClock.set(gearClock.value);
 
       bell.setHammer(hammerLiftAt(time, ESCAPEMENT_MARKERS.strike, ESCAPEMENT_BAR));
       if (!struck && time >= ESCAPEMENT_MARKERS.strike) {

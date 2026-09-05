@@ -18,7 +18,7 @@ import type { Material } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { attribute, cos, cross, dot, normalGeometry, positionGeometry, sin, uniform, normalLocal } from 'three/tsl';
 import type { FloatNode, Vec3Node } from '../../../engine/tsl-surface';
-import { createBrassMaterial, createPreviewLights, type MetalOptions } from './materials';
+import { createBrassMaterial, createPreviewLights, gearDisplacementClock, type MetalOptions } from './materials';
 
 // ---- spin shader -------------------------------------------------------------------
 //
@@ -29,7 +29,10 @@ import { createBrassMaterial, createPreviewLights, type MetalOptions } from './m
 // per instance; on a merged mesh they are per vertex, so one draw call can
 // carry parts that spin at different rates about different centres.
 
-/** Integrated gear time in seconds. `update` advances it by dt times the spin rate. */
+/**
+ * Integrated gear time in seconds. The environment advances it by dt times the
+ * spin rate and copies it into `gearDisplacementClock`, which the spin shader reads.
+ */
 export const gearClock = uniform(0);
 
 function rotateAboutAxis(v: Vec3Node, axis: Vec3Node, angle: FloatNode): Vec3Node {
@@ -38,13 +41,13 @@ function rotateAboutAxis(v: Vec3Node, axis: Vec3Node, angle: FloatNode): Vec3Nod
   return v.mul(c).add(cross(axis, v).mul(s)).add(axis.mul(dot(axis, v).mul(c.oneMinus())));
 }
 
-/** `shape` hook for the metal materials: spins the local position and normal by the part's attributes. */
-export function spinShape(local: Vec3Node): Vec3Node {
+/** `shape` hook for the metal materials: spins the local position and normal by the part's attributes at clock `clock`. */
+export function spinShape(local: Vec3Node, clock: FloatNode = gearDisplacementClock.current): Vec3Node {
   const center = attribute<'vec3'>('spinCenter', 'vec3');
   const axis = attribute<'vec3'>('spinAxis', 'vec3');
   const rate = attribute<'float'>('spinRate', 'float');
   const phase = attribute<'float'>('spinPhase', 'float');
-  const angle: FloatNode = gearClock.mul(rate).add(phase);
+  const angle: FloatNode = clock.mul(rate).add(phase);
   normalLocal.assign(rotateAboutAxis(normalLocal, axis, angle));
   return rotateAboutAxis(local.sub(center), axis, angle).add(center);
 }
@@ -352,5 +355,6 @@ export function previewGears() {
   group.add(bigFamily.mesh, smallFamily.mesh);
   group.add(createPreviewLights(new Vector3(30, 20, 0), 120));
   gearClock.value = 0.8;
+  gearDisplacementClock.set(0.8);
   return group;
 }
