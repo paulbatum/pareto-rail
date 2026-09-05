@@ -610,8 +610,8 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
     placeAhead(frame, runTime, lateral, vertical, ahead, enemy.mesh.position);
     // Walking: head down the face toward the seat. Leaping: head at the camera.
     if (clock < leapAt) {
-      const toward = placeAhead(frame, runTime, seat.lateral, seat.vertical - 3, 28);
-      mesh.up.copy(frame.tangent).negate();
+      const toward = placeAhead(frame, runTime, seat.lateral, seat.vertical - 4, 20);
+      mesh.up.copy(frame.up);
       mesh.lookAt(toward);
     } else {
       faceCamera(mesh, frame, camera);
