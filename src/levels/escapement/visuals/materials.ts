@@ -19,11 +19,13 @@ import {
   normalWorld,
   normalize,
   positionLocal,
+  positionView,
   positionWorld,
   select,
   sin,
   smoothstep,
   uniform,
+  uv,
   vec2,
   vec3,
   vec4,
@@ -97,7 +99,7 @@ export type MetalOptions = {
   seamScale?: number;
   /** Plate stretch along the second in-plane axis; 2.5 makes plates 2.5 times longer than wide. */
   seamAniso?: number;
-  /** Direction the brushing grooves run along; the highlight stretches along it. */
+  /** The grooves run in planes perpendicular to this axis; on a vertical wall with the axis up they run horizontally. */
   brushAxis?: Vector3;
   /** Normal tilt across the grooves, 0..1. */
   brushStrength?: number;
@@ -120,20 +122,31 @@ export type MetalOptions = {
 };
 
 const DEFAULT_BRUSH_AXIS = new Vector3(0, 1, 0);
-/** Brushing scratch frequency: features about a unit across. */
-const BRUSH_SCALE = 0.9;
-/** Streak length is 1 / (BRUSH_SCALE * squash): about 55 units, so a groove crosses a whole plate. */
+/** Brushing scratch frequency: grooves about three units across, with two finer octaves. */
+const BRUSH_SCALE = 0.35;
+/** Streak length is 1 / (BRUSH_SCALE * squash): about 140 units, so a groove crosses a whole plate. */
 const BRUSH_ALONG_SQUASH = 0.02;
-/** Tarnish blotch frequency: patches ten to twenty units across. */
-const TARNISH_SCALE = 0.035;
+/** Tarnish patch frequency: patches twenty to fifty units across. */
+const TARNISH_PATCH_SCALE = 0.022;
+/** Mottle inside the patches: five to ten units across. */
+const TARNISH_MOTTLE_SCALE = 0.12;
+/**
+ * The fine layer (scratches, brushing normal, tarnish mottle, rivet domes) is at
+ * full strength inside FINE_NEAR view units and gone beyond FINE_FAR. Past that
+ * distance its features are under a pixel and would alias into a mosaic.
+ */
+const FINE_NEAR = 220;
+const FINE_FAR = 800;
 const DEFAULT_SEAM_ANISO = 2.5;
 /** Seam groove width in cell units. */
 const SEAM_WIDTH = 0.012;
-/** Rivet row distance from the seam and rivet spacing, both in cell units. */
+/** Rivet row distance from the seam and its width, in cell units. */
 const RIVET_ROW = 0.035;
 const RIVET_ROW_WIDTH = 0.012;
-const RIVETS_PER_CELL = 22;
-const RIVET_RADIUS = 0.3;
+/** Rivets per cell along the row; 40 on a 300-unit plate is one every 7.5 units. */
+const RIVETS_PER_CELL = 40;
+/** Rivet head radius in rivet-spacing units: 0.16 of 7.5 is a 1.2-unit head. */
+const RIVET_RADIUS = 0.16;
 
 function colorNode(color: Color): Vec3Node {
   return vec3(color.r, color.g, color.b);
@@ -141,7 +154,13 @@ function colorNode(color: Color): Vec3Node {
 
 type SurfaceFrame = { along: Vec3Node; across: Vec3Node; streak: FloatNode };
 
-/** Tangent frame for brushing and the scratch noise, 0.5-centred. */
+/**
+ * Tangent frame for brushing and the scratch noise, 0.5-centred. The noise
+ * coordinate is squashed in the plane perpendicular to the brush axis, a fixed
+ * transform of the pattern position, so the streak value is continuous across
+ * faces of a surface built from many pieces; only the tilt direction of the
+ * normal depends on the face.
+ */
 function surfaceFrame(pattern: Vec3Node, brushAxis: Vector3): SurfaceFrame {
   const axis = vec3(brushAxis.x, brushAxis.y, brushAxis.z);
   const n = normalWorld;
@@ -150,9 +169,9 @@ function surfaceFrame(pattern: Vec3Node, brushAxis: Vector3): SurfaceFrame {
   const fallback = cross(n, vec3(1, 0, 0));
   const along = normalize(select(length(primary).lessThan(0.05), fallback, primary));
   const across = cross(n, along);
-  // Compress the sample coordinate along the grooves so the noise is long along them and fine across.
-  const projected = pattern.sub(along.mul(dot(pattern, along).mul(1 - BRUSH_ALONG_SQUASH)));
-  const streak = fractalNoise(projected, { scale: BRUSH_SCALE, octaves: 3, roughness: 0.6 }).sub(0.5);
+  const alongAxis = axis.mul(dot(pattern, axis));
+  const squashed = alongAxis.add(pattern.sub(alongAxis).mul(BRUSH_ALONG_SQUASH));
+  const streak = fractalNoise(squashed, { scale: BRUSH_SCALE, octaves: 3, roughness: 0.6 }).sub(0.5);
   return { along, across, streak };
 }
 
@@ -164,8 +183,8 @@ type PlateDetail = {
   face: FloatNode;
   /** 1 on a rivet head. */
   rivet: FloatNode;
-  /** Offset from the rivet centre in rivet-lattice units, for the dome bump. */
-  rivetOffset: Node<'vec2'>;
+  /** Dome slope at this point in lattice units, -1..1 across the head, before the rivet mask. */
+  rivetSlope: Node<'vec2'>;
 };
 
 /**
@@ -188,19 +207,26 @@ function plateDetail(pattern: Vec3Node, normal: Vec3Node, scale: number, aniso: 
   const lattice = vec2(swizzled.x, swizzled.y.div(aniso)).mul(scale * RIVETS_PER_CELL);
   const rivetOffset = lattice.fract().sub(0.5);
   const dome = smoothstep(float(RIVET_RADIUS), float(RIVET_RADIUS * 0.6), length(rivetOffset));
-  return { face, rivet: dome.mul(row), rivetOffset };
+  return { face, rivet: dome.mul(row), rivetSlope: rivetOffset.div(RIVET_RADIUS) };
 }
 
-function tarnishMask(pattern: Vec3Node, coverage: number): FloatNode {
+/**
+ * Tarnish: soft patches tens of units across with a fine mottle inside them.
+ * The mottle weight fades with `fine` so the patch edge stays soft at distance.
+ */
+function tarnishMask(pattern: Vec3Node, coverage: number, fine: FloatNode): FloatNode {
   if (coverage <= 0) return float(0);
-  const noise = fractalNoise(pattern, { scale: TARNISH_SCALE, octaves: 4, roughness: 0.55 });
-  const threshold = 0.72 - coverage * 0.3;
-  return smoothstep(float(threshold), float(threshold + 0.07), noise);
+  const patch = fractalNoise(pattern, { scale: TARNISH_PATCH_SCALE, octaves: 3, roughness: 0.5 });
+  const mottle = fractalNoise(pattern.add(vec3(5, 9, 2)), { scale: TARNISH_MOTTLE_SCALE, octaves: 2, roughness: 0.6 });
+  const weight = fine.mul(0.3);
+  const combined = patch.mul(weight.oneMinus()).add(mottle.mul(weight));
+  const threshold = 0.64 - coverage * 0.28;
+  return smoothstep(float(threshold), float(threshold + 0.1), combined);
 }
 
 function verdigrisMask(pattern: Vec3Node, coverage: number): FloatNode {
   if (coverage <= 0) return float(0);
-  const noise = fractalNoise(pattern.add(vec3(31, 7, 13)), { scale: TARNISH_SCALE * 1.6, octaves: 4, roughness: 0.6 });
+  const noise = fractalNoise(pattern.add(vec3(31, 7, 13)), { scale: TARNISH_PATCH_SCALE * 3, octaves: 4, roughness: 0.6 });
   const threshold = 0.66 - coverage * 0.3;
   return smoothstep(float(threshold), float(threshold + 0.08), noise);
 }
@@ -227,29 +253,36 @@ function createMetal(base: Color, dark: Color, options: MetalOptions, defaults: 
   const pattern = options.patternPosition ?? positionWorld;
   const frame = surfaceFrame(pattern, options.brushAxis ?? DEFAULT_BRUSH_AXIS);
   const brushStrength = options.brushStrength ?? 0.3;
+  // 1 close to the camera, 0 where the fine layer would be under a pixel.
+  const fine = smoothstep(float(FINE_FAR), float(FINE_NEAR), positionView.z.negate());
 
   let color = colorNode(base);
   let rough: FloatNode = float(roughness);
   let normal: Vec3Node = normalWorld;
 
   // Fine layer: scratches darken and roughen thin lines along the brushing.
-  const scratch = smoothstep(float(0.14), float(0.24), frame.streak);
-  color = color.mul(scratch.mul(-0.18).add(1));
-  rough = rough.add(scratch.mul(0.12));
-  normal = normal.add(frame.across.mul(frame.streak.mul(brushStrength * 2)));
+  const scratch = smoothstep(float(0.14), float(0.24), frame.streak).mul(fine);
+  color = color.mul(scratch.mul(-0.22).add(1));
+  rough = rough.add(scratch.mul(0.14));
+  normal = normal.add(frame.across.mul(frame.streak.mul(brushStrength * 2).mul(fine)));
+  // Where the brushing normal fades out, widen the lobe by the same amount instead,
+  // so a far plate reflects the same mix of sky as a near one.
+  rough = rough.add(fine.oneMinus().mul(brushStrength * 0.8));
 
   // Coarse layer: plate seams and rivet rows.
   if (options.seamScale !== undefined) {
     const detail = plateDetail(pattern, options.patternNormal ?? normalWorld, options.seamScale, options.seamAniso ?? DEFAULT_SEAM_ANISO);
-    color = mix(color.mul(0.35), color, detail.face);
+    color = mix(color.mul(0.3), color, detail.face);
     rough = mix(float(Math.min(1, roughness + 0.3)), rough, detail.face);
-    color = mix(color, color.mul(1.12), detail.rivet);
-    normal = normal.add(frame.along.mul(detail.rivetOffset.x).add(frame.across.mul(detail.rivetOffset.y)).mul(detail.rivet.mul(1.6)));
+    color = mix(color, color.mul(1.08), detail.rivet);
+    // The dome tilts the normal in the brushing frame; which way a head's highlight faces matters less than that it has one.
+    const bump = frame.along.mul(detail.rivetSlope.x).add(frame.across.mul(detail.rivetSlope.y));
+    normal = normal.add(bump.mul(detail.rivet.mul(0.35).mul(fine)));
   }
 
-  const tarnish = tarnishMask(pattern, options.tarnish ?? 0.35);
-  color = mix(color, colorNode(dark), tarnish.mul(0.8));
-  rough = mix(rough, float(Math.min(1, roughness + 0.35)), tarnish);
+  const tarnish = tarnishMask(pattern, options.tarnish ?? 0.35, fine);
+  color = mix(color, colorNode(dark), tarnish.mul(0.45));
+  rough = mix(rough, float(Math.min(1, roughness + 0.4)), tarnish);
 
   const verdigris = verdigrisMask(pattern, options.verdigris ?? 0);
   color = mix(color, colorNode(VERDIGRIS), verdigris);
@@ -267,12 +300,12 @@ function createMetal(base: Color, dark: Color, options: MetalOptions, defaults: 
 
 /** Lamp-lit brass: metallic, brushed, tarnished in patches, plate seams when `seamScale` is given. */
 export function createBrassMaterial(options: MetalOptions = {}) {
-  return createMetal(BRASS, BRASS_DARK, options, { roughness: 0.3, metalness: 0.9 });
+  return createMetal(BRASS, BRASS_DARK, options, { roughness: 0.26, metalness: 0.92 });
 }
 
 /** Steel blue: pylons, rods, arbors and the ratchet-coloured fittings. */
 export function createSteelMaterial(options: MetalOptions = {}) {
-  return createMetal(STEEL_BLUE, STEEL_DARK, options, { roughness: 0.4, metalness: 0.85 });
+  return createMetal(STEEL_BLUE, STEEL_DARK, options, { roughness: 0.34, metalness: 0.88 });
 }
 
 /** Black oxide: hands, hammer heads, the dial face. */
@@ -280,12 +313,30 @@ export function createOxideMaterial(options: MetalOptions = {}) {
   return createMetal(BLACK_OXIDE, VOID, { tarnish: 0, ...options }, { roughness: 0.58, metalness: 0.6 });
 }
 
-/** The lamp body: the only warm-white surface in the environment. Clamped at 1; the flare and bloom stages add the glow. */
+/**
+ * The lamp body: the only warm-white surface in the environment. `intensity` 1
+ * is warm lamp white; the flare and bloom stages add the glow, so callers keep
+ * it near 1 rather than pushing the disc to white-hot.
+ */
 export function createLampMaterial(intensity = 1) {
   const material = new MeshBasicNodeMaterial();
   const view = normalize(vec3(0, 0, 1));
   const rim = float(1).sub(normalView.dot(view).abs()).pow(2);
-  material.colorNode = colorNode(LAMP_WARM).mul(float(intensity).sub(rim.mul(intensity * 0.5)));
+  material.colorNode = colorNode(LAMP_WARM).mul(float(intensity).sub(rim.mul(intensity * 0.35)));
+  material.positionNode = environmentPositionNode();
+  return material;
+}
+
+/**
+ * A warm glow for a flat disc: `peak` at the centre falling to `edge` at the
+ * rim (uv radius 0.5), so the disc reads as light beyond an opening rather
+ * than a painted card.
+ */
+export function createGlowDiscMaterial(peak = 1.6, edge = 0.5) {
+  const material = new MeshBasicNodeMaterial();
+  const radial = length(uv().sub(0.5)).mul(2).clamp(0, 1);
+  const falloff = radial.mul(radial).oneMinus();
+  material.colorNode = colorNode(LAMP_WARM).mul(mix(float(edge), float(peak), falloff));
   material.positionNode = environmentPositionNode();
   return material;
 }

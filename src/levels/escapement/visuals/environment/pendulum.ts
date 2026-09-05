@@ -91,7 +91,7 @@ function createPlate(layout: PendulumLayout) {
   parts.push(nonIndexed(cockArm));
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
-  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 60, tarnish: 0.4, roughness: 0.48, brushAxis: new Vector3(0, 1, 0) }));
+  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 230, seamAniso: 1.6, tarnish: 0.35, roughness: 0.44, brushAxis: new Vector3(0, 1, 0) }));
 }
 
 /** The mount arbor from the plate to the fork pivot, and the pendulum's pivot pin. */
@@ -150,9 +150,18 @@ export const PREVIEW_PENDULUM_LAYOUT: PendulumLayout = {
   pivot: new Vector3(140, 200, -1420),
   length: 130,
   bobRadius: 30,
-  mount: new Vector3(140, 300, -1420),
+  mount: new Vector3(140, 260, -1406),
   plate: { z: -1482, xMin: -84, xMax: 364, yMin: 40, yMax: 560 },
 };
+
+/** Rail camera offset from the bob centre for the pendulum ride: above and in front. */
+export const PENDULUM_RIDE_OFFSET = new Vector3(0, 30, 120);
+/**
+ * Where the ride camera aims, relative to the mount: this far below it, so
+ * the escapement sits centred in the top third of a 45 degree frame from the
+ * ride offset.
+ */
+export const PENDULUM_RIDE_AIM_DROP = 66;
 
 function previewPendulumLights(group: Group) {
   // The works lamp is about 270 units from the mount and the plate behind it.
@@ -170,7 +179,7 @@ export function previewPendulum() {
   });
 }
 
-/** Snapshot factory: the rail camera at the top of a swing, 110 units in front of the bob, aimed so the escapement fills the top third. */
+/** Snapshot factory: the rail camera at the top of a swing, 120 units in front of the bob, aimed so the escapement fills the top third. */
 export function previewPendulumRide() {
   return withPreviewEnvironment(() => {
     const pendulum = createPendulum(PREVIEW_PENDULUM_LAYOUT);
@@ -180,8 +189,8 @@ export function previewPendulumRide() {
     previewPendulumLights(pendulum.group);
     const layout = PREVIEW_PENDULUM_LAYOUT;
     const bob = layout.pivot.clone().add(new Vector3(Math.sin(angle) * layout.length, -Math.cos(angle) * layout.length, 0));
-    const camera = bob.clone().add(new Vector3(0, 24, 110));
-    const target = layout.mount.clone().add(new Vector3(0, -70, 0));
+    const camera = bob.clone().add(PENDULUM_RIDE_OFFSET);
+    const target = layout.mount.clone().add(new Vector3(0, -PENDULUM_RIDE_AIM_DROP, 0));
     return pinSnapshotView(pendulum.group, camera, target.sub(camera).normalize());
   });
 }

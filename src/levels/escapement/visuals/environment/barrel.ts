@@ -1,14 +1,14 @@
-import { BoxGeometry, BufferGeometry, CylinderGeometry, Group, Matrix4, Mesh, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Group, Matrix4, Mesh, SphereGeometry, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { mulberry32, type Rng } from '../../../../engine/rng';
-import { createBrassMaterial, createLamp, createSteelMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
+import { createBrassMaterial, createLamp, createLampMaterial, createSteelMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
 
 // The Barrel: the mainspring coil seen edge-on. The band is a thin brass
 // ribbon with open breaks between its plates; the rail runs in the gap between
 // two turns with the void below and the farther turns visible through the
-// breaks. The lamp hangs inside the coil above the rail, so its light crosses
-// the corridor through the breaks. The rail leaves through a doorway in the
-// toothed barrel drum.
+// breaks. The lamp hangs in the next turn out, ahead of the rail, so its light
+// crosses the corridor through the outer wall's breaks. The rail leaves through
+// a doorway in the toothed barrel drum.
 
 export type BarrelLayout = {
   /** World position of the arbor, at corridor height. */
@@ -230,6 +230,23 @@ function createArbor(layout: BarrelLayout) {
   return new Mesh(merged, createSteelMaterial({ brushAxis: new Vector3(0, 1, 0), tarnish: 0.2 }));
 }
 
+/** The hanging lamp: brass shade, warm-white bulb named for the god-rays stage, and a stem up into the dark. */
+export function createLampFixture(position: Vector3) {
+  const group = new Group();
+  const shade = new Mesh(new ConeGeometry(22, 26, 24, 1, true), createBrassMaterial({ tarnish: 0.25, brushAxis: new Vector3(0, 1, 0) }));
+  shade.material.side = 2;
+  shade.position.copy(position).add(new Vector3(0, 18, 0));
+  group.add(shade);
+  const bulb = new Mesh(new SphereGeometry(9, 24, 16), createLampMaterial(1.1));
+  bulb.position.copy(position);
+  bulb.name = 'escapement-lamp-body';
+  group.add(bulb);
+  const stem = new Mesh(new ConeGeometry(3, 220, 8), createBrassMaterial({ tarnish: 0.3 }));
+  stem.position.copy(position).add(new Vector3(0, 140, 0));
+  group.add(stem);
+  return group;
+}
+
 export function createBarrel(layout: BarrelLayout) {
   const group = new Group();
   group.name = 'barrel';
@@ -249,16 +266,23 @@ export const PREVIEW_BARREL_LAYOUT: BarrelLayout = {
   drumRadius: 236,
 };
 
-/** Lamp position inside the coil for the previews: above the corridor near its exit. */
-export const PREVIEW_BARREL_LAMP = new Vector3(96, 78, 34);
-/** Coil plates sit 60–110 units from the lamp, so they receive 0.25–0.8 of lamp light. */
-const PREVIEW_LAMP_INTENSITY = 2800;
+/**
+ * Lamp position for the previews: in the turn outside the corridor's outer
+ * wall, 24 above the band top, 120 units straight ahead of the rail camera at
+ * 0.35 of the ride. The corridor curves left, so for the first half of the
+ * ride the camera sees the lamp over the outer wall's top edge and through
+ * the wall's breaks, and its light crosses the corridor from ahead-right.
+ */
+export const PREVIEW_BARREL_LAMP = new Vector3(175, 46, 56);
+/** The corridor's far wall sits about 140 units from the lamp, so it receives 0.3 of lamp light. */
+const PREVIEW_LAMP_INTENSITY = 6000;
 
 /** Snapshot factory: the barrel from outside, under the level sky. */
 export function previewBarrel() {
   return withPreviewEnvironment(() => {
     const group = createBarrel(PREVIEW_BARREL_LAYOUT);
     group.add(createLamp({ name: 'preview-lamp', position: PREVIEW_BARREL_LAMP, intensity: PREVIEW_LAMP_INTENSITY }));
+    group.add(createLampFixture(PREVIEW_BARREL_LAMP));
     return group;
   });
 }
@@ -268,6 +292,7 @@ export function previewBarrelInside() {
   return withPreviewEnvironment(() => {
     const group = createBarrel(PREVIEW_BARREL_LAYOUT);
     group.add(createLamp({ name: 'preview-lamp', position: PREVIEW_BARREL_LAMP, intensity: PREVIEW_LAMP_INTENSITY }));
+    group.add(createLampFixture(PREVIEW_BARREL_LAMP));
     const { position, tangent } = barrelCorridor(PREVIEW_BARREL_LAYOUT, 0.35);
     return pinSnapshotView(group, position, tangent);
   });

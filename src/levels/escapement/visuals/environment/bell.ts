@@ -157,7 +157,7 @@ function createSteelwork(layout: BellLayout) {
   return new Mesh(merged, createSteelMaterial({ tarnish: 0.25, roughness: 0.48 }));
 }
 
-/** The hammer: an arm pivoting at the bracket, head toward the bell's sound bow. Rotates about +z. */
+/** The hammer: a steel arm pivoting at the bracket with a black-oxide head toward the bell's sound bow. Rotates about +z. */
 function createHammer(layout: BellLayout) {
   const R = layout.radius;
   const pivotGroup = new Group();
@@ -165,12 +165,17 @@ function createHammer(layout: BellLayout) {
   const reach = R * 2.3 - R * 0.98;
   const arm = new BoxGeometry(reach, R * 0.16, R * 0.16);
   arm.translate(-layout.hammerSide * reach / 2, 0, 0);
-  const head = new BoxGeometry(R * 0.5, R * 0.6, R * 0.6);
+  const hubs: BufferGeometry[] = [nonIndexed(arm)];
+  const hub = new CylinderGeometry(R * 0.16, R * 0.16, R * 0.3, 16);
+  hub.rotateX(Math.PI / 2);
+  hubs.push(nonIndexed(hub));
+  const steel = mergeGeometries(hubs, false);
+  for (const part of hubs) part.dispose();
+  pivotGroup.add(new Mesh(steel, createSteelMaterial({ tarnish: 0.2, roughness: 0.4, brushAxis: new Vector3(1, 0, 0) })));
+  const head = new CylinderGeometry(R * 0.3, R * 0.3, R * 0.7, 20);
+  head.rotateZ(Math.PI / 2);
   head.translate(-layout.hammerSide * (reach + R * 0.05), 0, 0);
-  const parts = [nonIndexed(arm), nonIndexed(head)];
-  const merged = mergeGeometries(parts, false);
-  for (const part of parts) part.dispose();
-  pivotGroup.add(new Mesh(merged, createOxideMaterial({ roughness: 0.5, brushAxis: new Vector3(1, 0, 0) })));
+  pivotGroup.add(new Mesh(head, createOxideMaterial({ roughness: 0.5, brushAxis: new Vector3(1, 0, 0) })));
   return pivotGroup;
 }
 

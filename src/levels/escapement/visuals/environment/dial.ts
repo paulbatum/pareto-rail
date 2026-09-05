@@ -1,6 +1,6 @@
 import { BoxGeometry, BufferGeometry, CircleGeometry, CylinderGeometry, ExtrudeGeometry, Group, Matrix4, Mesh, Path, Shape, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { createBrassMaterial, createLamp, createLampMaterial, createOxideMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
+import { createBrassMaterial, createGlowDiscMaterial, createLamp, createOxideMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
 
 // The Dial: the sky of the level. A black-oxide face seen from behind, so the
 // brass numerals read mirrored, with the chapter ring, minute ticks, frozen
@@ -102,7 +102,7 @@ function createFace(layout: DialLayout) {
   face.translate(0, 0, -FACE_DEPTH);
 
   face.translate(layout.center.x, layout.center.y, layout.center.z);
-  const mesh = new Mesh(face, createOxideMaterial({ seamScale: 1 / 150, seamAniso: 1, roughness: 0.55, metalness: 0.5, brushAxis: new Vector3(1, 0, 0) }));
+  const mesh = new Mesh(face, createOxideMaterial({ seamScale: 1 / 420, seamAniso: 1, roughness: 0.55, metalness: 0.5, brushAxis: new Vector3(1, 0, 0) }));
   mesh.userData.raildIgnoreOcclusion = true;
   return mesh;
 }
@@ -225,11 +225,11 @@ export function dialGatewayLamp(layout: DialLayout) {
   return dialGateway(layout).add(new Vector3(0, 40, -160));
 }
 
-/** Warm disc beyond the gateway: the outside the Free Run flies into. */
+/** Warm glow beyond the gateway: the outside the Free Run flies into, brightest at the centre of the opening. */
 function createBeyond(layout: DialLayout) {
   const gate = dialGateway(layout);
-  const disc = new Mesh(new CircleGeometry(layout.doorway.width * 2.2, 48), createLampMaterial(0.85));
-  disc.position.copy(gate).add(new Vector3(0, 0, -240));
+  const disc = new Mesh(new CircleGeometry(layout.doorway.width * 0.9, 48), createGlowDiscMaterial(1.7, 0.45));
+  disc.position.copy(gate).add(new Vector3(0, 0, -140));
   disc.userData.raildIgnoreOcclusion = true;
   return disc;
 }

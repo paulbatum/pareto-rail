@@ -1,7 +1,9 @@
-import { BoxGeometry, BufferGeometry, CylinderGeometry, Group, Mesh, SphereGeometry, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, CylinderGeometry, Group, Mesh, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createGearFamily, meshedPhase, pinionOn, pitchRadius, toothPhase, type GearFamily, type GearInstance, type GearSpec } from '../gears';
-import { createBrassMaterial, createLamp, createLampMaterial, createSteelMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
+import { createBrassMaterial, createLamp, createSteelMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
+import { createDial, PREVIEW_DIAL_LAMP, PREVIEW_DIAL_LAYOUT } from './dial';
+import { createOrrery, PREVIEW_ORRERY_LAYOUT } from './orrery';
 
 // The Train: the great wheels the rail rides. Every wheel spins about +y, so
 // the rail on a rim sees the far plates yaw around it. The rail rides
@@ -18,9 +20,15 @@ export const SMALL_10: GearSpec = { teeth: 10, module: 6, width: 8, rimWidth: 5,
 export const PINION_8: GearSpec = { teeth: 8, module: 10, width: 22, rimWidth: 40, hubRadius: 10, spokes: 0 };
 
 const UP = new Vector3(0, 1, 0);
-/** Rail height above a wheel's top face: with a 62 degree vertical field of view the face leaves the frame. */
-export const RIDE_HEIGHT = 55;
-/** Height of the pinion and upper-tier wheel above a ridden wheel's centre. */
+/**
+ * Rail height above a wheel's top face. From a camera on a 150-radius wheel's
+ * pitch circle looking along the tangent, no point of the disc lies more than
+ * 150 units ahead; a level camera with a 62 degree vertical field of view
+ * shows a point that far ahead only when it is less than 90 below the camera,
+ * so at 100 up the ridden face never shows.
+ */
+export const RIDE_HEIGHT = 100;
+/** Height of the pinion and upper-tier wheel above a ridden wheel's centre: 39 above the rail, so the tier passes at eye level. */
 export const UPPER_TIER = 150;
 
 /**
@@ -163,13 +171,14 @@ function createPlates(layout: TrainLayout) {
   // Floor plate far below the wheels.
   push(new BoxGeometry(right.x - left.x + 80, 8, back.z * -1 + 260), (left.x + right.x) / 2, layout.floorY, back.z / 2 + 40);
   // Bridges: beams spanning the plates over the upper tier, each with a cock at the ends.
+  const tierY = layout.wheels[0].center.y + UPPER_TIER;
   for (const z of [back.z + 120, back.z + 330]) {
-    push(new BoxGeometry(right.x - left.x, 18, 26), (left.x + right.x) / 2, UPPER_TIER + 60, z);
-    for (const x of [left.x + 40, right.x - 40]) push(new BoxGeometry(60, 40, 40), x, UPPER_TIER + 40, z);
+    push(new BoxGeometry(right.x - left.x, 18, 26), (left.x + right.x) / 2, tierY + 60, z);
+    for (const x of [left.x + 40, right.x - 40]) push(new BoxGeometry(60, 40, 40), x, tierY + 40, z);
   }
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
-  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 320, tarnish: 0.4, roughness: 0.42, brushAxis: new Vector3(0, 1, 0) }));
+  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 320, tarnish: 0.3, roughness: 0.4, brushAxis: new Vector3(0, 1, 0) }));
 }
 
 function createSteelwork(layout: TrainLayout, plateGears: PlateGear[]) {
@@ -353,14 +362,19 @@ export function previewTrainLayout(): TrainLayout {
   };
 }
 
+/** The level's train lamp, repeated here so the previews match the level. */
+export const PREVIEW_TRAIN_LAMP = new Vector3(60, 230, -330);
+export const PREVIEW_TRAIN_LAMP_INTENSITY = 27000;
+
 function previewTrainLights(group: Group) {
-  // The lamp sits about 300 units above the wheels; the sun stands in for the orrery beyond the doorway.
-  group.add(createLamp({ name: 'preview-lamp', position: new Vector3(60, 230, -300), intensity: 27000 }));
-  const sunPosition = new Vector3(260, 30, -1020);
-  group.add(createLamp({ name: 'preview-sun', position: sunPosition, intensity: 7200 }));
-  const sun = new Mesh(new SphereGeometry(60, 32, 24), createLampMaterial(2.6));
-  sun.position.copy(sunPosition);
-  group.add(sun);
+  group.add(createLamp({ name: 'preview-lamp', position: PREVIEW_TRAIN_LAMP, intensity: PREVIEW_TRAIN_LAMP_INTENSITY }));
+}
+
+/** What the doorway opens onto: the orrery with its sun, and the dial as the sky behind it. */
+function previewBeyondDoorway(group: Group) {
+  group.add(createOrrery(PREVIEW_ORRERY_LAYOUT).group);
+  group.add(createDial(PREVIEW_DIAL_LAYOUT));
+  group.add(createLamp({ name: 'preview-dial-lamp', position: PREVIEW_DIAL_LAMP, intensity: 60000 }));
 }
 
 /** Snapshot factory: the whole train from outside, under the level sky. */
@@ -378,6 +392,7 @@ function previewRide(index: number, fraction: number) {
     const layout = previewTrainLayout();
     const { group } = createTrain(layout);
     previewTrainLights(group);
+    previewBeyondDoorway(group);
     const wheel = layout.wheels[index];
     const angle = wheel.entryAngle + (wheel.exitAngle - wheel.entryAngle) * fraction;
     const position = rimPoint(wheel, angle, 0);

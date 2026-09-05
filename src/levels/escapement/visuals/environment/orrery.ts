@@ -38,10 +38,10 @@ function nonIndexed(geometry: BufferGeometry) {
   return result;
 }
 
-/** The sun: an emissive sphere inside a brass armillary cage. */
+/** The sun: a warm-white sphere inside a brass armillary cage; the lens-flare stage adds its glow. */
 function createSun(layout: OrreryLayout) {
   const group = new Group();
-  const sun = new Mesh(new SphereGeometry(layout.sunRadius, 48, 32), createLampMaterial(2.6));
+  const sun = new Mesh(new SphereGeometry(layout.sunRadius, 48, 32), createLampMaterial(1.05));
   sun.position.copy(layout.sun);
   sun.name = 'orrery-sun-body';
   group.add(sun);
@@ -62,11 +62,6 @@ function createSun(layout: OrreryLayout) {
   const column = new CylinderGeometry(9, 12, 520, 20);
   column.translate(layout.sun.x, layout.sun.y + 10, layout.sun.z);
   rings.push(nonIndexed(column));
-  for (const arm of layout.arms) {
-    const collar = new CylinderGeometry(18, 18, 14, 24);
-    collar.translate(layout.sun.x, layout.sun.y + arm.height, layout.sun.z);
-    rings.push(nonIndexed(collar));
-  }
   const merged = mergeGeometries(rings, false);
   for (const ring of rings) ring.dispose();
   group.add(new Mesh(merged, createBrassMaterial({ tarnish: 0.3, brushAxis: new Vector3(0, 1, 0) })));
