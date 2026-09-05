@@ -19,8 +19,8 @@ import {
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { disposeObject3D } from '../../../engine/visual-kit';
 import { brassMaterial, createTargetPaint, steelMaterial } from './enemy-materials';
-import { previewLightRig, type EnemyRig } from './enemies';
-import { pinSnapshotView } from './materials';
+import type { EnemyRig } from './enemies';
+import { createLamp, pinSnapshotView, withPreviewEnvironment } from './materials';
 import { RUBY, WHITE_HOT } from './palette';
 
 // The Escapement: an anchor fork pivoted above a 30-tooth escape wheel, under
@@ -35,9 +35,10 @@ import { RUBY, WHITE_HOT } from './palette';
 // the parts behind it: crown wheel at the back, then wheel and fork, then the
 // jewels and the arbor core in front of everything.
 //
-// Sizes: the escape wheel is 44 m across and the anchor spans 40 m, so the
-// body reads at the 180 m hold station. The jewels are 14 m crystals, far
-// larger than a real pallet stone, because they are the lock targets.
+// Sizes: the escape wheel is 56 m across and the anchor spans 50 m, so the
+// body reads from the ride camera about 150 m in front. The jewels are 18 m
+// crystals, far larger than a real pallet stone, because they are the lock
+// targets.
 
 export type JewelSide = 'left' | 'right';
 export type BossStage = 'jewels' | 'arbor' | 'broken';
@@ -77,32 +78,32 @@ export function liftedSide(forkAngle: number): JewelSide {
 export const ESCAPE_WHEEL_TEETH = 30;
 const TOOTH_ANGLE = (Math.PI * 2) / ESCAPE_WHEEL_TEETH;
 /** The wheel sits behind the fork plane so the anchor band crosses its top rim without touching it. */
-const WHEEL_CENTER = new Vector3(0, -36, -5);
-const WHEEL_TIP_RADIUS = 22;
-const WHEEL_ROOT_RADIUS = 19.2;
-const WHEEL_RIM_INNER = 15;
-const WHEEL_DEPTH = 6;
-const WHEEL_HUB_RADIUS = 6;
-const CROWN_CENTER = new Vector3(0, 31, -24);
-const CROWN_OUTER = 31;
-const CROWN_INNER = 25.5;
+const WHEEL_CENTER = new Vector3(0, -46, -6);
+const WHEEL_TIP_RADIUS = 28;
+const WHEEL_ROOT_RADIUS = 24.5;
+const WHEEL_RIM_INNER = 19;
+const WHEEL_DEPTH = 7.5;
+const WHEEL_HUB_RADIUS = 7.5;
+const CROWN_CENTER = new Vector3(0, 40, -30);
+const CROWN_OUTER = 40;
+const CROWN_INNER = 33;
 const CROWN_TEETH = 60;
-const CROWN_DEPTH = 5;
-const ARBOR_RADIUS = 3;
-const ARBOR_LENGTH = 22;
+const CROWN_DEPTH = 6.5;
+const ARBOR_RADIUS = 3.8;
+const ARBOR_LENGTH = 28;
 const ARBOR_FRONT = ARBOR_LENGTH / 2;
-const FORK_DEPTH = 6;
-const PIVOT_RADIUS = 8;
+const FORK_DEPTH = 7.5;
+const PIVOT_RADIUS = 10;
 /** Fork tip centres, in the fork's frame. The pallets sit on the wheel 45 degrees either side of its top. */
-const TIP_X = 17.5;
-const TIP_Y = -16;
+const TIP_X = 22;
+const TIP_Y = -20.5;
 /** Jewel centre in the tip's frame: below the tip block and 2 m in front of its face, so no part of the fork or wheel is ever between the jewel and a camera in front of the body. */
-const JEWEL_OFFSET = new Vector3(1.5, -5, 7);
+const JEWEL_OFFSET = new Vector3(2, -6.5, 10);
 const JEWEL_TILT = -0.7;
 /** Radius of the shutter discs and of the socket they cover. */
-const SOCKET_RADIUS = 6.5;
+const SOCKET_RADIUS = 8;
 const SHUTTER_Z = ARBOR_FRONT + 0.5;
-const SHUTTER_TRAVEL = 8;
+const SHUTTER_TRAVEL = 10;
 const SNAP_RATE = 22;
 /** Falling pieces: gravity and how long they stay in the scene. */
 const FALL_GRAVITY = 24;
@@ -205,9 +206,9 @@ function addSpokesAndHub(pieces: BufferGeometry[], count: number, rimInner: numb
 /** The escape wheel: 30 club teeth on a thick rim, an inner stiffening ring, five spokes and a bolted hub. */
 function escapeWheelGeometry() {
   const pieces: BufferGeometry[] = [extrude(toothedRing(WHEEL_TIP_RADIUS, WHEEL_ROOT_RADIUS, WHEEL_RIM_INNER, ESCAPE_WHEEL_TEETH), WHEEL_DEPTH)];
-  const stiffener = new TorusGeometry(WHEEL_RIM_INNER + 0.4, 1.1, 8, 48);
+  const stiffener = new TorusGeometry(WHEEL_RIM_INNER + 0.5, 1.4, 8, 48);
   pieces.push(stiffener);
-  addSpokesAndHub(pieces, 5, WHEEL_RIM_INNER, WHEEL_DEPTH, 2.8, WHEEL_HUB_RADIUS);
+  addSpokesAndHub(pieces, 5, WHEEL_RIM_INNER, WHEEL_DEPTH, 3.5, WHEEL_HUB_RADIUS);
   return mergeAll(pieces);
 }
 
@@ -216,12 +217,12 @@ function crownWheelGeometry() {
   const pieces: BufferGeometry[] = [extrude(ring(CROWN_OUTER, CROWN_INNER), CROWN_DEPTH, 0.4)];
   const toothRadius = (CROWN_OUTER + CROWN_INNER) / 2;
   for (let i = 0; i < CROWN_TEETH; i += 1) {
-    const tooth = new BoxGeometry(1.6, CROWN_OUTER - CROWN_INNER - 1, 3.2);
-    tooth.translate(0, toothRadius, CROWN_DEPTH / 2 + 1.4);
+    const tooth = new BoxGeometry(2, CROWN_OUTER - CROWN_INNER - 1.2, 4);
+    tooth.translate(0, toothRadius, CROWN_DEPTH / 2 + 1.8);
     tooth.rotateZ((i / CROWN_TEETH) * Math.PI * 2);
     pieces.push(tooth);
   }
-  addSpokesAndHub(pieces, 8, CROWN_INNER, CROWN_DEPTH, 2.6, 7);
+  addSpokesAndHub(pieces, 8, CROWN_INNER, CROWN_DEPTH, 3.2, 9);
   return mergeAll(pieces);
 }
 
@@ -234,27 +235,27 @@ function crownWheelGeometry() {
 function forkGeometry() {
   const tipAngle = Math.atan2(TIP_Y, TIP_X);
   const tipRadius = Math.hypot(TIP_X, TIP_Y);
-  const outer = tipRadius + 3;
-  const inner = tipRadius - 4;
+  const outer = tipRadius + 3.5;
+  const inner = tipRadius - 5;
   const shape = new Shape();
   // From the right tip under the pivot to the left tip and back along the inner edge.
   shape.absarc(0, 0, outer, tipAngle, Math.PI - tipAngle, true);
   shape.absarc(0, 0, inner, Math.PI - tipAngle, tipAngle, false);
   shape.closePath();
   const pieces: BufferGeometry[] = [extrude(shape, FORK_DEPTH, 0.4)];
-  const shank = new BoxGeometry(7, inner + 2, FORK_DEPTH);
+  const shank = new BoxGeometry(9, inner + 2, FORK_DEPTH);
   shank.translate(0, -(inner + 2) / 2, 0);
   pieces.push(shank);
   const boss = new CylinderGeometry(PIVOT_RADIUS, PIVOT_RADIUS, FORK_DEPTH + 1, 32);
   boss.rotateX(Math.PI / 2);
   pieces.push(boss);
   // A raised rib along the band and a bolted collar on the boss give the anchor its forged read.
-  const rib = new TorusGeometry((outer + inner) / 2, 1.3, 8, 48, Math.PI + 2 * tipAngle);
+  const rib = new TorusGeometry((outer + inner) / 2, 1.6, 8, 48, Math.PI + 2 * tipAngle);
   rib.rotateZ(-(Math.PI + tipAngle));
   pieces.push(rib);
-  const collar = new TorusGeometry(PIVOT_RADIUS - 0.4, 1.2, 8, 32);
+  const collar = new TorusGeometry(PIVOT_RADIUS - 0.5, 1.5, 8, 32);
   pieces.push(collar);
-  addBolts(pieces, 6, PIVOT_RADIUS - 2.6, FORK_DEPTH / 2 + 0.5, 0.7);
+  addBolts(pieces, 6, PIVOT_RADIUS - 3.2, FORK_DEPTH / 2 + 0.5, 0.9);
   return mergeAll(pieces);
 }
 
@@ -263,20 +264,20 @@ function tipGeometry(sign: 1 | -1) {
   const tilt = sign * JEWEL_TILT;
   const ox = sign * JEWEL_OFFSET.x;
   const oy = JEWEL_OFFSET.y;
-  const block = new BoxGeometry(8, 7, FORK_DEPTH + 1);
+  const block = new BoxGeometry(10, 9, FORK_DEPTH + 1);
   block.rotateZ(tilt);
   const pieces: BufferGeometry[] = [block];
   for (const side of [1, -1]) {
-    const claw = new BoxGeometry(1.6, 7, 1.6);
-    claw.translate(0, -1, 0);
+    const claw = new BoxGeometry(2, 9, 2);
+    claw.translate(0, -1.2, 0);
     claw.rotateZ(tilt);
-    claw.translate(ox + side * 4.6 * Math.cos(tilt), oy + 1.5 + side * 4.6 * Math.sin(tilt), JEWEL_OFFSET.z - 2.5);
+    claw.translate(ox + side * 6 * Math.cos(tilt), oy + 2 + side * 6 * Math.sin(tilt), JEWEL_OFFSET.z - 3.5);
     pieces.push(claw);
   }
   // The pad the claws grow from, bridging the block's face and the jewel's back.
-  const pad = new BoxGeometry(10, 3, JEWEL_OFFSET.z - 1);
+  const pad = new BoxGeometry(13, 4, JEWEL_OFFSET.z - 2);
   pad.rotateZ(tilt);
-  pad.translate(ox, oy + 1.5, (JEWEL_OFFSET.z - 1) / 2);
+  pad.translate(ox, oy + 2, (JEWEL_OFFSET.z - 2) / 2);
   pieces.push(pad);
   return mergeAll(pieces);
 }
@@ -310,9 +311,9 @@ function arborBrassGeometry() {
 
 // ---- target rigs ----------------------------------------------------------------------
 
-/** A hexagonal bipyramid crystal, 14 m along its axis and 8 m across. The axis lies along x. */
-const JEWEL_LENGTH = 14;
-const JEWEL_RADIUS = 4;
+/** A hexagonal bipyramid crystal, 18 m along its axis and 10 m across. The axis lies along x. */
+const JEWEL_LENGTH = 18;
+const JEWEL_RADIUS = 5;
 
 const jewelGeometry = (() => {
   let cached: BufferGeometry | null = null;
@@ -343,12 +344,12 @@ export function createPalletJewel(side: JewelSide): PalletJewelRig {
   group.add(stone);
   // The spark's tips reach out of the crystal's front, back, top and bottom faces.
   const spark = new Mesh(new OctahedronGeometry(1, 1), paint.spark(3));
-  spark.scale.set(2.2, JEWEL_RADIUS + 1.2, JEWEL_RADIUS + 1.2);
+  spark.scale.set(2.8, JEWEL_RADIUS + 1.5, JEWEL_RADIUS + 1.5);
   group.add(spark);
   group.userData.kind = 'pallet-jewel';
   group.userData.side = side;
   group.userData.accent = RUBY.clone();
-  group.userData.lockRingScale = 6;
+  group.userData.lockRingScale = 7.5;
 
   let lifted = true;
   let heat = 1;
@@ -400,11 +401,11 @@ export function createArborTarget(): EnemyRig {
   boss.position.z = -0.6;
   group.add(boss);
   const spark = new Mesh(new OctahedronGeometry(1, 1), paint.spark(3));
-  spark.scale.set(3.2, 3.2, 2.4);
+  spark.scale.set(4, 4, 3);
   group.add(spark);
   group.userData.kind = 'arbor';
   group.userData.accent = RUBY.clone();
-  group.userData.lockRingScale = 5;
+  group.userData.lockRingScale = 6;
 
   let locked = false;
   let deniedUntil = -1;
@@ -457,7 +458,7 @@ export function createEscapementBoss(): EscapementBoss {
   const plates: Record<JewelSide, Mesh> = { left: new Mesh(), right: new Mesh() };
   for (const side of ['left', 'right'] as const) {
     const angle = side === 'right' ? -Math.PI / 2 + 0.75 : -Math.PI / 2 - 0.75;
-    const plate = new Mesh(new BoxGeometry(12, 3.2, 3), brass);
+    const plate = new Mesh(new BoxGeometry(15, 4, 3.5), brass);
     plate.position.set(
       CROWN_CENTER.x + Math.cos(angle) * (CROWN_INNER - 1.2),
       CROWN_CENTER.y + Math.sin(angle) * (CROWN_INNER - 1.2),
@@ -502,9 +503,9 @@ export function createEscapementBoss(): EscapementBoss {
   const socketGlow = new MeshStandardMaterial({ color: RUBY, emissive: RUBY.clone().multiplyScalar(1.2), roughness: 0.4, metalness: 0.1 });
   const socketFloor = new Mesh(new CylinderGeometry(SOCKET_RADIUS, SOCKET_RADIUS, 1, 40), socketGlow);
   socketFloor.rotation.x = Math.PI / 2;
-  socketFloor.position.z = ARBOR_FRONT - 2.5;
+  socketFloor.position.z = ARBOR_FRONT - 3;
   group.add(socketFloor);
-  anchors.arbor.position.set(0, 0, ARBOR_FRONT - 1.2);
+  anchors.arbor.position.set(0, 0, ARBOR_FRONT - 1.5);
   group.add(anchors.arbor);
   const shutterShape = shutterGeometry();
   const shutters = [1, -1].map((sign) => {
@@ -588,13 +589,13 @@ export function createEscapementBoss(): EscapementBoss {
     const sign = side === 'right' ? 1 : -1;
     falling.push({
       object: tips[side],
-      velocity: new Vector3(sign * 7, -4, -7),
+      velocity: new Vector3(sign * 9, -5, -9),
       spin: new Vector3(2.5, 1.5, sign * 3),
       age: 0,
     });
     falling.push({
       object: plates[side],
-      velocity: new Vector3(sign * 4, -2, -9),
+      velocity: new Vector3(sign * 5, -2, -11),
       spin: new Vector3(1.8, 0.6, sign * 2.2),
       age: 0,
     });
@@ -630,23 +631,32 @@ export function createEscapementBoss(): EscapementBoss {
 export type BossPreviewStage = 'jewels-right' | 'jewels-left' | 'broken-left' | 'arbor' | 'free';
 export type BossPreviewView = 'orbit' | 'station' | 'front';
 
-/** The hold camera relative to the fork pivot: gameplay's BOSS_STATION minus the pendulum mount, and BOSS_AIM minus the mount. */
-const STATION_OFFSET = new Vector3(0, 170, 68);
-const STATION_AIM = new Vector3(0, -46, 0);
-/** The pendulum pivot relative to the mount; the station swings about it with the bob. */
+/** The pendulum pivot relative to the mount; the ride camera swings about it with the bob. */
 const PENDULUM_PIVOT_OFFSET = new Vector3(0, -60, -14);
-/** A front view for comparison: 100 m in front of the body, level with the wheel's top. */
-const FRONT_OFFSET = new Vector3(0, -18, 100);
+/** The ride camera relative to the mount at rest: the bob plus PENDULUM_RIDE_OFFSET, aimed PENDULUM_RIDE_AIM_DROP below the mount (gameplay.ts RIDE_STATION and BOSS_AIM). */
+const STATION_OFFSET = new Vector3(0, -160, 106);
+const STATION_AIM = new Vector3(0, -66, 0);
+/** The agreed boss pose for the camera designer: on the pendulum frame 35 m below the pivot and 120 m in front of it, aimed at the fork pivot. */
+const FRONT_OFFSET = PENDULUM_PIVOT_OFFSET.clone().add(new Vector3(0, -35, 120));
+
+/** The works lamp relative to the mount, as the pendulum set previews it. */
+const PREVIEW_LAMP_OFFSET = new Vector3(0, 260, 106);
+const PREVIEW_LAMP_INTENSITY = 25000;
 
 /**
  * Snapshot entry point: the body with jewel and arbor targets seated, posed
- * in one loop stage, and lit. `view` 'orbit' lets the tool frame the body;
- * 'station' pins the camera where gameplay holds it, swung with the bob by
- * the stage's fork angle; 'front' pins it 100 m in front of the body, swung
- * the same way. For
+ * in one loop stage, and lit under the level's sky bake and works lamp.
+ * `view` 'orbit' lets the tool frame the body;
+ * 'station' pins the camera where gameplay rides it, swung with the bob by
+ * the stage's fork angle; 'front' pins it at the agreed boss pose, 35 m
+ * below the pendulum pivot and 120 m in front of it, swung the same way. For
  * `npm run snapshot -- --module src/levels/escapement/visuals/escapement-boss.ts --export previewBoss --args '["arbor","station"]'`.
  */
 export function previewBoss(stageName: BossPreviewStage = 'jewels-right', view: BossPreviewView = 'orbit') {
+  return withPreviewEnvironment(() => buildBossPreview(stageName, view));
+}
+
+function buildBossPreview(stageName: BossPreviewStage, view: BossPreviewView) {
   const stage = new Group();
   const boss = createEscapementBoss();
   const jewels = { left: createPalletJewel('left'), right: createPalletJewel('right') };
@@ -690,12 +700,12 @@ export function previewBoss(stageName: BossPreviewStage = 'jewels-right', view: 
   if (jewels.right.parent) boss.seatPart('jewelRight', jewels.right);
   boss.seatPart('arbor', arbor);
 
-  stage.add(previewLightRig(new Vector3(0, -8, 0), 12));
+  stage.add(createLamp({ name: 'preview-lamp', position: PREVIEW_LAMP_OFFSET.clone(), intensity: PREVIEW_LAMP_INTENSITY }));
   if (view === 'orbit') return stage;
 
   const rest = view === 'station' ? STATION_OFFSET : FRONT_OFFSET;
   const cameraPosition = rest.clone().sub(PENDULUM_PIVOT_OFFSET).applyAxisAngle(new Vector3(0, 0, 1), angle).add(PENDULUM_PIVOT_OFFSET);
-  const aim = view === 'station' ? STATION_AIM : new Vector3(0, FRONT_OFFSET.y, 0);
+  const aim = view === 'station' ? STATION_AIM : new Vector3(0, 0, 0);
   const direction = aim.clone().sub(cameraPosition).normalize();
   return pinSnapshotView(stage, cameraPosition, direction);
 }
