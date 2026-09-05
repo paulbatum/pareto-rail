@@ -1,5 +1,5 @@
 import type { Object3D, PerspectiveCamera, Scene } from 'three';
-import type { Node, PassNode } from 'three/webgpu';
+import type { Node, PassNode, WebGPURenderer } from 'three/webgpu';
 import type { EventBus } from '../events';
 import type { Hud } from '../ui/hud';
 
@@ -24,6 +24,8 @@ export type LevelRuntime = {
 export type LevelContext = {
   scene: Scene;
   camera: PerspectiveCamera;
+  /** The initialized renderer. Use it for compute dispatch and environment baking. The post chain is built after createRuntime returns. */
+  renderer: WebGPURenderer;
   canvas: HTMLCanvasElement;
   bus: EventBus;
   hud: Hud;

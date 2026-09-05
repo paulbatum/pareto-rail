@@ -74,7 +74,7 @@
     "pg": "^8.22.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "three": "latest"
+    "three": "0.185.1"
   },
   "devDependencies": {
     "@anthropic-ai/sandbox-runtime": "0.0.67",
