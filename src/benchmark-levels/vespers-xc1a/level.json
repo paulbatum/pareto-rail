@@ -1,0 +1,9 @@
+{
+  "id": "vespers-xc1a",
+  "title": "Vespers",
+  "contentImages": {
+    "overview": "/level-content/vespers-xc1a/overview.avif",
+    "start": "/level-content/vespers-xc1a/start.avif",
+    "hero": "/level-content/vespers-xc1a/hero.avif"
+  }
+}
