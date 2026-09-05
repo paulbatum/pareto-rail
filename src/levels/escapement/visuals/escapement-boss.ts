@@ -11,6 +11,7 @@ import {
   Path,
   Shape,
   TorusGeometry,
+  Vector2,
   Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -65,23 +66,25 @@ export function liftedSide(forkAngle: number): JewelSide {
 
 export const ESCAPE_WHEEL_TEETH = 30;
 const TOOTH_ANGLE = (Math.PI * 2) / ESCAPE_WHEEL_TEETH;
-const WHEEL_CENTER = new Vector3(0, -30, 0);
-const WHEEL_TIP_RADIUS = 22.5;
-const WHEEL_ROOT_RADIUS = 19.8;
-const WHEEL_RIM_INNER = 16.8;
-const WHEEL_DEPTH = 2.6;
-const CROWN_CENTER = new Vector3(0, -4, -7);
-const CROWN_OUTER = 31;
-const CROWN_INNER = 27.4;
+const WHEEL_CENTER = new Vector3(0, -33, 0);
+const WHEEL_TIP_RADIUS = 24.5;
+const WHEEL_ROOT_RADIUS = 21.6;
+const WHEEL_RIM_INNER = 16;
+const WHEEL_DEPTH = 3.6;
+const CROWN_CENTER = new Vector3(0, 27, -9);
+const CROWN_OUTER = 29;
+const CROWN_INNER = 24.8;
 const CROWN_TEETH = 72;
-const CROWN_ARC: [number, number] = [Math.PI * 0.1, Math.PI * 0.9];
-const CROWN_DEPTH = 3;
-const FORK_DEPTH = 3.8;
-const ARM_THICKNESS = 4.4;
-const PIVOT_RADIUS = 6;
-const TIP_X = 17;
-const TIP_Y = -13;
-const JEWEL_OFFSET = new Vector3(1.8, -3.0, 1.8);
+const CROWN_DEPTH = 3.4;
+const ARBOR_RADIUS = 2.2;
+const ARBOR_LENGTH = 14;
+const ARBOR_FRONT = ARBOR_LENGTH / 2;
+const FORK_DEPTH = 4.2;
+const ARM_THICKNESS = 5;
+const PIVOT_RADIUS = 7;
+const TIP_X = 19;
+const TIP_Y = -15;
+const JEWEL_OFFSET = new Vector3(2.0, -3.4, 2.0);
 const SNAP_RATE = 22;
 
 // ---- geometry ----------------------------------------------------------------------
@@ -94,7 +97,7 @@ function toothedRing(outer: number, root: number, inner: number, teeth: number, 
     // A club tooth leans forward: a long ramp up the back, a short flat at the
     // tip, a steep face at the front. A blunt tooth is symmetric.
     const points: Array<[number, number]> = club
-      ? [[a, root], [a + step * 0.42, outer], [a + step * 0.55, outer], [a + step * 0.6, root]]
+      ? [[a, root], [a + step * 0.5, outer], [a + step * 0.64, outer], [a + step * 0.66, root + (outer - root) * 0.35], [a + step * 0.7, root]]
       : [[a, root], [a + step * 0.2, outer], [a + step * 0.5, outer], [a + step * 0.7, root]];
     for (const [angle, radius] of points) {
       const x = Math.cos(angle) * radius;
@@ -133,36 +136,33 @@ function nonIndexed(geometry: BufferGeometry) {
 function escapeWheelGeometry() {
   const rim = extrude(toothedRing(WHEEL_TIP_RADIUS, WHEEL_ROOT_RADIUS, WHEEL_RIM_INNER, ESCAPE_WHEEL_TEETH, true), WHEEL_DEPTH);
   const pieces = [nonIndexed(rim)];
-  // Five spokes and a hub carry the rim.
-  for (let i = 0; i < 5; i += 1) {
-    const spoke = new BoxGeometry(1.8, WHEEL_RIM_INNER + 0.6, WHEEL_DEPTH * 0.7);
-    spoke.translate(0, (WHEEL_RIM_INNER + 0.6) / 2, 0);
-    spoke.rotateZ((i / 5) * Math.PI * 2);
-    pieces.push(nonIndexed(spoke));
-  }
-  const hub = new CylinderGeometry(3.2, 3.2, WHEEL_DEPTH * 1.4, 16);
-  hub.rotateX(Math.PI / 2);
-  pieces.push(nonIndexed(hub));
+  addSpokes(pieces, 5, WHEEL_RIM_INNER, WHEEL_DEPTH, 2.0, 3.4);
   const merged = mergeGeometries(pieces);
   for (const piece of pieces) piece.dispose();
   return merged;
 }
 
-/** An arc of the crown wheel: blunt teeth outward, a plain inner rim, open ends. */
-function crownArcGeometry() {
-  const shape = new Shape();
-  const [start, end] = CROWN_ARC;
-  const step = (Math.PI * 2) / CROWN_TEETH;
-  const root = CROWN_OUTER - 1.8;
-  shape.moveTo(Math.cos(start) * CROWN_INNER, Math.sin(start) * CROWN_INNER);
-  for (let a = start; a < end - step * 0.5; a += step) {
-    const points: Array<[number, number]> = [[a, root], [a + step * 0.2, CROWN_OUTER], [a + step * 0.5, CROWN_OUTER], [a + step * 0.7, root]];
-    for (const [angle, radius] of points) shape.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+/** Spokes from a hub to the rim, merged into `pieces`. */
+function addSpokes(pieces: BufferGeometry[], count: number, rimInner: number, depth: number, width: number, hubRadius: number) {
+  for (let i = 0; i < count; i += 1) {
+    const spoke = new BoxGeometry(width, rimInner + 0.6, depth * 0.7);
+    spoke.translate(0, (rimInner + 0.6) / 2, 0);
+    spoke.rotateZ((i / count) * Math.PI * 2);
+    pieces.push(nonIndexed(spoke));
   }
-  shape.lineTo(Math.cos(end) * root, Math.sin(end) * root);
-  shape.absarc(0, 0, CROWN_INNER, end, start, true);
-  shape.closePath();
-  return extrude(shape, CROWN_DEPTH, 0.2);
+  const hub = new CylinderGeometry(hubRadius, hubRadius, depth * 1.4, 16);
+  hub.rotateX(Math.PI / 2);
+  pieces.push(nonIndexed(hub));
+}
+
+/** The crown wheel: blunt teeth, a rim, six spokes and a hub. */
+function crownWheelGeometry() {
+  const rim = extrude(toothedRing(CROWN_OUTER, CROWN_OUTER - 1.8, CROWN_INNER, CROWN_TEETH, false), CROWN_DEPTH, 0.2);
+  const pieces = [nonIndexed(rim)];
+  addSpokes(pieces, 6, CROWN_INNER, CROWN_DEPTH, 2.4, 4.5);
+  const merged = mergeGeometries(pieces);
+  for (const piece of pieces) piece.dispose();
+  return merged;
 }
 
 // The anchor: a pivot disc with two forged bars that reach down and out to the
@@ -193,12 +193,12 @@ function forkGeometry() {
 
 /** A pallet tip: a brass block with two claws that hold the jewel. Built for the right side; the left is mirrored by rotation. */
 function tipGeometry() {
-  const block = new BoxGeometry(6, 5, FORK_DEPTH + 1.2);
+  const block = new BoxGeometry(7, 5.6, FORK_DEPTH + 1.2);
   block.rotateZ(-0.7);
   const pieces = [nonIndexed(block)];
   for (const side of [1, -1]) {
-    const claw = new BoxGeometry(1.0, 4.0, 1.0);
-    claw.translate(0, 1.1, side * 2.4);
+    const claw = new BoxGeometry(1.1, 4.6, 1.1);
+    claw.translate(0, 1.3, side * 2.7);
     claw.rotateZ(-0.7);
     claw.translate(JEWEL_OFFSET.x * 0.8, JEWEL_OFFSET.y * 0.8, 0);
     pieces.push(nonIndexed(claw));
@@ -209,33 +209,51 @@ function tipGeometry() {
 }
 
 function shutterGeometry() {
-  const geometry = new CylinderGeometry(3.8, 3.8, 0.7, 24, 1, false, 0, Math.PI);
+  const geometry = new CylinderGeometry(3.4, 3.4, 0.7, 24, 1, false, 0, Math.PI);
   geometry.rotateX(Math.PI / 2);
   return geometry;
 }
 
 // ---- target rigs ----------------------------------------------------------------------
 
+// A faceted slab a fifth of the arm length, its long axis along the pallet
+// face where the wheel's teeth land.
+const JEWEL_LENGTH = 5.4;
+const JEWEL_HEIGHT = 2.6;
+const JEWEL_DEPTH = 1.8;
+
 const jewelGeometry = (() => {
-  let cached: OctahedronGeometry | null = null;
+  let cached: BufferGeometry | null = null;
   return () => {
     if (!cached) {
-      cached = new OctahedronGeometry(3.0, 1);
-      cached.scale(0.85, 1.2, 0.85);
+      const half = JEWEL_LENGTH / 2;
+      const rise = JEWEL_HEIGHT / 2;
+      const outline = new Shape([
+        new Vector2(-half, -rise * 0.55),
+        new Vector2(-half * 0.8, -rise),
+        new Vector2(half * 0.8, -rise),
+        new Vector2(half, -rise * 0.55),
+        new Vector2(half, rise * 0.55),
+        new Vector2(half * 0.8, rise),
+        new Vector2(-half * 0.8, rise),
+        new Vector2(-half, rise * 0.55),
+      ]);
+      cached = new ExtrudeGeometry(outline, { depth: JEWEL_DEPTH, bevelEnabled: true, bevelThickness: 0.35, bevelSize: 0.35, bevelSegments: 1 });
+      cached.translate(0, 0, -JEWEL_DEPTH / 2);
     }
     return cached;
   };
 })();
 
-/** A pallet jewel target. Lifted: white-hot, lockable. Engaged: dull ruby. */
+/** A pallet jewel target. Lifted: the whole slab white-hot, lockable. Engaged: dull ruby. */
 export function createPalletJewel(side: JewelSide): PalletJewelRig {
   const group = new Group();
   const paint = createTargetPaint();
-  const stone = new Mesh(jewelGeometry(), paint.accent('ruby', 0, true));
-  stone.rotation.z = side === 'right' ? -0.4 : 0.4;
+  const stone = new Mesh(jewelGeometry(), paint.accent('ruby-dull', 0, true));
   group.add(stone);
-  const spark = new Mesh(new OctahedronGeometry(0.8, 0), paint.spark(3));
-  spark.position.z = 2.3;
+  // The spark's tips reach through the slab's front and back faces.
+  const spark = new Mesh(new OctahedronGeometry(1.0, 1), paint.spark(3));
+  spark.scale.set(1, 1, JEWEL_DEPTH / 2 + 0.9);
   group.add(spark);
   group.userData.kind = 'pallet-jewel';
   group.userData.side = side;
@@ -252,12 +270,9 @@ export function createPalletJewel(side: JewelSide): PalletJewelRig {
   rig.update = (dt, beatPhase) => {
     time += dt;
     heat = MathUtils.damp(heat, lifted ? 1 : 0, 6, dt);
-    const entry = paint.accents[0];
-    paint.retint(entry, heat > 0.5 ? 'ruby' : 'ruby-dull');
-    spark.scale.setScalar(0.6 + heat * 0.6);
-    stone.rotation.y = Math.sin(time * 0.8) * 0.15;
     paint.apply({
       locked,
+      whiteHot: heat > 0.5,
       denied: MathUtils.clamp((deniedUntil - time) / 0.5, 0, 1),
       damaged: MathUtils.clamp((damagedUntil - time) / 0.32, 0, 1),
       pulse: (1 - beatPhase) ** 3 * heat,
@@ -290,7 +305,7 @@ export function createArborTarget(): EnemyRig {
   const group = new Group();
   const paint = createTargetPaint();
   group.add(new Mesh(new TorusGeometry(2.0, 0.55, 8, 28), paint.accent('ruby')));
-  const spark = new Mesh(new OctahedronGeometry(1.1, 1), paint.spark(3));
+  const spark = new Mesh(new OctahedronGeometry(1.2, 1), paint.spark(3));
   group.add(spark);
   group.userData.kind = 'arbor';
   group.userData.accent = RUBY.clone();
@@ -339,20 +354,21 @@ export function createEscapementBoss(): EscapementBoss {
   const brass = brassMaterial();
   const steel = steelMaterial();
 
-  // Crown wheel arc behind the top of the fork. A brass plate hangs from each
-  // end of the arc; it falls when the jewel on that side breaks.
-  const crown = new Mesh(crownArcGeometry(), brass);
+  // Crown wheel above and behind the fork. A brass plate is bolted to its
+  // lower rim on each side; the plate falls when the jewel on that side breaks.
+  const crown = new Mesh(crownWheelGeometry(), brass);
   crown.position.copy(CROWN_CENTER);
   group.add(crown);
   const plates: Record<JewelSide, Mesh> = { left: new Mesh(), right: new Mesh() };
   for (const side of ['left', 'right'] as const) {
-    const angle = side === 'right' ? CROWN_ARC[0] : CROWN_ARC[1];
-    const plate = new Mesh(new BoxGeometry(3.6, 10, 2.4), brass);
+    const angle = side === 'right' ? -Math.PI / 2 + 0.7 : -Math.PI / 2 - 0.7;
+    const plate = new Mesh(new BoxGeometry(9, 2.4, 2.6), brass);
     plate.position.set(
-      CROWN_CENTER.x + Math.cos(angle) * (CROWN_INNER + 1.8),
-      CROWN_CENTER.y + Math.sin(angle) * (CROWN_INNER + 1.8) - 4.5,
-      CROWN_CENTER.z + 0.5,
+      CROWN_CENTER.x + Math.cos(angle) * (CROWN_INNER - 1.0),
+      CROWN_CENTER.y + Math.sin(angle) * (CROWN_INNER - 1.0),
+      CROWN_CENTER.z + 3.0,
     );
+    plate.rotation.z = angle + Math.PI / 2;
     group.add(plate);
     plates[side] = plate;
   }
@@ -365,7 +381,7 @@ export function createEscapementBoss(): EscapementBoss {
   // The fork: arms, tips, and the pivot hub.
   const fork = new Group();
   fork.add(new Mesh(forkGeometry(), steel));
-  const hub = new Mesh(new CylinderGeometry(4.2, 4.2, FORK_DEPTH + 1.2, 24), brass);
+  const hub = new Mesh(new CylinderGeometry(4.8, 4.8, FORK_DEPTH + 1.2, 24), brass);
   hub.rotation.x = Math.PI / 2;
   fork.add(hub);
   const tipShape = tipGeometry();
@@ -379,22 +395,29 @@ export function createEscapementBoss(): EscapementBoss {
     tip.add(new Mesh(tipShape, brass));
     const anchor = side === 'right' ? anchors.jewelRight : anchors.jewelLeft;
     anchor.position.copy(JEWEL_OFFSET);
+    // The slab's long axis follows the tip block's face. The left tip is the
+    // right one turned about y, so its anchor turns back to face +z.
+    anchor.rotation.set(0, side === 'right' ? 0 : Math.PI, -0.7);
     tip.add(anchor);
     fork.add(tip);
   }
   group.add(fork);
 
-  // The arbor at the pivot, behind two brass shutters that open for stage two.
-  const arbor = new Mesh(new CylinderGeometry(2.2, 2.2, 9, 16), steel);
+  // The arbor runs through the pivot and out both faces, with a brass collet
+  // in front of the hub. Two brass shutters cover its front end until stage two.
+  const arbor = new Mesh(new CylinderGeometry(ARBOR_RADIUS, ARBOR_RADIUS, ARBOR_LENGTH, 16), steel);
   arbor.rotation.x = Math.PI / 2;
   group.add(arbor);
-  anchors.arbor.position.set(0, 0, 4.6);
+  const collet = new Mesh(new TorusGeometry(ARBOR_RADIUS + 0.7, 0.7, 8, 24), brass);
+  collet.position.z = FORK_DEPTH / 2 + 1.6;
+  group.add(collet);
+  anchors.arbor.position.set(0, 0, ARBOR_FRONT + 0.4);
   group.add(anchors.arbor);
   const shutterShape = shutterGeometry();
   const shutters = [1, -1].map((sign) => {
     const shutter = new Mesh(shutterShape, brass);
     shutter.rotation.z = sign === 1 ? -Math.PI / 2 : Math.PI / 2;
-    shutter.position.z = 4.0;
+    shutter.position.z = ARBOR_FRONT - 0.2;
     group.add(shutter);
     return { mesh: shutter, sign };
   });
@@ -433,11 +456,13 @@ export function createEscapementBoss(): EscapementBoss {
       wheelAngle = MathUtils.damp(wheelAngle, wheelTarget, SNAP_RATE, dt);
     }
     wheel.rotation.z = -wheelAngle;
+    // The crown wheel meshes with the escape wheel's pinion, so it turns the other way at the tooth ratio.
+    crown.rotation.z = wheelAngle * (ESCAPE_WHEEL_TEETH / CROWN_TEETH);
     forkSkip = MathUtils.damp(forkSkip, 0, 9, dt);
     fork.rotation.z = MathUtils.lerp(forkAngle + forkSkip, -0.55 + Math.sin(wheelAngle * 0.2) * 0.03, hang);
 
     arborOpen = MathUtils.damp(arborOpen, arborOpenTarget, 5, dt);
-    for (const shutter of shutters) shutter.mesh.position.x = shutter.sign * arborOpen * 5.2;
+    for (const shutter of shutters) shutter.mesh.position.x = shutter.sign * arborOpen * 5.0;
 
     for (const piece of falling) {
       piece.age += dt;
@@ -555,8 +580,6 @@ export function previewBoss(stageName: BossPreviewStage = 'jewels-right') {
   if (jewels.right.parent) boss.seatPart('jewelRight', jewels.right);
   boss.seatPart('arbor', arbor);
 
-  const lights = previewLightRig(new Vector3(0, -8, 0));
-  lights.scale.setScalar(10);
-  stage.add(lights);
+  stage.add(previewLightRig(new Vector3(0, -8, 0), 12));
   return stage;
 }

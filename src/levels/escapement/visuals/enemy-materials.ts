@@ -8,7 +8,6 @@ import {
   BRASS_DARK,
   CHIME_SILVER,
   hdr,
-  LOCK_COLD,
   RUBY,
   RUBY_DULL,
   STEEL_BLUE,
@@ -23,12 +22,10 @@ import {
 // noise. Target paints (verdigris, ruby, spark) are per-enemy materials so
 // each target can show its own locked, denied and damaged state.
 //
-// Environment lighting: the level assigns `scene.environment` from a PMREM
-// bake. These materials leave `envMapIntensity` at 1, so the bake lights them
-// with no further change here. Metalness sits at 0.7 rather than 0.9 because a
-// metal takes no diffuse light: under direct lights alone a 0.9 metal is a
-// black shape with one highlight, and the level must stay legible before the
-// bake is in.
+// Environment lighting: the level assigns `scene.environmentNode` from the
+// PMREM bake in `src/engine/environment-light.ts`. A metal takes no diffuse
+// light, so these metals read only under that bake or a direct light; the
+// preview harness in enemies.ts bakes the same sky the level uses.
 
 type MetalSpec = {
   color: Color;
@@ -81,7 +78,7 @@ export function brassMaterial() {
   brass ??= createMetalMaterial({
     color: BRASS,
     dark: BRASS_DARK,
-    metalness: 0.7,
+    metalness: 0.9,
     roughness: 0.42,
     brushAxis: [1, 0, 0],
     grainScale: 3.5,
@@ -94,7 +91,7 @@ export function steelMaterial() {
   steel ??= createMetalMaterial({
     color: STEEL_BLUE,
     dark: STEEL_DARK,
-    metalness: 0.7,
+    metalness: 0.85,
     roughness: 0.38,
     brushAxis: [0, 1, 0],
     grainScale: 4,
@@ -107,7 +104,7 @@ export function steelTwoSidedMaterial() {
   steelTwoSided ??= createMetalMaterial({
     color: STEEL_BLUE,
     dark: STEEL_DARK,
-    metalness: 0.7,
+    metalness: 0.85,
     roughness: 0.34,
     brushAxis: [0, 0, 1],
     grainScale: 6,
@@ -116,13 +113,13 @@ export function steelTwoSidedMaterial() {
   return steelTwoSided;
 }
 
-/** Black oxide: near-black, low-roughness, shared. */
+/** Black oxide: near-black, matte and rough, shared. */
 export function oxideMaterial() {
   oxide ??= createMetalMaterial({
-    color: BLACK_OXIDE.clone().multiplyScalar(2.2),
+    color: BLACK_OXIDE.clone().multiplyScalar(3),
     dark: BLACK_OXIDE,
-    metalness: 0.45,
-    roughness: 0.32,
+    metalness: 0.5,
+    roughness: 0.68,
     brushAxis: [0, 0, 1],
     grainScale: 8,
   });
@@ -134,7 +131,7 @@ export function silverMaterial() {
   silver ??= createMetalMaterial({
     color: CHIME_SILVER,
     dark: CHIME_SILVER.clone().multiplyScalar(0.55),
-    metalness: 0.7,
+    metalness: 0.95,
     roughness: 0.22,
     brushAxis: [0, 1, 0],
     grainScale: 6,
@@ -149,8 +146,8 @@ export type AccentKind = 'verdigris' | 'ruby' | 'ruby-dull';
 type AccentSpec = { color: Color; emissive: number; metalness: number; roughness: number };
 
 const ACCENT_SPECS: Record<AccentKind, AccentSpec> = {
-  verdigris: { color: VERDIGRIS, emissive: 0.32, metalness: 0.2, roughness: 0.62 },
-  ruby: { color: RUBY, emissive: 0.6, metalness: 0.1, roughness: 0.16 },
+  verdigris: { color: VERDIGRIS, emissive: 0.22, metalness: 0.2, roughness: 0.62 },
+  ruby: { color: RUBY, emissive: 0.5, metalness: 0.1, roughness: 0.16 },
   'ruby-dull': { color: RUBY_DULL, emissive: 0.12, metalness: 0.1, roughness: 0.3 },
 };
 
@@ -159,6 +156,8 @@ type SparkEntry = { material: MeshBasicMaterial; intensity: number };
 
 export type TargetStateInput = {
   locked: boolean;
+  /** Every accent turns white-hot: the lifted pallet jewel only. */
+  whiteHot?: boolean;
   /** 0..1 strength of the denied flash. */
   denied: number;
   /** 0..1 strength of the damage flash. */
@@ -181,7 +180,6 @@ export type TargetPaint = ReturnType<typeof createTargetPaint>;
 export function createTargetPaint() {
   const accents: AccentEntry[] = [];
   const sparks: SparkEntry[] = [];
-  const scratch = new Color();
 
   function accent(kind: AccentKind, side: Side = 0, flatShading = false) {
     const spec = ACCENT_SPECS[kind];
@@ -207,32 +205,34 @@ export function createTargetPaint() {
     entry.spec = ACCENT_SPECS[kind];
   }
 
+  // Every state keeps the kind colour. Locked and damaged brighten the accent's
+  // own hue and the spark; denied darkens both. Only `whiteHot` recolours.
   function apply(state: TargetStateInput) {
     for (const entry of accents) {
       const { material, spec } = entry;
-      if (state.denied > 0) {
-        material.color.copy(RUBY_DULL);
-        material.emissive.copy(RUBY_DULL).multiplyScalar(0.15 * state.denied);
+      if (state.whiteHot) {
+        material.color.copy(WHITE_HOT);
+        material.emissive.copy(WHITE_HOT).multiplyScalar(1.4 + state.pulse * 0.3);
         continue;
       }
       material.color.copy(spec.color);
-      if (state.locked) material.color.lerp(LOCK_COLD, 0.45);
-      const glow = spec.emissive * (1 + state.heat * 1.6);
-      material.emissive.copy(state.locked ? LOCK_COLD : spec.color).multiplyScalar(glow);
-      if (state.damaged > 0) material.emissive.lerp(scratch.copy(WHITE_HOT).multiplyScalar(0.9), state.damaged);
+      let glow = spec.emissive * (1 + state.heat * 1.6);
+      if (state.locked) glow *= 2.4;
+      if (state.damaged > 0) glow *= 1 + state.damaged * 3;
+      if (state.denied > 0) {
+        material.color.multiplyScalar(1 - state.denied * 0.65);
+        glow *= 1 - state.denied;
+      }
+      material.emissive.copy(spec.color).multiplyScalar(glow);
     }
     for (const entry of sparks) {
       const { material, intensity } = entry;
-      if (state.denied > 0) {
-        material.color.copy(RUBY_DULL).multiplyScalar(0.6);
-        continue;
-      }
-      const base = state.locked ? LOCK_COLD : WHITE_HOT;
       let strength = intensity * (1 + state.pulse * 0.3 + state.heat * 1.2);
-      if (state.locked) strength *= 1.5;
+      if (state.locked) strength *= 1.6;
       if (state.damaged > 0) strength *= 1 + state.damaged * 1.5;
       strength *= 1 - state.dim * 0.75;
-      material.color.copy(base).multiplyScalar(strength);
+      if (state.denied > 0) strength *= 1 - state.denied * 0.8;
+      material.color.copy(WHITE_HOT).multiplyScalar(strength);
     }
   }
 
