@@ -200,8 +200,33 @@ function buildRig(group: Group, kind: EscapementEnemyKind, accent: Color, paint:
 function addSpark(parent: Group, paint: TargetPaint, radius: number, position: [number, number, number], intensity = 2.4) {
   const spark = new Mesh(sparkGeometry(radius), paint.spark(intensity));
   spark.position.set(...position);
+  clampAngularSize(spark, radius, SPARK_MAX_ANGULAR_RADIUS);
   parent.add(spark);
   return spark;
+}
+
+/** Largest on-screen radius of a spark, in radians: a seventh of the 62-degree frame height. */
+const SPARK_MAX_ANGULAR_RADIUS = 0.08;
+const scratchSparkPosition = new Vector3();
+const scratchSparkScale = new Vector3();
+
+/**
+ * Keeps a white-hot mesh from filling the frame when its rig passes through
+ * the camera: a bolt braking at the hull or a tick leaping past. Before each
+ * draw the mesh's world matrix is shrunk about its origin so its radius never
+ * covers more than `maxRadians` of the view. The renderer reads the world
+ * matrix after this hook, so the shrink applies to the same frame.
+ */
+function clampAngularSize(mesh: Mesh, radius: number, maxRadians: number) {
+  mesh.onBeforeRender = (_renderer, _scene, camera) => {
+    scratchSparkPosition.setFromMatrixPosition(mesh.matrixWorld);
+    scratchSparkScale.setFromMatrixScale(mesh.matrixWorld);
+    const worldRadius = radius * Math.max(scratchSparkScale.x, scratchSparkScale.y, scratchSparkScale.z);
+    const distance = scratchSparkPosition.distanceTo(camera.position);
+    const allowed = Math.max(0.001, distance * Math.tan(maxRadians));
+    if (worldRadius <= allowed) return;
+    mesh.matrixWorld.scale(scratchSparkScale.setScalar(allowed / worldRadius));
+  };
 }
 
 // ---- tarnish mote: a verdigris fleck, 0.6 m, that drifts --------------------------
