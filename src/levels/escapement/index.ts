@@ -1,4 +1,4 @@
-import { HemisphereLight, Mesh, Vector3 } from 'three';
+import { Mesh, Vector3 } from 'three';
 import { vec4 } from 'three/tsl';
 import type { LevelDefinition } from '../../engine/types';
 import { createCameraFeel } from '../../engine/camera-feel';
@@ -32,10 +32,6 @@ import { LAMP_WARM, STEEL_BLUE, VOID } from './visuals/palette';
 
 const DEG = Math.PI / 180;
 const BEAT = ESCAPEMENT_TIME.beatSeconds;
-/** Lamp intensities were tuned without a tone curve; AgX needs them brighter. */
-const LAMP_GAIN = 1.0;
-/** The environment's steel-blue hemisphere fill, scaled down so unlit brass falls toward the void. */
-const FILL_GAIN = 0.35;
 /** Escape-wheel rate the Free Run reaches after four bars, in radians per second. */
 const FREE_RUN_WHEEL_SPIN = 9;
 const FREE_RUN_SPIN_RATE = 24;
@@ -49,7 +45,8 @@ export const escapementLevel: LevelDefinition = {
   markers: ESCAPEMENT_MARKERS,
   sections: ESCAPEMENT_RUN_SECTIONS.map((section) => ({ name: section.name, time: bar(section.fromBar) })),
   debugSelector: { queryParam: 'debugEnemy', label: 'Enemy', options: ESCAPEMENT_DEBUG_TARGETS },
-  render: { toneMapping: 'agx', exposure: 0.85, farPlane: SUGGESTED_FAR_PLANE },
+  // Under AgX at exposure 1 lit brass sits near 0.7 luminance and reads pale; 0.7 keeps it gold.
+  render: { toneMapping: 'agx', exposure: 0.7, farPlane: SUGGESTED_FAR_PLANE },
   post: {
     clearColor: 0x010102,
     bloom: { strength: 0.45, threshold: 1.35, radius: 0.22 },
@@ -70,34 +67,28 @@ export const escapementLevel: LevelDefinition = {
     const cameraFeel = createCameraFeel(camera);
     const feel = createTimeFeel();
 
-    // Lighting: the PMREM bake the enemy models were tuned under, then the sets.
+    // Lighting: the PMREM bake of visuals/enemies.ts's previewLightRig at 0.6 of its brightness; at full brightness
+    // the plates behind the escapement wash out to beige under the works lamp.
     const sky = createGradientSky({
-      zenith: LAMP_WARM.clone().multiplyScalar(0.14),
-      horizon: STEEL_BLUE.clone().multiplyScalar(0.2),
+      zenith: LAMP_WARM.clone().multiplyScalar(0.55),
+      horizon: STEEL_BLUE.clone().multiplyScalar(0.35),
       ground: VOID,
       horizonWidth: 0.35,
       sunDirection: new Vector3(0.2, 1, 0.35),
       sunColor: LAMP_WARM,
-      sunIntensity: 16,
+      sunIntensity: 20,
       sunAngularRadius: 0.08,
       haloAngularRadius: 0.6,
-      haloIntensity: 0.08,
+      haloIntensity: 0.1,
     });
     const bake = bakeEnvironment(renderer, () => sky.scene, { size: 128 });
     bake.attach(scene);
     const environment = createEscapementEnvironment(scene, { environmentNode: bake.node });
     const lamp = environment.getLampLight();
-    lamp.intensity *= LAMP_GAIN;
     lamp.shadow.mapSize.set(1024, 1024);
     lamp.shadow.camera.near = 4;
     lamp.shadow.camera.far = 520;
     lamp.shadow.bias = -0.002;
-    environment.getSunLight().intensity *= LAMP_GAIN;
-    const worksLamp = environment.root.getObjectByName('escapement-works-lamp');
-    if (worksLamp && 'intensity' in worksLamp) (worksLamp as { intensity: number }).intensity *= LAMP_GAIN;
-    environment.root.traverse((object) => {
-      if ((object as HemisphereLight).isHemisphereLight) (object as HemisphereLight).intensity *= FILL_GAIN;
-    });
     // The barrel cuts the lamp: its plates are what the god rays shine between.
     environment.root.getObjectByName('barrel')?.traverse((object) => {
       if ((object as Mesh).isMesh) object.castShadow = true;
@@ -251,7 +242,8 @@ export const escapementLevel: LevelDefinition = {
 
       // The bob's trail follows the bob through its swing.
       const pivot = environment.getPendulumPivot();
-      const bob = pivot.clone().add(new Vector3(Math.sin(swing) * 300, -Math.cos(swing) * 300, 0));
+      const rod = environment.layout.pendulum.length;
+      const bob = pivot.clone().add(new Vector3(Math.sin(swing) * rod, -Math.cos(swing) * rod, 0));
       visuals.bobTrail.pushPoint(bob);
       visuals.bobTrail.update(dt, camera.position);
     }
