@@ -76,7 +76,7 @@ export const levelMetadatas: LevelMetadata[] = [
 const builtInLoaders: Record<string, () => Promise<LevelDefinition>> = {
   'escapement': async () => (await import('./escapement')).escapementLevel,
   'crystal-corridor': async () => (await import('./crystal')).crystalCorridorLevel,
-  helios: async () => (await import('./helios')).heliosLevel,
+  'helios': async () => (await import('./helios')).heliosLevel,
   'prism-bloom': async () => (await import('./prism')).prismBloomLevel,
   rezdle: async () => (await import('./rezdle')).rezdleLevel,
   rush: async () => (await import('./rush')).rushLevel,
