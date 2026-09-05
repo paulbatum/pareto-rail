@@ -84,7 +84,10 @@ const ARM_THICKNESS = 5;
 const PIVOT_RADIUS = 7;
 const TIP_X = 19;
 const TIP_Y = -15;
-const JEWEL_OFFSET = new Vector3(2.0, -3.4, 2.0);
+/** Jewel centre from the tip block's centre: proud of the block's front face, so the camera below and in front sees the whole slab. */
+const JEWEL_OFFSET = new Vector3(2.0, -3.4, 4.6);
+/** The claws straddle the jewel's depth in front of the block. */
+const CLAW_GAP = 1.75;
 const SNAP_RATE = 22;
 
 // ---- geometry ----------------------------------------------------------------------
@@ -191,14 +194,14 @@ function forkGeometry() {
   return merged;
 }
 
-/** A pallet tip: a brass block with two claws that hold the jewel. Built for the right side; the left is mirrored by rotation. */
+/** A pallet tip: a brass block with two claws that hold the jewel in front of its face. Built for the right side; the left is mirrored by rotation. */
 function tipGeometry() {
   const block = new BoxGeometry(7, 5.6, FORK_DEPTH + 1.2);
   block.rotateZ(-0.7);
   const pieces = [nonIndexed(block)];
   for (const side of [1, -1]) {
     const claw = new BoxGeometry(1.1, 4.6, 1.1);
-    claw.translate(0, 1.3, side * 2.7);
+    claw.translate(0, 1.3, JEWEL_OFFSET.z + side * CLAW_GAP);
     claw.rotateZ(-0.7);
     claw.translate(JEWEL_OFFSET.x * 0.8, JEWEL_OFFSET.y * 0.8, 0);
     pieces.push(nonIndexed(claw));
@@ -216,11 +219,12 @@ function shutterGeometry() {
 
 // ---- target rigs ----------------------------------------------------------------------
 
-// A faceted slab a fifth of the arm length, its long axis along the pallet
-// face where the wheel's teeth land.
-const JEWEL_LENGTH = 5.4;
-const JEWEL_HEIGHT = 2.6;
-const JEWEL_DEPTH = 1.8;
+// A faceted slab about a quarter of the arm length, its long axis along the
+// pallet face where the wheel's teeth land. Sized to read from the boss
+// station 95 units away.
+const JEWEL_LENGTH = 7;
+const JEWEL_HEIGHT = 3.4;
+const JEWEL_DEPTH = 2.2;
 
 const jewelGeometry = (() => {
   let cached: BufferGeometry | null = null;

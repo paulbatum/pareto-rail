@@ -314,18 +314,9 @@ function dialChime(time: number, numeral: number, leadBeats: number): Escapement
   };
 }
 
-function bossPart(part: BossPart): EscapementSpawnEntry {
+function bossJewel(part: 'jewel-left' | 'jewel-right'): EscapementSpawnEntry {
   const time = bar(ESCAPEMENT_BARS.boss);
   const leadBeats = (ESCAPEMENT_BARS.bossDeadline - ESCAPEMENT_BARS.boss) * ESCAPEMENT_TIME.beatsPerBar;
-  if (part === 'arbor') {
-    return {
-      time,
-      kind: 'arbor',
-      hitStages: [3, 3],
-      lockable: false,
-      data: { role: 'arbor', part, placement: place('arbor', leadBeats, 0, 4.5) },
-    };
-  }
   const side = part === 'jewel-left' ? -1 : 1;
   return {
     time,
@@ -337,6 +328,23 @@ function bossPart(part: BossPart): EscapementSpawnEntry {
       part,
       placement: place(part === 'jewel-left' ? 'fork-tip-left' : 'fork-tip-right', leadBeats, side * 5.5, 3.5),
     },
+  };
+}
+
+/**
+ * The arbor target. Spawn it with `context.spawnEnemy` when the boss emits
+ * its first `arborStage` event: until both jewels break the arbor is behind
+ * its shutters, and a target that exists but cannot be locked draws the
+ * reticle for nothing.
+ */
+export function createArborEntry(time: number): EscapementSpawnEntry {
+  const leadBeats = Math.max(1, Math.round((BOSS_DEADLINE - time) / BEAT));
+  return {
+    time,
+    kind: 'arbor',
+    hitStages: [3, 3],
+    lockable: false,
+    data: { role: 'arbor', part: 'arbor', placement: place('arbor', leadBeats, 0, 4.5) },
   };
 }
 
@@ -439,11 +447,11 @@ export function createEscapementTimeline(): EscapementSpawnEntry[] {
 
     // --- The Escapement (bars 42-56): the boss and its escort. Wasps ride the
     // pallets, burrs fly off the escape wheel on the beats after each jewel
-    // window opens, chimes keep arriving at the extremes. Ticks pour from the
-    // crown wheel at the arbor stage break (createTickPour, spawned at runtime).
-    bossPart('jewel-left'),
-    bossPart('jewel-right'),
-    bossPart('arbor'),
+    // window opens, chimes keep arriving at the extremes. The arbor target
+    // spawns when both jewels are broken (createArborEntry) and ticks pour
+    // from the crown wheel at the arbor stage break (createTickPour).
+    bossJewel('jewel-left'),
+    bossJewel('jewel-right'),
     wasp(bar(43), 'pallet-left', 16, -4, 1.5),
     swingChime(44, 6, 1.5, 2),
     ...burrVolley(bar(44, 2), 2, 1, [1, 2.5], { anchor: 'escape-wheel' }),
@@ -632,6 +640,7 @@ export function simulatePlausiblePlayer(player: PlausiblePlayer, timeline: Escap
     if (role === 'jewel' || role === 'arbor') {
       for (const event of boss.hit(target.entry.data.part, time)) {
         if (event.type === 'tickPour') for (const pour of createTickPour(event.time)) addTarget(pour);
+        if (event.type === 'arborStage' && event.stage === 1) addTarget(createArborEntry(event.time));
         if (event.type === 'jewelBroken') target.dead = true;
         if (event.type === 'killed') {
           target.dead = true;

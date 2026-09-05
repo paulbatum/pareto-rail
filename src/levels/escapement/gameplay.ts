@@ -1,7 +1,7 @@
-import { CatmullRomCurve3, MathUtils, Matrix4, Object3D, Vector3 } from 'three';
+import { CatmullRomCurve3, MathUtils, Matrix4, Object3D, Quaternion, Vector3 } from 'three';
 import { shotBehindCamera, updateHostileShotImpact, type HostileShotImpactState } from '../../engine/hostile-shot';
 import type { LockOnEnemy, LockOnEnemyUpdate, LockOnRunnerLevel } from '../../engine/lock-on-runner';
-import { attachRailFrame, sampleRailFrame, type RailFrameConfig } from '../../engine/rail';
+import { attachRailFrame, railCameraPose, sampleRailFrame, type RailCameraPose, type RailFrameConfig } from '../../engine/rail';
 import type { EventBus } from '../../events';
 import { ESCAPEMENT_AUDIO_KINDS } from './audio';
 import {
@@ -14,6 +14,7 @@ import {
   type EscapementBoss,
 } from './boss-logic';
 import {
+  createArborEntry,
   createEscapementTimeline,
   createRubyBolt,
   createTickPour,
@@ -27,19 +28,25 @@ import {
 } from './choreography';
 import { ESCAPEMENT_BAR, ESCAPEMENT_BARS, ESCAPEMENT_BPM, ESCAPEMENT_DURATION, ESCAPEMENT_MARKERS, ESCAPEMENT_TIME, bar } from './timing';
 import { barrelCorridor } from './visuals/environment/barrel';
-import { BARREL_LAYOUT, DIAL_LAYOUT, PENDULUM_LAYOUT, RAIL_X, TRAIN_LAYOUT } from './visuals/environment/index';
+import { BARREL_LAYOUT, BELL_LAYOUT, BOB_REST, DIAL_LAYOUT, PENDULUM_LAYOUT, RAIL_X, TRAIN_LAYOUT } from './visuals/environment/index';
+import { PENDULUM_RIDE_OFFSET } from './visuals/environment/pendulum';
+import { dialGateway } from './visuals/environment/dial';
 import { rimPoint } from './visuals/environment/train';
 
 // The Escapement run: 60 bars at 120 BPM. The rail leaves the mainspring
-// barrel, rides three great wheels, crosses the orrery, passes the bell as it
-// strikes, climbs the pendulum rod in the bob's swinging frame, holds in front
-// of the escapement for the boss, and is thrown out through the dial's XII.
+// barrel, rides three great wheels, swings out around the orrery sun, passes
+// the bell as it strikes, joins the pendulum bob's swinging frame and climbs
+// toward the escapement, holds under it for the boss, and is released under
+// the plate and out through the dial's XII.
 //
-// Enemies are placed in the rail frame at the camera's own position, a fixed
-// distance ahead that closes over the entry's lead, so every kind reads at the
-// same scale whether the rail is fast (Barrel, Orrery) or nearly still (the
-// boss hold). The choreography in choreography.ts supplies the offsets, leads
-// and per-kind motion parameters; this file turns them into positions.
+// Enemies are placed in the camera's view frame: the pose the runner gives the
+// camera from the rail and its look targets, before the pointer's edge-look.
+// A target sits a fixed distance ahead that closes over the entry's lead, so
+// every kind reads at the same scale whether the rail is fast (Barrel,
+// Orrery) or nearly still (the boss hold), and it stays in frame wherever the
+// look targets turn the camera. The choreography in choreography.ts supplies
+// the offsets, leads and per-kind motion parameters; this file turns them into
+// positions.
 
 export { ESCAPEMENT_BPM, ESCAPEMENT_DURATION };
 export const ESCAPEMENT_PLAYER_HEALTH = 4;
@@ -71,12 +78,24 @@ type RailLeg = {
 
 /** Where on the barrel corridor the run starts, as a fraction of the corridor arc. */
 const BARREL_START = 0.35;
-/** Camera station in front of the fork during the boss, in the bob's rest frame. */
-export const BOSS_STATION = new Vector3(RAIL_X, 430, -1338);
-/** World point the camera aims at during the boss: below the fork pivot so the escapement fills the top of the frame. */
-export const BOSS_AIM = PENDULUM_LAYOUT.mount.clone().add(new Vector3(0, -46, 0));
+/** Where the rail joins the bob frame at bar 29: the environment's ride offset from the bob at rest. */
+export const PENDULUM_START = BOB_REST.clone().add(PENDULUM_RIDE_OFFSET);
+/**
+ * Camera station for the boss, in the bob's rest frame: level with the escape
+ * wheel's centre and 95 units in front of the fork pivot. Aimed at the pivot,
+ * the frame holds the arbor at the reticle, the jewels just below it at 12
+ * degrees to either side, the escape wheel in the bottom half with its top
+ * teeth 4 degrees under the reticle, and the crown wheel in the top third.
+ */
+export const BOSS_STATION = PENDULUM_LAYOUT.mount.clone().add(new Vector3(0, -33, 95));
+/** World point the camera aims at during the boss: the fork pivot. */
+export const BOSS_AIM = PENDULUM_LAYOUT.mount.clone();
+/** Aim drop below the fork pivot at the pendulum start: the escapement sits in the top third from the ride offset. */
+const PENDULUM_AIM_DROP = 90;
 /** Camera pitch above the rail tangent while riding the Train, so the wheel face stays below the frame. */
 const TRAIN_PITCH = 15 * DEG;
+/** Rail parameter the runner looks ahead to aim the camera (its RUN_LOOK_AHEAD_U). */
+const LOOK_AHEAD_U = 0.025;
 
 function corridorPoints() {
   const points: Vector3[] = [];
@@ -105,7 +124,8 @@ const launchShape = (t: number) => t ** 1.4;
 
 function buildLegs(): RailLeg[] {
   const trainEntry = TRAIN_LAYOUT.wheels[0].entry.clone().setY(0);
-  const gateway = DIAL_LAYOUT.center.clone().add(new Vector3(0, DIAL_LAYOUT.numeralRadius, 0));
+  const gateway = dialGateway(DIAL_LAYOUT);
+  const doorway = new Vector3(RAIL_X, 0, TRAIN_LAYOUT.backPlate.z);
   return [
     {
       name: 'barrel',
@@ -116,22 +136,35 @@ function buildLegs(): RailLeg[] {
     { name: 'train-b', points: rimArc(1, false), endTime: bar(14) },
     { name: 'train-c', points: rimArc(2, false), endTime: bar(ESCAPEMENT_BARS.orrery) },
     {
+      // Straight through the back plate doorway, then a swing out to the right
+      // of the sun, 100 units clear of its cage, and back to the rail line.
       name: 'orrery',
-      points: [-640, -700, -800, -900, -1000, -1075, -1150].map((z) => new Vector3(RAIL_X, 0, z)),
+      points: [
+        new Vector3(RAIL_X, 0, -640),
+        doorway,
+        new Vector3(170, 5, -775),
+        new Vector3(240, 20, -850),
+        new Vector3(315, 36, -925),
+        new Vector3(352, 42, -1000),
+        new Vector3(350, 38, -1075),
+        new Vector3(285, 22, -1130),
+        new Vector3(190, 8, -1160),
+        new Vector3(RAIL_X, 0, -1175),
+      ],
       endTime: bar(ESCAPEMENT_BARS.strike),
     },
     {
+      // Bows right of the bell frame's hammer-side leg at x 80, then climbs to the ride offset.
       name: 'strike',
-      points: [new Vector3(RAIL_X, 14, -1240), new Vector3(RAIL_X, 70, -1300), new Vector3(RAIL_X, 130, -1332)],
+      points: [new Vector3(RAIL_X + 30, 28, -1220), new Vector3(RAIL_X + 22, 66, -1262), PENDULUM_START.clone()],
       endTime: bar(ESCAPEMENT_BARS.pendulum),
     },
     {
+      // In the bob frame: a slow climb from the ride offset to the boss station.
       name: 'climb',
       points: [
-        new Vector3(RAIL_X, 180, -1346),
-        new Vector3(RAIL_X, 250, -1350),
-        new Vector3(RAIL_X, 330, -1348),
-        new Vector3(RAIL_X, 395, -1342),
+        PENDULUM_START.clone().lerp(BOSS_STATION, 0.3),
+        PENDULUM_START.clone().lerp(BOSS_STATION, 0.65),
         BOSS_STATION.clone(),
       ],
       endTime: bar(ESCAPEMENT_BARS.boss),
@@ -143,16 +176,17 @@ function buildLegs(): RailLeg[] {
       endTime: bar(ESCAPEMENT_BARS.freeRun),
     },
     {
+      // Released at the bottom of the swing: right of the bob, under the plate
+      // (its lower edge is at y 40), then a climb to the XII gateway.
       name: 'free-run',
       points: [
-        new Vector3(230, 428, -1392),
-        new Vector3(330, 410, -1440),
-        new Vector3(400, 370, -1500),
-        new Vector3(392, 300, -1580),
-        new Vector3(300, 240, -1680),
-        new Vector3(175, 205, -1760),
+        new Vector3(185, 175, -1375),
+        new Vector3(235, 90, -1425),
+        new Vector3(220, 10, -1488),
+        new Vector3(165, 60, -1590),
+        new Vector3(150, 140, -1690),
         gateway,
-        gateway.clone().add(new Vector3(0, 6, -150)),
+        gateway.clone().add(new Vector3(0, 20, -150)),
       ],
       endTime: bar(ESCAPEMENT_BARS.end),
       shape: launchShape,
@@ -253,16 +287,37 @@ export type PendulumClock = {
 const FIXED_PENDULUM: PendulumClock = { degreesAt: (time) => swingDegrees(time, 20) };
 
 /**
+ * World point the camera aims at while it approaches and holds under the
+ * escapement: below the fork pivot at the pendulum start, rising to the pivot
+ * itself by the boss, so the escapement drops from the top third to the centre.
+ */
+function escapementAim(time: number, out = new Vector3()) {
+  const k = MathUtils.smoothstep(time, bar(ESCAPEMENT_BARS.pendulum), bar(ESCAPEMENT_BARS.boss));
+  return out.copy(BOSS_AIM).add(new Vector3(0, -PENDULUM_AIM_DROP * (1 - k), 0));
+}
+
+/**
  * The level rail with its authored frame: parallel transport, the Barrel
- * roll, a pitch-up look through the Train, the bob-frame section from the
- * strike exit to the release, and the boss aim.
+ * roll, a pitch-up look through the Train, a glance at the bell for the
+ * strike, the bob-frame section from bar 29 to the release, the escapement
+ * aim through the climb and the hold, and the gateway aim for the Free Run.
  */
 export function createEscapementRail(pendulum: PendulumClock = FIXED_PENDULUM) {
   const train = { start: legNamed('train-a').startU, end: legNamed('train-c').endU };
   const climb = legNamed('climb');
   const hold = legNamed('hold');
+  // The hold is 20 units long and nearly still, so its ranges end a few units
+  // into the Free Run with blends shorter than the hold: the release is where
+  // the escapement aim and the bob frame let go, over the first third of a second.
+  const release = hold.endU + 0.002;
   const curve = new CatmullRomCurve3(RAIL.points.map((point) => point.clone()), false, 'catmullrom', 0.5);
   const parent = new Matrix4();
+  const bell = BELL_LAYOUT.mouth.clone().add(new Vector3(0, BELL_LAYOUT.height * 0.45, 0));
+  const gateGlow = dialGateway(DIAL_LAYOUT).add(new Vector3(0, 0, -140));
+  const aheadOf = (time: number, span: number) => {
+    const u = escapementRunProgress(time);
+    return sampleRailFrame(curve, Math.min(1, u + span), time).position;
+  };
   const config: RailFrameConfig = {
     frame: 'parallel-transport',
     roll: barrelRollKeys(),
@@ -279,20 +334,30 @@ export function createEscapementRail(pendulum: PendulumClock = FIXED_PENDULUM) {
         },
       },
       {
-        range: [climb.startU + (climb.endU - climb.startU) * 0.55, hold.endU],
-        blend: 0.003,
+        // The bell drifts to the left of centre as the hammer falls.
+        range: [escapementRunProgress(bar(25)), escapementRunProgress(bar(27, 1))],
+        blend: 0.004,
+        target: (time) => aheadOf(time, 0.03).lerp(bell, 0.6),
+      },
+      {
+        range: [escapementRunProgress(bar(27)), release + 0.004],
+        blend: 0.006,
+        target: (time) => escapementAim(time),
+      },
+      {
+        // The dive keeps mostly to the rail; the climb locks onto the lit gateway.
+        range: [release, 1],
+        blend: 0.01,
         target: (time) => {
-          const u = escapementRunProgress(time);
-          const ahead = sampleRailFrame(curve, Math.min(1, u + 0.025), time).position;
-          const k = MathUtils.smoothstep(time, bar(36), bar(ESCAPEMENT_BARS.boss));
-          return ahead.lerp(BOSS_AIM, k);
+          const k = MathUtils.lerp(0.35, 1, MathUtils.smoothstep(time, bar(ESCAPEMENT_BARS.freeRun), bar(ESCAPEMENT_BARS.freeRun + 2.5)));
+          return aheadOf(time, 0.03).lerp(gateGlow, k);
         },
       },
     ],
     sections: [
       {
-        range: [climb.startU, hold.endU],
-        blend: 0.001,
+        range: [climb.startU, release],
+        blend: 0.002,
         parent: (time) => bobFrameMatrix(-pendulum.degreesAt(time) * DEG, parent),
       },
     ],
@@ -300,12 +365,31 @@ export function createEscapementRail(pendulum: PendulumClock = FIXED_PENDULUM) {
   return attachRailFrame(curve, config);
 }
 
+/**
+ * Fraction of the bob's roll the camera keeps. The bob frame rolls the camera
+ * by the full swing; the level takes the rest back in updateCameraEffects.
+ */
+export const CAMERA_SWING_ROLL = 0.6;
+
+/** Roll in radians the level adds to the camera at `time` to leave it CAMERA_SWING_ROLL of the swing. */
+export function cameraRollCorrection(time: number, swingDegrees: number) {
+  if (time < ESCAPEMENT_MARKERS.pendulum || time >= bar(ESCAPEMENT_BARS.freeRun)) return 0;
+  return (1 - CAMERA_SWING_ROLL) * swingDegrees * DEG;
+}
+
 // ---- placement --------------------------------------------------------------
 
-/** Offsets from the choreography are scaled up so a target at the hold distance spreads across the frame. */
-const OFFSET_SCALE = 1.4;
+/** Offsets from the choreography are scaled up so a seated target spreads across the frame. */
+const OFFSET_SCALE = 1.6;
 /** Distance ahead of the camera where a seated target sits once it has arrived. */
-const NEAR = 22;
+const NEAR = 17;
+/**
+ * How much of a target's seat offset grows with its distance beyond NEAR. At
+ * 0 a far target sits near the centre and slides outward as it closes; at 1
+ * it holds its seat's screen angle all the way in. 0.6 shows a target at
+ * about 70 percent of its seat angle when it appears.
+ */
+const APPROACH_SPREAD = 0.6;
 const PASS_SECONDS = 0.45;
 const PASS_BEHIND = -8;
 /** Seconds a ruby bolt takes from the wasp to the hull. */
@@ -319,25 +403,46 @@ const scratchNose = new Vector3();
 
 type Frame = ReturnType<typeof sampleRailFrame>;
 
-/** Camera pitch above the rail tangent the look targets add, per rail leg, as vertical rise per unit ahead. */
-function aimLift(time: number) {
-  const leg = legAt(time);
-  if (leg.name === 'train-a' || leg.name === 'train-b' || leg.name === 'train-c') return Math.tan(TRAIN_PITCH);
-  if (leg.name === 'hold') return Math.tan(18 * DEG);
-  if (leg.name === 'climb') return Math.tan(18 * DEG) * MathUtils.smoothstep(time, bar(36), bar(ESCAPEMENT_BARS.boss));
-  return 0;
+const viewPose: RailCameraPose = { position: new Vector3(), quaternion: new Quaternion() };
+const viewRoll = new Quaternion();
+const viewFrame: Frame = { position: new Vector3(), tangent: new Vector3(), right: new Vector3(), up: new Vector3() };
+let viewFrameTime = NaN;
+
+/**
+ * The camera's view frame at the update's run time: the rail pose with its
+ * look targets, rolled the way the level rolls the camera during the
+ * pendulum. Every enemy update in one frame shares the same run time, so the
+ * frame is computed once per run time.
+ */
+function frameAt(context: EscapementUpdate, swingDegrees: number): Frame {
+  if (context.runTime === viewFrameTime) return viewFrame;
+  viewFrameTime = context.runTime;
+  railCameraPose(context.curve, context.runProgress, LOOK_AHEAD_U, viewPose, context.runTime);
+  const pose = viewPose.quaternion;
+  viewFrame.position.copy(viewPose.position);
+  viewFrame.tangent.set(0, 0, -1).applyQuaternion(pose);
+  viewFrame.right.set(1, 0, 0).applyQuaternion(pose);
+  viewFrame.up.set(0, 1, 0).applyQuaternion(pose);
+  const correction = cameraRollCorrection(context.runTime, swingDegrees);
+  if (correction !== 0) {
+    // The camera rolls about its own z, which points back along the tangent.
+    viewRoll.setFromAxisAngle(viewFrame.tangent, -correction);
+    viewFrame.right.applyQuaternion(viewRoll);
+    viewFrame.up.applyQuaternion(viewRoll);
+  }
+  return viewFrame;
 }
 
-function frameAt(context: EscapementUpdate): Frame {
-  return sampleRailFrame(context.curve, context.runProgress);
-}
-
-/** World point `ahead` units in front of the camera's rail frame, `lateral` to the right and `vertical` up. */
-function placeAhead(frame: Frame, time: number, lateral: number, vertical: number, ahead: number, out = new Vector3()) {
+/**
+ * World point `ahead` units in front of the camera, `lateral` to its right and
+ * `vertical` up, with the offsets widened by APPROACH_SPREAD beyond NEAR.
+ */
+function placeAhead(frame: Frame, lateral: number, vertical: number, ahead: number, out = new Vector3()) {
+  const spread = ahead > NEAR ? MathUtils.lerp(1, ahead / NEAR, APPROACH_SPREAD) : 1;
   return out
     .copy(frame.position)
-    .addScaledVector(frame.right, lateral)
-    .addScaledVector(frame.up, vertical + aimLift(time) * ahead)
+    .addScaledVector(frame.right, lateral * spread)
+    .addScaledVector(frame.up, vertical * spread)
     .addScaledVector(frame.tangent, ahead);
 }
 
@@ -430,10 +535,11 @@ function debugTimeline(target: EscapementDebugTarget): { entries: EscapementSpaw
     return entries;
   };
   if (target === 'boss') {
-    const entries = pick(['jewel', 'arbor']);
+    const entries = pick(['jewel']);
     const right = timeline.find((entry) => entry.data.role === 'jewel' && entry.data.part === 'jewel-right');
-    if (right) {
-      const entry: EscapementSpawnEntry = { ...right, time: 1.2, hitStages: Array.from({ length: 12 }, () => 6), lockable: true };
+    for (const source of [right, createArborEntry(bar(ESCAPEMENT_BARS.boss))]) {
+      if (!source) continue;
+      const entry: EscapementSpawnEntry = { ...source, time: 1.2 + entries.length * 0.1, hitStages: Array.from({ length: 12 }, () => 6), lockable: true };
       debug.add(entry);
       entries.push(entry);
     }
@@ -464,6 +570,7 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
 
   function emitBoss(events: BossEvent[]) {
     for (const event of events) {
+      if (event.type === 'arborStage' && event.stage === 1) pendingSpawns.push(createArborEntry(event.time));
       if (event.type === 'tickPour') pendingSpawns.push(...createTickPour(event.time));
       if (event.type === 'killed') freed = true;
       for (const listener of listeners) listener(event);
@@ -527,6 +634,11 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
     return debugEntries.has(entry);
   }
 
+  /** The camera's view frame for this update, with the amplitude currently displayed. */
+  function viewAt(context: EscapementUpdate) {
+    return frameAt(context, swingDegrees(context.runTime, liveAmplitude));
+  }
+
   /** Age used for placement: debug targets freeze partway into their approach. */
   function placementAge(context: EscapementUpdate, lead: number) {
     return isDebug(context.enemy.entry) ? lead * 0.7 : context.age;
@@ -541,13 +653,13 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
   function updateMote(context: EscapementUpdate, data: Extract<EscapementSpawnData, { role: 'mote' }>) {
     const { enemy, age, runTime, camera } = context;
     const lead = effectiveLead(context, data.placement);
-    const frame = frameAt(context);
+    const frame = viewAt(context);
     const seat = seatOf(data.placement);
     const spiral = (2 * Math.PI * age) / (data.spiralBeats * BEAT) + data.slot * 0.8;
     const lateral = seat.lateral + Math.cos(spiral) * data.spiralRadius + (data.drift[0] * age) / BAR;
     const vertical = seat.vertical + Math.sin(spiral) * data.spiralRadius * 0.7 + (data.drift[1] * age) / BAR;
     const ahead = approach(placementAge(context, lead), lead, 70);
-    placeAhead(frame, runTime, lateral, vertical, ahead, enemy.mesh.position);
+    placeAhead(frame, lateral, vertical, ahead, enemy.mesh.position);
     faceCamera(enemy.mesh, frame, camera);
     enemy.mesh.rotateX(0.55 + Math.sin(age * 0.9 + data.slot) * 0.3);
     enemy.mesh.rotateY(age * 1.3 + data.slot);
@@ -556,7 +668,7 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
 
   function updateBurr(context: EscapementUpdate, data: Extract<EscapementSpawnData, { role: 'burr' }>) {
     const { enemy, age, runTime, camera } = context;
-    const frame = frameAt(context);
+    const frame = viewAt(context);
     const crossSeconds = data.crossBeats * BEAT;
     const t = isDebug(enemy.entry) ? 0.5 : (age - data.delayBeats * BEAT) / crossSeconds;
     if (!isDebug(enemy.entry) && t > 1.12) return true;
@@ -565,7 +677,7 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
     const lateral = MathUtils.lerp(data.fromLateral, data.toLateral, eased) * OFFSET_SCALE;
     const vertical = data.placement.vertical * OFFSET_SCALE + Math.sin(clamped * Math.PI) * data.arc * OFFSET_SCALE;
     const ahead = MathUtils.lerp(34, 24, clamped);
-    placeAhead(frame, runTime, lateral, vertical, ahead, enemy.mesh.position);
+    placeAhead(frame, lateral, vertical, ahead, enemy.mesh.position);
     faceCamera(enemy.mesh, frame, camera);
     enemy.mesh.rotateZ(age * data.tumbleTurnsPerBar * (2 * Math.PI) / BAR);
     return false;
@@ -573,7 +685,7 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
 
   function updateTick(context: EscapementUpdate, data: Extract<EscapementSpawnData, { role: 'tick' }>) {
     const { enemy, age, runTime, camera } = context;
-    const frame = frameAt(context);
+    const frame = viewAt(context);
     const seat = seatOf(data.placement);
     const walkSeconds = data.walkBeats * BEAT;
     const leapAt = data.leapBeat * BEAT;
@@ -609,10 +721,10 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
       mesh.setGait?.('leap');
       if (t >= 1) return true;
     }
-    placeAhead(frame, runTime, lateral, vertical, ahead, enemy.mesh.position);
+    placeAhead(frame, lateral, vertical, ahead, enemy.mesh.position);
     // Walking: head down the face toward the seat. Leaping: head at the camera.
     if (clock < leapAt) {
-      const toward = placeAhead(frame, runTime, seat.lateral, seat.vertical - 4, 20);
+      const toward = placeAhead(frame, seat.lateral, seat.vertical - 4, 20);
       mesh.up.copy(frame.up);
       mesh.lookAt(toward);
     } else {
@@ -624,7 +736,7 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
   function updateRatchet(context: EscapementUpdate, data: Extract<EscapementSpawnData, { role: 'ratchet' }>) {
     const { enemy, age, runTime, camera } = context;
     const lead = effectiveLead(context, data.placement);
-    const frame = frameAt(context);
+    const frame = viewAt(context);
     const seat = seatOf(data.placement);
     const from = { lateral: data.from[0] * OFFSET_SCALE, vertical: data.from[1] * OFFSET_SCALE };
     const state = context.enemyState(() => ({ steps: 0, travelled: 0 }));
@@ -645,7 +757,7 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
     const lateral = from.lateral + (dx / Math.max(0.001, distance)) * travelled;
     const vertical = from.vertical + (dy / Math.max(0.001, distance)) * travelled - snap;
     const ahead = approach(placementAge(context, lead), lead, 46);
-    placeAhead(frame, runTime, lateral, vertical, ahead, enemy.mesh.position);
+    placeAhead(frame, lateral, vertical, ahead, enemy.mesh.position);
     faceCamera(enemy.mesh, frame, camera);
     enemy.mesh.rotateZ(-0.4 + Math.sin(age * 0.7) * 0.1);
     return !isDebug(enemy.entry) && age > lead + PASS_SECONDS;
@@ -660,14 +772,14 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
   function updateWasp(context: EscapementUpdate, data: Extract<EscapementSpawnData, { role: 'wasp' }>) {
     const { enemy, age, runTime, camera } = context;
     const lead = effectiveLead(context, data.placement);
-    const frame = frameAt(context);
+    const frame = viewAt(context);
     const seat = seatOf(data.placement);
     const state = context.enemyState(() => ({ fired: 0, nextDebugFire: 3 }));
     const ride = Math.sin(age * 0.55 + enemy.id) * data.rideMetresPerBar * 1.6;
     const lateral = seat.lateral + ride;
     const vertical = seat.vertical + Math.sin(age * 1.3) * 0.4;
     const ahead = approach(placementAge(context, lead), lead, 42);
-    placeAhead(frame, runTime, lateral, vertical, ahead, enemy.mesh.position);
+    placeAhead(frame, lateral, vertical, ahead, enemy.mesh.position);
     faceCamera(enemy.mesh, frame, camera);
     waspPositions.set(enemy.id, enemy.mesh.position);
     waspSeats.set(enemy.id, { lateral, vertical, ahead });
@@ -696,12 +808,12 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
   function updateChime(context: EscapementUpdate, data: Extract<EscapementSpawnData, { role: 'chime' }>) {
     const { enemy, age, runTime } = context;
     const lead = effectiveLead(context, data.placement);
-    const frame = frameAt(context);
+    const frame = viewAt(context);
     const seat = seatOf(data.placement);
     const dial = data.placement.anchor === 'dial-numeral';
     const far = dial ? 110 : 60;
     const ahead = approach(placementAge(context, lead), lead, far);
-    placeAhead(frame, runTime, seat.lateral, seat.vertical, ahead, enemy.mesh.position);
+    placeAhead(frame, seat.lateral, seat.vertical, ahead, enemy.mesh.position);
     // A chime hangs from the rail frame's up and faces back along the rail.
     enemy.mesh.up.copy(frame.up);
     enemy.mesh.lookAt(enemy.mesh.position.clone().sub(frame.tangent));
@@ -715,7 +827,7 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
    */
   function updateBolt(context: EscapementUpdate, data: Extract<EscapementSpawnData, { role: 'bolt' }>) {
     const { enemy, age, runTime, camera, damagePlayer } = context;
-    const frame = frameAt(context);
+    const frame = viewAt(context);
     const state = context.enemyState(() => ({
       seat: waspSeats.get(data.waspId) ?? { lateral: 0, vertical: 3 * OFFSET_SCALE, ahead: 30 },
       position: new Vector3(),
@@ -751,7 +863,6 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
     const eased = t * t;
     const seat = placeAhead(
       frame,
-      runTime,
       MathUtils.lerp(state.seat.lateral, 0, eased),
       MathUtils.lerp(state.seat.vertical, 0.2, eased),
       MathUtils.lerp(state.seat.ahead, BOLT_HIT_DISTANCE * 0.8, eased),
@@ -772,8 +883,8 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
   // Analytic pose of a boss part when no body is attached: the fork tips and the
   // arbor in the body's frame at the mount, rocked by the fork angle.
   const partOffsets: Record<BossPart, Vector3> = {
-    'jewel-left': new Vector3(-21, -18.4, 0),
-    'jewel-right': new Vector3(21, -18.4, 0),
+    'jewel-left': new Vector3(-21, -18.4, 4.6),
+    'jewel-right': new Vector3(21, -18.4, 4.6),
     arbor: new Vector3(0, 0, 7.4),
   };
 

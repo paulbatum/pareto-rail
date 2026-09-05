@@ -11,6 +11,7 @@ import {
   HANDOFF_TIMES,
   STEADY_PLAYER,
   countsTowardTotal,
+  createArborEntry,
   createEscapementTimeline,
   createRubyBolt,
   createTickPour,
@@ -64,13 +65,17 @@ export function runChoreographyTests() {
   for (const entry of byKind('ratchet')) assert.deepEqual(hitStagesOf(entry), [2, 2, 2]);
   for (const entry of byKind('wasp')) assert.deepEqual(hitStagesOf(entry), [2]);
   for (const entry of byKind('jewel')) assert.deepEqual(hitStagesOf(entry), [3]);
-  for (const entry of byKind('arbor')) assert.deepEqual(hitStagesOf(entry), [3, 3]);
   assert.equal(byKind('jewel').length, 2);
-  assert.equal(byKind('arbor').length, 1);
-  for (const entry of [...byKind('jewel'), ...byKind('arbor')]) {
+  for (const entry of byKind('jewel')) {
     assert.equal(entry.lockable, false, `${describe(entry)} starts unlockable; boss-logic opens it`);
     assert.equal(entry.time, bar(ESCAPEMENT_BARS.boss));
   }
+  assert.equal(byKind('arbor').length, 0, 'the arbor spawns at runtime when both jewels are broken');
+  const arbor = createArborEntry(bar(50));
+  assert.deepEqual(hitStagesOf(arbor), [3, 3]);
+  assert.equal(arbor.lockable, false);
+  assert.ok(countsTowardTotal(arbor));
+  assert.ok(Math.abs(arbor.time + screenSeconds(arbor) - BOSS_DEADLINE) < 1e-9, 'the arbor expires at the deadline');
   assert.equal(byKind('bolt').length, 0, 'bolts are fired at runtime, never authored');
 
   // Every kind sits in the sections the spec gives it.
@@ -152,22 +157,24 @@ export function runChoreographyTests() {
   for (const entry of pour) assert.equal(entry.countsTowardTotal, false);
   assert.ok(pour[pour.length - 1].time < bar(48));
 
-  // Density: 90-130 counted targets, peak concurrency within two sweeps, and the
-  // Orrery and boss carry the busiest bars by lock demand.
-  const total = timeline.filter(countsTowardTotal).length;
+  // Density: 90-130 counted targets plus the arbor, peak concurrency within two
+  // sweeps, the Orrery the busiest section by targets per bar, and the boss's
+  // twelve rings the largest lock demand on any one target.
+  const total = timeline.filter(countsTowardTotal).length + 1;
   assert.ok(total >= 90 && total <= 130, `counted targets ${total} within 90..130`);
-  const rows = densityTable(timeline);
+  // The arbor opens when the player breaks both jewels; bar 46 stands in for that moment.
+  const rows = densityTable([...timeline, createArborEntry(bar(46))].sort((a, b) => a.time - b.time));
   for (const row of rows) {
     assert.ok(row.peakOnScreen <= PEAK_ON_SCREEN_CAP, `bar ${row.bar}: ${row.peakOnScreen} on screen exceeds ${PEAK_ON_SCREEN_CAP}`);
   }
-  const peakDemand = (section: string) => Math.max(...rows.filter((row) => row.section === section).map((row) => row.lockDemand));
   const meanTargets = (section: string) => {
     const own = rows.filter((row) => row.section === section);
     return own.reduce((sum, row) => sum + row.targets, 0) / own.length;
   };
-  for (const section of ['barrel', 'train', 'orrery', 'pendulum']) {
-    assert.ok(peakDemand('boss') >= peakDemand(section), `the boss bars carry the highest lock demand (vs ${section})`);
-  }
+  const demandOf = (entry: EscapementSpawnEntry) => hitStagesOf(entry).reduce((sum, hp) => sum + hp, 0);
+  const bossDemand = [...byKind('jewel'), arbor].reduce((sum, entry) => sum + demandOf(entry), 0);
+  assert.equal(bossDemand, 12, 'the boss takes twelve hits');
+  for (const entry of timeline) assert.ok(demandOf(entry) <= 6, `${describe(entry)} needs no more than one full volley`);
   for (const section of ['barrel', 'train', 'pendulum']) {
     assert.ok(meanTargets('orrery') > meanTargets(section), `the Orrery averages more targets per bar than the ${section}`);
   }

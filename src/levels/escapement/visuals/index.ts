@@ -27,6 +27,7 @@ import { colorForLockCount } from '../../../engine/locks';
 import { createRibbonTrail, type RibbonTrail } from '../../../engine/ribbon-trail';
 import { createAdditiveBasicMaterial, createAdornmentSlot, createPendingVisualRecords, disposeObject3D } from '../../../engine/visual-kit';
 import type { EventBus } from '../../../events';
+import { escapementAudio } from '../audio';
 import type { BossPart } from '../boss-logic';
 import { ESCAPEMENT_TIME } from '../timing';
 import {
@@ -63,6 +64,8 @@ type EnemyRecord = {
   lockRing: Group | null;
   trail: RibbonTrail | null;
   bornAt: number | null;
+  /** Rest scale of the mesh; a chime is sized by its pitch. */
+  size: number;
 };
 
 export type VisualContext = {
@@ -96,7 +99,7 @@ const lockRings = createAdornmentSlot<EnemyRecord, Group>({
 });
 
 const enemyRecords = createPendingVisualRecords<{ mesh: Object3D; handle: EnemyHandle }, EnemyRecord>({
-  createRecord: ({ mesh, handle }) => ({ mesh, handle, lockRing: null, trail: null, bornAt: null }),
+  createRecord: ({ mesh, handle }) => ({ mesh, handle, lockRing: null, trail: null, bornAt: null, size: 1 }),
   disposeRecord: (record) => {
     lockRings.detach(record);
     releaseTrail(record);
@@ -107,6 +110,15 @@ const enemyRecords = createPendingVisualRecords<{ mesh: Object3D; handle: EnemyH
 let runtime: EscapementVisualRuntime | null = null;
 let elapsedNow = 0;
 let reticleHand: Group | null = null;
+let eventBus: EventBus | null = null;
+
+/** Chime pitch at which the bell is drawn at its authored size, in MIDI. */
+const CHIME_REFERENCE_MIDI = 80;
+
+/** A chime an octave higher is drawn a quarter smaller, so the pitch the kill will ring shows in the bell's size. */
+function chimeSizeForPitch(midi: number) {
+  return 2 ** (-(midi - CHIME_REFERENCE_MIDI) / 30);
+}
 
 // ---- runtime ------------------------------------------------------------------
 
@@ -522,10 +534,16 @@ function accentOf(mesh: Object3D) {
 }
 
 export function installVisualEventHandlers(bus: EventBus, scene: Scene) {
+  eventBus = bus;
   bus.on('spawn', ({ enemyId, worldPosition, kind }) => {
     const record = enemyRecords.claim(enemyId);
     if (!record) return;
     if (kind === 'bolt') runtime?.particles.emit(worldPosition, 30, { color: RUBY, speed: 4, life: 0.5, size: 0.12 });
+    if (kind === 'chime') {
+      // The score assigns the chime's pitch in its own spawn handler; it is set by the time this one runs when audio is present.
+      const pitch = eventBus ? escapementAudio(eventBus)?.chimePitch(enemyId) : undefined;
+      if (pitch !== undefined) record.size = chimeSizeForPitch(pitch);
+    }
   });
 
   bus.on('lock', ({ enemyId, worldPosition, lockCount }) => {
@@ -619,7 +637,7 @@ export function updateVisuals(dt: number, ctx: VisualContext) {
     if (record.bornAt === null) record.bornAt = elapsedNow;
     const age = elapsedNow - record.bornAt;
     if (!record.mesh.userData.isLetter && record.mesh.userData.kind !== 'jewel' && record.mesh.userData.kind !== 'arbor') {
-      record.mesh.scale.setScalar(easeOutBack(Math.min(1, age / 0.35)));
+      record.mesh.scale.setScalar(easeOutBack(Math.min(1, age / 0.35)) * record.size);
     }
     record.handle.update(dt, beatPhase);
 
