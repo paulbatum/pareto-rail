@@ -349,6 +349,7 @@ async function bootstrap() {
   const runtime = selectedLevel.createRuntime({
     scene,
     camera,
+    renderer,
     canvas: renderer.domElement,
     bus,
     hud: createSnapshotHud(),

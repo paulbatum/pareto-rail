@@ -190,7 +190,6 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     setBloomLevel(readStoredPercent('pareto-rail-bloom', 100) / 100);
     setMotionBlurLevel(readStoredPercent('pareto-rail-motion-blur', 100) / 100);
     audio.installGestureStart(() => hud.setSoundActive(true));
-    const post = createPost(renderer, scene, camera, level.post);
     const perfParam = urlParams.get('perf');
     const perfEnabled = perfParam === '1' || (import.meta.env.DEV && perfParam !== '0');
     const perfOverlay = perfEnabled
@@ -228,8 +227,11 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       last = performance.now();
     };
 
-    const runtime = level.createRuntime({ scene, camera, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(), debugValue });
+    const runtime = level.createRuntime({ scene, camera, renderer, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(), debugValue });
     stack.add(() => runtime.dispose());
+    /* Built after the runtime so post stages can find the level's scene objects, such as a god-rays light. */
+    const post = createPost(renderer, scene, camera, level.post);
+    stack.add(() => post.dispose());
     if (urlParams.get('capture') === '1') {
       window.__raildCapture = { scene, camera, canvas: renderer.domElement, bus };
       stack.add(() => { delete window.__raildCapture; });

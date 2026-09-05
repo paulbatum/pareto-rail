@@ -1,8 +1,10 @@
 import { Matrix4 } from 'three';
-import { RenderPipeline, WebGPURenderer, type UniformNode } from 'three/webgpu';
-import { clamp, float, length, max, min, mix, pass, screenUV, smoothstep, step, uniform, vec2, vec3, vec4 } from 'three/tsl';
+import { RenderPipeline, WebGPURenderer, type TextureNode, type UniformNode } from 'three/webgpu';
+import { clamp, float, int, length, max, min, mix, mrt, output, pass, screenUV, smoothstep, step, uniform, vec2, vec3, vec4, velocity } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
+import { motionBlur } from 'three/addons/tsl/display/MotionBlur.js';
 import type { Camera, Scene } from 'three';
+import { buildPostStage, type BuiltPostStage, type PostStageUniform } from './post-stages';
 import type { LevelPostColorNode, LevelPostConfig, LevelPostUvNode } from './types';
 
 // Bloom is what turns flat neon colors into light. Threshold sits below the
@@ -18,6 +20,7 @@ const DEFAULT_VIGNETTE_FLOOR = 0.18;
 const BLOOM_UI_SCALE = 0.75;
 const MOTION_BLUR_TAPS = 8;
 const MOTION_BLUR_MAX_VELOCITY_UV = 0.045;
+const VELOCITY_BLUR_SAMPLES = 16;
 const bloomRefs = new Map<ReturnType<typeof bloom>, number>();
 let bloomLevel = 1;
 let motionBlurLevel = 1;
@@ -50,8 +53,16 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
   const scenePass = pass(scene, camera);
   let activeCamera = camera;
   const sceneColor = scenePass.getTextureNode();
+  const sceneDepth = scenePass.getTextureNode('depth');
   const clipToPreviousClipUniform = uniform(new Matrix4());
-  const blurredScene = createDepthReprojectionMotionBlur(scenePass.getTextureNode(), scenePass.getTextureNode('depth'), clipToPreviousClipUniform);
+  let velocityTexture: TextureNode | undefined;
+  if (config.velocityBuffer) {
+    scenePass.setMRT(mrt({ output, velocity }));
+    velocityTexture = scenePass.getTextureNode('velocity');
+  }
+  const blurredScene = velocityTexture
+    ? createVelocityMotionBlur(sceneColor, velocityTexture)
+    : createDepthReprojectionMotionBlur(sceneColor, sceneDepth, clipToPreviousClipUniform);
   const baseStrength = config.bloom?.strength ?? DEFAULT_BLOOM_STRENGTH;
   const bloomPass = bloom(
     sceneColor,
@@ -63,7 +74,19 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
 
   const post = new RenderPipeline(renderer);
   const base = blurredScene.add(bloomPass);
-  const composed = config.composeOutput?.({ base, scenePass, bloomPass, screenUV }) ?? base;
+  let composed = config.composeOutput?.({ base, scenePass, bloomPass, screenUV, sceneColor, depth: sceneDepth, velocity: velocityTexture }) ?? base;
+  const stages: BuiltPostStage[] = [];
+  const stageUniforms: Record<string, Record<string, PostStageUniform>> = {};
+  /* The bloom node's texture accessor exists at runtime under this name; the type declaration lags it. */
+  const bloomTexture = (bloomPass as unknown as { getTextureNode(): TextureNode }).getTextureNode();
+  for (const stageConfig of config.stages ?? []) {
+    const stage = buildPostStage(stageConfig, composed, { renderer, scene, camera, scenePass, sceneColor, depth: sceneDepth, bloomTexture });
+    if (stageUniforms[stage.name]) throw new Error(`Post stage name "${stage.name}" is used twice; give one of them a name`);
+    stageUniforms[stage.name] = stage.uniforms;
+    stages.push(stage);
+    composed = stage.output;
+  }
+  for (const stage of stages) stage.warmUp?.();
   if (config.vignette === false) {
     post.outputNode = composed;
   } else {
@@ -117,10 +140,35 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
       previousMatrixInitialized = false;
     },
     render(options: { advanceMotionBlur?: boolean } = {}) {
-      if (options.advanceMotionBlur !== false) updateMotionBlurMatrix();
+      if (options.advanceMotionBlur !== false && !velocityTexture) updateMotionBlurMatrix();
+      for (const stage of stages) stage.update?.(activeCamera);
       post.render();
     },
+    /** Uniforms of each configured stage, keyed by stage name then parameter name. */
+    stages: stageUniforms,
+    setStageUniform(stageName: string, parameter: string, value: number) {
+      const target = stageUniforms[stageName]?.[parameter];
+      if (!target) throw new Error(`Post stage "${stageName}" has no uniform "${parameter}"`);
+      if (typeof target.value !== 'number') throw new Error(`Post stage uniform "${stageName}.${parameter}" is not a float; write its value directly`);
+      (target as UniformNode<'float', number>).value = value;
+    },
+    dispose() {
+      for (const stage of stages) stage.dispose?.();
+      bloomRefs.delete(bloomPass);
+    },
   };
+}
+
+/* Blur along the velocity the scene pass wrote for each pixel. Velocity is an NDC delta,
+   so half of it is the UV delta; the length clamp and the player's slider match the
+   depth-reprojection blur. The taps are spread symmetrically around the pixel. */
+function createVelocityMotionBlur(sceneTexture: TextureNode, velocityTexture: TextureNode) {
+  const uvVelocity = vec2(velocityTexture.x, velocityTexture.y.negate()).mul(0.5);
+  const velocityLength = length(uvVelocity);
+  const velocityScale = min(float(1), float(MOTION_BLUR_MAX_VELOCITY_UV).div(max(velocityLength, float(0.00001))));
+  const blurVelocity = uvVelocity.mul(velocityScale).mul(motionBlurLevelUniform);
+  const blurredScene = motionBlur(sceneTexture, blurVelocity, int(VELOCITY_BLUR_SAMPLES));
+  return mix(sceneTexture, blurredScene, motionBlurLevelUniform);
 }
 
 function createDepthReprojectionMotionBlur(

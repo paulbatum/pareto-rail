@@ -44,7 +44,7 @@ Start from `npm run scaffold -- --id <id> [--title <Title>] [--bpm <n>]` for a b
 1. Create `src/levels/<id>/index.ts` that exports a `LevelDefinition`.
 2. Declare one authoritative BPM constant for the level. Reference it from both the `LevelDefinition` and the runner config; audio should import the same constant instead of repeating the number.
 3. Implement `createAudio(bus)` in that level. The pause menu calls the returned volume, start, suspend, and dispose methods. Mix the level at full loudness: the pause menu's volume slider drives a gain node the audio kit owns, placed in front of the speakers, and the kit hides it behind `context.destination`, so every connection a level makes passes through it. For beat-driven levels, the expected audio spine uses `createBeatLevelAudio` to compose the mix bus, score epoch, transport, beat emission, and trace run; levels still supply `createScore`, `defineInstruments`, `createArrangement`, and all musical data. Raw `audio-kit` primitives remain available when a level needs custom synthesis or routing.
-4. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`.
+4. Implement `createRuntime(context)` in that level. It should create the level environment and visual event handlers, then call `createLockOnRunner`. The context carries the initialized `renderer` for compute dispatch and environment baking; the engine builds the post chain after `createRuntime` returns, so a post stage can reference objects the runtime added to the scene.
 5. Add the level to `src/levels/index.ts`.
 
 A built-in level task should only touch `src/levels/<id>/`, one registry line in `src/levels/index.ts`, the regenerated `docs/level-gallery.md` and `src/app/generated/built-in-notes.ts`, and its own gallery content directory `public/level-content/<id>/`. Public level imagery is AVIF; the build rejects tracked PNGs. Use `npm run check:scope -- <level-id>` to verify that boundary.
@@ -243,6 +243,37 @@ export const post: LevelPostConfig = {
 ```
 
 The bloom slider goes to 0. A level must stay playable and legible with bloom fully off. Do not rely on bloom alone to make targets, letters, or the reticle visible; HDR colors control how hard things glow when bloom is on, but base geometry and color must carry readability when it is off.
+
+### Post stages and the velocity buffer
+
+`post.stages` is an ordered list of screen-space effects the engine runs after `composeOutput` and before the vignette. `post.velocityBuffer: true` makes the scene pass write a per-object velocity target and blurs along it in place of the camera-only depth reprojection, so an enemy crossing a still camera smears. A level that sets neither renders the graph described above. The stage types are `chromaticAberration`, `film`, `lensflare`, `afterImage`, `rgbShift`, `radialBlur`, and `godrays`; `src/engine/post-stages.ts` lists every parameter with its default.
+
+```ts
+import { uniform } from 'three/tsl';
+
+const kick = uniform(0); // the runtime writes kick.value each frame
+
+export const post: LevelPostConfig = {
+  velocityBuffer: true,
+  stages: [
+    { type: 'godrays', lightName: 'sun', color: [1, 0.72, 0.4], density: 0.04, maxDensity: 0.45 },
+    { type: 'chromaticAberration', strength: kick },
+  ],
+};
+```
+
+A numeric parameter becomes an engine-owned uniform. A node parameter is used as is, so pass a `uniform()` the level owns at module scope and write its `.value` from the runtime, as above. The post handle also exposes `stages[name][parameter]` and `setStageUniform(name, parameter, value)`, but only the game shell holds that handle.
+
+To add god rays:
+
+1. In `createRuntime`, add a `DirectionalLight` or `PointLight` to the scene and give it a name. Configure its shadow camera and `shadow.mapSize` there; the raymarch runs only inside the shadow camera's volume, and the node reads the shadow map once when it builds.
+2. Set `castShadow = true` on the meshes that should cut the light. The rays are the lit volume between those cuts, so a light with only thin occluders in front of it reads as fog. Block most of the light and leave openings.
+3. Reference the light by `lightName`. The stage sets `castShadow` on the light, turns the renderer's shadow maps on, and adds a hidden shadow-receiving mesh named `post:shadow-receiver` so the map renders in a scene whose materials are all unlit.
+4. Scale `density` to the world. The node accumulates `density / 100` per world unit marched, and the camera far plane is 500, so values above about 0.06 saturate the frame. Keep `maxDensity` at or below 0.5; it is the fraction of each pixel replaced by `color`.
+
+The freecam does not redirect the god rays camera. `radialBlur` with `lightName` and `threshold` gives screen-space shafts from a bright object without shadows; the stage fades out while the object is off screen or behind the camera.
+
+With `velocityBuffer`, geometry displaced by a material `positionNode` gets a velocity equal to its displacement, so it smears every frame whether or not it moves. Each stage that samples the frame renders it to a texture first, one extra full-screen pass per such stage, and the god rays raymarch runs at half resolution by default. Measure with the `?perf=1` overlay on hardware; `check:perf` renders without the post chain.
 
 ## Musical action audio
 
