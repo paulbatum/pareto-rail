@@ -229,7 +229,8 @@ export const escapementLevel: LevelDefinition = {
             cam.rotateZ(0.4 * gameplay.swingDegreesAt(time) * DEG);
           }
           const section = sectionAt(time);
-          const fovTarget = section === 'orrery' ? 8 : section === 'free-run' ? 12 : section === 'strike' ? 4 : 0;
+          // The boss section tightens to 56 degrees so the fork and jewels read at 120 units.
+          const fovTarget = section === 'orrery' ? 8 : section === 'free-run' ? 12 : section === 'strike' ? 4 : section === 'boss' ? -6 : 0;
           cameraFeel.setFovOffset(fovTarget, { response: 2.5 });
           cameraFeel.update(dt);
         },

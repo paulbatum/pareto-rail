@@ -177,6 +177,7 @@ function newGameplaySnapshotUrl(baseUrl, options, time, fidelity) {
   if (options.immortal) url.searchParams.set('immortal', '1');
   if (options.startScreen) url.searchParams.set('startScreen', '1');
   if (options.projectiles) url.searchParams.set('projectiles', '1');
+  if (options.autoplay) url.searchParams.set('autoplay', '1');
   if (options.debugValue !== undefined) url.searchParams.set('debugValue', options.debugValue);
   if (options.seed !== undefined) url.searchParams.set('seed', String(options.seed));
   return url;
@@ -259,6 +260,7 @@ function parseArgs(argv) {
     immortal: true,
     startScreen: false,
     projectiles: false,
+    autoplay: false,
     debugValue: undefined,
     seed: undefined,
     sheet: false,
@@ -338,6 +340,11 @@ function parseArgs(argv) {
       } else {
         parsed.projectiles = true;
       }
+      continue;
+    }
+
+    if (key === 'autoplay') {
+      parsed.autoplay = true;
       continue;
     }
 
@@ -481,7 +488,7 @@ function projectileSuffix(options) {
 }
 
 function mortalitySuffix(options) {
-  return options.immortal ? '' : '-mortal';
+  return (options.immortal ? '' : '-mortal') + (options.autoplay ? '-autoplay' : '');
 }
 
 function startScreenSuffix(options) {

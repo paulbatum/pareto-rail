@@ -28,8 +28,7 @@ import {
 } from './choreography';
 import { ESCAPEMENT_BAR, ESCAPEMENT_BARS, ESCAPEMENT_BPM, ESCAPEMENT_DURATION, ESCAPEMENT_MARKERS, ESCAPEMENT_TIME, bar } from './timing';
 import { barrelCorridor } from './visuals/environment/barrel';
-import { BARREL_LAYOUT, BELL_LAYOUT, BOB_REST, DIAL_LAYOUT, PENDULUM_LAYOUT, RAIL_X, TRAIN_LAYOUT } from './visuals/environment/index';
-import { PENDULUM_RIDE_OFFSET } from './visuals/environment/pendulum';
+import { BARREL_LAYOUT, BELL_LAYOUT, DIAL_LAYOUT, PENDULUM_LAYOUT, RAIL_X, TRAIN_LAYOUT } from './visuals/environment/index';
 import { dialGateway } from './visuals/environment/dial';
 import { rimPoint } from './visuals/environment/train';
 
@@ -78,20 +77,20 @@ type RailLeg = {
 
 /** Where on the barrel corridor the run starts, as a fraction of the corridor arc. */
 const BARREL_START = 0.35;
-/** Where the rail joins the bob frame at bar 29: the environment's ride offset from the bob at rest. */
-export const PENDULUM_START = BOB_REST.clone().add(PENDULUM_RIDE_OFFSET);
 /**
- * Camera station for the boss, in the bob's rest frame: level with the escape
- * wheel's centre and 95 units in front of the fork pivot. Aimed at the pivot,
- * the frame holds the arbor at the reticle, the jewels just below it at 12
- * degrees to either side, the escape wheel in the bottom half with its top
- * teeth 4 degrees under the reticle, and the crown wheel in the top third.
+ * Camera pose in the pendulum frame for bars 29 to 56: on the rod line 35
+ * units below the pivot and 120 units in front of it, aimed at the fork
+ * pivot about 38 degrees up. The fork sits in the upper half against the
+ * void, the escape wheel below it, and the swing turns the world about the
+ * pivot with 10 units of lateral travel.
  */
-export const BOSS_STATION = PENDULUM_LAYOUT.mount.clone().add(new Vector3(0, -33, 95));
+export const BOSS_STATION = PENDULUM_LAYOUT.pivot.clone().add(new Vector3(0, -35, 120));
+/** Where the rail joins the bob frame at bar 29: the same pose, so the ride is a hold. */
+export const PENDULUM_START = BOSS_STATION.clone().add(new Vector3(0, -6, 12));
 /** World point the camera aims at during the boss: the fork pivot. */
 export const BOSS_AIM = PENDULUM_LAYOUT.mount.clone();
-/** Aim drop below the fork pivot at the pendulum start: the escapement sits in the top third from the ride offset. */
-const PENDULUM_AIM_DROP = 90;
+/** Aim drop below the fork pivot at the pendulum start, so the fork starts in the top third and settles to centre by the boss. */
+const PENDULUM_AIM_DROP = 40;
 /** Camera pitch above the rail tangent while riding the Train, so the wheel face stays below the frame. */
 const TRAIN_PITCH = 15 * DEG;
 /** Rail parameter the runner looks ahead to aim the camera (its RUN_LOOK_AHEAD_U). */
@@ -160,13 +159,9 @@ function buildLegs(): RailLeg[] {
       endTime: bar(ESCAPEMENT_BARS.pendulum),
     },
     {
-      // In the bob frame: a slow climb from the ride offset to the boss station.
+      // In the pendulum frame: a short drift from the ride start to the boss station.
       name: 'climb',
-      points: [
-        PENDULUM_START.clone().lerp(BOSS_STATION, 0.3),
-        PENDULUM_START.clone().lerp(BOSS_STATION, 0.65),
-        BOSS_STATION.clone(),
-      ],
+      points: [PENDULUM_START.clone().lerp(BOSS_STATION, 0.5), BOSS_STATION.clone()],
       endTime: bar(ESCAPEMENT_BARS.boss),
       shape: climbShape,
     },

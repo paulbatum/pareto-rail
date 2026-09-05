@@ -255,6 +255,8 @@ const fixedDt = readPositiveNumber(params.get('dt')) ?? DEFAULT_DT;
 const fidelity = readFidelity(params.get('fidelity'));
 const requestedBackend = readBackend(params.get('backend'));
 const showProjectiles = params.get('projectiles') === '1';
+/** Drive the run with the perfect lock-on policy while advancing to the capture time, so stills show a played run. */
+const autoplay = params.get('autoplay') === '1';
 const startScreen = params.get('startScreen') === '1';
 const skipRenders = params.get('render') === 'sample';
 // Perf probing: GPU timestamp queries, and knobs that remove one cost at a time so a
@@ -477,6 +479,7 @@ function setRendererFrameTime(value: SnapshotRenderer, seconds: number, dt: numb
 function advanceRuntime(update: (dt: number, elapsed: number) => void, seconds: number, dt: number) {
   while (currentElapsed < seconds - 0.000001) {
     const step = Math.min(dt, seconds - currentElapsed);
+    if (autoplay) drivePerfectOcclusionPolicy();
     currentElapsed += step;
     update(step, currentElapsed);
   }
@@ -714,6 +717,12 @@ async function analyzeTargetOcclusion(options: OcclusionOptions): Promise<Occlus
   };
 }
 
+/** Seconds the policy aims at one target before it moves on: a target the level has made unlockable would hold it forever. */
+const POLICY_STALL_SECONDS = 0.5;
+let policyAimId = -1;
+let policyAimSince = 0;
+let policySkip = 0;
+
 function drivePerfectOcclusionPolicy() {
   if (!renderer || !camera || runtimeState !== 'running') return;
   if (currentLocks >= 6) {
@@ -729,7 +738,16 @@ function drivePerfectOcclusionPolicy() {
     return;
   }
 
-  const ndc = targetNdc(candidates[0]);
+  const chosen = candidates[policySkip % candidates.length];
+  if (chosen.enemyId !== policyAimId) {
+    policyAimId = chosen.enemyId;
+    policyAimSince = currentElapsed;
+  } else if (currentElapsed - policyAimSince > POLICY_STALL_SECONDS) {
+    policySkip += 1;
+    policyAimSince = currentElapsed;
+    if (currentLocks > 0) releasePointer(renderer.domElement);
+  }
+  const ndc = targetNdc(chosen);
   if (ndc) aimPointer(renderer.domElement, ndc.x, ndc.y);
 }
 
