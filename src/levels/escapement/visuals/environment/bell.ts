@@ -181,12 +181,12 @@ export function previewBell() {
   return bell.group;
 }
 
-/** Snapshot factory: the bell mid-strike, wave front 0.12 s out. */
+/** Snapshot factory: the bell mid-strike, the wave front crossing the bell body. */
 export function previewBellStrike() {
   const bell = createBell(PREVIEW_BELL_LAYOUT);
   bell.setHammer(0.05);
-  beginStrike(bell.origin, 7);
-  strikeAge.value = 0.12;
+  beginStrike(bell.origin, 12);
+  strikeAge.value = 0.06;
   bell.group.add(createPreviewLights(bell.origin, 140));
   return bell.group;
 }

@@ -149,7 +149,10 @@ function surfaceSeams(pattern: Vec3Node, normal: Vec3Node, scale: number, aniso:
   const magnitude = abs(normal);
   const xDominant = magnitude.x.greaterThan(magnitude.y).and(magnitude.x.greaterThan(magnitude.z));
   const yDominant = magnitude.y.greaterThan(magnitude.z);
-  const projected = select(xDominant, pattern.yzx, select(yDominant, pattern.zxy, pattern.xyz));
+  const swizzled = select(xDominant, pattern.yzx, select(yDominant, pattern.zxy, pattern.xyz));
+  // Hold the collapsed axis at the middle of a cell so the surface never sits on a lattice border.
+  const midCell = (0.5 * SEAM_NORMAL_STRETCH * aniso) / scale;
+  const projected = vec3(swizzled.x, swizzled.y, midCell);
   return seams(projected, scale, SEAM_NORMAL_STRETCH * aniso);
 }
 

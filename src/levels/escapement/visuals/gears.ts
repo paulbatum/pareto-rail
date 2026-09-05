@@ -32,8 +32,6 @@ import { createBrassMaterial, createPreviewLights, type MetalOptions } from './m
 /** Integrated gear time in seconds. `update` advances it by dt times the spin rate. */
 export const gearClock = uniform(0);
 
-export const SPIN_ATTRIBUTES = ['spinCenter', 'spinAxis', 'spinRate', 'spinPhase'] as const;
-
 function rotateAboutAxis(v: Vec3Node, axis: Vec3Node, angle: FloatNode): Vec3Node {
   const c = cos(angle);
   const s = sin(angle);
@@ -326,11 +324,6 @@ export function mergeSpinParts(parts: SpinPart[]): BufferGeometry {
   const merged = mergeGeometries(geometries, false);
   for (const geometry of geometries) geometry.dispose();
   return merged;
-}
-
-/** Fixed part in a spinning mesh: rate 0 keeps it still while sharing the draw call. */
-export function stillPart(geometry: BufferGeometry): SpinPart {
-  return { geometry, center: new Vector3(), axis: new Vector3(0, 1, 0), rate: 0 };
 }
 
 /** A single gear as a plain mesh, for previews and for parts that never spin. */

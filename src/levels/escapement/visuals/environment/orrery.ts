@@ -183,15 +183,17 @@ export function createOrrery(layout: OrreryLayout): Orrery {
 }
 
 export const PREVIEW_ORRERY_LAYOUT: OrreryLayout = {
-  sun: new Vector3(324, 40, -740),
+  sun: new Vector3(360, 40, -960),
   sunRadius: 34,
   arms: [
-    { length: 230, height: -60, period: 48, planetRadius: 14, phase: 0.4, moons: 0 },
-    { length: 360, height: 85, period: 70, planetRadius: 22, phase: 2.1, moons: 1 },
-    { length: 520, height: -130, period: 95, planetRadius: 30, phase: 3.9, moons: 0 },
-    { length: 700, height: 150, period: 130, planetRadius: 42, phase: 1.3, moons: 2 },
-    { length: 900, height: -200, period: 170, planetRadius: 55, phase: 5.2, moons: 1 },
-    { length: 1150, height: 230, period: 220, planetRadius: 70, phase: 2.9, moons: 3 },
+    { length: 190, height: -60, period: 44, planetRadius: 14, phase: 0.4, moons: 0 },
+    { length: 300, height: 85, period: 62, planetRadius: 22, phase: 2.1, moons: 1 },
+    { length: 430, height: -130, period: 84, planetRadius: 30, phase: 3.9, moons: 0 },
+    { length: 580, height: 150, period: 110, planetRadius: 42, phase: 1.3, moons: 2 },
+    { length: 760, height: -200, period: 150, planetRadius: 55, phase: 5.2, moons: 1 },
+    { length: 960, height: 230, period: 200, planetRadius: 70, phase: 2.9, moons: 3 },
+    { length: 1180, height: -280, period: 260, planetRadius: 84, phase: 4.4, moons: 2 },
+    { length: 1400, height: 320, period: 330, planetRadius: 96, phase: 0.9, moons: 4 },
   ],
 };
 
@@ -206,5 +208,5 @@ export function previewOrrery() {
 export function previewOrreryCrossing() {
   const { group } = createOrrery(PREVIEW_ORRERY_LAYOUT);
   group.add(createFill());
-  return pinSnapshotView(group, new Vector3(54, 0, -600), new Vector3(0, 0, -1));
+  return pinSnapshotView(group, new Vector3(140, 0, -560), new Vector3(0.3, 0.02, -1));
 }

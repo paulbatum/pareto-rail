@@ -77,24 +77,8 @@ function createFace(layout: DialLayout) {
   const face = new ExtrudeGeometry(shape, { depth: FACE_DEPTH, bevelEnabled: false, curveSegments: 160 });
   face.translate(0, 0, -FACE_DEPTH);
 
-  const parts: BufferGeometry[] = [face];
-  // Frozen hands on the front side, seen mirrored from behind.
-  for (const [hours, length, width] of [
-    [layout.hands.hour, layout.numeralRadius * 0.62, 34],
-    [layout.hands.minute, layout.numeralRadius * 0.92, 24],
-  ]) {
-    const { angle } = hourDirection(hours);
-    const hand = new BoxGeometry(length + 60, width, 10);
-    hand.translate(length / 2 - 30, 0, 0);
-    hand.applyMatrix4(new Matrix4().makeRotationZ(angle));
-    hand.translate(0, 0, 8);
-    parts.push(hand.toNonIndexed());
-    hand.dispose();
-  }
-  const merged = mergeGeometries(parts, false);
-  for (const part of parts) part.dispose();
-  merged.translate(layout.center.x, layout.center.y, layout.center.z);
-  const mesh = new Mesh(merged, createOxideMaterial({ seamScale: 1 / 150, seamAniso: 1, roughness: 0.55, metalness: 0.5, brushAxis: new Vector3(1, 0, 0) }));
+  face.translate(layout.center.x, layout.center.y, layout.center.z);
+  const mesh = new Mesh(face, createOxideMaterial({ seamScale: 1 / 150, seamAniso: 1, roughness: 0.55, metalness: 0.5, brushAxis: new Vector3(1, 0, 0) }));
   mesh.userData.raildIgnoreOcclusion = true;
   return mesh;
 }
@@ -108,7 +92,7 @@ function ring(radius: number, tube: number, depth: number) {
   return new ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 160 });
 }
 
-/** Chapter rings, numerals, ticks, centre boss and the XII gateway frame: all brass, one mesh. */
+/** Chapter rings, numerals, ticks, hands, centre boss and the XII gateway frame: all brass, one mesh. */
 function createBrasswork(layout: DialLayout) {
   const parts: BufferGeometry[] = [];
   const lift = 4;
@@ -157,6 +141,20 @@ function createBrasswork(layout: DialLayout) {
     beam.translate(0, y, lift + 6);
     parts.push(beam.toNonIndexed());
     beam.dispose();
+  }
+
+  // Frozen hands, mirrored like the numerals.
+  for (const [hours, length, width] of [
+    [layout.hands.hour, layout.numeralRadius * 0.62, 34],
+    [layout.hands.minute, layout.numeralRadius * 0.92, 24],
+  ]) {
+    const { angle } = hourDirection(hours);
+    const hand = new BoxGeometry(length + 60, width, 10);
+    hand.translate(length / 2 - 30, 0, 0);
+    hand.applyMatrix4(new Matrix4().makeRotationZ(angle));
+    hand.translate(0, 0, lift + 10);
+    parts.push(hand.toNonIndexed());
+    hand.dispose();
   }
 
   const boss = new CylinderGeometry(layout.radius * 0.06, layout.radius * 0.06, 30, 40);
