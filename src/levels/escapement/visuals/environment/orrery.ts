@@ -1,8 +1,8 @@
 import { BoxGeometry, BufferGeometry, CylinderGeometry, Group, Mesh, SphereGeometry, TorusGeometry, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { normalGeometry, positionGeometry } from 'three/tsl';
-import { createGearFamily, mergeSpinParts, spinShape, type GearSpec, type SpinPart } from '../gears';
-import { createBrassMaterial, createLamp, createLampMaterial, createFill, createPreviewLights, createSteelMaterial, pinSnapshotView } from '../materials';
+import { createGearFamily, createSpinningBrassMaterial, createSpinningSteelMaterial, mergeSpinParts, type GearSpec, type SpinPart } from '../gears';
+import { createBrassMaterial, createLamp, createLampMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
+import { createDial, PREVIEW_DIAL_LAMP, PREVIEW_DIAL_LAYOUT } from './dial';
 import { LAMP_WARM } from '../palette';
 
 // The Orrery: open black outside the back plate. Planets on brass arms sweep
@@ -80,19 +80,40 @@ function createArms(layout: OrreryLayout) {
   for (const arm of layout.arms) {
     const rate = (2 * Math.PI) / arm.period;
     const y = layout.sun.y + arm.height;
-    const bar = new BoxGeometry(arm.length + 20, 7, 7);
-    bar.translate(layout.sun.x + arm.length / 2 - 4, y, layout.sun.z);
-    const counter = new BoxGeometry(arm.length * 0.22, 9, 9);
+    // The arm is a lattice girder: two chords with diagonal members between them, so its length reads against the member spacing.
+    const brassParts: BufferGeometry[] = [];
+    const chordGap = Math.max(10, arm.length * 0.02);
+    const chordSize = Math.max(3, arm.length * 0.006);
+    for (const dy of [-chordGap / 2, chordGap / 2]) {
+      const chord = new BoxGeometry(arm.length + 20, chordSize, chordSize);
+      chord.translate(layout.sun.x + arm.length / 2 - 4, y + dy, layout.sun.z);
+      brassParts.push(chord);
+    }
+    const bay = chordGap * 1.4;
+    const bays = Math.max(3, Math.floor(arm.length / bay));
+    for (let i = 0; i < bays; i += 1) {
+      const x0 = layout.sun.x + 20 + i * bay;
+      const diagonal = new BoxGeometry(Math.hypot(bay, chordGap), chordSize * 0.8, chordSize * 0.8);
+      diagonal.rotateZ(Math.atan2(chordGap, bay) * (i % 2 === 0 ? 1 : -1));
+      diagonal.translate(x0 + bay / 2, y, layout.sun.z);
+      brassParts.push(diagonal);
+      if (i % 4 === 0) {
+        const post = new BoxGeometry(chordSize * 0.8, chordGap, chordSize * 0.8);
+        post.translate(x0, y, layout.sun.z);
+        brassParts.push(post);
+      }
+    }
+    const counter = new BoxGeometry(arm.length * 0.22, chordGap, chordSize * 1.4);
     counter.translate(layout.sun.x - arm.length * 0.11 - 14, y, layout.sun.z);
     const weight = new CylinderGeometry(arm.planetRadius * 0.5, arm.planetRadius * 0.5, 16, 20);
     weight.translate(layout.sun.x - arm.length * 0.22 - 14, y, layout.sun.z);
-    const sleeve = new CylinderGeometry(24, 24, 22, 24);
+    const sleeve = new CylinderGeometry(24, 24, chordGap + 12, 24);
     sleeve.translate(layout.sun.x, y, layout.sun.z);
     const equator = new TorusGeometry(arm.planetRadius * 1.25, 2.4, 8, 64);
     equator.rotateX(Math.PI / 2);
     equator.rotateZ(0.35);
     equator.translate(layout.sun.x + arm.length, y, layout.sun.z);
-    const brassParts = [bar, counter, weight, sleeve, equator];
+    brassParts.push(counter, weight, sleeve, equator);
     const planet = new SphereGeometry(arm.planetRadius, 40, 28);
     planet.translate(layout.sun.x + arm.length, y, layout.sun.z);
     const steelParts = [planet];
@@ -112,8 +133,8 @@ function createArms(layout: OrreryLayout) {
     for (const geometry of steelParts) steel.push({ geometry: nonIndexed(geometry), center: layout.sun, axis: UP, rate, phase: arm.phase });
   }
   const group = new Group();
-  group.add(new Mesh(mergeSpinParts(brass), createBrassMaterial({ patternPosition: positionGeometry, patternNormal: normalGeometry, tarnish: 0.3, brushAxis: new Vector3(1, 0, 0), shape: spinShape })));
-  group.add(new Mesh(mergeSpinParts(steel), createSteelMaterial({ patternPosition: positionGeometry, patternNormal: normalGeometry, tarnish: 0.35, seamScale: 1 / 26, shape: spinShape })));
+  group.add(new Mesh(mergeSpinParts(brass), createSpinningBrassMaterial({ tarnish: 0.3, brushAxis: new Vector3(1, 0, 0) })));
+  group.add(new Mesh(mergeSpinParts(steel), createSpinningSteelMaterial({ tarnish: 0.35, seamScale: 1 / 120, seamAniso: 1 })));
   return group;
 }
 
@@ -176,17 +197,18 @@ export function createOrrery(layout: OrreryLayout): Orrery {
   group.add(createArms(layout));
   group.add(createRings(layout));
   group.add(createDrive(layout));
-  const sunLight = createLamp({ name: 'escapement-sun', position: layout.sun, intensity: 520 });
+  // The rail passes about 120 units from the sun, where it receives 0.5 of sun light.
+  const sunLight = createLamp({ name: 'escapement-sun', position: layout.sun, intensity: 7200 });
   sunLight.color.copy(LAMP_WARM);
   group.add(sunLight);
   return { group, sunLight };
 }
 
 export const PREVIEW_ORRERY_LAYOUT: OrreryLayout = {
-  sun: new Vector3(360, 40, -960),
+  sun: new Vector3(260, 30, -1020),
   sunRadius: 34,
   arms: [
-    { length: 190, height: -60, period: 44, planetRadius: 14, phase: 0.4, moons: 0 },
+    { length: 190, height: -75, period: 44, planetRadius: 14, phase: 0.4, moons: 0 },
     { length: 300, height: 85, period: 62, planetRadius: 22, phase: 2.1, moons: 1 },
     { length: 430, height: -130, period: 84, planetRadius: 30, phase: 3.9, moons: 0 },
     { length: 580, height: 150, period: 110, planetRadius: 42, phase: 1.3, moons: 2 },
@@ -197,16 +219,20 @@ export const PREVIEW_ORRERY_LAYOUT: OrreryLayout = {
   ],
 };
 
-/** Snapshot factory: the whole orrery from outside. */
+/** Snapshot factory: the whole orrery from outside, under the level sky. */
 export function previewOrrery() {
-  const { group } = createOrrery(PREVIEW_ORRERY_LAYOUT);
-  group.add(createPreviewLights(PREVIEW_ORRERY_LAYOUT.sun, 500));
-  return group;
+  return withPreviewEnvironment(() => {
+    const { group } = createOrrery(PREVIEW_ORRERY_LAYOUT);
+    return group;
+  });
 }
 
-/** Snapshot factory: the rail camera crossing the orrery, sun to the right. */
+/** Snapshot factory: the rail camera crossing the orrery, sun to the right, with the dial behind as the sky. */
 export function previewOrreryCrossing() {
-  const { group } = createOrrery(PREVIEW_ORRERY_LAYOUT);
-  group.add(createFill());
-  return pinSnapshotView(group, new Vector3(140, 0, -560), new Vector3(0.3, 0.02, -1));
+  return withPreviewEnvironment(() => {
+    const { group } = createOrrery(PREVIEW_ORRERY_LAYOUT);
+    group.add(createDial(PREVIEW_DIAL_LAYOUT));
+    group.add(createLamp({ name: 'preview-dial-lamp', position: PREVIEW_DIAL_LAMP, intensity: 60000 }));
+    return pinSnapshotView(group, new Vector3(140, 0, -720), new Vector3(0.12, 0.05, -1));
+  });
 }

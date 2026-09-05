@@ -1,13 +1,14 @@
-import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Group, Matrix4, Mesh, Shape, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, CylinderGeometry, Group, Matrix4, Mesh, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { mulberry32, type Rng } from '../../../../engine/rng';
-import { createBrassMaterial, createFill, createLamp, createPreviewLights, createSteelMaterial, pinSnapshotView } from '../materials';
+import { createBrassMaterial, createLamp, createSteelMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
 
-// The Barrel: the mainspring coil seen edge-on. The rail runs along the
-// corridor between two turns of the coil, from the arbor outward, and leaves
-// through a doorway in the barrel drum. The lamp hangs above the broken lid, so
-// its light comes down through the missing lid plates and sideways through the
-// gaps in the coil.
+// The Barrel: the mainspring coil seen edge-on. The band is a thin brass
+// ribbon with open breaks between its plates; the rail runs in the gap between
+// two turns with the void below and the farther turns visible through the
+// breaks. The lamp hangs inside the coil above the rail, so its light crosses
+// the corridor through the breaks. The rail leaves through a doorway in the
+// toothed barrel drum.
 
 export type BarrelLayout = {
   /** World position of the arbor, at corridor height. */
@@ -24,16 +25,15 @@ export type BarrelLayout = {
 
 const SEGMENT_LENGTH = 3;
 const BAND_THICKNESS = 2.4;
+/** Fraction of the band's length that is open break. */
+const BREAK_FRACTION = 0.3;
 const DRUM_THICKNESS = 3.2;
 const DRUM_TOOTH_COUNT = 44;
-const LID_SECTORS = 36;
-const LID_RINGS = 6;
-const LID_MISSING_FRACTION = 0.34;
 /** Angle range of the ride along the corridor: a quarter turn ending on the +x axis, heading -z. */
 const CORRIDOR_START = -Math.PI / 2;
 const CORRIDOR_END = 0;
 /** How far the coil band continues on either side of the ride, in turns. */
-const COIL_TURNS_BEFORE = 1.6;
+const COIL_TURNS_BEFORE = 2.6;
 const COIL_TURNS_AFTER = 1;
 
 /** Wall spiral radius at angle `theta`: the coil band the corridor runs between. */
@@ -112,23 +112,23 @@ function sweepPlates(sweep: Sweep, center: Vector3): BufferGeometry {
   return merged;
 }
 
-/** Gap pattern for the coil: full breaks every few metres, half-height cracks between them. */
+/**
+ * Break pattern for the coil: ribbon plates 40 to 90 units long separated by
+ * open breaks 10 to 35 units wide, with a few plates torn to half height.
+ */
 function coilSpans(rng: Rng, height: number) {
   const half = height / 2;
   let remaining = 0;
   let mode: 'plate' | 'break' | 'crackTop' | 'crackBottom' = 'plate';
   return (): [number, number] | null => {
     if (remaining <= 0) {
-      const roll = rng();
-      if (roll < 0.1) {
+      if (mode !== 'break' && rng() < BREAK_FRACTION + 0.25) {
         mode = 'break';
-        remaining = 2 + Math.floor(rng() * 3);
-      } else if (roll < 0.22) {
-        mode = rng() < 0.5 ? 'crackTop' : 'crackBottom';
-        remaining = 3 + Math.floor(rng() * 6);
+        remaining = Math.round((10 + rng() * 25) / SEGMENT_LENGTH);
       } else {
-        mode = 'plate';
-        remaining = 6 + Math.floor(rng() * 12);
+        const roll = rng();
+        mode = roll < 0.12 ? 'crackTop' : roll < 0.24 ? 'crackBottom' : 'plate';
+        remaining = Math.round((40 + rng() * 50) / SEGMENT_LENGTH);
       }
     }
     remaining -= 1;
@@ -136,9 +136,9 @@ function coilSpans(rng: Rng, height: number) {
       case 'break':
         return null;
       case 'crackTop':
-        return [-half, half * 0.15];
+        return [-half, half * 0.1];
       case 'crackBottom':
-        return [-half * 0.1, half];
+        return [-half * 0.05, half];
       default:
         return [-half, half];
     }
@@ -157,7 +157,7 @@ function createCoil(layout: BarrelLayout, rng: Rng) {
     },
     layout.center,
   );
-  return new Mesh(geometry, createBrassMaterial({ seamScale: 1 / 5.5, seamAniso: 2.2, brushAxis: new Vector3(0, 1, 0), brushStrength: 0.34, tarnish: 0.4 }));
+  return new Mesh(geometry, createBrassMaterial({ seamScale: 1 / 260, seamAniso: 1, brushAxis: new Vector3(0, 1, 0), brushStrength: 0.34, tarnish: 0.35 }));
 }
 
 /** Steel binding strips along the top and bottom edges of the coil. */
@@ -168,8 +168,8 @@ function createCoilEdges(layout: BarrelLayout) {
       radiusAt: (theta) => wallRadius(layout, theta),
       thetaFrom: CORRIDOR_START - COIL_TURNS_BEFORE * 2 * Math.PI,
       thetaTo: CORRIDOR_END + COIL_TURNS_AFTER * 2 * Math.PI,
-      thickness: BAND_THICKNESS + 1.6,
-      spanAt: () => [y - 1.4, y + 1.4],
+      thickness: BAND_THICKNESS + 1.2,
+      spanAt: () => [y - 0.9, y + 0.9],
     },
     layout.center,
   ));
@@ -209,49 +209,12 @@ function createDrum(layout: BarrelLayout, rng: Rng) {
   }
   const merged = mergeGeometries(teeth, false);
   for (const part of teeth) part.dispose();
-  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 8, tarnish: 0.5, roughness: 0.5 }));
-}
-
-function annularSector(inner: number, outer: number, from: number, to: number) {
-  const shape = new Shape();
-  shape.absarc(0, 0, outer, from, to, false);
-  shape.absarc(0, 0, inner, to, from, true);
-  shape.closePath();
-  return shape;
-}
-
-/** The barrel lid: sector plates with a third of them missing, so the lamp above throws shafts. */
-function createLid(layout: BarrelLayout, rng: Rng) {
-  const plates: BufferGeometry[] = [];
-  const outer = layout.drumRadius - DRUM_THICKNESS;
-  const inner = 9;
-  const ringStep = (outer - inner) / LID_RINGS;
-  for (let ring = 0; ring < LID_RINGS; ring += 1) {
-    for (let sector = 0; sector < LID_SECTORS; sector += 1) {
-      if (rng() < LID_MISSING_FRACTION) continue;
-      const from = (sector / LID_SECTORS) * Math.PI * 2 + ring * 0.11;
-      const to = from + (Math.PI * 2) / LID_SECTORS - 0.012;
-      const shape = annularSector(inner + ring * ringStep + 0.4, inner + (ring + 1) * ringStep - 0.4, from, to);
-      const plate = new ExtrudeGeometry(shape, { depth: 2, bevelEnabled: false, curveSegments: 6 });
-      plate.rotateX(Math.PI / 2);
-      plate.translate(layout.center.x, layout.center.y + layout.bandHeight / 2 + 1.5, layout.center.z);
-      plates.push(plate);
-    }
-  }
-  const merged = mergeGeometries(plates, false);
-  for (const plate of plates) plate.dispose();
-  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 12, tarnish: 0.45, brushAxis: new Vector3(1, 0, 0) }));
-}
-
-function createFloor(layout: BarrelLayout) {
-  const geometry = new CylinderGeometry(layout.drumRadius + 6, layout.drumRadius + 6, 2.5, 72);
-  geometry.translate(layout.center.x, layout.center.y - layout.bandHeight / 2 - 1.6, layout.center.z);
-  return new Mesh(geometry, createBrassMaterial({ seamScale: 1 / 15, tarnish: 0.5, roughness: 0.55, brushAxis: new Vector3(1, 0, 0) }));
+  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 320, tarnish: 0.45, roughness: 0.45 }));
 }
 
 function createArbor(layout: BarrelLayout) {
   const parts: BufferGeometry[] = [];
-  const shaft = new CylinderGeometry(6, 6, layout.bandHeight + 70, 24);
+  const shaft = new CylinderGeometry(8, 8, layout.bandHeight * 4, 24);
   parts.push(shaft.toNonIndexed());
   const hook = new BoxGeometry(14, layout.bandHeight, 6);
   hook.translate(7, 0, 0);
@@ -267,15 +230,13 @@ function createArbor(layout: BarrelLayout) {
   return new Mesh(merged, createSteelMaterial({ brushAxis: new Vector3(0, 1, 0), tarnish: 0.2 }));
 }
 
-export function createBarrel(layout: BarrelLayout, options: { lid?: boolean } = {}) {
+export function createBarrel(layout: BarrelLayout) {
   const group = new Group();
   group.name = 'barrel';
   const rng = mulberry32(0x5ca1e);
   group.add(createCoil(layout, rng));
   group.add(createCoilEdges(layout));
   group.add(createDrum(layout, rng));
-  if (options.lid !== false) group.add(createLid(layout, rng));
-  group.add(createFloor(layout));
   group.add(createArbor(layout));
   return group;
 }
@@ -288,25 +249,26 @@ export const PREVIEW_BARREL_LAYOUT: BarrelLayout = {
   drumRadius: 236,
 };
 
-/** Snapshot factory: the barrel under a lamp above its lid. */
-export function previewBarrel() {
-  const group = createBarrel(PREVIEW_BARREL_LAYOUT);
-  group.add(createPreviewLights(new Vector3(0, 0, 0), 260));
-  return group;
-}
+/** Lamp position inside the coil for the previews: above the corridor near its exit. */
+export const PREVIEW_BARREL_LAMP = new Vector3(96, 78, 34);
+/** Coil plates sit 60–110 units from the lamp, so they receive 0.25–0.8 of lamp light. */
+const PREVIEW_LAMP_INTENSITY = 2800;
 
-/** Snapshot factory: the barrel with the lid removed, so the corridor is visible from above. */
-export function previewBarrelOpen() {
-  const group = createBarrel(PREVIEW_BARREL_LAYOUT, { lid: false });
-  group.add(createPreviewLights(new Vector3(0, 0, 0), 260));
-  return group;
+/** Snapshot factory: the barrel from outside, under the level sky. */
+export function previewBarrel() {
+  return withPreviewEnvironment(() => {
+    const group = createBarrel(PREVIEW_BARREL_LAYOUT);
+    group.add(createLamp({ name: 'preview-lamp', position: PREVIEW_BARREL_LAMP, intensity: PREVIEW_LAMP_INTENSITY }));
+    return group;
+  });
 }
 
 /** Snapshot factory: the corridor from the rail camera a third of the way round. */
 export function previewBarrelInside() {
-  const group = createBarrel(PREVIEW_BARREL_LAYOUT);
-  group.add(createLamp({ name: 'preview-lamp', position: new Vector3(60, 130, -30), intensity: 220 }));
-  group.add(createFill());
-  const { position, tangent } = barrelCorridor(PREVIEW_BARREL_LAYOUT, 0.35);
-  return pinSnapshotView(group, position, tangent);
+  return withPreviewEnvironment(() => {
+    const group = createBarrel(PREVIEW_BARREL_LAYOUT);
+    group.add(createLamp({ name: 'preview-lamp', position: PREVIEW_BARREL_LAMP, intensity: PREVIEW_LAMP_INTENSITY }));
+    const { position, tangent } = barrelCorridor(PREVIEW_BARREL_LAYOUT, 0.35);
+    return pinSnapshotView(group, position, tangent);
+  });
 }

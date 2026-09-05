@@ -1,5 +1,6 @@
-import { Box3, BoxGeometry, Color, Group, HemisphereLight, Matrix4, Mesh, Object3D, PlaneGeometry, PointLight, Vector3 } from 'three';
-import type { Node } from 'three/webgpu';
+import { AgXToneMapping, Box3, BoxGeometry, Color, Group, HemisphereLight, Matrix4, Mesh, Object3D, PlaneGeometry, PointLight, Scene, Vector3 } from 'three';
+import { bakeEnvironment, createGradientSky } from '../../../engine/environment-light';
+import type { Node, WebGPURenderer } from 'three/webgpu';
 import { MeshBasicNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu';
 import {
   Fn,
@@ -23,10 +24,11 @@ import {
   sin,
   smoothstep,
   uniform,
+  vec2,
   vec3,
   vec4,
 } from 'three/tsl';
-import { fractalNoise, seams, type FloatNode, type Vec3Node } from '../../../engine/tsl-surface';
+import { fractalNoise, voronoiEdgeDistance, type FloatNode, type Vec3Node } from '../../../engine/tsl-surface';
 import { BLACK_OXIDE, BRASS, BRASS_DARK, LAMP_WARM, STEEL_BLUE, STEEL_DARK, VERDIGRIS, VOID } from './palette';
 
 // Every environment surface is lit and never emissive. The palette rule for
@@ -68,26 +70,32 @@ function strikeOffsetWorld(world: Vec3Node): Vec3Node {
   return toPoint.div(max(distance, float(1))).mul(amount);
 }
 
+/** Applies the strike wave to a local-space position: to world, displace, back to local. */
+export function strikeDisplaceLocal(local: Vec3Node): Vec3Node {
+  const world = modelWorldMatrix.mul(vec4(local, 1)).xyz;
+  const displaced = world.add(strikeOffsetWorld(world));
+  return modelWorldMatrixInverse.mul(vec4(displaced, 1)).xyz;
+}
+
 /**
- * The position node every environment material uses. `shape` runs first on the
- * local position (the gear spin lives there); the strike wave then displaces the
- * result in world space and maps it back to local space.
+ * The position node every still environment material uses. `shape` runs first
+ * on the local position; the strike wave then displaces the result.
  */
 export function environmentPositionNode(shape?: (local: Vec3Node) => Vec3Node): Vec3Node {
-  return Fn(() => {
-    const local = shape ? shape(positionLocal) : positionLocal;
-    const world = modelWorldMatrix.mul(vec4(local, 1)).xyz;
-    const displaced = world.add(strikeOffsetWorld(world));
-    return modelWorldMatrixInverse.mul(vec4(displaced, 1)).xyz;
-  })();
+  return Fn(() => strikeDisplaceLocal(shape ? shape(positionLocal) : positionLocal))();
 }
 
 // ---- brushed metal ------------------------------------------------------------
+//
+// Two detail frequencies give the metal its scale: plate seams hundreds of
+// units apart with rivet rows along them, and brushing scratches a few units
+// across. Under the PMREM environment the metal reflects the warm sky above
+// and the steel-blue sides; the point lights add the local highlight.
 
 export type MetalOptions = {
-  /** World-space plate size divisor for the seam mask: 1 / plate size. Omit for no seams. */
+  /** Plate size divisor for the seam mask: 1 / plate size in world units. Omit for no seams. */
   seamScale?: number;
-  /** Seam stretch along z (see `seams`). */
+  /** Plate stretch along the second in-plane axis; 2.5 makes plates 2.5 times longer than wide. */
   seamAniso?: number;
   /** Direction the brushing grooves run along; the highlight stretches along it. */
   brushAxis?: Vector3;
@@ -105,24 +113,36 @@ export type MetalOptions = {
   patternNormal?: Vec3Node;
   /** Runs on the local position before the strike displacement. */
   shape?: (local: Vec3Node) => Vec3Node;
+  /** Replaces the whole positionNode; spinning parts use this to feed the velocity pass. */
+  positionNode?: Vec3Node;
   /** PMREM environment lighting plugs in here (`material.envNode`). */
   environmentNode?: Node;
 };
 
 const DEFAULT_BRUSH_AXIS = new Vector3(0, 1, 0);
+/** Brushing scratch frequency: features about a unit across. */
 const BRUSH_SCALE = 0.9;
-const BRUSH_ALONG_SQUASH = 0.08;
-const NOISE_SCALE = 0.11;
+/** Streak length is 1 / (BRUSH_SCALE * squash): about 55 units, so a groove crosses a whole plate. */
+const BRUSH_ALONG_SQUASH = 0.02;
+/** Tarnish blotch frequency: patches ten to twenty units across. */
+const TARNISH_SCALE = 0.035;
+const DEFAULT_SEAM_ANISO = 2.5;
+/** Seam groove width in cell units. */
+const SEAM_WIDTH = 0.012;
+/** Rivet row distance from the seam and rivet spacing, both in cell units. */
+const RIVET_ROW = 0.035;
+const RIVET_ROW_WIDTH = 0.012;
+const RIVETS_PER_CELL = 22;
+const RIVET_RADIUS = 0.3;
 
 function colorNode(color: Color): Vec3Node {
   return vec3(color.r, color.g, color.b);
 }
 
-/**
- * View-space normal tilted across a brushing direction by streaky noise, so a
- * point light draws one stretched highlight instead of a round one.
- */
-function brushedNormal(pattern: Vec3Node, brushAxis: Vector3, strength: number): Vec3Node {
+type SurfaceFrame = { along: Vec3Node; across: Vec3Node; streak: FloatNode };
+
+/** Tangent frame for brushing and the scratch noise, 0.5-centred. */
+function surfaceFrame(pattern: Vec3Node, brushAxis: Vector3): SurfaceFrame {
   const axis = vec3(brushAxis.x, brushAxis.y, brushAxis.z);
   const n = normalWorld;
   // Grooves run along `along`; fall back to a second axis where the normal is parallel to the brush axis.
@@ -133,39 +153,56 @@ function brushedNormal(pattern: Vec3Node, brushAxis: Vector3, strength: number):
   // Compress the sample coordinate along the grooves so the noise is long along them and fine across.
   const projected = pattern.sub(along.mul(dot(pattern, along).mul(1 - BRUSH_ALONG_SQUASH)));
   const streak = fractalNoise(projected, { scale: BRUSH_SCALE, octaves: 3, roughness: 0.6 }).sub(0.5);
-  const tilted = normalize(n.add(across.mul(streak.mul(strength * 2))));
-  return normalize(cameraViewMatrix.mul(vec4(tilted, 0)).xyz);
+  return { along, across, streak };
 }
 
 /** Cells along the surface normal are stretched this much, so a flat surface never crosses a lattice plane. */
 const SEAM_NORMAL_STRETCH = 1000;
 
+type PlateDetail = {
+  /** 1 on plate faces, 0 in the seam groove. */
+  face: FloatNode;
+  /** 1 on a rivet head. */
+  rivet: FloatNode;
+  /** Offset from the rivet centre in rivet-lattice units, for the dome bump. */
+  rivetOffset: Node<'vec2'>;
+};
+
 /**
- * Plate seams sampled in the surface's own plane. The 3D lattice is swizzled
- * so the dominant normal axis becomes z and stretched along it, which stops a
- * flat surface that lies on a lattice plane from reading as a checkerboard.
+ * Plate seams and rivet rows sampled in the surface's own plane. The 3D lattice
+ * is swizzled so the dominant normal axis becomes z and held at mid-cell along
+ * it, which stops a flat surface that lies on a lattice plane from reading as a
+ * checkerboard. Plates are a straight grid, so the rivet rows run parallel to
+ * the seams.
  */
-function surfaceSeams(pattern: Vec3Node, normal: Vec3Node, scale: number, aniso: number): FloatNode {
+function plateDetail(pattern: Vec3Node, normal: Vec3Node, scale: number, aniso: number): PlateDetail {
   const magnitude = abs(normal);
   const xDominant = magnitude.x.greaterThan(magnitude.y).and(magnitude.x.greaterThan(magnitude.z));
   const yDominant = magnitude.y.greaterThan(magnitude.z);
   const swizzled = select(xDominant, pattern.yzx, select(yDominant, pattern.zxy, pattern.xyz));
-  // Hold the collapsed axis at the middle of a cell so the surface never sits on a lattice border.
-  const midCell = (0.5 * SEAM_NORMAL_STRETCH * aniso) / scale;
-  const projected = vec3(swizzled.x, swizzled.y, midCell);
-  return seams(projected, scale, SEAM_NORMAL_STRETCH * aniso);
+  const midCell = (0.5 * SEAM_NORMAL_STRETCH) / scale;
+  const projected = vec3(swizzled.x, swizzled.y.div(aniso), midCell);
+  const edge = voronoiEdgeDistance(projected, scale, { aniso: SEAM_NORMAL_STRETCH, randomness: 0 });
+  const face = smoothstep(float(0), float(SEAM_WIDTH), edge);
+  const row = smoothstep(float(RIVET_ROW_WIDTH), float(0), abs(edge.sub(RIVET_ROW)));
+  const lattice = vec2(swizzled.x, swizzled.y.div(aniso)).mul(scale * RIVETS_PER_CELL);
+  const rivetOffset = lattice.fract().sub(0.5);
+  const dome = smoothstep(float(RIVET_RADIUS), float(RIVET_RADIUS * 0.6), length(rivetOffset));
+  return { face, rivet: dome.mul(row), rivetOffset };
 }
 
 function tarnishMask(pattern: Vec3Node, coverage: number): FloatNode {
   if (coverage <= 0) return float(0);
-  const noise = fractalNoise(pattern, { scale: NOISE_SCALE, octaves: 4, roughness: 0.55 });
-  return smoothstep(float(1 - coverage * 0.75), float(1.05 - coverage * 0.75), noise);
+  const noise = fractalNoise(pattern, { scale: TARNISH_SCALE, octaves: 4, roughness: 0.55 });
+  const threshold = 0.72 - coverage * 0.3;
+  return smoothstep(float(threshold), float(threshold + 0.07), noise);
 }
 
 function verdigrisMask(pattern: Vec3Node, coverage: number): FloatNode {
   if (coverage <= 0) return float(0);
-  const noise = fractalNoise(pattern.add(vec3(31, 7, 13)), { scale: NOISE_SCALE * 1.6, octaves: 4, roughness: 0.6 });
-  return smoothstep(float(1 - coverage * 0.7), float(1.08 - coverage * 0.7), noise);
+  const noise = fractalNoise(pattern.add(vec3(31, 7, 13)), { scale: TARNISH_SCALE * 1.6, octaves: 4, roughness: 0.6 });
+  const threshold = 0.66 - coverage * 0.3;
+  return smoothstep(float(threshold), float(threshold + 0.08), noise);
 }
 
 /** Every metal material made so far, so a PMREM environment can be applied after the fact. */
@@ -182,34 +219,46 @@ export function applyEnvironmentNode(node: Node | null) {
 }
 
 function createMetal(base: Color, dark: Color, options: MetalOptions, defaults: { roughness: number; metalness: number }) {
+  const roughness = options.roughness ?? defaults.roughness;
   const material = new MeshStandardNodeMaterial({
-    roughness: options.roughness ?? defaults.roughness,
+    roughness,
     metalness: options.metalness ?? defaults.metalness,
   });
   const pattern = options.patternPosition ?? positionWorld;
-  const roughness = options.roughness ?? defaults.roughness;
+  const frame = surfaceFrame(pattern, options.brushAxis ?? DEFAULT_BRUSH_AXIS);
+  const brushStrength = options.brushStrength ?? 0.3;
 
   let color = colorNode(base);
   let rough: FloatNode = float(roughness);
+  let normal: Vec3Node = normalWorld;
 
+  // Fine layer: scratches darken and roughen thin lines along the brushing.
+  const scratch = smoothstep(float(0.14), float(0.24), frame.streak);
+  color = color.mul(scratch.mul(-0.18).add(1));
+  rough = rough.add(scratch.mul(0.12));
+  normal = normal.add(frame.across.mul(frame.streak.mul(brushStrength * 2)));
+
+  // Coarse layer: plate seams and rivet rows.
   if (options.seamScale !== undefined) {
-    const plate = surfaceSeams(pattern, options.patternNormal ?? normalWorld, options.seamScale, options.seamAniso ?? 1);
-    color = mix(color.mul(0.42), color, plate);
-    rough = mix(float(Math.min(1, roughness + 0.35)), rough, plate);
+    const detail = plateDetail(pattern, options.patternNormal ?? normalWorld, options.seamScale, options.seamAniso ?? DEFAULT_SEAM_ANISO);
+    color = mix(color.mul(0.35), color, detail.face);
+    rough = mix(float(Math.min(1, roughness + 0.3)), rough, detail.face);
+    color = mix(color, color.mul(1.12), detail.rivet);
+    normal = normal.add(frame.along.mul(detail.rivetOffset.x).add(frame.across.mul(detail.rivetOffset.y)).mul(detail.rivet.mul(1.6)));
   }
 
   const tarnish = tarnishMask(pattern, options.tarnish ?? 0.35);
-  color = mix(color, colorNode(dark), tarnish.mul(0.85));
-  rough = mix(rough, float(Math.min(1, roughness + 0.3)), tarnish);
+  color = mix(color, colorNode(dark), tarnish.mul(0.8));
+  rough = mix(rough, float(Math.min(1, roughness + 0.35)), tarnish);
 
   const verdigris = verdigrisMask(pattern, options.verdigris ?? 0);
   color = mix(color, colorNode(VERDIGRIS), verdigris);
   rough = mix(rough, float(0.9), verdigris);
 
   material.colorNode = color;
-  material.roughnessNode = rough;
-  material.normalNode = brushedNormal(pattern, options.brushAxis ?? DEFAULT_BRUSH_AXIS, options.brushStrength ?? 0.22);
-  material.positionNode = environmentPositionNode(options.shape);
+  material.roughnessNode = rough.clamp(0.05, 1);
+  material.normalNode = normalize(cameraViewMatrix.mul(vec4(normalize(normal), 0)).xyz);
+  material.positionNode = options.positionNode ?? environmentPositionNode(options.shape);
   const environmentNode = options.environmentNode ?? sharedEnvironmentNode;
   if (environmentNode) material.envNode = environmentNode;
   metals.push(material);
@@ -218,21 +267,21 @@ function createMetal(base: Color, dark: Color, options: MetalOptions, defaults: 
 
 /** Lamp-lit brass: metallic, brushed, tarnished in patches, plate seams when `seamScale` is given. */
 export function createBrassMaterial(options: MetalOptions = {}) {
-  return createMetal(BRASS, BRASS_DARK, options, { roughness: 0.42, metalness: 0.72 });
+  return createMetal(BRASS, BRASS_DARK, options, { roughness: 0.3, metalness: 0.9 });
 }
 
 /** Steel blue: pylons, rods, arbors and the ratchet-coloured fittings. */
 export function createSteelMaterial(options: MetalOptions = {}) {
-  return createMetal(STEEL_BLUE, STEEL_DARK, options, { roughness: 0.5, metalness: 0.6 });
+  return createMetal(STEEL_BLUE, STEEL_DARK, options, { roughness: 0.4, metalness: 0.85 });
 }
 
 /** Black oxide: hands, hammer heads, the dial face. */
 export function createOxideMaterial(options: MetalOptions = {}) {
-  return createMetal(BLACK_OXIDE, VOID, { tarnish: 0, ...options }, { roughness: 0.62, metalness: 0.4 });
+  return createMetal(BLACK_OXIDE, VOID, { tarnish: 0, ...options }, { roughness: 0.58, metalness: 0.6 });
 }
 
-/** The lamp body: the only warm-white surface in the environment. Intensity above 1 feeds bloom. */
-export function createLampMaterial(intensity = 3) {
+/** The lamp body: the only warm-white surface in the environment. Clamped at 1; the flare and bloom stages add the glow. */
+export function createLampMaterial(intensity = 1) {
   const material = new MeshBasicNodeMaterial();
   const view = normalize(vec3(0, 0, 1));
   const rim = float(1).sub(normalView.dot(view).abs()).pow(2);
@@ -246,36 +295,75 @@ export function createLampMaterial(intensity = 3) {
 export type LampOptions = {
   name: string;
   position: Vector3;
+  /**
+   * Candela. Falloff is physical (decay 2), so a surface `d` units away receives
+   * `intensity / d²`; pick the value so a mid-distance surface gets about 0.35
+   * on top of the sky, and let bloom carry the hot spot near the lamp.
+   */
   intensity: number;
-  /** 1 gives linear falloff, which reaches across a set at this scale; 2 is physical. */
+  /** Falloff exponent; 2 is physical and the default. */
   decay?: number;
 };
 
 /** A warm point light. `escapement-lamp` is the one the god-rays stage looks up by name. */
 export function createLamp(options: LampOptions) {
-  const light = new PointLight(LAMP_WARM, options.intensity, 0, options.decay ?? 1);
+  const light = new PointLight(LAMP_WARM, options.intensity, 0, options.decay ?? 2);
   light.name = options.name;
   light.position.copy(options.position);
   return light;
 }
 
-/** Low steel-blue fill from the sides, black from below. */
+/** Low steel-blue fill from the sides, black from below, for a scene without the sky bake. */
 export function createFill(intensity = 1.2) {
   return new HemisphereLight(STEEL_BLUE.clone().multiplyScalar(0.8), VOID, intensity);
 }
 
+export type PreviewContext = { renderer: WebGPURenderer; scene: Scene };
+
+/** The procedural sky the level's PMREM bake uses: warm lamp above, steel-blue sides, black below. */
+export function createEscapementSky() {
+  return createGradientSky({
+    zenith: LAMP_WARM.clone().multiplyScalar(0.9),
+    horizon: STEEL_BLUE.clone().multiplyScalar(0.55),
+    ground: VOID,
+    horizonWidth: 0.35,
+    sunDirection: new Vector3(0.2, 1, 0.35),
+    sunColor: LAMP_WARM,
+    sunIntensity: 30,
+    sunAngularRadius: 0.08,
+    haloAngularRadius: 0.6,
+    haloIntensity: 0.15,
+  });
+}
+
 /**
- * Lights for a single-set snapshot: a lamp above the set's bounds centre and the
- * fill. `reach` is the lamp's height above the centre.
+ * Wraps a snapshot factory so the harness bakes the level's sky into the scene
+ * before building the set. The harness calls the returned function with its
+ * renderer once the renderer is initialised.
+ */
+export function withPreviewEnvironment(build: () => Object3D) {
+  return ({ renderer, scene }: PreviewContext) => {
+    const sky = createEscapementSky();
+    bakeEnvironment(renderer, () => sky.scene, { size: 128 }).attach(scene);
+    // The level renders through AgX; the harness applies whatever the renderer carries.
+    renderer.toneMapping = AgXToneMapping;
+    renderer.toneMappingExposure = 1;
+    return build();
+  };
+}
+
+/**
+ * Lights for a single-set snapshot under the sky bake: one lamp above the set's
+ * centre. `reach` is the lamp's height above the centre; the intensity gives the
+ * centre about 0.35 of lamp light.
  */
 export function createPreviewLights(center: Vector3, reach: number) {
   const group = new Group();
   group.add(createLamp({
     name: 'preview-lamp',
     position: center.clone().add(new Vector3(reach * 0.35, reach, reach * 0.5)),
-    intensity: reach * 0.9,
+    intensity: reach * reach * 0.55,
   }));
-  group.add(createFill());
   return group;
 }
 
@@ -335,17 +423,22 @@ export function pinSnapshotView(root: Object3D, cameraPosition: Vector3, directi
 export function previewMaterialSwatches() {
   const group = new Group();
   const options: MetalOptions[] = [
-    { seamScale: 1 / 60, tarnish: 0, brushStrength: 0 },
+    { seamScale: 1 / 300, tarnish: 0, brushStrength: 0 },
     { tarnish: 0.4, brushStrength: 0 },
-    { tarnish: 0, brushStrength: 0.22 },
-    { seamScale: 1 / 60, tarnish: 0.4, brushStrength: 0.22 },
+    { tarnish: 0, brushStrength: 0.3 },
+    { seamScale: 1 / 300, tarnish: 0.4, brushStrength: 0.3 },
   ];
   options.forEach((option, index) => {
-    const plate = new Mesh(new PlaneGeometry(200, 200), createBrassMaterial(option));
-    plate.position.set((index - 1.5) * 210, 0, 0);
+    const plate = new Mesh(new PlaneGeometry(400, 400), createBrassMaterial(option));
+    plate.position.set((index - 1.5) * 410, 0, 0);
+    plate.rotation.x = -0.35;
     group.add(plate);
   });
-  group.add(createLamp({ name: 'preview-lamp', position: new Vector3(0, 120, 260), intensity: 260 }));
-  group.add(createFill());
+  group.add(createLamp({ name: 'preview-lamp', position: new Vector3(120, 260, 420), intensity: 70000 }));
   return group;
+}
+
+/** Snapshot factory: the swatches under the level's PMREM sky. */
+export function previewMaterialSwatchesLit() {
+  return withPreviewEnvironment(previewMaterialSwatches);
 }

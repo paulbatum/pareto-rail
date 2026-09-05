@@ -2,10 +2,10 @@ import { ConeGeometry, Group, Mesh, PointLight, Scene, SphereGeometry, Vector3 }
 import type { Node } from 'three/webgpu';
 import { ESCAPEMENT_BAR, ESCAPEMENT_MARKERS, PENDULUM_PERIOD } from '../../timing';
 import { gearClock } from '../gears';
-import { applyEnvironmentNode, createBrassMaterial, createFill, createLamp, createLampMaterial, strikeAge, strikeOrigin, strikeStrength } from '../materials';
+import { applyEnvironmentNode, createBrassMaterial, createLamp, createLampMaterial, strikeAge, strikeOrigin, strikeStrength, withPreviewEnvironment } from '../materials';
 import { barrelCorridor, barrelExit, createBarrel, type BarrelLayout } from './barrel';
 import { beginStrike, createBell, hammerLiftAt, type Bell, type BellLayout } from './bell';
-import { createDial, dialGateway, type DialLayout } from './dial';
+import { createDial, dialGateway, dialGatewayLamp, type DialLayout } from './dial';
 import { createOrrery, type OrreryLayout } from './orrery';
 import { createPendulum, type Pendulum, type PendulumLayout } from './pendulum';
 import { chainWheels, createTrain, GREAT_20, GREAT_30, RIDE_HEIGHT, rimPoint, type TrainLayout, type TrainWheel } from './train';
@@ -17,23 +17,26 @@ import { chainWheels, createTrain, GREAT_20, GREAT_30, RIDE_HEIGHT, rimPoint, ty
 // | Set      | Anchor                                   | Rail entry (heading)                    | Rail exit (heading)                       |
 // | -------- | ---------------------------------------- | --------------------------------------- | ----------------------------------------- |
 // | Barrel   | arbor (0, 0, 0), drum radius 236         | (0, 0, 130) heading +x, corridor turn   | corridor end (140, 0, 0) heading -z; drum doorway (140, 0, -190) |
-// | Train A  | centre (290, -21, -260), 30 teeth, r 150 | (140, 0, -260) heading -z, angle 180deg | (175.1, 0, -356.4) heading (0.643, 0, -0.766), angle 220deg |
-// | Train B  | centre (98.5, -21, -420.7), 20 teeth, r 100 | (175.1, 0, -356.4), angle 40deg      | (175.1, 0, -485.0) heading (-0.643, 0, -0.766), angle -40deg |
-// | Train C  | centre (290, -21, -581.4), 30 teeth, r 150 | (175.1, 0, -485.0), angle 140deg      | (140, 0, -581.4) heading -z, angle 180deg |
-// | Train D  | centre (40, -21, -581.4), 20 teeth, scenery only | -                                | -                                         |
+// | Train A  | centre (290, -66, -260), 30 teeth, r 150 | (140, 0, -260) heading -z, angle 180deg | (175.1, 0, -356.4) heading (0.643, 0, -0.766), angle 220deg |
+// | Train B  | centre (98.5, -66, -420.7), 20 teeth, r 100 | (175.1, 0, -356.4), angle 40deg      | (175.1, 0, -485.0) heading (-0.643, 0, -0.766), angle -40deg |
+// | Train C  | centre (290, -66, -581.4), 30 teeth, r 150 | (175.1, 0, -485.0), angle 140deg      | (140, 0, -581.4) heading -z, angle 180deg |
+// | Train D  | centre (40, -66, -581.4), 20 teeth, scenery only | -                                | -                                         |
 // | Back plate doorway | (140, 0, -700), 44 wide, 56 tall | (140, 0, -700) heading -z            | open black beyond                          |
-// | Orrery   | sun (360, 40, -960)                      | (140, 0, -700) heading -z               | (140, 0, -1150) heading -z                |
+// | Orrery   | sun (260, 30, -1020)                     | (140, 0, -700) heading -z               | (140, 0, -1150) heading -z                |
 // | Bell     | mouth (-40, 20, -1240), hammer on +x side | (140, 0, -1150) heading -z             | (140, 0, -1330) heading -z                |
-// | Pendulum | pivot (140, 320, -1420), rod 300, bob rest (140, 20, -1420) | bob frame from bar 29 | released at the bottom of a swing        |
-// | Dial     | centre (140, -640, -1780), radius 980    | Free Run ray from (140, 20, -1420)      | XII gateway (140, 200, -1780), 150 x 120 |
+// | Pendulum | pivot (140, 200, -1420), rod 130, bob rest (140, 70, -1420), boss mount (140, 300, -1420) | bob frame from bar 29 | released at the bottom of a swing |
+// | Dial     | centre (140, -640, -1780), radius 980    | Free Run ray from (140, 70, -1420)      | XII gateway (140, 200, -1780), 150 x 120 (20deg climb over 383 u) |
 //
 // Train wheels spin about +y at the rate the rail rides them: A -0.1164 rad/s
 // (40deg in 6 s), B +0.1745 rad/s (80deg in 8 s), C -0.1164 rad/s. The rail
-// rides each pitch circle RIDE_HEIGHT above the wheel's top face; the parent
-// frame for a Train section is a rotation about the wheel centre by
-// `rate * (time - sectionStart)`. The pendulum swing is a rotation about +z
-// through the pivot by `amplitude * sin(2 * PI * (time - pendulumStart) / PENDULUM_PERIOD)`;
-// positive angle carries the bob toward +x.
+// rides each pitch circle RIDE_HEIGHT (55) above the wheel's top face, so the
+// wheel tops are at y = -55 and their centres at y = -66; the parent frame for
+// a Train section is a rotation about the wheel centre by
+// `rate * (time - sectionStart)`. B and C carry a pinion and an upper wheel
+// 150 above their centres. The pendulum swing is a rotation about +z through
+// the pivot by `amplitude * sin(2 * PI * (time - pendulumStart) / PENDULUM_PERIOD)`;
+// positive angle carries the bob toward +x. The lamp hangs inside the barrel
+// coil at (96, 78, 34).
 
 export const RAIL_X = 140;
 const RAIL_Y = 0;
@@ -46,10 +49,18 @@ export const BARREL_LAYOUT: BarrelLayout = {
   drumRadius: 236,
 };
 
-export const LAMP_POSITION = new Vector3(60, 112, -30);
-const LAMP_INTENSITY = 240;
-const WORKS_LAMP_POSITION = new Vector3(140, 760, -1300);
-const WORKS_LAMP_INTENSITY = 420;
+export const LAMP_POSITION = new Vector3(96, 78, 34);
+// Lamp falloff is physical (see `createLamp`). Each intensity gives the surfaces
+// that lamp exists to light about 0.35 on top of the sky bake: the coil plates
+// 60–110 units from the coil lamp, the pendulum mount and plate about 270 units
+// from the works lamp, the XII region of the dial about 400 units from the dial
+// lamp, and the gateway 160 units from the gate lamp.
+const LAMP_INTENSITY = 2800;
+const WORKS_LAMP_POSITION = new Vector3(140, 520, -1300);
+const WORKS_LAMP_INTENSITY = 25000;
+const DIAL_LAMP_POSITION = new Vector3(140, -100, -1520);
+const DIAL_LAMP_INTENSITY = 60000;
+const GATE_LAMP_INTENSITY = 6000;
 
 const TRAIN_ENTRY = new Vector3(RAIL_X, RAIL_Y, -260);
 const WHEEL_TOP = RAIL_Y - RIDE_HEIGHT;
@@ -64,18 +75,22 @@ export const RIDDEN_WHEELS = 3;
 
 export const TRAIN_LAYOUT: TrainLayout = {
   wheels: chainWheels(TRAIN_ENTRY, new Vector3(0, 0, -1), TRAIN_ARCS, WHEEL_TOP - GREAT_30.width / 2),
+  upperTiers: [
+    { wheel: 1, direction: new Vector3(-1, 0, 0) },
+    { wheel: 2, direction: new Vector3(1, 0, 0) },
+  ],
   wheelTop: WHEEL_TOP,
-  backPlate: { z: -700, xMin: -380, xMax: 620, yMin: -330, yMax: 330, doorway: { x: RAIL_X, y: RAIL_Y, width: 44, height: 56 } },
+  backPlate: { z: -700, xMin: -380, xMax: 620, yMin: -330, yMax: 330, doorway: { x: RAIL_X, y: RAIL_Y, width: 160, height: 120 } },
   leftPlate: { x: -380, zMin: -700, zMax: -150, yMin: -330, yMax: 330 },
   rightPlate: { x: 620, zMin: -700, zMax: -150, yMin: -330, yMax: 330 },
   floorY: -400,
 };
 
 export const ORRERY_LAYOUT: OrreryLayout = {
-  sun: new Vector3(RAIL_X + 220, 40, -960),
+  sun: new Vector3(RAIL_X + 120, 30, -1020),
   sunRadius: 34,
   arms: [
-    { length: 190, height: -60, period: 44, planetRadius: 14, phase: 0.4, moons: 0 },
+    { length: 190, height: -75, period: 44, planetRadius: 14, phase: 0.4, moons: 0 },
     { length: 300, height: 85, period: 62, planetRadius: 22, phase: 2.1, moons: 1 },
     { length: 430, height: -130, period: 84, planetRadius: 30, phase: 3.9, moons: 0 },
     { length: 580, height: 150, period: 110, planetRadius: 42, phase: 1.3, moons: 2 },
@@ -94,13 +109,11 @@ export const BELL_LAYOUT: BellLayout = {
 };
 
 export const PENDULUM_LAYOUT: PendulumLayout = {
-  pivot: new Vector3(RAIL_X, 320, -1420),
-  length: 300,
-  bobRadius: 46,
-  escapeWheel: new Vector3(RAIL_X, 420, -1435),
-  crownWheel: new Vector3(RAIL_X, 590, -1435),
-  mount: new Vector3(RAIL_X, 500, -1420),
-  plate: { z: -1482, xMin: RAIL_X - 224, xMax: RAIL_X + 224, yMin: 150, yMax: 720 },
+  pivot: new Vector3(RAIL_X, 200, -1420),
+  length: 130,
+  bobRadius: 30,
+  mount: new Vector3(RAIL_X, 300, -1420),
+  plate: { z: -1482, xMin: RAIL_X - 224, xMax: RAIL_X + 224, yMin: 40, yMax: 560 },
 };
 
 export const DIAL_LAYOUT: DialLayout = {
@@ -212,7 +225,8 @@ export function createEscapementEnvironment(scene: Scene, options: EscapementEnv
   root.add(lamp);
   root.add(createLampFixture(LAMP_POSITION));
   root.add(createLamp({ name: 'escapement-works-lamp', position: WORKS_LAMP_POSITION, intensity: WORKS_LAMP_INTENSITY }));
-  root.add(createFill());
+  root.add(createLamp({ name: 'escapement-dial-lamp', position: DIAL_LAMP_POSITION, intensity: DIAL_LAMP_INTENSITY }));
+  root.add(createLamp({ name: 'escapement-gate-lamp', position: dialGatewayLamp(DIAL_LAYOUT), intensity: GATE_LAMP_INTENSITY }));
   scene.add(root);
 
   const layout: EscapementLayout = {
@@ -237,7 +251,8 @@ export function createEscapementEnvironment(scene: Scene, options: EscapementEnv
   let angleOverridden = false;
   let struck = false;
   let strikeActive = false;
-  gearClock.value = 0;
+  let gearTime = 0;
+  gearClock.set(0);
   strikeAge.value = 1e4;
   strikeStrength.value = 0;
 
@@ -256,7 +271,7 @@ export function createEscapementEnvironment(scene: Scene, options: EscapementEnv
     update(time, section) {
       if (time < lastTime) {
         lastTime = time;
-        gearClock.value = Math.max(0, time);
+        gearTime = Math.max(0, time);
         struck = false;
       }
       const dt = Math.max(0, time - lastTime);
@@ -271,7 +286,8 @@ export function createEscapementEnvironment(scene: Scene, options: EscapementEnv
           spinRate = 1;
         }
       }
-      gearClock.value += dt * spinRate;
+      gearTime += dt * spinRate;
+      gearClock.set(gearTime);
 
       bell.setHammer(hammerLiftAt(time, ESCAPEMENT_MARKERS.strike, ESCAPEMENT_BAR));
       if (!struck && time >= ESCAPEMENT_MARKERS.strike) {
@@ -324,10 +340,12 @@ export function createEscapementEnvironment(scene: Scene, options: EscapementEnv
   };
 }
 
-/** Snapshot factory: the whole layout from outside. */
+/** Snapshot factory: the whole layout from outside, under the level sky. */
 export function previewEscapementEnvironment() {
-  const scene = new Scene();
-  const environment = createEscapementEnvironment(scene);
-  environment.update(30, 'orrery');
-  return environment.root;
+  return withPreviewEnvironment(() => {
+    const scene = new Scene();
+    const environment = createEscapementEnvironment(scene);
+    environment.update(30, 'orrery');
+    return environment.root;
+  });
 }

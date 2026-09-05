@@ -1,10 +1,11 @@
-import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Group, Matrix4, Mesh, Path, Shape, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, CircleGeometry, CylinderGeometry, ExtrudeGeometry, Group, Matrix4, Mesh, Path, Shape, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { createBrassMaterial, createOxideMaterial, createPreviewLights, pinSnapshotView } from '../materials';
+import { createBrassMaterial, createLamp, createLampMaterial, createOxideMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
 
 // The Dial: the sky of the level. A black-oxide face seen from behind, so the
 // brass numerals read mirrored, with the chapter ring, minute ticks, frozen
-// hands, and a gateway at XII the Free Run exits through.
+// hands, and a gateway at XII the Free Run exits through. A lamp disc behind
+// the gateway lights the opening, so the run ends into brightness.
 
 export type DialLayout = {
   /** Centre of the face. The face lies in the plane z = center.z and faces +z. */
@@ -25,6 +26,29 @@ const STROKE_DEPTH = 12;
 const TICK_LENGTH = 26;
 
 type Stroke = { x: number; width: number; slant: number };
+
+/** A numeral stroke as cast metal: a rounded-rectangle extrusion with a bevel on every edge. */
+function strokeGeometry(width: number, height: number, depth: number) {
+  const bevel = Math.min(width, depth) * 0.22;
+  const shape = new Shape();
+  const hw = width / 2 - bevel;
+  const hh = height / 2 - bevel;
+  shape.moveTo(-hw, -hh);
+  shape.lineTo(hw, -hh);
+  shape.lineTo(hw, hh);
+  shape.lineTo(-hw, hh);
+  shape.closePath();
+  const geometry = new ExtrudeGeometry(shape, {
+    depth: depth - bevel * 2,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelSegments: 2,
+    curveSegments: 4,
+  });
+  geometry.translate(0, 0, -(depth - bevel * 2) / 2);
+  return geometry;
+}
 
 /** Roman numeral strokes: x offsets in glyph space (right-handed, reading left to right), before mirroring. */
 function glyphStrokes(numeral: string): Stroke[] {
@@ -116,7 +140,7 @@ function createBrasswork(layout: DialLayout) {
     const strokes = glyphStrokes(numeral);
     const up = angle - Math.PI / 2;
     for (const stroke of strokes) {
-      const box = new BoxGeometry(stroke.width * scale, NUMERAL_HEIGHT * scale, STROKE_DEPTH);
+      const box = strokeGeometry(stroke.width * scale, NUMERAL_HEIGHT * scale, STROKE_DEPTH);
       // Mirror: the glyph is read from behind, so its strokes are laid out right to left.
       let mirroredX = -stroke.x * scale;
       // XII splits around the gateway: X on one side of the opening, II on the other.
@@ -124,8 +148,7 @@ function createBrasswork(layout: DialLayout) {
       const local = new Matrix4().makeRotationZ(-stroke.slant).setPosition(mirroredX, 0, 0);
       const place = new Matrix4().makeRotationZ(up).setPosition(x * layout.numeralRadius, y * layout.numeralRadius, lift + 6);
       box.applyMatrix4(place.multiply(local));
-      parts.push(box.toNonIndexed());
-      box.dispose();
+      parts.push(box);
     }
   });
 
@@ -143,18 +166,39 @@ function createBrasswork(layout: DialLayout) {
     beam.dispose();
   }
 
-  // Frozen hands, mirrored like the numerals.
+  // Frozen hands, mirrored like the numerals: a tapered bevelled blade, a counterweight tail, and a boss at the hub.
   for (const [hours, length, width] of [
-    [layout.hands.hour, layout.numeralRadius * 0.62, 34],
-    [layout.hands.minute, layout.numeralRadius * 0.92, 24],
+    [layout.hands.hour, layout.numeralRadius * 0.62, 44],
+    [layout.hands.minute, layout.numeralRadius * 0.92, 30],
   ]) {
     const { angle } = hourDirection(hours);
-    const hand = new BoxGeometry(length + 60, width, 10);
-    hand.translate(length / 2 - 30, 0, 0);
-    hand.applyMatrix4(new Matrix4().makeRotationZ(angle));
-    hand.translate(0, 0, lift + 10);
-    parts.push(hand.toNonIndexed());
-    hand.dispose();
+    const rotate = new Matrix4().makeRotationZ(angle);
+    const blade = strokeGeometry(length, width, 14);
+    blade.applyMatrix4(new Matrix4().makeRotationZ(Math.PI / 2));
+    blade.applyMatrix4(new Matrix4().makeScale(1, 1, 1));
+    // Taper: scale the blade's far end down by squashing y toward the tip.
+    const positions = blade.getAttribute('position');
+    for (let i = 0; i < positions.count; i += 1) {
+      const t = (positions.getX(i) + length / 2) / length;
+      positions.setY(i, positions.getY(i) * (1 - 0.65 * t));
+    }
+    blade.translate(length / 2, 0, 0);
+    blade.applyMatrix4(rotate);
+    blade.translate(0, 0, lift + 12);
+    parts.push(blade);
+    const tail = strokeGeometry(length * 0.22, width * 1.3, 14);
+    tail.applyMatrix4(new Matrix4().makeRotationZ(Math.PI / 2));
+    tail.translate(-length * 0.11 - 20, 0, 0);
+    tail.applyMatrix4(rotate);
+    tail.translate(0, 0, lift + 12);
+    parts.push(tail);
+    const weight = new CylinderGeometry(width * 1.1, width * 1.1, 16, 24);
+    weight.rotateX(Math.PI / 2);
+    weight.translate(-length * 0.22 - 20, 0, 0);
+    weight.applyMatrix4(rotate);
+    weight.translate(0, 0, lift + 12);
+    parts.push(weight.toNonIndexed());
+    weight.dispose();
   }
 
   const boss = new CylinderGeometry(layout.radius * 0.06, layout.radius * 0.06, 30, 40);
@@ -176,34 +220,62 @@ export function dialGateway(layout: DialLayout) {
   return layout.center.clone().add(new Vector3(0, layout.numeralRadius, 0));
 }
 
+/** Where the lamp that lights the gateway from beyond the dial sits. */
+export function dialGatewayLamp(layout: DialLayout) {
+  return dialGateway(layout).add(new Vector3(0, 40, -160));
+}
+
+/** Warm disc beyond the gateway: the outside the Free Run flies into. */
+function createBeyond(layout: DialLayout) {
+  const gate = dialGateway(layout);
+  const disc = new Mesh(new CircleGeometry(layout.doorway.width * 2.2, 48), createLampMaterial(0.85));
+  disc.position.copy(gate).add(new Vector3(0, 0, -240));
+  disc.userData.raildIgnoreOcclusion = true;
+  return disc;
+}
+
 export function createDial(layout: DialLayout) {
   const group = new Group();
   group.name = 'dial';
   group.add(createFace(layout));
   group.add(createBrasswork(layout));
+  group.add(createBeyond(layout));
   return group;
 }
 
 export const PREVIEW_DIAL_LAYOUT: DialLayout = {
-  center: new Vector3(54, -640, -1560),
+  center: new Vector3(140, -640, -1780),
   radius: 980,
   numeralRadius: 840,
   doorway: { width: 150, height: 120 },
   hands: { hour: 4.6, minute: 7.3 },
 };
 
-/** Snapshot factory: the dial from behind. */
+/** The dial lamp: a warm light in front of the face so the numerals read from the orrery. */
+export const PREVIEW_DIAL_LAMP = new Vector3(140, -100, -1520);
+
+function previewDialLights(group: Group) {
+  // The dial lamp is about 400 units from the XII region of the face; the gate lamp 160 units behind the gateway.
+  group.add(createLamp({ name: 'preview-dial-lamp', position: PREVIEW_DIAL_LAMP, intensity: 60000 }));
+  group.add(createLamp({ name: 'preview-gate-lamp', position: dialGatewayLamp(PREVIEW_DIAL_LAYOUT), intensity: 6000 }));
+}
+
+/** Snapshot factory: the dial from behind, under the level sky. */
 export function previewDial() {
-  const group = createDial(PREVIEW_DIAL_LAYOUT);
-  group.add(createPreviewLights(PREVIEW_DIAL_LAYOUT.center.clone().add(new Vector3(0, 0, 400)), 900));
-  return group;
+  return withPreviewEnvironment(() => {
+    const group = createDial(PREVIEW_DIAL_LAYOUT);
+    previewDialLights(group);
+    return group;
+  });
 }
 
 /** Snapshot factory: the Free Run approach, climbing toward the XII gateway from the bob's rest position. */
 export function previewDialApproach() {
-  const group = createDial(PREVIEW_DIAL_LAYOUT);
-  group.add(createPreviewLights(new Vector3(54, 400, -1200), 500));
-  const from = new Vector3(54, 20, -1200);
-  const direction = dialGateway(PREVIEW_DIAL_LAYOUT).sub(from).normalize();
-  return pinSnapshotView(group, from.clone().addScaledVector(direction, 60), direction);
+  return withPreviewEnvironment(() => {
+    const group = createDial(PREVIEW_DIAL_LAYOUT);
+    previewDialLights(group);
+    const from = new Vector3(140, 70, -1420);
+    const direction = dialGateway(PREVIEW_DIAL_LAYOUT).sub(from).normalize();
+    return pinSnapshotView(group, from.clone().addScaledVector(direction, 120), direction);
+  });
 }
