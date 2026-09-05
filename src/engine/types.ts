@@ -1,6 +1,7 @@
 import type { Object3D, PerspectiveCamera, Scene } from 'three';
-import type { Node, PassNode, WebGPURenderer } from 'three/webgpu';
+import type { Node, PassNode, TextureNode, WebGPURenderer } from 'three/webgpu';
 import type { EventBus } from '../events';
+import type { PostStageConfig } from './post-stages';
 import type { Hud } from '../ui/hud';
 
 export type LevelAudio = {
@@ -47,6 +48,12 @@ export type LevelPostComposeInput = {
   bloomPass: LevelPostColorNode;
   /** Screen UV node from three/tsl. */
   screenUV: LevelPostUvNode;
+  /** Scene color texture, before motion blur and bloom. */
+  sceneColor: TextureNode;
+  /** Scene depth texture. */
+  depth: TextureNode;
+  /** Per-object screen velocity texture (NDC delta, xy). Present only when `velocityBuffer` is set. */
+  velocity?: TextureNode;
 };
 
 export type LevelPostConfig = {
@@ -62,6 +69,10 @@ export type LevelPostConfig = {
     strength?: number;
   } | false;
   composeOutput?: (input: LevelPostComposeInput) => LevelPostColorNode;
+  /** Screen-space stages run in this order after composeOutput and before the vignette. See src/engine/post-stages.ts. */
+  stages?: PostStageConfig[];
+  /** Render a per-object velocity target with the scene and blur along it, in place of the camera-only depth-reprojection blur. */
+  velocityBuffer?: boolean;
 };
 
 export type LevelToneMapping = 'none' | 'aces' | 'agx' | 'neutral';
