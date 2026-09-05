@@ -1,30 +1,24 @@
 import { BoxGeometry, BufferGeometry, CylinderGeometry, Group, LatheGeometry, Mesh, Vector2, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { createGearFamily, meshedPhase, pitchRadius, type GearFamily, type GearSpec } from '../gears';
-import { createBrassMaterial, createPreviewLights, createSteelMaterial, pinSnapshotView } from '../materials';
+import { createEscapementBoss } from '../escapement-boss';
+import { createBrassMaterial, createLamp, createSteelMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
 
-// The Pendulum: rod and bob hanging from the back cock, the escape wheel and
-// the crown wheel on the plate above. The swing is a rotation about +z through
-// the pivot; positive angle carries the bob toward +x. The escapement boss body
-// (the anchor fork) belongs to another module and attaches at `mount`.
+// The Pendulum: rod and bob hanging from the back cock, with the plate behind
+// and the mount the escapement boss body attaches to. The swing is a rotation
+// about +z through the pivot; positive angle carries the bob toward +x. The
+// escapement itself (fork, escape wheel, crown wheel) is `escapement-boss.ts`,
+// parented to `mount` by the integrator.
 
 export type PendulumLayout = {
   pivot: Vector3;
   /** Pivot-to-bob-centre distance. */
   length: number;
   bobRadius: number;
-  /** Escape wheel centre; its axis is +z. */
-  escapeWheel: Vector3;
-  crownWheel: Vector3;
-  /** Where the anchor fork pivots. */
+  /** Where the escapement boss body attaches; its fork pivots here. */
   mount: Vector3;
   plate: { z: number; xMin: number; xMax: number; yMin: number; yMax: number };
 };
 
-export const ESCAPE_WHEEL: GearSpec = { teeth: 30, module: 4, width: 6, rimWidth: 7, hubRadius: 7, spokes: 5, spokeWidth: 3 };
-export const CROWN_WHEEL: GearSpec = { teeth: 48, module: 4, width: 8, rimWidth: 10, hubRadius: 10, spokes: 8, spokeWidth: 4 };
-const CROWN_PINION: GearSpec = { teeth: 12, module: 4, width: 8, rimWidth: 4, hubRadius: 5, spokes: 3, spokeWidth: 3 };
-const Z_AXIS = new Vector3(0, 0, 1);
 
 function nonIndexed(geometry: BufferGeometry) {
   const result = geometry.index ? geometry.toNonIndexed() : geometry;
@@ -87,30 +81,30 @@ function createPlate(layout: PendulumLayout) {
   const cock = new BoxGeometry(60, 26, layout.pivot.z - plate.z + 4);
   cock.translate(layout.pivot.x, layout.pivot.y + 14, (layout.pivot.z + plate.z) / 2 + 2);
   parts.push(nonIndexed(cock));
-  // Bosses where the arbors pass through the plate.
-  for (const center of [layout.escapeWheel, layout.crownWheel, layout.mount]) {
-    const boss = new CylinderGeometry(16, 16, 8, 24);
-    boss.rotateX(Math.PI / 2);
-    boss.translate(center.x, center.y, plate.z + 8);
-    parts.push(nonIndexed(boss));
-  }
+  // Boss where the mount arbor passes through the plate, and a cock bracing it.
+  const boss = new CylinderGeometry(22, 22, 10, 24);
+  boss.rotateX(Math.PI / 2);
+  boss.translate(layout.mount.x, layout.mount.y, plate.z + 9);
+  parts.push(nonIndexed(boss));
+  const cockArm = new BoxGeometry(90, 20, layout.mount.z - plate.z - 20);
+  cockArm.translate(layout.mount.x - 60, layout.mount.y + 30, (layout.mount.z + plate.z) / 2);
+  parts.push(nonIndexed(cockArm));
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
-  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 60, tarnish: 0.4, roughness: 0.48, brushAxis: new Vector3(0, 1, 0) }));
+  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 230, seamAniso: 1.6, tarnish: 0.35, roughness: 0.44, brushAxis: new Vector3(0, 1, 0) }));
 }
 
+/** The mount arbor from the plate to the fork pivot, and the pendulum's pivot pin. */
 function createArbors(layout: PendulumLayout) {
   const parts: BufferGeometry[] = [];
-  for (const [center, radius] of [
-    [layout.escapeWheel, 4],
-    [layout.crownWheel, 6],
-    [layout.mount, 7],
-  ] as const) {
-    const arbor = new CylinderGeometry(radius, radius, layout.pivot.z - layout.plate.z + 30, 12);
-    arbor.rotateX(Math.PI / 2);
-    arbor.translate(center.x, center.y, (center.z + layout.plate.z) / 2 + 6);
-    parts.push(nonIndexed(arbor));
-  }
+  const arbor = new CylinderGeometry(7, 7, layout.mount.z - layout.plate.z + 30, 12);
+  arbor.rotateX(Math.PI / 2);
+  arbor.translate(layout.mount.x, layout.mount.y, (layout.mount.z + layout.plate.z) / 2 + 6);
+  parts.push(nonIndexed(arbor));
+  const pin = new CylinderGeometry(4, 4, layout.pivot.z - layout.plate.z + 16, 12);
+  pin.rotateX(Math.PI / 2);
+  pin.translate(layout.pivot.x, layout.pivot.y, (layout.pivot.z + layout.plate.z) / 2 + 4);
+  parts.push(nonIndexed(pin));
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
   return new Mesh(merged, createSteelMaterial({ tarnish: 0.2 }));
@@ -122,9 +116,8 @@ export type Pendulum = {
   mount: Group;
   setAngle(radians: number): void;
   getAngle(): number;
-  /** Rotates the escape wheel to an absolute angle; the boss loop steps it a tooth per tick. */
+  /** The escape wheel belongs to the boss body; this stays for callers and does nothing. */
   setEscapeWheelAngle(radians: number): void;
-  escapeWheel: GearFamily;
 };
 
 export function createPendulum(layout: PendulumLayout): Pendulum {
@@ -135,21 +128,6 @@ export function createPendulum(layout: PendulumLayout): Pendulum {
   group.add(createPlate(layout));
   group.add(createArbors(layout));
 
-  const escapeWheel = createGearFamily(ESCAPE_WHEEL, [{ position: layout.escapeWheel, axis: Z_AXIS, rate: 0 }]);
-  group.add(escapeWheel.mesh);
-  const crownRate = 0.06;
-  const crownPhase = 0;
-  const toPinion = new Vector3(1, 0, 0);
-  const pinionCenter = layout.crownWheel.clone().addScaledVector(toPinion, pitchRadius(CROWN_WHEEL) + pitchRadius(CROWN_PINION));
-  const crown = createGearFamily(CROWN_WHEEL, [{ position: layout.crownWheel, axis: Z_AXIS, rate: crownRate, phase: crownPhase }]);
-  const pinion = createGearFamily(CROWN_PINION, [{
-    position: pinionCenter,
-    axis: Z_AXIS,
-    rate: -crownRate * (CROWN_WHEEL.teeth / CROWN_PINION.teeth),
-    phase: meshedPhase({ spec: CROWN_WHEEL, axis: Z_AXIS, phase: crownPhase }, toPinion, CROWN_PINION),
-  }]);
-  group.add(crown.mesh, pinion.mesh);
-
   const mount = new Group();
   mount.name = 'escapement-mount';
   mount.position.copy(layout.mount);
@@ -158,44 +136,61 @@ export function createPendulum(layout: PendulumLayout): Pendulum {
   return {
     group,
     mount,
-    escapeWheel,
     setAngle(radians) {
       swing.rotation.z = radians;
     },
     getAngle() {
       return swing.rotation.z;
     },
-    setEscapeWheelAngle(radians) {
-      escapeWheel.setPhase(0, radians);
-    },
+    setEscapeWheelAngle() {},
   };
 }
 
 export const PREVIEW_PENDULUM_LAYOUT: PendulumLayout = {
-  pivot: new Vector3(54, 320, -1200),
-  length: 300,
-  bobRadius: 46,
-  escapeWheel: new Vector3(54, 420, -1215),
-  crownWheel: new Vector3(54, 590, -1215),
-  mount: new Vector3(54, 500, -1200),
-  plate: { z: -1262, xMin: -170, xMax: 280, yMin: 150, yMax: 720 },
+  pivot: new Vector3(140, 200, -1420),
+  length: 130,
+  bobRadius: 30,
+  mount: new Vector3(140, 260, -1406),
+  plate: { z: -1482, xMin: -84, xMax: 364, yMin: 40, yMax: 560 },
 };
 
-/** Snapshot factory: the pendulum set from outside, mid-swing. */
-export function previewPendulum() {
-  const pendulum = createPendulum(PREVIEW_PENDULUM_LAYOUT);
-  pendulum.setAngle((14 * Math.PI) / 180);
-  pendulum.group.add(createPreviewLights(new Vector3(54, 400, -1200), 320));
-  return pendulum.group;
+/** Rail camera offset from the bob centre for the pendulum ride: above and in front. */
+export const PENDULUM_RIDE_OFFSET = new Vector3(0, 30, 120);
+/**
+ * Where the ride camera aims, relative to the mount: this far below it, so
+ * the escapement sits centred in the top third of a 45 degree frame from the
+ * ride offset.
+ */
+export const PENDULUM_RIDE_AIM_DROP = 66;
+
+function previewPendulumLights(group: Group) {
+  // The works lamp is about 270 units from the mount and the plate behind it.
+  group.add(createLamp({ name: 'preview-lamp', position: new Vector3(140, 520, -1300), intensity: 25000 }));
 }
 
-/** Snapshot factory: looking up from the bob at the top of a swing toward the escapement. */
+/** Snapshot factory: the pendulum set from outside, mid-swing, with the boss body at the mount. */
+export function previewPendulum() {
+  return withPreviewEnvironment(() => {
+    const pendulum = createPendulum(PREVIEW_PENDULUM_LAYOUT);
+    pendulum.setAngle((14 * Math.PI) / 180);
+    pendulum.mount.add(createEscapementBoss());
+    previewPendulumLights(pendulum.group);
+    return pendulum.group;
+  });
+}
+
+/** Snapshot factory: the rail camera at the top of a swing, 120 units in front of the bob, aimed so the escapement fills the top third. */
 export function previewPendulumRide() {
-  const pendulum = createPendulum(PREVIEW_PENDULUM_LAYOUT);
-  const angle = (20 * Math.PI) / 180;
-  pendulum.setAngle(angle);
-  pendulum.group.add(createPreviewLights(new Vector3(54, 520, -1140), 260));
-  const layout = PREVIEW_PENDULUM_LAYOUT;
-  const camera = layout.pivot.clone().add(new Vector3(Math.sin(angle) * (layout.length - 30), -Math.cos(angle) * (layout.length - 30), 40));
-  return pinSnapshotView(pendulum.group, camera, new Vector3(0, 0.55, -1));
+  return withPreviewEnvironment(() => {
+    const pendulum = createPendulum(PREVIEW_PENDULUM_LAYOUT);
+    const angle = (20 * Math.PI) / 180;
+    pendulum.setAngle(angle);
+    pendulum.mount.add(createEscapementBoss());
+    previewPendulumLights(pendulum.group);
+    const layout = PREVIEW_PENDULUM_LAYOUT;
+    const bob = layout.pivot.clone().add(new Vector3(Math.sin(angle) * layout.length, -Math.cos(angle) * layout.length, 0));
+    const camera = bob.clone().add(PENDULUM_RIDE_OFFSET);
+    const target = layout.mount.clone().add(new Vector3(0, -PENDULUM_RIDE_AIM_DROP, 0));
+    return pinSnapshotView(pendulum.group, camera, target.sub(camera).normalize());
+  });
 }

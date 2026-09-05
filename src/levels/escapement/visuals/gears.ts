@@ -11,14 +11,16 @@ import {
   Mesh,
   Path,
   Quaternion,
+  RingGeometry,
   Shape,
   Vector3,
 } from 'three';
 import type { Material } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { attribute, cos, cross, dot, normalGeometry, positionGeometry, sin, uniform, normalLocal } from 'three/tsl';
+import { attribute, cos, cross, dot, normalGeometry, positionGeometry, positionLocal, sin, normalLocal } from 'three/tsl';
+import { createDisplacementClock, displacedPosition } from '../../../engine/displaced-velocity';
 import type { FloatNode, Vec3Node } from '../../../engine/tsl-surface';
-import { createBrassMaterial, createPreviewLights, gearDisplacementClock, type MetalOptions } from './materials';
+import { createBrassMaterial, createPreviewLights, createSteelMaterial, pinSnapshotView, strikeDisplaceLocal, withPreviewEnvironment, type MetalOptions } from './materials';
 
 // ---- spin shader -------------------------------------------------------------------
 //
@@ -27,13 +29,12 @@ import { createBrassMaterial, createPreviewLights, gearDisplacementClock, type M
 // radians. The vertex shader rotates the part about its axis by
 // `gearClock * spinRate + spinPhase`. On an InstancedMesh the attributes are
 // per instance; on a merged mesh they are per vertex, so one draw call can
-// carry parts that spin at different rates about different centres.
+// carry parts that spin at different rates about different centres. The spin
+// goes through `displacedPosition`, so the velocity pass sees only the change
+// between frames.
 
-/**
- * Integrated gear time in seconds. The environment advances it by dt times the
- * spin rate and copies it into `gearDisplacementClock`, which the spin shader reads.
- */
-export const gearClock = uniform(0);
+/** Integrated gear time in seconds. `update` advances it by dt times the spin rate and calls `set`. */
+export const gearClock = createDisplacementClock(0);
 
 function rotateAboutAxis(v: Vec3Node, axis: Vec3Node, angle: FloatNode): Vec3Node {
   const c = cos(angle);
@@ -41,20 +42,34 @@ function rotateAboutAxis(v: Vec3Node, axis: Vec3Node, angle: FloatNode): Vec3Nod
   return v.mul(c).add(cross(axis, v).mul(s)).add(axis.mul(dot(axis, v).mul(c.oneMinus())));
 }
 
-/** `shape` hook for the metal materials: spins the local position and normal by the part's attributes at clock `clock`. */
-export function spinShape(local: Vec3Node, clock: FloatNode = gearDisplacementClock.current): Vec3Node {
+/** Spins a local position by the part's attributes at clock value `clock`; rotates the normal too when asked. */
+function spinAt(local: Vec3Node, clock: FloatNode, rotateNormal: boolean): Vec3Node {
   const center = attribute<'vec3'>('spinCenter', 'vec3');
   const axis = attribute<'vec3'>('spinAxis', 'vec3');
   const rate = attribute<'float'>('spinRate', 'float');
   const phase = attribute<'float'>('spinPhase', 'float');
   const angle: FloatNode = clock.mul(rate).add(phase);
-  normalLocal.assign(rotateAboutAxis(normalLocal, axis, angle));
+  if (rotateNormal) normalLocal.assign(rotateAboutAxis(normalLocal, axis, angle));
   return rotateAboutAxis(local.sub(center), axis, angle).add(center);
 }
 
-/** Brass material for spinning parts: patterns sample the pre-spin geometry so they do not slide. */
+/** Position node for spinning parts: spin at the gear clock, then the strike wave, with velocity-correct previous positions. */
+export function spinPositionNode(): Vec3Node {
+  return displacedPosition((position, clock) => {
+    // The velocity pass evaluates the previous frame first; only the current evaluation may rotate the normal.
+    const current = position === positionLocal;
+    return strikeDisplaceLocal(spinAt(position as Vec3Node, clock as FloatNode, current));
+  }, gearClock) as Vec3Node;
+}
+
+/** Brass material for spinning parts: patterns sample the pre-spin geometry so they do not slide; no plate seams on a gear. */
 export function createSpinningBrassMaterial(options: MetalOptions = {}) {
-  return createBrassMaterial({ patternPosition: positionGeometry, patternNormal: normalGeometry, ...options, shape: spinShape });
+  return createBrassMaterial({ patternPosition: positionGeometry, patternNormal: normalGeometry, tarnish: 0.3, ...options, positionNode: spinPositionNode() });
+}
+
+/** Steel material for spinning parts. */
+export function createSpinningSteelMaterial(options: MetalOptions = {}) {
+  return createSteelMaterial({ patternPosition: positionGeometry, patternNormal: normalGeometry, ...options, positionNode: spinPositionNode() });
 }
 
 // ---- involute gear geometry ---------------------------------------------------------
@@ -148,23 +163,59 @@ export function createGearGeometry(spec: GearSpec): BufferGeometry {
   hole.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
   shape.holes.push(hole);
 
-  const rim = new ExtrudeGeometry(shape, { depth: spec.width, bevelEnabled: false, curveSegments: 48 });
-  rim.translate(0, 0, -spec.width / 2);
+  // Chamfered teeth: the bevel takes a small fraction of the module off every edge.
+  const bevel = spec.module * 0.09;
+  const rim = new ExtrudeGeometry(shape, {
+    depth: spec.width - bevel * 2,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelSegments: 1,
+    curveSegments: 48,
+  });
+  rim.translate(0, 0, -(spec.width - bevel * 2) / 2);
 
   const parts: BufferGeometry[] = [rim];
   const spokeDepth = spec.spokeDepth ?? spec.width * 0.55;
   const spokeWidth = spec.spokeWidth ?? Math.max(1, spec.module * 0.9);
   const spokeLength = innerRadius - spec.hubRadius + 2;
   for (let i = 0; i < spec.spokes; i += 1) {
+    const angle = (i * 2 * Math.PI) / spec.spokes;
     const spoke = new BoxGeometry(spokeLength, spokeWidth, spokeDepth);
     spoke.translate(spec.hubRadius - 1 + spokeLength / 2, 0, 0);
-    spoke.rotateZ((i * 2 * Math.PI) / spec.spokes);
+    spoke.rotateZ(angle);
     parts.push(spoke.toNonIndexed());
     spoke.dispose();
+    // Fillet: a wider, thinner root where the spoke meets the rim and the hub.
+    for (const [radius, length] of [
+      [innerRadius - spokeWidth * 0.9, spokeWidth * 1.8],
+      [spec.hubRadius + spokeWidth * 0.9, spokeWidth * 1.8],
+    ]) {
+      const fillet = new BoxGeometry(length, spokeWidth * 2.2, spokeDepth * 0.7);
+      fillet.translate(radius, 0, 0);
+      fillet.rotateZ(angle);
+      parts.push(fillet.toNonIndexed());
+      fillet.dispose();
+    }
   }
-  const hub = new CylinderGeometry(spec.hubRadius, spec.hubRadius, spec.width * 1.3, 32);
+  // Hub boss, a thinner web ring around it, and the arbor through it.
+  const hub = new CylinderGeometry(spec.hubRadius, spec.hubRadius * 1.08, spec.width * 1.4, 32);
   hub.rotateX(Math.PI / 2);
   parts.push(hub.toNonIndexed());
+  const webOuter = spec.hubRadius + (innerRadius - spec.hubRadius) * 0.3;
+  const web = new RingGeometry(spec.hubRadius - 0.5, webOuter, 32, 1);
+  const webDepth = spokeDepth * 0.5;
+  for (const side of [-1, 1]) {
+    const face = web.clone();
+    face.translate(0, 0, side * webDepth * 0.5);
+    if (side < 0) face.rotateY(Math.PI);
+    parts.push(face.toNonIndexed());
+    face.dispose();
+  }
+  web.dispose();
+  const arbor = new CylinderGeometry(spec.hubRadius * 0.42, spec.hubRadius * 0.42, spec.width * 3.2, 20);
+  arbor.rotateX(Math.PI / 2);
+  parts.push(arbor.toNonIndexed());
 
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
@@ -239,6 +290,20 @@ export function meshedPhase(
   return phaseToward(driver.axis, direction.clone().negate()) + drivenPitch / 2 + gapOffset;
 }
 
+/**
+ * A pinion riding on a wheel's arbor: same centre line, axis and rate, offset
+ * `along` units up the axis so it sits above the wheel and meshes with the
+ * next wheel of the train.
+ */
+export function pinionOn(wheel: GearInstance, along: number): GearInstance {
+  return {
+    position: wheel.position.clone().addScaledVector(wheel.axis, along),
+    axis: wheel.axis,
+    rate: wheel.rate,
+    phase: wheel.phase,
+  };
+}
+
 export type GearFamily = {
   mesh: InstancedMesh;
   spec: GearSpec;
@@ -263,7 +328,7 @@ export function createGearFamily(spec: GearSpec, instances: GearInstance[], mate
   const axes = new Float32Array(count * 3);
   const rates = new Float32Array(count);
   const phases = new Float32Array(count);
-  const mesh = new InstancedMesh(geometry, material ?? createSpinningBrassMaterial({ seamScale: 1 / 9 }), count);
+  const mesh = new InstancedMesh(geometry, material ?? createSpinningBrassMaterial(), count);
   const matrix = new Matrix4();
   instances.forEach((instance, index) => {
     mesh.setMatrixAt(index, instanceMatrix(instance, matrix));
@@ -331,30 +396,58 @@ export function mergeSpinParts(parts: SpinPart[]): BufferGeometry {
 
 /** A single gear as a plain mesh, for previews and for parts that never spin. */
 export function createGearMesh(spec: GearSpec, material?: Material) {
-  return new Mesh(createGearGeometry(spec), material ?? createBrassMaterial({ patternPosition: positionGeometry, patternNormal: normalGeometry, seamScale: 1 / 9 }));
+  return new Mesh(createGearGeometry(spec), material ?? createBrassMaterial({ patternPosition: positionGeometry, patternNormal: normalGeometry }));
 }
 
 // ---- preview ------------------------------------------------------------------------------
 
-/** Snapshot factory: three meshing gears of two families under preview lights. */
+/** Snapshot factory: a great wheel meshing with a pinion, each with a pinion on its arbor, under the level sky. */
 export function previewGears() {
-  const group = new Group();
-  const big: GearSpec = { teeth: 30, module: 4, width: 10, rimWidth: 12, hubRadius: 8, spokes: 6 };
-  const small: GearSpec = { teeth: 14, module: 4, width: 10, rimWidth: 6, hubRadius: 5, spokes: 4 };
-  const axis = new Vector3(0, 0, 1);
-  const contact = new Vector3(1, 0, 0);
-  const bigCenter = new Vector3(0, 0, 0);
-  const smallCenter = bigCenter.clone().addScaledVector(contact, pitchRadius(big) + pitchRadius(small));
-  const bigFamily = createGearFamily(big, [
-    { position: bigCenter, axis, rate: 0.3, phase: toothPhase(big, axis, contact) },
-  ]);
-  const smallFamily = createGearFamily(small, [
-    { position: smallCenter, axis, rate: -0.3 * (big.teeth / small.teeth), phase: toothPhase(small, axis, contact.clone().negate(), true) },
-    { position: new Vector3(-40, 70, 0), axis: new Vector3(0, 1, 0), rate: 0.5 },
-  ]);
-  group.add(bigFamily.mesh, smallFamily.mesh);
-  group.add(createPreviewLights(new Vector3(30, 20, 0), 120));
-  gearClock.value = 0.8;
-  gearDisplacementClock.set(0.8);
-  return group;
+  return withPreviewEnvironment(() => {
+    const group = new Group();
+    const big: GearSpec = { teeth: 30, module: 4, width: 10, rimWidth: 12, hubRadius: 8, spokes: 6 };
+    const small: GearSpec = { teeth: 14, module: 4, width: 10, rimWidth: 6, hubRadius: 5, spokes: 4 };
+    const top: GearSpec = { teeth: 9, module: 4, width: 8, rimWidth: 4, hubRadius: 4, spokes: 3 };
+    const axis = new Vector3(0, 0, 1);
+    const contact = new Vector3(1, 0, 0);
+    const bigCenter = new Vector3(0, 0, 0);
+    const smallCenter = bigCenter.clone().addScaledVector(contact, pitchRadius(big) + pitchRadius(small));
+    const bigInstance: GearInstance = { position: bigCenter, axis, rate: 0.3, phase: toothPhase(big, axis, contact) };
+    const smallInstance: GearInstance = {
+      position: smallCenter,
+      axis,
+      rate: -0.3 * (big.teeth / small.teeth),
+      phase: meshedPhase({ spec: big, axis, phase: bigInstance.phase ?? 0 }, contact, small),
+    };
+    group.add(createGearFamily(big, [bigInstance]).mesh);
+    group.add(createGearFamily(small, [smallInstance]).mesh);
+    group.add(createGearFamily(top, [pinionOn(bigInstance, 12), pinionOn(smallInstance, 12)]).mesh);
+    group.add(createPreviewLights(new Vector3(30, 20, 0), 120));
+    gearClock.set(0.8);
+    return group;
+  });
+}
+
+/** Snapshot factory: the mesh point between the wheel and pinion, close up. */
+export function previewGearMesh() {
+  return withPreviewEnvironment(() => {
+    const group = new Group();
+    const big: GearSpec = { teeth: 30, module: 4, width: 10, rimWidth: 12, hubRadius: 8, spokes: 6 };
+    const small: GearSpec = { teeth: 14, module: 4, width: 10, rimWidth: 6, hubRadius: 5, spokes: 4 };
+    const axis = new Vector3(0, 0, 1);
+    const contact = new Vector3(1, 0, 0);
+    const smallCenter = new Vector3().addScaledVector(contact, pitchRadius(big) + pitchRadius(small));
+    const bigInstance: GearInstance = { position: new Vector3(), axis, rate: 0.3, phase: toothPhase(big, axis, contact) };
+    const smallInstance: GearInstance = {
+      position: smallCenter,
+      axis,
+      rate: -0.3 * (big.teeth / small.teeth),
+      phase: meshedPhase({ spec: big, axis, phase: bigInstance.phase ?? 0 }, contact, small),
+    };
+    group.add(createGearFamily(big, [bigInstance]).mesh);
+    group.add(createGearFamily(small, [smallInstance]).mesh);
+    group.add(createPreviewLights(new Vector3(60, 0, 0), 60));
+    gearClock.set(0.8);
+    return pinSnapshotView(group, new Vector3(pitchRadius(big), -6, 70), new Vector3(0, 0.1, -1));
+  });
 }

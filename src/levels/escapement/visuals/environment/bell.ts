@@ -1,10 +1,12 @@
-import { BoxGeometry, BufferGeometry, CatmullRomCurve3, CylinderGeometry, Group, LatheGeometry, Mesh, SphereGeometry, Vector2, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, CatmullRomCurve3, CylinderGeometry, Group, LatheGeometry, Mesh, SphereGeometry, TorusGeometry, Vector2, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { createBrassMaterial, createOxideMaterial, createPreviewLights, createSteelMaterial, strikeAge, strikeOrigin, strikeStrength } from '../materials';
+import { createBrassMaterial, createOxideMaterial, createPreviewLights, createSteelMaterial, strikeAge, strikeOrigin, strikeStrength, withPreviewEnvironment } from '../materials';
 
-// The hour bell and its hammer. The hammer is raised over the last bar before
-// the strike and falls on the downbeat; the fall starts the strike wave that
-// every environment material displaces by.
+// The hour bell in its headstock: a brass yoke with trunnions turning in
+// bearing blocks on an A-frame, a bell wheel on one trunnion, and the hammer on
+// a pivoted arm bracketed to the frame. The hammer is raised over the last bar
+// before the strike and falls on the downbeat; the fall starts the strike wave
+// that every environment material displaces by.
 
 export type BellLayout = {
   /** Centre of the bell's mouth. */
@@ -57,63 +59,124 @@ function bellProfile(radius: number, height: number) {
 }
 
 function createBellBody(layout: BellLayout) {
-  const shell = new LatheGeometry(bellProfile(layout.radius, layout.height), 64);
+  const R = layout.radius;
+  const shell = new LatheGeometry(bellProfile(R, layout.height), 64);
   shell.translate(layout.mouth.x, layout.mouth.y, layout.mouth.z);
   const parts: BufferGeometry[] = [nonIndexed(shell)];
-  // Crown loop and yoke beam.
-  const crown = new CylinderGeometry(layout.radius * 0.14, layout.radius * 0.14, layout.radius * 0.3, 16);
-  crown.translate(layout.mouth.x, layout.mouth.y + layout.height + layout.radius * 0.18, layout.mouth.z);
+  // Crown loop, the headstock yoke the bell hangs from, and its trunnions.
+  const crown = new CylinderGeometry(R * 0.16, R * 0.16, R * 0.34, 16);
+  crown.translate(layout.mouth.x, layout.mouth.y + layout.height + R * 0.2, layout.mouth.z);
   parts.push(nonIndexed(crown));
-  const yoke = new BoxGeometry(layout.radius * 2.4, layout.radius * 0.24, layout.radius * 0.3);
-  yoke.translate(layout.mouth.x, layout.mouth.y + layout.height + layout.radius * 0.42, layout.mouth.z);
+  const yokeY = layout.mouth.y + layout.height + R * 0.52;
+  const yoke = new BoxGeometry(R * 2.6, R * 0.44, R * 0.9);
+  yoke.translate(layout.mouth.x, yokeY, layout.mouth.z);
   parts.push(nonIndexed(yoke));
+  for (const side of [-1, 1]) {
+    const cheek = new BoxGeometry(R * 0.5, R * 0.9, R * 1.1);
+    cheek.translate(layout.mouth.x + side * R * 1.05, yokeY - R * 0.1, layout.mouth.z);
+    parts.push(nonIndexed(cheek));
+  }
+  const trunnion = new CylinderGeometry(R * 0.14, R * 0.14, R * 4.2, 16);
+  trunnion.rotateZ(Math.PI / 2);
+  trunnion.translate(layout.mouth.x, yokeY, layout.mouth.z);
+  parts.push(nonIndexed(trunnion));
+  // Bell wheel on the trunnion opposite the hammer: a rim with spokes.
+  const wheelX = layout.mouth.x - layout.hammerSide * R * 1.85;
+  const wheelRadius = R * 1.35;
+  const wheel = new TorusGeometry(wheelRadius, R * 0.09, 10, 64);
+  wheel.rotateY(Math.PI / 2);
+  wheel.translate(wheelX, yokeY, layout.mouth.z);
+  parts.push(nonIndexed(wheel));
+  for (let i = 0; i < 8; i += 1) {
+    const spoke = new BoxGeometry(R * 0.08, wheelRadius, R * 0.08);
+    spoke.translate(0, wheelRadius / 2, 0);
+    spoke.rotateX((i * Math.PI) / 4);
+    spoke.translate(wheelX, yokeY, layout.mouth.z);
+    parts.push(nonIndexed(spoke));
+  }
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
-  return new Mesh(merged, createBrassMaterial({ tarnish: 0.28, roughness: 0.36, brushAxis: new Vector3(0, 1, 0) }));
+  return new Mesh(merged, createBrassMaterial({ tarnish: 0.28, roughness: 0.32, brushAxis: new Vector3(0, 1, 0) }));
+}
+
+/** Frame height above the mouth where the trunnions turn. */
+function trunnionHeight(layout: BellLayout) {
+  return layout.mouth.y + layout.height + layout.radius * 0.52;
+}
+
+/** The hammer pivot: on the frame leg on the hammer side, level with the bell's sound bow. */
+function hammerPivot(layout: BellLayout) {
+  const R = layout.radius;
+  return new Vector3(layout.mouth.x + layout.hammerSide * R * 2.3, layout.mouth.y + layout.height * 0.55, layout.mouth.z);
 }
 
 function createSteelwork(layout: BellLayout) {
+  const R = layout.radius;
   const parts: BufferGeometry[] = [];
-  const top = layout.mouth.y + layout.height + layout.radius * 0.54;
-  // Hangers from the yoke ends up to the beam, and the beam itself.
+  const top = trunnionHeight(layout);
+  const legSpread = R * 2.3;
+  const footY = layout.mouth.y - R * 0.6;
+  // A-frame on each side: two legs to a bearing block at the trunnion, and a tie beam between the sides.
   for (const side of [-1, 1]) {
-    const hanger = new CylinderGeometry(3.2, 3.2, layout.radius * 0.9, 12);
-    hanger.translate(layout.mouth.x + side * layout.radius * 1.05, top + layout.radius * 0.45, layout.mouth.z);
-    parts.push(nonIndexed(hanger));
+    const x = layout.mouth.x + side * legSpread;
+    const block = new BoxGeometry(R * 0.6, R * 0.5, R * 0.7);
+    block.translate(x, top, layout.mouth.z);
+    parts.push(nonIndexed(block));
+    for (const dz of [-1, 1]) {
+      const height = top - footY;
+      const leg = new CylinderGeometry(R * 0.11, R * 0.15, Math.hypot(height, R * 0.8), 12);
+      leg.rotateX(Math.atan2(dz * R * 0.8, height));
+      leg.translate(x, (top + footY) / 2, layout.mouth.z + dz * R * 0.4);
+      parts.push(nonIndexed(leg));
+    }
+    const foot = new BoxGeometry(R * 0.5, R * 0.16, R * 2.2);
+    foot.translate(x, footY, layout.mouth.z);
+    parts.push(nonIndexed(foot));
   }
-  const beam = new BoxGeometry(layout.radius * 3.6, 14, 18);
-  beam.translate(layout.mouth.x, top + layout.radius * 0.9 + 7, layout.mouth.z);
-  parts.push(nonIndexed(beam));
+  const tie = new BoxGeometry(legSpread * 2, R * 0.24, R * 0.3);
+  tie.translate(layout.mouth.x, top + R * 0.36, layout.mouth.z);
+  parts.push(nonIndexed(tie));
   // Clapper: rod and ball inside the mouth.
-  const rod = new CylinderGeometry(2.5, 2.5, layout.height * 0.8, 10);
+  const rod = new CylinderGeometry(R * 0.05, R * 0.05, layout.height * 0.8, 10);
   rod.translate(layout.mouth.x, layout.mouth.y + layout.height * 0.5, layout.mouth.z);
   parts.push(nonIndexed(rod));
-  const ball = new SphereGeometry(layout.radius * 0.16, 20, 14);
-  ball.translate(layout.mouth.x, layout.mouth.y + layout.radius * 0.18, layout.mouth.z);
+  const ball = new SphereGeometry(R * 0.16, 20, 14);
+  ball.translate(layout.mouth.x, layout.mouth.y + R * 0.18, layout.mouth.z);
   parts.push(nonIndexed(ball));
-  // Hammer post.
-  const post = new CylinderGeometry(6, 8, layout.height * 1.1, 14);
-  post.translate(layout.mouth.x + layout.hammerSide * (layout.radius + 70), layout.mouth.y + layout.height * 0.55, layout.mouth.z);
-  parts.push(nonIndexed(post));
+  // Hammer bracket on the hammer-side leg, with the pivot pin through it.
+  const pivot = hammerPivot(layout);
+  const bracket = new BoxGeometry(R * 0.5, R * 0.4, R * 0.5);
+  bracket.translate(pivot.x, pivot.y, pivot.z);
+  parts.push(nonIndexed(bracket));
+  const pin = new CylinderGeometry(R * 0.06, R * 0.06, R * 0.7, 10);
+  pin.rotateX(Math.PI / 2);
+  pin.translate(pivot.x, pivot.y, pivot.z);
+  parts.push(nonIndexed(pin));
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
-  return new Mesh(merged, createSteelMaterial({ tarnish: 0.25 }));
+  return new Mesh(merged, createSteelMaterial({ tarnish: 0.25, roughness: 0.48 }));
 }
 
-/** The hammer: an arm pivoting at the post, head toward the bell. Rotates about +z. */
+/** The hammer: a steel arm pivoting at the bracket with a black-oxide head toward the bell's sound bow. Rotates about +z. */
 function createHammer(layout: BellLayout) {
-  const pivot = new Group();
-  pivot.position.set(layout.mouth.x + layout.hammerSide * (layout.radius + 70), layout.mouth.y + layout.height * 0.62, layout.mouth.z);
-  const reach = 70 - layout.radius * 0.1;
-  const arm = new BoxGeometry(reach, 9, 9);
+  const R = layout.radius;
+  const pivotGroup = new Group();
+  pivotGroup.position.copy(hammerPivot(layout));
+  const reach = R * 2.3 - R * 0.98;
+  const arm = new BoxGeometry(reach, R * 0.16, R * 0.16);
   arm.translate(-layout.hammerSide * reach / 2, 0, 0);
-  const head = new BoxGeometry(26, 30, 30);
-  head.translate(-layout.hammerSide * (reach + 8), 0, 0);
-  const parts = [nonIndexed(arm), nonIndexed(head)];
-  const merged = mergeGeometries(parts, false);
-  for (const part of parts) part.dispose();
-  pivot.add(new Mesh(merged, createOxideMaterial({ roughness: 0.5, brushAxis: new Vector3(1, 0, 0) })));
-  return pivot;
+  const hubs: BufferGeometry[] = [nonIndexed(arm)];
+  const hub = new CylinderGeometry(R * 0.16, R * 0.16, R * 0.3, 16);
+  hub.rotateX(Math.PI / 2);
+  hubs.push(nonIndexed(hub));
+  const steel = mergeGeometries(hubs, false);
+  for (const part of hubs) part.dispose();
+  pivotGroup.add(new Mesh(steel, createSteelMaterial({ tarnish: 0.2, roughness: 0.4, brushAxis: new Vector3(1, 0, 0) })));
+  const head = new CylinderGeometry(R * 0.3, R * 0.3, R * 0.7, 20);
+  head.rotateZ(Math.PI / 2);
+  head.translate(-layout.hammerSide * (reach + R * 0.05), 0, 0);
+  pivotGroup.add(new Mesh(head, createOxideMaterial({ roughness: 0.5, brushAxis: new Vector3(1, 0, 0) })));
+  return pivotGroup;
 }
 
 export type Bell = {
@@ -167,26 +230,30 @@ export function beginStrike(origin: Vector3, strength = 7) {
 }
 
 export const PREVIEW_BELL_LAYOUT: BellLayout = {
-  mouth: new Vector3(-60, 30, -1010),
+  mouth: new Vector3(-40, 20, -1240),
   radius: 52,
   height: 78,
   hammerSide: 1,
 };
 
-/** Snapshot factory: bell and hammer, hammer half raised. */
+/** Snapshot factory: bell, headstock and hammer half raised, under the level sky. */
 export function previewBell() {
-  const bell = createBell(PREVIEW_BELL_LAYOUT);
-  bell.setHammer(0.6);
-  bell.group.add(createPreviewLights(bell.origin, 140));
-  return bell.group;
+  return withPreviewEnvironment(() => {
+    const bell = createBell(PREVIEW_BELL_LAYOUT);
+    bell.setHammer(0.6);
+    bell.group.add(createPreviewLights(bell.origin, 140));
+    return bell.group;
+  });
 }
 
 /** Snapshot factory: the bell mid-strike, the wave front crossing the bell body. */
 export function previewBellStrike() {
-  const bell = createBell(PREVIEW_BELL_LAYOUT);
-  bell.setHammer(0.05);
-  beginStrike(bell.origin, 12);
-  strikeAge.value = 0.06;
-  bell.group.add(createPreviewLights(bell.origin, 140));
-  return bell.group;
+  return withPreviewEnvironment(() => {
+    const bell = createBell(PREVIEW_BELL_LAYOUT);
+    bell.setHammer(0.05);
+    beginStrike(bell.origin, 12);
+    strikeAge.value = 0.06;
+    bell.group.add(createPreviewLights(bell.origin, 140));
+    return bell.group;
+  });
 }

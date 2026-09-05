@@ -1,21 +1,35 @@
 import { BoxGeometry, BufferGeometry, CylinderGeometry, Group, Mesh, Vector3 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { createGearFamily, meshedPhase, pitchRadius, toothPhase, type GearFamily, type GearInstance, type GearSpec } from '../gears';
-import { createBrassMaterial, createPreviewLights, createSteelMaterial, pinSnapshotView } from '../materials';
+import { createGearFamily, meshedPhase, pinionOn, pitchRadius, toothPhase, type GearFamily, type GearInstance, type GearSpec } from '../gears';
+import { createBrassMaterial, createLamp, createSteelMaterial, pinSnapshotView, withPreviewEnvironment } from '../materials';
+import { createDial, PREVIEW_DIAL_LAMP, PREVIEW_DIAL_LAYOUT } from './dial';
+import { createOrrery, PREVIEW_ORRERY_LAYOUT } from './orrery';
 
 // The Train: the great wheels the rail rides. Every wheel spins about +y, so
-// the rail on a rim sees the far plates yaw around it while the wheel face
-// stays level with the camera and out of frame. Detail sits on the plates the
-// camera looks at and on the next wheel in the chain.
+// the rail on a rim sees the far plates yaw around it. The rail rides
+// RIDE_HEIGHT above the wheel, high enough that the ridden face falls below a
+// level camera's bottom edge; what stays in frame is the next wheel's arbor
+// with its pinion and upper wheel, the meshing teeth ahead, the plates, and the
+// orrery sun through the doorway.
 
 export const GREAT_30: GearSpec = { teeth: 30, module: 10, width: 22, rimWidth: 16, hubRadius: 18, spokes: 8, spokeWidth: 8, spokeDepth: 10 };
 export const GREAT_20: GearSpec = { teeth: 20, module: 10, width: 22, rimWidth: 14, hubRadius: 16, spokes: 6, spokeWidth: 8, spokeDepth: 10 };
 export const MID_16: GearSpec = { teeth: 16, module: 6, width: 8, rimWidth: 7, hubRadius: 8, spokes: 5, spokeWidth: 4 };
 export const SMALL_10: GearSpec = { teeth: 10, module: 6, width: 8, rimWidth: 5, hubRadius: 6, spokes: 3, spokeWidth: 3.5 };
+/** Pinion on a ridden wheel's arbor; it drives the upper-tier wheel. */
+export const PINION_8: GearSpec = { teeth: 8, module: 10, width: 22, rimWidth: 40, hubRadius: 10, spokes: 0 };
 
 const UP = new Vector3(0, 1, 0);
-/** Rail height above a wheel's top face. */
-export const RIDE_HEIGHT = 10;
+/**
+ * Rail height above a wheel's top face. From a camera on a 150-radius wheel's
+ * pitch circle looking along the tangent, no point of the disc lies more than
+ * 150 units ahead; a level camera with a 62 degree vertical field of view
+ * shows a point that far ahead only when it is less than 90 below the camera,
+ * so at 100 up the ridden face never shows.
+ */
+export const RIDE_HEIGHT = 100;
+/** Height of the pinion and upper-tier wheel above a ridden wheel's centre: 39 above the rail, so the tier passes at eye level. */
+export const UPPER_TIER = 150;
 
 /**
  * Radius of the circle the rail rides: the pitch circle, so at a hand-off the
@@ -106,6 +120,8 @@ export function rimPoint(wheel: TrainWheel, angle: number, y: number) {
 
 export type TrainLayout = {
   wheels: TrainWheel[];
+  /** Index of the ridden wheels that carry a pinion and an upper wheel, with the direction the upper wheel sits from the arbor. */
+  upperTiers: Array<{ wheel: number; direction: Vector3 }>;
   /** Height of the wheels' top faces. */
   wheelTop: number;
   backPlate: { z: number; xMin: number; xMax: number; yMin: number; yMax: number; doorway: { x: number; y: number; width: number; height: number } };
@@ -154,9 +170,15 @@ function createPlates(layout: TrainLayout) {
   push(new BoxGeometry(thickness, right.yMax - right.yMin, right.zMax - right.zMin), right.x, (right.yMin + right.yMax) / 2, (right.zMin + right.zMax) / 2);
   // Floor plate far below the wheels.
   push(new BoxGeometry(right.x - left.x + 80, 8, back.z * -1 + 260), (left.x + right.x) / 2, layout.floorY, back.z / 2 + 40);
+  // Bridges: beams spanning the plates over the upper tier, each with a cock at the ends.
+  const tierY = layout.wheels[0].center.y + UPPER_TIER;
+  for (const z of [back.z + 120, back.z + 330]) {
+    push(new BoxGeometry(right.x - left.x, 18, 26), (left.x + right.x) / 2, tierY + 60, z);
+    for (const x of [left.x + 40, right.x - 40]) push(new BoxGeometry(60, 40, 40), x, tierY + 40, z);
+  }
   const merged = mergeGeometries(parts, false);
   for (const part of parts) part.dispose();
-  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 42, seamAniso: 1.6, tarnish: 0.45, roughness: 0.5, brushAxis: new Vector3(0, 1, 0) }));
+  return new Mesh(merged, createBrassMaterial({ seamScale: 1 / 320, tarnish: 0.3, roughness: 0.4, brushAxis: new Vector3(0, 1, 0) }));
 }
 
 function createSteelwork(layout: TrainLayout, plateGears: PlateGear[]) {
@@ -169,8 +191,8 @@ function createSteelwork(layout: TrainLayout, plateGears: PlateGear[]) {
     const pylon = new CylinderGeometry(15, 22, wheel.center.y - layout.floorY, 20);
     pylon.translate(wheel.center.x, (wheel.center.y + layout.floorY) / 2, wheel.center.z);
     add(pylon);
-    const arbor = new CylinderGeometry(9, 9, 120, 16);
-    arbor.translate(wheel.center.x, wheel.center.y + 50, wheel.center.z);
+    const arbor = new CylinderGeometry(9, 9, UPPER_TIER + 90, 16);
+    arbor.translate(wheel.center.x, wheel.center.y + (UPPER_TIER + 90) / 2 - 10, wheel.center.z);
     add(arbor);
   }
   // Pillars at the plate corners.
@@ -184,6 +206,14 @@ function createSteelwork(layout: TrainLayout, plateGears: PlateGear[]) {
     const pillar = new CylinderGeometry(10, 10, back.yMax - back.yMin, 14);
     pillar.translate(x, (back.yMin + back.yMax) / 2, z);
     add(pillar);
+  }
+  // Posts under the upper-tier wheels, from the floor to the wheel.
+  for (const tier of layout.upperTiers) {
+    const wheel = layout.wheels[tier.wheel];
+    const center = wheel.center.clone().addScaledVector(tier.direction, pitchRadius(PINION_8) + pitchRadius(GREAT_20));
+    const post = new CylinderGeometry(9, 12, UPPER_TIER + wheel.center.y - layout.floorY + 40, 16);
+    post.translate(center.x, (wheel.center.y + UPPER_TIER + 40 + layout.floorY) / 2, center.z);
+    add(post);
   }
   // Arbors through the plate-mounted gears.
   for (const gear of plateGears) {
@@ -279,6 +309,19 @@ export function createTrain(layout: TrainLayout): Train {
   for (const wheel of layout.wheels) {
     instance(wheel.spec, { position: wheel.center, axis: UP, rate: wheel.rate, phase: wheel.phase });
   }
+  for (const tier of layout.upperTiers) {
+    const wheel = layout.wheels[tier.wheel];
+    const pinion = pinionOn({ position: wheel.center, axis: UP, rate: wheel.rate, phase: wheel.phase }, UPPER_TIER);
+    instance(PINION_8, pinion);
+    const direction = tier.direction.clone().setY(0).normalize();
+    const upperCenter = pinion.position.clone().addScaledVector(direction, pitchRadius(PINION_8) + pitchRadius(GREAT_20));
+    instance(GREAT_20, {
+      position: upperCenter,
+      axis: UP,
+      rate: -wheel.rate * (PINION_8.teeth / GREAT_20.teeth),
+      phase: meshedPhase({ spec: PINION_8, axis: UP, phase: pinion.phase ?? 0 }, direction, GREAT_20),
+    });
+  }
   for (const gear of plateGears) {
     instance(gear.spec, { position: gear.position, axis: gear.axis, rate: gear.rate, phase: gear.phase });
   }
@@ -301,62 +344,75 @@ export const PREVIEW_TRAIN_ARCS: ChainArc[] = [
   { spec: GREAT_20, arc: (-60 * Math.PI) / 180, seconds: 6 },
 ];
 
+/** The level's train layout, repeated here so the previews match the level. */
 export function previewTrainLayout(): TrainLayout {
-  const wheelTop = -8;
-  const wheels = chainWheels(new Vector3(54, wheelTop + RIDE_HEIGHT, -110), new Vector3(0, 0, -1), PREVIEW_TRAIN_ARCS, wheelTop - GREAT_30.width / 2);
+  const wheelTop = -RIDE_HEIGHT;
+  const wheels = chainWheels(new Vector3(140, 0, -260), new Vector3(0, 0, -1), PREVIEW_TRAIN_ARCS, wheelTop - GREAT_30.width / 2);
   return {
     wheels,
+    upperTiers: [
+      { wheel: 1, direction: new Vector3(-1, 0, 0) },
+      { wheel: 2, direction: new Vector3(1, 0, 0) },
+    ],
     wheelTop,
-    backPlate: { z: -490, xMin: -380, xMax: 520, yMin: -330, yMax: 330, doorway: { x: 54, y: 0, width: 44, height: 56 } },
-    leftPlate: { x: -380, zMin: -490, zMax: 60, yMin: -330, yMax: 330 },
-    rightPlate: { x: 520, zMin: -490, zMax: 60, yMin: -330, yMax: 330 },
+    backPlate: { z: -700, xMin: -380, xMax: 620, yMin: -330, yMax: 330, doorway: { x: 140, y: 0, width: 160, height: 120 } },
+    leftPlate: { x: -380, zMin: -700, zMax: -150, yMin: -330, yMax: 330 },
+    rightPlate: { x: 620, zMin: -700, zMax: -150, yMin: -330, yMax: 330 },
     floorY: -400,
   };
 }
 
-/** Snapshot factory: the whole train under a lamp above the middle wheel. */
-export function previewTrain() {
-  const layout = previewTrainLayout();
-  const { group } = createTrain(layout);
-  group.add(createPreviewLights(new Vector3(70, 0, -250), 320));
-  return group;
+/** The level's train lamp, repeated here so the previews match the level. */
+export const PREVIEW_TRAIN_LAMP = new Vector3(60, 230, -330);
+export const PREVIEW_TRAIN_LAMP_INTENSITY = 27000;
+
+function previewTrainLights(group: Group) {
+  group.add(createLamp({ name: 'preview-lamp', position: PREVIEW_TRAIN_LAMP, intensity: PREVIEW_TRAIN_LAMP_INTENSITY }));
 }
 
-/** Snapshot factory: the four ride wheels alone. */
-export function previewTrainWheels() {
-  const layout = previewTrainLayout();
-  const group = new Group();
-  const bySpec = new Map<GearSpec, GearInstance[]>();
-  for (const wheel of layout.wheels) {
-    const list = bySpec.get(wheel.spec) ?? [];
-    list.push({ position: wheel.center, axis: UP, rate: wheel.rate, phase: wheel.phase });
-    bySpec.set(wheel.spec, list);
-  }
-  for (const [spec, instances] of bySpec) group.add(createGearFamily(spec, instances).mesh);
-  group.add(createPreviewLights(new Vector3(100, -15, -280), 260));
-  return group;
+/** What the doorway opens onto: the orrery with its sun, and the dial as the sky behind it. */
+function previewBeyondDoorway(group: Group) {
+  group.add(createOrrery(PREVIEW_ORRERY_LAYOUT).group);
+  group.add(createDial(PREVIEW_DIAL_LAYOUT));
+  group.add(createLamp({ name: 'preview-dial-lamp', position: PREVIEW_DIAL_LAMP, intensity: 60000 }));
+}
+
+/** Snapshot factory: the whole train from outside, under the level sky. */
+export function previewTrain() {
+  return withPreviewEnvironment(() => {
+    const { group } = createTrain(previewTrainLayout());
+    previewTrainLights(group);
+    return group;
+  });
+}
+
+/** Rail camera on wheel `index`, `fraction` of the way through its arc. */
+function previewRide(index: number, fraction: number) {
+  return withPreviewEnvironment(() => {
+    const layout = previewTrainLayout();
+    const { group } = createTrain(layout);
+    previewTrainLights(group);
+    previewBeyondDoorway(group);
+    const wheel = layout.wheels[index];
+    const angle = wheel.entryAngle + (wheel.exitAngle - wheel.entryAngle) * fraction;
+    const position = rimPoint(wheel, angle, 0);
+    const forward = wheel.exitAngle > wheel.entryAngle ? 1 : -1;
+    const heading = new Vector3(-Math.sin(angle) * forward, 0, Math.cos(angle) * forward);
+    return pinSnapshotView(group, position, heading);
+  });
 }
 
 /** Snapshot factory: the view from the rail camera riding the first wheel's rim, a third of the way round its arc. */
 export function previewTrainRide() {
-  const layout = previewTrainLayout();
-  const { group } = createTrain(layout);
-  group.add(createPreviewLights(new Vector3(60, 40, -200), 220));
-  const wheel = layout.wheels[0];
-  const angle = wheel.entryAngle + (wheel.exitAngle - wheel.entryAngle) * 0.35;
-  const position = rimPoint(wheel, angle, layout.wheelTop + RIDE_HEIGHT);
-  const heading = new Vector3(-Math.sin(angle), 0, Math.cos(angle));
-  return pinSnapshotView(group, position, heading);
+  return previewRide(0, 0.35);
 }
 
-/** Snapshot factory: the view from the second wheel, looking at the left plate. */
+/** Snapshot factory: the view from the second wheel, halfway round. */
 export function previewTrainRideSecond() {
-  const layout = previewTrainLayout();
-  const { group } = createTrain(layout);
-  group.add(createPreviewLights(new Vector3(60, 40, -200), 220));
-  const wheel = layout.wheels[1];
-  const angle = wheel.entryAngle + (wheel.exitAngle - wheel.entryAngle) * 0.5;
-  const position = rimPoint(wheel, angle, layout.wheelTop + RIDE_HEIGHT);
-  const heading = new Vector3(Math.sin(angle), 0, -Math.cos(angle));
-  return pinSnapshotView(group, position, heading);
+  return previewRide(1, 0.5);
+}
+
+/** Snapshot factory: leaving the third wheel toward the doorway and the sun beyond it. */
+export function previewTrainRideThird() {
+  return previewRide(2, 0.6);
 }
