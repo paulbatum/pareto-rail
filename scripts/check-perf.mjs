@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createServer } from 'vite';
-import { assertBackend, backendForMode, gotoOrExplain, openRenderBrowser, readRenderMode } from './capture/render-browser.mjs';
+import { assertBackend, backendForMode, gotoOrExplain, openRenderBrowser, readProtocolTimeoutMs, readRenderMode } from './capture/render-browser.mjs';
 
 const DEFAULT_WIDTH = 640;
 const DEFAULT_HEIGHT = 360;
@@ -66,6 +66,7 @@ if (process.argv[1] && import.meta.url === pathToFileUrl(process.argv[1])) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
+  if (!options.renderExplicit && options.mode === 'gpu') options.render = 'realtime';
   const levels = options.levels.length > 0 ? options.levels : [options.level].filter(Boolean);
   if (levels.length === 0) throw new Error('Missing --level <id>');
 
@@ -101,7 +102,12 @@ export async function analyzePerformanceLevels(levels, options = {}) {
     if (!address || typeof address === 'string') throw new Error('Could not determine Vite dev server port');
     const baseUrl = `http://127.0.0.1:${address.port}`;
 
-    target = await openRenderBrowser({ mode: resolvedOptions.mode, width: resolvedOptions.width, height: resolvedOptions.height });
+    target = await openRenderBrowser({
+      mode: resolvedOptions.mode,
+      width: resolvedOptions.width,
+      height: resolvedOptions.height,
+      ...(resolvedOptions.protocolTimeoutMs ? { protocolTimeoutMs: resolvedOptions.protocolTimeoutMs } : {}),
+    });
 
     const reports = [];
     for (const level of levels) reports.push(await analyzeLevel(target.browser, baseUrl, level, resolvedOptions));
@@ -133,7 +139,7 @@ async function analyzeLevel(browser, baseUrl, level, options) {
     url.searchParams.set('immortal', '1');
     url.searchParams.set('projectiles', '1');
     url.searchParams.set('seed', String(options.seed));
-    url.searchParams.set('render', options.render);
+    url.searchParams.set('render', options.render === 'realtime' ? 'all' : options.render);
     url.searchParams.set('backend', backendForMode(options.mode));
     await gotoOrExplain(page, url.href, { mode: options.mode, baseUrl });
     await page.evaluate(() => window.__gameplaySnapshot.ready);
@@ -154,7 +160,7 @@ async function analyzeLevel(browser, baseUrl, level, options) {
     for (const targetTime of sampleTargets) {
       const sample = await page.evaluate(
         (stepOptions) => window.__gameplaySnapshot.stepPerformance(stepOptions),
-        { targetTime, dt: options.dt },
+        { targetTime, dt: options.dt, realtime: options.render === 'realtime' },
       );
       // Collect before reading, so the heap column is what the run is holding on
       // to rather than wherever the sawtooth happened to be. Sampling the raw heap
@@ -414,7 +420,11 @@ function defaultOptions() {
     gateOverrides: {},
     jsonPath: '',
     fail: true,
+    // `sample` renders once per sampled second and reports that render's CPU time; `all` renders every
+    // frame the same way; `realtime` steps one frame per animation frame and reports the wall-clock
+    // time between frames. `--gpu` defaults to `realtime`, the software path to `sample`.
     render: 'sample',
+    renderExplicit: false,
     // `postless` skips the post chain, so the gate measures scene work alone.
     // `full` builds the level's post chain, which is what `--gpu --fidelity full` measures.
     fidelity: 'postless',
@@ -422,6 +432,8 @@ function defaultOptions() {
     // is calibrated against the software path. `--gpu` swaps in the real WebGPU pipeline
     // when the frame column itself is the question.
     mode: 'software',
+    // 0 keeps the render browser's default (see PARETO_PROTOCOL_TIMEOUT_MS).
+    protocolTimeoutMs: 0,
   };
 }
 
@@ -525,12 +537,17 @@ function parseArgs(argv) {
         parsed.jsonPath = value;
         break;
       case 'render':
-        if (value !== 'all' && value !== 'sample') throw new Error('--render must be "all" or "sample"');
+        if (value !== 'all' && value !== 'sample' && value !== 'realtime') throw new Error('--render must be "all", "sample", or "realtime"');
         parsed.render = value;
+        parsed.renderExplicit = true;
         break;
       case 'render-mode':
       case 'renderMode':
         parsed.mode = readRenderMode(value);
+        break;
+      case 'protocol-timeout':
+      case 'protocolTimeout':
+        parsed.protocolTimeoutMs = readProtocolTimeoutMs(Number(value) * 1000, `--${key}`);
         break;
       default:
         throw new Error(`Unknown option: --${key}`);
@@ -585,7 +602,7 @@ function readNonNegativeNumber(value, flag) {
 }
 
 function printHelpAndExit() {
-  console.log(`Usage: npm run check:perf -- --level <id> [options]\n\nOptions:\n  --json <path>                         Write raw samples and gate verdicts\n  --render <all|sample>                 Render mode: "all" (every frame) or "sample" (only sample points), default "sample"\n  --gpu                                 Sample on the real WebGPU pipeline instead of the software path\n  --perf-profile <name>                 Gate budget profile: ${PERF_PROFILE_NAMES.join(' | ')}; defaults to the level's declared profile\n  --fidelity <postless|full>            Render without the post chain (default) or with the level's post chain\n  --growth-ratio <ratio>                Late/early growth failure ratio, default ${DEFAULT_GROWTH_RATIO}\n  --heap-retention-mb <mb>              Retained heap allowance across a run, default ${DEFAULT_HEAP_RETENTION_MB}\n  --max-calls <count>                   Absolute draw-call budget, default ${DEFAULT_MAX_CALLS}\n  --max-objects <count>                 Absolute scene object budget, default ${DEFAULT_MAX_OBJECTS}\n  --frame-growth-warn-ratio <ratio>     Relative frame-time warning ratio, default ${DEFAULT_FRAME_GROWTH_WARN_RATIO}\n  --draw-call-growth-allowance <count>  Absolute draw-call growth allowance, default ${DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE}\n  --object-growth-allowance <count>     Absolute object growth allowance, default ${DEFAULT_OBJECT_GROWTH_ALLOWANCE}\n  --geometry-growth-allowance <count>   Absolute geometry growth allowance, default ${DEFAULT_GEOMETRY_GROWTH_ALLOWANCE}\n  --texture-growth-allowance <count>    Absolute texture growth allowance, default ${DEFAULT_TEXTURE_GROWTH_ALLOWANCE}\n  --dt <seconds>                        Fixed simulation step, default ${DEFAULT_DT}\n  --seed <integer>                      Snapshot RNG seed, default ${DEFAULT_SEED}\n  --no-fail                             Print failures but exit zero`);
+  console.log(`Usage: npm run check:perf -- --level <id> [options]\n\nOptions:\n  --json <path>                         Write raw samples and gate verdicts\n  --render <all|sample|realtime>        "sample" renders once per sampled second, "all" every frame, "realtime" one frame per animation frame reporting wall time between frames; default "sample", or "realtime" with --gpu\n  --gpu                                 Sample on the real WebGPU pipeline instead of the software path\n  --perf-profile <name>                 Gate budget profile: ${PERF_PROFILE_NAMES.join(' | ')}; defaults to the level's declared profile\n  --fidelity <postless|full>            Render without the post chain (default) or with the level's post chain\n  --growth-ratio <ratio>                Late/early growth failure ratio, default ${DEFAULT_GROWTH_RATIO}\n  --heap-retention-mb <mb>              Retained heap allowance across a run, default ${DEFAULT_HEAP_RETENTION_MB}\n  --max-calls <count>                   Absolute draw-call budget, default ${DEFAULT_MAX_CALLS}\n  --max-objects <count>                 Absolute scene object budget, default ${DEFAULT_MAX_OBJECTS}\n  --frame-growth-warn-ratio <ratio>     Relative frame-time warning ratio, default ${DEFAULT_FRAME_GROWTH_WARN_RATIO}\n  --draw-call-growth-allowance <count>  Absolute draw-call growth allowance, default ${DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE}\n  --object-growth-allowance <count>     Absolute object growth allowance, default ${DEFAULT_OBJECT_GROWTH_ALLOWANCE}\n  --geometry-growth-allowance <count>   Absolute geometry growth allowance, default ${DEFAULT_GEOMETRY_GROWTH_ALLOWANCE}\n  --texture-growth-allowance <count>    Absolute texture growth allowance, default ${DEFAULT_TEXTURE_GROWTH_ALLOWANCE}\n  --dt <seconds>                        Fixed simulation step, default ${DEFAULT_DT}\n  --protocol-timeout <seconds>          How long one CDP call may run, default 180 (or PARETO_PROTOCOL_TIMEOUT_MS)\n  --seed <integer>                      Snapshot RNG seed, default ${DEFAULT_SEED}\n  --no-fail                             Print failures but exit zero`);
   process.exit(0);
 }
 

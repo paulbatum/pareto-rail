@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createServer } from 'vite';
-import { openRenderBrowser } from './capture/render-browser.mjs';
+import { openRenderBrowser, readProtocolTimeoutMs } from './capture/render-browser.mjs';
 
 const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 720;
@@ -61,7 +61,10 @@ export async function analyzeOcclusionLevels(levels, options = {}) {
 
     // Occlusion is CPU raycasting against the scene graph and never renders a frame, so
     // it always takes the software path: a GPU browser would cost startup and change nothing.
-    target = await openRenderBrowser({ mode: 'software' });
+    target = await openRenderBrowser({
+      mode: 'software',
+      ...(resolvedOptions.protocolTimeoutMs ? { protocolTimeoutMs: resolvedOptions.protocolTimeoutMs } : {}),
+    });
 
     const reports = [];
     for (const level of levels) reports.push(await analyzeLevel(target.browser, baseUrl, level, resolvedOptions));
@@ -152,6 +155,8 @@ function defaultOptions() {
     policy: 'perfect',
     fail: true,
     json: false,
+    // 0 keeps the render browser's default (see PARETO_PROTOCOL_TIMEOUT_MS).
+    protocolTimeoutMs: 0,
   };
 }
 
@@ -227,6 +232,10 @@ function parseArgs(argv) {
         break;
       case 'seed':
         parsed.seed = readInteger(value, '--seed');
+        break;
+      case 'protocol-timeout':
+      case 'protocolTimeout':
+        parsed.protocolTimeoutMs = readProtocolTimeoutMs(Number(value) * 1000, `--${key}`);
         break;
       case 'policy':
         if (value !== 'none' && value !== 'perfect') throw new Error('--policy must be none or perfect');

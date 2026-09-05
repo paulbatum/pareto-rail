@@ -15,7 +15,7 @@ import {
 import { WebGPURenderer, type WebGPURendererParameters } from 'three/webgpu';
 import { createEventBus } from '../events';
 import { createPost } from '../engine/post';
-import { applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
+import { applyInitializedRenderConfig, applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
 import { collectPerfCounters, type PerfCounters } from '../engine/perf-counters';
 import type { Hud } from '../ui/hud';
 import { findLevelEntry, getLevelById } from '../levels';
@@ -78,6 +78,52 @@ type OcclusionReport = {
 type PerfStepOptions = {
   dt?: number;
   targetTime: number;
+  /**
+   * `realtime` steps one frame per animation frame and reports the wall-clock time between
+   * frames, which is what a player sees: a GPU that falls behind or a driver compile shows
+   * up as a long frame. Off, the page steps synchronously, the render's CPU time is reported,
+   * and the `render` page parameter decides whether every frame or only the last one renders.
+   */
+  realtime?: boolean;
+};
+
+type PerfProbeOptions = {
+  dt?: number;
+  /** Frames to step and render from the current time. */
+  frames: number;
+  /** Return every frame's timings and cache sizes as well as the medians. */
+  detail?: boolean;
+};
+
+type PerfProbeFrame = {
+  t: number;
+  updateMs: number;
+  renderMs: number;
+  gpuRenderMs: number | null;
+  /** Render pipelines the renderer holds after the frame; a rise means a compile happened in it. */
+  pipelines: number | null;
+  /** Node builder states (shader programs built from node graphs) the renderer holds after the frame. */
+  builders: number | null;
+  calls: number;
+};
+
+type PerfProbeSample = PerfCounters & {
+  t: number;
+  state: string;
+  frames: number;
+  /** CPU milliseconds inside the level's update, median over the frames. */
+  updateMs: number;
+  /** CPU milliseconds inside the render call, median over the frames. */
+  renderMs: number;
+  /** CPU milliseconds of the first render after stepping to this time: pipeline compiles land here. */
+  firstRenderMs: number;
+  renderMaxMs: number;
+  /** GPU milliseconds for every render pass of a frame, median, or null without timestamp queries. */
+  gpuRenderMs: number | null;
+  /** GPU milliseconds for every compute dispatch of a frame, median, or null without timestamp queries. */
+  gpuComputeMs: number | null;
+  gpuRenderMaxMs: number | null;
+  detail?: PerfProbeFrame[];
 };
 
 type PerfStepSample = PerfCounters & {
@@ -96,6 +142,7 @@ type GameplaySnapshotApi = {
   capture(): Promise<{ dataUrl: string; luminance: number; fidelity: Fidelity; backend: Backend; state: string; seed: number | null }>;
   analyzeOcclusion(options?: OcclusionOptions): Promise<OcclusionReport>;
   stepPerformance(options: PerfStepOptions): Promise<PerfStepSample>;
+  probePerformance(options: PerfProbeOptions): Promise<PerfProbeSample>;
   metadata(): {
     duration: number | null;
     fidelity: Fidelity;
@@ -117,17 +164,31 @@ type SnapshotRenderer = WebGPURenderer & {
 type SnapshotRendererParameters = WebGPURendererParameters & {
   forceWebGL: boolean;
   preserveDrawingBuffer: true;
+  trackTimestamp: boolean;
+};
+
+type TimestampPool = {
+  frames: number[];
+  timestamps: Map<string, number>;
 };
 
 type SnapshotRendererInternals = SnapshotRenderer & {
   _animation?: { stop(): void };
-  _nodes?: {
-    nodeFrame?: {
-      time: number;
-      deltaTime: number;
-      frameId: number;
-      lastTime?: number;
-    };
+  backend?: {
+    trackTimestamp?: boolean;
+    timestampQueryPool?: Record<string, TimestampPool | null>;
+  };
+  resolveTimestampsAsync?: (type: 'render' | 'compute') => Promise<number | undefined>;
+  _pipelines?: { caches?: Map<string, unknown> };
+  _nodes?: { nodeBuilderCache?: Map<string, unknown> } & SnapshotRendererInternalsNodes;
+};
+
+type SnapshotRendererInternalsNodes = {
+  nodeFrame?: {
+    time: number;
+    deltaTime: number;
+    frameId: number;
+    lastTime?: number;
   };
 };
 
@@ -196,6 +257,12 @@ const requestedBackend = readBackend(params.get('backend'));
 const showProjectiles = params.get('projectiles') === '1';
 const startScreen = params.get('startScreen') === '1';
 const skipRenders = params.get('render') === 'sample';
+// Perf probing: GPU timestamp queries, and knobs that remove one cost at a time so a
+// probe can attribute frame time. Every knob defaults to the level as authored.
+const trackTimestamps = params.get('timestamps') === '1';
+const hiddenObjectNames = readList(params.get('hide'));
+const droppedStageTypes = readList(params.get('dropStages'));
+const velocityBufferOverride = readBooleanOverride(params.get('velocityBuffer'));
 
 let renderer: SnapshotRenderer | null = null;
 let activeBackend: Backend = requestedBackend;
@@ -239,6 +306,9 @@ window.__gameplaySnapshot = {
   async stepPerformance(options) {
     return stepPerformance(options);
   },
+  async probePerformance(options) {
+    return probePerformance(options);
+  },
   metadata() {
     return {
       duration: runDuration,
@@ -273,6 +343,7 @@ async function bootstrap() {
     alpha: false,
     forceWebGL: requestedBackend === 'webgl',
     preserveDrawingBuffer: true,
+    trackTimestamp: trackTimestamps,
   } as SnapshotRendererParameters;
   renderer = new WebGPURenderer(rendererParams) as SnapshotRenderer;
   renderer.setPixelRatio(1);
@@ -280,6 +351,7 @@ async function bootstrap() {
   renderer.setClearColor(selectedLevel.post?.clearColor ?? 0x02040a, 1);
   applyRenderConfig(renderer, selectedLevel.render);
   await renderer.init();
+  applyInitializedRenderConfig(renderer, selectedLevel.render);
   activeBackend = readActiveBackend(renderer);
   stopRendererAnimation(renderer);
   document.body.append(renderer.domElement);
@@ -364,8 +436,25 @@ async function bootstrap() {
   advanceRuntime(runtime.update, targetTime, fixedDt);
 
   if (!showProjectiles) hideProjectiles(scene);
+  hideNamedObjects(scene, hiddenObjectNames);
   if (fidelity === 'flat') replaceSceneMaterials(scene);
-  if (fidelity === 'full') post = createPost(renderer, scene, camera, selectedLevel.post);
+  if (fidelity === 'full') post = createPost(renderer, scene, camera, probePostConfig(selectedLevel.post));
+}
+
+/** The level's post config with the probe knobs applied. */
+function probePostConfig(config: LevelDefinition['post']) {
+  if (!config) return config;
+  const stages = droppedStageTypes.length > 0 ? (config.stages ?? []).filter((stage) => !droppedStageTypes.includes(stage.type)) : config.stages;
+  const velocityBuffer = velocityBufferOverride ?? config.velocityBuffer;
+  return { ...config, stages, velocityBuffer };
+}
+
+function hideNamedObjects(root: Scene, names: string[]) {
+  for (const name of names) {
+    const object = root.getObjectByName(name);
+    if (!object) throw new Error(`hide: no scene object named "${name}"`);
+    object.visible = false;
+  }
 }
 
 function startRunViaInput() {
@@ -397,9 +486,9 @@ async function stepPerformance(options: PerfStepOptions): Promise<PerfStepSample
   if (!scene || !camera || !renderer || !runtimeUpdate) throw new Error('Gameplay snapshot runtime is not ready');
   const dt = readOptionPositiveNumber(options.dt, fixedDt, 'dt');
   const targetTime = readOptionNonNegativeNumber(options.targetTime, currentElapsed, 'targetTime');
-  const frameTimes: number[] = [];
+  const frameTimes: number[] = options.realtime ? await stepRealtime(targetTime, dt) : [];
 
-  while (currentElapsed < targetTime - 0.000001 && runtimeState !== 'ended') {
+  while (!options.realtime && currentElapsed < targetTime - 0.000001 && runtimeState !== 'ended') {
     const step = Math.min(dt, targetTime - currentElapsed);
     currentElapsed += step;
     runtimeUpdate(step, currentElapsed);
@@ -434,6 +523,126 @@ async function stepPerformance(options: PerfStepOptions): Promise<PerfStepSample
     heapUsedMB: readInPageHeapUsedMB(),
     ...counters,
   };
+}
+
+/** One frame per animation frame up to `targetTime`; returns the wall-clock milliseconds between consecutive frames. */
+function stepRealtime(targetTime: number, dt: number): Promise<number[]> {
+  return new Promise((resolve, reject) => {
+    const deltas: number[] = [];
+    let previous: number | null = null;
+    const frame = (now: number) => {
+      try {
+        if (!(scene && camera && renderer && runtimeUpdate)) throw new Error('Gameplay snapshot runtime is not ready');
+        if (currentElapsed >= targetTime - 0.000001 || runtimeState === 'ended') {
+          resolve(deltas);
+          return;
+        }
+        if (previous !== null) deltas.push(now - previous);
+        previous = now;
+        const step = Math.min(dt, targetTime - currentElapsed);
+        currentElapsed += step;
+        runtimeUpdate(step, currentElapsed);
+        setRendererFrameTime(renderer, currentElapsed, step);
+        renderer.info?.reset?.();
+        if (post) post.render();
+        else renderer.render(scene, camera);
+        requestAnimationFrame(frame);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    requestAnimationFrame(frame);
+  });
+}
+
+/**
+ * Steps and renders `frames` frames from the current time, timing the level update and
+ * the render call on the CPU and, with `timestamps=1`, the render passes and compute
+ * dispatches on the GPU. Each frame waits for its GPU timestamps, so the GPU numbers are
+ * per frame rather than a queue's worth.
+ */
+async function probePerformance(options: PerfProbeOptions): Promise<PerfProbeSample> {
+  if (!scene || !camera || !renderer || !runtimeUpdate) throw new Error('Gameplay snapshot runtime is not ready');
+  const dt = readOptionPositiveNumber(options.dt, fixedDt, 'dt');
+  const frames = readOptionPositiveInteger(options.frames, 1, 'frames');
+  const updateTimes: number[] = [];
+  const renderTimes: number[] = [];
+  const gpuRenderTimes: number[] = [];
+  const gpuComputeTimes: number[] = [];
+  const internals = renderer as SnapshotRendererInternals;
+  const timestamps = internals.backend?.trackTimestamp === true && typeof internals.resolveTimestampsAsync === 'function';
+  const detail: PerfProbeFrame[] = [];
+
+  for (let frame = 0; frame < frames; frame += 1) {
+    currentElapsed += dt;
+    const updateStart = performance.now();
+    runtimeUpdate(dt, currentElapsed);
+    const updateMs = performance.now() - updateStart;
+    updateTimes.push(updateMs);
+
+    const renderStart = performance.now();
+    setRendererFrameTime(renderer, currentElapsed, dt);
+    renderer.info?.reset?.();
+    if (post) post.render();
+    else renderer.render(scene, camera);
+    const renderMs = performance.now() - renderStart;
+    renderTimes.push(renderMs);
+
+    let gpuRenderMs: number | null = null;
+    if (timestamps) {
+      gpuRenderMs = await resolveGpuMs(internals, 'render');
+      gpuRenderTimes.push(gpuRenderMs);
+      gpuComputeTimes.push(await resolveGpuMs(internals, 'compute'));
+    }
+    if (options.detail) {
+      detail.push({
+        t: roundSeconds(currentElapsed),
+        updateMs: roundMillis(updateMs),
+        renderMs: roundMillis(renderMs),
+        gpuRenderMs: gpuRenderMs === null ? null : roundMillis(gpuRenderMs),
+        pipelines: internals._pipelines?.caches?.size ?? null,
+        builders: internals._nodes?.nodeBuilderCache?.size ?? null,
+        calls: collectPerfCounters(renderer, scene).calls,
+      });
+    }
+  }
+
+  const counters = collectPerfCounters(renderer, scene);
+  return {
+    t: roundSeconds(currentElapsed),
+    state: runtimeState,
+    frames,
+    updateMs: roundMillis(median(updateTimes)),
+    renderMs: roundMillis(median(renderTimes)),
+    firstRenderMs: roundMillis(renderTimes[0]),
+    renderMaxMs: roundMillis(max(renderTimes)),
+    gpuRenderMs: timestamps ? roundMillis(median(gpuRenderTimes)) : null,
+    gpuComputeMs: timestamps ? roundMillis(median(gpuComputeTimes)) : null,
+    gpuRenderMaxMs: timestamps ? roundMillis(max(gpuRenderTimes)) : null,
+    ...counters,
+    ...(options.detail ? { detail } : {}),
+  };
+}
+
+/**
+ * Resolves the pending timestamp queries of one pool and sums every pass recorded since
+ * the previous resolve. The renderer's own total covers only the last render call, and a
+ * post chain or a cube shadow map is many render calls per frame.
+ */
+async function resolveGpuMs(internals: SnapshotRendererInternals, type: 'render' | 'compute') {
+  const pool = internals.backend?.timestampQueryPool?.[type];
+  if (!pool) return 0;
+  await internals.resolveTimestampsAsync?.(type);
+  const frames = new Set(pool.frames.map((frame) => `:f${frame}`));
+  let total = 0;
+  for (const [uid, duration] of pool.timestamps) {
+    if (frames.has(uid.slice(uid.lastIndexOf(':')))) total += duration;
+  }
+  // The pool keeps every uid it has ever resolved; drop the ones just summed so they are not counted again.
+  for (const uid of [...pool.timestamps.keys()]) {
+    if (frames.has(uid.slice(uid.lastIndexOf(':')))) pool.timestamps.delete(uid);
+  }
+  return total;
 }
 
 async function analyzeTargetOcclusion(options: OcclusionOptions): Promise<OcclusionReport> {
@@ -733,6 +942,13 @@ function max(values: number[]) {
   return result;
 }
 
+function median(values: number[]) {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
 function percentile(values: number[], p: number) {
   if (values.length === 0) return 0;
   values.sort((a, b) => a - b);
@@ -832,6 +1048,16 @@ function readPositiveNumber(value: string | null): number | null {
   if (!value) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function readList(value: string | null): string[] {
+  if (!value) return [];
+  return value.split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function readBooleanOverride(value: string | null): boolean | undefined {
+  if (value === null || value === '') return undefined;
+  return value === '1' || value === 'true';
 }
 
 function readNonNegativeNumber(value: string | null): number | null {

@@ -1,10 +1,12 @@
-import { HemisphereLight, Mesh, Vector3 } from 'three';
+import { DoubleSide, Mesh, RingGeometry, Vector3 } from 'three';
 import { vec4 } from 'three/tsl';
 import type { LevelDefinition } from '../../engine/types';
 import { createCameraFeel } from '../../engine/camera-feel';
 import { bakeEnvironment, createGradientSky } from '../../engine/environment-light';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
+import { warmUpShaders } from '../../engine/shader-cache';
 import { createTimeFeel } from '../../engine/time-feel';
+import { createAdditiveBasicMaterial } from '../../engine/visual-kit';
 import { createAudio, escapementAudio } from './audio';
 import {
   createEscapementGameplay,
@@ -27,15 +29,37 @@ import {
   strikeKickUniform,
   updateVisuals,
 } from './visuals';
+import { createBurr, createChime, createJewelWasp, createOxideTick, createRatchet, createRubyBolt } from './visuals/enemies';
 import { createEscapementEnvironment, SUGGESTED_FAR_PLANE } from './visuals/environment/index';
-import { LAMP_WARM, STEEL_BLUE, VOID } from './visuals/palette';
+import { createArborTarget, createPalletJewel } from './visuals/escapement-boss';
+import { hdr, LAMP_WARM, LOCK_COLD, STEEL_BLUE, VOID, WHITE_HOT } from './visuals/palette';
 
 const DEG = Math.PI / 180;
 const BEAT = ESCAPEMENT_TIME.beatSeconds;
-/** Lamp intensities were tuned without a tone curve; AgX needs them brighter. */
-const LAMP_GAIN = 1.0;
-/** The environment's steel-blue hemisphere fill, scaled down so unlit brass falls toward the void. */
-const FILL_GAIN = 0.35;
+
+/**
+ * One of every target rig the run spawns, a projectile, and the two ring materials a
+ * lock ring is made of, so their shaders compile during the attract screen instead of
+ * at the first spawn of each kind. The rings copy the materials of `makeLockRing` in
+ * visuals/index.ts; the renderer keys a shader on material settings, not colour.
+ */
+function warmUpObjects() {
+  const lockRing = new Mesh(new RingGeometry(0.84, 0.9, 12), createAdditiveBasicMaterial({ color: hdr(LOCK_COLD, 1.6), side: DoubleSide }));
+  const lockRingInner = new Mesh(new RingGeometry(0.66, 0.69, 36), createAdditiveBasicMaterial({ color: hdr(WHITE_HOT, 1.2), side: DoubleSide }));
+  return [
+    createBurr(),
+    createOxideTick(),
+    createRatchet(),
+    createJewelWasp(),
+    createRubyBolt(),
+    createChime(),
+    createPalletJewel('left'),
+    createArborTarget(),
+    createProjectileMesh(),
+    lockRing,
+    lockRingInner,
+  ];
+}
 /** Escape-wheel rate the Free Run reaches after four bars, in radians per second. */
 const FREE_RUN_WHEEL_SPIN = 9;
 const FREE_RUN_SPIN_RATE = 24;
@@ -49,7 +73,10 @@ export const escapementLevel: LevelDefinition = {
   markers: ESCAPEMENT_MARKERS,
   sections: ESCAPEMENT_RUN_SECTIONS.map((section) => ({ name: section.name, time: bar(section.fromBar) })),
   debugSelector: { queryParam: 'debugEnemy', label: 'Enemy', options: ESCAPEMENT_DEBUG_TARGETS },
-  render: { toneMapping: 'agx', exposure: 0.85, farPlane: SUGGESTED_FAR_PLANE },
+  // Under AgX at exposure 1 lit brass sits near 0.7 luminance and reads pale; 0.7 keeps it gold.
+  // Every enemy kind is disposed on its kill and spawned again a bar later; without retention each wave compiles its shaders again.
+  // The dust is 100k slots; on the software backend the render tools use, the perf and occlusion gates step it on the CPU.
+  render: { toneMapping: 'agx', exposure: 0.7, farPlane: SUGGESTED_FAR_PLANE, retainShaders: true, softwareParticleCapacity: 4000 },
   post: {
     clearColor: 0x010102,
     bloom: { strength: 0.45, threshold: 1.35, radius: 0.22 },
@@ -70,34 +97,31 @@ export const escapementLevel: LevelDefinition = {
     const cameraFeel = createCameraFeel(camera);
     const feel = createTimeFeel();
 
-    // Lighting: the PMREM bake the enemy models were tuned under, then the sets.
+    // Lighting: the PMREM bake of visuals/enemies.ts's previewLightRig at 0.6 of its brightness; at full brightness
+    // the plates behind the escapement wash out to beige under the works lamp.
     const sky = createGradientSky({
-      zenith: LAMP_WARM.clone().multiplyScalar(0.14),
-      horizon: STEEL_BLUE.clone().multiplyScalar(0.2),
+      zenith: LAMP_WARM.clone().multiplyScalar(0.55),
+      horizon: STEEL_BLUE.clone().multiplyScalar(0.35),
       ground: VOID,
       horizonWidth: 0.35,
       sunDirection: new Vector3(0.2, 1, 0.35),
       sunColor: LAMP_WARM,
-      sunIntensity: 16,
+      sunIntensity: 20,
       sunAngularRadius: 0.08,
       haloAngularRadius: 0.6,
-      haloIntensity: 0.08,
+      haloIntensity: 0.1,
     });
     const bake = bakeEnvironment(renderer, () => sky.scene, { size: 128 });
     bake.attach(scene);
     const environment = createEscapementEnvironment(scene, { environmentNode: bake.node });
     const lamp = environment.getLampLight();
-    lamp.intensity *= LAMP_GAIN;
     lamp.shadow.mapSize.set(1024, 1024);
     lamp.shadow.camera.near = 4;
     lamp.shadow.camera.far = 520;
     lamp.shadow.bias = -0.002;
-    environment.getSunLight().intensity *= LAMP_GAIN;
-    const worksLamp = environment.root.getObjectByName('escapement-works-lamp');
-    if (worksLamp && 'intensity' in worksLamp) (worksLamp as { intensity: number }).intensity *= LAMP_GAIN;
-    environment.root.traverse((object) => {
-      if ((object as HemisphereLight).isHemisphereLight) (object as HemisphereLight).intensity *= FILL_GAIN;
-    });
+    // The lamp and the barrel never move, so the six shadow faces render once instead of every frame.
+    lamp.shadow.autoUpdate = false;
+    lamp.shadow.needsUpdate = true;
     // The barrel cuts the lamp: its plates are what the god rays shine between.
     environment.root.getObjectByName('barrel')?.traverse((object) => {
       if ((object as Mesh).isMesh) object.castShadow = true;
@@ -105,6 +129,7 @@ export const escapementLevel: LevelDefinition = {
 
     const visuals = createEscapementVisualRuntime({ scene, renderer, environment });
     installVisualEventHandlers(bus, scene);
+    const warmUp = warmUpShaders(scene, warmUpObjects());
 
     const debugTarget = normalizeEscapementDebugTarget(debugValue);
     const gameplay = createEscapementGameplay(bus, debugTarget);
@@ -251,7 +276,8 @@ export const escapementLevel: LevelDefinition = {
 
       // The bob's trail follows the bob through its swing.
       const pivot = environment.getPendulumPivot();
-      const bob = pivot.clone().add(new Vector3(Math.sin(swing) * 300, -Math.cos(swing) * 300, 0));
+      const rod = environment.layout.pendulum.length;
+      const bob = pivot.clone().add(new Vector3(Math.sin(swing) * rod, -Math.cos(swing) * rod, 0));
       visuals.bobTrail.pushPoint(bob);
       visuals.bobTrail.update(dt, camera.position);
     }
@@ -259,6 +285,7 @@ export const escapementLevel: LevelDefinition = {
     return {
       update(dt, elapsed) {
         now = elapsed;
+        warmUp.update(camera);
         const running = game.state === 'running';
         const gameDt = feel.scaleDt(dt);
         if (running) {
@@ -290,6 +317,7 @@ export const escapementLevel: LevelDefinition = {
       },
       dispose() {
         game.dispose();
+        warmUp.dispose();
         visuals.dispose();
         environment.dispose();
         bake.dispose();

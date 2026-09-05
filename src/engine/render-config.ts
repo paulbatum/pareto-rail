@@ -11,6 +11,8 @@ import {
   type ToneMapping,
 } from 'three';
 import type { WebGPURenderer } from 'three/webgpu';
+import { setGpuParticleSoftwareCapacity } from './gpu-particles';
+import { retainCompiledShaders } from './shader-cache';
 import type { LevelRenderConfig, LevelShadowMapType, LevelToneMapping } from './types';
 
 const TONE_MAPPINGS: Record<LevelToneMapping, ToneMapping> = {
@@ -51,4 +53,10 @@ export function applyRenderConfig(renderer: WebGPURenderer, config: LevelRenderC
   renderer.toneMappingExposure = config.exposure ?? 1;
   renderer.shadowMap.enabled = config.shadows !== undefined;
   renderer.shadowMap.type = SHADOW_MAP_TYPES[config.shadows?.type ?? 'pcf'];
+  setGpuParticleSoftwareCapacity(config.softwareParticleCapacity ?? null);
+}
+
+/** The part of the render config that needs the initialized renderer. Call after `renderer.init()` resolves. */
+export function applyInitializedRenderConfig(renderer: WebGPURenderer, config: LevelRenderConfig = {}) {
+  if (config.retainShaders) retainCompiledShaders(renderer);
 }
