@@ -1,0 +1,26 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level speedsolve-kv7m
+
+Speedsolve floor check
+duration 60.0s; spawned kinds 7: bolt, core, octa, prism, spindle, square, tetra
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=linear
+    gapThirtyseconds=2
+    releaseShare=0.65
+    gridRampGapGrowthThirtyseconds=0
+    maxGridSeconds=0.46875
+  action SFX snap: overridden grid (enabled, 32nd grid)
+  lock radius: 0.115 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, updateCameraEffects, updateAttractCamera, playerHealth, allowLockUndo, detailsForRun
+  identity hooks [default]: validateRelease, easeRunProgress
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+All floor checks passed.
+FLOOR VERDICT: ACCEPT — if submitted in its current state, this level will be accepted.

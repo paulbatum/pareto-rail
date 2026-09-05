@@ -257,6 +257,12 @@
       "configurationId": "claude-opus-4-8-high-b20"
     },
     {
+      "runId": "run-7c41ab90de",
+      "levelId": "speedsolve-kv7m",
+      "themeId": "speedsolve",
+      "configurationId": "codex-gpt-6-astra-max"
+    },
+    {
       "runId": "run-8swex50r9h",
       "levelId": "tinker-ball-3ioa",
       "themeId": "tinker-ball",
@@ -358,6 +364,12 @@
       "levelId": "thermal-ink-v1d2",
       "themeId": "thermal-ink",
       "configurationId": "pi-openrouter-ox-alpha-high"
+    },
+    {
+      "runId": "run-l0jnrvcba5",
+      "levelId": "vespers-xc1a",
+      "themeId": "vespers",
+      "configurationId": "claude-fable-5-1-high"
     },
     {
       "runId": "run-n0i508zstz",

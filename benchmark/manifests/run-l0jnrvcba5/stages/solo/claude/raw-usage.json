@@ -1,0 +1,132 @@
+{
+  "sessionId": "873e3e5d-3e52-4384-acf1-223d947c2873",
+  "initResolvedModel": "claude-fable-5-1",
+  "finalMessage": "The ignited rose now reads as saturated glass with a warm glow instead of a white-out, and the black room keeps its contrast. All gates pass on the final code.\n\n## Vespers is built and verified\n\n**What was built** in `src/benchmark-levels/vespers-xc1a/` (plus gallery images under `public/level-content/vespers-xc1a/`):\n\n- **World.** A 470 m nave of near-black stone: piers with baked shading, arcade and gallery tiers, ribbed vaults, a west wall with portal and rose, and a floor of 4,400 flickering candles. Seventy claimable windows plus the rose live in one merged glass mesh with per-window vertex ranges.\n- **The mechanic.** Each shade, moth, censer, and petal claims a dark window ahead of it on spawn, preferring its own colour. A kill flies a light streak back to that window, which ignites and stays lit, tinting the surrounding stone, vault lines, and floor pools. Misses leave the window dark. The whole run starts with only the first bays burning.\n- **Enemies.** Lancet-shaped shades that peel off the wall and hover, moths with flapping wings crossing in arcs, censers on chains swinging one bar per period and throwing cinders at the low point, and the rose boss: eight orbiting petals gate a two-stage eye that sinks into the glass when wounded, throws a second ring plus dark shards, and ignites the rose when it dies, with a wave of light running back down the nave.\n- **Music.** 72 BPM, eighteen bars, sixty seconds exactly, all organ and no percussion. Pedal alone, tenor at bar 2, alto at 4, soprano at 6, choir and tubular bells at 8, one flute voice for the quiet, a walking pedal and tolling bell under the rose. Locks are 4' flute notes up the bar's harmony, fire is a pedal-reed thump on the root, kills walk per-section melody lanes, the eye's wounds stack a growing cluster, and the killing blow opens every rank in D major with the trumpet that had been held back all night. A 4.6 s convolution reverb sells the room.\n\n**Verified:** typecheck, production build, and the floor check all pass on the final code (7 enemy kinds, full event coverage, no occlusion or perf failures, only a mild 27% centre-concentration warning). The perfect simulation clears 61/61 including the eye at 49.5 s; the audio trace confirms each voice enters on its written bar. SwiftShader renders of the start screen, mid-run, boss fight, and a debug-lit cathedral (`?debugScene=lit`) were reviewed and tuned.\n\n**Not verified, needs human eyes:** WebGPU cannot run headless here, so real bloom levels, the ignition flash, the attract-screen windows flickering out, and every audio judgment (mix balance, reverb length, whether the coda lands) are unheard. First things to check in a playtest: the eye's open-state legibility at 20–60 m, the rose ignition exposure, and the trumpet coda volume against the tutti. Also note `npm run check:benchmark-scope` fails in this checkout because `scripts/benchmark/protocol.mjs` is missing from the baseline; `git status` confirms only the two permitted directories were touched.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 2563194,
+    "stop_reason": "end_turn",
+    "session_id": "873e3e5d-3e52-4384-acf1-223d947c2873",
+    "total_cost_usd": 24.28321975,
+    "usage": {
+      "input_tokens": 1890,
+      "cache_creation_input_tokens": 471119,
+      "cache_read_input_tokens": 19334359,
+      "output_tokens": 200167,
+      "output_tokens_details": {
+        "thinking_tokens": 86856
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 471119,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 32,
+          "output_tokens": 2354,
+          "cache_read_input_tokens": 480479,
+          "cache_creation_input_tokens": 856,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 856
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-fable-5-1": {
+        "inputTokens": 1890,
+        "outputTokens": 200167,
+        "cacheReadInputTokens": 19334359,
+        "cacheCreationInputTokens": 471119,
+        "webSearchRequests": 0,
+        "costUSD": 24.28321975,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 86856,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 100,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "The ignited rose now reads as saturated glass with a warm glow instead of a white-out, and the black room keeps its contrast. All gates pass on the final code.\n\n## Vespers is built and verified\n\n**What was built** in `src/benchmark-levels/vespers-xc1a/` (plus gallery images under `public/level-content/vespers-xc1a/`):\n\n- **World.** A 470 m nave of near-black stone: piers with baked shading, arcade and gallery tiers, ribbed vaults, a west wall with portal and rose, and a floor of 4,400 flickering candles. Seventy claimable windows plus the rose live in one merged glass mesh with per-window vertex ranges.\n- **The mechanic.** Each shade, moth, censer, and petal claims a dark window ahead of it on spawn, preferring its own colour. A kill flies a light streak back to that window, which ignites and stays lit, tinting the surrounding stone, vault lines, and floor pools. Misses leave the window dark. The whole run starts with only the first bays burning.\n- **Enemies.** Lancet-shaped shades that peel off the wall and hover, moths with flapping wings crossing in arcs, censers on chains swinging one bar per period and throwing cinders at the low point, and the rose boss: eight orbiting petals gate a two-stage eye that sinks into the glass when wounded, throws a second ring plus dark shards, and ignites the rose when it dies, with a wave of light running back down the nave.\n- **Music.** 72 BPM, eighteen bars, sixty seconds exactly, all organ and no percussion. Pedal alone, tenor at bar 2, alto at 4, soprano at 6, choir and tubular bells at 8, one flute voice for the quiet, a walking pedal and tolling bell under the rose. Locks are 4' flute notes up the bar's harmony, fire is a pedal-reed thump on the root, kills walk per-section melody lanes, the eye's wounds stack a growing cluster, and the killing blow opens every rank in D major with the trumpet that had been held back all night. A 4.6 s convolution reverb sells the room.\n\n**Verified:** typecheck, production build, and the floor check all pass on the final code (7 enemy kinds, full event coverage, no occlusion or perf failures, only a mild 27% centre-concentration warning). The perfect simulation clears 61/61 including the eye at 49.5 s; the audio trace confirms each voice enters on its written bar. SwiftShader renders of the start screen, mid-run, boss fight, and a debug-lit cathedral (`?debugScene=lit`) were reviewed and tuned.\n\n**Not verified, needs human eyes:** WebGPU cannot run headless here, so real bloom levels, the ignition flash, the attract-screen windows flickering out, and every audio judgment (mix balance, reverb length, whether the coda lands) are unheard. First things to check in a playtest: the eye's open-state legibility at 20–60 m, the rose ignition exposure, and the trumpet coda volume against the tutti. Also note `npm run check:benchmark-scope` fails in this checkout because `scripts/benchmark/protocol.mjs` is missing from the baseline; `git status` confirms only the two permitted directories were touched.",
+    "ttft_ms": 1777,
+    "type": "result",
+    "duration_ms": 2823271,
+    "uuid": "709fa220-8ed9-4225-a0b4-e6ab6ed7c48f",
+    "ttft_stream_ms": 1302,
+    "time_to_request_ms": 92,
+    "first_content_frame_ms": 1714,
+    "queued_turn_count": 0
+  },
+  "normalized": {
+    "inputTokens": 19336249,
+    "outputTokens": 200167,
+    "cacheReadInputTokens": 19334359,
+    "cacheWriteInputTokens": 471119,
+    "vendorFields": {
+      "totalCostUsd": 24.28321975,
+      "durationMs": 2823271,
+      "durationApiMs": 2563194,
+      "numTurns": 100,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-fable-5-1": {
+          "inputTokens": 1890,
+          "outputTokens": 200167,
+          "cacheReadInputTokens": 19334359,
+          "cacheCreationInputTokens": 471119,
+          "webSearchRequests": 0,
+          "costUSD": 24.28321975,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 86856,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

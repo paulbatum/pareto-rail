@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-7c41ab90de",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-05T00:28:44.447Z",
+      "data": {
+        "source": {
+          "runId": "run-7c41ab90de",
+          "slotId": "kv7m",
+          "themeId": "speedsolve",
+          "levelId": "speedsolve-kv7m",
+          "title": "Speedsolve",
+          "materialsCommit": "f5f4fdeb796b002ca29ef1d0d182b137342f3818",
+          "evaluatedCommit": "115569339ef911688fc0df573987b4377df8618e",
+          "payloadCommit": "e420cd483589ae23831619ae66ec689648d24eb9",
+          "manifestSha256": "3d4a3f29ca4d9a32edba8fdcaa60f6b9bb44281e76b104d9ab702beb83117ed3",
+          "definitionSha256": "540cca695d47df480a16a1459339abb574a4eaef6e54e0726895aeb03a9693f5",
+          "evaluatedSha256": "06e9bfdd90d2fddd2892e538c7876cfbb079aacd176d23185ad1282bca33ca9f",
+          "payloadSha256": "0f720d986993981a49a177c10c3a7c197b923878d482d671260017144487fa62",
+          "payloadDiffSha256": "aa977372adbbd91d7c8cbb5c7aef11863f445abc7e3a80b99f2985abb5d57bed",
+          "sourcePath": "src/benchmark-levels/speedsolve-kv7m/",
+          "destinationPath": "src/benchmark-levels/speedsolve-kv7m/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/speedsolve-kv7m",
+              "promotedPath": "src/benchmark-levels/speedsolve-kv7m",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/speedsolve-kv7m",
+              "promotedPath": "public/level-content/speedsolve-kv7m",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "571bf346f0dcb6c7026bbaf09939c573f2e34e6d"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-05T00:28:44.563Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/speedsolve-kv7m/",
+            "files": 10,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/speedsolve-kv7m/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-05T00:28:59.946Z",
+      "data": {
+        "images": [
+          {
+            "path": "hero.png",
+            "avifPath": "hero.avif",
+            "pngSha256": "b98e0b79629a44be8e32e65b9396bfb5c054192698bce226441b966c77936a1b",
+            "avifSha256": "48c7939123b444f778bdde8c101531443d6b5e8149fb70563b7dacf534320b48"
+          },
+          {
+            "path": "overview.png",
+            "avifPath": "overview.avif",
+            "pngSha256": "4bd6f842103da0a44e28895dfc53b6263791088a3ff4a1feb24f9e35818a3340",
+            "avifSha256": "d72e3e5a24ba113edcf6d940fc838964891196ca7ce79226d8c2ac8ae2c708fb"
+          },
+          {
+            "path": "start.png",
+            "avifPath": "start.avif",
+            "pngSha256": "16c288ba58a30108ea2767307f957a72bb77a16664035c016e9b2d8a276bc89a",
+            "avifSha256": "23d299eeda9f1b1220319c3b71a4dccc8f0d97c25e53d74ad3bc219f36b82755"
+          }
+        ],
+        "descriptor": {
+          "path": "level.json",
+          "keys": [
+            "overview",
+            "start",
+            "hero"
+          ],
+          "sha256Before": "53e877feb5a74b4a38aee12ea24340f3a3982ba4f0566a94a086af04256352c7",
+          "sha256After": "be388257da11e54292d971d40a50b5f916147564b4001d2e72c041e643ae8071"
+        }
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-05T00:29:00.070Z",
+      "data": {
+        "destination": "src/benchmark-levels/speedsolve-kv7m/",
+        "verifiedFiles": 13
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-05T00:30:31.076Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.948717393999999,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "0172be10043c4c3aeeccd6abd3a52319517b658fa67c009e4bb38f4a00b139b6",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 38.150776872,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level speedsolve-kv7m --base 571bf346f0dcb6c7026bbaf09939c573f2e34e6d",
+            "exitCode": 0,
+            "stdoutSha256": "109ac033528a29e635a5e8ab91e3c822a6c53f6dcfb01eb194ccddf788f9809f",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.06063610700000572,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level speedsolve-kv7m",
+            "exitCode": 0,
+            "stdoutSha256": "c817b9f2de4a1cb6a68224c44ad91932edaddaf2cf8bf7158f1a9c14c89615c8",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 50.544370608,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-05T00:30:31.229Z",
+      "data": {
+        "promotionCommit": "697e950f63174d29327c6b4de6e9ceabce7c8959",
+        "reused": false
+      }
+    }
+  },
+  "failures": [
+    {
+      "failedAt": "2026-09-05T00:24:41.060Z",
+      "checkpoint": "validation",
+      "message": "Refusing to overwrite unrelated local changes: public/level-content/vespers-xc1a/hero.avif, public/level-content/vespers-xc1a/overview.avif, public/level-content/vespers-xc1a/start.avif"
+    }
+  ],
+  "updatedAt": "2026-09-05T00:30:31.230Z",
+  "failure": {
+    "failedAt": "2026-09-05T00:24:41.060Z",
+    "checkpoint": "validation",
+    "message": "Refusing to overwrite unrelated local changes: public/level-content/vespers-xc1a/hero.avif, public/level-content/vespers-xc1a/overview.avif, public/level-content/vespers-xc1a/start.avif"
+  },
+  "source": {
+    "runId": "run-7c41ab90de",
+    "slotId": "kv7m",
+    "themeId": "speedsolve",
+    "levelId": "speedsolve-kv7m",
+    "title": "Speedsolve",
+    "materialsCommit": "f5f4fdeb796b002ca29ef1d0d182b137342f3818",
+    "evaluatedCommit": "115569339ef911688fc0df573987b4377df8618e",
+    "payloadCommit": "e420cd483589ae23831619ae66ec689648d24eb9",
+    "manifestSha256": "3d4a3f29ca4d9a32edba8fdcaa60f6b9bb44281e76b104d9ab702beb83117ed3",
+    "definitionSha256": "540cca695d47df480a16a1459339abb574a4eaef6e54e0726895aeb03a9693f5",
+    "evaluatedSha256": "06e9bfdd90d2fddd2892e538c7876cfbb079aacd176d23185ad1282bca33ca9f",
+    "payloadSha256": "0f720d986993981a49a177c10c3a7c197b923878d482d671260017144487fa62",
+    "payloadDiffSha256": "aa977372adbbd91d7c8cbb5c7aef11863f445abc7e3a80b99f2985abb5d57bed",
+    "sourcePath": "src/benchmark-levels/speedsolve-kv7m/",
+    "destinationPath": "src/benchmark-levels/speedsolve-kv7m/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/speedsolve-kv7m",
+        "promotedPath": "src/benchmark-levels/speedsolve-kv7m",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/speedsolve-kv7m",
+        "promotedPath": "public/level-content/speedsolve-kv7m",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "571bf346f0dcb6c7026bbaf09939c573f2e34e6d"
+  },
+  "promotionCommit": "697e950f63174d29327c6b4de6e9ceabce7c8959"
+}

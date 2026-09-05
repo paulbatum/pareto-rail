@@ -1,0 +1,31 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level vespers-xc1a
+
+Vespers floor check
+duration 60.0s; spawned kinds 7: censer, cinder, eye, moth, petal, shade, shard
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm:
+    pattern=grid-ramp [default]
+    gapThirtyseconds=2 [default]
+    releaseShare=0.75 [default]
+    gridRampGapGrowthThirtyseconds=2 [default]
+    maxGridSeconds=1.6766666666666667
+  action SFX snap: overridden grid (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC; reticle visual 0.047 NDC = 0.56x lock radius, no reticle scaling
+  words: start "START!" (6), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, updateCameraEffects, updateAttractCamera, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 1
+reticle warnings: 0
+start/replay word warnings: 0
+
+Warnings:
+- Enemy destruction concentration in screen center is slightly high (27.0%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.

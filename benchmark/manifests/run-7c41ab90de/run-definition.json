@@ -1,0 +1,21 @@
+{
+  "runId": "run-7c41ab90de",
+  "slotId": "kv7m",
+  "levelId": "speedsolve-kv7m",
+  "themeId": "speedsolve",
+  "themePath": "benchmark/themes/speedsolve.md",
+  "configurationId": "codex-gpt-6-astra-max",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-6-astra",
+    "effort": "max",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "f5f4fdeb796b002ca29ef1d0d182b137342f3818",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Speedsolve"
+}
