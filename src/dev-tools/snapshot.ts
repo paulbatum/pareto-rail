@@ -31,6 +31,11 @@ type SnapshotRendererParameters = WebGPURendererParameters & {
 
 type PostRenderer = ReturnType<typeof createPost>;
 
+/* A factory that needs the renderer (GPU particles, an environment bake) returns a
+   function instead of an object; the harness calls it once the renderer is initialized. */
+export type SnapshotContext = { renderer: WebGPURenderer; scene: Scene; camera: PerspectiveCamera };
+type SnapshotFactoryResult = Object3D | ((context: SnapshotContext) => Object3D | Promise<Object3D>);
+
 declare global {
   interface Window {
     __snapshot: SnapshotApi;
@@ -99,7 +104,7 @@ async function bootstrap() {
   activeBackend = readActiveBackend(renderer);
   document.body.append(renderer.domElement);
 
-  const object = await createSnapshotObject(modulePath, exportName, readArgs(params.get('args')));
+  const object = await createSnapshotObject(modulePath, exportName, readArgs(params.get('args')), { renderer, scene, camera });
   normalizeRootScale(object);
   scene.add(object);
   frameObject(object);
@@ -110,13 +115,14 @@ async function bootstrap() {
   lastLuminance = measureLuminance(renderer.domElement);
 }
 
-async function createSnapshotObject(modulePath: string, exportName: string, args: unknown[]): Promise<Object3D> {
+async function createSnapshotObject(modulePath: string, exportName: string, args: unknown[], context: SnapshotContext): Promise<Object3D> {
   const moduleUrl = toModuleUrl(modulePath);
   const imported = (await import(/* @vite-ignore */ moduleUrl)) as Record<string, unknown>;
   const factory = imported[exportName];
   if (typeof factory !== 'function') throw new Error(`Export ${JSON.stringify(exportName)} is not a function in ${modulePath}`);
 
-  const result = (factory as (...factoryArgs: unknown[]) => unknown)(...args);
+  const produced = (factory as (...factoryArgs: unknown[]) => SnapshotFactoryResult)(...args);
+  const result = typeof produced === 'function' ? await produced(context) : produced;
   if (!(result instanceof Object3D)) throw new Error(`Export ${JSON.stringify(exportName)} did not return a three.js Object3D`);
   return result;
 }
