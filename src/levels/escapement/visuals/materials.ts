@@ -152,6 +152,11 @@ function colorNode(color: Color): Vec3Node {
   return vec3(color.r, color.g, color.b);
 }
 
+// Every per-material number below is a uniform rather than a shader constant, so
+// all the brass, steel and oxide variants of one structure compile to one program.
+// The renderer keys programs on generated code, and a constant folded into the
+// code makes each material its own program and its own driver compile at load.
+
 type SurfaceFrame = { along: Vec3Node; across: Vec3Node; streak: FloatNode };
 
 /**
@@ -162,7 +167,7 @@ type SurfaceFrame = { along: Vec3Node; across: Vec3Node; streak: FloatNode };
  * normal depends on the face.
  */
 function surfaceFrame(pattern: Vec3Node, brushAxis: Vector3): SurfaceFrame {
-  const axis = vec3(brushAxis.x, brushAxis.y, brushAxis.z);
+  const axis = uniform(brushAxis.clone().normalize());
   const n = normalWorld;
   // Grooves run along `along`; fall back to a second axis where the normal is parallel to the brush axis.
   const primary = cross(n, axis);
@@ -194,17 +199,17 @@ type PlateDetail = {
  * checkerboard. Plates are a straight grid, so the rivet rows run parallel to
  * the seams.
  */
-function plateDetail(pattern: Vec3Node, normal: Vec3Node, scale: number, aniso: number): PlateDetail {
+function plateDetail(pattern: Vec3Node, normal: Vec3Node, scale: FloatNode, aniso: FloatNode): PlateDetail {
   const magnitude = abs(normal);
   const xDominant = magnitude.x.greaterThan(magnitude.y).and(magnitude.x.greaterThan(magnitude.z));
   const yDominant = magnitude.y.greaterThan(magnitude.z);
   const swizzled = select(xDominant, pattern.yzx, select(yDominant, pattern.zxy, pattern.xyz));
-  const midCell = (0.5 * SEAM_NORMAL_STRETCH) / scale;
+  const midCell = float(0.5 * SEAM_NORMAL_STRETCH).div(scale);
   const projected = vec3(swizzled.x, swizzled.y.div(aniso), midCell);
   const edge = voronoiEdgeDistance(projected, scale, { aniso: SEAM_NORMAL_STRETCH, randomness: 0 });
   const face = smoothstep(float(0), float(SEAM_WIDTH), edge);
   const row = smoothstep(float(RIVET_ROW_WIDTH), float(0), abs(edge.sub(RIVET_ROW)));
-  const lattice = vec2(swizzled.x, swizzled.y.div(aniso)).mul(scale * RIVETS_PER_CELL);
+  const lattice = vec2(swizzled.x, swizzled.y.div(aniso)).mul(scale.mul(RIVETS_PER_CELL));
   const rivetOffset = lattice.fract().sub(0.5);
   const dome = smoothstep(float(RIVET_RADIUS), float(RIVET_RADIUS * 0.6), length(rivetOffset));
   return { face, rivet: dome.mul(row), rivetSlope: rivetOffset.div(RIVET_RADIUS) };
@@ -220,15 +225,15 @@ function tarnishMask(pattern: Vec3Node, coverage: number, fine: FloatNode): Floa
   const mottle = fractalNoise(pattern.add(vec3(5, 9, 2)), { scale: TARNISH_MOTTLE_SCALE, octaves: 2, roughness: 0.6 });
   const weight = fine.mul(0.3);
   const combined = patch.mul(weight.oneMinus()).add(mottle.mul(weight));
-  const threshold = 0.64 - coverage * 0.28;
-  return smoothstep(float(threshold), float(threshold + 0.1), combined);
+  const threshold = uniform(0.64 - coverage * 0.28);
+  return smoothstep(threshold, threshold.add(0.1), combined);
 }
 
 function verdigrisMask(pattern: Vec3Node, coverage: number): FloatNode {
   if (coverage <= 0) return float(0);
   const noise = fractalNoise(pattern.add(vec3(31, 7, 13)), { scale: TARNISH_PATCH_SCALE * 3, octaves: 4, roughness: 0.6 });
-  const threshold = 0.66 - coverage * 0.3;
-  return smoothstep(float(threshold), float(threshold + 0.08), noise);
+  const threshold = uniform(0.66 - coverage * 0.3);
+  return smoothstep(threshold, threshold.add(0.08), noise);
 }
 
 /** Every metal material made so far, so a PMREM environment can be applied after the fact. */
@@ -252,28 +257,29 @@ function createMetal(base: Color, dark: Color, options: MetalOptions, defaults: 
   });
   const pattern = options.patternPosition ?? positionWorld;
   const frame = surfaceFrame(pattern, options.brushAxis ?? DEFAULT_BRUSH_AXIS);
-  const brushStrength = options.brushStrength ?? 0.3;
+  const brushStrength = uniform(options.brushStrength ?? 0.3);
+  const baseRoughness = uniform(roughness);
   // 1 close to the camera, 0 where the fine layer would be under a pixel.
   const fine = smoothstep(float(FINE_FAR), float(FINE_NEAR), positionView.z.negate());
 
-  let color = colorNode(base);
-  let rough: FloatNode = float(roughness);
+  let color: Vec3Node = uniform(new Vector3(base.r, base.g, base.b));
+  let rough: FloatNode = baseRoughness;
   let normal: Vec3Node = normalWorld;
 
   // Fine layer: scratches darken and roughen thin lines along the brushing.
   const scratch = smoothstep(float(0.14), float(0.24), frame.streak).mul(fine);
   color = color.mul(scratch.mul(-0.22).add(1));
   rough = rough.add(scratch.mul(0.14));
-  normal = normal.add(frame.across.mul(frame.streak.mul(brushStrength * 2).mul(fine)));
+  normal = normal.add(frame.across.mul(frame.streak.mul(brushStrength.mul(2)).mul(fine)));
   // Where the brushing normal fades out, widen the lobe by the same amount instead,
   // so a far plate reflects the same mix of sky as a near one.
-  rough = rough.add(fine.oneMinus().mul(brushStrength * 0.8));
+  rough = rough.add(fine.oneMinus().mul(brushStrength.mul(0.8)));
 
   // Coarse layer: plate seams and rivet rows.
   if (options.seamScale !== undefined) {
-    const detail = plateDetail(pattern, options.patternNormal ?? normalWorld, options.seamScale, options.seamAniso ?? DEFAULT_SEAM_ANISO);
+    const detail = plateDetail(pattern, options.patternNormal ?? normalWorld, uniform(options.seamScale), uniform(options.seamAniso ?? DEFAULT_SEAM_ANISO));
     color = mix(color.mul(0.3), color, detail.face);
-    rough = mix(float(Math.min(1, roughness + 0.3)), rough, detail.face);
+    rough = mix(baseRoughness.add(0.3).min(1), rough, detail.face);
     color = mix(color, color.mul(1.08), detail.rivet);
     // The dome tilts the normal in the brushing frame; which way a head's highlight faces matters less than that it has one.
     const bump = frame.along.mul(detail.rivetSlope.x).add(frame.across.mul(detail.rivetSlope.y));
@@ -281,8 +287,8 @@ function createMetal(base: Color, dark: Color, options: MetalOptions, defaults: 
   }
 
   const tarnish = tarnishMask(pattern, options.tarnish ?? 0.35, fine);
-  color = mix(color, colorNode(dark), tarnish.mul(0.45));
-  rough = mix(rough, float(Math.min(1, roughness + 0.4)), tarnish);
+  color = mix(color, uniform(new Vector3(dark.r, dark.g, dark.b)), tarnish.mul(0.45));
+  rough = mix(rough, baseRoughness.add(0.4).min(1), tarnish);
 
   const verdigris = verdigrisMask(pattern, options.verdigris ?? 0);
   color = mix(color, colorNode(VERDIGRIS), verdigris);

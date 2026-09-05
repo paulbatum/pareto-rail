@@ -80,6 +80,9 @@ export function warmUpShaders(scene: Scene, objects: Object3D[]): ShaderWarmUp {
   const group = new Group();
   group.name = 'shader-warm-up';
   group.userData.raildIgnoreOcclusion = true;
+  /* Draws count only after the first update: the post chain renders the scene once while it is
+     built, before any update, through a plain pass whose shaders the run never uses again. */
+  let armed = false;
   let pending = 0;
   for (const object of objects) {
     group.add(object);
@@ -91,6 +94,7 @@ export function warmUpShaders(scene: Scene, objects: Object3D[]): ShaderWarmUp {
       const previous = mesh.onAfterRender;
       mesh.onAfterRender = (...args) => {
         previous.apply(mesh, args);
+        if (!armed) return;
         mesh.onAfterRender = previous;
         pending -= 1;
         if (pending === 0) group.visible = false;
@@ -104,6 +108,7 @@ export function warmUpShaders(scene: Scene, objects: Object3D[]): ShaderWarmUp {
       return pending === 0;
     },
     update(camera) {
+      armed = true;
       if (pending === 0) return;
       camera.updateMatrixWorld();
       camera.getWorldDirection(back).multiplyScalar(-WARM_UP_BEHIND_CAMERA);
