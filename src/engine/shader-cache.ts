@@ -1,4 +1,6 @@
+import { Group, Mesh, Vector3, type Camera, type Object3D, type Scene } from 'three';
 import type { WebGPURenderer } from 'three/webgpu';
+import { disposeObject3D } from './visual-kit';
 
 /* Keeps compiled shaders alive for the life of the renderer.
 
@@ -53,4 +55,64 @@ export function retainCompiledShaders(renderer: WebGPURenderer): boolean {
     map[RETAINED] = true;
   }
   return true;
+}
+
+export type ShaderWarmUp = {
+  /** True once every mesh handed in has been drawn. */
+  readonly done: boolean;
+  /** Call once per frame before the render until `done`; keeps the group behind the camera. */
+  update(camera: Camera): void;
+  dispose(): void;
+};
+
+const WARM_UP_BEHIND_CAMERA = 2;
+
+/**
+ * Draws `objects` once so their shaders compile before the run needs them, then hides
+ * them. The objects go into a group that follows the camera two units behind it with
+ * frustum culling off: the renderer draws them, the GPU clips every vertex, and no
+ * pixel changes. The group stays in the scene, hidden, so the renderer keeps counting
+ * the objects as users of their shaders and never evicts them. Build the objects with
+ * the same factories the run uses: the renderer keys shaders on material settings,
+ * geometry layout, and lights, so a copy built any other way warms a different shader.
+ */
+export function warmUpShaders(scene: Scene, objects: Object3D[]): ShaderWarmUp {
+  const group = new Group();
+  group.name = 'shader-warm-up';
+  group.userData.raildIgnoreOcclusion = true;
+  let pending = 0;
+  for (const object of objects) {
+    group.add(object);
+    object.traverse((child) => {
+      const mesh = child as Mesh;
+      if (!mesh.isMesh) return;
+      mesh.frustumCulled = false;
+      pending += 1;
+      const previous = mesh.onAfterRender;
+      mesh.onAfterRender = (...args) => {
+        previous.apply(mesh, args);
+        mesh.onAfterRender = previous;
+        pending -= 1;
+        if (pending === 0) group.visible = false;
+      };
+    });
+  }
+  scene.add(group);
+  const back = new Vector3();
+  return {
+    get done() {
+      return pending === 0;
+    },
+    update(camera) {
+      if (pending === 0) return;
+      camera.updateMatrixWorld();
+      camera.getWorldDirection(back).multiplyScalar(-WARM_UP_BEHIND_CAMERA);
+      camera.getWorldPosition(group.position).add(back);
+      camera.getWorldQuaternion(group.quaternion);
+    },
+    dispose() {
+      scene.remove(group);
+      disposeObject3D(group);
+    },
+  };
 }

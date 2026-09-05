@@ -32,6 +32,16 @@ This gate stays on the software path by default, unlike the visual tools in `doc
 
 Pass `--gpu` when the frame column itself is the question — it samples the pipeline the game ships, and needs the setup described in `docs/visual-tools.md`.
 
+### What the frame column measures
+
+`--render` picks how the harness steps the run, and with it what the frame column means:
+
+- `sample` (the software default) steps a whole second without rendering, renders once, and reports that render's CPU time. It is the cheapest mode on SwiftShader. The stepped second queues every compute dispatch the level made without a frame between them, and the render then waits for that queue, so a level with GPU particles reads tens of seconds on the sample after a busy second. That number is an artifact of this mode, not a frame the game shows.
+- `all` renders every frame the same synchronous way and reports the per-second average, p95, p99, and maximum of the render's CPU time.
+- `realtime` (the `--gpu` default) steps one frame per animation frame and reports the wall-clock time between frames, which is what a player sees: a GPU that falls behind, or a driver still compiling a pipeline the frame needs, shows up as one long frame. The display refresh caps the floor at about 16.7 ms, so read this mode for hitches (`maxFrameMs` in the JSON) rather than for the median.
+
+The GPU browser compiles a render pipeline the first time a shader is drawn, in the GPU process, for 20 to 700 ms depending on the shader. The renderer's CPU time does not include it; the wall time between frames does. A level that spawns an enemy kind, disposes it, and spawns it again pays that compile on every wave unless it sets `render.retainShaders` (`docs/level-authoring.md`).
+
 ### Retained heap
 
 The heap column is read after a forced collection at every sample, so it is what the run is still holding rather than wherever the allocation sawtooth happened to be. This matters more than it sounds: sampling the raw heap measures uncollected garbage as much as retention, and whether a collection fires near a sample depends on how busy that stretch of the level is. A level that goes quiet in its final seconds gives the collector no reason to run, ends its last sample at the top of a sawtooth, and reads as though it leaked tens of megabytes when it retained a fraction of that. Collecting first removes the question, and makes the reading repeatable to a tenth of a megabyte across runs.

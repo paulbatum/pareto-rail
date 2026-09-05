@@ -15,7 +15,7 @@ import {
 import { WebGPURenderer, type WebGPURendererParameters } from 'three/webgpu';
 import { createEventBus } from '../events';
 import { createPost } from '../engine/post';
-import { applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
+import { applyInitializedRenderConfig, applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
 import { collectPerfCounters, type PerfCounters } from '../engine/perf-counters';
 import type { Hud } from '../ui/hud';
 import { findLevelEntry, getLevelById } from '../levels';
@@ -78,6 +78,13 @@ type OcclusionReport = {
 type PerfStepOptions = {
   dt?: number;
   targetTime: number;
+  /**
+   * `realtime` steps one frame per animation frame and reports the wall-clock time between
+   * frames, which is what a player sees: a GPU that falls behind or a driver compile shows
+   * up as a long frame. Off, the page steps synchronously, the render's CPU time is reported,
+   * and the `render` page parameter decides whether every frame or only the last one renders.
+   */
+  realtime?: boolean;
 };
 
 type PerfProbeOptions = {
@@ -344,6 +351,7 @@ async function bootstrap() {
   renderer.setClearColor(selectedLevel.post?.clearColor ?? 0x02040a, 1);
   applyRenderConfig(renderer, selectedLevel.render);
   await renderer.init();
+  applyInitializedRenderConfig(renderer, selectedLevel.render);
   activeBackend = readActiveBackend(renderer);
   stopRendererAnimation(renderer);
   document.body.append(renderer.domElement);
@@ -478,9 +486,9 @@ async function stepPerformance(options: PerfStepOptions): Promise<PerfStepSample
   if (!scene || !camera || !renderer || !runtimeUpdate) throw new Error('Gameplay snapshot runtime is not ready');
   const dt = readOptionPositiveNumber(options.dt, fixedDt, 'dt');
   const targetTime = readOptionNonNegativeNumber(options.targetTime, currentElapsed, 'targetTime');
-  const frameTimes: number[] = [];
+  const frameTimes: number[] = options.realtime ? await stepRealtime(targetTime, dt) : [];
 
-  while (currentElapsed < targetTime - 0.000001 && runtimeState !== 'ended') {
+  while (!options.realtime && currentElapsed < targetTime - 0.000001 && runtimeState !== 'ended') {
     const step = Math.min(dt, targetTime - currentElapsed);
     currentElapsed += step;
     runtimeUpdate(step, currentElapsed);
@@ -515,6 +523,36 @@ async function stepPerformance(options: PerfStepOptions): Promise<PerfStepSample
     heapUsedMB: readInPageHeapUsedMB(),
     ...counters,
   };
+}
+
+/** One frame per animation frame up to `targetTime`; returns the wall-clock milliseconds between consecutive frames. */
+function stepRealtime(targetTime: number, dt: number): Promise<number[]> {
+  return new Promise((resolve, reject) => {
+    const deltas: number[] = [];
+    let previous: number | null = null;
+    const frame = (now: number) => {
+      try {
+        if (!(scene && camera && renderer && runtimeUpdate)) throw new Error('Gameplay snapshot runtime is not ready');
+        if (currentElapsed >= targetTime - 0.000001 || runtimeState === 'ended') {
+          resolve(deltas);
+          return;
+        }
+        if (previous !== null) deltas.push(now - previous);
+        previous = now;
+        const step = Math.min(dt, targetTime - currentElapsed);
+        currentElapsed += step;
+        runtimeUpdate(step, currentElapsed);
+        setRendererFrameTime(renderer, currentElapsed, step);
+        renderer.info?.reset?.();
+        if (post) post.render();
+        else renderer.render(scene, camera);
+        requestAnimationFrame(frame);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    requestAnimationFrame(frame);
+  });
 }
 
 /**

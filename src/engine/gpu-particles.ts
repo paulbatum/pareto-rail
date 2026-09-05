@@ -233,8 +233,24 @@ const SALT_STRIDE = 7919;
 const SEED_SALT = 104729;
 const TINY = 1e-5;
 
+let softwareCapacityCap: number | null = null;
+
+/**
+ * Caps the slot count of every system created afterwards while the renderer runs on the
+ * WebGL backend, which is the SwiftShader path of the render tools. There the kernels run
+ * on the CPU over every slot each frame, so a 100k system makes a simulated second take
+ * tens of seconds. 0 turns compute off and hides the object; null removes the cap.
+ * `applyRenderConfig` sets this from `render.softwareParticleCapacity`.
+ */
+export function setGpuParticleSoftwareCapacity(cap: number | null) {
+  softwareCapacityCap = cap === null ? null : Math.max(0, Math.floor(cap));
+}
+
 export function createGpuParticles(renderer: WebGPURenderer, options: GpuParticlesOptions): GpuParticles {
-  const capacity = Math.max(1, Math.floor(options.capacity));
+  const softwareBackend = readBackend(renderer) === 'webgl';
+  const cappedCapacity = softwareBackend && softwareCapacityCap !== null ? Math.min(options.capacity, softwareCapacityCap) : options.capacity;
+  const capacity = Math.max(1, Math.floor(cappedCapacity));
+  const computeDisabled = softwareBackend && softwareCapacityCap === 0;
   const mode = options.material ?? 'sprite';
   if (mode === 'mesh' && !options.geometry) throw new Error('createGpuParticles: material "mesh" needs a geometry');
 
@@ -418,7 +434,8 @@ export function createGpuParticles(renderer: WebGPURenderer, options: GpuParticl
   object.name = 'gpu-particles';
 
   let cursor = 0;
-  let computeAvailable = true;
+  let computeAvailable = !computeDisabled;
+  if (computeDisabled) object.visible = false;
   let disposed = false;
   let frame = 0;
   const pending: PendingRequest[] = [];
