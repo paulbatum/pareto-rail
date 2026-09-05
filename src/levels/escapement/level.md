@@ -26,4 +26,4 @@ Escapement is built on the engine's flagship features: real lighting with a bake
 Weaker ground: the escapement body sits far above the pendulum bob, so the camera station is above the pivot rather than on the bob, and the swing the player feels is the top of the rod's, not the bob's. Enemies hold a fixed distance from the camera in most sections, so the sense of passing is weaker than in Helios.
 
 ## Status & notes
-Inspection captures: `barrel` (roll through the spiral, 0:05), `train` (rim ride, 0:20), `orrery` (sun and arms, 0:40), `strike` (bell ripple, 0:53), `pendulum` (climb in the bob frame, 1:05), `boss` (jewels lifted, 1:30), `arbor` (arbor exposed, 1:45), `freeRun` (dial approach, 1:55).
+Debug targets: `?level=escapement&debugEnemy=<mote|burr|tick|ratchet|wasp|chime|boss>` holds one enemy kind, or the boss with both jewels and the arbor, in front of the camera with inflated health. Snapshot the set pieces by run time: Barrel 0:05, Train 0:20, Orrery 0:40, Strike 0:53, Pendulum 1:05, boss jewels 1:30, arbor 1:45, Free Run 1:55.

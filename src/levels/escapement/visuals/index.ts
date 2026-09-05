@@ -238,9 +238,9 @@ function acquireTrail(scene: Scene, color: Color) {
     trail = createRibbonTrail({
       points: 24,
       minSpacing: 0.08,
-      width: ({ t }) => float(0.22).mul(float(1).sub(t)),
-      fade: ({ t }) => float(0.9).mul(float(1).sub(t)),
-      color: ({ t }) => vec3(color.r, color.g, color.b).mul(float(1.8).sub(t)),
+      width: ({ t }) => float(0.12).mul(float(1).sub(t)),
+      fade: ({ t }) => float(0.7).mul(float(1).sub(t)),
+      color: ({ t }) => vec3(color.r, color.g, color.b).mul(float(1.2).sub(t)),
     });
     trailPool.push(trail);
     scene.add(trail.mesh);
@@ -343,6 +343,8 @@ function buildEnemy(kind: string, letter?: string): { mesh: Object3D; handle: En
     }
     case 'bolt': {
       const rig = createRubyBolt();
+      // The bolt ends at the camera's nose, where a full white-hot trail would fill the frame.
+      rig.userData.trailColor = WHITE_HOT.clone().multiplyScalar(0.45);
       return { mesh: rig, handle: rigHandle(rig) };
     }
     case 'jewel': {

@@ -310,7 +310,9 @@ const PASS_SECONDS = 0.45;
 const PASS_BEHIND = -8;
 /** Seconds a ruby bolt takes from the wasp to the hull. */
 const BOLT_FLIGHT_SECONDS = 1.8;
-const BOLT_HIT_DISTANCE = 3.2;
+/** The bolt brakes here and lands at BOLT_DAMAGE_DISTANCE; its white-hot spark would fill the frame any closer. */
+const BOLT_HIT_DISTANCE = 4.2;
+const BOLT_DAMAGE_DISTANCE = 1.6;
 const scratchForward = new Vector3();
 const scratchUp = new Vector3();
 const scratchNose = new Vector3();
@@ -732,7 +734,7 @@ export function createEscapementGameplay(bus: EventBus, debugTarget?: Escapement
       velocity: state.velocity,
       state: state.impact,
       intercepted: interceptions.delete(enemy.id),
-      config: { hitDistance: BOLT_HIT_DISTANCE, impactBrake: 0.3, damageDistance: 0.7 },
+      config: { hitDistance: BOLT_HIT_DISTANCE, impactBrake: 0.3, damageDistance: BOLT_DAMAGE_DISTANCE },
     });
     if (impact.phase === 'braking') {
       enemy.mesh.position.copy(state.position);
