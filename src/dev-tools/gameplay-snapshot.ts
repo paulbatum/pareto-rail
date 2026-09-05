@@ -18,8 +18,13 @@ import { createPost } from '../engine/post';
 import { applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
 import { collectPerfCounters, type PerfCounters } from '../engine/perf-counters';
 import type { Hud } from '../ui/hud';
-import { getLevelById } from '../levels';
+import { findLevelEntry, getLevelById } from '../levels';
 import type { LevelDefinition } from '../engine/types';
+
+// Dev-only fixture levels under src/dev-tools/levels/<id>/index.ts. They are
+// reachable only from this page, by id, and only when the id is not a
+// registered or benchmark level.
+const devFixtureModules = import.meta.glob<{ default: LevelDefinition }>('./levels/*/index.ts');
 
 type Fidelity = 'full' | 'postless' | 'flat';
 type Backend = 'webgpu' | 'webgl';
@@ -248,8 +253,16 @@ window.__gameplaySnapshot = {
   },
 };
 
+async function loadSnapshotLevel(id: string | null): Promise<LevelDefinition> {
+  if (id !== null && findLevelEntry(id) === undefined) {
+    const fixture = devFixtureModules[`./levels/${id}/index.ts`];
+    if (fixture) return (await fixture()).default;
+  }
+  return getLevelById(id);
+}
+
 async function bootstrap() {
-  selectedLevel = await getLevelById(params.get('level'));
+  selectedLevel = await loadSnapshotLevel(params.get('level'));
   document.title = `Pareto Rail gameplay snapshot — ${selectedLevel.title}`;
 
   scene = new Scene();

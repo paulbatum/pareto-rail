@@ -5,7 +5,7 @@
 Shared code lives in `src/engine/`:
 
 - `lock-on-runner.ts` contains the START/RUN/REPLAY flow, pointer input, lock-on targeting, homing shots, scoring hooks, and HUD updates;
-- `rail.ts` contains rail sampling helpers, not a level rail;
+- `rail.ts` contains rail sampling helpers, not a level rail, plus the opt-in authored rail frame (parallel transport, roll keys, look targets, moving-body sections; see "Authored rail frames");
 - `rail-pacer.ts` contains an opt-in helper for high-speed levels that need enemies to pace the camera for an authored readable window;
 - `music.ts` contains small timing helpers for beat emission, tempo, MIDI conversion, and grid quantization;
 - `music-time.ts` converts authored bars, beats, steps, and named markers into the seconds consumed by gameplay systems;
@@ -131,6 +131,38 @@ npm run simulate -- --level crystal --engagement
 ```
 
 The engagement report runs a no-fire, immortal simulation and measures the real camera projection each frame. For entries with a `data.engagement.leadSeconds` contract, `OK` means the target was lockable for at least the authored lead, minus a checker-owned tolerance (a small flat term plus a fraction of the window covering the moment near the pass where the target leaves the lock frustum). Entries with no contract are reported as measured-only, which is useful for checking fixed-anchor levels without changing their source. Pressure numbers under the no-fire policy overstate stacking — nothing dies — so compare them against a known-good level (Helios) rather than reading them as absolutes.
+
+## Authored rail frames
+
+By default a rail's frame comes from the world up vector: `sampleRailFrame` crosses the tangent with world up, so the camera stays level and a vertical segment has no defined frame. A level that wants banking, a vertical loop or dive, a camera that turns toward a set piece, or a rail stretch that rides a moving body attaches a frame to its curve inside `createRail()`:
+
+```ts
+import { attachRailFrame, type RailFrameConfig } from '../../engine/rail';
+
+const RAIL_FRAME: RailFrameConfig = {
+  frame: 'parallel-transport',
+  roll: [[0.12, 0], [0.18, 60], [0.26, 60], [0.32, 0]],
+  lookTargets: [{ range: [0.55, 0.62], target: new Vector3(70, 40, -680) }],
+  sections: [{ range: [0.7, 0.9], parent: (time) => spin.makeRotationZ(time * 0.35) }],
+};
+
+export function createRail() {
+  return attachRailFrame(new CatmullRomCurve3(points, false, 'catmullrom', 0.5), RAIL_FRAME);
+}
+```
+
+Attach the frame in `createRail()` rather than once at module load, because every curve instance the level builds (the runner's, the environment's) must carry it. A curve with no attachment keeps the world-up frame and the default camera code path, so existing levels are unaffected.
+
+What each field does:
+
+- `frame: 'parallel-transport'` carries the up vector along the curve, so a loop or a vertical dive keeps a continuous frame. Where the rail is not steep, a tilt picked up in a loop settles back to horizon-level over `levelOver` world units (default 60; 0 keeps pure transport). `frame: 'world-up'` keeps the default frame and is there so the other three fields can be used on it.
+- `roll` is a list of `[u, degrees]` keys, interpolated with a smoothstep between neighbours and held flat outside the first and last key. Positive degrees roll the camera clockwise as the player sees it, the way a plane banks into a right turn. The roll rotates the whole frame, so `offsetFromRail` and `scatterAlongRail` bank with the camera.
+- `lookTargets` turn the camera toward `target` (a `Vector3`, or a function of the rail clock) while `u` is inside `range`. The turn eases in over the first `blend` of `u` after `range[0]` and eases out over the last `blend` before `range[1]` (default 0.02). Only the camera aim changes; the frame and every placement stay on the rail.
+- `sections` author a `range` of the rail in a moving body's local frame. `parent(time)` returns the body's rigid world transform at rail clock `time`; the frame's position and basis are transformed by it, so the camera, `offsetFromRail`, `scatterAlongRail`, and any enemy seated with them ride the body together. The transform eases in and out over `blend` of `u` at each end of the range, the same way a look target does. Author the section's points where the body is at time 0.
+
+The rail clock is `AttachedRailFrame.time`, read with `getRailFrame(curve)`. The runner assigns the run time to it each frame before it moves the camera or updates enemies, and the attract-mode time while on the start screen; a level that samples the rail outside the runner (an environment built at load) sees time 0 unless it passes an explicit `time` to `sampleRailFrame(curve, u, time)` or `offsetFromRail(curve, u, offset, time)`.
+
+To check a frame: run `npm run snapshot:gameplay -- --level <id> --thumbnails 8` and confirm the horizon banks where the roll keys say, stays continuous through any loop, and that rail-placed scenery sits where the camera expects it. `src/dev-tools/levels/rail-frame-fixture/` is a dev-only level that exercises every field; `--level rail-frame-fixture` loads it from the snapshot page only.
 
 ## Visual factories
 

@@ -22,7 +22,7 @@ export type {
 import { createInput } from './input';
 import { MAX_LOCKS } from './locks';
 import { getPlayerCameraSettings } from './player-camera';
-import { smoothRunProgress } from './rail';
+import { getRailFrame, railCameraPose, smoothRunProgress, type RailCameraPose } from './rail';
 import { scoreForKill as defaultScoreForKill, rankForRun as defaultRankForRun, type RunSummary } from './scoring';
 
 export const RETICLE_DISTANCE = 24;
@@ -78,6 +78,9 @@ const PLAYER_INVULNERABILITY_SECONDS = 0.9;
 const REPEAT_LOCK_DELAY = 0.18;
 const EDGE_LOOK_EXPONENT = 1.35;
 const EDGE_LOOK_RESPONSE = 9;
+// Rail parameter the framed camera looks ahead of its seat; the default camera path uses the same literals inline.
+const RUN_LOOK_AHEAD_U = 0.025;
+const ATTRACT_LOOK_AHEAD_U = 0.03;
 
 // Shot delays quantize each impact to the music, so a projectile's planned
 // arrival is a contract: re-solving speed from the live distance every frame
@@ -184,6 +187,8 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const replayWord = level.replayWord ?? REPLAY_WORD;
   const lockRadiusNdc = level.lockRadiusNdc ?? LOCK_RADIUS_NDC;
   const curve = level.createRail();
+  // Present only when the level attached an authored frame; every camera path below keeps its default branch otherwise.
+  const railFrame = getRailFrame(curve);
   const easeRunProgress = level.easeRunProgress ?? smoothRunProgress;
   const timelineTotalEnemies = level.spawnTimeline.filter((entry) => countsEntryTowardTotal(entry)).length;
   const hasPlayerHealth = level.playerHealth !== undefined;
@@ -252,6 +257,8 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   const easeFromPosition = new Vector3();
   const easeFromLook = new Vector3(0, 0, -1);
   const cameraBaseQuaternion = new Quaternion();
+  const easeFromQuaternion = new Quaternion();
+  const railPose: RailCameraPose = { position: new Vector3(), quaternion: new Quaternion() };
   const smoothedEdgeLook = new Vector2();
   const targetEdgeLook = new Vector2();
 
@@ -371,6 +378,7 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
   function startRun() {
     easeFromPosition.copy(camera.position);
     camera.getWorldDirection(easeFromLook);
+    easeFromQuaternion.copy(camera.quaternion);
     clearRunObjects();
     state = 'running';
     modeTime = 0;
@@ -471,13 +479,28 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
       Math.cos(modeTime * 0.6) * 0.045,
       0,
     );
-    camera.position.copy(base).add(drift);
-    camera.lookAt(lookBase.clone().add(lookDrift));
+    if (railFrame) {
+      railFrame.time = modeTime;
+      railCameraPose(curve, 0, ATTRACT_LOOK_AHEAD_U, railPose);
+      camera.position.copy(railPose.position).add(drift);
+      camera.quaternion.copy(railPose.quaternion);
+      // The default path adds lookDrift to a point ~lookDistance ahead; the same drift as a turn of the framed pose.
+      const lookDistance = Math.max(1, base.distanceTo(lookBase));
+      camera.rotateY(-lookDrift.x / lookDistance);
+      camera.rotateX(lookDrift.y / lookDistance);
+    } else {
+      camera.position.copy(base).add(drift);
+      camera.lookAt(lookBase.clone().add(lookDrift));
+    }
     level.updateAttractCamera?.({ camera, curve, modeTime, dt });
     captureCameraBaseAndApplyEdgeLook(dt);
   }
 
   function updateRunCamera(runProgress: number, dt: number) {
+    if (railFrame) {
+      updateFramedRunCamera(runProgress, dt);
+      return;
+    }
     const position = curve.getPointAt(runProgress);
     const lookAt = curve.getPointAt(MathUtils.clamp(runProgress + 0.025, 0, 1));
     if (runEase < 1) {
@@ -489,6 +512,22 @@ export function createLockOnRunner<TKind extends string = string, TData = unknow
     } else {
       camera.position.copy(position);
       camera.lookAt(lookAt);
+    }
+    captureCameraBaseAndApplyEdgeLook(dt);
+  }
+
+  function updateFramedRunCamera(runProgress: number, dt: number) {
+    if (!railFrame) return;
+    railFrame.time = runTime;
+    railCameraPose(curve, runProgress, RUN_LOOK_AHEAD_U, railPose);
+    if (runEase < 1) {
+      runEase = Math.min(1, runEase + dt);
+      const eased = runEase * runEase * (3 - 2 * runEase);
+      camera.position.copy(easeFromPosition).lerp(railPose.position, eased);
+      camera.quaternion.copy(easeFromQuaternion).slerp(railPose.quaternion, eased);
+    } else {
+      camera.position.copy(railPose.position);
+      camera.quaternion.copy(railPose.quaternion);
     }
     captureCameraBaseAndApplyEdgeLook(dt);
   }
