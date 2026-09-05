@@ -6,7 +6,6 @@ import { bakeEnvironment, createGradientSky } from '../../engine/environment-lig
 import { createLockOnRunner } from '../../engine/lock-on-runner';
 import { createTimeFeel } from '../../engine/time-feel';
 import { createAudio, escapementAudio } from './audio';
-import { ESCAPE_WHEEL_TEETH } from './visuals/escapement-boss';
 import {
   createEscapementGameplay,
   ESCAPEMENT_BPM,
@@ -33,7 +32,6 @@ import { LAMP_WARM, STEEL_BLUE, VOID } from './visuals/palette';
 
 const DEG = Math.PI / 180;
 const BEAT = ESCAPEMENT_TIME.beatSeconds;
-const TOOTH = (Math.PI * 2) / ESCAPE_WHEEL_TEETH;
 /** Lamp intensities were tuned without a tone curve; AgX needs them brighter. */
 const LAMP_GAIN = 1.0;
 /** The environment's steel-blue hemisphere fill, scaled down so unlit brass falls toward the void. */
@@ -174,17 +172,11 @@ export const escapementLevel: LevelDefinition = {
     ];
     let nextCallout = 0;
     let strikeSeen = false;
-    let lastBeatIndex = -1;
-    let wheelTarget = 0;
-    let wheelAngle = 0;
 
     bus.on('runstart', () => {
       runTime = 0;
       nextCallout = 0;
       strikeSeen = false;
-      lastBeatIndex = -1;
-      wheelTarget = 0;
-      wheelAngle = 0;
       calloutUntil = -1;
       feel.reset();
       cameraFeel.restore();
@@ -244,20 +236,9 @@ export const escapementLevel: LevelDefinition = {
       environment.setPendulumAmplitude(gameplay.amplitude() * DEG);
       environment.setPendulumAngle(swing);
 
-      // The escape wheel steps one tooth per beat and free-spins once the clock is freed.
+      // The boss body steps its escape wheel one tooth on each beat wrap of the phase it is given,
+      // and free-spins it once the clock is freed.
       const spin = freeRunSpin(running ? time : -1);
-      const beatIndex = Math.floor(time / BEAT);
-      if (beatIndex !== lastBeatIndex) {
-        lastBeatIndex = beatIndex;
-        if (spin.wheel === 0) wheelTarget += TOOTH;
-      }
-      if (spin.wheel > 0) {
-        wheelAngle += spin.wheel * dt;
-        wheelTarget = wheelAngle;
-      } else {
-        wheelAngle += (wheelTarget - wheelAngle) * Math.min(1, dt * 22);
-      }
-      environment.pendulum.setEscapeWheelAngle(-wheelAngle);
       environment.setSpinRate(spin.gears);
 
       const body = visuals.body;
@@ -293,7 +274,6 @@ export const escapementLevel: LevelDefinition = {
             cameraFeel.kickFov(9, { decay: 3 });
             visuals.kickStrike(1.0, 0.75);
             visuals.impulse(environment.bell.origin, 140, 60);
-            escapementAudio(bus);
           }
           if (runTime >= bar(ESCAPEMENT_BARS.freeRun) && nextCallout === callouts.length - 1) {
             nextCallout += 1;

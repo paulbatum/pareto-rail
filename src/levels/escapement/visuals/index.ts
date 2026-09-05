@@ -77,9 +77,10 @@ export type VisualContext = {
 
 const BEAT = ESCAPEMENT_TIME.beatSeconds;
 const DUST_CAPACITY = 100_000;
-const DUST_LIFE = 12;
-const DUST_PER_SECOND = 7000;
-const DUST_SECTIONS = new Set(['barrel', 'train', 'strike', 'pendulum', 'boss']);
+const DUST_LIFE = 9;
+const DUST_PER_SECOND = 2500;
+/** Sections with dust in the lamp shafts. The swinging camera of the Pendulum and boss would smear it into streaks. */
+const DUST_SECTIONS = new Set(['barrel', 'train', 'strike']);
 const DENY_COLOR = new Color(1.4, 0.12, 0.08);
 
 /** Screen flash in linear RGB, added in composeOutput. The Strike is the only frame-wide flash. */
@@ -664,7 +665,7 @@ function emitDust(dt: number, ctx: VisualContext, camera: PerspectiveCamera) {
   for (let i = 0; i < batches; i += 1) {
     const origin = scratch
       .copy(camera.position)
-      .addScaledVector(forward, 14 + Math.random() * 110)
+      .addScaledVector(forward, 24 + Math.random() * 100)
       .addScaledVector(right, (Math.random() - 0.5) * 70)
       .addScaledVector(up, (Math.random() - 0.5) * 44);
     runtime.particles.emit(origin, 24, {
@@ -672,9 +673,9 @@ function emitDust(dt: number, ctx: VisualContext, camera: PerspectiveCamera) {
       speed: 0.4,
       spread: 1,
       life: DUST_LIFE,
-      size: 0.16,
-      jitter: 0.6,
-      color: LAMP_WARM.clone().multiplyScalar(0.45),
+      size: 0.07,
+      jitter: 0.5,
+      color: LAMP_WARM.clone().multiplyScalar(0.22),
     });
   }
 }
