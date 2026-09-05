@@ -8,7 +8,10 @@ import { MAX_LOCKS } from '../src/engine/locks';
 export async function main(argv = process.argv.slice(2), env: { root?: string } = {}) {
   const root = env.root ?? process.cwd();
   const options = parseArgs(argv);
-  const { analyzePerformanceLevels, formatGateGlyph, formatPerformanceReports } = await import('./check-perf.mjs');
+  const { analyzePerformanceLevels, formatGateGlyph, formatPerformanceReports, PERF_PROFILE_NAMES } = await import('./check-perf.mjs');
+  if (options.perfProfile && !PERF_PROFILE_NAMES.includes(options.perfProfile)) {
+    throw new Error(`--perf-profile must be one of: ${PERF_PROFILE_NAMES.join(', ')}`);
+  }
   const audioConfigErrors = await validateLevelAudioConfig(options.level, root);
 
   const [result, occlusionReports, perfReports] = await Promise.all([
@@ -21,7 +24,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
       gapThreshold: options.gapThreshold,
     }),
     analyzeOcclusionLevels([options.level], { dt: options.dt }),
-    analyzePerformanceLevels([options.level], { dt: options.dt }),
+    analyzePerformanceLevels([options.level], { dt: options.dt, perfProfile: options.perfProfile }),
   ]);
 
   const failures: string[] = [];
@@ -88,7 +91,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   }
 
   type PerfGate = { name: string; status: string; detail: string };
-  type PerfReport = { failures: unknown[]; marginal?: PerfGate[]; gates: PerfGate[] };
+  type PerfReport = { failures: unknown[]; marginal?: PerfGate[]; gates: PerfGate[]; options?: { perfProfile?: string } };
   const perfFailures = perfReports.flatMap((report: PerfReport) => report.failures);
   if (perfFailures.length > 0) {
     failures.push(`Performance check found ${perfFailures.length} failing gate${perfFailures.length === 1 ? '' : 's'}. Run npm run check:perf -- --level ${level.id} for details.`);
@@ -139,6 +142,7 @@ export async function main(argv = process.argv.slice(2), env: { root?: string } 
   lines.push(formatEngineDefaultsReport(result.engineDefaults));
   lines.push('');
   lines.push(`target occlusion warnings: ${occlusionWarnings.length}, failing levels: ${occlusionFailures.length}`);
+  lines.push(`performance profile: ${perfReports[0]?.options?.perfProfile ?? 'default'}${options.perfProfile ? ' (from --perf-profile)' : ''}`);
   lines.push(`performance gate failures: ${perfFailures.length}, over authoring budget: ${perfMarginal.length}`);
   lines.push(`audio configuration failures: ${audioConfigErrors.length}`);
   lines.push(`spawn centerness/distance warnings: ${spawnWarningCount}`);
@@ -210,6 +214,7 @@ function parseArgs(argv: string[]) {
   let seed = 1;
   let dt = 1 / 60;
   let gapThreshold = 4;
+  let perfProfile = '';
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     const value = () => {
@@ -222,13 +227,14 @@ function parseArgs(argv: string[]) {
     else if (arg === '--seed') seed = Number(value());
     else if (arg === '--dt') dt = Number(value());
     else if (arg === '--gap-threshold') gapThreshold = Number(value());
+    else if (arg === '--perf-profile') perfProfile = value();
     else if (arg === '-h' || arg === '--help') {
-      console.log('Usage: npm run check:floor -- --level <id> [--seed n]');
+      console.log('Usage: npm run check:floor -- --level <id> [--seed n] [--perf-profile default|flagship]');
       process.exit(0);
     } else throw new Error(`Unknown argument: ${arg}`);
   }
   if (!level) throw new Error('Missing --level <id>');
-  return { level, seed, dt, gapThreshold };
+  return { level, seed, dt, gapThreshold, perfProfile };
 }
 
 function isNonTemplateCard(card: string, title: string) {

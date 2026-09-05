@@ -24,6 +24,37 @@ const DEFAULT_TEXTURE_GROWTH_ALLOWANCE = 8;
 // over its budget is told about it as a warning rather than being failed by it.
 const GATE_TOLERANCE = 1.5;
 
+// A perf profile is a named set of gate budgets. `default` is what every level is
+// authored to. `flagship` is for a level the owner has decided may spend more of the
+// frame than a normal level: it doubles the absolute draw-call and object caps and the
+// growth allowances, and loosens the growth ratio and the retained-heap allowance.
+// A level names its profile through `LevelDefinition.perfProfile`; `--perf-profile`
+// overrides that, and an individual budget flag overrides both.
+const PERF_PROFILES = {
+  default: {
+    growthRatio: DEFAULT_GROWTH_RATIO,
+    heapRetentionMB: DEFAULT_HEAP_RETENTION_MB,
+    maxCalls: DEFAULT_MAX_CALLS,
+    maxObjects: DEFAULT_MAX_OBJECTS,
+    drawCallGrowthAllowance: DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE,
+    objectGrowthAllowance: DEFAULT_OBJECT_GROWTH_ALLOWANCE,
+    geometryGrowthAllowance: DEFAULT_GEOMETRY_GROWTH_ALLOWANCE,
+    textureGrowthAllowance: DEFAULT_TEXTURE_GROWTH_ALLOWANCE,
+  },
+  flagship: {
+    growthRatio: 1.6,
+    heapRetentionMB: 32,
+    maxCalls: 1000,
+    maxObjects: 10000,
+    drawCallGrowthAllowance: 128,
+    objectGrowthAllowance: 256,
+    geometryGrowthAllowance: 1024,
+    textureGrowthAllowance: 16,
+  },
+};
+
+export const PERF_PROFILE_NAMES = Object.keys(PERF_PROFILES);
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 if (process.argv[1] && import.meta.url === pathToFileUrl(process.argv[1])) {
@@ -98,7 +129,7 @@ async function analyzeLevel(browser, baseUrl, level, options) {
     url.searchParams.set('dt', String(options.dt));
     url.searchParams.set('width', String(options.width));
     url.searchParams.set('height', String(options.height));
-    url.searchParams.set('fidelity', 'postless');
+    url.searchParams.set('fidelity', options.fidelity);
     url.searchParams.set('immortal', '1');
     url.searchParams.set('projectiles', '1');
     url.searchParams.set('seed', String(options.seed));
@@ -138,7 +169,7 @@ async function analyzeLevel(browser, baseUrl, level, options) {
     return analyzeSamples({
       level: { id: level, title: metadata.title ?? level, duration },
       samples,
-      options: { ...options, backend: metadata.backend },
+      options: { ...applyPerfProfile(options, metadata.perfProfile), backend: metadata.backend },
     });
   } finally {
     if (client) await client.detach().catch(() => {});
@@ -292,11 +323,12 @@ function addFrameGrowthWarning(warnings, early, late, threshold) {
 export function formatPerformanceReports(reports, options = {}) {
   const lines = [];
   const resolvedOptions = { ...defaultOptions(), ...options };
-  lines.push(`Performance check (growth ${resolvedOptions.growthRatio}×, max calls ${resolvedOptions.maxCalls}, max objects ${resolvedOptions.maxObjects}, retained heap ${resolvedOptions.heapRetentionMB} MB; a gate allows ${GATE_TOLERANCE}× these before failing)`);
+  lines.push(`Performance check (fidelity ${resolvedOptions.fidelity}; a gate allows ${GATE_TOLERANCE}× the budgets below before failing)`);
   for (const report of reports) {
     const status = report.failures.length > 0 ? '✗' : (report.marginal ?? []).length > 0 ? '⚠' : '✓';
     lines.push('');
     lines.push(`${status} ${report.level.id}: duration ${report.level.duration.toFixed(1)}s, samples ${report.samples.length}`);
+    lines.push(`  profile ${report.options.perfProfile}: growth ${report.options.growthRatio}×, max calls ${report.options.maxCalls}, max objects ${report.options.maxObjects}, retained heap ${report.options.heapRetentionMB} MB`);
     lines.push(formatSampleTable(report.samples));
     lines.push('Gates:');
     for (const gate of report.gates) lines.push(`  ${formatGateGlyph(gate.status)} ${gate.name}: ${gate.detail}`);
@@ -345,6 +377,20 @@ function describeWindows(early, late) {
   return { early: label(early), late: label(late) };
 }
 
+/**
+ * Picks the gate budgets for one level. The flag wins over the profile the level
+ * declares, that profile wins over `default`, and a budget named by its own flag
+ * wins over all three.
+ */
+export function applyPerfProfile(options, declaredProfile = null) {
+  const requested = options.perfProfile || declaredProfile || 'default';
+  const profile = PERF_PROFILES[requested];
+  if (!profile) {
+    throw new Error(`Unknown perf profile: ${requested}. Known profiles: ${PERF_PROFILE_NAMES.join(', ')}`);
+  }
+  return { ...options, ...profile, ...(options.gateOverrides ?? {}), perfProfile: requested };
+}
+
 function defaultOptions() {
   return {
     level: '',
@@ -362,9 +408,16 @@ function defaultOptions() {
     objectGrowthAllowance: DEFAULT_OBJECT_GROWTH_ALLOWANCE,
     geometryGrowthAllowance: DEFAULT_GEOMETRY_GROWTH_ALLOWANCE,
     textureGrowthAllowance: DEFAULT_TEXTURE_GROWTH_ALLOWANCE,
+    // An empty name means "use whatever profile the level declares, else default".
+    perfProfile: '',
+    // Budgets named by an explicit flag. They win over the profile the level declares.
+    gateOverrides: {},
     jsonPath: '',
     fail: true,
     render: 'sample',
+    // `postless` skips the post chain, so the gate measures scene work alone.
+    // `full` builds the level's post chain, which is what `--gpu --fidelity full` measures.
+    fidelity: 'postless',
     // The gates here measure growth, not absolute time, and the frame-time warning ratio
     // is calibrated against the software path. `--gpu` swaps in the real WebGPU pipeline
     // when the frame column itself is the question.
@@ -418,18 +471,22 @@ function parseArgs(argv) {
       case 'growth-ratio':
       case 'growthRatio':
         parsed.growthRatio = readPositiveNumber(value, `--${key}`);
+        parsed.gateOverrides.growthRatio = parsed.growthRatio;
         break;
       case 'heap-retention-mb':
       case 'heapRetentionMB':
         parsed.heapRetentionMB = readNonNegativeNumber(value, `--${key}`);
+        parsed.gateOverrides.heapRetentionMB = parsed.heapRetentionMB;
         break;
       case 'max-calls':
       case 'maxCalls':
         parsed.maxCalls = readPositiveInteger(value, `--${key}`);
+        parsed.gateOverrides.maxCalls = parsed.maxCalls;
         break;
       case 'max-objects':
       case 'maxObjects':
         parsed.maxObjects = readPositiveInteger(value, `--${key}`);
+        parsed.gateOverrides.maxObjects = parsed.maxObjects;
         break;
       case 'frame-growth-warn-ratio':
       case 'frameGrowthWarnRatio':
@@ -438,18 +495,31 @@ function parseArgs(argv) {
       case 'draw-call-growth-allowance':
       case 'drawCallGrowthAllowance':
         parsed.drawCallGrowthAllowance = readNonNegativeNumber(value, `--${key}`);
+        parsed.gateOverrides.drawCallGrowthAllowance = parsed.drawCallGrowthAllowance;
         break;
       case 'object-growth-allowance':
       case 'objectGrowthAllowance':
         parsed.objectGrowthAllowance = readNonNegativeNumber(value, `--${key}`);
+        parsed.gateOverrides.objectGrowthAllowance = parsed.objectGrowthAllowance;
         break;
       case 'geometry-growth-allowance':
       case 'geometryGrowthAllowance':
         parsed.geometryGrowthAllowance = readNonNegativeNumber(value, `--${key}`);
+        parsed.gateOverrides.geometryGrowthAllowance = parsed.geometryGrowthAllowance;
         break;
       case 'texture-growth-allowance':
       case 'textureGrowthAllowance':
         parsed.textureGrowthAllowance = readNonNegativeNumber(value, `--${key}`);
+        parsed.gateOverrides.textureGrowthAllowance = parsed.textureGrowthAllowance;
+        break;
+      case 'perf-profile':
+      case 'perfProfile':
+        if (!PERF_PROFILES[value]) throw new Error(`--${key} must be one of: ${PERF_PROFILE_NAMES.join(', ')}`);
+        parsed.perfProfile = value;
+        break;
+      case 'fidelity':
+        if (value !== 'postless' && value !== 'full') throw new Error('--fidelity must be "postless" or "full"');
+        parsed.fidelity = value;
         break;
       case 'json':
         parsed.jsonPath = value;
@@ -479,6 +549,8 @@ function publicOptions(options) {
     maxCalls: options.maxCalls,
     maxObjects: options.maxObjects,
     frameGrowthWarnRatio: options.frameGrowthWarnRatio,
+    perfProfile: options.perfProfile || 'default',
+    fidelity: options.fidelity,
     backend: options.backend,
     drawCallGrowthAllowance: options.drawCallGrowthAllowance,
     objectGrowthAllowance: options.objectGrowthAllowance,
@@ -513,7 +585,7 @@ function readNonNegativeNumber(value, flag) {
 }
 
 function printHelpAndExit() {
-  console.log(`Usage: npm run check:perf -- --level <id> [options]\n\nOptions:\n  --json <path>                         Write raw samples and gate verdicts\n  --render <all|sample>                 Render mode: "all" (every frame) or "sample" (only sample points), default "sample"\n  --gpu                                 Sample on the real WebGPU pipeline instead of the software path\n  --growth-ratio <ratio>                Late/early growth failure ratio, default ${DEFAULT_GROWTH_RATIO}\n  --heap-retention-mb <mb>              Retained heap allowance across a run, default ${DEFAULT_HEAP_RETENTION_MB}\n  --max-calls <count>                   Absolute draw-call budget, default ${DEFAULT_MAX_CALLS}\n  --max-objects <count>                 Absolute scene object budget, default ${DEFAULT_MAX_OBJECTS}\n  --frame-growth-warn-ratio <ratio>     Relative frame-time warning ratio, default ${DEFAULT_FRAME_GROWTH_WARN_RATIO}\n  --draw-call-growth-allowance <count>  Absolute draw-call growth allowance, default ${DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE}\n  --object-growth-allowance <count>     Absolute object growth allowance, default ${DEFAULT_OBJECT_GROWTH_ALLOWANCE}\n  --geometry-growth-allowance <count>   Absolute geometry growth allowance, default ${DEFAULT_GEOMETRY_GROWTH_ALLOWANCE}\n  --texture-growth-allowance <count>    Absolute texture growth allowance, default ${DEFAULT_TEXTURE_GROWTH_ALLOWANCE}\n  --dt <seconds>                        Fixed simulation step, default ${DEFAULT_DT}\n  --seed <integer>                      Snapshot RNG seed, default ${DEFAULT_SEED}\n  --no-fail                             Print failures but exit zero`);
+  console.log(`Usage: npm run check:perf -- --level <id> [options]\n\nOptions:\n  --json <path>                         Write raw samples and gate verdicts\n  --render <all|sample>                 Render mode: "all" (every frame) or "sample" (only sample points), default "sample"\n  --gpu                                 Sample on the real WebGPU pipeline instead of the software path\n  --perf-profile <name>                 Gate budget profile: ${PERF_PROFILE_NAMES.join(' | ')}; defaults to the level's declared profile\n  --fidelity <postless|full>            Render without the post chain (default) or with the level's post chain\n  --growth-ratio <ratio>                Late/early growth failure ratio, default ${DEFAULT_GROWTH_RATIO}\n  --heap-retention-mb <mb>              Retained heap allowance across a run, default ${DEFAULT_HEAP_RETENTION_MB}\n  --max-calls <count>                   Absolute draw-call budget, default ${DEFAULT_MAX_CALLS}\n  --max-objects <count>                 Absolute scene object budget, default ${DEFAULT_MAX_OBJECTS}\n  --frame-growth-warn-ratio <ratio>     Relative frame-time warning ratio, default ${DEFAULT_FRAME_GROWTH_WARN_RATIO}\n  --draw-call-growth-allowance <count>  Absolute draw-call growth allowance, default ${DEFAULT_DRAW_CALL_GROWTH_ALLOWANCE}\n  --object-growth-allowance <count>     Absolute object growth allowance, default ${DEFAULT_OBJECT_GROWTH_ALLOWANCE}\n  --geometry-growth-allowance <count>   Absolute geometry growth allowance, default ${DEFAULT_GEOMETRY_GROWTH_ALLOWANCE}\n  --texture-growth-allowance <count>    Absolute texture growth allowance, default ${DEFAULT_TEXTURE_GROWTH_ALLOWANCE}\n  --dt <seconds>                        Fixed simulation step, default ${DEFAULT_DT}\n  --seed <integer>                      Snapshot RNG seed, default ${DEFAULT_SEED}\n  --no-fail                             Print failures but exit zero`);
   process.exit(0);
 }
 

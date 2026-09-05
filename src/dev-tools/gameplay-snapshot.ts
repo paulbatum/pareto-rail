@@ -97,6 +97,7 @@ type GameplaySnapshotApi = {
     backend: Backend;
     state: string;
     bpm: number | null;
+    perfProfile: 'default' | 'flagship' | null;
     markers: Record<string, number>;
     sections: Array<{ name: string; time: number }>;
   };
@@ -240,6 +241,7 @@ window.__gameplaySnapshot = {
       backend: activeBackend,
       state: runtimeState,
       bpm: selectedLevel ? selectedLevel.bpm : null,
+      perfProfile: selectedLevel ? (selectedLevel.perfProfile ?? null) : null,
       markers: selectedLevel ? (selectedLevel.markers ?? {}) : {},
       sections: selectedLevel ? (selectedLevel.sections ?? []) : [],
     };
