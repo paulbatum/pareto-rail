@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { unpricedReasonFor } from './rate-card.mjs';
 import { initializeBudgetDirectory, POLL_INTERVAL_MS, resumeMessage, shouldResume } from './budget.mjs';
 import { parseBudgetUsd, startBudgetPoller, writeBudgetSummary } from './budget-runtime.mjs';
 import { assertSandboxDependencies, findHeadlessShell, PRIMARY_REPOSITORY_ROOT, piSandboxConfig, sandboxShieldedEntries, writeSandboxGitExclude } from './entrant-sandbox.mjs';
@@ -629,7 +630,8 @@ async function declareOpenRouterModel({ model, outputDirectory }) {
     fail(`OpenRouter lists ${model} without both a context length and a maximum completion length, so pi would fall back to its 4096-token output default.`);
   }
   const reasoning = (listed.supported_parameters ?? []).some((parameter) => parameter === 'reasoning' || parameter === 'reasoning_effort');
-  if (!Number(listed.pricing?.prompt) || !Number(listed.pricing?.completion)) {
+  // A model on the unpriced list is expected to be listed free; its run records no cost at all.
+  if (!unpricedReasonFor([model]) && (!Number(listed.pricing?.prompt) || !Number(listed.pricing?.completion))) {
     fail(`OpenRouter lists ${model} without both an input and an output price, so pi would record every call as free and the run could not be measured.`);
   }
   const declaration = {

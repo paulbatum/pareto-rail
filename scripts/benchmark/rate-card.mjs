@@ -54,3 +54,17 @@ export function rateCardCost({ inputTokens = 0, outputTokens = 0, cacheReadToken
   if (!rates) throw new Error(`No rate card for ${modelName}.`);
   return inputTokens * rates.input + outputTokens * rates.output + cacheReadTokens * rates.cacheRead;
 }
+
+// A cloaked model is published without a price, so a run on one records its cost as unavailable:
+// token counts stand, no dollar figure exists. Remove the entry once the model is named and priced.
+const UNPRICED_MODELS = new Map([
+  ['stealth/union-alpha', 'OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session.'],
+]);
+
+export function unpricedReasonFor(modelNames) {
+  for (const modelName of modelNames) {
+    const reason = UNPRICED_MODELS.get(modelName);
+    if (reason) return reason;
+  }
+  return null;
+}

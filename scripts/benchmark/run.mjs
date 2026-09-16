@@ -18,7 +18,7 @@ import {
 import { renderAssignment, renderDelegation } from './render-assignment.mjs';
 import { ccusageVersion, counterUnavailableReason, harnessCountersForRounds, measureRunCost, reconcileCost, reconciliationWarnings } from './ccusage-cost.mjs';
 import { measureAgyRunCost, tokscaleVersion } from './tokscale-cost.mjs';
-import { applyRateCard, RATE_CARD_MODELS } from './rate-card.mjs';
+import { applyRateCard, RATE_CARD_MODELS, unpricedReasonFor } from './rate-card.mjs';
 import { manifestErrors } from './results.mjs';
 import { createRecoverySnapshot, restoreRecoverySnapshot, startPeriodicRecoverySnapshots } from './recovery-snapshot.mjs';
 import { assertScrubbedBaseline, scrubbedBaselineViolations } from './baseline-policy.mjs';
@@ -164,19 +164,7 @@ const COST_SOURCES = {
 // A free or discounted access route can still serve a model whose ordinary route has a published
 // price. Its recorded cost uses that rate card rather than claiming the provider charged the operator.
 
-// A cloaked model is published without a price, so a run on one records its cost as unavailable:
-// token counts stand, no dollar figure exists. Remove the entry once the model is named and priced.
-const UNPRICED_MODELS = new Map([
-  ['stealth/union-alpha', 'OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge.'],
-]);
-
-export function unpricedReasonFor(modelNames) {
-  for (const modelName of modelNames) {
-    const reason = UNPRICED_MODELS.get(modelName);
-    if (reason) return reason;
-  }
-  return null;
-}
+export { unpricedReasonFor };
 
 export function costBasisFor(modelNames, { usesTokscale = false } = {}) {
   return usesTokscale || modelNames.some((modelName) => RATE_CARD_MODELS.has(modelName)) ? 'rate-card' : 'metered';
