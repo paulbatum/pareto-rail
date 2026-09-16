@@ -175,7 +175,7 @@ Use `npm run benchmark:status` or `npm run benchmark:manage -- status` for contr
 
 For a pi stage, `events.jsonl` can remain unwritten for roughly half an hour because the harness flushes it lazily. Inspect the native session under the run's `harness-home/sessions/` instead. A growing session is live. A session that stops growing without a new `quota-wait/quota-waits.jsonl` entry indicates a stall.
 
-When the `kimi-coding` subscription reaches its quota, the controller-owned extension normally waits in process. If the process dies during the wait, preserve the existing session and use same-session recovery after confirming no controller or adapter process remains active.
+When the `kimi-coding` subscription reaches its quota, or OpenRouter rate-limits a model upstream, the controller-owned extension normally waits in process and resumes the session (see `PROVIDER_QUOTA_WAIT` in `scripts/benchmark/pi-cli.mjs`). If the process dies during the wait, preserve the existing session and use same-session recovery after confirming no controller or adapter process remains active.
 
 ## Resume or recover a run
 

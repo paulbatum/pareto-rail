@@ -11,6 +11,8 @@ const CONTINUATION = 'You were interrupted by a provider usage limit and have be
 assert.equal(isQuotaError({ stopReason: 'error', errorMessage: QUOTA_ERROR }), true);
 assert.equal(isQuotaError({ stopReason: 'error', errorMessage: '403: temporary upstream failure' }), false);
 assert.equal(isQuotaError({ stopReason: 'error', errorMessage: 'Provider usage limit reached without an HTTP status' }), false);
+assert.equal(isQuotaError({ stopReason: 'error', errorMessage: '429: {"message":"Provider returned error","code":429,"metadata":{"raw":"stealth/union-alpha is temporarily rate-limited upstream. Please retry shortly."}}' }), true);
+assert.equal(isQuotaError({ stopReason: 'error', errorMessage: '429: Too many requests' }), false);
 assert.equal(QUOTA_CONTINUATION_MESSAGE, CONTINUATION);
 
 const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'pareto-rail-quota-wait-test-'));

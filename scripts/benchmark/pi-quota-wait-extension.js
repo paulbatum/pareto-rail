@@ -16,7 +16,8 @@ export const QUOTA_CONTINUATION_MESSAGE = 'You were interrupted by a provider us
 export function isQuotaError(message) {
   if (message?.stopReason !== 'error' || typeof message.errorMessage !== 'string') return false;
   return /access_terminated_error/i.test(message.errorMessage)
-    || (/403/i.test(message.errorMessage) && /usage limit/i.test(message.errorMessage));
+    || (/403/i.test(message.errorMessage) && /usage limit/i.test(message.errorMessage))
+    || (/429/.test(message.errorMessage) && /rate-limited upstream/i.test(message.errorMessage));
 }
 
 export default function quotaWait(pi) {

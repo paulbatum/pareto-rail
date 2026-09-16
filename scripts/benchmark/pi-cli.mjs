@@ -63,9 +63,11 @@ const PROVIDER_EXTENSIONS = {
 // published limits here, outside the entrant boundary, and declares them in the per-run home.
 const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
 
-const PROVIDER_QUOTA_WAIT = new Set(['kimi-coding']);
-const DEFAULT_QUOTA_WAIT_MS = 900_000;
-const DEFAULT_QUOTA_WAIT_MAX = 50;
+// A subscription quota refreshes slowly; an OpenRouter upstream rate limit clears within a minute.
+const PROVIDER_QUOTA_WAIT = new Map([
+  ['kimi-coding', { waitMs: 900_000, maxWaits: 50 }],
+  ['openrouter', { waitMs: 60_000, maxWaits: 120 }],
+]);
 
 async function main() {
   const { options, rest } = parseArgs(process.argv.slice(2));
@@ -141,8 +143,7 @@ async function main() {
     ? {
       directory: path.join(outputDirectory, 'quota-wait'),
       extensionPath: fileURLToPath(new URL('./pi-quota-wait-extension.js', import.meta.url)),
-      waitMs: DEFAULT_QUOTA_WAIT_MS,
-      maxWaits: DEFAULT_QUOTA_WAIT_MAX,
+      ...PROVIDER_QUOTA_WAIT.get(provider),
     }
     : undefined;
   if (quotaWait) {
