@@ -70,11 +70,9 @@ export const levelMetadatas: LevelMetadata[] = [
     },
   },
   { id: 'rush', title: 'Rush', kind: 'technical' },
-  { id: 'escapement', title: 'Escapement', kind: 'playable' },
 ];
 
 const builtInLoaders: Record<string, () => Promise<LevelDefinition>> = {
-  'escapement': async () => (await import('./escapement')).escapementLevel,
   'crystal-corridor': async () => (await import('./crystal')).crystalCorridorLevel,
   'helios': async () => (await import('./helios')).heliosLevel,
   'prism-bloom': async () => (await import('./prism')).prismBloomLevel,
