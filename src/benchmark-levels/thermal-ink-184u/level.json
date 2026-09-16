@@ -1,0 +1,9 @@
+{
+  "id": "thermal-ink-184u",
+  "title": "Thermal Ink",
+  "contentImages": {
+    "hero": "/level-content/thermal-ink-184u/hero.avif",
+    "overview": "/level-content/thermal-ink-184u/overview.avif",
+    "start": "/level-content/thermal-ink-184u/start.avif"
+  }
+}
