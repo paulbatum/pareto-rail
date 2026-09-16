@@ -164,8 +164,17 @@ const COST_SOURCES = {
 // A free or discounted access route can still serve a model whose ordinary route has a published
 // price. Its recorded cost uses that rate card rather than claiming the provider charged the operator.
 
-// Every currently supported model has a price, so no run is excluded from the cost axis.
+// A cloaked model is published without a price, so a run on one records its cost as unavailable:
+// token counts stand, no dollar figure exists. Remove the entry once the model is named and priced.
+const UNPRICED_MODELS = new Map([
+  ['stealth/union-alpha', 'OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, and pi has no catalog entry for the id, so the session figure comes from a fallback rate card rather than from any charge.'],
+]);
+
 export function unpricedReasonFor(modelNames) {
+  for (const modelName of modelNames) {
+    const reason = UNPRICED_MODELS.get(modelName);
+    if (reason) return reason;
+  }
   return null;
 }
 

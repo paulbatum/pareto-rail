@@ -31,6 +31,8 @@ const hash = (character) => character.repeat(64);
 
 assert.equal(unpricedReasonFor(['thinkingmachines/inkling:free']), null);
 assert.equal(unpricedReasonFor(['stealth/ox-alpha']), null);
+assert.match(unpricedReasonFor(['stealth/union-alpha']), /zero price/);
+assert.equal(unpricedReasonFor(['z-ai/glm-5.3-flash', 'stealth/union-alpha']) !== null, true);
 assert.equal(costBasisFor(['stealth/ox-alpha']), 'rate-card');
 assert.equal(costBasisFor(['thinkingmachines/inkling:free']), 'rate-card');
 assert.equal(costBasisFor(['thinkingmachines/inkling']), 'metered');
