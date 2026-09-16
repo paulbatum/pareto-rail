@@ -3,6 +3,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail } from './common.mjs';
+import { unpricedReasonFor } from './rate-card.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -209,7 +210,9 @@ export function reconciliationWarnings(reconciliation) {
 export function assertMeasurable(summary) {
   if (summary.sessionCount < 1) fail('ccusage found no sessions in the per-run home; the isolated home is misconfigured.');
   if (!(summary.totalTokens > 0)) fail('ccusage reported zero tokens for the per-run home; the isolated home is misconfigured.');
-  if (!(summary.totalUsd > 0)) fail('ccusage reported zero cost for the per-run home; the isolated home is misconfigured.');
+  // A model published at a zero price is costless by design; its run records the cost as unavailable.
+  const unpriced = summary.models?.length > 0 && summary.models.every((model) => unpricedReasonFor([model.modelName]));
+  if (!unpriced && !(summary.totalUsd > 0)) fail('ccusage reported zero cost for the per-run home; the isolated home is misconfigured.');
   return summary;
 }
 
