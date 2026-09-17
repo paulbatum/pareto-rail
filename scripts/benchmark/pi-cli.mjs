@@ -198,6 +198,12 @@ async function main() {
     sandboxExtensionPath = fileURLToPath(new URL('./pi-sandbox-extension.js', import.meta.url));
   }
 
+  // pi discovers skills from the operator's home (~/.agents/skills) as well as the worktree, and the
+  // home ones are operator tooling, not task material. Discovery is disabled and the worktree's own
+  // skills, which the entrant can read anyway, are loaded explicitly.
+  const worktreeSkills = path.join(worktree, '.agents', 'skills');
+  const hasWorktreeSkills = await fs.stat(worktreeSkills).then((stat) => stat.isDirectory(), () => false);
+
   const sharedArgs = [
     '--print',
     '--mode', 'json',
@@ -209,6 +215,8 @@ async function main() {
     // `--no-extensions`, which lets a budgeted run load only its controller-owned notice extension.
     '--offline',
     '--no-extensions',
+    '--no-skills',
+    ...(hasWorktreeSkills ? ['--skill', worktreeSkills] : []),
     '--thinking', effort,
     '--model', model,
     ...(provider ? ['--provider', provider] : []),

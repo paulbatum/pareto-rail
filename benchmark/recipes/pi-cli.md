@@ -41,7 +41,7 @@ npm run benchmark:pi -- \
 
 The rendered assignment is supplied as the complete stdin prompt, byte-for-byte, with no controller preface. Effective arguments are recorded verbatim in `command.json`.
 
-The stage runs `--offline --no-extensions` plus the controller-owned sandbox extension, so startup version checks and any operator-installed extension cannot vary between runs. Unattended operation runs `--approve` inside the sandbox boundary.
+The stage runs `--offline --no-extensions --no-skills` plus the controller-owned sandbox extension, so startup version checks, operator-installed extensions, and the operator's home skills (`~/.agents/skills`) cannot vary between runs or reach the entrant. The worktree's own `.agents/skills` directory is passed back explicitly with `--skill`, and the worktree's `AGENTS.md` still loads as project context. Unattended operation runs `--approve` inside the sandbox boundary.
 
 ## Isolation
 
