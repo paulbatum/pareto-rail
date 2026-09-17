@@ -1,0 +1,9 @@
+{
+  "id": "vespers-nolz",
+  "title": "Vespers",
+  "contentImages": {
+    "hero": "/level-content/vespers-nolz/hero.avif",
+    "overview": "/level-content/vespers-nolz/overview.avif",
+    "start": "/level-content/vespers-nolz/start.avif"
+  }
+}
