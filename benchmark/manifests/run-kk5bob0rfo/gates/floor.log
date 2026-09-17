@@ -1,0 +1,24 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level strandline-u4wm
+
+Strandline floor check
+duration 60.0s; spawned kinds 5: brood, clasp, parent, ribbon, urchin
+event coverage missing: playerhit
+
+Engine defaults:
+  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: 0.095 NDC (engine default 0.085)
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, detailsForRun
+  identity hooks [default]: validateRelease, playerHealth, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 1
+
+Warnings:
+- Enemy destruction concentration in screen center is slightly high (26.5%, warning threshold 25.0%). Consider spreading spawns away from the center.
+All floor checks passed.
+FLOOR VERDICT: ACCEPT — if submitted in its current state, this level will be accepted.

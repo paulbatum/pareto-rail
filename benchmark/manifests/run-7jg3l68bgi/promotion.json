@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-7jg3l68bgi",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:23:25.003Z",
+      "data": {
+        "source": {
+          "runId": "run-7jg3l68bgi",
+          "slotId": "28fr",
+          "themeId": "speedsolve",
+          "levelId": "speedsolve-28fr",
+          "title": "Speedsolve",
+          "materialsCommit": "7ab2988501cd03c91e6e8152c50bbd8731a85d3e",
+          "evaluatedCommit": "3144146b6add162f657183745cb6967396301a25",
+          "payloadCommit": "4c166f14ebdbc89cb12a76df817edf782fead4bc",
+          "manifestSha256": "27705ee95d1318f97687a96b4ad93ac8f1029eff64e935b7b555bb69e0caf1c9",
+          "definitionSha256": "ef6dca574f0f547f7d0cbb90ecea2cad674c358566d8e82c06d4b28588c03cc8",
+          "evaluatedSha256": "ec387de5df3b62bc17985e4047a3a8fb01ed135b5ac56a08fa341c0fc92874df",
+          "payloadSha256": "d67038ca43a1cbefccd66f41f2c76aa29e9cbe8a8973807bac35acb27843efef",
+          "payloadDiffSha256": "0100be79e91c2146152f9e9fba76488848a4f7c64f30bf9ada0af3f1ede357a0",
+          "sourcePath": "src/benchmark-levels/speedsolve-28fr/",
+          "destinationPath": "src/benchmark-levels/speedsolve-28fr/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/speedsolve-28fr",
+              "promotedPath": "src/benchmark-levels/speedsolve-28fr",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/speedsolve-28fr",
+              "promotedPath": "public/level-content/speedsolve-28fr",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "9e887ca6ede0c8d74024b0114e138d6536a824cd"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:23:25.092Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/speedsolve-28fr/",
+            "files": 7,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/speedsolve-28fr/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:23:34.157Z",
+      "data": {
+        "images": [
+          {
+            "path": "hero.png",
+            "avifPath": "hero.avif",
+            "pngSha256": "f5848b25f45b68f5e935224b2330f9a621c485c8f35a97a9fc8a74ba2786c0c6",
+            "avifSha256": "2a0617f83c5d0cd098f5c7673ea28fb7ca28ab945929e82c34cf206792a40a24"
+          },
+          {
+            "path": "overview.png",
+            "avifPath": "overview.avif",
+            "pngSha256": "4ec6d999b390d5b2515f5a82726bc0ca5a8bcae368dc29292195aff1f8fda8bd",
+            "avifSha256": "083afc003639c72649062563b9db673646d9e8c122a8c227c3e261599a37ccf8"
+          },
+          {
+            "path": "start.png",
+            "avifPath": "start.avif",
+            "pngSha256": "b55dff8dd3debd58aceae375f2f91d253f57b106d447072fa72b4249f521d183",
+            "avifSha256": "c816cccbff3091e44032bdd998b9cf692e312484fe94d2bbc9c0de39bb52e902"
+          }
+        ],
+        "descriptor": {
+          "path": "level.json",
+          "keys": [
+            "hero",
+            "overview",
+            "start"
+          ],
+          "sha256Before": "b793fd9deb35efaa211739dff485db639967a902b7d10269b7c7c566460c02ff",
+          "sha256After": "4fe2620eceffff14b87b018c6aebf8583f8116adae5cf62a7bac18fc5fc7a1ba"
+        }
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:23:34.248Z",
+      "data": {
+        "destination": "src/benchmark-levels/speedsolve-28fr/",
+        "verifiedFiles": 10
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:26:05.629Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.342847393999999,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "4688073b32f6d0ff4d589d8d61312bb836955022d86e5beb66039d0748002d3f",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 50.79870017,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level speedsolve-28fr --base 9e887ca6ede0c8d74024b0114e138d6536a824cd",
+            "exitCode": 0,
+            "stdoutSha256": "0f3b9d12c8ae691efbeab215e87b8b1c88540e4f7de02c8769f4fe1a761bbdb3",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.058100125000004485,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level speedsolve-28fr",
+            "exitCode": 0,
+            "stdoutSha256": "c7bbb4c4440ac4787cd58bacbbb79315387ef911c4aefd89c8f28cd998b788a1",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 92.166547803,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:26:05.780Z",
+      "data": {
+        "promotionCommit": "d09d541ca6da51e9ca5e2775a7b402c99e225304",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-17T02:26:05.781Z",
+  "source": {
+    "runId": "run-7jg3l68bgi",
+    "slotId": "28fr",
+    "themeId": "speedsolve",
+    "levelId": "speedsolve-28fr",
+    "title": "Speedsolve",
+    "materialsCommit": "7ab2988501cd03c91e6e8152c50bbd8731a85d3e",
+    "evaluatedCommit": "3144146b6add162f657183745cb6967396301a25",
+    "payloadCommit": "4c166f14ebdbc89cb12a76df817edf782fead4bc",
+    "manifestSha256": "27705ee95d1318f97687a96b4ad93ac8f1029eff64e935b7b555bb69e0caf1c9",
+    "definitionSha256": "ef6dca574f0f547f7d0cbb90ecea2cad674c358566d8e82c06d4b28588c03cc8",
+    "evaluatedSha256": "ec387de5df3b62bc17985e4047a3a8fb01ed135b5ac56a08fa341c0fc92874df",
+    "payloadSha256": "d67038ca43a1cbefccd66f41f2c76aa29e9cbe8a8973807bac35acb27843efef",
+    "payloadDiffSha256": "0100be79e91c2146152f9e9fba76488848a4f7c64f30bf9ada0af3f1ede357a0",
+    "sourcePath": "src/benchmark-levels/speedsolve-28fr/",
+    "destinationPath": "src/benchmark-levels/speedsolve-28fr/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/speedsolve-28fr",
+        "promotedPath": "src/benchmark-levels/speedsolve-28fr",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/speedsolve-28fr",
+        "promotedPath": "public/level-content/speedsolve-28fr",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "9e887ca6ede0c8d74024b0114e138d6536a824cd"
+  },
+  "promotionCommit": "d09d541ca6da51e9ca5e2775a7b402c99e225304"
+}

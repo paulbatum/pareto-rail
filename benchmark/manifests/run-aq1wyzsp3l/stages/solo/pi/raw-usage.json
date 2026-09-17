@@ -1,0 +1,22 @@
+{
+  "sessionId": "01a0ac4c-51b0-72df-8974-3b8cc98a0497",
+  "toolCalls": 66,
+  "initResolvedModel": "stealth/union-alpha",
+  "assistantMessageCount": 48,
+  "finalMessage": "Implemented **Vespers** in `src/benchmark-levels/vespers-nolz/`.\n\n- Exactly 60 seconds, with three thief types and a staged rose-window boss.\n- Persistent window restoration, cathedral architecture, candle floor, and procedural glyphs.\n- Organ counterpoint, quantized player notes, quiet passage, and major-key victory finale.\n- Hero, overview, and start-screen AVIFs included.\n\n**Verified:** typecheck, build, floor check, simulation, audio trace, and gameplay snapshots. Both tested firing policies cleared all 44 targets.\n\n**Scope gate blocked:** the repository is missing `scripts/benchmark/protocol.mjs`. A manual audit found all 12 added files within the two allowed directories.\n\nHuman WebGPU playtesting remains necessary for audio balance, boss feel, bloom-zero readability, and victory lighting.",
+  "normalized": {
+    "inputTokens": 308489,
+    "outputTokens": 25818,
+    "cacheReadTokens": 1993796,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/union-alpha": {
+          "outputTokens": 25818,
+          "costUSD": 0
+        }
+      }
+    }
+  }
+}

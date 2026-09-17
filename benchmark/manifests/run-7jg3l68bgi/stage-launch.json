@@ -1,0 +1,32 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-7jg3l68bgi",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-7jg3l68bgi/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-7jg3l68bgi/stages/solo/pi",
+    "--model",
+    "stealth/union-alpha",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter",
+    "--sandbox",
+    "false",
+    "--resume-round",
+    "1"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-09-17T00:00:14.170Z",
+  "finishedAt": "2026-09-17T00:32:10.900Z",
+  "wallTimeSeconds": 1873.796872676,
+  "stdoutSha256": "41a6acaea8a1d808159359164551d2298f0816eeb14085de218d3ff074e6e476",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"01a0ac4b-9e95-7397-9d42-f861bb77118b\",\"usage\":{\"inputTokens\":471497,\"outputTokens\":41914,\"cacheReadTokens\":4364457,\"cacheWriteTokens\":0,\"reasoningTokens\":0,\"vendorFields\":{\"modelUsage\":{\"stealth/union-alpha\":{\"outputTokens\":41914,\"costUSD\":0}}}},\"wallTimeSeconds\":1873.060842634}\n",
+  "stderr": ""
+}

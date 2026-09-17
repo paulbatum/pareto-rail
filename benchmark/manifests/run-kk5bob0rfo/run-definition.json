@@ -1,0 +1,22 @@
+{
+  "runId": "run-kk5bob0rfo",
+  "slotId": "u4wm",
+  "levelId": "strandline-u4wm",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "pi-openrouter-union-alpha-high",
+  "recipePath": "benchmark/recipes/pi-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "stealth/union-alpha",
+    "provider": "openrouter",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "149be2a4befac6738055b51fd1a983eb16a5e8ab",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Strandline"
+}

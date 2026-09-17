@@ -170,6 +170,13 @@ export const configurationLabels = {
     effort: 'high',
     workflowSummary: 'One fresh unattended pi session driving Muse Spark 1.3 over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
+  'pi-openrouter-union-alpha-high': {
+    modelName: 'Union Alpha',
+    workflowName: 'solo',
+    primaryModel: 'stealth/union-alpha',
+    effort: 'high',
+    workflowSummary: 'One fresh unattended pi session driving Union Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+  },
   'pi-openrouter-kimi-k3-max': {
     modelName: 'Kimi K3',
     workflowName: 'solo',
@@ -206,6 +213,7 @@ export const PUBLISHED_CONFIGURATIONS = new Set([
   'pi-kimi-k3-max',
   'pi-openrouter-kimi-k3-max',
   'pi-openrouter-muse-spark-1-3-high',
+  'pi-openrouter-union-alpha-high',
 ]);
 
 const delegationIntroduction = 'Your work will be evaluated on a quality/cost pareto curve. Therefore you are encouraged to use your built in support for delegating work to subagents running cheaper models.';

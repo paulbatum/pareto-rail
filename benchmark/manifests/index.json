@@ -263,6 +263,12 @@
       "configurationId": "codex-gpt-6-astra-max"
     },
     {
+      "runId": "run-7jg3l68bgi",
+      "levelId": "speedsolve-28fr",
+      "themeId": "speedsolve",
+      "configurationId": "pi-openrouter-union-alpha-high"
+    },
+    {
       "runId": "run-8swex50r9h",
       "levelId": "tinker-ball-3ioa",
       "themeId": "tinker-ball",
@@ -293,6 +299,12 @@
       "configurationId": "pi-openrouter-ox-alpha-high"
     },
     {
+      "runId": "run-aq1wyzsp3l",
+      "levelId": "vespers-nolz",
+      "themeId": "vespers",
+      "configurationId": "pi-openrouter-union-alpha-high"
+    },
+    {
       "runId": "run-b82b6e4a1b",
       "levelId": "strandline-b4d3",
       "themeId": "strandline",
@@ -315,6 +327,12 @@
       "levelId": "mass-driver-def9",
       "themeId": "mass-driver",
       "configurationId": "codex-sol-max"
+    },
+    {
+      "runId": "run-cdglws4sxc",
+      "levelId": "tinker-ball-x9a0",
+      "themeId": "tinker-ball",
+      "configurationId": "pi-openrouter-union-alpha-high"
     },
     {
       "runId": "run-cfdddf9471",
@@ -366,6 +384,12 @@
       "configurationId": "pi-openrouter-ox-alpha-high"
     },
     {
+      "runId": "run-kk5bob0rfo",
+      "levelId": "strandline-u4wm",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-union-alpha-high"
+    },
+    {
       "runId": "run-l0jnrvcba5",
       "levelId": "vespers-xc1a",
       "themeId": "vespers",
@@ -382,6 +406,12 @@
       "levelId": "broadside-amr2",
       "themeId": "broadside",
       "configurationId": "pi-openrouter-muse-spark-1-3-high"
+    },
+    {
+      "runId": "run-nqw47y4pzu",
+      "levelId": "thermal-ink-184u",
+      "themeId": "thermal-ink",
+      "configurationId": "pi-openrouter-union-alpha-high"
     },
     {
       "runId": "run-pnpwjrxhz8uu",
@@ -527,6 +557,12 @@
       "themeId": "skyhook",
       "configurationId": "codex-sol-terra-delegation",
       "retired": true
+    },
+    {
+      "runId": "run-vi207g6wxh",
+      "levelId": "broadside-86kh",
+      "themeId": "broadside",
+      "configurationId": "pi-openrouter-union-alpha-high"
     },
     {
       "runId": "run-x58xikqvx62i",

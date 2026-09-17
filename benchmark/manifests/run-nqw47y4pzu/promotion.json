@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-nqw47y4pzu",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:31:13.721Z",
+      "data": {
+        "source": {
+          "runId": "run-nqw47y4pzu",
+          "slotId": "184u",
+          "themeId": "thermal-ink",
+          "levelId": "thermal-ink-184u",
+          "title": "Thermal Ink",
+          "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+          "evaluatedCommit": "648f762da45ab1729566c073ab7fea8b7e0662eb",
+          "payloadCommit": "0b6c98c3d1cb196ba3628e83d0fde427ecbf174e",
+          "manifestSha256": "5240839c62bbc695ba907cd63942fcf95469c2664790bb8005938a09a2eaa65c",
+          "definitionSha256": "c5e70caea331f0c9d9a5247922fa459bccd0b7f6bcb3af4926891af134eb2ff9",
+          "evaluatedSha256": "b4ea607c422d8757892253c0aa6c50589181f7b0dab4accf4baad83f2f13afba",
+          "payloadSha256": "ebeb528236df4c72292811a0f5098fb93a025881ce7b020579a62b4d8dd25d91",
+          "payloadDiffSha256": "6a611ee6e9e44fa791baf055b35b79c1cc8db7de38de35a16711f5575d7599ea",
+          "sourcePath": "src/benchmark-levels/thermal-ink-184u/",
+          "destinationPath": "src/benchmark-levels/thermal-ink-184u/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/thermal-ink-184u",
+              "promotedPath": "src/benchmark-levels/thermal-ink-184u",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/thermal-ink-184u",
+              "promotedPath": "public/level-content/thermal-ink-184u",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "f6980e74732a13178f6cccf1a489e352e0a40287"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:31:13.810Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/thermal-ink-184u/",
+            "files": 8,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/thermal-ink-184u/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:31:13.812Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:31:13.875Z",
+      "data": {
+        "destination": "src/benchmark-levels/thermal-ink-184u/",
+        "verifiedFiles": 11
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:33:47.336Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.500497407,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "aedae5a64024af66cc798babdf4e188e5cc35a75693bfc5ecc836005a5a29368",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 51.279785719,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level thermal-ink-184u --base f6980e74732a13178f6cccf1a489e352e0a40287",
+            "exitCode": 0,
+            "stdoutSha256": "7c7366d9c083876e5da04515e6ac0a1fd34c717e780182ce60e04f643722cf09",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.05104449600000226,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level thermal-ink-184u",
+            "exitCode": 0,
+            "stdoutSha256": "cac8cb389830899ff3729c2f7eea2dbb8021539f15735eeabf044c41da1ac63d",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 92.31343193899998,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:33:47.434Z",
+      "data": {
+        "promotionCommit": "af2cd9532f70576bb5d8e51664a7e05866aa7c56",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-17T02:33:47.435Z",
+  "source": {
+    "runId": "run-nqw47y4pzu",
+    "slotId": "184u",
+    "themeId": "thermal-ink",
+    "levelId": "thermal-ink-184u",
+    "title": "Thermal Ink",
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "evaluatedCommit": "648f762da45ab1729566c073ab7fea8b7e0662eb",
+    "payloadCommit": "0b6c98c3d1cb196ba3628e83d0fde427ecbf174e",
+    "manifestSha256": "5240839c62bbc695ba907cd63942fcf95469c2664790bb8005938a09a2eaa65c",
+    "definitionSha256": "c5e70caea331f0c9d9a5247922fa459bccd0b7f6bcb3af4926891af134eb2ff9",
+    "evaluatedSha256": "b4ea607c422d8757892253c0aa6c50589181f7b0dab4accf4baad83f2f13afba",
+    "payloadSha256": "ebeb528236df4c72292811a0f5098fb93a025881ce7b020579a62b4d8dd25d91",
+    "payloadDiffSha256": "6a611ee6e9e44fa791baf055b35b79c1cc8db7de38de35a16711f5575d7599ea",
+    "sourcePath": "src/benchmark-levels/thermal-ink-184u/",
+    "destinationPath": "src/benchmark-levels/thermal-ink-184u/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/thermal-ink-184u",
+        "promotedPath": "src/benchmark-levels/thermal-ink-184u",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/thermal-ink-184u",
+        "promotedPath": "public/level-content/thermal-ink-184u",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "f6980e74732a13178f6cccf1a489e352e0a40287"
+  },
+  "promotionCommit": "af2cd9532f70576bb5d8e51664a7e05866aa7c56"
+}

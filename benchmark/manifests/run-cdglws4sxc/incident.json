@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "incident": "2026-09-operator-skills-exposure",
+  "note": "pi offered the operator home skills (~/.agents/skills) to the entrant; operator tooling, not level material. Promoted with the note by owner decision.",
+  "auditVerdict": "CONTAMINATED"
+}

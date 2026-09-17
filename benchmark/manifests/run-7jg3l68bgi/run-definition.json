@@ -1,0 +1,22 @@
+{
+  "runId": "run-7jg3l68bgi",
+  "slotId": "28fr",
+  "levelId": "speedsolve-28fr",
+  "themeId": "speedsolve",
+  "themePath": "benchmark/themes/speedsolve.md",
+  "configurationId": "pi-openrouter-union-alpha-high",
+  "recipePath": "benchmark/recipes/pi-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "stealth/union-alpha",
+    "provider": "openrouter",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "7ab2988501cd03c91e6e8152c50bbd8731a85d3e",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Speedsolve"
+}

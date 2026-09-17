@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-aq1wyzsp3l",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:26:06.291Z",
+      "data": {
+        "source": {
+          "runId": "run-aq1wyzsp3l",
+          "slotId": "nolz",
+          "themeId": "vespers",
+          "levelId": "vespers-nolz",
+          "title": "Vespers",
+          "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+          "evaluatedCommit": "6b21d71c5e91feb39c25d7ed1769551078850002",
+          "payloadCommit": "3edd7307adc32a6728161358e4967aefc4d817ab",
+          "manifestSha256": "e5fcd4274a64ccbf61524d0ed54b53c833f84281ea439e70875c0a88e120b894",
+          "definitionSha256": "e24652583cb2e65ca18adefaa78569d449473f47a7ec1223b66da7fb107c8d7a",
+          "evaluatedSha256": "52c36dd39f258bb317905b6649ef17966c3a37ebf19f22528eacaa33056c143b",
+          "payloadSha256": "f878ec4d02f76eba2a9be4632a498be654033f09bfaf85faea8346518ac89817",
+          "payloadDiffSha256": "d90c21a678951e273423ec3f1fb99229b733b78e0c9c7aba80a4581de1f206ff",
+          "sourcePath": "src/benchmark-levels/vespers-nolz/",
+          "destinationPath": "src/benchmark-levels/vespers-nolz/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/vespers-nolz",
+              "promotedPath": "src/benchmark-levels/vespers-nolz",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/vespers-nolz",
+              "promotedPath": "public/level-content/vespers-nolz",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "d09d541ca6da51e9ca5e2775a7b402c99e225304"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:26:06.388Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/vespers-nolz/",
+            "files": 9,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/vespers-nolz/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:26:06.390Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:26:06.455Z",
+      "data": {
+        "destination": "src/benchmark-levels/vespers-nolz/",
+        "verifiedFiles": 12
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:28:38.932Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.243910945,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "4d33d19ef85494c269b90449adaeeb324933315754e2f9eb72c7e991e313ebe3",
+            "stderrSha256": "e40df379b3ca806791529144da53b048cf1a232201fdfc817692665ba9ad0093",
+            "wallTimeSeconds": 50.865969752999995,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-nolz --base d09d541ca6da51e9ca5e2775a7b402c99e225304",
+            "exitCode": 0,
+            "stdoutSha256": "4d819287dd191c0fe6f2165d8d0c302d18af362f513f441ec167130407207e49",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.05019660899999872,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level vespers-nolz",
+            "exitCode": 0,
+            "stdoutSha256": "b780030d342c517a048e42ac3e12ce2cc332232167c1c4cf9a767b155cd44bcc",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 92.431614662,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-17T02:28:39.022Z",
+      "data": {
+        "promotionCommit": "aa70ee4d89dad7c3095fb010103e482ab96e3aa0",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-17T02:28:39.023Z",
+  "source": {
+    "runId": "run-aq1wyzsp3l",
+    "slotId": "nolz",
+    "themeId": "vespers",
+    "levelId": "vespers-nolz",
+    "title": "Vespers",
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "evaluatedCommit": "6b21d71c5e91feb39c25d7ed1769551078850002",
+    "payloadCommit": "3edd7307adc32a6728161358e4967aefc4d817ab",
+    "manifestSha256": "e5fcd4274a64ccbf61524d0ed54b53c833f84281ea439e70875c0a88e120b894",
+    "definitionSha256": "e24652583cb2e65ca18adefaa78569d449473f47a7ec1223b66da7fb107c8d7a",
+    "evaluatedSha256": "52c36dd39f258bb317905b6649ef17966c3a37ebf19f22528eacaa33056c143b",
+    "payloadSha256": "f878ec4d02f76eba2a9be4632a498be654033f09bfaf85faea8346518ac89817",
+    "payloadDiffSha256": "d90c21a678951e273423ec3f1fb99229b733b78e0c9c7aba80a4581de1f206ff",
+    "sourcePath": "src/benchmark-levels/vespers-nolz/",
+    "destinationPath": "src/benchmark-levels/vespers-nolz/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/vespers-nolz",
+        "promotedPath": "src/benchmark-levels/vespers-nolz",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/vespers-nolz",
+        "promotedPath": "public/level-content/vespers-nolz",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "d09d541ca6da51e9ca5e2775a7b402c99e225304"
+  },
+  "promotionCommit": "aa70ee4d89dad7c3095fb010103e482ab96e3aa0"
+}

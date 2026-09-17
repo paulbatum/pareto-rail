@@ -1,4 +1,9 @@
 {
   "id": "strandline-u4wm",
-  "title": "Strandline"
+  "title": "Strandline",
+  "contentImages": {
+    "overview": "/level-content/strandline-u4wm/overview.avif",
+    "start": "/level-content/strandline-u4wm/start.avif",
+    "hero": "/level-content/strandline-u4wm/hero.avif"
+  }
 }

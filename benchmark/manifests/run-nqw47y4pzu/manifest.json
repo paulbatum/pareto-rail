@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-nqw47y4pzu",
+  "slotId": "184u",
+  "configuration": {
+    "id": "pi-openrouter-union-alpha-high"
+  },
+  "theme": {
+    "id": "thermal-ink",
+    "path": "benchmark/themes/thermal-ink.md",
+    "sha256": "e73f34c0e5245c1d99f9e882650f3b83bbcddfdce3638a24ef1b28e3b759f979"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-cli.md",
+    "sha256": "5fcb9e6686bcf1b1e697f36434da3eab5674e28b7550c2442d57f2ebd6a3bf1b"
+  },
+  "controller": {
+    "commit": "3f8f646c594c22a4d8459b86e465cf86e3b50193"
+  },
+  "timing": {
+    "startedAt": "2026-09-16T23:16:52.309Z",
+    "finishedAt": "2026-09-16T23:56:45.383Z",
+    "wallTimeSeconds": 2393.074
+  },
+  "stages": [
+    {
+      "id": "stealth/union-alpha",
+      "role": "solo",
+      "model": {
+        "provider": "pi provider openrouter",
+        "snapshotId": "stealth/union-alpha"
+      },
+      "promptSha256": "584fd323d3d85fb5086ecad3d0d61e66be92a0565ae35524a2665d6ee3a372b5",
+      "harness": {
+        "name": "pi",
+        "version": "0.85.0"
+      },
+      "sessionId": "01a0ac82-674c-7587-8a57-d5d80792f871",
+      "rolloutArtifactSha256": "fc9202e8a8ea3b7fc0dc256fcad17987dfd38a3d238fd453f7b548b18fcc8778",
+      "outputArtifactSha256": "b3f9b22371f2a9fe54dd8503cb3631884f9c0816784e827e9815a7746decfdb7",
+      "startedAt": "2026-09-16T23:17:02.168Z",
+      "finishedAt": "2026-09-16T23:56:34.494Z",
+      "wallTimeSeconds": 2324.2409995189996,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 1075443,
+        "outputTokens": 39308,
+        "cacheReadInputTokens": 5230267
+      },
+      "pricing": {
+        "status": "unavailable",
+        "reason": "OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session."
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "unavailable",
+    "unavailableReason": "OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session.",
+    "orchestrationTreatment": "unavailable",
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "stealth/union-alpha",
+        "usageSource": "agreed",
+        "inputTokens": 1075443,
+        "outputTokens": 39308,
+        "cacheReadTokens": 5230267,
+        "cacheWriteTokens": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.565412132,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.1323469410000007,
+      "outputSha256": "3896e22a49c3d0dd1a87115f531d38b931b0235a571d90e26086f874426c7524"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level thermal-ink-184u --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.0336013210000001,
+      "outputSha256": "7c7366d9c083876e5da04515e6ac0a1fd34c717e780182ce60e04f643722cf09"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level thermal-ink-184u",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 4.756022626999999,
+      "outputSha256": "a513dd49a24289b624addbfb3272514861d9e1d7c35ef0a8c7e932cb9f95925a"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "thermal-ink-184u",
+    "title": "Thermal Ink",
+    "evaluated": {
+      "commit": "648f762da45ab1729566c073ab7fea8b7e0662eb",
+      "branch": "benchmark-run-run-nqw47y4pzu"
+    },
+    "payload": {
+      "commit": "0b6c98c3d1cb196ba3628e83d0fde427ecbf174e",
+      "branch": "benchmark-payload-run-nqw47y4pzu"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

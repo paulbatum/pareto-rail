@@ -1,0 +1,22 @@
+{
+  "sessionId": "01a0ac4b-9e95-7397-9d42-f861bb77118b",
+  "toolCalls": 74,
+  "initResolvedModel": "stealth/union-alpha",
+  "assistantMessageCount": 82,
+  "finalMessage": "Implemented **Speedsolve** in `src/benchmark-levels/speedsolve-28fr/`.\n\n- 60-second cube boss fight with beat-snapped row solves, face peeling, weakpoints, and an 18-hit core finale.\n- Three distinct polyhedral enemies and interceptable hostile shots.\n- Procedural mechanical soundtrack with quantized player audio.\n- Gallery card and hero, overview, and start images included.\n\n**Verified:** typecheck, production build, benchmark scope, audio trace, and floor gate—all passed. Perfect simulation cleared **97/97 counted targets**, with no damage or dead-air gaps.\n\nCaptured frames were inspected, but a human WebGPU playtest remains necessary—especially for rotation/audio synchronization, bloom-zero contrast, weakpoint timing, and the final barrage’s feel.",
+  "normalized": {
+    "inputTokens": 471497,
+    "outputTokens": 41914,
+    "cacheReadTokens": 4364457,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/union-alpha": {
+          "outputTokens": 41914,
+          "costUSD": 0
+        }
+      }
+    }
+  }
+}

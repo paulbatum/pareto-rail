@@ -1,0 +1,22 @@
+{
+  "runId": "run-aq1wyzsp3l",
+  "slotId": "nolz",
+  "levelId": "vespers-nolz",
+  "themeId": "vespers",
+  "themePath": "benchmark/themes/vespers.md",
+  "configurationId": "pi-openrouter-union-alpha-high",
+  "recipePath": "benchmark/recipes/pi-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "pi-cli",
+    "model": "stealth/union-alpha",
+    "provider": "openrouter",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v3",
+  "baselinePolicy": "scrubbed",
+  "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+  "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+  "levelTitle": "Vespers"
+}

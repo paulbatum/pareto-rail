@@ -1,0 +1,26 @@
+{
+  "executable": "pi",
+  "arguments": [
+    "--print",
+    "--mode",
+    "json",
+    "--approve",
+    "--offline",
+    "--no-extensions",
+    "--thinking",
+    "high",
+    "--model",
+    "stealth/union-alpha",
+    "--provider",
+    "openrouter"
+  ],
+  "cliVersion": "0.85.0",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-kk5bob0rfo",
+  "startedAt": "2026-09-16T22:04:03.696Z",
+  "finishedAt": "2026-09-16T22:16:46.432Z",
+  "wallTimeSeconds": 762.7358967970001,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

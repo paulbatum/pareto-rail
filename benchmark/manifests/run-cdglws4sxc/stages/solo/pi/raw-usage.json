@@ -1,0 +1,22 @@
+{
+  "sessionId": "01a0ac5d-46d7-7715-a134-f485ad3d7d4b",
+  "toolCalls": 129,
+  "initResolvedModel": "stealth/union-alpha",
+  "assistantMessageCount": 108,
+  "finalMessage": "Everything is verified and the footprint is clean. Final state:\n\n## Tinker Ball — `src/benchmark-levels/tinker-ball-x9a0/` (+ `public/level-content/tinker-ball-x9a0/`)\n\n**The level (60.0s at 128 BPM, 32 bars exactly):**\n- **Arc**: marble warm-up among notions (beetle waves) → tennis-ball chorus with flapping peg birds → three recycled glue-spill shells (3 stages × 2 hits each, on successive phrases at bars 22/25/28) → four-bar clean-table coda. The final core shrinks with each shell break and the spill floor dissolve matches.\n- **Signature mechanic**: kills scatter real supply meshes (buttons, pencils, spools, rulers, jars, clips, beads) that fall, land on the table, and persist. The ball steers continuously toward the nearest fresh debris field while the camera stays on the authored route; landed pieces visibly stick to its rolling surface (verified: 101 pickups, radius 0.8 → 1.7). Its lopsided silhouette is the kill record.\n- **Enemies**: button-beetles (hop-scuttle), pencil-striders (long lateral sway), peg-birds (flap-bobbing), spill-core boss — four kinds, distinct silhouettes and motion. Each creature is a dark adhesive core with cream eyes and a body of recognizable supplies; cores break into the very materials that then get collected.\n- **Audio**: bright eccentric pop — mallet bells, clipped reed-organ stabs, triangle bass, handclaps, workshop ticks, kick. Four sections at the gameplay phrase boundaries; lock/fire/hit/kill quantize to the transport and pitch from the live chord; kills follow written per-section melody lanes; boss stage breaks duck the mix and add rising mallets; finale cadence ends on a rising C-major bell arpeggio. Trace: 972 events, no gaps.\n- **Legibility with bloom at 0**: lock rings, eyes, glyphs, and reticle are all basic-material geometry; palette was verified in a bloom-off capture path.\n\n**Verification run in this sandbox (SwiftShader, no WebGPU):**\n- `npm run typecheck` ✅ · `npm run build` ✅ (bundle budget pass)\n- `npm run check:floor -- --level tinker-ball-x9a0` ✅ — occlusion 0 warnings, perf gates 0 failures, audio config 0 failures, all floor items pass. One warning: destruction concentration 30.4% vs 25% center threshold (soft).\n- `npm run simulate`: perfect 56/56 kills, 0 missed, 0 impossible moments; imperfect seed also 56/56; no dead air before the 51.5s coda; `playerhit` unexercised by design (no hull).\n- `check:occlusion` seeded run: 0 warnings across 56 targets.\n- Audio trace: 4 sections, all instruments present from the first bar; spawn trace: 56 entries, 0.9s–52.5s.\n- Attract screen verified by pixel inspection after a real bug was found and fixed (dark ink glyph pixels were invisible against the cream tile in the lit scene; solved via an in-scene A/B variant test, now coral glyphs on riveted wooden tiles — confirmed readable in the final 1920×1080 attract capture).\n- Showcase images produced per the content-images skill: ranked 8-frame review sheet → hero (48.8s boss shell), 4-frame unlabeled overview (3.8/26.3/41.3/48.8s), start screen — all AVIF in `public/level-content/tinker-ball-x9a0/`, wired via `level.json`.\n- `check:benchmark-scope` cannot execute in this checkout: its companion `scripts/benchmark/protocol.mjs` was scrubbed from the entrant baseline (the script itself documents they \"travel together in the isolated entrant checkout\"). Equivalent verified manually: `git status` shows only the two allowed paths.\n\n**Needs human WebGPU playtest:** bloom/motion-blur look and the actual mix. First things to watch: ball steering vs camera route during collection, boss-shell readability at 40–50s, and mallet-kill level vs claps/bass.",
+  "normalized": {
+    "inputTokens": 388089,
+    "outputTokens": 72788,
+    "cacheReadTokens": 6574665,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/union-alpha": {
+          "outputTokens": 72788,
+          "costUSD": 0
+        }
+      }
+    }
+  }
+}

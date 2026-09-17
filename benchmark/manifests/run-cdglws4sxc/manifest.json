@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-cdglws4sxc",
+  "slotId": "x9a0",
+  "configuration": {
+    "id": "pi-openrouter-union-alpha-high"
+  },
+  "theme": {
+    "id": "tinker-ball",
+    "path": "benchmark/themes/tinker-ball.md",
+    "sha256": "b9c846813d00dda166372ee7a298d6fa8bb5428e432a8988994126c1adcebc47"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-cli.md",
+    "sha256": "5fcb9e6686bcf1b1e697f36434da3eab5674e28b7550c2442d57f2ebd6a3bf1b"
+  },
+  "controller": {
+    "commit": "3f8f646c594c22a4d8459b86e465cf86e3b50193"
+  },
+  "timing": {
+    "startedAt": "2026-09-16T22:36:19.150Z",
+    "finishedAt": "2026-09-16T23:16:52.002Z",
+    "wallTimeSeconds": 2432.852
+  },
+  "stages": [
+    {
+      "id": "stealth/union-alpha",
+      "role": "solo",
+      "model": {
+        "provider": "pi provider openrouter",
+        "snapshotId": "stealth/union-alpha"
+      },
+      "promptSha256": "b8c92c9d36a7963a17462cf450056f274e4c5f77a7f1b455ba49a8e79c049c37",
+      "harness": {
+        "name": "pi",
+        "version": "0.85.0"
+      },
+      "sessionId": "01a0ac5d-46d7-7715-a134-f485ad3d7d4b",
+      "rolloutArtifactSha256": "e38e3aa897b3a235285a99faae8b986c62e6326c9d3ef288c906128258ea3d3a",
+      "outputArtifactSha256": "5b41047aeafa3c70de94715fdd98807187397050ea23184f7c5643d4a57760ee",
+      "startedAt": "2026-09-16T22:36:29.028Z",
+      "finishedAt": "2026-09-16T23:16:38.271Z",
+      "wallTimeSeconds": 2369.320685291,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 388089,
+        "outputTokens": 72788,
+        "cacheReadInputTokens": 6574665
+      },
+      "pricing": {
+        "status": "unavailable",
+        "reason": "OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session."
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "unavailable",
+    "unavailableReason": "OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session.",
+    "orchestrationTreatment": "unavailable",
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "stealth/union-alpha",
+        "usageSource": "agreed",
+        "inputTokens": 388089,
+        "outputTokens": 72788,
+        "cacheReadTokens": 6574665,
+        "cacheWriteTokens": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.601168825,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.295325336,
+      "outputSha256": "3fb5379487d23b82efa788b33881d4d3b3f9c21edd15ff215463f3a0b8559531"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-x9a0 --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03391656899999998,
+      "outputSha256": "0f3b9d12c8ae691efbeab215e87b8b1c88540e4f7de02c8769f4fe1a761bbdb3"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level tinker-ball-x9a0",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.596199145,
+      "outputSha256": "a27891821386d21b0908c87c10207698e3aa62e40c1cdc6c6837150534a51ef8"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "tinker-ball-x9a0",
+    "title": "Tinker Ball",
+    "evaluated": {
+      "commit": "6ae7a04722decbf7dde65bbb3c42cb3595627a77",
+      "branch": "benchmark-run-run-cdglws4sxc"
+    },
+    "payload": {
+      "commit": "8dc4b472df57faa7ab609cfbe3f2c7b40a541929",
+      "branch": "benchmark-payload-run-cdglws4sxc"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

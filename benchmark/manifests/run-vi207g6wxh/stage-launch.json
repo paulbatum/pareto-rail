@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-vi207g6wxh",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-vi207g6wxh/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-vi207g6wxh/stages/solo/pi",
+    "--model",
+    "stealth/union-alpha",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--provider",
+    "openrouter",
+    "--sandbox",
+    "false"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-09-16T21:40:56.127Z",
+  "finishedAt": "2026-09-16T21:55:21.284Z",
+  "wallTimeSeconds": 865.157057522,
+  "stdoutSha256": "b77fc7e970bb75808fb00d40d8f17594f5520609237ae37ceaa68e41011da6c0",
+  "stderrSha256": "58dfcd5e1f15f255ebd53a870ac70a435ff84f8134cfbb79b6fc1c4972b05399",
+  "stdout": "{\"sessionId\":\"01a0ac2a-6ee0-743a-a9ed-ed7e1298827f\",\"usage\":{\"inputTokens\":387637,\"outputTokens\":20789,\"cacheReadTokens\":2387025,\"cacheWriteTokens\":0,\"reasoningTokens\":0,\"vendorFields\":{\"modelUsage\":{\"stealth/union-alpha\":{\"outputTokens\":20789,\"costUSD\":0}}}},\"wallTimeSeconds\":864.256813567}\n",
+  "stderr": "pi's catalog does not cover stealth/union-alpha; declared it from OpenRouter at 262144 context and 131072 max output.\n"
+}

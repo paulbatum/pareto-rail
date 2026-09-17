@@ -1,0 +1,22 @@
+{
+  "sessionId": "01a0ac3f-97ef-7686-b8ec-e092b4eaeddd",
+  "toolCalls": 59,
+  "initResolvedModel": "stealth/union-alpha",
+  "assistantMessageCount": 44,
+  "finalMessage": "Implemented **Strandline** in `src/benchmark-levels/strandline-u4wm/`.\n\n- 60-second run through procedural jellyfish tentacles\n- Three parasite motion types, nine brood anchors, and a staged parent boss\n- Brood-dependent web removal and a full-animal pullback reveal\n- Procedural score, harmony-aware player sounds, glyphs, and event effects\n- Completed level card and regenerated gallery\n\n**Verified:** typecheck, production build, benchmark scope, simulation, and floor check all pass.\n\nReviewed gameplay snapshots. The floor reports one non-blocking warning about slightly center-heavy kills. Final WebGPU motion, bloom-zero readability, and audio balance still need a human playtest.",
+  "normalized": {
+    "inputTokens": 269246,
+    "outputTokens": 18130,
+    "cacheReadTokens": 1720251,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/union-alpha": {
+          "outputTokens": 18130,
+          "costUSD": 0
+        }
+      }
+    }
+  }
+}

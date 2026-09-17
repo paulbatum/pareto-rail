@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-aq1wyzsp3l",
+  "slotId": "nolz",
+  "configuration": {
+    "id": "pi-openrouter-union-alpha-high"
+  },
+  "theme": {
+    "id": "vespers",
+    "path": "benchmark/themes/vespers.md",
+    "sha256": "c0866c43804268b700a568a31382462e4e50b2500b99bd2148d88924e0adc83f"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/pi-cli.md",
+    "sha256": "5fcb9e6686bcf1b1e697f36434da3eab5674e28b7550c2442d57f2ebd6a3bf1b"
+  },
+  "controller": {
+    "commit": "3f8f646c594c22a4d8459b86e465cf86e3b50193"
+  },
+  "timing": {
+    "startedAt": "2026-09-16T22:17:47.554Z",
+    "finishedAt": "2026-09-16T22:36:18.888Z",
+    "wallTimeSeconds": 1111.334
+  },
+  "stages": [
+    {
+      "id": "stealth/union-alpha",
+      "role": "solo",
+      "model": {
+        "provider": "pi provider openrouter",
+        "snapshotId": "stealth/union-alpha"
+      },
+      "promptSha256": "46282c0249bf0f67f44f6c7ad8fc1660e2711ae73adb5ba483729d367db99a25",
+      "harness": {
+        "name": "pi",
+        "version": "0.85.0"
+      },
+      "sessionId": "01a0ac4c-51b0-72df-8974-3b8cc98a0497",
+      "rolloutArtifactSha256": "17d719cf052303948bf0c9d6654162f2c64514d7bbde92d36079e1f4b4520691",
+      "outputArtifactSha256": "7bf61ee19b4abaaf4542eadf81d72a9663bb3aff59081886110e869e1e9fe534",
+      "startedAt": "2026-09-16T22:17:57.668Z",
+      "finishedAt": "2026-09-16T22:36:05.798Z",
+      "wallTimeSeconds": 1077.0603839330001,
+      "result": "completed",
+      "entrantSandbox": true,
+      "usage": {
+        "inputTokens": 308489,
+        "outputTokens": 25818,
+        "cacheReadInputTokens": 1993796
+      },
+      "pricing": {
+        "status": "unavailable",
+        "reason": "OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session."
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "unavailable",
+    "unavailableReason": "OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session.",
+    "orchestrationTreatment": "unavailable",
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "stealth/union-alpha",
+        "usageSource": "agreed",
+        "inputTokens": 308489,
+        "outputTokens": 25818,
+        "cacheReadTokens": 1993796,
+        "cacheWriteTokens": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.603846764,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.131654577,
+      "outputSha256": "caa653a17f7ce0065d0cfa1998cbbb966be738ecdbde316f417f044597415070"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level vespers-nolz --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03564717599999949,
+      "outputSha256": "4d819287dd191c0fe6f2165d8d0c302d18af362f513f441ec167130407207e49"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level vespers-nolz",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 6.5635186260000005,
+      "outputSha256": "898376b039c7c3188ed77eab63d41eac4b2b4b22d3c2c4a2ff5da3e4746d7d78"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "vespers-nolz",
+    "title": "Vespers",
+    "evaluated": {
+      "commit": "6b21d71c5e91feb39c25d7ed1769551078850002",
+      "branch": "benchmark-run-run-aq1wyzsp3l"
+    },
+    "payload": {
+      "commit": "3edd7307adc32a6728161358e4967aefc4d817ab",
+      "branch": "benchmark-payload-run-aq1wyzsp3l"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

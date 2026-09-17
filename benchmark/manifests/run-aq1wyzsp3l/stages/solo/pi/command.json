@@ -1,0 +1,28 @@
+{
+  "executable": "pi",
+  "arguments": [
+    "--print",
+    "--mode",
+    "json",
+    "--approve",
+    "--offline",
+    "--no-extensions",
+    "--thinking",
+    "high",
+    "--model",
+    "stealth/union-alpha",
+    "--provider",
+    "openrouter",
+    "--extension",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-sandbox-extension.js"
+  ],
+  "cliVersion": "0.85.0",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-aq1wyzsp3l",
+  "startedAt": "2026-09-16T22:17:57.668Z",
+  "finishedAt": "2026-09-16T22:36:05.798Z",
+  "wallTimeSeconds": 1077.0603839330001,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}

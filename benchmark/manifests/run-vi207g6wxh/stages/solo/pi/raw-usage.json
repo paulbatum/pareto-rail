@@ -1,0 +1,22 @@
+{
+  "sessionId": "01a0ac2a-6ee0-743a-a9ed-ed7e1298827f",
+  "toolCalls": 69,
+  "initResolvedModel": "stealth/union-alpha",
+  "assistantMessageCount": 56,
+  "finalMessage": "Implemented **Broadside** in `src/benchmark-levels/broadside-86kh/`.\n\n- 60-second fleet engagement with procedural capital ships, nebula, crossfire, and three fighter types.\n- Two-phase flagship fight: shield generators, escort waves, then trench power systems.\n- Procedural orchestral score with harmony-quantized player sounds.\n- Updated level documentation and regenerated gallery.\n\n**Verified:** typecheck, production build, benchmark scope, audio trace, and floor checks all pass. Perfect simulation clears **64/64 targets without damage**. Occlusion warnings: **0**.\n\nReviewed gameplay and START captures, including bloom disabled. Two non-blocking floor warnings remain for target distance and center concentration. The final victory capture returned blank, so the fleet pullback still needs visual confirmation. A human WebGPU playtest should also check orchestral balance and real-time flight feel.",
+  "normalized": {
+    "inputTokens": 387637,
+    "outputTokens": 20789,
+    "cacheReadTokens": 2387025,
+    "cacheWriteTokens": 0,
+    "reasoningTokens": 0,
+    "vendorFields": {
+      "modelUsage": {
+        "stealth/union-alpha": {
+          "outputTokens": 20789,
+          "costUSD": 0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "executable": "pi",
+  "arguments": [
+    "--print",
+    "--mode",
+    "json",
+    "--approve",
+    "--offline",
+    "--no-extensions",
+    "--thinking",
+    "high",
+    "--model",
+    "stealth/union-alpha",
+    "--provider",
+    "openrouter",
+    "--extension",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-quota-wait-extension.js",
+    "--extension",
+    "/home/pbatum/vibes/raild/scripts/benchmark/pi-sandbox-extension.js"
+  ],
+  "cliVersion": "0.85.0",
+  "cliVersionStderr": "",
+  "workingDirectory": "/tmp/pareto-rail-run-cdglws4sxc",
+  "startedAt": "2026-09-16T22:36:29.028Z",
+  "finishedAt": "2026-09-16T23:16:38.271Z",
+  "wallTimeSeconds": 2369.320685291,
+  "timeoutSeconds": 43200,
+  "exitCode": 0,
+  "timedOut": false
+}
