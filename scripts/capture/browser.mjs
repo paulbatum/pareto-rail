@@ -14,6 +14,11 @@ const run = promisify(execFile);
 
 const BINFMT_DIR = '/proc/sys/fs/binfmt_misc';
 
+// A WSL shell started through `login` loses the Windows directories WSL appends to PATH, so the
+// Windows tools are called by their full paths.
+const CMD_EXE = '/mnt/c/Windows/System32/cmd.exe';
+const POWERSHELL_EXE = '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe';
+
 const CHROME_CANDIDATES = [
   '/mnt/c/Program Files/Google/Chrome/Application/chrome.exe',
   '/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe',
@@ -64,7 +69,7 @@ export function findCaptureBrowser() {
 }
 
 async function windowsTempDir() {
-  const { stdout } = await run('cmd.exe', ['/c', 'echo %TEMP%'], { cwd: '/mnt/c' });
+  const { stdout } = await run(CMD_EXE, ['/c', 'echo %TEMP%'], { cwd: '/mnt/c' });
   const value = stdout.trim();
   if (!value || value.includes('%TEMP%')) throw new Error('Could not read the Windows temp directory');
   return value;
@@ -131,5 +136,5 @@ export async function launchCaptureBrowser({ port, width, height, muted = true, 
 async function stopBrowser(profile, port) {
   const script = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*${profile}*' `
     + `-and $_.CommandLine -like '*remote-debugging-port=${port}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }`;
-  await run('powershell.exe', ['-NoProfile', '-Command', script], { cwd: '/mnt/c' }).catch(() => {});
+  await run(POWERSHELL_EXE, ['-NoProfile', '-Command', script], { cwd: '/mnt/c' }).catch(() => {});
 }
