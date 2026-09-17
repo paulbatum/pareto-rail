@@ -33,7 +33,7 @@ The rendered assignment is supplied as the complete stdin prompt, byte-for-byte.
 
 The effective `codex exec` arguments — the permission profile, `approval_policy`, `features.network_proxy`, `--ignore-user-config`, `--ignore-rules`, `--strict-config` — are constructed by the adapter and recorded verbatim in the stage's `command.json`. Read that file, not this section, to learn what a given run actually ran.
 
-`--ignore-user-config` keeps the operator's own model, effort, MCP servers, and hooks from becoming an undeclared intervention; authentication still resolves. `--ignore-rules` excludes user and project exec-policy rules. Tracked repository instructions, including `AGENTS.md`, remain normal context — the controller injects no additional system prompt. Web search is never enabled.
+`--ignore-user-config` keeps the operator's own model, effort, MCP servers, and hooks from becoming an undeclared intervention; authentication still resolves. `--ignore-rules` excludes user and project exec-policy rules. Codex also lists skills from the operator's `~/.agents/skills`, which `--ignore-user-config` does not stop, so the adapter disables each skill it finds there with a `skills.config` override; the worktree's own `.agents/skills` stay listed. Tracked repository instructions, including `AGENTS.md`, remain normal context — the controller injects no additional system prompt. Web search is never enabled.
 
 ## Isolation
 

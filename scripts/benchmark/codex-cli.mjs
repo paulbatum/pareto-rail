@@ -119,6 +119,9 @@ async function main() {
     + (headlessShell ? `${tomlPath(`${path.join(os.homedir(), '.cache', 'pareto-rail')}/**`)}="read", ` : '')
     + `"/tmp/.X11-unix"="read"`
     + `}, network={enabled=true${networkAccess ? '' : ', allow_local_binding=true'}}}`;
+  // Codex lists skills from the operator's ~/.agents/skills alongside the worktree's own, and has no
+  // setting that drops that root. Disabling each skill found there keeps them out of the prompt.
+  const homeSkillsOverride = await operatorSkillsOverride();
   const configOverrides = [
     ...(networkAccess ? [] : ['-c', 'features.network_proxy=true']),
     '-m', model,
@@ -130,6 +133,7 @@ async function main() {
     // `[permissions]` table.
     '-c', 'default_permissions="entrant"',
     '-c', permissionProfile,
+    ...homeSkillsOverride,
     // Delegation configurations enable the multi_agent_v2 feature so a spawned subagent can run a
     // different model than its parent. `--ignore-user-config` drops the operator's config.toml
     // (which normally carries this), so it is re-declared here as an explicit `-c` override. Without
@@ -205,6 +209,7 @@ async function main() {
         ...(networkAccess ? [] : ['-c', 'features.network_proxy=true']),
         '-c', 'default_permissions="entrant"',
         '-c', permissionProfile,
+        ...homeSkillsOverride,
         ...(enableMultiAgent ? ['-c', 'features.multi_agent_v2.hide_spawn_agent_metadata=false', '-c', 'features.multi_agent_v2.tool_namespace="agents"'] : []),
         ...trustBypassArgs,
         '--output-last-message', resumeFinalMessage,
@@ -493,4 +498,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;
   });
+}
+
+async function operatorSkillsOverride() {
+  const skillFiles = [];
+  const walk = async (directory) => {
+    const entries = await fs.readdir(directory, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      if (entry.name === '.git') continue;
+      const entryPath = path.join(directory, entry.name);
+      if (entry.name === 'SKILL.md' && entry.isFile()) skillFiles.push(entryPath);
+      else if (entry.isDirectory() || (entry.isSymbolicLink() && await fs.stat(entryPath).then((stat) => stat.isDirectory(), () => false))) await walk(entryPath);
+    }
+  };
+  await walk(path.join(os.homedir(), '.agents', 'skills'));
+  if (skillFiles.length === 0) return [];
+  return ['-c', `skills.config=[${skillFiles.map((file) => `{path=${JSON.stringify(file)}, enabled=false}`).join(', ')}]`];
 }

@@ -27,4 +27,4 @@ The owner promoted the six runs with this note attached rather than rerunning th
 
 ## Actions
 
-The pi adapter runs `--no-skills` and passes the worktree's own `.agents/skills` back with `--skill`, so an entrant receives only the skills its checkout contains. A captured system prompt confirms the worktree's `AGENTS.md` and skills remain and the operator's skills are gone.
+The pi adapter runs `--no-skills` and passes the worktree's own `.agents/skills` back with `--skill`, so an entrant receives only the skills its checkout contains. The Codex adapter disables every skill under `~/.agents/skills` with a `skills.config` override, since Codex has no setting that drops that root. Captured prompts for both harnesses confirm the worktree's `AGENTS.md` and skills remain and the operator's skills are gone.
