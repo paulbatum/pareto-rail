@@ -33,6 +33,7 @@ most at the top.
 Keep the page short: when a model's newer version arrives, unlist the versions it
 supersedes.
 
+- [Union Alpha](https://openrouter.ai/stealth/union-alpha) — a stealth model on OpenRouter (new)
 - GPT-6 Astra (new)
 - Claude Fable 5.1 (new)
 - Claude Opus 5
