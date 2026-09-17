@@ -34,13 +34,13 @@ Keep the page short: when a model's newer version arrives, unlist the versions i
 supersedes.
 
 - [Union Alpha](https://openrouter.ai/stealth/union-alpha) — a stealth model on OpenRouter (new)
-- GPT-6 Astra (new)
-- Claude Fable 5.1 (new)
+- GPT-6 Astra
+- Claude Fable 5.1
 - Claude Opus 5
 - GPT-5.6 Sol
-- Gemini 3.8 Flash (new)
+- Gemini 3.8 Flash
 - Kimi K3
-- Muse Spark 1.3 (new)
+- Muse Spark 1.3
 - GLM 5.3 Flash
 - Claude Fable 5 (unlisted)
 - Claude Opus 4.8 (unlisted)

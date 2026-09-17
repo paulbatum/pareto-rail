@@ -85,16 +85,16 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
    its distance from the nav instead of every spare pixel opening up under the
    lede. The padding holds a floor under the lede on a band with no slack at all. */
 .hero-models { margin-top: auto; padding-top: clamp(16px, 1.5vw, 21px); }
-.hero-models h2 { margin: 0 0 10px; color: var(--flag); font-size: 13px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; }
+.hero-models h2 { margin: 0 0 8px; color: var(--flag); font-size: 12px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; }
 /* Every entry carries the boxed entry's padding so the rows stay aligned whether
    or not one of them is flagged; the negative inset keeps the names flush with
    the heading above them. */
-.hero-models ul { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 6px 20px; margin: 0 0 0 -12px; padding: 0; list-style: none; }
-.hero-models li { display: flex; align-items: baseline; gap: 12px; min-width: 0; padding: 7px 12px; color: var(--soft-text); font: 15px var(--mono); letter-spacing: .04em; }
+.hero-models ul { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 3px 16px; margin: 0 0 0 -9px; padding: 0; list-style: none; }
+.hero-models li { display: flex; align-items: baseline; gap: 10px; min-width: 0; padding: 4px 9px; color: var(--soft-text); font: 13px var(--mono); letter-spacing: .04em; }
 /* The new arrival is the one thing here worth a second look, so it gets the whole
    treatment: a flagged box, a full-contrast name, a filled badge, and a slow halo. */
 .hero-models li.is-new { color: var(--ink); background: var(--flag-tint); border: 1px solid var(--flag); }
-.hero-models .new-tag { padding: 3px 8px 4px; color: var(--flag-ink); background: var(--flag); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+.hero-models .new-tag { padding: 2px 6px 3px; color: var(--flag-ink); background: var(--flag); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
 /* Only a name with a destination is a link, so it carries the one affordance the
    plain names beside it do not: an underline that fills in on hover. */
 .hero-models li a { color: inherit; text-decoration: none; border-bottom: 1px solid color-mix(in srgb, currentColor 45%, transparent); }
@@ -103,7 +103,7 @@ body:not(.game-active) #app { position: relative; min-height: 100dvh; height: au
    column and pull the other names out of line, so a noted entry takes a row of
    its own across both columns. */
 .hero-models li.has-note { grid-column: 1 / -1; }
-.hero-models .model-note { color: var(--muted); font-size: 13px; letter-spacing: .02em; }
+.hero-models .model-note { color: var(--muted); font-size: 12px; letter-spacing: .02em; }
 /* The unranked model's callout: the flag colour ties it to the flagged entry in
    the list above, and the copy and its action sit on one row until the panel is
    too narrow to hold both. */
@@ -533,11 +533,12 @@ html:fullscreen .perf-overlay { display: none; }
   .hero-copy { padding-top: 48px; padding-bottom: 22px; }
   /* Smaller type so both columns still fit a phone without breaking a name. */
   .hero-models h2 { margin-bottom: 8px; font-size: 12px; }
-  .hero-models ul { gap: 4px 14px; margin-left: -10px; }
-  .hero-models li { gap: 10px; padding: 6px 10px; font-size: 13px; white-space: nowrap; }
+  .hero-models ul { gap: 3px 12px; margin-left: -8px; }
+  .hero-models li { gap: 8px; padding: 4px 8px; font-size: 12px; white-space: nowrap; }
   /* A bare name fits a phone row; a noted entry does not, so only it may wrap. */
-  .hero-models li.has-note { white-space: normal; gap: 4px 8px; }
-  .hero-models .model-note { font-size: 12px; }
+  .hero-models li.has-note { flex-wrap: wrap; white-space: normal; gap: 2px 8px; }
+  .hero-models li.has-note > a { white-space: nowrap; }
+  .hero-models .model-note { font-size: 11px; }
   .hero-models .new-tag { padding: 2px 6px 3px; font-size: 9px; }
   /* A phone gives the stacked hero far less room than the desktop band, so the
      list stops after two rows of the two-column grid. A noted entry spans both
