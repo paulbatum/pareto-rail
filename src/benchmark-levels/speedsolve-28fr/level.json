@@ -1,0 +1,9 @@
+{
+  "id": "speedsolve-28fr",
+  "title": "Speedsolve",
+  "contentImages": {
+    "hero": "/level-content/speedsolve-28fr/hero.png",
+    "overview": "/level-content/speedsolve-28fr/overview.png",
+    "start": "/level-content/speedsolve-28fr/start.png"
+  }
+}
