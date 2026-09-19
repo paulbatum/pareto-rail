@@ -116,10 +116,13 @@ export function railFrameAt(time: number): RailFrame {
 // ---- walker track ----------------------------------------------------------------
 
 /** Height of the walker's belly above its feet, and its body length. The body is built to these. */
-export const WALKER_BELLY = 30;
+export const WALKER_BELLY = 25;
 export const WALKER_BODY_LENGTH = 34;
-const WALKER_STRIDE = 36;
+/** Ground covered per gait cycle: each foot takes one step of about three quarters of this. */
+export const WALKER_STRIDE = 44;
 const CLIMB_FROM_S = DAM_S - 26;
+/** Where the walker stands on the crest, dam-local: astride the two right-hand gate bays, clear of the centre bay the flood carries you through. */
+export const WALKER_DAM = { a: 10, l: 33 };
 
 export type WalkerState = 'wading' | 'climbing' | 'on-dam';
 
@@ -203,7 +206,7 @@ const smooth = (x: number) => {
 };
 
 const climbFrom = new Vector3();
-const climbTo = damPoint(-3, 0, DAM.crestHeight);
+const climbTo = damPoint(WALKER_DAM.a, WALKER_DAM.l, DAM.crestHeight);
 const climbRight = new Vector3();
 
 /** Out on the reservoir the walker bears to the right, so the dam behind it stays in view for the reveal. */
@@ -261,11 +264,11 @@ function bellyTarget(time: number) {
   return aimPoint.copy(scratchPose.position).addScaledVector(scratchPose.forward, WALKER_BODY_LENGTH * 0.5).setY(scratchPose.position.y + WALKER_BELLY);
 }
 
-/** The walker's hips, pulled a third of the way toward the rail ahead: the walker, the crest and the water stay in frame. */
+/** Below the walker's belly, pulled a quarter of the way toward the rail ahead: the walker fills the upper frame, the crest and the water the lower. */
 function bossTarget(time: number) {
   walkerTrack(time, scratchPose);
   const ahead = template.getPointAt(Math.min(1, railU(time) + 0.02));
-  return aimPoint.copy(scratchPose.position).setY(scratchPose.position.y + WALKER_BELLY * 0.3).lerp(ahead, 0.35);
+  return aimPoint.copy(scratchPose.position).setY(scratchPose.position.y + 19).lerp(ahead, 0.25);
 }
 
 const DAM_REVEAL_TARGET = damPoint(0, 0, DAM.crestHeight * 0.55);

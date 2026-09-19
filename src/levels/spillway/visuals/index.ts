@@ -7,8 +7,8 @@ import { warmUpShaders, type ShaderWarmUp } from '../../../engine/shader-cache';
 import type { TimeFeel } from '../../../engine/time-feel';
 import { createPendingVisualRecords } from '../../../engine/visual-kit';
 import type { EventBus } from '../../../events';
-import { createBossMesh, type BossPart } from '../boss';
 import type { CableState } from '../enemies';
+import { solveWalker, walkerPoint } from '../walker';
 import { waterHeightAt } from '../world';
 import { createEffects, type CableDraw, type Effects, type TrailHandle } from './effects';
 import {
@@ -25,9 +25,11 @@ import {
   type EnemyColors,
   type ModelFx,
 } from './enemies';
-import { createEnvironment as buildEnvironment, type Environment } from './environment';
+import { createEnvironment as buildEnvironment, WALKER_COLORS, type Environment } from './environment';
 import { createLetterMesh, type LetterColors } from './letters';
 import { EFFECT, MACHINE, RIVET, SIGNAL } from './machine-palette';
+import { CONCRETE } from './palette';
+import { createBossTargetMesh } from './walker';
 
 // Spine: palette and event choreography. The world is built in environment.ts,
 // the machines in enemies.ts, the pools in effects.ts. This file decides what
@@ -59,6 +61,8 @@ const LETTER_COLORS: LetterColors = {
 
 const PAINTED_DEBRIS = [MACHINE.paint, MACHINE.paintFaded, MACHINE.steel, MACHINE.darkSteel];
 const STEEL_DEBRIS = [MACHINE.darkSteel, MACHINE.steel, MACHINE.darkSteel];
+const CONCRETE_DEBRIS = [CONCRETE.base, CONCRETE.stain, CONCRETE.bleached];
+const ARMOUR_DEBRIS = [MACHINE.paint, MACHINE.hazard, MACHINE.paintFaded];
 const DENY_GREY = new Color(0.45, 0.45, 0.45);
 const FOAM_RING = EFFECT.foam.clone().multiplyScalar(0.45);
 const SPOTTER_CAPACITY = 36;
@@ -202,7 +206,7 @@ export function createEnemyMesh(kind: string, letter?: string) {
     case 'leg':
     case 'core':
     case 'slab':
-      record.mesh = createBossMesh(kind as BossPart);
+      record.mesh = createBossTargetMesh(kind, WALKER_COLORS);
       break;
   }
   record.fx = (record.mesh.userData.fx as EnemyRecord['fx']) ?? null;
@@ -401,6 +405,25 @@ export function installVisualEventHandlers(bus: EventBus, scene: Scene, rigs: { 
       effects.ring(waterPoint(worldPosition), FOAM_RING, 4, 0.9, true);
     } else if (kind === 'pod' && record.winchCable) {
       scene.add(record.winchCable);
+    } else if (kind === 'slab' && !record.mesh.userData.controller) {
+      // Thrown: concrete dust off the claw as it lets go.
+      spray()?.spray({ at: worldPosition, count: 60, speed: 4, spread: 1, life: 1.8, size: 2.6, color: EFFECT.dust });
+    } else if (kind === 'core') {
+      feel?.camera.shake(0.35);
+    }
+  });
+
+  // A leg's first stage is its knee armour: it is blown off in a shower of painted plate.
+  bus.on('stage', ({ enemyId, worldPosition }) => {
+    const record = enemyRecords.get(enemyId);
+    if (!record || !effects) return;
+    if (record.kind === 'leg') {
+      effects.debris(worldPosition, 16, 13, 0.7, ARMOUR_DEBRIS);
+      effects.sparks(worldPosition, 40, 18);
+      feel?.camera.shake(0.3);
+    } else if (record.kind === 'core') {
+      effects.sparks(worldPosition, 50, 16, EFFECT.spark, 0.6);
+      feel?.camera.shake(0.4);
     }
   });
 
@@ -566,6 +589,29 @@ function explode(record: EnemyRecord, at: Vector3) {
       effects.sparks(at, 22, 12, RIVET.hot, 0.3);
       effects.ring(at, RIVET.hot.clone().multiplyScalar(0.3), 2.2, 0.25);
       break;
+    case 'leg':
+      // The knee gives: a freeze on the break, the frame jolts, the joint sprays oil and steel.
+      feel?.time.hitStop(0.08);
+      feel?.camera.shake(0.8);
+      feel?.camera.kickRoll(Math.random() < 0.5 ? -3 : 3, { decay: 3 });
+      effects.debris(at, 26, 15, 0.9, PAINTED_DEBRIS);
+      effects.sparks(at, 60, 20);
+      environment?.spray.spray({ at, count: 120, speed: 7, spread: 0.9, life: 2.4, size: 3.2, color: EFFECT.smoke });
+      break;
+    case 'core':
+      // The walker falls onto the gates: slow motion through the fall.
+      feel?.time.slowMo(1.8, 0.3);
+      feel?.camera.shake(1);
+      feel?.camera.kickFov(-6, { decay: 1.5 });
+      effects.debris(at, 40, 18, 1, PAINTED_DEBRIS);
+      effects.sparks(at, 90, 24, EFFECT.spark, 0.8);
+      effects.ring(at, EFFECT.spark, 9, 0.5);
+      environment?.spray.spray({ at, count: 260, speed: 9, spread: 1, life: 3, size: 4, color: EFFECT.smoke });
+      break;
+    case 'slab':
+      effects.debris(at, 18, 12, 0.7, CONCRETE_DEBRIS);
+      environment?.spray.spray({ at, count: 90, speed: 6, spread: 1, life: 2, size: 2.8, color: EFFECT.dust });
+      break;
     case 'letter':
       effects.debris(at, 10, 8, 0.35, [MACHINE.paint, MACHINE.hazard]);
       effects.sparks(at, 12, 9);
@@ -628,6 +674,7 @@ export function updateVisuals(frame: { runTime: number; dt: number; camera: Pers
   }
 
   updateCables();
+  wreckSparks(frame.runTime, dt);
   swarm?.bodies.update(dt);
   swarm?.blades.update(dt);
   swarm?.discs.update(dt);
@@ -732,6 +779,19 @@ function updateRecord(record: EnemyRecord, frame: { dt: number; camera: Perspect
     case 'letter':
       mesh.position.y += Math.sin(elapsed * 1.6 + mesh.id) * 0.08;
       break;
+    case 'leg':
+    case 'core': {
+      // The target is an empty frame on the walker: its hit flash belongs on the walker's own leg or core.
+      const walker = environment?.walker;
+      const leg = mesh.userData.leg as number | undefined;
+      const target = record.kind === 'core' ? walker?.coreFx : leg !== undefined ? walker?.legFx[leg] : undefined;
+      if (target && fx) target.flash = Math.max(target.flash, fx.flash);
+      break;
+    }
+    case 'slab':
+      // Concrete dust shaken off the tumbling slab.
+      if (!mesh.userData.controller && Math.random() < dt * 8) environment?.spray.spray({ at: mesh.position, count: 6, speed: 1.5, spread: 1, life: 1.4, size: 1.8, color: EFFECT.dust });
+      break;
   }
 
   if (record.marker) {
@@ -759,6 +819,18 @@ function placeWinchCable(line: Group, pod: Vector3, top: Vector3, retract = 0) {
 }
 
 const released = new Vector3();
+
+const wreckPoint = new Vector3();
+
+/** The fallen walker groans on the gates: sparks spit from its knees and chassis until the flood takes it. */
+function wreckSparks(runTime: number, dt: number) {
+  const rig = solveWalker(runTime);
+  if (!effects || rig.collapse <= 0 || !rig.visible || Math.random() > dt * 5) return;
+  const leg = rig.legs[Math.floor(Math.random() * rig.legs.length)];
+  if (Math.random() < 0.5) wreckPoint.copy(leg.knee);
+  else walkerPoint(rig, wreckPoint.set((Math.random() - 0.5) * 14, Math.random() * 6, (Math.random() - 0.5) * 30), wreckPoint);
+  effects.sparks(wreckPoint, 12 + Math.random() * 20, 10);
+}
 
 /** Rebuild each cable's segments: taut through the jaws that hold, sagging into the water where they let go, whipping away once cut. */
 function updateCables() {

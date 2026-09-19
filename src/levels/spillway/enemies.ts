@@ -7,7 +7,8 @@ import {
 import { offsetFromRail, sampleRailFrame } from '../../engine/rail';
 import type { RailPacer } from '../../engine/rail-pacer';
 import type { SpillwaySpawnData, SpillwayUpdate } from './gameplay';
-import { WALKER_BELLY, WALKER_BODY_LENGTH, railFrameAt, walkerTrack, type WalkerPose } from './rail';
+import { railFrameAt, walkerTrack, type WalkerPose } from './rail';
+import { hatchPoint, rackPoint, sternPoint } from './walker';
 import { canyonWallPoint, nearestSpine, rimPoint, riverPoint, type WallPoint } from './world';
 
 // Enemy motion. Every target is seated on the river, the walls or the air
@@ -51,23 +52,9 @@ const UP = new Vector3(0, 1, 0);
 
 const launchPose: WalkerPose = walkerTrack(0);
 
-/**
- * Where a skiff leaves the walker. Stand-in offsets against `walkerTrack` until
- * the walker model exposes its rack attachment points.
- */
+/** Where a skiff leaves the walker: a slot on the rear launch rack, or the stern chute under it. */
 export function skiffLaunchPoint(time: number, launch: SkiffLaunch, rack: number, out = new Vector3()) {
-  walkerTrack(time, launchPose);
-  const across = ((rack % 3) - 1) * 3.2;
-  if (launch === 'belly') {
-    return out.copy(launchPose.position)
-      .addScaledVector(UP, WALKER_BELLY - 1)
-      .addScaledVector(launchPose.forward, -WALKER_BODY_LENGTH * 0.35)
-      .addScaledVector(launchPose.right, across);
-  }
-  return out.copy(launchPose.position)
-    .addScaledVector(UP, WALKER_BELLY + 13)
-    .addScaledVector(launchPose.forward, -WALKER_BODY_LENGTH * 0.2 + (rack % 2) * 4)
-    .addScaledVector(launchPose.right, across);
+  return launch === 'belly' ? sternPoint(time, rack, out) : rackPoint(time, rack, out);
 }
 
 /** Flight time from the rack to the splashdown at `landAt`: longer the further the walker is. */
@@ -311,7 +298,7 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
     let closing = 1;
     if (data.entrance === 'belly') {
       walkerTrack(runTime, launchPose);
-      center.copy(launchPose.position).addScaledVector(UP, WALKER_BELLY - 8).addScaledVector(launchPose.forward, 6);
+      hatchPoint(runTime, center).addScaledVector(UP, -5);
       axisRight.copy(launchPose.right);
       axisUp.copy(UP);
       axisForward.copy(launchPose.forward);
@@ -528,5 +515,7 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
     return runTime >= data.engagement.passTime;
   }
 
-  return { intercepted, skiff, spotter, pod, rivet, clamp };
+  return { intercepted, hurt, skiff, spotter, pod, rivet, clamp };
 }
+
+export type EnemyMotion = ReturnType<typeof createEnemyMotion>;

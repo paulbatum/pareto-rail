@@ -37,6 +37,7 @@ const CALLOUTS: Array<{ bar: number; text: string; hold: number }> = [
   { bar: 10.25, text: 'CUT THE CABLE', hold: 2.2 },
   { bar: 21.75, text: 'WHITEWATER', hold: 2 },
   { bar: 41.5, text: 'THE DAM', hold: 2.4 },
+  { bar: 44.25, text: 'BREAK ITS LEGS', hold: 2.2 },
   { bar: 60.25, text: 'RIDE THE FLOOD', hold: 2.4 },
 ];
 
@@ -105,6 +106,16 @@ export const spillwayLevel: LevelDefinition = {
       cameraFeel.restore();
     });
     bus.on('runend', () => timeFeel.reset());
+    // The fight's own moments: the core bared, and the walker falling.
+    let coreId = -1;
+    bus.on('spawn', ({ enemyId, kind }) => {
+      if (kind !== 'core') return;
+      coreId = enemyId;
+      say('THE CORE', 2);
+    });
+    bus.on('kill', ({ enemyId }) => {
+      if (enemyId === coreId) say('WALKER DOWN', 3);
+    });
 
     const game = createLockOnRunner({
       scene,

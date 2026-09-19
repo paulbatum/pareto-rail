@@ -2,20 +2,20 @@ import { Color, Group, MathUtils, Scene, Vector3 } from 'three';
 import type { PerspectiveCamera } from 'three';
 import type { WebGPURenderer } from 'three/webgpu';
 import { mulberry32 } from '../../../engine/rng';
-import { walkerTrack, type WalkerPose } from '../rail';
 import { BOSS_LOOP, DAM, GORGE_MOUTH_S, LIP_A, RAIL_KNOTS, SPINE, SUN_DIRECTION, TAILWATER, WATER_LEVEL, chuteFloor, damLocal, damPoint, headingVector, rightVector, spineAt } from '../route';
 import { bar } from '../timing';
 import { fbm2, lakeShore, nearestSpine, terrainSample, wallSkyVisibility } from '../world';
 import { createDam, type DamModel } from './dam';
 import { createBoulderGeometry, createFoliageMaterial, createInstancedField, createPineGeometry, createSnagGeometry, type Placement } from './flora';
 import { createGorge, type LedgeSpot } from './gorge';
-import { CONCRETE, FOLIAGE, GRANITE, PLACEHOLDER_YELLOW, SKY, STEEL, WATER } from './palette';
+import { EFFECT, MACHINE } from './machine-palette';
+import { CONCRETE, FOLIAGE, GRANITE, SKY, STEEL, WATER } from './palette';
 import { disposeNoiseVolume } from './noise';
 import { createGraniteMaterial } from './rock';
 import { createSky, type SkyRig } from './sky';
 import { createSpray, type Spray } from './spray';
 import { createFarRange, createTerrain } from './terrain';
-import { createWalkerPlaceholder, type WalkerPlaceholder } from './walker-placeholder';
+import { createWalker, type WalkerColors, type WalkerModel, type WalkerWorld } from './walker';
 import { JET_REVEAL, createLake, createRiver, createRiverMaterial, createSpillwayWater, jetPoint, type Obstacle } from './water';
 
 // The world of the run, assembled: sky and sun, the gorge, the terrain, the
@@ -23,6 +23,7 @@ import { JET_REVEAL, createLake, createRiver, createRiverMaterial, createSpillwa
 // breach choreography live here; the leaves only build what they are given.
 
 export const BREACH_BAR = 58;
+export const WALKER_COLORS: WalkerColors = { ...MACHINE, core: MACHINE.lamp, concrete: CONCRETE.base, smoke: EFFECT.smoke };
 /** Height of the bleached band the drawn-down reservoir leaves on rock and concrete. */
 const BATHTUB_HEIGHT = 9;
 /** Seconds after the breach at which the flood crests the sill; it then accelerates down the chute. */
@@ -39,7 +40,7 @@ export type Environment = {
   sky: SkyRig;
   dam: DamModel;
   spray: Spray;
-  walker: WalkerPlaceholder;
+  walker: WalkerModel;
   /** Arc length of the spillway chute, gates to lip. */
   chuteLength: number;
   update(frame: { runTime: number; dt: number; camera: PerspectiveCamera }): void;
@@ -185,15 +186,15 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
   }
   root.add(createInstancedField({ geometry: createSnagGeometry(rng, FOLIAGE.snag), material: foliage, placements: snags, groupOf: routeBand, castShadow: true }));
 
-  // ---- spray and the walker stand-in ----
+  // ---- spray and the walker ----
   const spray = createSpray(renderer, { sprayCapacity: 24000, mistCapacity: 700 });
   root.add(...spray.objects);
-  const walker = createWalkerPlaceholder(PLACEHOLDER_YELLOW);
+  const walker = createWalker(WALKER_COLORS);
   root.add(walker.group);
+  const walkerWorld: WalkerWorld = { spray, camera: new Vector3(), waterAt: (x, z) => terrainSample(x, z).waterY, setGateStrain: dam.setGateStrain };
   scene.add(root);
 
   // ---- per-frame ----
-  const pose: WalkerPose = walkerTrack(0);
   const scratch = new Vector3();
   const line = new Vector3();
   const direction = new Vector3();
@@ -236,17 +237,12 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
       const walls = here.kind === 'river' && here.s < GORGE_MOUTH_S ? here.wall : 0;
       spray.light.value = MathUtils.lerp(spray.light.value, 0.45 + 0.55 * wallSkyVisibility(here, 30, walls), dt > 0 ? 1 - Math.exp(-dt * 1.5) : 1);
 
-      // The walker stand-in and its splashes.
-      walkerTrack(runTime, pose);
-      walker.update(pose);
-      for (const foot of walker.landed) {
-        spray.spray({ at: foot.setY(waterLevelAt(foot) + 0.5), count: 110, speed: 10, spread: 0.7, life: 1.6, size: 1.6, radius: 2.5 });
-        spray.mist({ at: foot, count: 2, size: 26, life: 6, radius: 4 });
-      }
-
       // The breach: gates burst on the bar, the lake slides, the flood runs the chute and leaps the lip.
       const breach = runTime - bar(BREACH_BAR);
       dam.updateBreach(runTime > 0 ? breach : -1);
+      // After the breach pose, so the walker's grip on the gates wins until they burst.
+      walkerWorld.camera.copy(camera.position);
+      walker.update(runTime, dt, walkerWorld);
       // Fully drawn down by the time the camera reaches the gates: the flood tongue is shaped to meet it.
       lake.breach.value = MathUtils.smoothstep(breach, 0, bar(1));
       const floodTime = breach - FLOOD_DELAY;

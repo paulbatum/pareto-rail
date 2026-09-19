@@ -216,7 +216,7 @@ function buildTimeline(): SpillwaySpawnEntry[] {
     ...flock(40.5, 4, 'right', { x: 13, y: 10, peelBar: 42.25, lineY: 7, lead: 5.6 }),
 
     // --- boss (44–58)
-    ...createBossSpawns(),
+    ...createBossSpawns({ flock }),
 
     // --- spillway (60–66): the flock flees the breach, skiffs ride the flood off the lip.
     ...flock(60, 6, 'left', { x: -9, y: 9, peelBar: 61.25, lineY: 6, lead: 4.6 }),
@@ -250,8 +250,8 @@ const CABLE_CUT_BONUS = 300;
 
 export function createSpillwayGameplay(bus: EventBus): LockOnRunnerLevel<SpillwayEnemyKind, SpillwaySpawnData> {
   const cables = createCableRegistry();
-  const boss = createBoss(bus);
   const motion = createEnemyMotion({ pacer: spillwayPacer, wallPacer: spillwayWallPacer, cables });
+  const boss = createBoss(bus, motion);
   const cableCount = new Set(SPILLWAY_SPAWN_TIMELINE.flatMap((entry) => (entry.data.role === 'clamp' ? [entry.data.cable] : []))).size;
 
   let hitsTaken = 0;
@@ -310,10 +310,10 @@ export function createSpillwayGameplay(bus: EventBus): LockOnRunnerLevel<Spillwa
     },
     rankForRun(score, kills, totalEnemies) {
       const clearRate = totalEnemies === 0 ? 0 : kills / totalEnemies;
-      if (score >= 22000 && clearRate >= 0.9 && hitsTaken === 0) return 'S';
-      if (score >= 17000 && clearRate >= 0.7) return 'A';
-      if (score >= 10000 && clearRate >= 0.5) return 'B';
-      if (score >= 5000 && clearRate >= 0.25) return 'C';
+      if (score >= 28000 && clearRate >= 0.9 && hitsTaken === 0) return 'S';
+      if (score >= 21000 && clearRate >= 0.7) return 'A';
+      if (score >= 13000 && clearRate >= 0.5) return 'B';
+      if (score >= 6000 && clearRate >= 0.25) return 'C';
       return 'D';
     },
     detailsForRun() {

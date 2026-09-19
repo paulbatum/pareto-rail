@@ -343,17 +343,21 @@ const flightHeight = (a: number) => {
 
 // The lake approach bears left onto the loop's left point, so the loop starts where the lake ends (bar 42).
 const DAM_KNOTS: DamKnot[] = [
-  // The loop climbs toward crest height, so the fight frames the walker against the dam and the lake, not empty sky.
   loop(35, 8, { bank: 8 }),
-  loop(60, 13, { bar: 44 }),
-  loop(105, 19),
-  loop(150, 21),
-  loop(195, 21),
-  loop(240, 21),
-  loop(285, 20),
-  loop(330, 18),
-  loop(360, 15, { bank: 6 }),
-  { a: -72, l: -50, h: 11, bank: -8 },
+  // The fight: arcs 70–95 units in front of the walker (astride the gates at a = 10, l = 33), at about its
+  // hip height, so it fills half the frame with the crest and the water below it: left to right past the
+  // rear legs and round the front right, back across a little wider, then down to the centre gate.
+  { a: -26, l: -44, h: 26, bar: 44, bank: 8 },
+  { a: -46, l: -18, h: 34, bank: 8 },
+  { a: -57, l: 11, h: 40, bank: 8 },
+  { a: -57, l: 42, h: 43, bank: 8 },
+  { a: -49, l: 70, h: 45, bank: 8 },
+  { a: -36, l: 91, h: 45, bank: 12 },
+  { a: -58, l: 106, h: 44, bank: 14 },
+  { a: -84, l: 84, h: 41, bank: 10 },
+  { a: -80, l: 25, h: 38, bank: 8 },
+  { a: -66, l: -4, h: 31, bank: 6 },
+  { a: -58, l: -17, h: 18, bank: -4 },
   { a: -45, l: -24, h: 6.5, bar: 58, bank: -10 },
   { a: -28, l: -6, h: 4.5, bank: 4 },
   { a: -14, l: 0, h: 5, bar: 60, bank: 0 },
