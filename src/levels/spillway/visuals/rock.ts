@@ -119,7 +119,11 @@ export function createGraniteMaterial(options: GraniteOptions) {
 
   // Three scales of relief: the mid scale breaks up the mesh's facets close to the rail.
   const bump = noise4(p.mul(0.3)).xyz.mul(0.3).add(noise4(p.mul(0.9)).xyz.mul(0.24)).add(noise4(p.mul(2.6)).xyz.mul(0.1));
-  const worldNormal = normalWorld.add(bump).normalize();
+  // Steep faces break into jointed blocks, each face turned a little its own way: the
+  // lookup is constant inside a block, so the shading steps at the block edges.
+  const block = noise4(p.mul(vec3(1 / 7, 1 / 5.5, 1 / 7)).floor().mul(0.37).add(0.5)).xyz;
+  const facets = block.mul(smoothstep(0.75, 0.5, up).mul(0.4));
+  const worldNormal = normalWorld.add(bump).add(facets).normalize();
   material.normalNode = cameraViewMatrix.mul(vec4(worldNormal, 0)).xyz.normalize();
   return material;
 }

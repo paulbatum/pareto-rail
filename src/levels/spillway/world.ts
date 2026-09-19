@@ -62,7 +62,97 @@ SPINE.forEach((sample, index) => {
   if (list) list.push(index);
   else cells.set(key, [index]);
 });
-const COARSE = SPINE.filter((_, index) => index % 12 === 0);
+
+// Far from the river the ring search above finds nothing, so a coarse raster over the
+// whole map holds the nearest spine sample of each cell, filled by a brushfire from the
+// cells the spine crosses. A far query reads it and refines along the spine.
+const FAR_CELL = 64;
+const FAR_MARGIN = 9000;
+const far = (() => {
+  let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity;
+  for (const sample of SPINE) {
+    minX = Math.min(minX, sample.x);
+    maxX = Math.max(maxX, sample.x);
+    minZ = Math.min(minZ, sample.z);
+    maxZ = Math.max(maxZ, sample.z);
+  }
+  const x0 = minX - FAR_MARGIN;
+  const z0 = minZ - FAR_MARGIN;
+  const nx = Math.ceil((maxX - minX + 2 * FAR_MARGIN) / FAR_CELL);
+  const nz = Math.ceil((maxZ - minZ + 2 * FAR_MARGIN) / FAR_CELL);
+  const nearest = new Int32Array(nx * nz).fill(-1);
+  const distance = new Float32Array(nx * nz).fill(Infinity);
+  const centreDistance = (cell: number, index: number) => {
+    const x = x0 + ((cell % nx) + 0.5) * FAR_CELL - SPINE[index].x;
+    const z = z0 + (Math.floor(cell / nx) + 0.5) * FAR_CELL - SPINE[index].z;
+    return x * x + z * z;
+  };
+  SPINE.forEach((sample, index) => {
+    const cell = Math.floor((sample.z - z0) / FAR_CELL) * nx + Math.floor((sample.x - x0) / FAR_CELL);
+    const d = centreDistance(cell, index);
+    if (d < distance[cell]) {
+      distance[cell] = d;
+      nearest[cell] = index;
+    }
+  });
+  // Two sweeps each way, every cell taking a neighbour's source when it is nearer.
+  const offer = (cell: number, from: number) => {
+    const source = nearest[from];
+    if (source < 0) return;
+    const d = centreDistance(cell, source);
+    if (d < distance[cell]) {
+      distance[cell] = d;
+      nearest[cell] = source;
+    }
+  };
+  for (let pass = 0; pass < 2; pass += 1) {
+    for (let z = 0; z < nz; z += 1) {
+      for (let x = 0; x < nx; x += 1) {
+        const cell = z * nx + x;
+        if (x > 0) offer(cell, cell - 1);
+        if (z > 0) {
+          offer(cell, cell - nx);
+          if (x > 0) offer(cell, cell - nx - 1);
+          if (x < nx - 1) offer(cell, cell - nx + 1);
+        }
+      }
+      for (let x = nx - 2; x >= 0; x -= 1) offer(z * nx + x, z * nx + x + 1);
+    }
+    for (let z = nz - 1; z >= 0; z -= 1) {
+      for (let x = nx - 1; x >= 0; x -= 1) {
+        const cell = z * nx + x;
+        if (x < nx - 1) offer(cell, cell + 1);
+        if (z < nz - 1) {
+          offer(cell, cell + nx);
+          if (x > 0) offer(cell, cell + nx - 1);
+          if (x < nx - 1) offer(cell, cell + nx + 1);
+        }
+      }
+      for (let x = 1; x < nx; x += 1) offer(z * nx + x, z * nx + x - 1);
+    }
+  }
+  return {
+    /** Nearest spine sample among the sources of the 3x3 cells around the point. */
+    lookup(x: number, z: number) {
+      const cx = MathUtils.clamp(Math.floor((x - x0) / FAR_CELL), 1, nx - 2);
+      const cz = MathUtils.clamp(Math.floor((z - z0) / FAR_CELL), 1, nz - 2);
+      let best = nearest[cz * nx + cx];
+      let bestDistance = Infinity;
+      for (let dz = -1; dz <= 1; dz += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          const index = nearest[(cz + dz) * nx + cx + dx];
+          const d = (SPINE[index].x - x) ** 2 + (SPINE[index].z - z) ** 2;
+          if (d < bestDistance) {
+            bestDistance = d;
+            best = index;
+          }
+        }
+      }
+      return best;
+    },
+  };
+})();
+const FINE_REACH = 5 * CELL;
 
 export type SpineHit = {
   sample: SpineSample;
@@ -75,6 +165,20 @@ const hit: SpineHit = { sample: SPINE[0], lateral: 0, distance: 0 };
 
 /** Nearest spine sample to a horizontal position. Returns a shared object; copy what you keep. */
 export function nearestSpine(x: number, z: number): SpineHit {
+  const guess = far.lookup(x, z);
+  const guessDistance = (SPINE[guess].x - x) ** 2 + (SPINE[guess].z - z) ** 2;
+  if (guessDistance > FINE_REACH * FINE_REACH) {
+    let best = guess;
+    let bestDistance = guessDistance;
+    for (let i = Math.max(0, guess - 40); i < Math.min(SPINE.length, guess + 40); i += 1) {
+      const distance = (SPINE[i].x - x) ** 2 + (SPINE[i].z - z) ** 2;
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = i;
+      }
+    }
+    return spineHit(best, bestDistance, x, z);
+  }
   const cx = Math.floor(x / CELL);
   const cz = Math.floor(z / CELL);
   let best = -1;
@@ -100,23 +204,13 @@ export function nearestSpine(x: number, z: number): SpineHit {
     if (best >= 0 && maxRadius > radius + 1) maxRadius = radius + 1;
   }
   if (best < 0) {
-    let coarse = 0;
-    for (let i = 0; i < COARSE.length; i += 1) {
-      const distance = (COARSE[i].x - x) ** 2 + (COARSE[i].z - z) ** 2;
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        coarse = i;
-      }
-    }
-    best = SPINE.indexOf(COARSE[coarse]);
-    for (let i = Math.max(0, best - 12); i < Math.min(SPINE.length, best + 12); i += 1) {
-      const distance = (SPINE[i].x - x) ** 2 + (SPINE[i].z - z) ** 2;
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        best = i;
-      }
-    }
+    best = guess;
+    bestDistance = guessDistance;
   }
+  return spineHit(best, bestDistance, x, z);
+}
+
+function spineHit(best: number, bestDistance: number, x: number, z: number) {
   const sample = SPINE[best];
   const rx = Math.cos(sample.heading);
   const rz = Math.sin(sample.heading);
@@ -158,7 +252,13 @@ export function wallHeight(sample: SpineSample, side: WallSide) {
 export function wallDisplacement(s: number, side: WallSide, height: number, wall: number) {
   const columns = fbm2(s * 0.045 + side * 31, height * 0.018, 3);
   const breakup = noise.noise(s * 0.22 + side * 11, height * 0.2);
-  return (1.3 + wall * 0.03) * columns + 0.7 * breakup;
+  // Jointed blocks a few metres across, each standing a little proud of or behind its
+  // neighbours: breaks the profile's long flat faces into the stepped look of granite.
+  const blockS = Math.floor(s / 7 + noise.noise(height * 0.05, side * 5) * 0.8);
+  const blockH = Math.floor(height / 5.5 + noise.noise(s * 0.04, side * 9) * 0.8);
+  const block = noise.noise(blockS * 1.37 + side * 17, blockH * 1.91);
+  const relief = fbm2(s * 0.11 + side * 7, height * 0.09, 2);
+  return (1.3 + wall * 0.03) * columns + 0.7 * breakup + 1.1 * block + 1.2 * relief;
 }
 
 export type WallProfile = {

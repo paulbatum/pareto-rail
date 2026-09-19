@@ -286,8 +286,9 @@ function frameConfig(): RailFrameConfig {
     roll,
     lookTargets: [
       { range: [u(27.4), u(31.6)], target: bellyTarget, blend: 0.008 },
-      { range: [u(35.7), u(39.8)], target: DAM_REVEAL_TARGET, blend: 0.008 },
-      { range: [u(44.2), u(57.9)], target: bossTarget, blend: 0.006 },
+      { range: [u(35.7), u(41.2)], target: DAM_REVEAL_TARGET, blend: 0.008 },
+      // From the lake end the loop swings left, away from the dam; the walker's climb stays in frame.
+      { range: [u(41), u(57.9)], target: bossTarget, blend: 0.006 },
       { range: [u(57.4), u(59.9)], target: BREACH_TARGET, blend: 0.004 },
       { range: [u(59.7), u(61.4)], target: CHUTE_TARGET, blend: 0.003 },
       { range: [u(62.8), u(64.6)], target: LAUNCH_TARGET, blend: 0.005 },

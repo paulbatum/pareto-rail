@@ -265,8 +265,9 @@ function buildGate() {
   return mergeGeometries(parts);
 }
 
-function createConcreteMaterial(colors: DamColors, bathtubHeight: number) {
+function createConcreteMaterial(colors: DamColors, bathtubHeight: number, soak: UniformNode<'float', number>) {
   const material = new MeshStandardNodeMaterial({ roughness: 0.86, metalness: 0 });
+  material.name = 'concrete';
   const p = positionWorld;
   const along = attribute<'float'>('along', 'float');
   const variation = fractal(p.mul(0.08), 2);
@@ -284,7 +285,12 @@ function createConcreteMaterial(colors: DamColors, bathtubHeight: number) {
   const { ring, scum } = bathtubRing({ level: WATER_LEVEL, height: bathtubHeight, color: colors.bleached }, p.y, float(WATER_LEVEL));
   color = mix(color, vec3(colors.bleached.r, colors.bleached.g, colors.bleached.b).mul(variation.mul(0.16).add(0.92)), ring.mul(upstream).mul(0.9));
   color = mix(color, vec3(colors.stain.r, colors.stain.g, colors.stain.b), scum.mul(upstream));
-  const wet = smoothstep(WATER_LEVEL + 0.8, WATER_LEVEL - 0.2, p.y);
+  // Once the gates burst, the piers and the sill run with water: dark, glossy streaks
+  // on everything around the spillway up to well above the torn gates.
+  const spillway = smoothstep(DAM.spillwayHalfWidth + 8, DAM.spillwayHalfWidth, offset.dot(vec2(DAM.right.x, DAM.right.z)).abs());
+  const runs = smoothstep(0.35, 0.6, fractal(vec3(p.x.mul(0.7), p.y.mul(0.04), p.z.mul(0.7)), 2));
+  const soaked = soak.mul(spillway).mul(smoothstep(WATER_LEVEL + DAM.gateTop + 12, WATER_LEVEL + DAM.gateTop - 2, p.y)).mul(runs.mul(0.5).add(0.5));
+  const wet = smoothstep(WATER_LEVEL + 0.8, WATER_LEVEL - 0.2, p.y).max(soaked);
   material.colorNode = mix(color, vec3(colors.wet.r, colors.wet.g, colors.wet.b), wet);
   material.roughnessNode = mix(float(0.86), float(0.4), wet);
   return material;
@@ -296,7 +302,8 @@ export function createDam(colors: DamColors, bathtubHeight: number): DamModel {
   group.position.copy(DAM.center);
   group.rotation.y = -DAM.heading;
 
-  const concrete = createConcreteMaterial(colors, bathtubHeight);
+  const soak = uniform(0);
+  const concrete = createConcreteMaterial(colors, bathtubHeight, soak);
   const psiSpill = Math.asin((DAM.spillwayHalfWidth + 1) / DAM.archRadius);
   const psiEnd = Math.asin((DAM.halfSpan + 40) / DAM.archRadius);
   const parts: BufferGeometry[] = [];
@@ -333,6 +340,7 @@ export function createDam(colors: DamColors, bathtubHeight: number): DamModel {
   // Lamp posts along both parapets, staggered.
   const postGeometry = mergeGeometries([withAlong(new CylinderGeometry(0.14, 0.2, 6, 6).translate(0, 3, 0)), withAlong(new BoxGeometry(0.5, 0.35, 1.8).translate(0, 6, 0.7))]);
   const metal = new MeshStandardNodeMaterial({ color: colors.rail, roughness: 0.5, metalness: 0.6 });
+  metal.name = 'dam-metal';
   const postPlaces: Array<[psi: number, offset: number, yaw: number]> = [];
   let flip = false;
   for (let psi = -psiEnd + 0.12; psi < psiEnd - 0.12; psi += 14 / DAM.archRadius) {
@@ -352,6 +360,7 @@ export function createDam(colors: DamColors, bathtubHeight: number): DamModel {
 
   // Radial gates.
   const gateMaterial = new MeshStandardNodeMaterial({ roughness: 0.55, metalness: 0.35, side: 2 });
+  gateMaterial.name = 'dam-gates';
   const gp = positionWorld;
   const rust = smoothstep(0.55, 0.8, fractal(vec3(gp.x.mul(0.6), gp.y.mul(0.12), gp.z.mul(0.6)), 2));
   gateMaterial.colorNode = mix(vec3(colors.gate.r, colors.gate.g, colors.gate.b), vec3(colors.rust.r, colors.rust.g, colors.rust.b), rust.mul(0.7));
@@ -389,6 +398,7 @@ export function createDam(colors: DamColors, bathtubHeight: number): DamModel {
       gate.rotation.set(-amount * 0.22 + Math.sin(time * 23 + index * 2) * 0.012 * amount, 0, Math.sin(time * 17 + index) * 0.03 * amount);
     },
     updateBreach(elapsed) {
+      soak.value = elapsed < 0 ? 0 : MathUtils.smoothstep(elapsed, 0, 1.5);
       for (const entry of state) {
         const gate = entry.gate.object;
         const delay = order.indexOf(entry.gate.index) * 0.14;

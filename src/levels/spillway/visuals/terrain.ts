@@ -122,6 +122,7 @@ export function createFarRange(options: { radius: number; peak: Color; base: Col
   }
   geometry.computeVertexNormals();
   const material = new MeshBasicNodeMaterial({ side: 1 });
+  material.name = 'far-range';
   material.fog = false;
   const height = positionLocal.y.add(260).div(560);
   material.colorNode = mix(vec3(options.base.r, options.base.g, options.base.b), vec3(options.peak.r, options.peak.g, options.peak.b), smoothstep(float(0.3), float(0.85), height));

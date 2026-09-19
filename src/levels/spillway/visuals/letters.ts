@@ -2,7 +2,7 @@ import { BufferGeometry, Color, Group, Mesh } from 'three';
 import { mix, uniform, vec3 } from 'three/tsl';
 import { MeshStandardNodeMaterial } from 'three/webgpu';
 import { glyphOnCells } from '../../../engine/glyphs';
-import { chamferBox, createMachineMaterial, createPartBuilder, drum, objectFx } from './machine-kit';
+import { chamferBox, createPartBuilder, drum, sharedMachineMaterial } from './machine-kit';
 
 // START and REPLAY: stencilled hazard plates on marker buoys. Each letter is a
 // 5×7 grid of black stencil cells on a worn yellow plate, framed in steel, on
@@ -40,7 +40,7 @@ function letterKit(colors: LetterColors): LetterKit {
 
   kit = {
     plate: b.build(),
-    plateMaterial: createMachineMaterial(objectFx(), { bare: colors.steel, hazard: colors.hazard, wearScale: 1.6 }),
+    plateMaterial: sharedMachineMaterial({ bare: colors.steel, hazard: colors.hazard }),
     cellMaterial,
     cells: new Map(),
   };

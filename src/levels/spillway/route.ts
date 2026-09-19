@@ -70,12 +70,13 @@ const LEGS: Leg[] = [
   { length: 150, turn: 24, bank: 22, drop: 5, end: { halfWidth: 22, wall: 100, rapids: 1 } },
   { length: 143, turn: -12, bank: 12, drop: 5, bar: 36, end: { halfWidth: 46, wall: 58, rapids: 0.25, ride: 2.8 } },
   // reservoir — the gorge opens onto the lake and turns toward the dam (1.1)
-  { length: 200, turn: 40, bank: 8, end: { halfWidth: 150, wall: -14, rapids: 0, ride: 3 } },
-  { length: 160, bar: 42, end: { halfWidth: 220, wall: -20 } },
+  // Short and slow, so the dam is close by bar 40 and fills the frame.
+  { length: 140, turn: 40, bank: 8, end: { halfWidth: 150, wall: -14, rapids: 0, ride: 3 } },
+  { length: 90, bar: 42, end: { halfWidth: 220, wall: -20 } },
 ];
 
 /** Distance from the end of the last river leg to the dam's crest centre, along the lake axis. */
-const LAKE_RUN_TO_DAM = 200;
+const LAKE_RUN_TO_DAM = 120;
 
 export type SpineKind = 'river' | 'lake' | 'chute' | 'valley';
 
@@ -319,8 +320,11 @@ type DamKnot = { a: number; l: number; h: number; bar?: number; bank?: number };
 // face, its right side, then out across the lake), comes back down the left
 // side for the breach, and rides the flood through the centre gate, down the
 // chute and off the lip. `h` is height above the lake.
-const LOOP_CENTER_A = -130;
+// The lake end falls just past the loop's left point.
+const LOOP_CENTER_A = -LAKE_RUN_TO_DAM - 10;
 const LOOP_RADIUS = 58;
+/** The boss loop's centre and radius in the dam frame. */
+export const BOSS_LOOP = { a: LOOP_CENTER_A, l: 0, radius: LOOP_RADIUS };
 const loop = (degrees: number, h: number, extra: Partial<DamKnot> = {}): DamKnot => {
   // 0° is the loop's left point heading downstream; angles run clockwise seen from above.
   const angle = MathUtils.degToRad(degrees);
@@ -337,18 +341,17 @@ const flightHeight = (a: number) => {
   return MathUtils.lerp(apex, land, smooth((a - apexA) / 220));
 };
 
+// The lake approach bears left onto the loop's left point, so the loop starts where the lake ends (bar 42).
 const DAM_KNOTS: DamKnot[] = [
-  { a: -215, l: -26, h: 3.3, bank: -6 },
-  { a: -172, l: -52, h: 7, bar: 44, bank: 0 },
   // The loop climbs toward crest height, so the fight frames the walker against the dam and the lake, not empty sky.
-  loop(0, 10, { bank: 8 }),
-  loop(45, 13),
-  loop(90, 16),
-  loop(135, 18),
-  loop(180, 20),
-  loop(225, 21),
-  loop(270, 21),
-  loop(315, 19),
+  loop(35, 8, { bank: 8 }),
+  loop(60, 13, { bar: 44 }),
+  loop(105, 19),
+  loop(150, 21),
+  loop(195, 21),
+  loop(240, 21),
+  loop(285, 20),
+  loop(330, 18),
   loop(360, 15, { bank: 6 }),
   { a: -72, l: -50, h: 11, bank: -8 },
   { a: -45, l: -24, h: 6.5, bar: 58, bank: -10 },
@@ -379,10 +382,15 @@ const knotBanks: Array<{ knot: number; degrees: number }> = [];
   const stops = new Set<number>(legEnds.filter((s) => s >= 0));
   for (let s = 0; s <= riverEndS; s += s >= cascadeFrom && s < cascadeTo ? 8 : 20) stops.add(Math.round(s / SPINE_STEP) * SPINE_STEP);
   const sorted = [...stops].sort((a, b) => a - b).filter((s, i, list) => i === 0 || s - list[i - 1] > 5 || barAtS.some((entry) => entry.s === s));
+  const lakeRight = new Vector3();
   for (const s of sorted) {
     const sample = spineAt(s);
     const index = knots.length;
-    knots.push(new Vector3(sample.x, sample.y + sample.ride, sample.z));
+    const knot = new Vector3(sample.x, sample.y + sample.ride, sample.z);
+    // Out on the lake the rail bears left, onto the boss loop's left point at the lake end.
+    const bear = smooth((s - GORGE_MOUTH_S - 40) / (riverEndS - GORGE_MOUTH_S - 40));
+    if (bear > 0) knot.addScaledVector(rightVector(sample.heading, lakeRight), -LOOP_RADIUS * bear);
+    knots.push(knot);
     const tag = barAtS.find((entry) => Math.abs(entry.s - s) < SPINE_STEP / 2);
     if (tag) tags.push({ knot: index, bar: tag.bar });
   }

@@ -5,7 +5,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { attribute, dot, float, fract, max, mix, positionGeometry, smoothstep, step, uniform, vec3 } from 'three/tsl';
 import { MeshStandardNodeMaterial } from 'three/webgpu';
 import type { Node } from 'three/webgpu';
-import { fractalNoise } from '../../../engine/tsl-surface';
+import { fractal } from './noise';
 
 // Machine parts: chamfered boxes and lathed drums merged into one geometry per
 // model, each vertex carrying its finish. One lit material draws them all:
@@ -132,14 +132,32 @@ export function objectFx(): MachineFx {
   return { flash: read('flash', 0), lamp: read('lamp', 1), deny: read('deny', 0) };
 }
 
-export function createMachineMaterial(fx: MachineFx, options: { bare: Color; hazard: Color; wearScale?: number; stripeScale?: number }) {
+type MachineMaterialOptions = { bare: Color; hazard: Color; wearScale?: number; stripeScale?: number };
+
+const shared = new Map<string, MeshStandardNodeMaterial>();
+
+/**
+ * One material for every machine drawn as ordinary meshes: effects come from each
+ * object's `userData.fx`, so all kinds share a single compiled shader.
+ */
+export function sharedMachineMaterial(options: MachineMaterialOptions) {
+  const key = [options.bare.getHex(), options.hazard.getHex(), options.wearScale, options.stripeScale].join();
+  let material = shared.get(key);
+  if (!material) {
+    material = createMachineMaterial(objectFx(), options);
+    shared.set(key, material);
+  }
+  return material;
+}
+
+export function createMachineMaterial(fx: MachineFx, options: MachineMaterialOptions) {
   const albedo = attribute<'vec3'>('color', 'vec3');
   const surface = attribute<'vec4'>('surface', 'vec4');
   const detail = attribute<'vec2'>('detail', 'vec2');
   const p = positionGeometry;
-  const chips = fractalNoise(p, { scale: options.wearScale ?? 2.4, octaves: 3 });
-  const grime = fractalNoise(p.add(vec3(7.3, 1.1, 4.9)), { scale: 0.8, octaves: 2 });
-  const worn = surface.w.mul(max(detail.x.mul(0.9), smoothstep(0.62, 0.67, chips)));
+  const chips = fractal(p.mul(options.wearScale ?? 2.4), 3);
+  const grime = fractal(p.add(vec3(7.3, 1.1, 4.9)).mul(0.8), 2);
+  const worn = surface.w.mul(max(detail.x.mul(0.9), smoothstep(0.605, 0.66, chips)));
   const stripe = step(0.5, fract(p.x.add(p.y).add(p.z).mul(options.stripeScale ?? 2.6)));
   const painted = mix(albedo, vec3(options.hazard.r, options.hazard.g, options.hazard.b), detail.y.mul(stripe));
   const base = mix(painted, vec3(options.bare.r, options.bare.g, options.bare.b), worn).mul(mix(float(0.78), float(1), grime));

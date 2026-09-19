@@ -194,5 +194,7 @@ export function createInstancedField(options: {
 }
 
 export function createFoliageMaterial() {
-  return new MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.92, metalness: 0 });
+  const material = new MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.92, metalness: 0 });
+  material.name = 'foliage';
+  return material;
 }

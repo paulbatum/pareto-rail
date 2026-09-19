@@ -16,7 +16,7 @@ import type { Material, Object3D } from 'three';
 import { float, mix, positionGeometry, sin, smoothstep, time, uv, vec3 } from 'three/tsl';
 import { MeshBasicNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu';
 import { createSwarm } from '../../../engine/instanced-swarm';
-import { chamferBox, createMachineMaterial, createPartBuilder, drum, hull, objectFx, type Finish, type MachineFx } from './machine-kit';
+import { chamferBox, createMachineMaterial, createPartBuilder, drum, hull, sharedMachineMaterial, type Finish, type MachineFx } from './machine-kit';
 
 // The walker's machines, built from chamfered steel and lathed drums: the
 // skiff (a wedge hull on foils), the spotter (a ducted rotor with a hanging
@@ -51,7 +51,7 @@ function machineKit(colors: EnemyColors): Kit {
   if (kit) return kit;
   kit = {
     colors,
-    material: createMachineMaterial(objectFx(), { bare: colors.steel, hazard: colors.hazard }),
+    material: sharedMachineMaterial({ bare: colors.steel, hazard: colors.hazard }),
     finishes: {
       paint: { color: colors.paint, metal: 0.25, rough: 0.55, paint: true },
       hazard: { color: colors.paint, metal: 0.25, rough: 0.55, paint: true, hazard: true },

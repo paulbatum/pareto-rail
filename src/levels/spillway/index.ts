@@ -69,9 +69,9 @@ export const spillwayLevel: LevelDefinition = {
   },
   post: {
     clearColor: 0xaebfcc,
-    // The engine hands these to three's bloom as (strength, radius, threshold), so
-    // `threshold` here is the blur radius and `radius` the luminance cutoff: only
-    // the sun and water glints bloom.
+    // `threshold` is the blur radius and `radius` the luminance cutoff (see the bloom
+    // note under "Post-processing" in docs/level-authoring.md): only the sun and
+    // water glints bloom.
     bloom: { strength: 0.35, threshold: 0.4, radius: 2 },
     vignette: { inner: 0.45, outer: 1.2, strength: 0.4 },
     stages: [

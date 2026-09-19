@@ -3,7 +3,7 @@ import type { PerspectiveCamera } from 'three';
 import type { WebGPURenderer } from 'three/webgpu';
 import { mulberry32 } from '../../../engine/rng';
 import { walkerTrack, type WalkerPose } from '../rail';
-import { DAM, GORGE_MOUTH_S, LIP_A, SPINE, SUN_DIRECTION, TAILWATER, WATER_LEVEL, chuteFloor, damLocal, damPoint, headingVector, rightVector, spineAt } from '../route';
+import { BOSS_LOOP, DAM, GORGE_MOUTH_S, LIP_A, RAIL_KNOTS, SPINE, SUN_DIRECTION, TAILWATER, WATER_LEVEL, chuteFloor, damLocal, damPoint, headingVector, rightVector, spineAt } from '../route';
 import { bar } from '../timing';
 import { fbm2, lakeShore, nearestSpine, terrainSample, wallSkyVisibility } from '../world';
 import { createDam, type DamModel } from './dam';
@@ -16,7 +16,7 @@ import { createSky, type SkyRig } from './sky';
 import { createSpray, type Spray } from './spray';
 import { createFarRange, createTerrain } from './terrain';
 import { createWalkerPlaceholder, type WalkerPlaceholder } from './walker-placeholder';
-import { createLake, createRiver, createRiverMaterial, createSpillwayWater, jetPoint, type Obstacle } from './water';
+import { JET_REVEAL, createLake, createRiver, createRiverMaterial, createSpillwayWater, jetPoint, type Obstacle } from './water';
 
 // The world of the run, assembled: sky and sun, the gorge, the terrain, the
 // water, the dam and everything growing or lying on them. Placement and the
@@ -58,6 +58,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
   // ---- rock ----
   const bathtub = { level: WATER_LEVEL, height: BATHTUB_HEIGHT, color: GRANITE.bleached };
   const granite = createGraniteMaterial({ colors: GRANITE, bathtub });
+  granite.name = 'granite';
   const ground = createGraniteMaterial({
     colors: GRANITE,
     ground: { meadow: FOLIAGE.meadow, forestFloor: FOLIAGE.forestFloor, canopy: FOLIAGE.pine[2] },
@@ -65,7 +66,8 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     joints: 'steep',
     bathtub,
   });
-  const gorgeEnd = SPINE.findIndex((sample) => sample.s > GORGE_MOUTH_S + 260);
+  ground.name = 'ground';
+  const gorgeEnd = SPINE.findIndex((sample) => sample.s > GORGE_MOUTH_S + 200);
   const gorge = createGorge({ from: 0, to: gorgeEnd, ringStride: 2, chunkRings: 60, material: granite });
   root.add(gorge.group);
 
@@ -156,20 +158,23 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
   scatterForest(pines, bounds, rng, tint);
   root.add(createInstancedField({ geometry: pineGeometry, material: foliage, placements: pines, groupOf: routeBand, castShadow: true }));
 
+  const mouthA = damLocal(spineAt(GORGE_MOUTH_S).x, spineAt(GORGE_MOUTH_S).z).a;
+  const lakeKnots = RAIL_KNOTS.filter((knot) => damLocal(knot.x, knot.z).a > mouthA - 40 && damLocal(knot.x, knot.z).a < 0);
+  const railDistance = (position: Vector3) => Math.min(...lakeKnots.map((knot) => Math.hypot(knot.x - position.x, knot.z - position.z)));
   const snags: Placement[] = [];
-  for (let i = 0; i < 400 && snags.length < 110; i += 1) {
-    const a = MathUtils.lerp(-560, -185, rng());
+  for (let i = 0; i < 600 && snags.length < 110; i += 1) {
+    const a = MathUtils.lerp(mouthA + 20, BOSS_LOOP.a - 40, rng());
     const shore = lakeShore(a);
     const l = (rng() * 2 - 1) * (shore - 16);
-    // Clear of the rail: its line down the lake and the boss loop in front of the dam.
-    if (Math.abs(l) < 40 + rng() * 30) continue;
-    if (a > -230 && Math.hypot(a + 130, l) < 110) continue;
     const position = damPoint(a, l, -4 - rng() * 3);
+    // Clear of the rail: its line down the lake and the boss loop in front of the dam.
+    if (railDistance(position) < 40 + rng() * 30) continue;
+    if (Math.hypot(a - BOSS_LOOP.a, l - BOSS_LOOP.l) < BOSS_LOOP.radius + 52) continue;
     snags.push({ position, scale: 0.55 + rng() * 0.6, yaw: rng() * 6.28, lean: (rng() - 0.5) * 0.4 });
   }
   // The drowned forest left standing on the mud flats the drawdown has exposed.
   for (let i = 0; i < 5000 && snags.length < 260; i += 1) {
-    const a = MathUtils.lerp(-600, -140, rng());
+    const a = MathUtils.lerp(mouthA - 40, BOSS_LOOP.a + 60, rng());
     const side = rng() < 0.5 ? -1 : 1;
     const l = side * (lakeShore(a, side) + rng() * 40);
     const position = damPoint(a, l, 0);
@@ -247,7 +252,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
       const floodTime = breach - FLOOD_DELAY;
       const front = floodTime > 0 ? 9 * floodTime + 12 * floodTime * floodTime : -100;
       spillwayWater.floodFront.value = front;
-      spillwayWater.jetFront.value = MathUtils.clamp((front - spillwayWater.chuteLength) / 30, 0, 1);
+      const jetDrawn = MathUtils.clamp((front - spillwayWater.chuteLength) / JET_REVEAL, 0, 1);
       spillwayWater.surge.value = MathUtils.smoothstep(front - spillwayWater.chuteLength, 30, 160);
       if (runTime > 0) {
         for (let i = 0; i < DAM.gateCount; i += 1) {
@@ -290,7 +295,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
       }
       if (front > spillwayWater.chuteLength) {
         spray.spray({ at: lipPoint, count: dt * 2400, direction: direction.copy(downstream).setY(0.55), speed: 24, spread: 0.18, life: 1.9, size: 1.1, line: chuteLine });
-        if (spillwayWater.jetFront.value >= 1) {
+        if (jetDrawn >= 1) {
           spray.spray({ at: landing, count: dt * 1300, direction: direction.set(0, 1, 0).addScaledVector(downstream, 0.4), speed: 14, spread: 0.8, life: 2.4, size: 3.2, line: chuteLine });
           spray.mist({ at: landing, count: dt * 8, size: 60, life: 9, radius: 30 });
         }

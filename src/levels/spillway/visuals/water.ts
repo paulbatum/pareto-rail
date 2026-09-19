@@ -220,7 +220,9 @@ export function createRiverMaterial(colors: WaterColors) {
   const inputs = ribbonInputs();
   inputs.flow = inputs.flow.mul(surge.mul(3).add(1));
   inputs.foam = inputs.foam.add(surge.mul(inputs.rough).mul(0.6));
-  return { material: createWaterMaterial(colors, inputs), surge };
+  const material = createWaterMaterial(colors, inputs);
+  material.name = 'water-river';
+  return { material, surge };
 }
 
 export type RiverOptions = {
@@ -390,6 +392,7 @@ export function createLake(options: LakeOptions) {
     edge: float(0),
     across: vec3(across.x, across.y, across.z),
   });
+  material.name = 'water-lake';
   material.positionNode = positionLocal.sub(vec3(0, breach.mul(distance.div(-DRAWDOWN.range).exp().mul(DRAWDOWN.depth).add(bay.mul(DRAWDOWN.bay))), 0));
   const mesh = new Mesh(geometry, material);
   mesh.name = 'lake';
@@ -409,8 +412,6 @@ export type SpillwayWater = {
   group: Group;
   /** Arc length down the chute the flood has reached; below the sill it is hidden. */
   floodFront: UniformNode<'float', number>;
-  /** 0..1 of the jet's length drawn out from the lip. */
-  jetFront: UniformNode<'float', number>;
   /** Extra flow and foam on the valley river once the flood lands. */
   surge: UniformNode<'float', number>;
   /** Arc length of the chute from the gates to the lip. */
@@ -418,6 +419,8 @@ export type SpillwayWater = {
 };
 
 const JET_SPEED = 27;
+/** Flood-front distance past the lip over which the jet draws out. */
+export const JET_REVEAL = 30;
 const JET_GRAVITY = 15;
 
 /** Height (relative to the lake) and axial position of the jet `t` seconds after leaving the lip. */
@@ -429,7 +432,6 @@ export function jetPoint(t: number) {
 
 export function createSpillwayWater(colors: WaterColors, river: { material: MeshStandardNodeMaterial; surge: UniformNode<'float', number> }) {
   const floodFront = uniform(-100);
-  const jetFront = uniform(0);
   const { surge } = river;
   const group = new Group();
   group.name = 'spillway-water';
@@ -473,7 +475,10 @@ export function createSpillwayWater(colors: WaterColors, river: { material: Mesh
   const chuteLength = along;
   // Deep lake green where it leaves the gates, paling as it thins and speeds down the chute.
   const floodAlong = attribute<'vec3'>('surf', 'vec3').y;
+  // One material for the flood and the jet (double-sided for the jet): one shader to compile.
   const floodMaterial = createWaterMaterial(colors, ribbonInputs({ cut: floodAlong.sub(floodFront), edge: smoothstep(6, 45, floodAlong) }));
+  floodMaterial.name = 'water-flood';
+  floodMaterial.side = 2;
   group.add(chunked(rows, 26, 200, floodMaterial, 'flood'));
 
   // The jet off the ski-jump lip, spreading as it falls into the plunge pool.
@@ -486,16 +491,15 @@ export function createSpillwayWater(colors: WaterColors, river: { material: Mesh
       centre: damPoint(a, 0, y),
       across: DAM.right.clone(),
       halfWidth: DAM.chuteHalfWidth + t * 3,
-      along: i / 60,
-      speed: 0.5,
+      // Along the flood's arc length, compressed: the jet draws out over the flood front's last 30 units.
+      along: chuteLength + (i / 60) * JET_REVEAL,
+      speed: 0.5 * JET_REVEAL,
       rough: 1,
       sky: 1,
       surface: (l) => ({ lift: 1.2 * fbm2(l * 0.1, i * 0.2, 2), foam: 0.78 }),
     });
   }
-  const jetMaterial = createWaterMaterial({ ...colors, deep: colors.shallow }, ribbonInputs({ cut: attribute<'vec3'>('surf', 'vec3').y.sub(jetFront) }));
-  jetMaterial.side = 2;
-  group.add(chunked(jetRows, 20, 60, jetMaterial, 'jet'));
+  group.add(chunked(jetRows, 20, 60, floodMaterial, 'jet'));
 
   // The valley river, from under the lip out across the valley.
   const valleyRows: RibbonRow[] = [];
@@ -516,7 +520,7 @@ export function createSpillwayWater(colors: WaterColors, river: { material: Mesh
   }
   group.add(chunked(valleyRows, 20, 120, river.material, 'valley-river'));
 
-  return { group, floodFront, jetFront, surge, chuteLength } satisfies SpillwayWater;
+  return { group, floodFront, surge, chuteLength } satisfies SpillwayWater;
 }
 
 function timeToTailwater() {
