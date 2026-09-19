@@ -1,6 +1,5 @@
 import { MathUtils, Matrix4, Quaternion, Vector3 } from 'three';
 import {
-  hostileShotAimPoint,
   shotBehindCamera,
   steerHomingShot,
   updateHostileShotImpact,
@@ -37,9 +36,15 @@ const POD_STANDOFF = 3.3;
 /** Where the clamp jaw holds the cable above the float, at the model's scale. */
 const CLAMP_JAW_HEIGHT = 3;
 const MISS_GRACE = 0.3;
+/** Fast enough to catch a camera running the rapids at up to 40 units a second. */
+const RIVET_STEER = { baseSpeed: 22, maxSpeed: 36, accel: 14, turnRate: 8 };
 /** Half-width of the camera's clearance tube for anything on the water. */
 const CAMERA_CLEARANCE = 7;
 const RIVET_MAX_AGE = 10;
+/** After a hull hit, cable sweeps and rivets pass harmlessly for this long, so one fumble does not cascade. */
+const HULL_GRACE_SECONDS = 14;
+/** Pods fire only while this far ahead, so a rivet has room to fly and to be shot down. */
+const POD_FIRE_WINDOW = { near: 30, far: 62 };
 const UP = new Vector3(0, 1, 0);
 
 // ---- the walker's racks ------------------------------------------------------------
@@ -184,6 +189,19 @@ function faceOutward(quaternion: Quaternion, outward: Vector3) {
 export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPacer; wallPacer: RailPacer; cables: CableRegistry }) {
   /** Rivets a player shot is already flying at: their impact waits for the shot. */
   const intercepted = new Set<number>();
+  let graceUntil = -Infinity;
+  const aimForward = new Vector3();
+  const aimOffset = new Vector3();
+  const aimPoint = new Vector3();
+
+  /** Costs a hull point unless the player was hit moments ago. */
+  function hurt(context: SpillwayUpdate) {
+    // A replay restarts run time, which clears the grace.
+    if (context.runTime < graceUntil - HULL_GRACE_SECONDS) graceUntil = -Infinity;
+    if (context.runTime < graceUntil) return;
+    graceUntil = context.runTime + HULL_GRACE_SECONDS;
+    context.damagePlayer(1);
+  }
 
   const target = new Vector3();
   const offset = new Vector3();
@@ -408,9 +426,10 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
     // Rivets, telegraphed by the charging lamp.
     const anchored = lowering >= 1;
     mesh.userData.charge = anchored ? MathUtils.clamp(1 - (state.nextShot - age) / 0.7, 0, 1) : 0;
-    if (anchored && age >= state.nextShot) {
+    // A loose pod swings on its cable and cannot aim.
+    if (anchored && state.looseAt < 0 && age >= state.nextShot) {
       state.nextShot = age + data.every;
-      if (sample.distanceAheadUnits > 14) {
+      if (sample.distanceAheadUnits > POD_FIRE_WINDOW.near && sample.distanceAheadUnits < POD_FIRE_WINDOW.far) {
         muzzle.copy(mesh.position).addScaledVector(normal, 2.9).addScaledVector(UP, -0.15);
         fireRivet(context, muzzle);
         mesh.userData.firedAt = runTime;
@@ -420,9 +439,19 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
     return runTime > data.engagement.passTime + MISS_GRACE;
   }
 
+  /**
+   * The camera outruns a shot aimed at the usual point well down its centreline,
+   * so rivets cut across to a point just ahead of the lens.
+   */
+  function rivetAimPoint(camera: SpillwayUpdate['camera'], from: Vector3) {
+    camera.getWorldDirection(aimForward);
+    const depth = aimOffset.copy(from).sub(camera.position).dot(aimForward);
+    return aimPoint.copy(camera.position).addScaledVector(aimForward, Math.max(2.4, depth * 0.2));
+  }
+
   function fireRivet(context: SpillwayUpdate, from: Vector3) {
-    const velocity = hostileShotAimPoint(context.camera, from).sub(from).normalize().multiplyScalar(7);
-    velocity.y += 3;
+    const velocity = rivetAimPoint(context.camera, from).clone().sub(from).normalize().multiplyScalar(RIVET_STEER.baseSpeed);
+    velocity.y += 2;
     context.spawnEnemy({
       time: context.runTime,
       kind: 'rivet',
@@ -433,7 +462,7 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
 
   // ---- rivet: spinning, red-hot, homing on the lens ----
   function rivet(context: SpillwayUpdate, data: Data<'rivet'>) {
-    const { enemy, age, camera, damagePlayer } = context;
+    const { enemy, age, camera } = context;
     const dt = Math.max(0, age - data.lastAge);
     data.lastAge = age;
     const impact = updateHostileShotImpact({
@@ -447,17 +476,12 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
     if (impact.phase === 'braking') {
       enemy.mesh.position.copy(data.position);
       if (impact.damaged) {
-        damagePlayer(1);
+        hurt(context);
         return true;
       }
       return false;
     }
-    steerHomingShot(data.position, data.velocity, hostileShotAimPoint(camera, data.position), age, dt, {
-      baseSpeed: 7,
-      maxSpeed: 16,
-      accel: 3.6,
-      turnRate: 2.3,
-    });
+    steerHomingShot(data.position, data.velocity, rivetAimPoint(camera, data.position), age, dt, RIVET_STEER);
     enemy.mesh.position.copy(data.position);
     if (data.velocity.lengthSq() > 0.01) enemy.mesh.lookAt(target.copy(data.position).add(data.velocity));
     return age > RIVET_MAX_AGE || shotBehindCamera(camera, data.position);
@@ -465,7 +489,7 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
 
   // ---- clamp: surfaces holding the cable; an uncut cable sweeps the camera ----
   function clamp(context: SpillwayUpdate, data: Data<'clamp'>) {
-    const { enemy, runTime, age, curve, damagePlayer } = context;
+    const { enemy, runTime, age, curve } = context;
     const mesh = enemy.mesh;
     const sample = pacer.sample(enemy.entry.time, runTime, data.engagement);
     const u = sample.anchorU;
@@ -499,7 +523,7 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
     // A few units out the uncut cable catches the camera.
     if (cable.state === 'taut' && sample.distanceAheadUnits < 4) {
       cable.state = 'swept';
-      damagePlayer(1);
+      hurt(context);
     }
     return runTime >= data.engagement.passTime;
   }

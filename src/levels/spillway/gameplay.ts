@@ -311,8 +311,8 @@ export function createSpillwayGameplay(bus: EventBus): LockOnRunnerLevel<Spillwa
     rankForRun(score, kills, totalEnemies) {
       const clearRate = totalEnemies === 0 ? 0 : kills / totalEnemies;
       if (score >= 30000 && clearRate >= 0.85 && hitsTaken === 0) return 'S';
-      if (score >= 22000 && clearRate >= 0.7) return 'A';
-      if (score >= 13000 && clearRate >= 0.5) return 'B';
+      if (score >= 17000 && clearRate >= 0.7) return 'A';
+      if (score >= 10000 && clearRate >= 0.5) return 'B';
       if (score >= 5000 && clearRate >= 0.25) return 'C';
       return 'D';
     },
