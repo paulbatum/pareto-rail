@@ -769,6 +769,12 @@ function updateRecord(record: EnemyRecord, frame: { dt: number; camera: Perspect
       record.trail ??= effects?.heatTrail() ?? null;
       record.trail?.push(mesh.position);
       effects?.sparks(mesh.position, 1, 1.5, RIVET.hot, 0.35);
+      // Stopped short of the lens: it bursts there.
+      if (mesh.userData.impact && record.phase !== 'impact') {
+        record.phase = 'impact';
+        effects?.sparks(mesh.position, 26, 9, RIVET.hot, 0.3);
+        effects?.ring(mesh.position, RIVET.hot.clone().multiplyScalar(0.3), 1.6, 0.22);
+      }
       break;
     }
     case 'clamp': {

@@ -39,6 +39,10 @@ const CLAMP_JAW_HEIGHT = 3;
 const MISS_GRACE = 0.3;
 /** Fast enough to catch a camera running the rapids at up to 40 units a second. */
 const RIVET_STEER = { baseSpeed: 22, maxSpeed: 36, accel: 14, turnRate: 8 };
+/** A rivet that reaches the lens stops and bursts several units out, never in the lens itself. */
+const RIVET_IMPACT = { hitDistance: 8, impactBrake: 0.22, damageDistance: 5 };
+/** Closer than this without a hit, a rivet has missed: it is culled before it can fill the frame. */
+const RIVET_NEAR_MISS = 4.5;
 /** Half-width of the camera's clearance tube for anything on the water. */
 const CAMERA_CLEARANCE = 7;
 const RIVET_MAX_AGE = 10;
@@ -461,9 +465,14 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
       velocity: data.velocity,
       state: data.impact,
       intercepted: intercepted.delete(enemy.id),
+      config: RIVET_IMPACT,
     });
+    const range = data.position.distanceTo(camera.position);
+    // Shrinks as it closes, so its size on screen stays bounded.
+    enemy.mesh.scale.setScalar(MathUtils.clamp((range - 2) / 10, 0.25, 1));
     if (impact.phase === 'braking') {
       enemy.mesh.position.copy(data.position);
+      enemy.mesh.userData.impact = true;
       if (impact.damaged) {
         hurt(context);
         return true;
@@ -473,7 +482,7 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
     steerHomingShot(data.position, data.velocity, rivetAimPoint(camera, data.position), age, dt, RIVET_STEER);
     enemy.mesh.position.copy(data.position);
     if (data.velocity.lengthSq() > 0.01) enemy.mesh.lookAt(target.copy(data.position).add(data.velocity));
-    return age > RIVET_MAX_AGE || shotBehindCamera(camera, data.position);
+    return age > RIVET_MAX_AGE || range < RIVET_NEAR_MISS || shotBehindCamera(camera, data.position);
   }
 
   // ---- clamp: surfaces holding the cable; an uncut cable sweeps the camera ----
