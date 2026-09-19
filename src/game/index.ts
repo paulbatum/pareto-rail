@@ -233,6 +233,9 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     /* Built after the runtime so post stages can find the level's scene objects, such as a god-rays light. */
     const post = createPost(renderer, scene, camera, level.post);
     stack.add(() => post.dispose());
+    /* Compile every scene shader before the first frame, in parallel and off the main thread. */
+    await post.compileAsync();
+    if (signal?.aborted) return abort();
     if (urlParams.get('capture') === '1') {
       window.__raildCapture = { scene, camera, canvas: renderer.domElement, bus };
       stack.add(() => { delete window.__raildCapture; });

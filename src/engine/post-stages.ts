@@ -305,10 +305,18 @@ function buildGodrays(config: GodraysStageConfig, input: LevelPostColorNode, con
        and without shadow sampling) instead of one per scene material in a variant the frame
        never uses again; the shadow pass keeps its own depth material and the real casters. */
     warmUp: () => {
+      /* Only the receiver draws: every other object would compile its own variant of the override. */
+      const hidden: Object3D[] = [];
+      scene.traverse((object) => {
+        if ((object as Mesh).isMesh || (object as { isPoints?: boolean }).isPoints || (object as { isSprite?: boolean }).isSprite) {
+          if (object !== receiver && object.visible) { object.visible = false; hidden.push(object); }
+        }
+      });
       const previousOverride = scene.overrideMaterial;
       scene.overrideMaterial = warmUpMaterial;
       renderer.render(scene, camera);
       scene.overrideMaterial = previousOverride;
+      for (const object of hidden) object.visible = true;
     },
     dispose: () => {
       node.dispose();
