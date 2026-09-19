@@ -215,6 +215,11 @@ Tone mapping runs after the whole post chain, so the vignette and any `composeOu
 
 `retainShaders: true` keeps every compiled shader for the life of the renderer. three evicts a shader when the last mesh using it is disposed, so a level that disposes each enemy on its kill and spawns the same kind a bar later compiles that kind again on every wave: about 10 ms of JavaScript to rebuild the node graph plus a blocking driver compile of 20 to 100 ms. With retention each shader compiles once. The first compile still lands on the first spawn; to move it to the attract screen, hand one object of every kind the run spawns to `warmUpShaders(scene, objects)` from `src/engine/shader-cache.ts` in `createRuntime` and call its `update(camera)` each frame. Build those objects with the factories the run uses, since the renderer keys a shader on material settings, geometry layout, and lights. `npm run perf:probe -- --level <id> --detail` shows the compiles as frames where the pipeline cache size rises (`docs/perf-tools.md`).
 
+Shader compile cost is the main load-time risk for a detailed level, and it is worst on Windows, where the driver inlines every function call into one large shader. The engine compiles every object in the scene in parallel before the first frame, but objects spawned later, the shadow pass, and the post chain still compile on first use. Two patterns multiply the cost:
+
+- Every `InstancedMesh` gets its own shader and pipeline, even when it shares a material, because three keys its render cache on the object. Split scenery into a few large instanced groups, not many small spatial cells.
+- Inline procedural noise (`mx_noise`, the `tsl-surface.ts` fractal and voronoi helpers) is expanded in full at every call site; a material with a few octaves can take hundreds of milliseconds to compile. For noise sampled across many materials, bake it once into a `Data3DTexture` generated in code at load and sample that. `src/levels/spillway/visuals/noise.ts` does this.
+
 `softwareParticleCapacity` caps every GPU particle system while the renderer runs on the WebGL backend, which is the SwiftShader path `check:perf`, `check:occlusion`, and `check:floor` use. There the particle kernels run on the CPU over every slot each frame, and a 100k system makes each simulated second take tens of seconds, past the tools' protocol timeout. 0 turns particle compute off on that backend; the real pipeline is never affected.
 
 ## Post-processing
@@ -229,6 +234,8 @@ post?: {
   composeOutput?: (input: LevelPostComposeInput) => LevelPostColorNode;
 };
 ```
+
+The bloom `threshold` and `radius` fields reach three's bloom node in swapped order: `threshold` sets the blur radius (0 to 1) and `radius` sets the luminance cutoff. Every level is tuned against this behaviour, so the engine keeps it; tune each field for what it actually does. A `threshold` above about 1.2 drives the bloom negative and leaves black holes.
 
 Omitting it preserves the shared default frame. The engine always multiplies the level bloom strength by the player's bloom slider, so levels cannot bypass the pause-menu bloom setting.
 
