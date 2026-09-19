@@ -16,7 +16,7 @@ import type { Color } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { MeshStandardNodeMaterial } from 'three/webgpu';
 import { attribute, float, fract, mix, positionWorld, smoothstep, vec2, vec3 } from 'three/tsl';
-import { fractalNoise } from '../../../engine/tsl-surface';
+import { fractal } from './noise';
 import { bathtubRing } from './rock';
 import { DAM, LIP_A, WATER_LEVEL, archFaceA, chuteFloor } from '../route';
 
@@ -269,10 +269,10 @@ function createConcreteMaterial(colors: DamColors, bathtubHeight: number) {
   const material = new MeshStandardNodeMaterial({ roughness: 0.86, metalness: 0 });
   const p = positionWorld;
   const along = attribute<'float'>('along', 'float');
-  const variation = fractalNoise(p, { scale: 0.08, octaves: 2 });
+  const variation = fractal(p.mul(0.08), 2);
   const lift = smoothstep(0.04, 0, fract(p.y.div(2.4)).sub(0.5).abs().sub(0.47));
   const joint = smoothstep(0.035, 0, fract(along.div(15)).sub(0.5).abs().sub(0.47));
-  const streaks = smoothstep(0.5, 0.78, fractalNoise(vec3(p.x.mul(0.45), p.y.mul(0.028), p.z.mul(0.45)), { scale: 1, octaves: 2 }));
+  const streaks = smoothstep(0.5, 0.78, fractal(vec3(p.x.mul(0.45), p.y.mul(0.028), p.z.mul(0.45)), 2));
   let color = vec3(colors.concrete.r, colors.concrete.g, colors.concrete.b).mul(variation.mul(0.24).add(0.88));
   color = mix(color, vec3(colors.stain.r, colors.stain.g, colors.stain.b), streaks.mul(0.55).add(lift.mul(0.3)).add(joint.mul(0.35)).clamp(0, 0.8));
   // The bathtub ring only on concrete the reservoir touches: upstream of the arch face and the gates.
@@ -353,7 +353,7 @@ export function createDam(colors: DamColors, bathtubHeight: number): DamModel {
   // Radial gates.
   const gateMaterial = new MeshStandardNodeMaterial({ roughness: 0.55, metalness: 0.35, side: 2 });
   const gp = positionWorld;
-  const rust = smoothstep(0.55, 0.8, fractalNoise(vec3(gp.x.mul(0.6), gp.y.mul(0.12), gp.z.mul(0.6)), { scale: 1, octaves: 2 }));
+  const rust = smoothstep(0.55, 0.8, fractal(vec3(gp.x.mul(0.6), gp.y.mul(0.12), gp.z.mul(0.6)), 2));
   gateMaterial.colorNode = mix(vec3(colors.gate.r, colors.gate.g, colors.gate.b), vec3(colors.rust.r, colors.rust.g, colors.rust.b), rust.mul(0.7));
   const gateGeometry = buildGate();
   const pitch = DAM.gateWidth + DAM.pierWidth;

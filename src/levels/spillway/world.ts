@@ -213,11 +213,11 @@ export function corridorHalfWidth(sample: SpineSample, side: WallSide) {
   return profile.lateral[profile.rimIndex] + 24;
 }
 
-/** Share of the sky a point on a wall sees, 0.15 at the foot of a deep gorge to 1 in the open. */
+/** Share of the sky a point on a wall sees, 0.25 at the foot of a deep gorge to 1 in the open. */
 export function wallSkyVisibility(sample: SpineSample, heightAboveWater: number, wall: number) {
   const open = smooth(0.6, 3, (2 * sample.halfWidth) / Math.max(1, wall));
   const up = MathUtils.clamp(heightAboveWater / Math.max(1, wall), 0, 1);
-  return MathUtils.lerp(0.15 + 0.85 * up ** 0.8, 1, open);
+  return MathUtils.lerp(0.25 + 0.75 * up ** 0.8, 1, open);
 }
 
 // ---- water -------------------------------------------------------------------------

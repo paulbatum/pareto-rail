@@ -3,8 +3,9 @@ import { uniform } from 'three/tsl';
 import type { LevelDefinition } from '../../engine/types';
 import { createCameraFeel } from '../../engine/camera-feel';
 import { createLockOnRunner } from '../../engine/lock-on-runner';
+import { createTimeFeel } from '../../engine/time-feel';
 import { createAudio } from './audio';
-import { SPILLWAY_BPM, spillwayGameplay } from './gameplay';
+import { SPILLWAY_BPM, createSpillwayGameplay } from './gameplay';
 import { speedFactorAt } from './rail';
 import { SPILLWAY_BAR, SPILLWAY_MARKERS, SPILLWAY_RUN_SECTIONS, SPILLWAY_TIME, bar } from './timing';
 import {
@@ -29,6 +30,15 @@ const SPEED_FOV_DEGREES = 4.5;
 // the open everything past it counts as lit and the rays become a flat veil.
 const GODRAY_KEYS: Array<[bar: number, intensity: number]> = [[0, 0.2], [8, 0.5], [34, 0.5], [37, 0]];
 const godrayIntensity = uniform(0);
+
+// The named moments, few and short.
+const CALLOUTS: Array<{ bar: number; text: string; hold: number }> = [
+  { bar: 7.75, text: 'THE NARROWS', hold: 2 },
+  { bar: 10.25, text: 'CUT THE CABLE', hold: 2.2 },
+  { bar: 21.75, text: 'WHITEWATER', hold: 2 },
+  { bar: 41.5, text: 'THE DAM', hold: 2.4 },
+  { bar: 60.25, text: 'RIDE THE FLOOD', hold: 2.4 },
+];
 
 function godraysAt(time: number) {
   const b = time / SPILLWAY_BAR;
@@ -72,16 +82,29 @@ export const spillwayLevel: LevelDefinition = {
   createAudio,
   createRuntime({ scene, camera, renderer, canvas, bus, hud, onPause, onFullscreen, startTip }) {
     const cameraFeel = createCameraFeel(camera);
+    const timeFeel = createTimeFeel();
     createEnvironment(scene, renderer);
-    installVisualEventHandlers(bus, scene);
+    installVisualEventHandlers(bus, scene, { camera: cameraFeel, time: timeFeel });
 
     let runTime = 0;
     let nextKick = 0;
+    let nextCallout = 0;
+    let calloutUntil = -1;
+    let now = 0;
+    const say = (text: string, seconds: number) => {
+      hud.setCallout(text);
+      calloutUntil = now + seconds;
+    };
     bus.on('runstart', () => {
       runTime = 0;
       nextKick = 0;
+      nextCallout = 0;
+      calloutUntil = -1;
+      hud.setCallout('');
+      timeFeel.reset();
       cameraFeel.restore();
     });
+    bus.on('runend', () => timeFeel.reset());
 
     const game = createLockOnRunner({
       scene,
@@ -93,7 +116,7 @@ export const spillwayLevel: LevelDefinition = {
       onFullscreen,
       startTip,
       level: {
-        ...spillwayGameplay,
+        ...createSpillwayGameplay(bus),
         updateCameraEffects({ runTime: time, dt }) {
           while (nextKick < FOV_KICKS.length && time >= bar(FOV_KICKS[nextKick][0])) {
             cameraFeel.kickFov(FOV_KICKS[nextKick][1], { decay: 1.6 });
@@ -116,9 +139,22 @@ export const spillwayLevel: LevelDefinition = {
     });
 
     return {
-      update(dt) {
-        if (game.state === 'running') runTime += dt;
-        game.update(dt);
+      update(dt, elapsed) {
+        now = elapsed;
+        // Hit-stop slows the game clock only; visuals and audio keep real time.
+        const gameDt = timeFeel.scaleDt(dt);
+        if (game.state === 'running') {
+          runTime += gameDt;
+          while (nextCallout < CALLOUTS.length && runTime >= bar(CALLOUTS[nextCallout].bar)) {
+            say(CALLOUTS[nextCallout].text, CALLOUTS[nextCallout].hold);
+            nextCallout += 1;
+          }
+        }
+        if (calloutUntil >= 0 && elapsed >= calloutUntil) {
+          calloutUntil = -1;
+          hud.setCallout('');
+        }
+        game.update(gameDt);
         godrayIntensity.value = godraysAt(runTime);
         updateVisuals({ runTime: game.state === 'attract' ? 0 : runTime, dt, camera });
       },

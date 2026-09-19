@@ -10,7 +10,7 @@ import { wallDisplacement, wallProfile, wallSkyVisibility, type WallSide } from 
 // columns and overhang lips come from.
 
 /** Subdivisions of each profile segment, from the underwater toe up to the tucked skirt. */
-const SEGMENT_STEPS = [2, 1, 1, 4, 4, 2, 6, 4, 3, 4, 2, 5, 4, 2, 3, 2, 1];
+const SEGMENT_STEPS = [2, 1, 2, 6, 6, 3, 8, 5, 4, 5, 3, 5, 4, 2, 3, 2, 1];
 
 export type LedgeSpot = { position: Vector3; side: WallSide; kind: 'ledge' | 'rim'; s: number };
 

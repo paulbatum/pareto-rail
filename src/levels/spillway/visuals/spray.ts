@@ -80,13 +80,15 @@ export function createSpray(renderer: WebGPURenderer, options: { sprayCapacity: 
     fog: true,
     spawn: lineSpawn,
     forces: { gravity: new Vector3(0, -11, 0), drag: 1.1, turbulence: { strength: 3, scale: 0.15, drift: 0.6 } },
-    sizeOverLife: ({ size, lifeFraction }) => size.mul(lifeFraction.mul(1.4).add(0.6)),
+    // Droplets swell and soften as they age, so a burst thins into a cloud rather than a scatter of dots.
+    sizeOverLife: ({ size, lifeFraction }) => size.mul(lifeFraction.mul(1.5).add(0.6)),
     colorOverLife: ({ color, uv, lifeFraction }) => {
-      const disc = smoothstep(0.5, 0.1, uv.sub(0.5).length());
-      const fade = smoothstep(0, 0.06, lifeFraction).mul(smoothstep(1, 0.4, lifeFraction));
+      const r = uv.sub(0.5).length().mul(2).min(1);
+      const disc = float(1).sub(r.mul(r)).pow(2);
+      const fade = smoothstep(0, 0.06, lifeFraction).mul(smoothstep(1, 0.35, lifeFraction));
       // Droplets right at the lens would read as big soft discs; they fade out instead.
-      const near = smoothstep(2, 9, positionView.z.negate());
-      return vec4(color.mul(light), disc.mul(fade).mul(near).mul(0.3));
+      const near = smoothstep(3, 14, positionView.z.negate());
+      return vec4(color.mul(light), disc.mul(fade).mul(near).mul(float(0.34).sub(lifeFraction.mul(0.2))));
     },
   });
   const mist = createGpuParticles(renderer, {

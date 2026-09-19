@@ -261,11 +261,11 @@ function bellyTarget(time: number) {
   return aimPoint.copy(scratchPose.position).addScaledVector(scratchPose.forward, WALKER_BODY_LENGTH * 0.5).setY(scratchPose.position.y + WALKER_BELLY);
 }
 
-/** The walker's chest, pulled a third of the way toward the rail ahead so the fight stays in frame. */
+/** The walker's hips, pulled a third of the way toward the rail ahead: the walker, the crest and the water stay in frame. */
 function bossTarget(time: number) {
   walkerTrack(time, scratchPose);
   const ahead = template.getPointAt(Math.min(1, railU(time) + 0.02));
-  return aimPoint.copy(scratchPose.position).setY(scratchPose.position.y + WALKER_BELLY + 6).lerp(ahead, 0.3);
+  return aimPoint.copy(scratchPose.position).setY(scratchPose.position.y + WALKER_BELLY * 0.3).lerp(ahead, 0.35);
 }
 
 const DAM_REVEAL_TARGET = damPoint(0, 0, DAM.crestHeight * 0.55);
@@ -288,8 +288,8 @@ function frameConfig(): RailFrameConfig {
       { range: [u(27.4), u(31.6)], target: bellyTarget, blend: 0.008 },
       { range: [u(35.7), u(39.8)], target: DAM_REVEAL_TARGET, blend: 0.008 },
       { range: [u(44.2), u(57.9)], target: bossTarget, blend: 0.006 },
-      { range: [u(57.4), u(60.2)], target: BREACH_TARGET, blend: 0.004 },
-      { range: [u(60), u(61.4)], target: CHUTE_TARGET, blend: 0.003 },
+      { range: [u(57.4), u(59.9)], target: BREACH_TARGET, blend: 0.004 },
+      { range: [u(59.7), u(61.4)], target: CHUTE_TARGET, blend: 0.003 },
       { range: [u(62.8), u(64.6)], target: LAUNCH_TARGET, blend: 0.005 },
     ],
   };

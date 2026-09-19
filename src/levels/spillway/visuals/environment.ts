@@ -10,12 +10,13 @@ import { createDam, type DamModel } from './dam';
 import { createBoulderGeometry, createFoliageMaterial, createInstancedField, createPineGeometry, createSnagGeometry, type Placement } from './flora';
 import { createGorge, type LedgeSpot } from './gorge';
 import { CONCRETE, FOLIAGE, GRANITE, PLACEHOLDER_YELLOW, SKY, STEEL, WATER } from './palette';
+import { disposeNoiseVolume } from './noise';
 import { createGraniteMaterial } from './rock';
 import { createSky, type SkyRig } from './sky';
 import { createSpray, type Spray } from './spray';
 import { createFarRange, createTerrain } from './terrain';
 import { createWalkerPlaceholder, type WalkerPlaceholder } from './walker-placeholder';
-import { createLake, createRiver, createSpillwayWater, jetPoint, type Obstacle } from './water';
+import { createLake, createRiver, createRiverMaterial, createSpillwayWater, jetPoint, type Obstacle } from './water';
 
 // The world of the run, assembled: sky and sun, the gorge, the terrain, the
 // water, the dam and everything growing or lying on them. Placement and the
@@ -102,27 +103,25 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     bankBoulders.push({ position: new Vector3(sample.x, sample.y + 0.3 - radius * 0.35, sample.z).addScaledVector(rightVector(sample.heading), lateral), scale: radius, yaw: rng() * 6.28 });
   }
   const boulderPlacements: Placement[] = [...riverBoulders.map((b) => ({ position: b.position, scale: b.radius, yaw: rng() * 6.28 })), ...bankBoulders];
-  const boulderGroup = new Group();
-  for (let variant = 0; variant < 3; variant += 1) {
-    boulderGroup.add(createInstancedField({
-      geometry: createBoulderGeometry(variant * 17.3),
-      material: granite,
-      placements: boulderPlacements.filter((_, index) => index % 3 === variant),
-      cellSize: 400,
-      castShadow: true,
-      attributes: { waterY: (p) => waterLevelAt(p.position), sky: () => 0.55 },
-    }));
-  }
-  root.add(boulderGroup);
+  // One mesh: the granite shader is expensive to compile, and every InstancedMesh compiles its own.
+  root.add(createInstancedField({
+    geometry: createBoulderGeometry(17.3),
+    material: granite,
+    placements: boulderPlacements,
+    groupOf: () => 0,
+    castShadow: true,
+    attributes: { waterY: (p) => waterLevelAt(p.position), sky: () => 0.55 },
+  }));
 
   // ---- water ----
   const cascadeFrom = SPINE.find((sample) => sample.s > 900 && sample.y < -14)?.s ?? 0;
   const cascadeTo = SPINE.find((sample) => sample.s > cascadeFrom && sample.y < -37.5)?.s ?? cascadeFrom;
   const waterColors = { deep: WATER.deep, shallow: WATER.shallow, foam: WATER.foam };
-  root.add(createRiver({ colors: waterColors, obstacles: riverBoulders, cascades: [[cascadeFrom - 8, cascadeTo]] }));
+  const riverWater = createRiverMaterial(waterColors);
+  root.add(createRiver({ material: riverWater.material, obstacles: riverBoulders, cascades: [[cascadeFrom - 8, cascadeTo]] }));
   const lake = createLake({ colors: waterColors, from: damLocal(spineAt(GORGE_MOUTH_S - 20).x, spineAt(GORGE_MOUTH_S - 20).z).a - 60, halfWidth: 340 });
   root.add(lake.mesh);
-  const spillwayWater = createSpillwayWater({ deep: WATER.deep, shallow: WATER.shallow, foam: WATER.foam });
+  const spillwayWater = createSpillwayWater(waterColors, riverWater);
   root.add(spillwayWater.group);
 
   // ---- dam ----
@@ -131,9 +130,14 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
 
   // ---- trees ----
   const foliage = createFoliageMaterial();
-  const pineGeometries = FOLIAGE.pine.slice(0, 2).map((color) => createPineGeometry(rng, color, FOLIAGE.trunk));
+  // One pine geometry; the per-instance tint picks among the palette's greens and varies the shade.
+  const pineGeometry = createPineGeometry(rng, FOLIAGE.pine[0], FOLIAGE.trunk);
   const pines: Placement[] = [];
-  const tint = () => new Color().setScalar(0.8 + rng() * 0.35);
+  const tint = () => {
+    const green = FOLIAGE.pine[Math.floor(rng() * FOLIAGE.pine.length)];
+    const shade = 0.8 + rng() * 0.35;
+    return new Color(green.r / FOLIAGE.pine[0].r, green.g / FOLIAGE.pine[0].g, green.b / FOLIAGE.pine[0].b).multiplyScalar(shade);
+  };
   for (const spot of gorge.ledges) placeLedgePine(spot);
   function placeLedgePine(spot: LedgeSpot) {
     if (spot.kind === 'ledge') {
@@ -150,9 +154,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     }
   }
   scatterForest(pines, bounds, rng, tint);
-  pineGeometries.forEach((geometry, variant) => {
-    root.add(createInstancedField({ geometry, material: foliage, placements: pines.filter((_, index) => index % 2 === variant), cellSize: 360, castShadow: true }));
-  });
+  root.add(createInstancedField({ geometry: pineGeometry, material: foliage, placements: pines, groupOf: routeBand, castShadow: true }));
 
   const snags: Placement[] = [];
   for (let i = 0; i < 400 && snags.length < 110; i += 1) {
@@ -161,7 +163,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     const l = (rng() * 2 - 1) * (shore - 16);
     // Clear of the rail: its line down the lake and the boss loop in front of the dam.
     if (Math.abs(l) < 40 + rng() * 30) continue;
-    if (a > -190 && Math.hypot(a + 100, l) < 110) continue;
+    if (a > -230 && Math.hypot(a + 130, l) < 110) continue;
     const position = damPoint(a, l, -4 - rng() * 3);
     snags.push({ position, scale: 0.55 + rng() * 0.6, yaw: rng() * 6.28, lean: (rng() - 0.5) * 0.4 });
   }
@@ -176,7 +178,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     position.y = ground - 0.3;
     snags.push({ position, scale: rng() < 0.6 ? 0.2 + rng() * 0.15 : 0.45 + rng() * 0.4, yaw: rng() * 6.28, lean: (rng() - 0.5) * 0.5 });
   }
-  root.add(createInstancedField({ geometry: createSnagGeometry(rng, FOLIAGE.snag), material: foliage, placements: snags, cellSize: 400, castShadow: true }));
+  root.add(createInstancedField({ geometry: createSnagGeometry(rng, FOLIAGE.snag), material: foliage, placements: snags, groupOf: routeBand, castShadow: true }));
 
   // ---- spray and the walker stand-in ----
   const spray = createSpray(renderer, { sprayCapacity: 24000, mistCapacity: 700 });
@@ -240,7 +242,8 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
       // The breach: gates burst on the bar, the lake slides, the flood runs the chute and leaps the lip.
       const breach = runTime - bar(BREACH_BAR);
       dam.updateBreach(runTime > 0 ? breach : -1);
-      lake.breach.value = MathUtils.smoothstep(breach, 0, bar(2.5));
+      // Fully drawn down by the time the camera reaches the gates: the flood tongue is shaped to meet it.
+      lake.breach.value = MathUtils.smoothstep(breach, 0, bar(1));
       const floodTime = breach - FLOOD_DELAY;
       const front = floodTime > 0 ? 9 * floodTime + 12 * floodTime * floodTime : -100;
       spillwayWater.floodFront.value = front;
@@ -266,7 +269,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
           if (t < 0 || t > 3) continue;
           const strength = Math.min(1, t * 4) * (1 - MathUtils.smoothstep(t, 1.8, 3));
           damPoint(-1, (i - (DAM.gateCount - 1) / 2) * (DAM.gateWidth + DAM.pierWidth), DAM.sillHeight + 8 * (1 - t / 3), scratch);
-          spray.spray({ at: scratch, count: dt * 2600 * strength, direction: direction.copy(downstream).setY(0.18), speed: 24, spread: 0.1, life: 1.3, size: 0.8, line: line.copy(DAM.right).multiplyScalar(DAM.gateWidth * 0.45), radius: 0.8, color: 0xe8f0ee });
+          spray.spray({ at: scratch, count: dt * 4200 * strength, direction: direction.copy(downstream).setY(0.22), speed: 26, spread: 0.07, life: 1.5, size: 1.1, line: line.copy(DAM.right).multiplyScalar(DAM.gateWidth * 0.45), radius: 0.6, color: 0xe8f0ee });
         }
       }
       if (front > 0 && front < spillwayWater.chuteLength) {
@@ -330,10 +333,15 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     dispose() {
       sky.dispose();
       spray.dispose();
+      disposeNoiseVolume();
       root.removeFromParent();
     },
   };
 }
+
+/** Instanced placements are grouped into bands along the route: a handful of meshes, each culled as a whole. */
+const ROUTE_BAND = 1500;
+const routeBand = (placement: Placement) => Math.floor(nearestSpine(placement.position.x, placement.position.z).sample.s / ROUTE_BAND);
 
 function hazeAt(runTime: number): [number, number] {
   const b = runTime / bar(1);

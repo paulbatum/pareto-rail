@@ -150,20 +150,25 @@ function instanceMatrix(placement: Placement) {
   return matrix.compose(placement.position, rotation, scale);
 }
 
-/** Instanced props, split into spatial cells so off-screen cells are culled whole. */
+/** Instanced props, one mesh per group so an off-screen group is culled whole. */
 export function createInstancedField(options: {
   geometry: BufferGeometry;
   material: Material;
   placements: Placement[];
-  cellSize: number;
+  /**
+   * Groups placements into meshes, so a group off screen is culled. Keep the groups
+   * few and large: three compiles a separate shader and pipeline for every
+   * InstancedMesh, so hundreds of small cells cost hundreds of compiles over a run.
+   */
+  groupOf: (placement: Placement) => number;
   castShadow: boolean;
   /** Per-instance float attributes, e.g. the local water level for wet rock. */
   attributes?: Record<string, (placement: Placement) => number>;
 }) {
   const group = new Group();
-  const cells = new Map<string, Placement[]>();
+  const cells = new Map<number, Placement[]>();
   for (const placement of options.placements) {
-    const key = `${Math.floor(placement.position.x / options.cellSize)},${Math.floor(placement.position.z / options.cellSize)}`;
+    const key = options.groupOf(placement);
     const list = cells.get(key);
     if (list) list.push(placement);
     else cells.set(key, [placement]);

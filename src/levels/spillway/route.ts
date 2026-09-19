@@ -319,7 +319,7 @@ type DamKnot = { a: number; l: number; h: number; bar?: number; bank?: number };
 // face, its right side, then out across the lake), comes back down the left
 // side for the breach, and rides the flood through the centre gate, down the
 // chute and off the lip. `h` is height above the lake.
-const LOOP_CENTER_A = -100;
+const LOOP_CENTER_A = -130;
 const LOOP_RADIUS = 58;
 const loop = (degrees: number, h: number, extra: Partial<DamKnot> = {}): DamKnot => {
   // 0° is the loop's left point heading downstream; angles run clockwise seen from above.
@@ -338,23 +338,24 @@ const flightHeight = (a: number) => {
 };
 
 const DAM_KNOTS: DamKnot[] = [
-  { a: -175, l: -30, h: 3.3, bank: -6 },
-  { a: -140, l: -56, h: 4, bar: 44, bank: 0 },
-  loop(0, 5, { bank: 8 }),
-  loop(45, 6.5),
-  loop(90, 8),
-  loop(135, 9.5),
-  loop(180, 11),
-  loop(225, 12.5),
-  loop(270, 13.5),
-  loop(315, 13),
-  loop(360, 11, { bank: 6 }),
-  { a: -72, l: -50, h: 9, bank: -8 },
+  { a: -215, l: -26, h: 3.3, bank: -6 },
+  { a: -172, l: -52, h: 7, bar: 44, bank: 0 },
+  // The loop climbs toward crest height, so the fight frames the walker against the dam and the lake, not empty sky.
+  loop(0, 10, { bank: 8 }),
+  loop(45, 13),
+  loop(90, 16),
+  loop(135, 18),
+  loop(180, 20),
+  loop(225, 21),
+  loop(270, 21),
+  loop(315, 19),
+  loop(360, 15, { bank: 6 }),
+  { a: -72, l: -50, h: 11, bank: -8 },
   { a: -45, l: -24, h: 6.5, bar: 58, bank: -10 },
   { a: -28, l: -6, h: 4.5, bank: 4 },
   { a: -14, l: 0, h: 5, bar: 60, bank: 0 },
-  // High over the brink, so the camera sees down the chute as it crosses the sill.
-  { a: 0, l: 0, h: DAM.sillHeight + floodDepth(0) + 6 },
+  // High over the brink (the drawn-down water is about 7 below the lake here), so the camera sees down the chute as it crosses the sill.
+  { a: 0, l: 0, h: 6 },
   { a: 12, l: 0, h: chuteFloor(12) + floodDepth(12) + 3.2 },
   // Over the brink by bar 61.5, so the flood carries the camera onto the chute without lingering at the sill.
   { a: 30, l: 0, h: chuteFloor(30) + floodDepth(30) + 3.2, bar: 61.5 },

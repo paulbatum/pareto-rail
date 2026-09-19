@@ -1,7 +1,7 @@
-import { BufferAttribute, BufferGeometry, Group, Mesh, Vector3 } from 'three';
+import { BufferAttribute, BufferGeometry, Group, MathUtils, Mesh, Vector3 } from 'three';
 import { MeshStandardNodeMaterial } from 'three/webgpu';
 import type { Node, UniformNode } from 'three/webgpu';
-import { attribute, cameraViewMatrix, float, mix, mx_noise_float, mx_noise_vec3, normalWorld, output, positionLocal, select, smoothstep, time, uniform, vec2, vec3, vec4 } from 'three/tsl';
+import { attribute, cameraViewMatrix, float, mix, normalWorld, output, positionLocal, select, smoothstep, time, uniform, vec2, vec3, vec4 } from 'three/tsl';
 import type { Color } from 'three';
 import {
   DAM,
@@ -20,6 +20,7 @@ import {
   valleyRiverHalfWidth,
 } from '../route';
 import { fbm2, wallProfile, wallSkyVisibility } from '../world';
+import { noise1, noise4 } from './noise';
 
 // Water surfaces, all one shading model: a lit, glossy surface whose ripples
 // and foam are advected by a per-vertex flow with the two-phase flow-map trick,
@@ -59,37 +60,62 @@ export function createWaterMaterial(colors: WaterColors, inputs: WaterSurfaceInp
   const uv0 = inputs.surf.sub(inputs.flow.mul(phase0.mul(FLOW_PERIOD)));
   const uv1 = inputs.surf.sub(inputs.flow.mul(phase1.mul(FLOW_PERIOD))).add(vec2(13.7, 7.1));
 
-  const slope = (uv: Vec2Node) => {
-    const broad = mx_noise_vec3(vec3(uv.mul(0.16), time.mul(0.12))).xy;
-    const fine = mx_noise_vec3(vec3(uv.mul(0.62), time.mul(0.35))).xy;
-    return broad.add(fine.mul(0.5));
+  // Each flow phase takes five fetches from the baked noise volume; their channels
+  // feed the slopes, the froth, the lace, the bubbles and the foam lines. The foam
+  // patterns are stretched along the current (surf y) so they read as flowing.
+  const layers = (uv: Vec2Node) => {
+    const broad = noise4(vec3(uv.mul(0.16), time.mul(0.12)));
+    const fine = noise4(vec3(uv.x.mul(1.0), uv.y.mul(0.22), time.mul(0.45)));
+    const tiny = noise4(vec3(uv.x.mul(3.2), uv.y.mul(1.1), time.mul(1.1)));
+    const bubbles = noise4(vec3(uv.x.mul(9), uv.y.mul(5), time.mul(1.7)));
+    // Foam lines drawn out along the current: what makes the surface read as flowing downstream.
+    const lines = noise1(vec3(uv.x.mul(0.55), uv.y.mul(0.035), time.mul(0.08)));
+    return {
+      slope: broad.xy.add(fine.xy.mul(0.5)),
+      ripple: tiny.xy,
+      froth: fine.z.add(broad.z.mul(0.6)),
+      lace: tiny.z.add(tiny.w.mul(0.5)),
+      bubbles: bubbles.x.add(bubbles.y.mul(0.5)),
+      bubbleSlope: bubbles.zw,
+      shade: broad.w,
+      lines,
+    };
   };
-  const froth = (uv: Vec2Node) => mx_noise_float(vec3(uv.x.mul(0.34), uv.y.mul(0.1), time.mul(0.25))).add(mx_noise_float(vec3(uv.mul(0.9), time.mul(0.5))).mul(0.45));
-  // Foam lines drawn out along the current: what makes the surface read as flowing downstream.
-  const lines = (uv: Vec2Node) => mx_noise_float(vec3(uv.x.mul(0.55), uv.y.mul(0.035), time.mul(0.08))).add(mx_noise_float(vec3(uv.x.mul(1.7), uv.y.mul(0.12), 3.1)).mul(0.35));
+  const l0 = layers(uv0);
+  const l1 = layers(uv1);
+  const blend = <T extends Node>(a: T, b: T) => mix(a as never, b as never, weight1) as unknown as T;
+  // Capillary ripples at a finer scale than the mesh give detail close to the camera, even on calm water.
+  const gradient = blend(l0.slope, l1.slope).mul(mix(float(0.12), float(0.75), inputs.rough)).add(blend(l0.ripple, l1.ripple).mul(0.1));
+  const bubbles = blend(l0.bubbles, l1.bubbles);
+  const lineFoam = smoothstep(0.42, 0.85, blend(l0.lines, l1.lines)).mul(inputs.rough.mul(0.8));
 
-  const gradient = mix(slope(uv0), slope(uv1), weight1).mul(mix(float(0.12), float(0.75), inputs.rough));
-  const foamNoise = mix(froth(uv0), froth(uv1), weight1);
-  // Fine lace: breaks the foam's edges into bubbles and threads instead of smooth blobs.
-  const lace = (uv: Vec2Node) => mx_noise_float(vec3(uv.x.mul(1.9), uv.y.mul(0.8), time.mul(0.9))).add(mx_noise_float(vec3(uv.mul(4.3), time.mul(1.4))).mul(0.5));
-  const laceNoise = mix(lace(uv0), lace(uv1), weight1);
-  const lineFoam = smoothstep(0.42, 0.85, mix(lines(uv0), lines(uv1), weight1)).mul(inputs.rough.mul(0.8));
-  const foam = smoothstep(0.55, 0.72, inputs.foam.add(foamNoise.mul(0.38)).add(laceNoise.mul(0.22))).max(lineFoam.mul(0.75));
+  // Foam in two layers. Thin foam is a translucent, pale green veil of fine bubbles;
+  // thick foam is white, with its brightness broken up by the bubbles and a broad
+  // shade, and the lace always opens gaps in it.
+  const cover = inputs.foam.add(blend(l0.froth, l1.froth).mul(0.34)).add(blend(l0.lace, l1.lace).mul(0.26));
+  const thin = smoothstep(0.38, 0.6, cover).max(lineFoam.mul(0.7));
+  const thick = smoothstep(0.62, 0.8, cover.add(bubbles.mul(0.12)));
+  const foam = thin.mul(0.45).add(thick.mul(0.55));
 
   const n = normalWorld;
   const along = n.cross(inputs.across).normalize();
-  const worldNormal = n.sub(inputs.across.mul(gradient.x)).sub(along.mul(gradient.y)).normalize();
-  material.normalNode = cameraViewMatrix.mul(vec4(mix(worldNormal, n, foam.mul(0.3)), 0)).xyz.normalize();
+  // Foam keeps its ripples and gains bubble relief, so up close it is a textured surface, not a flat sheet.
+  const detail = gradient.add(blend(l0.bubbleSlope, l1.bubbleSlope).mul(thin.mul(0.18)));
+  const worldNormal = n.sub(inputs.across.mul(detail.x)).sub(along.mul(detail.y)).normalize();
+  material.normalNode = cameraViewMatrix.mul(vec4(worldNormal, 0)).xyz.normalize();
 
   const body = mix(rgb(colors.deep), rgb(colors.shallow), inputs.edge);
+  const foamColor = rgb(colors.foam).mul(bubbles.mul(0.08).add(blend(l0.shade, l1.shade).mul(0.07)).add(0.9));
+  const veil = mix(body.mul(1.8), rgb(colors.foam), 0.45);
   // Clear water reflects and scatters rather than diffusing: a low albedo, and the colour comes from the emissive scatter below.
-  material.colorNode = mix(body.mul(0.45), rgb(colors.foam), foam);
-  material.roughnessNode = mix(float(0.09), float(0.7), foam);
+  material.colorNode = mix(mix(body.mul(0.45), veil, thin.mul(0.8)), foamColor, thick);
+  material.roughnessNode = mix(float(0.09), float(0.55), foam);
   material.aoNode = mix(inputs.sky.mul(0.35).add(0.2), float(1), foam.mul(0.8));
   // Light scattered back up out of the water column, strongest where the surface
   // sees open sky: it keeps the river cold green instead of a dark mirror.
   // Foam scatters too, so whitewater in the shade of the gorge still reads white.
-  material.emissiveNode = mix(body.mul(mix(float(0.25), float(0.5), inputs.sky)), rgb(colors.foam).mul(0.4), foam);
+  const scatter = body.mul(mix(float(0.25), float(0.5), inputs.sky));
+  material.emissiveNode = mix(mix(scatter, veil.mul(0.3), thin.mul(0.7)), foamColor.mul(0.38), thick);
   // A sun glint at grazing angles overflows the half-float scene target; keep it finite.
   material.outputNode = vec4(output.rgb.min(vec3(60)), output.a);
   if (inputs.cut) {
@@ -184,8 +210,21 @@ function chunked(rows: RibbonRow[], columns: number, rowsPerChunk: number, mater
 
 export type Obstacle = { position: Vector3; radius: number };
 
+/**
+ * The material shared by the gorge river and the valley river (one shader to compile
+ * instead of two). `surge` adds flow and foam once the flood reaches the valley; the
+ * gorge is out of sight by then.
+ */
+export function createRiverMaterial(colors: WaterColors) {
+  const surge = uniform(0);
+  const inputs = ribbonInputs();
+  inputs.flow = inputs.flow.mul(surge.mul(3).add(1));
+  inputs.foam = inputs.foam.add(surge.mul(inputs.rough).mul(0.6));
+  return { material: createWaterMaterial(colors, inputs), surge };
+}
+
 export type RiverOptions = {
-  colors: WaterColors;
+  material: MeshStandardNodeMaterial;
   /** Boulders standing in the stream: each throws a foam wake downstream. */
   obstacles: Obstacle[];
   /** Spine range of cascades, foamed over their whole drop. */
@@ -203,7 +242,7 @@ function standingWave(s: number, l: number, halfWidth: number, rapids: number) {
 }
 
 export function createRiver(options: RiverOptions) {
-  const material = createWaterMaterial(options.colors, ribbonInputs());
+  const { material } = options;
   const rows: RibbonRow[] = [];
   const endS = GORGE_MOUTH_S + 40;
   const right = new Vector3();
@@ -226,7 +265,7 @@ export function createRiver(options: RiverOptions) {
       sky: Math.max(0.2, wallSkyVisibility(sample, 0, walls)),
       surface(l) {
         const wave = standingWave(sample.s, l, sample.halfWidth, sample.rapids);
-        let foam = sample.rapids * 0.46 + wave.crest * 1.1;
+        let foam = sample.rapids * 0.36 + wave.crest * 0.8;
         let lift = wave.lift;
         foam += smoothRange(sample.halfWidth - 3, sample.halfWidth + 1.5, Math.abs(l)) * (0.25 + sample.rapids * 0.45);
         if (cascade) foam = Math.max(foam, 1);
@@ -242,7 +281,8 @@ export function createRiver(options: RiverOptions) {
           // Pour-over: a pillow of water heaped against the rock, a hole just behind it.
           lift += across * o.radius * (downstream < 0 ? 0.25 * Math.exp(downstream / o.radius) : -0.45 * Math.exp(-downstream / (o.radius * 1.8)) * smoothRange(0, o.radius, downstream));
         }
-        return { lift, foam: Math.min(1.3, foam) };
+        // Capped below solid white so the lace noise always opens green gaps, even in the roughest water.
+        return { lift, foam: Math.min(cascade ? 1 : 0.78, foam) };
       },
     });
   }
@@ -263,10 +303,39 @@ export type LakeOptions = { colors: WaterColors; from: number; halfWidth: number
  * arch. `breach` (0..1) sets the lake sliding toward the centre gate and draws
  * the surface down in front of it.
  */
+/** How far the breach draws the lake down around the centre gate; the flood tucks under it. */
+const DRAWDOWN = { depth: 5, range: 55, bay: 2, bayReach: 12 };
+const BAY_PITCH = DAM.gateWidth + DAM.pierWidth;
+const bayWave = (l: number) => 0.5 + 0.5 * Math.cos((2 * Math.PI * l) / BAY_PITCH);
+const drawdownAt = (a: number, l: number) => {
+  const bay = bayWave(l) ** 2 * smoothRange(DAM.spillwayHalfWidth, DAM.spillwayHalfWidth - 8, Math.abs(l)) * Math.exp(Math.min(0, a) / DRAWDOWN.bayReach);
+  return DRAWDOWN.depth * Math.exp(-Math.hypot(Math.min(0, a), l) / DRAWDOWN.range) + DRAWDOWN.bay * bay;
+};
+
+/** 0..1 dip in front of each gate bay (x across, y along the dam axis). */
+function bayDip(l: FloatNode, a: FloatNode) {
+  const wave = l.mul((2 * Math.PI) / BAY_PITCH).cos().mul(0.5).add(0.5);
+  const inside = smoothstep(float(DAM.spillwayHalfWidth), float(DAM.spillwayHalfWidth - 8), l.abs());
+  return wave.mul(wave).mul(inside).mul(a.min(0).div(DRAWDOWN.bayReach).exp());
+}
+
+/** Foam where the lake piles against the pier noses. */
+function pierPile(l: FloatNode, a: FloatNode) {
+  const pier = l.mul((2 * Math.PI) / BAY_PITCH).cos().mul(-0.5).add(0.5).pow(6);
+  const inside = smoothstep(float(DAM.spillwayHalfWidth + 4), float(DAM.spillwayHalfWidth - 4), l.abs());
+  return pier.mul(inside).mul(a.min(0).div(7).exp()).mul(0.8);
+}
+
 export function createLake(options: LakeOptions) {
   const breach = uniform(0);
   const across = DAM.right;
-  const columns = 64;
+  // Columns are fine across the spillway, where the breach pulls the water into each bay.
+  const inner = DAM.spillwayHalfWidth + 12;
+  const ls: number[] = [];
+  for (let i = 0; i < 26; i += 1) ls.push(-options.halfWidth + (i / 26) * (options.halfWidth - inner));
+  for (let l = -inner; l < inner; l += 2) ls.push(l);
+  for (let i = 0; i <= 26; i += 1) ls.push(inner + (i / 26) * (options.halfWidth - inner));
+  const columns = ls.length;
   const rowsCount = 90;
   const count = columns * rowsCount;
   const position = new Float32Array(count * 3);
@@ -276,7 +345,7 @@ export function createLake(options: LakeOptions) {
   for (let r = 0; r < rowsCount; r += 1) {
     const t = r / (rowsCount - 1);
     for (let c = 0; c < columns; c += 1) {
-      const l = ((c / (columns - 1)) * 2 - 1) * options.halfWidth;
+      const l = ls[c];
       const face = Math.abs(l) < DAM.halfSpan + 10 ? archFaceA(l) - 0.5 : 60;
       const shore = Math.min(face, 60);
       // Rows bunch toward the dam, where the breach pulls the surface down.
@@ -306,6 +375,7 @@ export function createLake(options: LakeOptions) {
   geometry.computeBoundingSphere();
 
   const local = attribute<'vec2'>('surf', 'vec2');
+  const bay = bayDip(local.x, local.y);
   const distance = local.length();
   const toGate = local.negate().div(distance.max(1));
   const pull = breach.mul(float(16).mul(distance.div(-190).exp()).add(1.5));
@@ -313,13 +383,14 @@ export function createLake(options: LakeOptions) {
   const material = createWaterMaterial(options.colors, {
     surf: local,
     flow,
-    foam: breach.mul(ramp(float(130), float(15), distance)).mul(0.9),
+    // Glassy where it pours into the bays, torn white where it piles against the piers.
+    foam: breach.mul(ramp(float(130), float(15), distance).mul(float(0.6).sub(bay.mul(0.35))).add(pierPile(local.x, local.y))),
     rough: breach.mul(ramp(float(200), float(20), distance)).mul(0.9),
     sky: float(1),
     edge: float(0),
     across: vec3(across.x, across.y, across.z),
   });
-  material.positionNode = positionLocal.sub(vec3(0, breach.mul(distance.div(-55).exp()).mul(5), 0));
+  material.positionNode = positionLocal.sub(vec3(0, breach.mul(distance.div(-DRAWDOWN.range).exp().mul(DRAWDOWN.depth).add(bay.mul(DRAWDOWN.bay))), 0));
   const mesh = new Mesh(geometry, material);
   mesh.name = 'lake';
   mesh.receiveShadow = true;
@@ -356,10 +427,10 @@ export function jetPoint(t: number) {
   return { a: LIP_A + vx * t, y: LIP_HEIGHT + 1.5 + vy * t - 0.5 * JET_GRAVITY * t * t };
 }
 
-export function createSpillwayWater(colors: WaterColors) {
+export function createSpillwayWater(colors: WaterColors, river: { material: MeshStandardNodeMaterial; surge: UniformNode<'float', number> }) {
   const floodFront = uniform(-100);
   const jetFront = uniform(0);
-  const surge = uniform(0);
+  const { surge } = river;
   const group = new Group();
   group.name = 'spillway-water';
 
@@ -367,34 +438,42 @@ export function createSpillwayWater(colors: WaterColors) {
   const rows: RibbonRow[] = [];
   const point = new Vector3();
   const previous = new Vector3();
-  let along = 0;
-  for (let a = -6; a <= LIP_A + 0.01; a += 1.5) {
+  // It starts well out on the lake, under the surface, and rises through it before the gates, so the two meet without a step.
+  let along = -24;
+  for (let a = -30; a <= LIP_A + 0.01; a += 1.5) {
     damPoint(a, 0, chuteFloor(a) + floodDepth(a), point);
     if (rows.length > 0) along += point.distanceTo(previous);
     previous.copy(point);
     const halfWidth = MathClamp(DAM.spillwayHalfWidth - 1 - (a / 40) * (DAM.spillwayHalfWidth - DAM.chuteHalfWidth), DAM.chuteHalfWidth - 0.6, DAM.spillwayHalfWidth - 1);
     const rowAlong = along;
+    const rowY = point.y - WATER_LEVEL;
+    const rowA = a;
     rows.push({
       centre: point.clone(),
       across: DAM.right.clone(),
       halfWidth,
       along: rowAlong,
-      speed: 20 + Math.min(30, rowAlong * 0.25),
-      rough: 1,
+      speed: 20 + Math.min(30, Math.max(0, rowAlong) * 0.25),
+      rough: 0.35 + 0.65 * smoothRange(10, 50, rowAlong),
       sky: 1,
-      // Green over the sill, tearing into white as it gathers speed down the chute.
-      // Boiling white where it tears through the bays and over the sill, green tongues in the middle of the chute, white again as it speeds up.
+      // A smooth, glassy tongue over the sill (no bulge in front of the camera), tearing
+      // into white streaks as it gathers speed down the chute.
+      // Near the gates it follows the drawn-down lake, just above it except at its upstream and side edges.
       surface: (l) => {
-        const boil = 1 - smoothRange(4, 40, rowAlong);
+        const above = smoothRange(-30, -18, rowA) * smoothRange(halfWidth, halfWidth - 8, Math.abs(l));
+        const lake = -drawdownAt(rowA, l) - rowY + MathUtils.lerp(-0.5, 0.2, above);
+        const lift = (0.15 + 0.6 * smoothRange(10, 50, rowAlong)) * fbm2(l * 0.15, rowAlong * 0.08, 2);
         return {
-          lift: (0.6 + 0.5 * boil) * fbm2(l * 0.15, rowAlong * 0.08, 2),
-          foam: Math.min(0.82, 0.3 + 0.25 * boil + Math.min(0.4, rowAlong / 180) + 0.3 * (Math.abs(l) / halfWidth) ** 2),
+          lift: rowA < 30 ? Math.min(lake, lift) : lift,
+          foam: Math.min(0.74, 0.34 + Math.min(0.38, Math.max(0, rowAlong) / 160) + 0.3 * (Math.abs(l) / halfWidth) ** 2),
         };
       },
     });
   }
   const chuteLength = along;
-  const floodMaterial = createWaterMaterial({ ...colors, deep: colors.shallow }, ribbonInputs({ cut: attribute<'vec3'>('surf', 'vec3').y.sub(floodFront) }));
+  // Deep lake green where it leaves the gates, paling as it thins and speeds down the chute.
+  const floodAlong = attribute<'vec3'>('surf', 'vec3').y;
+  const floodMaterial = createWaterMaterial(colors, ribbonInputs({ cut: floodAlong.sub(floodFront), edge: smoothstep(6, 45, floodAlong) }));
   group.add(chunked(rows, 26, 200, floodMaterial, 'flood'));
 
   // The jet off the ski-jump lip, spreading as it falls into the plunge pool.
@@ -435,10 +514,7 @@ export function createSpillwayWater(colors: WaterColors) {
       surface: (l) => ({ lift: 0, foam: plunge * 0.5 + 0.3 * smoothRange(halfWidth - 9, halfWidth - 4, Math.abs(l)) + 0.1 * fbm2(aValue * 0.02, l * 0.05, 2) }),
     });
   }
-  const valleyInputs = ribbonInputs();
-  valleyInputs.flow = valleyInputs.flow.mul(surge.mul(3).add(1));
-  valleyInputs.foam = valleyInputs.foam.add(surge.mul(valleyInputs.rough).mul(0.6));
-  group.add(chunked(valleyRows, 20, 120, createWaterMaterial(colors, valleyInputs), 'valley-river'));
+  group.add(chunked(valleyRows, 20, 120, river.material, 'valley-river'));
 
   return { group, floodFront, jetFront, surge, chuteLength } satisfies SpillwayWater;
 }
