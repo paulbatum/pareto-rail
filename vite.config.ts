@@ -30,8 +30,9 @@ export default defineConfig({
   },
   server: {
     /* Reaching the dev server from a phone needs HTTPS, since WebGPU is secure-context only.
-       `tailscale serve 5173` fronts it with a cert under the tailnet's own domain. */
-    allowedHosts: ['.ts.net'],
+       `tailscale serve 5173` fronts it with a cert under the tailnet's own domain. The bare
+       MagicDNS name covers hitting the dev server directly from another tailnet device. */
+    allowedHosts: ['.ts.net', 'paulryzen-1'],
   },
   build: {
     chunkSizeWarningLimit: 1200,
