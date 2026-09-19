@@ -101,7 +101,10 @@ export function createSpray(renderer: WebGPURenderer, options: { sprayCapacity: 
     colorOverLife: ({ color, uv, lifeFraction }) => {
       const disc = smoothstep(0.5, float(0), uv.sub(0.5).length());
       const fade = smoothstep(0, 0.25, lifeFraction).mul(smoothstep(1, 0.6, lifeFraction));
-      return vec4(color.mul(light.mul(0.5).add(0.5)), disc.mul(disc).mul(fade).mul(0.05));
+      // A sprite tens of units across fills the screen when the camera flies into it, and
+      // stacked ones white the frame out; they thin to nothing close to the lens.
+      const near = smoothstep(10, 55, positionView.z.negate());
+      return vec4(color.mul(light.mul(0.5).add(0.5)), disc.mul(disc).mul(fade).mul(near).mul(0.05));
     },
   });
   spray.object.name = 'spray';

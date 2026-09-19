@@ -254,6 +254,8 @@ export function createRiver(options: RiverOptions) {
     rightVector(sample.heading, right);
     const halfWidth = sample.halfWidth + 5;
     const cascade = options.cascades.some(([from, to]) => sample.s >= from && sample.s <= to + 30);
+    // White down the face; the plunge pool below it churns but lets green through.
+    const cascadeFoam = options.cascades.some(([from, to]) => sample.s >= from && sample.s <= to) ? 1 : 0.84;
     const walls = Math.min(wallProfile(sample, 1).wall, wallProfile(sample, -1).wall);
     const sink = -0.6 * Math.min(1, Math.max(0, (sample.s - (GORGE_MOUTH_S + 5)) / 30));
     const nearby = obstacles.filter((o) => Math.abs(o.position.x - sample.x) < 40 && Math.abs(o.position.z - sample.z) < 40);
@@ -270,7 +272,7 @@ export function createRiver(options: RiverOptions) {
         let foam = sample.rapids * 0.36 + wave.crest * 0.8;
         let lift = wave.lift;
         foam += smoothRange(sample.halfWidth - 3, sample.halfWidth + 1.5, Math.abs(l)) * (0.25 + sample.rapids * 0.45);
-        if (cascade) foam = Math.max(foam, 1);
+        if (cascade) foam = Math.max(foam, cascadeFoam);
         for (const o of nearby) {
           const dx = sample.x + right.x * l - o.position.x;
           const dz = sample.z + right.z * l - o.position.z;
@@ -284,7 +286,7 @@ export function createRiver(options: RiverOptions) {
           lift += across * o.radius * (downstream < 0 ? 0.25 * Math.exp(downstream / o.radius) : -0.45 * Math.exp(-downstream / (o.radius * 1.8)) * smoothRange(0, o.radius, downstream));
         }
         // Capped below solid white so the lace noise always opens green gaps, even in the roughest water.
-        return { lift, foam: Math.min(cascade ? 1 : 0.78, foam) };
+        return { lift, foam: Math.min(cascade ? cascadeFoam : 0.78, foam) };
       },
     });
   }
