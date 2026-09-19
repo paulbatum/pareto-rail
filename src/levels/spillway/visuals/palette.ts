@@ -54,5 +54,3 @@ export const STEEL = {
   rust: new Color(0x6a4c3a),
   rail: new Color(0x3a3f40),
 };
-
-export const PLACEHOLDER_YELLOW = new Color(0xd6a124);
