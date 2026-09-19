@@ -15,8 +15,8 @@ import {
   Vector3,
 } from 'three';
 import type { Camera, Object3D, Scene } from 'three';
-import { float, positionView, smoothstep, vec3 } from 'three/tsl';
-import { MeshStandardNodeMaterial } from 'three/webgpu';
+import { float, positionView, smoothstep, uniform, uv, vec3 } from 'three/tsl';
+import { MeshBasicNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu';
 import { createRibbonTrail, type RibbonTrail } from '../../../engine/ribbon-trail';
 import { chamferBox } from './machine-kit';
 
@@ -30,6 +30,7 @@ const SPARK_CAPACITY = 420;
 const RING_CAPACITY = 20;
 const CABLE_SEGMENTS = 128;
 const UP = new Vector3(0, 1, 0);
+const BLACK = new Color(0, 0, 0);
 
 export type EffectColors = {
   paint: Color;
@@ -96,11 +97,21 @@ export function createEffects(scene: Scene, colors: EffectColors, world: Effects
     root.push(mesh);
   }
 
+  // Things the camera flies into or over would fill the lens: they thin out close up.
+  const nearFade = (near: number, far: number) => smoothstep(near, far, positionView.z.negate());
+
   // ---- rings: flat on the water for splashes, facing the camera in the air ----
-  const ringGeometry = new RingGeometry(0.9, 1, 48);
+  // A soft band rather than a hard line, so a splash ring reads as spreading foam,
+  // and gone before the camera is close enough to see it as a flat disc.
+  const ringGeometry = new RingGeometry(0.5, 1, 48, 1);
+  const ringTint = uniform(new Color()).onObjectUpdate(({ object }) => (object?.userData.tint as Color | undefined) ?? BLACK);
+  const ringRadius = uv().sub(0.5).length().mul(2);
+  const ringMaterial = new MeshBasicNodeMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide });
+  ringMaterial.colorNode = ringTint.mul(smoothstep(0.5, 0.88, ringRadius).mul(smoothstep(1, 0.9, ringRadius))).mul(nearFade(6, 20));
   const rings: Ring[] = [];
   for (let i = 0; i < RING_CAPACITY; i += 1) {
-    const mesh = new Mesh(ringGeometry, new MeshBasicMaterial({ color: 0x000000, transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+    const mesh = new Mesh(ringGeometry, ringMaterial);
+    mesh.userData.tint = new Color();
     mesh.visible = false;
     mesh.userData.raildIgnoreOcclusion = true;
     rings.push({ mesh, color: new Color(), age: 0, life: -1, size: 1, flat: false });
@@ -108,8 +119,6 @@ export function createEffects(scene: Scene, colors: EffectColors, world: Effects
   }
 
   // ---- ribbon trails ----
-  // Trails the camera flies into would fill the lens: they thin out close up.
-  const nearFade = (near: number, far: number) => smoothstep(near, far, positionView.z.negate());
   const createPool = (count: number, make: () => RibbonTrail, linger: number): Trail[] =>
     Array.from({ length: count }, () => {
       const ribbon = make();
@@ -147,8 +156,9 @@ export function createEffects(scene: Scene, colors: EffectColors, world: Effects
     blending: NormalBlending,
     fog: true,
     color: colors.wake,
-    width: ({ age }) => age.mul(0.8).add(0.3).min(1.8),
-    fade: ({ t, age }) => float(1).sub(t).mul(age.mul(-0.9).exp()).mul(nearFade(3, 10)).mul(0.5),
+    width: ({ age }) => age.mul(0.7).add(0.3).min(1.5),
+    // Soft across the strip, so a wake is spreading foam and never a flat pale band.
+    fade: ({ t, age, side }) => float(1).sub(t).mul(age.mul(-0.9).exp()).mul(float(1).sub(side.mul(side))).mul(nearFade(8, 24)).mul(0.4),
   }), 2.5);
 
   function claim(pool: Trail[]): TrailHandle | null {
@@ -316,7 +326,7 @@ export function createEffects(scene: Scene, colors: EffectColors, world: Effects
         ring.mesh.scale.setScalar(ring.size * (0.15 + 0.85 * (1 - (1 - progress) ** 2)));
         if (ring.flat) ring.mesh.quaternion.setFromUnitVectors(along.set(0, 0, 1), UP);
         else ring.mesh.quaternion.copy(camera.quaternion);
-        (ring.mesh.material as MeshBasicMaterial).color.copy(ring.color).multiplyScalar((1 - progress) ** 1.5);
+        (ring.mesh.userData.tint as Color).copy(ring.color).multiplyScalar((1 - progress) ** 1.5);
       }
 
       // Wakes face a point high overhead, which lays them flat on the water.
