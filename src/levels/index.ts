@@ -69,7 +69,16 @@ export const levelMetadatas: LevelMetadata[] = [
       hero: '/level-content/rezdle/hero.avif',
     },
   },
-  { id: 'spillway', title: 'Spillway', kind: 'playable' },
+  {
+    id: 'spillway',
+    title: 'Spillway',
+    kind: 'playable',
+    contentImages: {
+      overview: '/level-content/spillway/overview.avif',
+      start: '/level-content/spillway/start.avif',
+      hero: '/level-content/spillway/hero.avif',
+    },
+  },
   { id: 'rush', title: 'Rush', kind: 'technical' },
 ];
 
