@@ -1,16 +1,36 @@
 import { BoxGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial, RingGeometry, Scene, SphereGeometry, TorusGeometry } from 'three';
-import type { Object3D } from 'three';
+import type { Object3D, PerspectiveCamera } from 'three';
+import type { WebGPURenderer } from 'three/webgpu';
 import type { EventBus } from '../../../events';
 import { glyphOnCells } from '../../../engine/glyphs';
+import { createEnvironment as buildEnvironment, type Environment } from './environment';
 
-// Spine: keep palette and event choreography decisions here. Move mesh
-// construction to leaf files as this level grows. These flat magenta primitive
-// placeholders are intentionally unshippable.
+// Spine: palette and event choreography. The world is built in environment.ts;
+// the enemy, letter and reticle factories below are magenta scaffold stand-ins
+// that the enemy phase replaces.
 const MAGENTA = 0xff00ff;
 const material = () => new MeshBasicMaterial({ color: MAGENTA, side: DoubleSide });
 
-export function createEnvironment(_scene: Scene) {
-  // Empty by design: replace with authored environment geometry.
+let environment: Environment | null = null;
+
+export function createEnvironment(scene: Scene, renderer: WebGPURenderer) {
+  environment = buildEnvironment(scene, renderer);
+  return environment;
+}
+
+/** The live world: dam gates, spray emitters and the walker stand-in, for gameplay and effects. */
+export function spillwayEnvironment() {
+  if (!environment) throw new Error('Spillway environment is not built yet');
+  return environment;
+}
+
+export function updateVisuals(frame: { runTime: number; dt: number; camera: PerspectiveCamera }) {
+  environment?.update(frame);
+}
+
+export function disposeVisuals() {
+  environment?.dispose();
+  environment = null;
 }
 
 export function installVisualEventHandlers(_bus: EventBus, _scene: Scene) {

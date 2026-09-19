@@ -1,0 +1,112 @@
+import type { Color } from 'three';
+import { MeshStandardNodeMaterial } from 'three/webgpu';
+import type { Node } from 'three/webgpu';
+import { attribute, cameraViewMatrix, float, mix, mx_noise_float, mx_noise_vec3, normalWorld, positionWorld, smoothstep, vec3, vec4 } from 'three/tsl';
+import { fractalNoise, voronoiEdgeDistance } from '../../../engine/tsl-surface';
+
+type Vec3Node = Node<'vec3'>;
+
+const rgb = (color: Color) => vec3(color.r, color.g, color.b);
+
+export type GraniteColors = {
+  warm: Color;
+  cool: Color;
+  pale: Color;
+  dark: Color;
+  lichen: Color;
+  moss: Color;
+  soil: Color;
+};
+
+export type GroundColors = {
+  meadow: Color;
+  forestFloor: Color;
+  canopy: Color;
+};
+
+export type GraniteOptions = {
+  colors: GraniteColors;
+  /** Gentle slopes become grass, forest floor and distant canopy instead of rock. */
+  ground?: GroundColors;
+  /** Height below which the valley floor turns to meadow. */
+  meadowBelow?: number;
+  /** Cut joint columns into the rock: everywhere, nowhere, or only on steep faces (the terrain's cliffs). */
+  joints?: boolean | 'steep';
+  /** Bleached band left on the rock above the drawn-down reservoir, where `waterY` is `level`. */
+  bathtub?: Bathtub;
+};
+
+export type Bathtub = { level: number; height: number; color: Color };
+
+/** Blend factor of the reservoir's bathtub ring at world height `y` for a surface whose local water level is `waterY`. */
+export function bathtubRing(bathtub: Bathtub, y: Node<'float'>, waterY: Node<'float'>) {
+  const onLake = smoothstep(1.5, 0.5, waterY.sub(bathtub.level).abs());
+  const band = smoothstep(bathtub.level - 0.2, bathtub.level + 0.6, y).mul(smoothstep(bathtub.level + bathtub.height + 0.4, bathtub.level + bathtub.height - 0.6, y));
+  // A ragged top edge, and a darker scum line along it.
+  const edge = mx_noise_float(vec3(positionWorld.x.mul(0.3), 0, positionWorld.z.mul(0.3))).mul(0.8);
+  const top = smoothstep(1.2, 0, y.sub(bathtub.level + bathtub.height).add(edge).abs());
+  return { ring: band.mul(onLake), scum: top.mul(onLake).mul(0.5) };
+}
+
+/**
+ * Lit granite for the gorge walls, boulders and the terrain's rock. Geometry
+ * supplies two float attributes: `waterY`, the local water level that darkens
+ * and glosses the rock near the waterline, and `sky`, the share of sky the
+ * surface sees, which occludes the image-based light at the foot of the gorge.
+ *
+ * The rock is warm grey with tilted banding, pale feldspar mottling, lichen on
+ * ledges and tall joint columns cut by one voronoi pass. Albedo stays below
+ * about 0.4 so sunlit rock never outshines painted machinery.
+ */
+export function createGraniteMaterial(options: GraniteOptions) {
+  const { colors } = options;
+  const material = new MeshStandardNodeMaterial({ metalness: 0 });
+  const p = positionWorld;
+  const up = normalWorld.y;
+
+  const banding = fractalNoise(vec3(p.x, p.y.add(p.x.mul(0.14)).add(p.z.mul(0.06)), p.z), { scale: 0.07, octaves: 3, squash: [0.18, 1, 0.18] });
+  const mottle = fractalNoise(p, { scale: 0.38, octaves: 2 });
+  const speckle = mx_noise_float(p.mul(2.9)).mul(0.5).add(0.5);
+  const jointLines = () => smoothstep(0, 0.05, voronoiEdgeDistance(vec3(p.x, p.z, p.y), 0.05, { aniso: 2.6, randomness: 0.45 }));
+  const crack = options.joints === false ? float(1) : options.joints === 'steep' ? mix(jointLines(), float(1), smoothstep(0.55, 0.8, up)) : jointLines();
+  const streaks = smoothstep(0.55, 0.8, fractalNoise(vec3(p.x.mul(0.35), p.y.mul(0.018), p.z.mul(0.35)), { scale: 1, octaves: 2 }));
+
+  let rock: Vec3Node = mix(rgb(colors.cool), rgb(colors.warm), smoothstep(0.3, 0.7, banding));
+  rock = mix(rock, rgb(colors.pale), smoothstep(0.55, 0.85, mottle).mul(0.55));
+  rock = rock.mul(speckle.mul(0.24).add(0.88));
+  rock = mix(rock, rgb(colors.dark), streaks.mul(0.45));
+  const ledge = smoothstep(0.55, 0.85, up);
+  const growth = smoothstep(0.35, 0.65, fractalNoise(p, { scale: 0.11, octaves: 2 }));
+  rock = mix(rock, mix(rgb(colors.lichen), rgb(colors.moss), growth), ledge.mul(0.8));
+  rock = mix(rgb(colors.dark), rock, crack.mul(0.75).add(0.25));
+
+  let albedo: Vec3Node = rock;
+  let roughness: Node<'float'> = float(0.9);
+  if (options.ground) {
+    const g = options.ground;
+    const gentle = smoothstep(0.66, 0.84, up);
+    const forest = smoothstep(0.42, 0.56, fractalNoise(p, { scale: 0.0045, octaves: 3 }));
+    const meadowZone = options.meadowBelow === undefined ? float(0) : smoothstep(options.meadowBelow + 30, options.meadowBelow, p.y);
+    let cover: Vec3Node = mix(rgb(g.forestFloor), rgb(g.canopy), forest.mul(meadowZone.oneMinus()));
+    cover = mix(cover, rgb(g.meadow), meadowZone.mul(forest.oneMinus().mul(0.7).add(0.3)));
+    cover = cover.mul(speckle.mul(0.3).add(0.82));
+    albedo = mix(rock, cover, gentle);
+    roughness = mix(float(0.9), float(0.95), gentle);
+  }
+
+  const waterY = attribute<'float'>('waterY', 'float');
+  const wet = smoothstep(4.5, 0.2, p.y.sub(waterY));
+  if (options.bathtub) {
+    const { ring, scum } = bathtubRing(options.bathtub, p.y, waterY);
+    albedo = mix(albedo, rgb(options.bathtub.color).mul(speckle.mul(0.2).add(0.9)), ring.mul(0.85));
+    albedo = mix(albedo, rgb(colors.dark), scum);
+  }
+  material.colorNode = albedo.mul(mix(float(1), float(0.42), wet));
+  material.roughnessNode = mix(roughness, float(0.32), wet);
+  material.aoNode = attribute<'float'>('sky', 'float').mul(crack.mul(0.35).add(0.65));
+
+  const bump = mx_noise_vec3(p.mul(0.3)).mul(0.32).add(mx_noise_vec3(p.mul(1.6)).mul(0.1));
+  const worldNormal = normalWorld.add(bump).normalize();
+  material.normalNode = cameraViewMatrix.mul(vec4(worldNormal, 0)).xyz.normalize();
+  return material;
+}
