@@ -69,6 +69,7 @@ export const levelMetadatas: LevelMetadata[] = [
       hero: '/level-content/rezdle/hero.avif',
     },
   },
+  { id: 'spillway', title: 'Spillway', kind: 'playable' },
   { id: 'rush', title: 'Rush', kind: 'technical' },
 ];
 
@@ -77,6 +78,7 @@ const builtInLoaders: Record<string, () => Promise<LevelDefinition>> = {
   'helios': async () => (await import('./helios')).heliosLevel,
   'prism-bloom': async () => (await import('./prism')).prismBloomLevel,
   rezdle: async () => (await import('./rezdle')).rezdleLevel,
+  spillway: async () => (await import('./spillway')).spillwayLevel,
   rush: async () => (await import('./rush')).rushLevel,
 };
 
