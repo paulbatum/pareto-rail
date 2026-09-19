@@ -14,8 +14,8 @@ import {
 } from 'three';
 import type { Color } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { MeshStandardNodeMaterial } from 'three/webgpu';
-import { attribute, float, fract, mix, positionWorld, smoothstep, vec2, vec3 } from 'three/tsl';
+import { MeshStandardNodeMaterial, type UniformNode } from 'three/webgpu';
+import { attribute, float, fract, mix, positionWorld, smoothstep, uniform, vec2, vec3 } from 'three/tsl';
 import { fractal } from './noise';
 import { bathtubRing } from './rock';
 import { DAM, LIP_A, WATER_LEVEL, archFaceA, chuteFloor } from '../route';
