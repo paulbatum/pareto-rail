@@ -129,6 +129,8 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer) {
   // One spotter drawn behind the camera on the start screen, so the swarm's shaders compile before the run.
   const warm = acquireSpotterSlots();
   if (warm) {
+    // Shrunk so its rotors never reach past the lens from two units behind the camera.
+    warm.body.scale.setScalar(0.05);
     scene.add(warm.body);
     warmSpotter = warm.body;
   }
