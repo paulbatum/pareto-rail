@@ -1,5 +1,7 @@
-import { CylinderGeometry, Float32BufferAttribute, Group, MathUtils, Matrix4, Mesh, Vector3 } from 'three';
-import type { BufferGeometry, Color, Material, Object3D } from 'three';
+import { AdditiveBlending, CylinderGeometry, Float32BufferAttribute, Group, InstancedMesh, MathUtils, Matrix4, Mesh, PlaneGeometry, Vector3 } from 'three';
+import type { BufferGeometry, Color, Material, Object3D, Quaternion } from 'three';
+import { MeshBasicNodeMaterial } from 'three/webgpu';
+import { color as colorNode, float, uniform, uv } from 'three/tsl';
 import {
   BODY_SCALE,
   CHASSIS,
@@ -52,6 +54,7 @@ export type WalkerModel = {
 export type WalkerWorld = {
   spray: Spray;
   camera: Vector3;
+  cameraQuaternion: Quaternion;
   waterAt(x: number, z: number): number;
   setGateStrain(index: number, amount: number, time: number): void;
 };
@@ -361,6 +364,13 @@ type LegParts = {
   lastLift: number;
 };
 
+/** Work lamps that get a halo at distance, in body space: the stern floods, the hip lamps and the mast lamp. Knee lamps are added from the rig. */
+const HALO_LAMPS = [
+  ...[-1, 1].map((side) => new Vector3(side * 6.2, CHASSIS.height - 1.2, CHASSIS.halfLength + 0.5)),
+  ...[-1, 1].flatMap((side) => [-1, 1].map((end) => new Vector3(side * (CHASSIS.halfWidth + 1.2), CHASSIS.height + 0.2, end * (HIP.z + 3)))),
+  new Vector3(-1.2, CHASSIS.height + 9.7, -CHASSIS.halfLength + 5),
+];
+
 let walkerFinishes: Finishes | null = null;
 let walkerMaterial: Material | null = null;
 
@@ -454,6 +464,20 @@ export function createWalker(colors: WalkerColors): WalkerModel {
     };
   });
 
+  // Far off up the river the walker is a few pixels of yellow in the haze; halos on its work lamps keep it
+  // readable there. They hold a fixed angular size and fade out as it closes.
+  const haloStrength = uniform(0);
+  const haloMaterial = new MeshBasicNodeMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false, fog: false });
+  const r = uv().sub(0.5).length().mul(2).min(1);
+  // A hot core and a wide soft skirt.
+  const edge = float(1).sub(r);
+  haloMaterial.colorNode = colorNode(colors.lamp).mul(1.8);
+  haloMaterial.opacityNode = edge.pow(8).add(edge.pow(2).mul(0.3)).mul(haloStrength);
+  const halos = new InstancedMesh(new PlaneGeometry(1, 1), haloMaterial, HALO_LAMPS.length + WALKER_LEGS.length);
+  halos.frustumCulled = false;
+  halos.renderOrder = 2;
+  group.add(halos);
+
   // ---- posing ----
   const basis = new Matrix4();
   const axisX = new Vector3();
@@ -525,6 +549,25 @@ export function createWalker(colors: WalkerColors): WalkerModel {
     jaws[0].rotation.x = -crane.open * 0.75;
     jaws[1].rotation.x = crane.open * 0.75;
     heldSlab.visible = crane.holding;
+  }
+
+  const haloScale = new Vector3();
+  const toward = new Vector3();
+  function placeHalos(rig: WalkerRig, world: WalkerWorld, distance: number, lit: number) {
+    const far = MathUtils.smoothstep(distance, 130, 230) * lit;
+    haloStrength.value = far;
+    halos.visible = far > 0;
+    if (!halos.visible) return;
+    haloScale.setScalar(distance * 0.045);
+    const place = (index: number, at: Vector3) => {
+      // Stood off toward the camera so the lamp's own housing does not clip it.
+      at.addScaledVector(toward.copy(world.camera).sub(at).normalize(), 3);
+      basis.compose(at, world.cameraQuaternion, haloScale);
+      halos.setMatrixAt(index, basis);
+    };
+    HALO_LAMPS.forEach((local, index) => place(index, walkerPoint(rig, a.copy(local), a)));
+    rig.legs.forEach((leg, index) => place(HALO_LAMPS.length + index, a.copy(leg.knee)));
+    halos.instanceMatrix.needsUpdate = true;
   }
 
   // ---- particles ----
@@ -618,9 +661,10 @@ export function createWalker(colors: WalkerColors): WalkerModel {
       rig.gateStrain.forEach((strain, index) => {
         if (strain >= 0) world.setGateStrain(index, strain, runTime);
       });
+      const distance = rig.position.distanceTo(world.camera);
+      placeHalos(rig, world, distance, dying);
       if (dt <= 0) return;
       // Particles only while it is close enough to see them.
-      const distance = rig.position.distanceTo(world.camera);
       const near = 1 - MathUtils.smoothstep(distance, 350, 700);
       if (near <= 0) return;
       waterWork(rig, dt, world, near);

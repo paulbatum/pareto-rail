@@ -1,4 +1,4 @@
-import { DirectionalLight, Group, Vector3 } from 'three';
+import { DirectionalLight, Group, Quaternion, Vector3 } from 'three';
 import { bakeEnvironment, createGradientSky } from '../../../engine/environment-light';
 import type { SnapshotContext } from '../../../dev-tools/snapshot';
 import { SUN_DIRECTION } from '../route';
@@ -30,7 +30,7 @@ export function createWalkerStudio(atBar: number, yawDegrees = 0, damage = 0) {
     if (damage >= 5) walkerDamage.coreDownAt = time - bar(0.5);
     walkerDamage.version += 1;
     const walker = createWalker(WALKER_COLORS);
-    walker.update(time, 0, { spray: null as unknown as Spray, camera: new Vector3(), waterAt: () => 0, setGateStrain: () => {} });
+    walker.update(time, 0, { spray: null as unknown as Spray, camera: solveWalker(time).position.clone(), cameraQuaternion: new Quaternion(), waterAt: () => 0, setGateStrain: () => {} });
     const centre = new Group();
     centre.add(walker.group);
     const rig = solveWalker(time);

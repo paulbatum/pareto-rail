@@ -264,11 +264,11 @@ function bellyTarget(time: number) {
   return aimPoint.copy(scratchPose.position).addScaledVector(scratchPose.forward, WALKER_BODY_LENGTH * 0.5).setY(scratchPose.position.y + WALKER_BELLY);
 }
 
-/** Below the walker's belly, pulled a quarter of the way toward the rail ahead: the walker fills the upper frame, the crest and the water the lower. */
+/** The crest just under the walker, pulled a fifth of the way toward the rail ahead: the walker fills the upper frame, the crest and the water the lower. */
 function bossTarget(time: number) {
   walkerTrack(time, scratchPose);
   const ahead = template.getPointAt(Math.min(1, railU(time) + 0.02));
-  return aimPoint.copy(scratchPose.position).setY(scratchPose.position.y + 19).lerp(ahead, 0.25);
+  return aimPoint.copy(scratchPose.position).setY(scratchPose.position.y + 13).lerp(ahead, 0.2);
 }
 
 const DAM_REVEAL_TARGET = damPoint(0, 0, DAM.crestHeight * 0.55);

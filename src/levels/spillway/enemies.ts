@@ -299,6 +299,8 @@ export function createEnemyMotion({ pacer, wallPacer, cables }: { pacer: RailPac
     if (data.entrance === 'belly') {
       walkerTrack(runTime, launchPose);
       hatchPoint(runTime, center).addScaledVector(UP, -5);
+      // On the dam the flock swings out over the lake, clear of the pier heads.
+      if (launchPose.state === 'on-dam') center.lerp(camera.position, 0.2 * smooth(age / 1.5));
       axisRight.copy(launchPose.right);
       axisUp.copy(UP);
       axisForward.copy(launchPose.forward);

@@ -344,22 +344,28 @@ const flightHeight = (a: number) => {
 // The lake approach bears left onto the loop's left point, so the loop starts where the lake ends (bar 42).
 const DAM_KNOTS: DamKnot[] = [
   loop(35, 8, { bank: 8 }),
-  // The fight: arcs 70–95 units in front of the walker (astride the gates at a = 10, l = 33), at about its
+  // The fight: arcs 85–110 units in front of the walker (astride the gates at a = 10, l = 33), at about its
   // hip height, so it fills half the frame with the crest and the water below it: left to right past the
   // rear legs and round the front right, back across a little wider, then down to the centre gate.
-  { a: -26, l: -44, h: 26, bar: 44, bank: 8 },
-  { a: -46, l: -18, h: 34, bank: 8 },
-  { a: -57, l: 11, h: 40, bank: 8 },
-  { a: -57, l: 42, h: 43, bank: 8 },
-  { a: -49, l: 70, h: 45, bank: 8 },
-  { a: -36, l: 91, h: 45, bank: 12 },
-  { a: -58, l: 106, h: 44, bank: 14 },
-  { a: -84, l: 84, h: 41, bank: 10 },
-  { a: -80, l: 25, h: 38, bank: 8 },
-  { a: -66, l: -4, h: 31, bank: 6 },
-  { a: -58, l: -17, h: 18, bank: -4 },
-  { a: -45, l: -24, h: 6.5, bar: 58, bank: -10 },
-  { a: -28, l: -6, h: 4.5, bank: 4 },
+  // A turn taken while climbing or diving rolls the transported frame; the banks cancel most of that.
+  { a: -80, l: -48, h: 19.5, bank: 8 },
+  { a: -68, l: -46, h: 29, bar: 44, bank: -16 },
+  { a: -66, l: -22, h: 33, bank: -12 },
+  { a: -72, l: 6, h: 39, bank: -2 },
+  { a: -73, l: 45, h: 42, bank: 3 },
+  { a: -63, l: 79, h: 44, bank: 8 },
+  { a: -45, l: 104, h: 44, bank: 14 },
+  { a: -40, l: 127, h: 43, bank: 14 },
+  { a: -73, l: 102, h: 41, bank: 8 },
+  { a: -92, l: 51, h: 38, bank: 8 },
+  { a: -85, l: 8, h: 32, bank: 6 },
+  // Level and slow through bars 56–57.5, where the core dies and the walker falls onto the gates; the turn onto
+  // the centre gate's axis is done before the dive to the water, so the ride into the breach runs straight.
+  { a: -80, l: -1, h: 31, bank: 2 },
+  { a: -72, l: -3, h: 28, bank: 7 },
+  { a: -58, l: -2, h: 16, bar: 58, bank: 19 },
+  { a: -42, l: -1, h: 6, bank: 9 },
+  { a: -28, l: 0, h: 4.5, bank: 6 },
   { a: -14, l: 0, h: 5, bar: 60, bank: 0 },
   // High over the brink (the drawn-down water is about 7 below the lake here), so the camera sees down the chute as it crosses the sill.
   { a: 0, l: 0, h: 6 },

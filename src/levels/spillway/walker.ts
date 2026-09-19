@@ -317,7 +317,7 @@ function releasePoint(rig: WalkerRig, at: number, out: Vector3) {
   const camera = railFrameAt(at).position;
   const origin = walkerPoint(rig, CRANE.ring, scratch2);
   throwAim.copy(camera).sub(origin).setY(0).normalize();
-  return out.copy(origin).addScaledVector(throwAim, 20).setY(origin.y + 17);
+  return out.copy(origin).addScaledVector(throwAim, 20).setY(origin.y + 9);
 }
 
 const keyC: CranePose = { slew: 0, luff: 0, cable: 0, open: 0, holding: false };

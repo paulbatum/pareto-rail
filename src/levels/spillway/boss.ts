@@ -57,18 +57,18 @@ const FIRST_THROW_BAR = 45.25;
 const LAST_THROW_BAR = 56.5;
 /** Slabs are lobbed, then home in: slower than rivets, and they hit from further out. */
 const SLAB_STEER = { baseSpeed: 26, maxSpeed: 40, accel: 9, turnRate: 2.6 };
-const SLAB_LOB = 9;
+const SLAB_LOB = 3;
 const SLAB_IMPACT = { hitDistance: 6, damageDistance: 3 };
 const SLAB_MAX_AGE = 12;
 /** Rack skiffs: flight from the rack, where they land (share of the way from camera to walker, half-width across it), and their run at the lens. */
-const SKIFF_FLIGHT = 1.6;
+const SKIFF_FLIGHT = 2.2;
 const SKIFF_LANDING = { toward: 0.78, across: 34 };
 const SKIFF_RUN = { speed: 17, ride: 1.15, clearance: 8, maxSeconds: 7 };
 
 type FlockWave = (atBar: number, size: number, entrance: SpotterEntrance, options: { x: number; y: number; peelBar: number; lineY: number; lead?: number }) => SpillwaySpawnEntry[];
 
 /**
- * Skiffs thrown off the rear rack onto the lake between the camera and the walker,
+ * Skiffs thrown off the rear rack in a high arc onto the lake between the camera and the walker,
  * authored by the bar the first lands on; `lanes` are [across the view -1..1, weave].
  * The rail-paced skiffs of the chase would land ahead along the orbit, out of frame.
  */
@@ -82,13 +82,15 @@ function rackSkiffs(landBar: number, lanes: Array<[number, number]>): SpillwaySp
 /** Timeline entries for the fight. Times are absolute run seconds. */
 export function createBossSpawns({ flock }: { flock: FlockWave }): SpillwaySpawnEntry[] {
   // Flocks drop out of the belly hatch and peel off across the frame, alternating sides.
-  const drops = BELLY_DROP_BARS.flatMap((at, k) => flock(at, k % 2 === 0 ? 4 : 6, 'belly', { x: k % 2 === 0 ? 8 : -8, y: 0, peelBar: at + 1.5, lineY: -6 }));
+  const drops = BELLY_DROP_BARS.flatMap((at, k) => flock(at, 6, 'belly', { x: k % 2 === 0 ? 8 : -8, y: 0, peelBar: at + 1.5, lineY: -6 }));
   return [
     { time: WALKER_WORK_FROM, kind: 'slab', lockable: false, countsTowardTotal: false, data: { role: 'boss', part: 'crane' } },
     ...drops,
     ...rackSkiffs(44.75, [[-0.5, 0.3], [0.5, 0.3]]),
     ...rackSkiffs(47.5, [[-0.7, 0.3], [0, 0.4], [0.7, 0.3]]),
     ...rackSkiffs(50.25, [[-0.8, 0.3], [-0.3, 0.4], [0.3, 0.4], [0.8, 0.3]]),
+    ...rackSkiffs(53, [[-0.7, 0.3], [0.1, 0.4], [0.75, 0.3]]),
+    ...rackSkiffs(55.5, [[-0.6, 0.3], [0.6, 0.3]]),
   ];
 }
 
@@ -283,10 +285,11 @@ export function createBoss(bus: EventBus, motion: EnemyMotion) {
     });
     const dt = Math.max(1e-4, age - state.lastAge);
     state.lastAge = age;
-    enemy.entry.lockable = runTime >= data.landAt;
+    // Lockable in the air: in the fight the camera rides high, and the lake right in front of the dam is below the frame.
+    enemy.entry.lockable = true;
     if (runTime < data.landAt) {
       const t = Math.min(1, age / SKIFF_FLIGHT);
-      const arc = 10 + state.from.distanceTo(state.land) * 0.12;
+      const arc = 14 + state.from.distanceTo(state.land) * 0.1;
       mesh.position.lerpVectors(state.from, state.land, t);
       mesh.position.y += arc * 4 * t * (1 - t);
       mesh.userData.phase = 'air';

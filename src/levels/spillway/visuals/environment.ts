@@ -1,4 +1,4 @@
-import { Color, Group, MathUtils, Scene, Vector3 } from 'three';
+import { Color, Group, MathUtils, Quaternion, Scene, Vector3 } from 'three';
 import type { PerspectiveCamera } from 'three';
 import type { WebGPURenderer } from 'three/webgpu';
 import { mulberry32 } from '../../../engine/rng';
@@ -191,7 +191,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
   root.add(...spray.objects);
   const walker = createWalker(WALKER_COLORS);
   root.add(walker.group);
-  const walkerWorld: WalkerWorld = { spray, camera: new Vector3(), waterAt: (x, z) => terrainSample(x, z).waterY, setGateStrain: dam.setGateStrain };
+  const walkerWorld: WalkerWorld = { spray, camera: new Vector3(), cameraQuaternion: new Quaternion(), waterAt: (x, z) => terrainSample(x, z).waterY, setGateStrain: dam.setGateStrain };
   scene.add(root);
 
   // ---- per-frame ----
@@ -242,6 +242,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
       dam.updateBreach(runTime > 0 ? breach : -1);
       // After the breach pose, so the walker's grip on the gates wins until they burst.
       walkerWorld.camera.copy(camera.position);
+      walkerWorld.cameraQuaternion.copy(camera.quaternion);
       walker.update(runTime, dt, walkerWorld);
       // Fully drawn down by the time the camera reaches the gates: the flood tongue is shaped to meet it.
       lake.breach.value = MathUtils.smoothstep(breach, 0, bar(1));
