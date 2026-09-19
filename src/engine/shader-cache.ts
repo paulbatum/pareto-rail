@@ -66,11 +66,12 @@ export type ShaderWarmUp = {
 };
 
 const WARM_UP_BEHIND_CAMERA = 2;
+const WARM_UP_SCALE = 0.01;
 
 /**
  * Draws `objects` once so their shaders compile before the run needs them, then hides
- * them. The objects go into a group that follows the camera two units behind it with
- * frustum culling off: the renderer draws them, the GPU clips every vertex, and no
+ * them. The objects go into a shrunken group that follows the camera two units behind it
+ * with frustum culling off: the renderer draws them, the GPU clips every vertex, and no
  * pixel changes. The group stays in the scene, hidden, so the renderer keeps counting
  * the objects as users of their shaders and never evicts them. Build the objects with
  * the same factories the run uses: the renderer keys shaders on material settings,
@@ -80,6 +81,8 @@ export function warmUpShaders(scene: Scene, objects: Object3D[]): ShaderWarmUp {
   const group = new Group();
   group.name = 'shader-warm-up';
   group.userData.raildIgnoreOcclusion = true;
+  /* Shrunk so no full-size model reaches past the lens from two units behind it. Scale does not change the shader. */
+  group.scale.setScalar(WARM_UP_SCALE);
   /* Draws count only after the first update: the post chain renders the scene once while it is
      built, before any update, through a plain pass whose shaders the run never uses again. */
   let armed = false;
