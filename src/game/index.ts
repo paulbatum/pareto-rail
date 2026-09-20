@@ -158,6 +158,8 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     renderer.setSize(viewWidth(), viewHeight());
     renderer.setClearColor(level.post?.clearColor ?? 0x02040a, 1);
     applyRenderConfig(renderer, level.render);
+    /* `?shadows=0` drops the shadow pass, another whole render of the scene. */
+    if (urlParams.get('shadows') === '0') renderer.shadowMap.enabled = false;
     try {
       await renderer.init();
     } catch (error) {
@@ -238,6 +240,14 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
 
     const runtime = level.createRuntime({ scene, camera, renderer, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(), debugValue });
     stack.add(() => runtime.dispose());
+    /* `?hide=a,b` takes named scene objects out of the frame, so a capture can price
+       one of them by difference. Named objects are level-specific; an unknown name is
+       a typo worth hearing about rather than a silent no-op. */
+    for (const name of (urlParams.get('hide') ?? '').split(',').map((part) => part.trim()).filter(Boolean)) {
+      const object = scene.getObjectByName(name);
+      if (!object) throw new Error(`hide: no scene object named "${name}"`);
+      object.visible = false;
+    }
     /* Built after the runtime so post stages can find the level's scene objects, such as a god-rays light. */
     /* `?post=0` renders the scene straight to the canvas, so a playtest capture can
        separate what the level's materials cost from what the post chain costs. */
