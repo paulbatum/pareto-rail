@@ -204,7 +204,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     setMotionBlurLevel(readStoredPercent('pareto-rail-motion-blur', 100) / 100);
     audio.installGestureStart(() => hud.setSoundActive(true));
     const perfOverlay = perfEnabled
-      ? (await import('../ui/perf-overlay')).createPerfOverlay({ renderer, scene, bus, levelId: level.id })
+      ? (await import('../ui/perf-overlay')).createPerfOverlay({ renderer, scene, bus, levelId: level.id, knobs: diagnosticKnobs(urlParams) })
       : null;
     if (perfOverlay) stack.add(() => perfOverlay.dispose());
     if (signal?.aborted) return abort();
@@ -370,5 +370,16 @@ function installUiVisibilityControls() {
 
 function canUseFullscreen() { return Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen); }
 async function setFullscreen(enabled: boolean) { try { if (enabled) await document.documentElement.requestFullscreen(); else if (document.fullscreenElement) await document.exitFullscreen(); } catch (error) { console.warn('Fullscreen request failed', error); } }
+/* What a capture was measuring. Without this a saved report is just a number, and a
+   run with the post chain off is indistinguishable from the shipping frame. */
+const DIAGNOSTIC_PARAMS = ['scale', 'msaa', 'post', 'shadows', 'hide', 'lowpoly'];
+function diagnosticKnobs(urlParams: URLSearchParams) {
+  const knobs: Record<string, string> = {};
+  for (const name of DIAGNOSTIC_PARAMS) {
+    const value = urlParams.get(name);
+    if (value !== null) knobs[name] = value;
+  }
+  return knobs;
+}
 function clampScale(raw: string | null) { const value = Number(raw); return raw !== null && Number.isFinite(value) && value > 0 ? Math.min(2, Math.max(0.25, value)) : 1; }
 function readStoredPercent(key: string, fallback: number) { const raw = localStorage.getItem(key); if (raw === null) return fallback; const value = Number(raw); return Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : fallback; }

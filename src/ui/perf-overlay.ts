@@ -14,6 +14,8 @@ type PerfOverlayOptions = {
   scene: Scene;
   bus: EventBus;
   levelId: string;
+  /** Diagnostic URL knobs in force, recorded so a capture says what it was measuring. */
+  knobs?: Record<string, string>;
 };
 
 type BucketReport = {
@@ -36,6 +38,8 @@ export type PerfReport = {
   renderSize: { width: number; height: number; pixelRatio: number; multisampled: boolean };
   /** The adapter the browser handed the renderer, where it reports one. */
   adapter: GPUAdapterInfo | null;
+  /** Diagnostic URL knobs in force. Empty means the capture is of the shipping frame. */
+  knobs: Record<string, string>;
   userAgent: string;
   generatedAt: string;
   buckets: BucketReport[];
@@ -49,6 +53,7 @@ class PerfOverlay {
   private readonly renderer: WebGPURenderer;
   private readonly scene: Scene;
   private readonly levelId: string;
+  private readonly knobs: Record<string, string>;
   private readonly frameMs = new Float32Array(MAX_FRAMES);
   private readonly bucketStart = new Int32Array(MAX_SECONDS);
   private readonly bucketCount = new Int32Array(MAX_SECONDS);
@@ -72,10 +77,11 @@ class PerfOverlay {
   private lastSampleSecond = -1;
   private disposed = false;
 
-  constructor({ renderer, scene, bus, levelId }: PerfOverlayOptions) {
+  constructor({ renderer, scene, bus, levelId, knobs }: PerfOverlayOptions) {
     this.renderer = renderer;
     this.scene = scene;
     this.levelId = levelId;
+    this.knobs = knobs ?? {};
     this.programs.fill(-1);
     this.root = document.createElement('div');
     this.root.className = 'perf-overlay';
@@ -223,6 +229,7 @@ class PerfOverlay {
       adapter: info
         ? { vendor: info.vendor, architecture: info.architecture, device: info.device, description: info.description } as GPUAdapterInfo
         : null,
+      knobs: this.knobs,
       userAgent: navigator.userAgent,
       generatedAt: new Date().toISOString(),
       buckets,
@@ -246,14 +253,18 @@ class PerfOverlay {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `pareto-rail-perf-${safeName(this.levelId)}-${Date.now()}.json`;
+    /* The knobs go in the filename too: a folder of captures is unreadable when only
+       the timestamp tells them apart. */
+    const knobs = Object.entries(this.knobs).map(([name, value]) => `${name}${value}`).join('-');
+    anchor.download = `pareto-rail-perf-${safeName(this.levelId)}${knobs ? `-${safeName(knobs)}` : ''}-${Date.now()}.json`;
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 }
 
 function logSummary(report: PerfReport) {
-  console.log(`pareto-rail perf report: ${report.levelId}, ${report.runDuration.toFixed(1)}s`);
+  const knobs = Object.entries(report.knobs).map(([name, value]) => `${name}=${value}`).join(' ');
+  console.log(`pareto-rail perf report: ${report.levelId}, ${report.runDuration.toFixed(1)}s${knobs ? ` (${knobs})` : ''}`);
   console.table(report.buckets.map((bucket) => ({
     t: bucket.second,
     avg: bucket.avgFrameMs,
