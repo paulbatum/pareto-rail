@@ -171,4 +171,10 @@ One knob per run answers one question, and a run costs a playthrough. The `perf 
 
 The configurations are discovered from the scene, so no level declares a list: the post chain, the shadow pass, the heaviest named groups, and the heaviest named materials. Groups are the axis a geometry or culling fix is made on; materials are the axis a fragment-cost fix is made on. A group and a material covering the same meshes are priced once. A level gets useful names out of this only if its groups and materials are named — see `src/game/perf-sweep.ts` for how they are chosen.
 
-Two things to know when reading a sweep. GPU timestamps lag the frame that produced them, so each block discards its first frames; that is why the sweep holds a configuration rather than alternating per frame. And on hardware fast enough to hit the frame cap, every configuration reports the same frame milliseconds and the deltas fall into the noise — run a sweep on the hardware that is actually slow.
+Three things to know when reading a sweep.
+
+A positive delta — a configuration slower than the baseline — is usually real, not noise. Hiding an opaque object reveals what was behind it, and those fragments now get shaded. So a level where hiding the water makes the frame slower is telling you it is overdraw-bound and that what sits behind the water is expensive per pixel. It also means a negative delta is a lower bound on what that object costs, never an upper one.
+
+GPU timestamps lag the frame that produced them, so each block discards its first frames; that is why the sweep holds a configuration rather than alternating per frame.
+
+On hardware fast enough to hit the frame cap, every configuration reports the same frame milliseconds and the deltas fall into the noise. Run a sweep on the hardware that is actually slow, and during a real run rather than on the intro screen — the camera sits somewhere unrepresentative there, and every number is relative to what is on screen.
