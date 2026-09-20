@@ -1,6 +1,6 @@
 import { Data3DTexture, LinearFilter, RGBAFormat, RepeatWrapping, UnsignedByteType } from 'three';
 import type { Node } from 'three/webgpu';
-import { texture3D } from 'three/tsl';
+import { int, texture3D } from 'three/tsl';
 import { mulberry32 } from '../../../engine/rng';
 
 // Gradient noise baked at load into a small tiling 3D texture: four independent
@@ -80,9 +80,15 @@ function noiseVolume() {
   return volume;
 }
 
-/** Four independent noises in -1..1 at `p`, in noise units (one feature per unit, like `mx_noise_float(p)`). */
+/**
+ * Four independent noises in -1..1 at `p`, in noise units (one feature per unit, like `mx_noise_float(p)`).
+ *
+ * The volume carries no mip chain, so the fetch names level 0 rather than asking
+ * for an implicit derivative. That is the same sample, and it is the form a fetch
+ * has to take to be legal in a vertex shader or inside a branch.
+ */
 export function noise4(p: Node<'vec3'>): Node<'vec4'> {
-  return texture3D(noiseVolume(), p.div(CELLS)).mul(2).sub(1) as unknown as Node<'vec4'>;
+  return texture3D(noiseVolume(), p.div(CELLS)).level(int(0)).mul(2).sub(1) as unknown as Node<'vec4'>;
 }
 
 /** One noise in -1..1 at `p`. */
