@@ -45,6 +45,43 @@ export type PerfReport = {
   buckets: BucketReport[];
 };
 
+/** One thing the sweep switches off, and how to put the world into that state. */
+export type SweepConfig = { name: string; apply(): void };
+
+export type PerfSweepReport = {
+  levelId: string;
+  renderSize: PerfReport['renderSize'];
+  adapter: GPUAdapterInfo | null;
+  knobs: Record<string, string>;
+  userAgent: string;
+  generatedAt: string;
+  sweep: { blockFrames: number; settleFrames: number; rounds: number };
+  /** Baseline first; `deltaGpuMs` is what removing that one thing saved. */
+  configs: {
+    name: string;
+    gpuSamples: number;
+    medianGpuMs: number | null;
+    deltaGpuMs: number | null;
+    medianFrameMs: number;
+    calls: number;
+    triangles: number;
+  }[];
+};
+
+type SweepRun = {
+  configs: { config: SweepConfig; gpu: number[]; frame: number[]; calls: number; triangles: number }[];
+  index: number;
+  frameInBlock: number;
+  rounds: number;
+};
+
+/* A block is held long enough for the GPU timestamps to catch up: `readGpuMs` reads the
+   most recently resolved query, which lags the frame that produced it. The first frames
+   of a block are therefore still reporting the previous config and are thrown away. */
+const SWEEP_BLOCK_FRAMES = 18;
+const SWEEP_SETTLE_FRAMES = 6;
+const SWEEP_ROUNDS = 8;
+
 export function createPerfOverlay(options: PerfOverlayOptions) {
   return new PerfOverlay(options);
 }
@@ -76,6 +113,9 @@ class PerfOverlay {
   private lastOverlayUpdate = 0;
   private lastSampleSecond = -1;
   private disposed = false;
+  private sweepConfigs: SweepConfig[] = [];
+  private sweep: SweepRun | null = null;
+  private readonly sweepButton: HTMLButtonElement;
 
   constructor({ renderer, scene, bus, levelId, knobs }: PerfOverlayOptions) {
     this.renderer = renderer;
@@ -90,7 +130,12 @@ class PerfOverlay {
     this.downloadButton.type = 'button';
     this.downloadButton.textContent = 'perf json';
     this.downloadButton.addEventListener('click', () => this.downloadReport());
-    this.root.append(this.label, this.downloadButton);
+    this.sweepButton = document.createElement('button');
+    this.sweepButton.type = 'button';
+    this.sweepButton.textContent = 'perf sweep';
+    this.sweepButton.hidden = true;
+    this.sweepButton.addEventListener('click', () => this.startSweep());
+    this.root.append(this.label, this.downloadButton, this.sweepButton);
     document.body.append(this.root);
     installStyle();
     bus.on('runstart', () => {
@@ -101,6 +146,12 @@ class PerfOverlay {
     });
   }
 
+  /** Offers the sweep button once the caller can put the world into each configuration. */
+  setSweepConfigs(configs: SweepConfig[]) {
+    this.sweepConfigs = configs;
+    this.sweepButton.hidden = configs.length < 2;
+  }
+
   /** Moves the readout into a host container (the debug panel) instead of floating over the game. */
   mount(parent: HTMLElement) {
     this.root.classList.add('perf-overlay-embedded');
@@ -109,6 +160,10 @@ class PerfOverlay {
 
   recordFrame(dtMs: number, now = performance.now()) {
     if (this.disposed) return;
+    if (this.sweep) {
+      this.advanceSweep(dtMs);
+      return;
+    }
     const frameSlot = this.frameIndex % MAX_FRAMES;
     this.frameMs[frameSlot] = dtMs;
     const elapsedSeconds = Math.max(0, (now - this.runStartedAt) / 1000);
@@ -132,7 +187,89 @@ class PerfOverlay {
 
   dispose() {
     this.disposed = true;
+    if (this.sweep) this.sweepConfigs[0]?.apply();
+    this.sweep = null;
     this.root.remove();
+  }
+
+  private startSweep() {
+    if (this.sweep || this.sweepConfigs.length < 2) return;
+    this.sweep = {
+      configs: this.sweepConfigs.map((config) => ({ config, gpu: [], frame: [], calls: 0, triangles: 0 })),
+      index: 0,
+      frameInBlock: 0,
+      rounds: 0,
+    };
+    this.sweepButton.disabled = true;
+    this.sweepConfigs[0].apply();
+  }
+
+  private advanceSweep(dtMs: number) {
+    const sweep = this.sweep;
+    if (!sweep) return;
+    const slot = sweep.configs[sweep.index];
+    if (sweep.frameInBlock >= SWEEP_SETTLE_FRAMES) {
+      const gpu = this.readGpuMs();
+      if (gpu > 0) slot.gpu.push(gpu);
+      slot.frame.push(dtMs);
+    }
+    if (sweep.frameInBlock === SWEEP_BLOCK_FRAMES - 1) {
+      const counters = collectPerfCounters(this.renderer, this.scene);
+      slot.calls = counters.calls;
+      slot.triangles = counters.triangles;
+    }
+    sweep.frameInBlock += 1;
+    if (sweep.frameInBlock < SWEEP_BLOCK_FRAMES) {
+      this.updateSweepLabel(sweep);
+      return;
+    }
+    sweep.frameInBlock = 0;
+    sweep.index += 1;
+    if (sweep.index >= sweep.configs.length) {
+      sweep.index = 0;
+      sweep.rounds += 1;
+    }
+    if (sweep.rounds >= SWEEP_ROUNDS) {
+      this.finishSweep(sweep);
+      return;
+    }
+    sweep.configs[sweep.index].config.apply();
+    this.updateSweepLabel(sweep);
+  }
+
+  private updateSweepLabel(sweep: SweepRun) {
+    const done = sweep.rounds * sweep.configs.length + sweep.index;
+    const total = SWEEP_ROUNDS * sweep.configs.length;
+    this.label.textContent = `sweep ${Math.round((done / total) * 100)}% · ${sweep.configs[sweep.index].config.name}`;
+  }
+
+  private finishSweep(sweep: SweepRun) {
+    this.sweep = null;
+    this.sweepButton.disabled = false;
+    sweep.configs[0].config.apply();
+    const report = this.buildSweepReport(sweep);
+    logSweep(report);
+    this.download(report, `sweep-${Date.now()}`);
+  }
+
+  private buildSweepReport(sweep: SweepRun): PerfSweepReport {
+    const baseline = median(sweep.configs[0].gpu);
+    return {
+      ...this.environment(),
+      sweep: { blockFrames: SWEEP_BLOCK_FRAMES, settleFrames: SWEEP_SETTLE_FRAMES, rounds: SWEEP_ROUNDS },
+      configs: sweep.configs.map((slot) => {
+        const gpu = median(slot.gpu);
+        return {
+          name: slot.config.name,
+          gpuSamples: slot.gpu.length,
+          medianGpuMs: gpu,
+          deltaGpuMs: gpu !== null && baseline !== null ? round(gpu - baseline, 3) : null,
+          medianFrameMs: median(slot.frame) ?? 0,
+          calls: slot.calls,
+          triangles: slot.triangles,
+        };
+      }),
+    };
   }
 
   private sampleCounters(second: number) {
@@ -212,6 +349,15 @@ class PerfOverlay {
         },
       });
     }
+    return {
+      ...this.environment(),
+      runDuration: round((performance.now() - this.runStartedAt) / 1000, 3),
+      buckets,
+    };
+  }
+
+  /** What the numbers were measured on. Shared by both reports. */
+  private environment() {
     const drawing = this.renderer.domElement;
     const backend = (this.renderer as WebGPURenderer & {
       backend?: { parameters?: { antialias?: boolean }; device?: { adapterInfo?: GPUAdapterInfo } };
@@ -219,7 +365,6 @@ class PerfOverlay {
     const info = backend?.device?.adapterInfo;
     return {
       levelId: this.levelId,
-      runDuration: round((performance.now() - this.runStartedAt) / 1000, 3),
       renderSize: {
         width: drawing.width,
         height: drawing.height,
@@ -232,7 +377,6 @@ class PerfOverlay {
       knobs: this.knobs,
       userAgent: navigator.userAgent,
       generatedAt: new Date().toISOString(),
-      buckets,
     };
   }
 
@@ -249,6 +393,10 @@ class PerfOverlay {
   private downloadReport() {
     const report = this.buildReport();
     logSummary(report);
+    this.download(report, String(Date.now()));
+  }
+
+  private download(report: object, suffix: string) {
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -256,10 +404,31 @@ class PerfOverlay {
     /* The knobs go in the filename too: a folder of captures is unreadable when only
        the timestamp tells them apart. */
     const knobs = Object.entries(this.knobs).map(([name, value]) => `${name}${value}`).join('-');
-    anchor.download = `pareto-rail-perf-${safeName(this.levelId)}${knobs ? `-${safeName(knobs)}` : ''}-${Date.now()}.json`;
+    anchor.download = `pareto-rail-perf-${safeName(this.levelId)}${knobs ? `-${safeName(knobs)}` : ''}-${suffix}.json`;
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
+}
+
+function median(values: number[]) {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = sorted.length >> 1;
+  const value = sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+  return round(value, 3);
+}
+
+function logSweep(report: PerfSweepReport) {
+  console.log(`pareto-rail perf sweep: ${report.levelId}, ${report.configs.length} configurations`);
+  console.table(report.configs.map((config) => ({
+    config: config.name,
+    gpuMs: config.medianGpuMs,
+    'vs baseline': config.deltaGpuMs,
+    frameMs: config.medianFrameMs,
+    calls: config.calls,
+    tris: config.triangles,
+    samples: config.gpuSamples,
+  })));
 }
 
 function logSummary(report: PerfReport) {
@@ -309,6 +478,10 @@ function installStyle() {
       border-radius: 0;
       padding: 0;
       background: none;
+    }
+    .perf-overlay button[disabled] {
+      opacity: 0.5;
+      cursor: default;
     }
     .perf-overlay button {
       padding: 1px 4px;

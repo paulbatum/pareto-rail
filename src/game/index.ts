@@ -252,12 +252,21 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     /* `?post=0` renders the scene straight to the canvas, so a playtest capture can
        separate what the level's materials cost from what the post chain costs. */
     const post = urlParams.get('post') === '0' ? null : createPost(renderer, scene, camera, level.post);
+    let postEnabled = post !== null;
     if (post) {
       stack.add(() => post.dispose());
       /* Compile every scene shader before the first frame, in parallel and off the main thread. */
       await post.compileAsync();
     } else {
       await renderer.compileAsync(scene, camera);
+    }
+    if (perfOverlay) {
+      const { buildSweepConfigs } = await import('./perf-sweep');
+      perfOverlay.setSweepConfigs(buildSweepConfigs({
+        scene,
+        hasPost: post !== null,
+        setPostEnabled: (enabled) => { postEnabled = enabled; },
+      }));
     }
     if (signal?.aborted) return abort();
     if (urlParams.get('capture') === '1') {
@@ -320,7 +329,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       if (!paused) runtime.update(dt, now / 1000);
       /* Outside the pause gate so the debug camera still flies over a stopped game. */
       freecam?.update(dt);
-      if (post) post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()) });
+      if (post && postEnabled) post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()) });
       else renderer.render(scene, camera);
       perfOverlay?.recordFrame(dtMs, now);
     });

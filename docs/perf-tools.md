@@ -146,9 +146,29 @@ The overlay records frame delta times into preallocated buffers and samples coun
 
 The JSON report contains per-second frame buckets with average, p95, p99, and max frame milliseconds, plus the renderer and scene counters, level id, run duration, drawing-surface size, the adapter the browser handed the renderer, user agent, and timestamp. GPU milliseconds are recorded whenever the overlay is on, because the renderer is constructed with `trackTimestamp` in that case.
 
-Two query parameters change what the GPU is asked to draw, so a playtest on slow hardware can tell a level's cost apart from the cost of the surface it is drawn on. `scale=<0.25-2>` multiplies the device pixel ratio, and `msaa=0` builds the renderer without multisampling. Both apply in any build:
+The overlay also prints a compact `console.table` summary for quick comparison during playtests.
+
+### Knobs
+
+These query parameters change what the GPU is asked to draw, so a playtest on slow hardware can tell a level's cost apart from the cost of the surface it is drawn on. They apply in any build, and whichever were in force are recorded in the report, the console summary and the downloaded filename:
+
+| parameter | effect |
+|---|---|
+| `scale=<0.25-2>` | multiplies the device pixel ratio |
+| `msaa=0` | builds the renderer without multisampling |
+| `post=0` | renders the scene straight to the canvas, with no post chain |
+| `shadows=0` | drops the shadow pass |
+| `hide=<names>` | takes named scene objects out of the frame; an unknown name is an error |
 
 ```text
 https://<deployed>/?level=spillway&perf=1&scale=0.5
-https://<deployed>/?level=spillway&perf=1&msaa=0
-``` The overlay also prints a compact `console.table` summary for quick comparison during playtests.
+https://<deployed>/?level=spillway&perf=1&post=0&hide=terrain
+```
+
+### Perf sweep
+
+One knob per run answers one question, and a run costs a playthrough. The `perf sweep` button beside `perf json` prices everything in a single sitting: it cycles through configurations in short blocks for about half a minute, so every configuration samples the same parts of the run, then downloads a report giving each one a median GPU millisecond figure and its delta from the baseline. The delta is what removing that one thing saved.
+
+The configurations are discovered from the scene, so no level declares a list: the post chain, the shadow pass, the heaviest named groups, and the heaviest named materials. Groups are the axis a geometry or culling fix is made on; materials are the axis a fragment-cost fix is made on. A group and a material covering the same meshes are priced once. A level gets useful names out of this only if its groups and materials are named — see `src/game/perf-sweep.ts` for how they are chosen.
+
+Two things to know when reading a sweep. GPU timestamps lag the frame that produced them, so each block discards its first frames; that is why the sweep holds a configuration rather than alternating per frame. And on hardware fast enough to hit the frame cap, every configuration reports the same frame milliseconds and the deltas fall into the noise — run a sweep on the hardware that is actually slow.
