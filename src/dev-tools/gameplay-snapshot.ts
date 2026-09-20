@@ -91,6 +91,10 @@ type PerfProbeOptions = {
   dt?: number;
   /** Frames to step and render from the current time. */
   frames: number;
+  /** Do not update the runtime or advance elapsed time; render the exact current state. */
+  freeze?: boolean;
+  /** Frames rendered before measured frames and excluded from all statistics. */
+  warmupFrames?: number;
   /** Return every frame's timings and cache sizes as well as the medians. */
   detail?: boolean;
 };
@@ -100,6 +104,8 @@ type PerfProbeFrame = {
   updateMs: number;
   renderMs: number;
   gpuRenderMs: number | null;
+  gpuComputeMs: number | null;
+  gpuTotalMs: number | null;
   /** Render pipelines the renderer holds after the frame; a rise means a compile happened in it. */
   pipelines: number | null;
   /** Node builder states (shader programs built from node graphs) the renderer holds after the frame. */
@@ -115,7 +121,7 @@ type PerfProbeSample = PerfCounters & {
   updateMs: number;
   /** CPU milliseconds inside the render call, median over the frames. */
   renderMs: number;
-  /** CPU milliseconds of the first render after stepping to this time: pipeline compiles land here. */
+  /** CPU milliseconds of the first measured render after stepping to this time. */
   firstRenderMs: number;
   renderMaxMs: number;
   /** GPU milliseconds for every render pass of a frame, median, or null without timestamp queries. */
@@ -123,6 +129,12 @@ type PerfProbeSample = PerfCounters & {
   /** GPU milliseconds for every compute dispatch of a frame, median, or null without timestamp queries. */
   gpuComputeMs: number | null;
   gpuRenderMaxMs: number | null;
+  /** Total render plus compute GPU milliseconds per frame, median, or null when unavailable. */
+  gpuTotalMs: number | null;
+  /** p95 total render plus compute GPU milliseconds per measured frame. */
+  gpuTotalP95Ms: number | null;
+  /** Number of measured frames with complete GPU timestamps. */
+  gpuSamples: number;
   detail?: PerfProbeFrame[];
 };
 
@@ -152,12 +164,15 @@ type GameplaySnapshotApi = {
     perfProfile: 'default' | 'flagship' | null;
     markers: Record<string, number>;
     sections: Array<{ name: string; time: number }>;
+    adapter: { vendor?: string; architecture?: string; device?: string; description?: string } | null;
+    renderSize: { width: number; height: number; multisampled: boolean; samples: number };
+    timestampAvailable: boolean;
   };
 };
 
 type SnapshotRenderer = WebGPURenderer & {
   domElement: HTMLCanvasElement;
-  info?: { reset?: () => void };
+  info?: { reset?: () => void; frame?: number };
   render(scene: Scene, camera: Camera): void;
 };
 
@@ -170,12 +185,14 @@ type SnapshotRendererParameters = WebGPURendererParameters & {
 type TimestampPool = {
   frames: number[];
   timestamps: Map<string, number>;
+  currentQueryIndex: number;
 };
 
 type SnapshotRendererInternals = SnapshotRenderer & {
   _animation?: { stop(): void };
   backend?: {
     trackTimestamp?: boolean;
+    device?: { adapterInfo?: { vendor?: string; architecture?: string; device?: string; description?: string } };
     timestampQueryPool?: Record<string, TimestampPool | null>;
   };
   resolveTimestampsAsync?: (type: 'render' | 'compute') => Promise<number | undefined>;
@@ -312,6 +329,11 @@ window.__gameplaySnapshot = {
     return probePerformance(options);
   },
   metadata() {
+    const internals = renderer as SnapshotRendererInternals | null;
+    const info = internals?.backend?.device?.adapterInfo;
+    const drawing = renderer?.domElement;
+    // The scene pass inherits renderer.samples; currentSamples can describe the single-sample post output.
+    const samples = renderer?.samples ?? 0;
     return {
       duration: runDuration,
       fidelity,
@@ -321,6 +343,19 @@ window.__gameplaySnapshot = {
       perfProfile: selectedLevel ? (selectedLevel.perfProfile ?? null) : null,
       markers: selectedLevel ? (selectedLevel.markers ?? {}) : {},
       sections: selectedLevel ? (selectedLevel.sections ?? []) : [],
+      adapter: info ? {
+        vendor: info.vendor,
+        architecture: info.architecture,
+        device: info.device,
+        description: info.description,
+      } : null,
+      renderSize: {
+        width: drawing?.width ?? 0,
+        height: drawing?.height ?? 0,
+        multisampled: samples > 1,
+        samples,
+      },
+      timestampAvailable: Boolean(internals?.backend?.trackTimestamp === true && typeof internals?.resolveTimestampsAsync === 'function'),
     };
   },
 };
@@ -466,14 +501,17 @@ function startRunViaInput() {
 function stopRendererAnimation(value: SnapshotRenderer) {
   (value as SnapshotRendererInternals)._animation?.stop();
 }
-
 function setRendererFrameTime(value: SnapshotRenderer, seconds: number, dt: number) {
-  const nodeFrame = (value as SnapshotRendererInternals)._nodes?.nodeFrame;
-  if (!nodeFrame) return;
-  nodeFrame.time = seconds;
-  nodeFrame.deltaTime = dt;
-  nodeFrame.frameId = Math.round(seconds / dt);
-  nodeFrame.lastTime = 0;
+  const internals = value as SnapshotRendererInternals;
+  const nodeFrame = internals._nodes?.nodeFrame;
+  const frameId = Math.max(value.info?.frame ?? 0, nodeFrame?.frameId ?? 0) + 1;
+  if (nodeFrame) {
+    nodeFrame.time = seconds;
+    nodeFrame.deltaTime = dt;
+    nodeFrame.frameId = frameId;
+    nodeFrame.lastTime = 0;
+  }
+  if (value.info) value.info.frame = frameId;
 }
 
 function advanceRuntime(update: (dt: number, elapsed: number) => void, seconds: number, dt: number) {
@@ -559,50 +597,76 @@ function stepRealtime(targetTime: number, dt: number): Promise<number[]> {
 }
 
 /**
- * Steps and renders `frames` frames from the current time, timing the level update and
- * the render call on the CPU and, with `timestamps=1`, the render passes and compute
- * dispatches on the GPU. Each frame waits for its GPU timestamps, so the GPU numbers are
- * per frame rather than a queue's worth.
+ * Steps and renders `frames` measured frames from the current time, timing the level
+ * update and render call on the CPU and, with `timestamps=1`, render passes and compute
+ * dispatches on the GPU. Warmup frames are real renders but excluded from all returned
+ * statistics. Frozen probes render the exact current runtime state with zero renderer dt.
  */
 async function probePerformance(options: PerfProbeOptions): Promise<PerfProbeSample> {
   if (!scene || !camera || !renderer || !runtimeUpdate) throw new Error('Gameplay snapshot runtime is not ready');
   const dt = readOptionPositiveNumber(options.dt, fixedDt, 'dt');
   const frames = readOptionPositiveInteger(options.frames, 1, 'frames');
+  const warmupFrames = readOptionNonNegativeInteger(options.warmupFrames, 0, 'warmupFrames');
+  const freeze = options.freeze === true;
   const updateTimes: number[] = [];
   const renderTimes: number[] = [];
   const gpuRenderTimes: number[] = [];
   const gpuComputeTimes: number[] = [];
+  const gpuTotalTimes: number[] = [];
   const internals = renderer as SnapshotRendererInternals;
   const timestamps = internals.backend?.trackTimestamp === true && typeof internals.resolveTimestampsAsync === 'function';
   const detail: PerfProbeFrame[] = [];
 
-  for (let frame = 0; frame < frames; frame += 1) {
-    currentElapsed += dt;
-    const updateStart = performance.now();
-    runtimeUpdate(dt, currentElapsed);
-    const updateMs = performance.now() - updateStart;
-    updateTimes.push(updateMs);
+  // A previous capture or step may have left resolved queries in the pools. Drain
+  // both pools before warmup so no pre-probe work enters measured statistics.
+  if (timestamps) {
+    await resolveGpuMs(internals, 'render');
+    await resolveGpuMs(internals, 'compute');
+  }
+
+  const totalFrames = warmupFrames + frames;
+  for (let iteration = 0; iteration < totalFrames; iteration += 1) {
+    const measured = iteration >= warmupFrames;
+    let updateMs = 0;
+    if (!freeze) {
+      currentElapsed += dt;
+      const updateStart = performance.now();
+      runtimeUpdate(dt, currentElapsed);
+      updateMs = performance.now() - updateStart;
+    }
+    if (measured) updateTimes.push(updateMs);
 
     const renderStart = performance.now();
-    setRendererFrameTime(renderer, currentElapsed, dt);
+    setRendererFrameTime(renderer, currentElapsed, freeze ? 0 : dt);
     renderer.info?.reset?.();
     if (post) post.render();
     else renderer.render(scene, camera);
     const renderMs = performance.now() - renderStart;
-    renderTimes.push(renderMs);
+    if (measured) renderTimes.push(renderMs);
 
     let gpuRenderMs: number | null = null;
+    let gpuComputeMs: number | null = null;
+    let gpuTotalMs: number | null = null;
     if (timestamps) {
       gpuRenderMs = await resolveGpuMs(internals, 'render');
-      gpuRenderTimes.push(gpuRenderMs);
-      gpuComputeTimes.push(await resolveGpuMs(internals, 'compute'));
+      gpuComputeMs = await resolveGpuMs(internals, 'compute');
+      if (gpuRenderMs !== null && gpuComputeMs !== null) {
+        gpuTotalMs = gpuRenderMs + gpuComputeMs;
+        if (measured) {
+          gpuRenderTimes.push(gpuRenderMs);
+          gpuComputeTimes.push(gpuComputeMs);
+          gpuTotalTimes.push(gpuTotalMs);
+        }
+      }
     }
-    if (options.detail) {
+    if (measured && options.detail) {
       detail.push({
         t: roundSeconds(currentElapsed),
         updateMs: roundMillis(updateMs),
         renderMs: roundMillis(renderMs),
         gpuRenderMs: gpuRenderMs === null ? null : roundMillis(gpuRenderMs),
+        gpuComputeMs: gpuComputeMs === null ? null : roundMillis(gpuComputeMs),
+        gpuTotalMs: gpuTotalMs === null ? null : roundMillis(gpuTotalMs),
         pipelines: internals._pipelines?.caches?.size ?? null,
         builders: internals._nodes?.nodeBuilderCache?.size ?? null,
         calls: collectPerfCounters(renderer, scene).calls,
@@ -619,9 +683,12 @@ async function probePerformance(options: PerfProbeOptions): Promise<PerfProbeSam
     renderMs: roundMillis(median(renderTimes)),
     firstRenderMs: roundMillis(renderTimes[0]),
     renderMaxMs: roundMillis(max(renderTimes)),
-    gpuRenderMs: timestamps ? roundMillis(median(gpuRenderTimes)) : null,
-    gpuComputeMs: timestamps ? roundMillis(median(gpuComputeTimes)) : null,
-    gpuRenderMaxMs: timestamps ? roundMillis(max(gpuRenderTimes)) : null,
+    gpuRenderMs: gpuRenderTimes.length > 0 ? roundMillis(median(gpuRenderTimes)) : null,
+    gpuComputeMs: gpuComputeTimes.length > 0 ? roundMillis(median(gpuComputeTimes)) : null,
+    gpuRenderMaxMs: gpuRenderTimes.length > 0 ? roundMillis(max(gpuRenderTimes)) : null,
+    gpuTotalMs: gpuTotalTimes.length > 0 ? roundMillis(median(gpuTotalTimes)) : null,
+    gpuTotalP95Ms: gpuTotalTimes.length > 0 ? roundMillis(percentile(gpuTotalTimes, 0.95)) : null,
+    gpuSamples: gpuTotalTimes.length,
     ...counters,
     ...(options.detail ? { detail } : {}),
   };
@@ -632,20 +699,25 @@ async function probePerformance(options: PerfProbeOptions): Promise<PerfProbeSam
  * the previous resolve. The renderer's own total covers only the last render call, and a
  * post chain or a cube shadow map is many render calls per frame.
  */
-async function resolveGpuMs(internals: SnapshotRendererInternals, type: 'render' | 'compute') {
+async function resolveGpuMs(internals: SnapshotRendererInternals, type: 'render' | 'compute'): Promise<number | null> {
   const pool = internals.backend?.timestampQueryPool?.[type];
-  if (!pool) return 0;
+  if (!pool) return type === 'compute' ? 0 : null;
+  if (pool.currentQueryIndex === 0) return type === 'compute' ? 0 : null;
   await internals.resolveTimestampsAsync?.(type);
   const frames = new Set(pool.frames.map((frame) => `:f${frame}`));
   let total = 0;
+  let found = false;
   for (const [uid, duration] of pool.timestamps) {
-    if (frames.has(uid.slice(uid.lastIndexOf(':')))) total += duration;
+    if (frames.has(uid.slice(uid.lastIndexOf(':')))) {
+      total += duration;
+      found = true;
+    }
   }
   // The pool keeps every uid it has ever resolved; drop the ones just summed so they are not counted again.
   for (const uid of [...pool.timestamps.keys()]) {
     if (frames.has(uid.slice(uid.lastIndexOf(':')))) pool.timestamps.delete(uid);
   }
-  return total;
+  return found && Number.isFinite(total) && total >= 0 ? total : null;
 }
 
 async function analyzeTargetOcclusion(options: OcclusionOptions): Promise<OcclusionReport> {
@@ -935,6 +1007,11 @@ function readOptionNonNegativeNumber(value: number | undefined, fallback: number
 function readOptionPositiveInteger(value: number | undefined, fallback: number, label: string) {
   if (value === undefined) return fallback;
   if (!Number.isInteger(value) || value <= 0) throw new Error(`${label} must be a positive integer`);
+  return value;
+}
+function readOptionNonNegativeInteger(value: number | undefined, fallback: number, label: string) {
+  if (value === undefined) return fallback;
+  if (!Number.isInteger(value) || value < 0) throw new Error(`${label} must be a non-negative integer`);
   return value;
 }
 

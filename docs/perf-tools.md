@@ -1,6 +1,6 @@
 # Performance tools
 
-Use these when a level slows down over a run or when handing off a level that may create too many objects, geometries, or draw calls.
+Use the headless gate for resource growth and draw-call budgets. Use the GPU probe for rendering cost, including levels that are already slow on the start screen. Passing the headless gate does not establish acceptable performance on integrated or mobile GPUs.
 
 ## Headless performance gate
 
@@ -112,18 +112,46 @@ Useful overrides:
 
 ## Frame-time probe
 
-`check:perf` samples one render per simulated second, so its frame column mixes steady-state cost with whatever compiled in that second. The probe separates them:
+The probe measures CPU submission time and GPU render/compute pass durations separately. Unlike frame intervals, GPU timestamps remain useful when the browser hits the display refresh cap.
 
 ```sh
 npm run perf:probe -- --level <level-id>
 npm run perf:probe -- --level <level-id> --times 5,20,90 --frames 36 --detail
 ```
 
-At each time (default: the midpoint of every section the level declares) the probe steps the level there, then steps and renders `--frames` frames back to back and reports, per time, the median CPU milliseconds inside the level update and inside the render call, the first render after the step, and the median GPU milliseconds of all render passes and of all compute dispatches, read from timestamp queries. It runs on the GPU browser at 1280x720 by default; `--software` takes the SwiftShader path, where the GPU columns mean nothing.
+At each time (default: the midpoint of every section the level declares), the probe steps the level there, then steps and renders `--frames` frames back to back. It reports median CPU time for update and render, GPU render and compute pass sums, and the median and p95 of their per-frame total. Each measured frame awaits its own timestamp queries. It runs on the GPU browser at 1280×720 by default; `--software` takes the SwiftShader path, where the GPU columns are not hardware performance evidence.
 
 `--detail` prints every frame's render time with the renderer's pipeline and node-builder cache sizes. A frame whose sizes rise is a frame that compiled a shader; a size that falls and rises again across waves means the renderer evicted a shader and compiled it again (see `retainShaders` in `docs/level-authoring.md`).
 
-Three knobs remove one cost at a time, so two runs attribute it: `--hide <names>` sets the named scene objects invisible, `--drop-stages <types>` leaves those post stage types out of the chain, and `--no-velocity` builds the chain without the velocity buffer. Repeat the baseline run: another process on the same GPU moves the medians by a millisecond.
+Three knobs help isolate costs: `--hide <names>` sets named scene objects invisible, `--drop-stages <types>` leaves those post stage types out of the chain, and `--no-velocity` builds the chain without the velocity buffer. Repeat the baseline: another process using the GPU can move the medians.
+
+### Repeatable GPU stress checks
+
+Use a frozen scene to compare optimizations without changing the camera, enemies, or animation between samples:
+
+```sh
+# Intro: no playthrough or user input required.
+npm run perf:probe -- --level spillway --gpu --start-screen --freeze --warmup 60 --frames 80 --repeats 3 --width 5120 --height 2880 --seed 424242 --json tmp/spillway-intro.json
+
+# Gameplay: keep the intro separate and cover several parts of the run.
+npm run perf:probe -- --level spillway --gpu --times 20,50,90,115 --freeze --warmup 60 --frames 80 --repeats 3 --width 5120 --height 2880 --seed 424242 --json tmp/spillway-run.json
+```
+
+`--start-screen` defaults to 0.8 seconds of attract mode. `--freeze` stops runtime updates and simulation/node time during warmup and measurement, but advances the renderer's frame identity so shadows and post passes still render every frame. `--warmup` discards the specified number of frames before each repeat. Without `--freeze`, warmup and measurement both advance the simulation, so repeats cover successive intervals rather than the same scene.
+
+The JSON records the actual renderer adapter, drawing-buffer dimensions, MSAA, timestamp availability, requested times, repeat numbers, and measured GPU sample counts. A frozen probe measures the cost of drawing the current state; it does not measure ongoing particle simulation, CPU gameplay work, startup compilation, frame pacing, or thermal throttling. Use the moving probe and `check:perf --gpu --fidelity full --render realtime` for those additional runtime costs. GPU totals sum timestamped render and compute passes, not copies or other commands outside those passes.
+
+To make an unattended run flag expensive scenes, add `--max-gpu-ms <budget>`. The command exits nonzero when any point/repeat exceeds that median GPU-pass budget, or when it lacks complete GPU samples. The JSON is still written on a budget failure. Software runs cannot enforce this hardware budget.
+
+Calibrate the budget on the machine that runs the check. For example, `--max-gpu-ms 2` at 5120×2880 is a local review threshold on the RTX 4090, not a 2 ms target for a phone and not part of the benchmark acceptance gate. Compare representative scenes from smooth control levels at the same settings before choosing a threshold.
+
+For an optimization investigation:
+
+1. Capture the intro and gameplay points at native-sized and stress-sized surfaces, with full postprocessing. Keep aspect ratio, seed, MSAA, and simulation time fixed. Increasing resolution stresses pixel shading and bandwidth; it does not emulate an integrated GPU's architecture.
+2. Warm up and repeat the baseline. If repeated medians differ by more than 5%, investigate GPU contention or clock changes before comparing small improvements. Do not run GPU captures in parallel.
+3. Remove one major cost at a time: a post stage, shadows, geometry, or a material's shading. Hiding a mesh also removes its depth coverage, so it does not isolate shader cost; a temporary cheap material preserving depth coverage is a better shader experiment.
+4. Retest a candidate in alternating baseline/candidate order. Keep changes only when their savings exceed the baseline variation across repeats, and inspect matching images at normal resolution.
+5. Keep low-spec compatibility claims separate from the stress result. High-resolution desktop tests can find wasted work and catch regressions without a human capture loop; they cannot certify iPhone or integrated-GPU frame rates.
 
 ## Running two render tools at once
 
@@ -167,14 +195,14 @@ https://<deployed>/?level=spillway&perf=1&post=0&hide=terrain
 
 ### Perf sweep
 
-One knob per run answers one question, and a run costs a playthrough. The `perf sweep` button beside `perf json` prices everything in a single sitting: it cycles through configurations in short blocks for about half a minute, so every configuration samples the same parts of the run, then downloads a report giving each one a median GPU millisecond figure and its delta from the baseline. The delta is what removing that one thing saved.
+The `perf sweep` button beside `perf json` cycles through configurations in short blocks for about half a minute, then downloads each configuration's median GPU milliseconds and difference from baseline. It helps identify costs to investigate without collecting a separate playthrough per knob. The simulation continues during the sweep, so configurations do not render identical views.
 
 The configurations are discovered from the scene, so no level declares a list: the post chain, the shadow pass, the heaviest named groups, and the heaviest named materials. Groups are the axis a geometry or culling fix is made on; materials are the axis a fragment-cost fix is made on. A group and a material covering the same meshes are priced once. A level gets useful names out of this only if its groups and materials are named — see `src/game/perf-sweep.ts` for how they are chosen.
 
 Three things to know when reading a sweep.
 
-A positive delta — a configuration slower than the baseline — is usually real, not noise. Hiding an opaque object reveals what was behind it, and those fragments now get shaded. So a level where hiding the water makes the frame slower is telling you it is overdraw-bound and that what sits behind the water is expensive per pixel. It also means a negative delta is a lower bound on what that object costs, never an upper one.
+A positive delta can mean that hiding an opaque object exposed expensive fragments behind it. It can also come from different camera positions, GPU clock changes, or delayed timestamps. Neither sign proves a bottleneck on its own. Use the frozen GPU probe to test the suspected cause at an identical view.
 
 GPU timestamps lag the frame that produced them, so each block discards its first frames; that is why the sweep holds a configuration rather than alternating per frame.
 
-On hardware fast enough to hit the frame cap, every configuration reports the same frame milliseconds and the deltas fall into the noise. Run a sweep on the hardware that is actually slow, and during a real run rather than on the intro screen — the camera sits somewhere unrepresentative there, and every number is relative to what is on screen.
+Frame intervals become uninformative when the browser hits its refresh cap; correctly resolved GPU timestamps do not. For desktop investigations, use the frozen GPU probe at higher resolution rather than relying on capped FPS. Treat the intro as its own reproducible case when it is slow, and test later gameplay separately. The sweep continues advancing the scene while configurations change, so its deltas are leads for investigation, not controlled before/after results.
