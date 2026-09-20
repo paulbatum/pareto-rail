@@ -34,6 +34,8 @@ export type PerfReport = {
   /** Drawing surface in device pixels, and the ratio it was derived from. A frame time
       means nothing without it: the post chain and the shadow map scale with this. */
   renderSize: { width: number; height: number; pixelRatio: number; multisampled: boolean };
+  /** The adapter the browser handed the renderer, where it reports one. */
+  adapter: GPUAdapterInfo | null;
   userAgent: string;
   generatedAt: string;
   buckets: BucketReport[];
@@ -205,7 +207,10 @@ class PerfOverlay {
       });
     }
     const drawing = this.renderer.domElement;
-    const backend = (this.renderer as WebGPURenderer & { backend?: { parameters?: { antialias?: boolean } } }).backend;
+    const backend = (this.renderer as WebGPURenderer & {
+      backend?: { parameters?: { antialias?: boolean }; device?: { adapterInfo?: GPUAdapterInfo } };
+    }).backend;
+    const info = backend?.device?.adapterInfo;
     return {
       levelId: this.levelId,
       runDuration: round((performance.now() - this.runStartedAt) / 1000, 3),
@@ -215,6 +220,9 @@ class PerfOverlay {
         pixelRatio: round(this.renderer.getPixelRatio(), 3),
         multisampled: backend?.parameters?.antialias !== false,
       },
+      adapter: info
+        ? { vendor: info.vendor, architecture: info.architecture, device: info.device, description: info.description } as GPUAdapterInfo
+        : null,
       userAgent: navigator.userAgent,
       generatedAt: new Date().toISOString(),
       buckets,

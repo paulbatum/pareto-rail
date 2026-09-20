@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import fsSync from 'node:fs';
 import fs from 'node:fs/promises';
 import type { IncomingMessage } from 'node:http';
 import path from 'node:path';
@@ -24,7 +25,14 @@ function resolveCommitHash(): string {
 const commitHash = resolveCommitHash();
 
 export default defineConfig({
-  plugins: [react(), crystalTemplateDevPlugin(), versionMarkerPlugin(commitHash), rankApiDevPlugin(), adminApiDevPlugin()],
+  plugins: [
+    react(),
+    benchmarkDescriptorsPlugin(),
+    crystalTemplateDevPlugin(),
+    versionMarkerPlugin(commitHash),
+    rankApiDevPlugin(),
+    adminApiDevPlugin(),
+  ],
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
@@ -39,6 +47,67 @@ export default defineConfig({
     manifest: true,
   },
 });
+
+/* Serves every benchmark level.json as one module instead of 100+ separate ones.
+
+   The catalog needs all descriptors up front, and a bundled build inlines them either
+   way. A dev server has no bundling step, so an eager glob costs one request per level
+   — fine on localhost, slow over a proxied connection where each round trip is ~100ms.
+
+   Discovery still means "a level.json one level down", so a new level appears without
+   touching a registry, and nested test-fixtures stay out. */
+const BENCHMARK_DESCRIPTORS_ID = 'virtual:benchmark-descriptors';
+const RESOLVED_BENCHMARK_DESCRIPTORS_ID = `\0${BENCHMARK_DESCRIPTORS_ID}`;
+const benchmarkLevelsRoot = path.resolve(process.cwd(), 'src/benchmark-levels');
+
+function benchmarkDescriptorsPlugin(): Plugin {
+  return {
+    name: 'pareto-rail-benchmark-descriptors',
+    resolveId(id) {
+      return id === BENCHMARK_DESCRIPTORS_ID ? RESOLVED_BENCHMARK_DESCRIPTORS_ID : null;
+    },
+    load(id) {
+      if (id !== RESOLVED_BENCHMARK_DESCRIPTORS_ID) return null;
+
+      const descriptors: Record<string, unknown> = {};
+      for (const entry of fsSync.readdirSync(benchmarkLevelsRoot, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const descriptorPath = path.join(benchmarkLevelsRoot, entry.name, 'level.json');
+        if (!fsSync.existsSync(descriptorPath)) continue;
+        // Parsing here turns a malformed descriptor into a build error naming the file,
+        // rather than a syntax error in a generated module nobody can open.
+        try {
+          descriptors[`./${entry.name}/level.json`] = JSON.parse(fsSync.readFileSync(descriptorPath, 'utf8'));
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          this.error(`Invalid JSON in src/benchmark-levels/${entry.name}/level.json: ${message}`);
+        }
+      }
+
+      // U+2028/U+2029 are valid in JSON strings and legal in modern JS, but escaping
+      // them keeps the emitted module safe for any downstream tool that predates ES2019.
+      const literal = JSON.stringify(descriptors).replace(/[\u2028\u2029]/g, (ch) => `\\u${ch.charCodeAt(0).toString(16)}`);
+      return `export default ${literal};\n`;
+    },
+    configureServer(server) {
+      const isDescriptor = (file: string) =>
+        path.dirname(path.dirname(path.resolve(file))) === benchmarkLevelsRoot && path.basename(file) === 'level.json';
+
+      // Nothing imports the individual files any more, so the module graph cannot link a
+      // descriptor edit back to this module. Adding, removing, or editing one reloads.
+      const reload = (file: string) => {
+        if (!isDescriptor(file)) return;
+        const module = server.moduleGraph.getModuleById(RESOLVED_BENCHMARK_DESCRIPTORS_ID);
+        if (module) server.moduleGraph.invalidateModule(module);
+        server.ws.send({ type: 'full-reload' });
+      };
+
+      server.watcher.on('add', reload);
+      server.watcher.on('unlink', reload);
+      server.watcher.on('change', reload);
+    },
+  };
+}
 
 /* Emits a tiny /version.json holding the deployed commit SHA so a long-open tab can
    detect a newer build (see src/app/update-check.ts). Build-only: it's written into the

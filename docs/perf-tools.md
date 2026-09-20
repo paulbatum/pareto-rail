@@ -144,7 +144,7 @@ Outside dev builds, no recorder or overlay is created without `perf=1`.
 
 The overlay records frame delta times into preallocated buffers and samples counters once per second. It displays current frames per second, the worst frame in the current second, a five-second sparkline, and current draw calls. When the renderer was constructed with `trackTimestamp: true`, the overlay also reads `renderer.info.render.timestamp` and shows GPU milliseconds beside the draw calls; without timestamp tracking that reading stays hidden and the JSON report carries `gpuMs: null`. Press the `perf json` button to download a JSON report at any time; on `runend` the overlay only logs the summary, it never downloads on its own.
 
-The JSON report contains per-second frame buckets with average, p95, p99, and max frame milliseconds, plus the renderer and scene counters, level id, run duration, drawing-surface size, user agent, and timestamp. GPU milliseconds are recorded whenever the overlay is on, because the renderer is constructed with `trackTimestamp` in that case.
+The JSON report contains per-second frame buckets with average, p95, p99, and max frame milliseconds, plus the renderer and scene counters, level id, run duration, drawing-surface size, the adapter the browser handed the renderer, user agent, and timestamp. GPU milliseconds are recorded whenever the overlay is on, because the renderer is constructed with `trackTimestamp` in that case.
 
 Two query parameters change what the GPU is asked to draw, so a playtest on slow hardware can tell a level's cost apart from the cost of the surface it is drawn on. `scale=<0.25-2>` multiplies the device pixel ratio, and `msaa=0` builds the renderer without multisampling. Both apply in any build:
 

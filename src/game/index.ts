@@ -143,7 +143,9 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const renderScale = clampScale(urlParams.get('scale'));
     const multisample = urlParams.get('msaa') !== '0';
     const pixelRatio = () => Math.min(window.devicePixelRatio, 2) * renderScale;
-    const renderer = new WebGPURenderer({ antialias: multisample, alpha: false, trackTimestamp: perfEnabled });
+    /* Without a preference the browser picks the adapter, and on a laptop with two GPUs
+       that is usually the integrated one. */
+    const renderer = new WebGPURenderer({ antialias: multisample, alpha: false, trackTimestamp: perfEnabled, powerPreference: 'high-performance' });
     stack.add(() => {
       renderer.domElement.remove();
       renderer.dispose();
