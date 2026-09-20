@@ -76,7 +76,7 @@ export const spillwayLevel: LevelDefinition = {
     bloom: { strength: 0.35, threshold: 0.4, radius: 2 },
     vignette: { inner: 0.45, outer: 1.2, strength: 0.4 },
     stages: [
-      { type: 'godrays', lightName: 'sun', color: [1, 0.9, 0.76], intensity: godrayIntensity, density: 0.45, maxDensity: 0.3, distanceAttenuation: 1.2, raymarchSteps: 48 },
+      { type: 'godrays', lightName: 'sun', color: [1, 0.9, 0.76], intensity: godrayIntensity, density: 0.45, maxDensity: 0.3, distanceAttenuation: 1.2, resolutionScale: 0.25, raymarchSteps: 48 },
       { type: 'lensflare', strength: 0.3, threshold: 1.2, tint: [0.85, 0.92, 1], ghostAttenuation: 30 },
     ],
   },
