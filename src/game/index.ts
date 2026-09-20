@@ -239,10 +239,16 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const runtime = level.createRuntime({ scene, camera, renderer, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(), debugValue });
     stack.add(() => runtime.dispose());
     /* Built after the runtime so post stages can find the level's scene objects, such as a god-rays light. */
-    const post = createPost(renderer, scene, camera, level.post);
-    stack.add(() => post.dispose());
-    /* Compile every scene shader before the first frame, in parallel and off the main thread. */
-    await post.compileAsync();
+    /* `?post=0` renders the scene straight to the canvas, so a playtest capture can
+       separate what the level's materials cost from what the post chain costs. */
+    const post = urlParams.get('post') === '0' ? null : createPost(renderer, scene, camera, level.post);
+    if (post) {
+      stack.add(() => post.dispose());
+      /* Compile every scene shader before the first frame, in parallel and off the main thread. */
+      await post.compileAsync();
+    } else {
+      await renderer.compileAsync(scene, camera);
+    }
     if (signal?.aborted) return abort();
     if (urlParams.get('capture') === '1') {
       window.__raildCapture = { scene, camera, canvas: renderer.domElement, bus };
@@ -270,7 +276,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
         freecam = (await import('./freecam')).createFreecam({
           playerCamera: camera,
           canvas: renderer.domElement,
-          onCameraChange: (next) => post.setCamera(next),
+          onCameraChange: (next) => post?.setCamera(next),
         });
         stack.add(() => freecam?.dispose());
       } catch (error) {
@@ -304,7 +310,9 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       if (!paused) runtime.update(dt, now / 1000);
       /* Outside the pause gate so the debug camera still flies over a stopped game. */
       freecam?.update(dt);
-      post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()) }); perfOverlay?.recordFrame(dtMs, now);
+      if (post) post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()) });
+      else renderer.render(scene, camera);
+      perfOverlay?.recordFrame(dtMs, now);
     });
     stack.add(() => renderer.setAnimationLoop(null));
 
