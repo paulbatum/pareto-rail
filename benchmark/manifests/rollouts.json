@@ -668,6 +668,24 @@
       ]
     },
     {
+      "runId": "run-6e7654e49d",
+      "levelId": "broadside-63d6",
+      "themeId": "broadside",
+      "configurationId": "codex-gpt-6-astra-max",
+      "files": [
+        {
+          "path": "runs/run-6e7654e49d/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 14238062,
+          "sha256": "ea4b9a88a60c61d89f4def76bc459b9107c52216344dd9e956a51181cc39f2e4"
+        },
+        {
+          "path": "runs/run-6e7654e49d/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 626634,
+          "sha256": "77f52e45a57b3c3ca3ff3117c669f6c1f9929cfeeb100450c9b52e3774f115ab"
+        }
+      ]
+    },
+    {
       "runId": "run-6eb31f58cc",
       "levelId": "thermal-ink-8448",
       "themeId": "thermal-ink",
@@ -736,6 +754,42 @@
           "path": "runs/run-770j1pokdphe/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 5207593,
           "sha256": "c1bcfb1d804c9516e11a7d3113228409ccc40d24dc23a470c65e4142ec35f836"
+        }
+      ]
+    },
+    {
+      "runId": "run-7c41ab90de",
+      "levelId": "speedsolve-kv7m",
+      "themeId": "speedsolve",
+      "configurationId": "codex-gpt-6-astra-max",
+      "files": [
+        {
+          "path": "runs/run-7c41ab90de/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 5557474,
+          "sha256": "e5bff2947b32147f76673baba735ac4c7608622cebc68e197e24702c941e3ad8"
+        },
+        {
+          "path": "runs/run-7c41ab90de/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 576917,
+          "sha256": "05592171bd86f698a26b507ac22c7568992837eaf78422267bc0833e1c16360d"
+        }
+      ]
+    },
+    {
+      "runId": "run-7jg3l68bgi",
+      "levelId": "speedsolve-28fr",
+      "themeId": "speedsolve",
+      "configurationId": "pi-openrouter-union-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-7jg3l68bgi/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 2515730,
+          "sha256": "60f29ae0e4243ce945b9c313ecd341c85fdce2d5f4aecdbb31ee6d205b78f38a"
+        },
+        {
+          "path": "runs/run-7jg3l68bgi/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 196248,
+          "sha256": "4faf1f79b968eb64db717e7fb7ac8386b7c6467044803869970adf7a4d8eea0a"
         }
       ]
     },
@@ -830,6 +884,42 @@
       ]
     },
     {
+      "runId": "run-aq1wyzsp3l",
+      "levelId": "vespers-nolz",
+      "themeId": "vespers",
+      "configurationId": "pi-openrouter-union-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-aq1wyzsp3l/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 3841882,
+          "sha256": "17d719cf052303948bf0c9d6654162f2c64514d7bbde92d36079e1f4b4520691"
+        },
+        {
+          "path": "runs/run-aq1wyzsp3l/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 19176213,
+          "sha256": "7bf61ee19b4abaaf4542eadf81d72a9663bb3aff59081886110e869e1e9fe534"
+        }
+      ]
+    },
+    {
+      "runId": "run-b82b6e4a1b",
+      "levelId": "strandline-b4d3",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-astra-max",
+      "files": [
+        {
+          "path": "runs/run-b82b6e4a1b/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 21942783,
+          "sha256": "ba575f3d9ff887b264e74f361c0a0fc31bbfea74f482e6bdceb974ddac60494e"
+        },
+        {
+          "path": "runs/run-b82b6e4a1b/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 647854,
+          "sha256": "89e2ab34b0772b0ae0217f21b5cfa10ec63d5518a7f6f80d7a7d22d44751b5e7"
+        }
+      ]
+    },
+    {
       "runId": "run-c340azfgk0vd",
       "levelId": "mass-driver-9281",
       "themeId": "mass-driver",
@@ -880,6 +970,24 @@
           "path": "runs/run-cc9f4ac46f/stages/solo/codex/events.jsonl.gz",
           "rawBytes": 1142037,
           "sha256": "ffbd1a4c0de50f02848efeb5772d615a8c5e2583161097151c0b1f32dabed6bc"
+        }
+      ]
+    },
+    {
+      "runId": "run-cdglws4sxc",
+      "levelId": "tinker-ball-x9a0",
+      "themeId": "tinker-ball",
+      "configurationId": "pi-openrouter-union-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-cdglws4sxc/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 5939300,
+          "sha256": "e38e3aa897b3a235285a99faae8b986c62e6326c9d3ef288c906128258ea3d3a"
+        },
+        {
+          "path": "runs/run-cdglws4sxc/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 29543354,
+          "sha256": "5b41047aeafa3c70de94715fdd98807187397050ea23184f7c5643d4a57760ee"
         }
       ]
     },
@@ -1024,6 +1132,42 @@
       ]
     },
     {
+      "runId": "run-kk5bob0rfo",
+      "levelId": "strandline-u4wm",
+      "themeId": "strandline",
+      "configurationId": "pi-openrouter-union-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-kk5bob0rfo/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 1510167,
+          "sha256": "10652ca08a33e9353cb8b6c150c36f7548ff07371e09327c397b5dd578df6593"
+        },
+        {
+          "path": "runs/run-kk5bob0rfo/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 7474165,
+          "sha256": "43663d899a7ad3110bf10fe858ef4366d7aac1f21724e7817c48e059111a1ef7"
+        }
+      ]
+    },
+    {
+      "runId": "run-l0jnrvcba5",
+      "levelId": "vespers-xc1a",
+      "themeId": "vespers",
+      "configurationId": "claude-fable-5-1-high",
+      "files": [
+        {
+          "path": "runs/run-l0jnrvcba5/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 6244781,
+          "sha256": "60045a500d3f09af98bc49edfa8f7209d66674b37b192d2c274386ee12a1794d"
+        },
+        {
+          "path": "runs/run-l0jnrvcba5/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 6208944,
+          "sha256": "67c333c0fe28529deb33de7656f4c451a52d0ad7a9786cc48c4966f78cfc8a24"
+        }
+      ]
+    },
+    {
       "runId": "run-n0i508zstz",
       "levelId": "tinker-ball-72pr",
       "themeId": "tinker-ball",
@@ -1056,6 +1200,24 @@
           "path": "runs/run-ng3zrmdjo4/stages/solo/pi/events.jsonl.gz",
           "rawBytes": 44156730,
           "sha256": "c2cb9b50833d1ab291976a297b6ebb19527cbca2faf5d52e53c0ad2c8047da32"
+        }
+      ]
+    },
+    {
+      "runId": "run-nqw47y4pzu",
+      "levelId": "thermal-ink-184u",
+      "themeId": "thermal-ink",
+      "configurationId": "pi-openrouter-union-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-nqw47y4pzu/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 5716392,
+          "sha256": "fc9202e8a8ea3b7fc0dc256fcad17987dfd38a3d238fd453f7b548b18fcc8778"
+        },
+        {
+          "path": "runs/run-nqw47y4pzu/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 28431067,
+          "sha256": "b3f9b22371f2a9fe54dd8503cb3631884f9c0816784e827e9815a7746decfdb7"
         }
       ]
     },
@@ -1489,6 +1651,24 @@
           "path": "runs/run-vbovdxbaxq9v/stages/solo/codex/events.jsonl.gz",
           "rawBytes": 294293,
           "sha256": "8f2f4d50e02c5fc279f2b1c633b94364d967500145d4f9c88e5ce5fda6157578"
+        }
+      ]
+    },
+    {
+      "runId": "run-vi207g6wxh",
+      "levelId": "broadside-86kh",
+      "themeId": "broadside",
+      "configurationId": "pi-openrouter-union-alpha-high",
+      "files": [
+        {
+          "path": "runs/run-vi207g6wxh/stages/solo/pi/rollout.jsonl",
+          "rawBytes": 1817429,
+          "sha256": "a63c3d49e5a6a07b1a8cdefd7d832793985494186d7de081aaf7b91d84075e9e"
+        },
+        {
+          "path": "runs/run-vi207g6wxh/stages/solo/pi/events.jsonl.gz",
+          "rawBytes": 9074364,
+          "sha256": "7c693e140303bda2928992194f63dee572ad980cea56aec5cd40d9079d18c311"
         }
       ]
     },

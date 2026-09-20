@@ -31,6 +31,9 @@ type BucketReport = {
 export type PerfReport = {
   levelId: string;
   runDuration: number;
+  /** Drawing surface in device pixels, and the ratio it was derived from. A frame time
+      means nothing without it: the post chain and the shadow map scale with this. */
+  renderSize: { width: number; height: number; pixelRatio: number; multisampled: boolean };
   userAgent: string;
   generatedAt: string;
   buckets: BucketReport[];
@@ -201,9 +204,17 @@ class PerfOverlay {
         },
       });
     }
+    const drawing = this.renderer.domElement;
+    const backend = (this.renderer as WebGPURenderer & { backend?: { parameters?: { antialias?: boolean } } }).backend;
     return {
       levelId: this.levelId,
       runDuration: round((performance.now() - this.runStartedAt) / 1000, 3),
+      renderSize: {
+        width: drawing.width,
+        height: drawing.height,
+        pixelRatio: round(this.renderer.getPixelRatio(), 3),
+        multisampled: backend?.parameters?.antialias !== false,
+      },
       userAgent: navigator.userAgent,
       generatedAt: new Date().toISOString(),
       buckets,

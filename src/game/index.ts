@@ -135,7 +135,15 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const debugValue = import.meta.env.DEV && level.debugSelector
       ? urlParams.get(level.debugSelector.queryParam) ?? undefined
       : undefined;
-    const renderer = new WebGPURenderer({ antialias: true, alpha: false });
+    const perfParam = urlParams.get('perf');
+    const perfEnabled = perfParam === '1' || (import.meta.env.DEV && perfParam !== '0');
+    /* Render-size knobs for playtests on slow hardware: `scale` multiplies the device
+       pixel ratio, `msaa=0` drops multisampling. Both change what the GPU is asked to
+       draw without touching the level, so a playtest can attribute a slow frame. */
+    const renderScale = clampScale(urlParams.get('scale'));
+    const multisample = urlParams.get('msaa') !== '0';
+    const pixelRatio = () => Math.min(window.devicePixelRatio, 2) * renderScale;
+    const renderer = new WebGPURenderer({ antialias: multisample, alpha: false, trackTimestamp: perfEnabled });
     stack.add(() => {
       renderer.domElement.remove();
       renderer.dispose();
@@ -144,7 +152,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     /* The runtime fills its frame, which the site nav insets from the top. */
     const viewWidth = () => app.clientWidth || window.innerWidth;
     const viewHeight = () => app.clientHeight || window.innerHeight;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(pixelRatio());
     renderer.setSize(viewWidth(), viewHeight());
     renderer.setClearColor(level.post?.clearColor ?? 0x02040a, 1);
     applyRenderConfig(renderer, level.render);
@@ -191,8 +199,6 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     setBloomLevel(readStoredPercent('pareto-rail-bloom', 100) / 100);
     setMotionBlurLevel(readStoredPercent('pareto-rail-motion-blur', 100) / 100);
     audio.installGestureStart(() => hud.setSoundActive(true));
-    const perfParam = urlParams.get('perf');
-    const perfEnabled = perfParam === '1' || (import.meta.env.DEV && perfParam !== '0');
     const perfOverlay = perfEnabled
       ? (await import('../ui/perf-overlay')).createPerfOverlay({ renderer, scene, bus, levelId: level.id })
       : null;
@@ -282,7 +288,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       freecam?.syncAspect(camera.aspect);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(pixelRatio());
       renderer.setSize(width, height);
     };
     /* Observing the frame rather than the window catches nav reflow and
@@ -344,4 +350,5 @@ function installUiVisibilityControls() {
 
 function canUseFullscreen() { return Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen); }
 async function setFullscreen(enabled: boolean) { try { if (enabled) await document.documentElement.requestFullscreen(); else if (document.fullscreenElement) await document.exitFullscreen(); } catch (error) { console.warn('Fullscreen request failed', error); } }
+function clampScale(raw: string | null) { const value = Number(raw); return raw !== null && Number.isFinite(value) && value > 0 ? Math.min(2, Math.max(0.25, value)) : 1; }
 function readStoredPercent(key: string, fallback: number) { const raw = localStorage.getItem(key); if (raw === null) return fallback; const value = Number(raw); return Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : fallback; }
