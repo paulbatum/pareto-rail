@@ -167,6 +167,8 @@ type GameplaySnapshotApi = {
     adapter: { vendor?: string; architecture?: string; device?: string; description?: string } | null;
     renderSize: { width: number; height: number; multisampled: boolean; samples: number };
     timestampAvailable: boolean;
+    /** Whether the renderer is drawing the shadow pass, so a probe records what it measured. */
+    shadowsEnabled: boolean;
   };
 };
 
@@ -281,7 +283,11 @@ const skipRenders = params.get('render') === 'sample';
 const trackTimestamps = params.get('timestamps') === '1';
 const hiddenObjectNames = readList(params.get('hide'));
 const droppedStageTypes = readList(params.get('dropStages'));
+/** `flatten=<material names>` swaps those materials for unlit ones, keeping the geometry and its depth coverage. */
+const flattenedMaterialNames = readList(params.get('flatten'));
 const velocityBufferOverride = readBooleanOverride(params.get('velocityBuffer'));
+/** `shadows=0` drops the shadow pass, another whole render of the scene. Matches the playtest knob. */
+const shadowsEnabled = params.get('shadows') !== '0';
 
 let renderer: SnapshotRenderer | null = null;
 let activeBackend: Backend = requestedBackend;
@@ -356,6 +362,7 @@ window.__gameplaySnapshot = {
         samples,
       },
       timestampAvailable: Boolean(internals?.backend?.trackTimestamp === true && typeof internals?.resolveTimestampsAsync === 'function'),
+      shadowsEnabled: renderer?.shadowMap.enabled ?? false,
     };
   },
 };
@@ -387,6 +394,7 @@ async function bootstrap() {
   renderer.setSize(width, height, false);
   renderer.setClearColor(selectedLevel.post?.clearColor ?? 0x02040a, 1);
   applyRenderConfig(renderer, selectedLevel.render);
+  if (!shadowsEnabled) renderer.shadowMap.enabled = false;
   await renderer.init();
   applyInitializedRenderConfig(renderer, selectedLevel.render);
   activeBackend = readActiveBackend(renderer);
@@ -474,6 +482,7 @@ async function bootstrap() {
 
   if (!showProjectiles) hideProjectiles(scene);
   hideNamedObjects(scene, hiddenObjectNames);
+  flattenNamedMaterials(scene, flattenedMaterialNames);
   if (fidelity === 'flat') replaceSceneMaterials(scene);
   if (fidelity === 'full') post = createPost(renderer, scene, camera, probePostConfig(selectedLevel.post));
 }
@@ -492,6 +501,25 @@ function hideNamedObjects(root: Scene, names: string[]) {
     if (!object) throw new Error(`hide: no scene object named "${name}"`);
     object.visible = false;
   }
+}
+
+/**
+ * Swaps the named materials for unlit ones. Unlike hiding an object this keeps the
+ * geometry, so what the meshes covered stays covered and the difference is the shading.
+ */
+function flattenNamedMaterials(root: Scene, names: string[]) {
+  if (names.length === 0) return;
+  const seen = new Set<string>();
+  root.traverse((object) => {
+    const renderable = object as RenderableObject;
+    const material = renderable.material;
+    if (!material || Array.isArray(material)) return;
+    if (!names.includes(material.name)) return;
+    seen.add(material.name);
+    renderable.material = createFallbackMaterial(material, renderable);
+  });
+  const missing = names.filter((name) => !seen.has(name));
+  if (missing.length > 0) throw new Error(`flatten: no scene material named ${missing.map((name) => `"${name}"`).join(', ')}`);
 }
 
 function startRunViaInput() {

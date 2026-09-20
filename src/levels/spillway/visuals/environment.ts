@@ -50,6 +50,12 @@ export type Environment = {
 
 type RiverBoulder = Obstacle & { s: number };
 
+/** Names an instanced field so the perf tools can price it with `--hide`. */
+const named = (name: string, group: Group) => {
+  group.name = name;
+  return group;
+};
+
 export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Environment {
   const root = new Group();
   root.name = 'spillway-world';
@@ -108,14 +114,14 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
   }
   const boulderPlacements: Placement[] = [...riverBoulders.map((b) => ({ position: b.position, scale: b.radius, yaw: rng() * 6.28 })), ...bankBoulders];
   // One mesh: the granite shader is expensive to compile, and every InstancedMesh compiles its own.
-  root.add(createInstancedField({
+  root.add(named('boulders', createInstancedField({
     geometry: createBoulderGeometry(17.3),
     material: granite,
     placements: boulderPlacements,
     groupOf: () => 0,
     castShadow: true,
     attributes: { waterY: (p) => waterLevelAt(p.position), sky: () => 0.55 },
-  }));
+  })));
 
   // ---- water ----
   const cascadeFrom = SPINE.find((sample) => sample.s > 900 && sample.y < -14)?.s ?? 0;
@@ -158,7 +164,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     }
   }
   scatterForest(pines, bounds, rng, tint);
-  root.add(createInstancedField({ geometry: pineGeometry, material: foliage, placements: pines, groupOf: routeBand, castShadow: true }));
+  root.add(named('pines', createInstancedField({ geometry: pineGeometry, material: foliage, placements: pines, groupOf: routeBand, castShadow: true })));
 
   const mouthA = damLocal(spineAt(GORGE_MOUTH_S).x, spineAt(GORGE_MOUTH_S).z).a;
   const lakeKnots = RAIL_KNOTS.filter((knot) => damLocal(knot.x, knot.z).a > mouthA - 40 && damLocal(knot.x, knot.z).a < 0);
@@ -185,7 +191,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     position.y = ground - 0.3;
     snags.push({ position, scale: rng() < 0.6 ? 0.2 + rng() * 0.15 : 0.45 + rng() * 0.4, yaw: rng() * 6.28, lean: (rng() - 0.5) * 0.5 });
   }
-  root.add(createInstancedField({ geometry: createSnagGeometry(rng, FOLIAGE.snag), material: foliage, placements: snags, groupOf: routeBand, castShadow: true }));
+  root.add(named('snags', createInstancedField({ geometry: createSnagGeometry(rng, FOLIAGE.snag), material: foliage, placements: snags, groupOf: routeBand, castShadow: true })));
 
   // ---- spray and the walker ----
   const spray = createSpray(renderer, { sprayCapacity: 24000, mistCapacity: 700 });

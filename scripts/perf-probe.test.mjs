@@ -47,7 +47,7 @@ test('GPU budget gate passes, fails over-budget, and fails missing timestamps', 
 test('report labels requested point and repeat', () => {
   const output = formatReport({
     level: { id: 'demo' },
-    options: { backend: 'webgpu', width: 10, height: 10, fidelity: 'full', frames: 1, repeats: 2, freeze: true, hide: [], dropStages: [], velocityBuffer: null, detail: false },
+    options: { backend: 'webgpu', width: 10, height: 10, fidelity: 'full', frames: 1, repeats: 2, freeze: true, hide: [], dropStages: [], flatten: [], velocityBuffer: null, shadows: true, detail: false },
     samples: [{ repeat: 2, requestedTime: 0.8, section: 'intro', t: 0.8, updateMs: 0, renderMs: 1, firstRenderMs: 1, gpuRenderMs: 2, gpuComputeMs: 1, gpuTotalMs: 3, gpuTotalP95Ms: 3, gpuSamples: 1, calls: 1, triangles: 3 }],
   });
   assert.match(output, /repeat requested/);

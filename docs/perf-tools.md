@@ -123,7 +123,11 @@ At each time (default: the midpoint of every section the level declares), the pr
 
 `--detail` prints every frame's render time with the renderer's pipeline and node-builder cache sizes. A frame whose sizes rise is a frame that compiled a shader; a size that falls and rises again across waves means the renderer evicted a shader and compiled it again (see `retainShaders` in `docs/level-authoring.md`).
 
-Three knobs help isolate costs: `--hide <names>` sets named scene objects invisible, `--drop-stages <types>` leaves those post stage types out of the chain, and `--no-velocity` builds the chain without the velocity buffer. Repeat the baseline: another process using the GPU can move the medians.
+Five knobs help isolate costs: `--hide <names>` sets named scene objects invisible, `--flatten <materials>` swaps named materials for unlit ones, `--drop-stages <types>` leaves those post stage types out of the chain, `--no-shadows` drops the shadow pass, and `--no-velocity` builds the chain without the velocity buffer. Repeat the baseline: another process using the GPU can move the medians, and two render tools must never run at once.
+
+Prefer `--flatten` to `--hide` when the question is what a shader costs. Hiding a mesh also removes its depth coverage, so whatever stood behind it is drawn instead and the two costs cancel out; flattening keeps the geometry and changes only the shading.
+
+A post stage can force the shadow pass back on: god rays raymarch the sun's shadow map, so the stage enables it whatever the renderer was set to. The report's `metadata.shadowsEnabled` records what actually rendered, so read it before believing a `--no-shadows` delta. To price the shadow pass on a level with god rays, drop that stage as well.
 
 ### Repeatable GPU stress checks
 
@@ -149,9 +153,10 @@ For an optimization investigation:
 
 1. Capture the intro and gameplay points at native-sized and stress-sized surfaces, with full postprocessing. Keep aspect ratio, seed, MSAA, and simulation time fixed. Increasing resolution stresses pixel shading and bandwidth; it does not emulate an integrated GPU's architecture.
 2. Warm up and repeat the baseline. If repeated medians differ by more than 5%, investigate GPU contention or clock changes before comparing small improvements. Do not run GPU captures in parallel.
-3. Remove one major cost at a time: a post stage, shadows, geometry, or a material's shading. Hiding a mesh also removes its depth coverage, so it does not isolate shader cost; a temporary cheap material preserving depth coverage is a better shader experiment.
+3. Remove one major cost at a time: a post stage, shadows, geometry, or a material's shading. Use `--flatten` rather than `--hide` for shader cost, since hiding a mesh also removes its depth coverage.
 4. Retest a candidate in alternating baseline/candidate order. Keep changes only when their savings exceed the baseline variation across repeats, and inspect matching images at normal resolution.
-5. Keep low-spec compatibility claims separate from the stress result. High-resolution desktop tests can find wasted work and catch regressions without a human capture loop; they cannot certify iPhone or integrated-GPU frame rates.
+5. Compare configurations at one high resolution. A small surface leaves the GPU idle between the probe's timestamped frames and it clocks down, which inflates every reading and hits a geometry-bound pass hardest: Spillway's shadow pass reads 0.88 ms at 1280x720 and 0.14 ms at 5120x2880, and a fixed-size shadow map cannot cost more when the output is smaller.
+6. Keep low-spec compatibility claims separate from the stress result. High-resolution desktop tests can find wasted work and catch regressions without a human capture loop; they cannot certify iPhone or integrated-GPU frame rates.
 
 ## Running two render tools at once
 

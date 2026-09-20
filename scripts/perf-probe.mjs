@@ -85,7 +85,9 @@ async function probeInBrowser(browser, baseUrl, options) {
     if (options.startScreen) url.searchParams.set('startScreen', '1');
     if (options.hide.length > 0) url.searchParams.set('hide', options.hide.join(','));
     if (options.dropStages.length > 0) url.searchParams.set('dropStages', options.dropStages.join(','));
+    if (options.flatten.length > 0) url.searchParams.set('flatten', options.flatten.join(','));
     if (options.velocityBuffer !== null) url.searchParams.set('velocityBuffer', options.velocityBuffer ? '1' : '0');
+    if (!options.shadows) url.searchParams.set('shadows', '0');
     await gotoOrExplain(page, url.href, { mode: options.mode, baseUrl });
     await page.evaluate(() => window.__gameplaySnapshot.ready);
     const metadata = await page.evaluate(() => window.__gameplaySnapshot.metadata());
@@ -112,6 +114,7 @@ async function probeInBrowser(browser, baseUrl, options) {
         adapter: metadata.adapter,
         renderSize: metadata.renderSize,
         timestampAvailable: metadata.timestampAvailable,
+        shadowsEnabled: metadata.shadowsEnabled,
       },
       options: publicOptions(options, metadata.backend),
       samples,
@@ -149,7 +152,9 @@ export function formatReport(report) {
   const knobs = [
     options.hide.length > 0 ? `hide ${options.hide.join(',')}` : '',
     options.dropStages.length > 0 ? `drop ${options.dropStages.join(',')}` : '',
+    options.flatten.length > 0 ? `flatten ${options.flatten.join(',')}` : '',
     options.velocityBuffer === null ? '' : `velocityBuffer ${options.velocityBuffer ? 'on' : 'off'}`,
+    options.shadows ? '' : 'shadows off',
   ].filter(Boolean).join('; ');
   lines.push(`Perf probe: ${report.level.id} on ${options.backend}, ${options.width}x${options.height}, fidelity ${options.fidelity}, ${options.frames} frames per point${options.repeats > 1 ? `, ${options.repeats} repeats` : ''}${options.freeze ? ', frozen' : ''}${knobs ? ` (${knobs})` : ''}`);
   lines.push(' repeat requested section   t   update  render   first   gpu.render gpu.compute gpu.total gpu.p95 samples calls    tris');
@@ -208,7 +213,9 @@ function publicOptions(options, backend) {
     times: options.times,
     hide: options.hide,
     dropStages: options.dropStages,
+    flatten: options.flatten,
     velocityBuffer: options.velocityBuffer,
+    shadows: options.shadows,
     detail: options.detail,
     maxGpuMs: options.maxGpuMs,
   };
@@ -229,7 +236,9 @@ function defaultOptions() {
     mode: defaultRenderMode(),
     hide: [],
     dropStages: [],
+    flatten: [],
     velocityBuffer: null,
+    shadows: true,
     detail: false,
     freeze: false,
     startScreen: false,
@@ -253,6 +262,10 @@ export function parseArgs(argv) {
     }
     if (key === 'no-velocity') {
       parsed.velocityBuffer = false;
+      continue;
+    }
+    if (key === 'no-shadows') {
+      parsed.shadows = false;
       continue;
     }
     if (key === 'detail') {
@@ -318,6 +331,9 @@ export function parseArgs(argv) {
         break;
       case 'hide':
         parsed.hide = value.split(',').map((item) => item.trim()).filter(Boolean);
+        break;
+      case 'flatten':
+        parsed.flatten = value.split(',').map((item) => item.trim()).filter(Boolean);
         break;
       case 'drop-stages':
         parsed.dropStages = value.split(',').map((item) => item.trim()).filter(Boolean);
@@ -390,7 +406,9 @@ Options:
   --gpu | --software          Real WebGPU pipeline (default) or the SwiftShader fallback
   --hide <names>              Scene objects (by name) set invisible before probing
   --drop-stages <types>       Post stage types left out of the chain
+  --flatten <materials>       Named materials swapped for unlit ones, keeping depth coverage
   --no-velocity               Build the post chain without the velocity buffer
+  --no-shadows                Drop the shadow pass
   --detail                    Print every frame's render time and GPU totals
   --json <path>               Write the samples as JSON
   --dt <seconds> --seed <integer>`);
