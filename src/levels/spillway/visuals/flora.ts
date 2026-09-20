@@ -17,6 +17,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { MeshStandardNodeMaterial } from 'three/webgpu';
 import type { Rng } from '../../../engine/rng';
 import { noise3 } from '../world';
+import { LOW_POLY } from './lowpoly';
 
 // Pines, drowned snags and boulders: instanced props placed by the
 // environment. Each factory takes the placements and returns meshes; where
@@ -167,7 +168,8 @@ export function createInstancedField(options: {
 }) {
   const group = new Group();
   const cells = new Map<number, Placement[]>();
-  for (const placement of options.placements) {
+  const placements = LOW_POLY ? options.placements.filter((_, index) => index % 4 === 0) : options.placements;
+  for (const placement of placements) {
     const key = options.groupOf(placement);
     const list = cells.get(key);
     if (list) list.push(placement);

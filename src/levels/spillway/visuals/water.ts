@@ -21,6 +21,7 @@ import {
 } from '../route';
 import { fbm2, wallProfile, wallSkyVisibility } from '../world';
 import { noise1, noise4 } from './noise';
+import { LOW_POLY } from './lowpoly';
 
 // Water surfaces, all one shading model: a lit, glossy surface whose ripples
 // and foam are advected by a per-vertex flow with the two-phase flow-map trick,
@@ -195,6 +196,11 @@ function buildRibbon(rows: RibbonRow[], columns: number) {
 }
 
 function chunked(rows: RibbonRow[], columns: number, rowsPerChunk: number, material: MeshStandardNodeMaterial, name: string) {
+  if (LOW_POLY) {
+    rows = rows.filter((_, index) => index % 3 === 0 || index === rows.length - 1);
+    columns = Math.max(3, Math.round(columns / 3));
+    rowsPerChunk = Math.max(1, Math.round(rowsPerChunk / 3));
+  }
   const group = new Group();
   group.name = name;
   for (let start = 0; start < rows.length - 1; start += rowsPerChunk) {

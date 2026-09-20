@@ -17,6 +17,7 @@ import { createSpray, type Spray } from './spray';
 import { createFarRange, createTerrain } from './terrain';
 import { createWalker, type WalkerColors, type WalkerModel, type WalkerWorld } from './walker';
 import { JET_REVEAL, createLake, createRiver, createRiverMaterial, createSpillwayWater, jetPoint, type Obstacle } from './water';
+import { LOW_POLY } from './lowpoly';
 
 // The world of the run, assembled: sky and sun, the gorge, the terrain, the
 // water, the dam and everything growing or lying on them. Placement and the
@@ -69,7 +70,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
   });
   ground.name = 'ground';
   const gorgeEnd = SPINE.findIndex((sample) => sample.s > GORGE_MOUTH_S + 200);
-  const gorge = createGorge({ from: 0, to: gorgeEnd, ringStride: 2, chunkRings: 60, material: granite });
+  const gorge = createGorge({ from: 0, to: gorgeEnd, ringStride: LOW_POLY ? 6 : 2, chunkRings: LOW_POLY ? 20 : 60, material: granite });
   root.add(gorge.group);
 
   const bounds = SPINE.reduce((box, sample) => ({
@@ -80,7 +81,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
     min: { x: bounds.minX - margin, z: bounds.minZ - margin },
     max: { x: bounds.maxX + margin, z: bounds.maxZ + margin },
     tileSize: 400,
-    cells: [[300, 7], [700, 18], [Infinity, 40]],
+    cells: LOW_POLY ? [[300, 21], [700, 54], [Infinity, 80]] : [[300, 7], [700, 18], [Infinity, 40]],
     material: ground,
   }));
   const farRange = createFarRange({ radius: 2500, peak: new Color(0x7f93a8), base: SKY.haze, seed: 3.7 });

@@ -2,6 +2,7 @@ import { BufferAttribute, BufferGeometry, Group, Mesh, Vector3 } from 'three';
 import type { Material } from 'three';
 import { SPINE, rightVector, type SpineSample } from '../route';
 import { wallDisplacement, wallProfile, wallSkyVisibility, type WallSide } from '../world';
+import { LOW_POLY } from './lowpoly';
 
 // Gorge walls lofted along the river from the cross-sections in world.ts.
 // Each profile segment is subdivided a fixed number of times, so every ring has
@@ -10,7 +11,8 @@ import { wallDisplacement, wallProfile, wallSkyVisibility, type WallSide } from 
 // columns and overhang lips come from.
 
 /** Subdivisions of each profile segment, from the underwater toe up to the tucked skirt. */
-const SEGMENT_STEPS = [2, 1, 2, 6, 6, 3, 8, 5, 4, 5, 3, 5, 4, 2, 3, 2, 1];
+const FULL_SEGMENT_STEPS = [2, 1, 2, 6, 6, 3, 8, 5, 4, 5, 3, 5, 4, 2, 3, 2, 1];
+const SEGMENT_STEPS = LOW_POLY ? FULL_SEGMENT_STEPS.map((steps) => Math.max(1, Math.round(steps / 4))) : FULL_SEGMENT_STEPS;
 
 export type LedgeSpot = { position: Vector3; side: WallSide; kind: 'ledge' | 'rim'; s: number };
 

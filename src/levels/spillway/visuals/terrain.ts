@@ -3,6 +3,7 @@ import type { Color, Material } from 'three';
 import { MeshBasicNodeMaterial } from 'three/webgpu';
 import { float, mix, positionLocal, smoothstep, vec3 } from 'three/tsl';
 import { fbm2, nearestSpine, terrainSample } from '../world';
+import { LOW_POLY } from './lowpoly';
 
 // Heightfield terrain around the gorge, the lake basin and the valley, in
 // square tiles whose resolution falls off with distance from the river.
@@ -109,7 +110,7 @@ function buildTile(x0: number, z0: number, size: number, cell: number) {
  * from every point on the route. Unlit; the colour is already the haze.
  */
 export function createFarRange(options: { radius: number; peak: Color; base: Color; seed: number }) {
-  const segments = 256;
+  const segments = LOW_POLY ? 64 : 256;
   const geometry = new CylinderGeometry(options.radius, options.radius, 1, segments, 6, true);
   const position = geometry.getAttribute('position');
   const point = new Vector3();
