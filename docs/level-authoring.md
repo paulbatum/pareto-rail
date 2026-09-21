@@ -284,8 +284,9 @@ To add god rays:
 
 1. In `createRuntime`, add a `DirectionalLight` or `PointLight` to the scene and give it a name. Configure its shadow camera and `shadow.mapSize` there; the raymarch runs only inside the shadow camera's volume, and the node reads the shadow map once when it builds.
 2. Set `castShadow = true` on the meshes that should cut the light. The rays are the lit volume between those cuts, so a light with only thin occluders in front of it reads as fog. Block most of the light and leave openings.
-3. Reference the light by `lightName`. The stage sets `castShadow` on the light, turns the renderer's shadow maps on, and adds a hidden shadow-receiving mesh named `post:shadow-receiver` so the map renders in a scene whose materials are all unlit.
-4. Scale `density` to the world. The node accumulates `density / 100` per world unit marched, and the camera far plane is 500, so values above about 0.06 saturate the frame. Keep `maxDensity` at or below 0.5; it is the fraction of each pixel replaced by `color`.
+3. Reference the light by `lightName`. The stage sets `castShadow` on the light, turns the renderer's shadow maps on, and adds a hidden shadow-receiving mesh named `post:shadow-receiver` so the map renders in a scene whose materials are all unlit. With shadow maps already switched off — `?shadows=0`, or the probe's `--no-shadows` — the stage is left out of the chain instead.
+4. `intensity` fades the whole effect: at 0 the frame is untouched and the raymarch and blur passes are skipped, so a level can fade its rays out and stop paying for them.
+5. Scale `density` to the world. The node accumulates `density / 100` per world unit marched, and the camera far plane is 500, so values above about 0.06 saturate the frame. Keep `maxDensity` at or below 0.5; it is the fraction of each pixel replaced by `color`.
 
 The freecam does not redirect the god rays camera. `radialBlur` with `lightName` and `threshold` gives screen-space shafts from a bright object without shadows; the stage fades out while the object is off screen or behind the camera.
 

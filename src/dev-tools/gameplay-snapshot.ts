@@ -15,6 +15,7 @@ import {
 import { WebGPURenderer, type WebGPURendererParameters } from 'three/webgpu';
 import { createEventBus } from '../events';
 import { createPost } from '../engine/post';
+import { withoutShadowDependentStages } from '../engine/post-stages';
 import { applyInitializedRenderConfig, applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
 import { collectPerfCounters, type PerfCounters } from '../engine/perf-counters';
 import type { Hud } from '../ui/hud';
@@ -286,7 +287,8 @@ const droppedStageTypes = readList(params.get('dropStages'));
 /** `flatten=<material names>` swaps those materials for unlit ones, keeping the geometry and its depth coverage. */
 const flattenedMaterialNames = readList(params.get('flatten'));
 const velocityBufferOverride = readBooleanOverride(params.get('velocityBuffer'));
-/** `shadows=0` drops the shadow pass, another whole render of the scene. Matches the playtest knob. */
+/** `shadows=0` drops the shadow pass, another whole render of the scene, and with it the post
+    stages that march the map. Matches the playtest knob. */
 const shadowsEnabled = params.get('shadows') !== '0';
 
 let renderer: SnapshotRenderer | null = null;
@@ -492,7 +494,8 @@ function probePostConfig(config: LevelDefinition['post']) {
   if (!config) return config;
   const stages = droppedStageTypes.length > 0 ? (config.stages ?? []).filter((stage) => !droppedStageTypes.includes(stage.type)) : config.stages;
   const velocityBuffer = velocityBufferOverride ?? config.velocityBuffer;
-  return { ...config, stages, velocityBuffer };
+  const withKnobs = { ...config, stages, velocityBuffer };
+  return shadowsEnabled ? withKnobs : withoutShadowDependentStages(withKnobs);
 }
 
 function hideNamedObjects(root: Scene, names: string[]) {

@@ -10,7 +10,7 @@ import { godrays } from 'three/addons/tsl/display/GodraysNode.js';
 import { lensflare } from 'three/addons/tsl/display/LensflareNode.js';
 import { radialBlur } from 'three/addons/tsl/display/radialBlur.js';
 import { rgbShift } from 'three/addons/tsl/display/RGBShiftNode.js';
-import type { LevelPostColorNode } from './types';
+import type { LevelPostColorNode, LevelPostConfig } from './types';
 
 /* Declarative post stages. `createPost` in ./post.ts builds each entry of
    `LevelPostConfig.stages` in order, after the level's composeOutput hook and
@@ -154,6 +154,18 @@ export type BuiltPostStage = {
   dispose?: () => void;
 };
 
+/* Stage types that raymarch a light's shadow map, so they turn the shadow pass on when built
+   and have nothing to march without it. */
+const SHADOW_DEPENDENT_STAGE_TYPES: readonly PostStageConfig['type'][] = ['godrays'];
+
+/* Shadows off is normally a level that never asked for them, and a god-ray stage is then right
+   to switch them on. The diagnostic knobs mean something else — draw no shadow pass — so they
+   drop those stages from the config rather than letting a stage put the pass back. */
+export function withoutShadowDependentStages<T extends LevelPostConfig | undefined>(config: T): T {
+  if (!config?.stages) return config;
+  return { ...config, stages: config.stages.filter((stage) => !SHADOW_DEPENDENT_STAGE_TYPES.includes(stage.type)) };
+}
+
 const SHADOW_RECEIVER_NAME = 'post:shadow-receiver';
 const RADIAL_FADE_START_NDC = 1.2;
 const RADIAL_FADE_END_NDC = 1.8;
@@ -292,9 +304,15 @@ function buildGodrays(config: GodraysStageConfig, input: LevelPostColorNode, con
     distanceAttenuation: floatParam(uniforms, 'distanceAttenuation', config.distanceAttenuation, 2),
   });
   const blurred = config.blur === false ? null : bilateralBlur(node.getTextureNode());
+  skipPassWhileZero(node, intensity);
+  if (blurred) skipPassWhileZero(blurred, intensity);
   const rays = blurred ? blurred.getTextureNode() : node.getTextureNode();
   const frame = convertToTexture(input);
-  const output = depthAwareBlend(frame, rays, context.depth, camera, { blendColor: color.mul(intensity) });
+  /* `intensity` fades the whole effect out, so it scales the blend rather than the colour fed
+     into it. Scaling the colour blends toward black instead, which left a dark veil over every
+     frame a level had faded its rays out of - and made the faded-out passes impossible to skip. */
+  const blended = depthAwareBlend(frame, rays, context.depth, camera, { blendColor: color });
+  const output = mix(frame, blended, intensity);
   return {
     name: config.name ?? config.type,
     uniforms,
@@ -327,6 +345,14 @@ function buildGodrays(config: GodraysStageConfig, input: LevelPostColorNode, con
       warmUpMaterial.dispose();
     },
   };
+}
+
+/* Both addon nodes render their pass from updateBefore, and nothing else in the frame drives
+   them. At exactly zero intensity the blend contributes nothing, so the passes can be skipped;
+   any value above zero renders before it is read, so the first visible frame is a fresh one. */
+function skipPassWhileZero<T extends Node>(node: T, intensity: UniformNode<'float', number>) {
+  const render = node.updateBefore.bind(node);
+  node.updateBefore = (frame) => (intensity.value === 0 ? undefined : render(frame));
 }
 
 /* three renders a light's shadow map only while a lit, shadow-receiving object is drawn.

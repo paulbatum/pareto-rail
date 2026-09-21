@@ -4,6 +4,7 @@ import type { RunSummary } from '../engine/scoring';
 import { GAME_FOV_DEGREES } from '../engine/lock-on-runner';
 import { createEventBus } from '../events';
 import { createPost, getBloomLevel, getMotionBlurLevel, setBloomLevel, setMotionBlurLevel } from '../engine/post';
+import { withoutShadowDependentStages } from '../engine/post-stages';
 import { applyInitializedRenderConfig, applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
 import { getStartScreenTip } from '../ui/client-tip';
 import { installDevErrorOverlay } from '../ui/dev-error-overlay';
@@ -158,8 +159,11 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     renderer.setSize(viewWidth(), viewHeight());
     renderer.setClearColor(level.post?.clearColor ?? 0x02040a, 1);
     applyRenderConfig(renderer, level.render);
-    /* `?shadows=0` drops the shadow pass, another whole render of the scene. */
-    if (urlParams.get('shadows') === '0') renderer.shadowMap.enabled = false;
+    /* `?shadows=0` drops the shadow pass, another whole render of the scene, and with it the post
+       stages that march the map — they would otherwise switch the pass back on. */
+    const shadowsEnabled = urlParams.get('shadows') !== '0';
+    if (!shadowsEnabled) renderer.shadowMap.enabled = false;
+    const postConfig = shadowsEnabled ? level.post : withoutShadowDependentStages(level.post);
     try {
       await renderer.init();
     } catch (error) {
@@ -251,7 +255,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     /* Built after the runtime so post stages can find the level's scene objects, such as a god-rays light. */
     /* `?post=0` renders the scene straight to the canvas, so a playtest capture can
        separate what the level's materials cost from what the post chain costs. */
-    const post = urlParams.get('post') === '0' ? null : createPost(renderer, scene, camera, level.post);
+    const post = urlParams.get('post') === '0' ? null : createPost(renderer, scene, camera, postConfig);
     let postEnabled = post !== null;
     if (post) {
       stack.add(() => post.dispose());

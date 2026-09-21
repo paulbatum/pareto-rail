@@ -127,7 +127,7 @@ Five knobs help isolate costs: `--hide <names>` sets named scene objects invisib
 
 Prefer `--flatten` to `--hide` when the question is what a shader costs. Hiding a mesh also removes its depth coverage, so whatever stood behind it is drawn instead and the two costs cancel out; flattening keeps the geometry and changes only the shading.
 
-A post stage can force the shadow pass back on: god rays raymarch the sun's shadow map, so the stage enables it whatever the renderer was set to. The report's `metadata.shadowsEnabled` records what actually rendered, so read it before believing a `--no-shadows` delta. To price the shadow pass on a level with god rays, drop that stage as well.
+God rays raymarch the sun's shadow map, so `--no-shadows` leaves a god-ray stage out of the chain as well: on such a level the delta prices the shadow pass and the rays together. Use `--drop-stages godrays` alone to price the rays by themselves. The report's `metadata.shadowsEnabled` records what actually rendered.
 
 ### Repeatable GPU stress checks
 
@@ -190,7 +190,7 @@ These query parameters change what the GPU is asked to draw, so a playtest on sl
 | `scale=<0.25-2>` | multiplies the device pixel ratio |
 | `msaa=0` | builds the renderer without multisampling |
 | `post=0` | renders the scene straight to the canvas, with no post chain |
-| `shadows=0` | drops the shadow pass |
+| `shadows=0` | drops the shadow pass, and any god-ray stage that marches it |
 | `hide=<names>` | takes named scene objects out of the frame; an unknown name is an error |
 
 ```text
