@@ -73,7 +73,7 @@ export type LevelPostConfig = {
   composeOutput?: (input: LevelPostComposeInput) => LevelPostColorNode;
   /** Screen-space stages run in this order after composeOutput and before the vignette. See src/engine/post-stages.ts. */
   stages?: PostStageConfig[];
-  /** Render a per-object velocity target with the scene and blur along it, in place of the camera-only depth-reprojection blur. */
+  /** Render per-object motion vectors with the scene and use the object motion blur in src/engine/motion-blur.ts in place of the depth-reprojection blur. */
   velocityBuffer?: boolean;
   /** Drawing-buffer pixel count above which the scene pass renders without multisampling. At that density a pixel is small enough that the edges MSAA smooths cost more than they show. Read when the post chain is built; a later resize does not change it. Default: always multisample when the renderer does. */
   multisampleMaxPixels?: number;

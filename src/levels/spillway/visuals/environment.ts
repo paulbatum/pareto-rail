@@ -252,7 +252,7 @@ export function createEnvironment(scene: Scene, renderer: WebGPURenderer): Envir
       walkerWorld.cameraQuaternion.copy(camera.quaternion);
       walker.update(runTime, dt, walkerWorld);
       // Fully drawn down by the time the camera reaches the gates: the flood tongue is shaped to meet it.
-      lake.breach.value = MathUtils.smoothstep(breach, 0, bar(1));
+      lake.breach.set(MathUtils.smoothstep(breach, 0, bar(1)));
       const floodTime = breach - FLOOD_DELAY;
       const front = floodTime > 0 ? 9 * floodTime + 12 * floodTime * floodTime : -100;
       spillwayWater.floodFront.value = front;

@@ -334,7 +334,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       if (!paused) runtime.update(dt, now / 1000);
       /* Outside the pause gate so the debug camera still flies over a stopped game. */
       freecam?.update(dt);
-      if (post && postEnabled) post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()) });
+      if (post && postEnabled) post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()), dt });
       else renderer.render(scene, camera);
       perfOverlay?.recordFrame(dtMs, now);
     });

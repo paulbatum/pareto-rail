@@ -55,6 +55,7 @@ Defaults are chosen for visual review:
 - projectiles are hidden, because volleys can cover the composition;
 - fidelity is `auto`, which tries `full`, then `postless`, then `flat`;
 - render size is `1280x720`.
+- with post on, the step before the capture is rendered too, so the still carries one step (`--dt`) of motion blur.
 
 Useful options:
 

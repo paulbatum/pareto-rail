@@ -1,10 +1,10 @@
-import { Matrix4, Vector2 } from 'three';
-import { RenderPipeline, WebGPURenderer, type MRTNode, type RenderTarget, type TextureNode, type UniformNode } from 'three/webgpu';
-import { clamp, float, int, length, max, min, mix, mrt, output, pass, screenUV, smoothstep, step, uniform, vec2, vec3, vec4, velocity } from 'three/tsl';
+import { MaterialBlending, Matrix4, Vector2 } from 'three';
+import { BlendMode, RenderPipeline, WebGPURenderer, type MRTNode, type RenderTarget, type TextureNode, type UniformNode } from 'three/webgpu';
+import { clamp, float, length, max, min, mix, mrt, output, pass, screenUV, smoothstep, step, uniform, vec2, vec3, vec4 } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
-import { motionBlur } from 'three/addons/tsl/display/MotionBlur.js';
 import type { Camera, Object3D, Scene } from 'three';
 import { sceneSampleCount } from './scene-samples';
+import { createMotionBlurState, motionVectors, objectMotionBlur } from './motion-blur';
 import { buildPostStage, type BuiltPostStage, type PostStageUniform } from './post-stages';
 import type { LevelPostColorNode, LevelPostConfig, LevelPostUvNode } from './types';
 
@@ -21,7 +21,6 @@ const DEFAULT_VIGNETTE_FLOOR = 0.18;
 const BLOOM_UI_SCALE = 0.75;
 const MOTION_BLUR_TAPS = 8;
 const MOTION_BLUR_MAX_VELOCITY_UV = 0.045;
-const VELOCITY_BLUR_SAMPLES = 16;
 const bloomRefs = new Map<ReturnType<typeof bloom>, number>();
 let bloomLevel = 1;
 let motionBlurLevel = 1;
@@ -56,13 +55,14 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
   const sceneColor = scenePass.getTextureNode();
   const sceneDepth = scenePass.getTextureNode('depth');
   const clipToPreviousClipUniform = uniform(new Matrix4());
+  const motion = config.velocityBuffer ? createMotionBlurState(motionBlurLevelUniform) : undefined;
   let velocityTexture: TextureNode | undefined;
-  if (config.velocityBuffer) {
-    scenePass.setMRT(mrt({ output, velocity }));
+  if (motion) {
+    scenePass.setMRT(mrt({ output, velocity: motionVectors(motion) }).setBlendMode('velocity', new BlendMode(MaterialBlending)));
     velocityTexture = scenePass.getTextureNode('velocity');
   }
-  const blurredScene = velocityTexture
-    ? createVelocityMotionBlur(sceneColor, velocityTexture)
+  const blurredScene = motion && velocityTexture
+    ? objectMotionBlur(sceneColor, velocityTexture, sceneDepth, motion)
     : createDepthReprojectionMotionBlur(sceneColor, sceneDepth, clipToPreviousClipUniform);
   const baseStrength = config.bloom?.strength ?? DEFAULT_BLOOM_STRENGTH;
   const bloomPass = bloom(
@@ -150,9 +150,14 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
       activeCamera = next;
       scenePass.camera = next;
       previousMatrixInitialized = false;
+      motion?.reset();
     },
-    render(options: { advanceMotionBlur?: boolean } = {}) {
-      if (options.advanceMotionBlur !== false && !velocityTexture) updateMotionBlurMatrix();
+    /** `dt` is the time since the previous frame; the object blur's shutter is a duration, so it needs it. */
+    render(options: { advanceMotionBlur?: boolean; dt?: number } = {}) {
+      if (options.advanceMotionBlur !== false) {
+        if (motion) motion.advance(activeCamera, options.dt ?? 1 / 60);
+        else updateMotionBlurMatrix();
+      }
       for (const stage of stages) stage.update?.(activeCamera);
       post.render();
     },
@@ -210,18 +215,6 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
       bloomRefs.delete(bloomPass);
     },
   };
-}
-
-/* Blur along the velocity the scene pass wrote for each pixel. Velocity is an NDC delta,
-   so half of it is the UV delta; the length clamp and the player's slider match the
-   depth-reprojection blur. The taps are spread symmetrically around the pixel. */
-function createVelocityMotionBlur(sceneTexture: TextureNode, velocityTexture: TextureNode) {
-  const uvVelocity = vec2(velocityTexture.x, velocityTexture.y.negate()).mul(0.5);
-  const velocityLength = length(uvVelocity);
-  const velocityScale = min(float(1), float(MOTION_BLUR_MAX_VELOCITY_UV).div(max(velocityLength, float(0.00001))));
-  const blurVelocity = uvVelocity.mul(velocityScale).mul(motionBlurLevelUniform);
-  const blurredScene = motionBlur(sceneTexture, blurVelocity, int(VELOCITY_BLUR_SAMPLES));
-  return mix(sceneTexture, blurredScene, motionBlurLevelUniform);
 }
 
 function createDepthReprojectionMotionBlur(

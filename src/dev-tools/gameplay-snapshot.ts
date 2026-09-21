@@ -317,7 +317,7 @@ window.__gameplaySnapshot = {
   async capture() {
     if (!renderer || !scene || !camera) throw new Error('Gameplay snapshot renderer is not ready');
     setRendererFrameTime(renderer, targetTime, fixedDt);
-    if (post) post.render();
+    if (post) post.render({ dt: fixedDt });
     else renderer.render(scene, camera);
     const luminance = measureLuminance(renderer.domElement);
     return {
@@ -482,13 +482,20 @@ async function bootstrap() {
 
   runtimeUpdate = runtime.update;
   if (!startScreen) startRunViaInput();
-  advanceRuntime(runtime.update, targetTime, fixedDt);
+  // Stop one step short: the post chain renders that frame so the capture has a previous frame to blur against.
+  const primeTime = Math.max(0, targetTime - fixedDt);
+  advanceRuntime(runtime.update, primeTime, fixedDt);
 
   if (!showProjectiles) hideProjectiles(scene);
   hideNamedObjects(scene, hiddenObjectNames);
   flattenNamedMaterials(scene, flattenedMaterialNames);
   if (fidelity === 'flat') replaceSceneMaterials(scene);
   if (fidelity === 'full') post = createPost(renderer, scene, camera, probePostConfig(selectedLevel.post));
+  if (post && primeTime < targetTime) {
+    setRendererFrameTime(renderer, currentElapsed, fixedDt);
+    post.render({ dt: fixedDt });
+  }
+  advanceRuntime(runtime.update, targetTime, fixedDt);
 }
 
 /** The level's post config with the probe knobs applied. */
@@ -566,13 +573,15 @@ async function stepPerformance(options: PerfStepOptions): Promise<PerfStepSample
     const step = Math.min(dt, targetTime - currentElapsed);
     currentElapsed += step;
     runtimeUpdate(step, currentElapsed);
-    if (!skipRenders) {
+    // A sampled step still renders its last two frames, so the target frame's motion blur spans one step.
+    const primes = skipRenders && post !== null && currentElapsed >= targetTime - dt - 0.000001 && currentElapsed < targetTime - 0.000001;
+    if (!skipRenders || primes) {
       const before = performance.now();
       setRendererFrameTime(renderer, currentElapsed, step);
       renderer.info?.reset?.();
-      if (post) post.render();
+      if (post) post.render({ dt: step });
       else renderer.render(scene, camera);
-      frameTimes.push(performance.now() - before);
+      if (!primes) frameTimes.push(performance.now() - before);
     }
   }
 
@@ -580,7 +589,7 @@ async function stepPerformance(options: PerfStepOptions): Promise<PerfStepSample
     const before = performance.now();
     setRendererFrameTime(renderer, currentElapsed, dt);
     renderer.info?.reset?.();
-    if (post) post.render();
+    if (post) post.render({ dt });
     else renderer.render(scene, camera);
     frameTimes.push(performance.now() - before);
   }
@@ -618,7 +627,7 @@ function stepRealtime(targetTime: number, dt: number): Promise<number[]> {
         runtimeUpdate(step, currentElapsed);
         setRendererFrameTime(renderer, currentElapsed, step);
         renderer.info?.reset?.();
-        if (post) post.render();
+        if (post) post.render({ dt: step });
         else renderer.render(scene, camera);
         requestAnimationFrame(frame);
       } catch (error) {
@@ -672,7 +681,7 @@ async function probePerformance(options: PerfProbeOptions): Promise<PerfProbeSam
     const renderStart = performance.now();
     setRendererFrameTime(renderer, currentElapsed, freeze ? 0 : dt);
     renderer.info?.reset?.();
-    if (post) post.render();
+    if (post) post.render({ dt, advanceMotionBlur: !freeze });
     else renderer.render(scene, camera);
     const renderMs = performance.now() - renderStart;
     if (measured) renderTimes.push(renderMs);

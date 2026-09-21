@@ -22,6 +22,7 @@ import {
 import { fbm2, wallProfile, wallSkyVisibility } from '../world';
 import { noise1, noise4 } from './noise';
 import { LOW_POLY } from './lowpoly';
+import { createDisplacementClock, displacedPosition } from '../../../engine/displaced-velocity';
 
 // Water surfaces, all one shading model: a lit, glossy surface whose ripples
 // and foam are advected by a per-vertex flow with the two-phase flow-map trick,
@@ -337,7 +338,8 @@ function pierPile(l: FloatNode, a: FloatNode) {
 }
 
 export function createLake(options: LakeOptions) {
-  const breach = uniform(0);
+  const breachClock = createDisplacementClock(0);
+  const breach = breachClock.current;
   const across = DAM.right;
   // Columns are fine across the spillway, where the breach pulls the water into each bay.
   const inner = DAM.spillwayHalfWidth + 12;
@@ -401,12 +403,13 @@ export function createLake(options: LakeOptions) {
     across: vec3(across.x, across.y, across.z),
   });
   material.name = 'water-lake';
-  material.positionNode = positionLocal.sub(vec3(0, breach.mul(distance.div(-DRAWDOWN.range).exp().mul(DRAWDOWN.depth).add(bay.mul(DRAWDOWN.bay))), 0));
+  const drawdown = distance.div(-DRAWDOWN.range).exp().mul(DRAWDOWN.depth).add(bay.mul(DRAWDOWN.bay));
+  material.positionNode = displacedPosition((position, amount) => position.sub(vec3(0, amount.mul(drawdown), 0)), breachClock);
   const mesh = new Mesh(geometry, material);
   mesh.name = 'lake';
   mesh.receiveShadow = true;
   mesh.userData.raildIgnoreOcclusion = true;
-  return { mesh, breach };
+  return { mesh, breach: breachClock };
 }
 
 const ramp = (a: FloatNode, b: FloatNode, x: FloatNode) => {
