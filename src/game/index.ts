@@ -259,6 +259,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     let postEnabled = post !== null;
     if (post) {
       stack.add(() => post.dispose());
+      perfOverlay?.setSceneSamples(() => (postEnabled ? post.sceneSamples() : renderer.samples));
       /* Compile every scene shader before the first frame, in parallel and off the main thread. */
       await post.compileAsync();
     } else {

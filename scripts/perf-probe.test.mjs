@@ -13,6 +13,21 @@ test('parses start-screen defaults and deterministic probe options', () => {
   assert.deepEqual(requestedTimes(options, { sections: [{ name: 'run', time: 4 }], duration: 10 }), [0.8]);
 });
 
+test('--no-msaa turns multisampling off, and the report names it and the effective scene samples', () => {
+  assert.equal(parseArgs(['--level', 'demo']).msaa, true);
+  const options = parseArgs(['--level', 'demo', '--no-msaa']);
+  assert.equal(options.msaa, false);
+  const output = formatReport({
+    level: { id: 'demo' },
+    metadata: { renderSize: { width: 10, height: 10, multisampled: false, samples: 0 } },
+    options: { ...options, backend: 'webgpu', width: 10, height: 10 },
+    samples: [],
+  });
+  assert.match(output, /msaa off/);
+  assert.match(output, /scene MSAA off/);
+  assert.match(formatReport({ level: { id: 'demo' }, metadata: { renderSize: { samples: 4 } }, options: parseArgs(['--level', 'demo']), samples: [] }), /scene MSAA 4x/);
+});
+
 test('accepts an ordered finite non-negative time list', () => {
   assert.deepEqual(parseArgs(['--level', 'demo', '--times', '0,0.5,2']).times, [0, 0.5, 2]);
 });

@@ -290,6 +290,8 @@ const velocityBufferOverride = readBooleanOverride(params.get('velocityBuffer'))
 /** `shadows=0` drops the shadow pass, another whole render of the scene, and with it the post
     stages that march the map. Matches the playtest knob. */
 const shadowsEnabled = params.get('shadows') !== '0';
+/** `msaa=0` builds the renderer without multisampling. Matches the playtest knob. */
+const multisampled = params.get('msaa') !== '0';
 
 let renderer: SnapshotRenderer | null = null;
 let activeBackend: Backend = requestedBackend;
@@ -340,8 +342,8 @@ window.__gameplaySnapshot = {
     const internals = renderer as SnapshotRendererInternals | null;
     const info = internals?.backend?.device?.adapterInfo;
     const drawing = renderer?.domElement;
-    // The scene pass inherits renderer.samples; currentSamples can describe the single-sample post output.
-    const samples = renderer?.samples ?? 0;
+    // With post on, the scene pass's own count, which multisampleMaxPixels can lower below renderer.samples.
+    const samples = post ? post.sceneSamples() : renderer?.samples ?? 0;
     return {
       duration: runDuration,
       fidelity,
@@ -385,7 +387,7 @@ async function bootstrap() {
   camera = new PerspectiveCamera(62, width / height, CAMERA_NEAR, resolveCameraFar(selectedLevel.render));
 
   const rendererParams = {
-    antialias: true,
+    antialias: multisampled,
     alpha: false,
     forceWebGL: requestedBackend === 'webgl',
     preserveDrawingBuffer: true,

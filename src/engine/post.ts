@@ -1,9 +1,10 @@
-import { Matrix4 } from 'three';
+import { Matrix4, Vector2 } from 'three';
 import { RenderPipeline, WebGPURenderer, type MRTNode, type RenderTarget, type TextureNode, type UniformNode } from 'three/webgpu';
 import { clamp, float, int, length, max, min, mix, mrt, output, pass, screenUV, smoothstep, step, uniform, vec2, vec3, vec4, velocity } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { motionBlur } from 'three/addons/tsl/display/MotionBlur.js';
 import type { Camera, Object3D, Scene } from 'three';
+import { sceneSampleCount } from './scene-samples';
 import { buildPostStage, type BuiltPostStage, type PostStageUniform } from './post-stages';
 import type { LevelPostColorNode, LevelPostConfig, LevelPostUvNode } from './types';
 
@@ -70,6 +71,7 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
     config.bloom?.threshold ?? DEFAULT_BLOOM_THRESHOLD,
     config.bloom?.radius ?? DEFAULT_BLOOM_RADIUS,
   );
+  if (config.bloom?.resolutionScale !== undefined) bloomPass.setResolutionScale(config.bloom.resolutionScale);
   bloomRefs.set(bloomPass, baseStrength);
 
   const post = new RenderPipeline(renderer);
@@ -101,6 +103,16 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
       .add(vignetteFloor);
     post.outputNode = composed.mul(vignette);
   }
+
+  /* Decided once, from the drawing buffer the chain is built for. Post shaders that read the
+     scene depth bake a multisampled or single-sampled binding when they build, so the count
+     must not change under them. A resize keeps the count; the next chain, after a reload or
+     level change, decides again. */
+  const drawingSize = renderer.getDrawingBufferSize(new Vector2());
+  const sceneSamples = sceneSampleCount(renderer.samples, drawingSize.x, drawingSize.y, config.multisampleMaxPixels);
+  const sceneTarget = scenePass as unknown as { options: { samples?: number }; renderTarget: RenderTarget };
+  sceneTarget.options.samples = sceneSamples;
+  sceneTarget.renderTarget.samples = sceneSamples;
 
   const currentViewProjection = new Matrix4();
   const currentViewProjectionInverse = new Matrix4();
@@ -151,7 +163,7 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
        a material would otherwise each build its node graph while the first build is pending. */
     async compileAsync() {
       const pass = scenePass as unknown as { renderTarget: RenderTarget; _mrt: MRTNode | null };
-      pass.renderTarget.samples = renderer.samples;
+      pass.renderTarget.samples = sceneSamples;
       pass.renderTarget.texture.type = renderer.getOutputBufferType();
       const firsts = new Map<string, Object3D>();
       const rest: Object3D[] = [];
@@ -180,6 +192,10 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
         renderer.setMRT(previousMrt);
         for (const object of culled) object.frustumCulled = true;
       }
+    },
+    /** MSAA samples the scene pass renders with, after `multisampleMaxPixels`; 0 is single-sampled. */
+    sceneSamples() {
+      return sceneSamples;
     },
     /** Uniforms of each configured stage, keyed by stage name then parameter name. */
     stages: stageUniforms,

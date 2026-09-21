@@ -120,6 +120,8 @@ export type GodraysStageConfig = PostStageBase & {
   resolutionScale?: number;
   /** Bilateral blur over the ray texture before compositing. Default true. */
   blur?: boolean;
+  /** Composite the rays with one lookup in the final pass instead of copying the frame and nudging each lookup away from depth edges. Cheaper at high resolution; rays can bleed a pixel or two across silhouettes. Default false. */
+  cheapComposite?: boolean;
 };
 
 export type PostStageConfig =
@@ -307,12 +309,17 @@ function buildGodrays(config: GodraysStageConfig, input: LevelPostColorNode, con
   skipPassWhileZero(node, intensity);
   if (blurred) skipPassWhileZero(blurred, intensity);
   const rays = blurred ? blurred.getTextureNode() : node.getTextureNode();
-  const frame = convertToTexture(input);
   /* `intensity` fades the whole effect out, so it scales the blend rather than the colour fed
      into it. Scaling the colour blends toward black instead, which left a dark veil over every
      frame a level had faded its rays out of - and made the faded-out passes impossible to skip. */
-  const blended = depthAwareBlend(frame, rays, context.depth, camera, { blendColor: color });
-  const output = mix(frame, blended, intensity);
+  let output: LevelPostColorNode;
+  if (config.cheapComposite) {
+    output = asColor(mix(input, vec4(color, 1), rays.r.mul(intensity)));
+  } else {
+    const frame = convertToTexture(input);
+    const blended = depthAwareBlend(frame, rays, context.depth, camera, { blendColor: color });
+    output = asColor(mix(frame, blended, intensity));
+  }
   return {
     name: config.name ?? config.type,
     uniforms,

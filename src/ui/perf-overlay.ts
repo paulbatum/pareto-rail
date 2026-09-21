@@ -35,7 +35,7 @@ export type PerfReport = {
   runDuration: number;
   /** Drawing surface in device pixels, and the ratio it was derived from. A frame time
       means nothing without it: the post chain and the shadow map scale with this. */
-  renderSize: { width: number; height: number; pixelRatio: number; multisampled: boolean };
+  renderSize: { width: number; height: number; pixelRatio: number; multisampled: boolean; samples: number };
   /** The adapter the browser handed the renderer, where it reports one. */
   adapter: GPUAdapterInfo | null;
   /** Diagnostic URL knobs in force. Empty means the capture is of the shipping frame. */
@@ -116,6 +116,7 @@ class PerfOverlay {
   private sweepConfigs: SweepConfig[] = [];
   private sweep: SweepRun | null = null;
   private readonly sweepButton: HTMLButtonElement;
+  private sceneSamples: (() => number) | null = null;
 
   constructor({ renderer, scene, bus, levelId, knobs }: PerfOverlayOptions) {
     this.renderer = renderer;
@@ -356,6 +357,11 @@ class PerfOverlay {
     };
   }
 
+  /** Reads the scene pass's MSAA samples once the post chain exists; without it the canvas's own count is reported. */
+  setSceneSamples(read: () => number) {
+    this.sceneSamples = read;
+  }
+
   /** What the numbers were measured on. Shared by both reports. */
   private environment() {
     const drawing = this.renderer.domElement;
@@ -363,13 +369,15 @@ class PerfOverlay {
       backend?: { parameters?: { antialias?: boolean }; device?: { adapterInfo?: GPUAdapterInfo } };
     }).backend;
     const info = backend?.device?.adapterInfo;
+    const samples = this.sceneSamples?.() ?? this.renderer.samples;
     return {
       levelId: this.levelId,
       renderSize: {
         width: drawing.width,
         height: drawing.height,
         pixelRatio: round(this.renderer.getPixelRatio(), 3),
-        multisampled: backend?.parameters?.antialias !== false,
+        multisampled: samples > 1,
+        samples,
       },
       adapter: info
         ? { vendor: info.vendor, architecture: info.architecture, device: info.device, description: info.description } as GPUAdapterInfo

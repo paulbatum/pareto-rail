@@ -62,6 +62,8 @@ export type LevelPostConfig = {
     strength?: number;
     threshold?: number;
     radius?: number;
+    /** Size of the bloom's first target as a fraction of the frame; its blur mips halve from there. Default 0.5. */
+    resolutionScale?: number;
   };
   vignette?: {
     inner?: number;
@@ -73,6 +75,8 @@ export type LevelPostConfig = {
   stages?: PostStageConfig[];
   /** Render a per-object velocity target with the scene and blur along it, in place of the camera-only depth-reprojection blur. */
   velocityBuffer?: boolean;
+  /** Drawing-buffer pixel count above which the scene pass renders without multisampling. At that density a pixel is small enough that the edges MSAA smooths cost more than they show. Read when the post chain is built; a later resize does not change it. Default: always multisample when the renderer does. */
+  multisampleMaxPixels?: number;
 };
 
 export type LevelToneMapping = 'none' | 'aces' | 'agx' | 'neutral';

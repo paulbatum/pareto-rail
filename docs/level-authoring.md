@@ -229,11 +229,14 @@ Shader compile cost is the main load-time risk for a detailed level, and it is w
 ```ts
 post?: {
   clearColor?: number;
-  bloom?: { strength?: number; threshold?: number; radius?: number };
+  bloom?: { strength?: number; threshold?: number; radius?: number; resolutionScale?: number };
   vignette?: { inner?: number; outer?: number; strength?: number } | false;
   composeOutput?: (input: LevelPostComposeInput) => LevelPostColorNode;
+  multisampleMaxPixels?: number;
 };
 ```
+
+Two fields trade fidelity for fill cost at high resolution. `bloom.resolutionScale` (default 0.5) sizes the bloom's first target; lower is cheaper and slightly softer. `multisampleMaxPixels` turns off the scene pass's MSAA when the drawing buffer has more pixels than that. It is read once, when the post chain is built, so a resize across the threshold keeps the earlier choice until the next reload or level change.
 
 The bloom `threshold` and `radius` fields reach three's bloom node in swapped order: `threshold` sets the blur radius (0 to 1) and `radius` sets the luminance cutoff. Every level is tuned against this behaviour, so the engine keeps it; tune each field for what it actually does. A `threshold` above about 1.2 drives the bloom negative and leaves black holes.
 

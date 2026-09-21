@@ -73,10 +73,12 @@ export const spillwayLevel: LevelDefinition = {
     // `threshold` is the blur radius and `radius` the luminance cutoff (see the bloom
     // note under "Post-processing" in docs/level-authoring.md): only the sun and
     // water glints bloom.
-    bloom: { strength: 0.35, threshold: 0.4, radius: 2 },
+    bloom: { strength: 0.35, threshold: 0.4, radius: 2, resolutionScale: 0.25 },
     vignette: { inner: 0.45, outer: 1.2, strength: 0.4 },
+    // Above 4K UHD the scene pass stops multisampling: 5K-class buffers pay ~0.4 ms for it on a 4090.
+    multisampleMaxPixels: 9_000_000,
     stages: [
-      { type: 'godrays', lightName: 'sun', color: [1, 0.9, 0.76], intensity: godrayIntensity, density: 0.45, maxDensity: 0.3, distanceAttenuation: 1.2, resolutionScale: 0.25, raymarchSteps: 48 },
+      { type: 'godrays', lightName: 'sun', color: [1, 0.9, 0.76], intensity: godrayIntensity, density: 0.45, maxDensity: 0.3, distanceAttenuation: 1.2, resolutionScale: 0.125, raymarchSteps: 48, cheapComposite: true },
       { type: 'lensflare', strength: 0.3, threshold: 1.2, tint: [0.85, 0.92, 1], ghostAttenuation: 30 },
     ],
   },
