@@ -33,6 +33,8 @@ Stack: Vite + strict TypeScript + three.js **WebGPU only** (`WebGPURenderer` fro
 
 Headless Chrome in WSL2 cannot render WebGPU, so the snapshot tools drive a GPU browser on the Windows side and render the pipeline the game ships; see `docs/visual-tools.md` for the setup they need and the reduced-fidelity fallback. Use them for self-review. Final visual and audio quality still needs a human playtest — a still frame does not carry motion, feel, or sound.
 
+For level optimization, start with `docs/level-performance-workflow.md`; measurement commands and report formats live in `docs/perf-tools.md`.
+
 ## Keeping docs current
 
 When adding or changing repo tools, update the appropriate human-facing docs in the same change. For level-building tools this usually means `docs/level-authoring.md` or `docs/level-brief.md`; edit `AGENTS.md` only when the guidance is broadly useful across repo tasks.

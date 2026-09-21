@@ -2,6 +2,8 @@
 
 Use the headless gate for resource growth and draw-call budgets. Use the GPU probe for rendering cost, including levels that are already slow on the start screen. Passing the headless gate does not establish acceptable performance on integrated or mobile GPUs.
 
+For choosing experiments, controlling measurement noise, and validating quality tradeoffs, follow the [level performance workflow](level-performance-workflow.md).
+
 ## Headless performance gate
 
 ```sh
@@ -149,14 +151,7 @@ To make an unattended run flag expensive scenes, add `--max-gpu-ms <budget>`. Th
 
 Calibrate the budget on the machine that runs the check. For example, `--max-gpu-ms 2` at 5120×2880 is a local review threshold on the RTX 4090, not a 2 ms target for a phone and not part of the benchmark acceptance gate. Compare representative scenes from smooth control levels at the same settings before choosing a threshold.
 
-For an optimization investigation:
-
-1. Capture the intro and gameplay points at native-sized and stress-sized surfaces, with full postprocessing. Keep aspect ratio, seed, MSAA, and simulation time fixed. Increasing resolution stresses pixel shading and bandwidth; it does not emulate an integrated GPU's architecture.
-2. Warm up and repeat the baseline. If repeated medians differ by more than 5%, investigate GPU contention or clock changes before comparing small improvements. Do not run GPU captures in parallel.
-3. Remove one major cost at a time: a post stage, shadows, geometry, or a material's shading. Use `--flatten` rather than `--hide` for shader cost, since hiding a mesh also removes its depth coverage.
-4. Retest a candidate in alternating baseline/candidate order. Keep changes only when their savings exceed the baseline variation across repeats, and inspect matching images at normal resolution.
-5. Compare configurations at one high resolution. A small surface leaves the GPU idle between the probe's timestamped frames and it clocks down, which inflates every reading and hits a geometry-bound pass hardest: Spillway's shadow pass reads 0.88 ms at 1280x720 and 0.14 ms at 5120x2880, and a fixed-size shadow map cannot cost more when the output is smaller.
-6. Keep low-spec compatibility claims separate from the stress result. High-resolution desktop tests can find wasted work and catch regressions without a human capture loop; they cannot certify iPhone or integrated-GPU frame rates.
+Follow the [level performance workflow](level-performance-workflow.md) for baseline selection, alternating A/B runs, cost isolation, and visual review. GPU timestamps are not display-capped, but their durations still depend on GPU clocks: a lighter workload can downclock and appear slower. Record clock state when repeats drift, keep the full repeat range, and do not infer lower-end hardware performance from a desktop stress test.
 
 ## Running two render tools at once
 
@@ -210,4 +205,4 @@ A positive delta can mean that hiding an opaque object exposed expensive fragmen
 
 GPU timestamps lag the frame that produced them, so each block discards its first frames; that is why the sweep holds a configuration rather than alternating per frame.
 
-Frame intervals become uninformative when the browser hits its refresh cap; correctly resolved GPU timestamps do not. For desktop investigations, use the frozen GPU probe at higher resolution rather than relying on capped FPS. Treat the intro as its own reproducible case when it is slow, and test later gameplay separately. The sweep continues advancing the scene while configurations change, so its deltas are leads for investigation, not controlled before/after results.
+Frame intervals become uninformative below the display refresh limit. GPU timestamps measure pass duration without that limit, but clock changes can still confound comparisons. Treat the intro as its own reproducible case when it is slow, and test later gameplay separately. The sweep continues advancing the scene while configurations change, so its deltas are leads for investigation, not controlled before/after results.
