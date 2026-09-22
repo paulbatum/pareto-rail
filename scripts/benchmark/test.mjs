@@ -31,11 +31,14 @@ const hash = (character) => character.repeat(64);
 
 assert.equal(unpricedReasonFor(['thinkingmachines/inkling:free']), null);
 assert.equal(unpricedReasonFor(['stealth/ox-alpha']), null);
-assert.match(unpricedReasonFor(['stealth/union-alpha']), /zero price/);
+assert.equal(unpricedReasonFor(['stealth/union-alpha']), null);
 const zeroCostSummary = (modelName) => ({ sessionCount: 1, totalTokens: 10, totalUsd: 0, models: [{ modelName, costUsd: 0 }] });
-assert.equal(assertMeasurable(zeroCostSummary('stealth/union-alpha')).totalUsd, 0);
 assert.throws(() => assertMeasurable(zeroCostSummary('moonshotai/kimi-k3')), /zero cost/);
-assert.equal(unpricedReasonFor(['z-ai/glm-5.3-flash', 'stealth/union-alpha']) !== null, true);
+assert.equal(costBasisFor(['stealth/union-alpha']), 'rate-card');
+assert.equal(
+  rateCardCost({ inputTokens: 1_000_000, outputTokens: 1_000_000, cacheReadTokens: 1_000_000 }, 'stealth/union-alpha'),
+  10.25,
+);
 assert.equal(costBasisFor(['stealth/ox-alpha']), 'rate-card');
 assert.equal(costBasisFor(['thinkingmachines/inkling:free']), 'rate-card');
 assert.equal(costBasisFor(['thinkingmachines/inkling']), 'metered');

@@ -780,6 +780,7 @@
       "levelId": "speedsolve-28fr",
       "themeId": "speedsolve",
       "configurationId": "pi-openrouter-union-alpha-high",
+      "retired": true,
       "files": [
         {
           "path": "runs/run-7jg3l68bgi/stages/solo/pi/rollout.jsonl",
@@ -888,6 +889,7 @@
       "levelId": "vespers-nolz",
       "themeId": "vespers",
       "configurationId": "pi-openrouter-union-alpha-high",
+      "retired": true,
       "files": [
         {
           "path": "runs/run-aq1wyzsp3l/stages/solo/pi/rollout.jsonl",
@@ -978,6 +980,7 @@
       "levelId": "tinker-ball-x9a0",
       "themeId": "tinker-ball",
       "configurationId": "pi-openrouter-union-alpha-high",
+      "retired": true,
       "files": [
         {
           "path": "runs/run-cdglws4sxc/stages/solo/pi/rollout.jsonl",
@@ -1136,6 +1139,7 @@
       "levelId": "strandline-u4wm",
       "themeId": "strandline",
       "configurationId": "pi-openrouter-union-alpha-high",
+      "retired": true,
       "files": [
         {
           "path": "runs/run-kk5bob0rfo/stages/solo/pi/rollout.jsonl",
@@ -1208,6 +1212,7 @@
       "levelId": "thermal-ink-184u",
       "themeId": "thermal-ink",
       "configurationId": "pi-openrouter-union-alpha-high",
+      "retired": true,
       "files": [
         {
           "path": "runs/run-nqw47y4pzu/stages/solo/pi/rollout.jsonl",
@@ -1659,6 +1664,7 @@
       "levelId": "broadside-86kh",
       "themeId": "broadside",
       "configurationId": "pi-openrouter-union-alpha-high",
+      "retired": true,
       "files": [
         {
           "path": "runs/run-vi207g6wxh/stages/solo/pi/rollout.jsonl",

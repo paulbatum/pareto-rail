@@ -13,6 +13,7 @@ const featuredModelsPath = path.join(root, 'src/app/featured-models.md');
 const publicModelNames = new Map([
   ['stealth/ox-alpha', 'z-ai/glm-5.3-flash'],
   ['meta/muse-spark-1.3-contributor', 'meta/muse-spark-1.3'],
+  ['stealth/union-alpha', 'unbiased/pareto'],
 ]);
 
 export const configurationLabels = {
@@ -171,11 +172,11 @@ export const configurationLabels = {
     workflowSummary: 'One fresh unattended pi session driving Muse Spark 1.3 over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
   'pi-openrouter-union-alpha-high': {
-    modelName: 'Union Alpha',
+    modelName: 'Unbiased Pareto',
     workflowName: 'solo',
-    primaryModel: 'stealth/union-alpha',
+    primaryModel: 'unbiased/pareto',
     effort: 'high',
-    workflowSummary: 'One fresh unattended pi session driving Union Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
+    workflowSummary: 'One fresh unattended pi session driving Unbiased Pareto over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
   },
   'pi-openrouter-kimi-k3-max': {
     modelName: 'Kimi K3',

@@ -61,16 +61,16 @@
         "cacheReadInputTokens": 6574665
       },
       "pricing": {
-        "status": "unavailable",
-        "reason": "OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session."
+        "status": "measured",
+        "costUsd": 3.15979875,
+        "source": "rate-card"
       }
     }
   ],
   "cost": {
     "currency": "USD",
-    "status": "unavailable",
-    "unavailableReason": "OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session.",
-    "orchestrationTreatment": "unavailable",
+    "status": "measured",
+    "orchestrationTreatment": "none",
     "reconciliation": {
       "status": "agreed",
       "source": "harness result event modelUsage"
@@ -79,12 +79,21 @@
       {
         "modelName": "stealth/union-alpha",
         "usageSource": "agreed",
+        "costUsd": 3.15979875,
         "inputTokens": 388089,
         "outputTokens": 72788,
         "cacheReadTokens": 6574665,
         "cacheWriteTokens": 0
       }
-    ]
+    ],
+    "totalUsd": 3.15979875,
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.17",
+      "view": "pi",
+      "command": "ccusage pi session --json",
+      "basis": "rate-card"
+    }
   },
   "gates": [
     {

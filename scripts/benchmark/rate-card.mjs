@@ -6,6 +6,12 @@ const GLM_53_FLASH_RATES = Object.freeze({
   cacheRead: 0.03 / 1_000_000,
 });
 
+const PARETO_RATES = Object.freeze({
+  input: 2.50 / 1_000_000,
+  output: 7.50 / 1_000_000,
+  cacheRead: 0.25 / 1_000_000,
+});
+
 const MUSE_SPARK_1_3_RATES = Object.freeze({
   input: 1.25 / 1_000_000,
   output: 4.25 / 1_000_000,
@@ -18,6 +24,8 @@ export const RATE_CARD_MODELS = new Set([
   'thinkingmachines/inkling:free',
   'stealth/ox-alpha',
   'z-ai/glm-5.3-flash',
+  'stealth/union-alpha',
+  'unbiased/pareto',
 ]);
 
 const MODEL_RATES = new Map([
@@ -25,6 +33,8 @@ const MODEL_RATES = new Map([
   ['meta/muse-spark-1.3-contributor', MUSE_SPARK_1_3_RATES],
   ['meta/muse-spark-1.3', MUSE_SPARK_1_3_RATES],
   ['z-ai/glm-5.3-flash', GLM_53_FLASH_RATES],
+  ['stealth/union-alpha', PARETO_RATES],
+  ['unbiased/pareto', PARETO_RATES],
 ]);
 
 // Replace a provider-reported cost for any model with its published rate-card value. Token counts
@@ -57,9 +67,7 @@ export function rateCardCost({ inputTokens = 0, outputTokens = 0, cacheReadToken
 
 // A cloaked model is published without a price, so a run on one records its cost as unavailable:
 // token counts stand, no dollar figure exists. Remove the entry once the model is named and priced.
-const UNPRICED_MODELS = new Map([
-  ['stealth/union-alpha', 'OpenRouter publishes stealth/union-alpha at a zero price and bills nothing for it, so no charge or published rate exists to value the session.'],
-]);
+const UNPRICED_MODELS = new Map([]);
 
 export function unpricedReasonFor(modelNames) {
   for (const modelName of modelNames) {

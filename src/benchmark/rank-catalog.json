@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T04:28:29.846Z",
+  "generatedAt": "2026-09-22T14:46:43.073Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -180,11 +180,11 @@
     },
     {
       "id": "pi-openrouter-union-alpha-high",
-      "modelName": "Union Alpha",
+      "modelName": "Unbiased Pareto",
       "workflowName": "solo",
-      "primaryModel": "stealth/union-alpha",
+      "primaryModel": "unbiased/pareto",
       "effort": "high",
-      "workflowSummary": "One fresh unattended pi session driving Union Alpha over OpenRouter, where it is published as a cloaked model of undisclosed origin. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+      "workflowSummary": "One fresh unattended pi session driving Unbiased Pareto over OpenRouter. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "pi-openrouter-kimi-k3-max",
@@ -1334,31 +1334,34 @@
       "levelId": "broadside-86kh",
       "themeId": "broadside",
       "configurationId": "pi-openrouter-union-alpha-high",
-      "modelName": "Union Alpha",
+      "modelName": "Unbiased Pareto",
       "workflowName": "solo",
+      "generationCost": 1.72176625,
       "linesOfCode": 510,
       "run": {
         "generationWallTimeSeconds": 864.257,
         "totalWallTimeSeconds": 947.464,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.85.0"
         },
         "models": [
           {
-            "modelName": "stealth/union-alpha",
+            "modelName": "unbiased/pareto",
             "role": "solo",
             "inputTokens": 387637,
             "outputTokens": 20789,
             "cacheReadTokens": 2387025,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 1.72176625
           }
         ]
       },
       "thumbnailPath": "/level-content/broadside-86kh/hero.avif",
+      "retired": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "149be2a4befac6738055b51fd1a983eb16a5e8ab"
     },
@@ -2580,31 +2583,34 @@
       "levelId": "strandline-u4wm",
       "themeId": "strandline",
       "configurationId": "pi-openrouter-union-alpha-high",
-      "modelName": "Union Alpha",
+      "modelName": "Unbiased Pareto",
       "workflowName": "solo",
+      "generationCost": 1.23915275,
       "linesOfCode": 469,
       "run": {
         "generationWallTimeSeconds": 762.736,
         "totalWallTimeSeconds": 787.661,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.85.0"
         },
         "models": [
           {
-            "modelName": "stealth/union-alpha",
+            "modelName": "unbiased/pareto",
             "role": "solo",
             "inputTokens": 269246,
             "outputTokens": 18130,
             "cacheReadTokens": 1720251,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 1.23915275
           }
         ]
       },
       "thumbnailPath": "/level-content/strandline-u4wm/hero.avif",
+      "retired": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "149be2a4befac6738055b51fd1a983eb16a5e8ab"
     },
@@ -2747,31 +2753,34 @@
       "levelId": "speedsolve-28fr",
       "themeId": "speedsolve",
       "configurationId": "pi-openrouter-union-alpha-high",
-      "modelName": "Union Alpha",
+      "modelName": "Unbiased Pareto",
       "workflowName": "solo",
+      "generationCost": 3.07642375,
       "linesOfCode": 332,
       "run": {
         "generationWallTimeSeconds": 1908.323,
         "totalWallTimeSeconds": 8120.598,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.85.0"
         },
         "models": [
           {
-            "modelName": "stealth/union-alpha",
+            "modelName": "unbiased/pareto",
             "role": "solo",
             "inputTokens": 639296,
             "outputTokens": 47479,
             "cacheReadTokens": 4488365,
             "cacheWriteTokens": 0,
-            "usageSource": "ccusage"
+            "usageSource": "ccusage",
+            "costUsd": 3.07642375
           }
         ]
       },
       "thumbnailPath": "/level-content/speedsolve-28fr/hero.avif",
+      "retired": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "7ab2988501cd03c91e6e8152c50bbd8731a85d3e"
     },
@@ -3186,31 +3195,34 @@
       "levelId": "vespers-nolz",
       "themeId": "vespers",
       "configurationId": "pi-openrouter-union-alpha-high",
-      "modelName": "Union Alpha",
+      "modelName": "Unbiased Pareto",
       "workflowName": "solo",
+      "generationCost": 1.4633065,
       "linesOfCode": 568,
       "run": {
         "generationWallTimeSeconds": 1077.06,
         "totalWallTimeSeconds": 1111.334,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.85.0"
         },
         "models": [
           {
-            "modelName": "stealth/union-alpha",
+            "modelName": "unbiased/pareto",
             "role": "solo",
             "inputTokens": 308489,
             "outputTokens": 25818,
             "cacheReadTokens": 1993796,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 1.4633065
           }
         ]
       },
       "thumbnailPath": "/level-content/vespers-nolz/hero.avif",
+      "retired": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -3354,31 +3366,34 @@
       "levelId": "thermal-ink-184u",
       "themeId": "thermal-ink",
       "configurationId": "pi-openrouter-union-alpha-high",
-      "modelName": "Union Alpha",
+      "modelName": "Unbiased Pareto",
       "workflowName": "solo",
+      "generationCost": 4.29098425,
       "linesOfCode": 588,
       "run": {
         "generationWallTimeSeconds": 2324.241,
         "totalWallTimeSeconds": 2393.074,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.85.0"
         },
         "models": [
           {
-            "modelName": "stealth/union-alpha",
+            "modelName": "unbiased/pareto",
             "role": "solo",
             "inputTokens": 1075443,
             "outputTokens": 39308,
             "cacheReadTokens": 5230267,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 4.29098425
           }
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-184u/hero.avif",
+      "retired": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -3903,31 +3918,34 @@
       "levelId": "tinker-ball-x9a0",
       "themeId": "tinker-ball",
       "configurationId": "pi-openrouter-union-alpha-high",
-      "modelName": "Union Alpha",
+      "modelName": "Unbiased Pareto",
       "workflowName": "solo",
+      "generationCost": 3.15979875,
       "linesOfCode": 598,
       "run": {
         "generationWallTimeSeconds": 2369.321,
         "totalWallTimeSeconds": 2432.852,
         "result": "completed",
-        "orchestrationTreatment": "unavailable",
+        "orchestrationTreatment": "none",
         "harness": {
           "name": "pi",
           "version": "0.85.0"
         },
         "models": [
           {
-            "modelName": "stealth/union-alpha",
+            "modelName": "unbiased/pareto",
             "role": "solo",
             "inputTokens": 388089,
             "outputTokens": 72788,
             "cacheReadTokens": 6574665,
             "cacheWriteTokens": 0,
-            "usageSource": "agreed"
+            "usageSource": "agreed",
+            "costUsd": 3.15979875
           }
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-x9a0/hero.avif",
+      "retired": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
