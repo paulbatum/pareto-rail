@@ -50,6 +50,7 @@ Every configuration id, what it composes, and what it is for. Model and effort a
 | `claude-opus-4-8-high` | `claude-opus-4-8` @ high | — | Opus 4.8 against Fable on the same harness. |
 | `claude-opus-4-8-high-b20` | `claude-opus-4-8` @ high | budget $20 | Budget variant of the above. |
 | `claude-opus-5-high` | `claude-opus-5` @ high | — | Opus 5 on the same harness. |
+| `claude-opus-5-5-high` | `claude-opus-5-5` @ high | — | Opus 5.5 on the same harness, against `claude-opus-5-high`. |
 | `codex-sol-high` | `gpt-5.6-sol` @ high | — | Codex solo baseline. |
 | `codex-sol-high-b20` | `gpt-5.6-sol` @ high | budget $20 | Budget variant of the above. |
 | `codex-sol-max` | `gpt-5.6-sol` @ max | — | Reasoning effort against `codex-sol-high`, nothing else varied. |
