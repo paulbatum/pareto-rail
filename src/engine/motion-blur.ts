@@ -1,12 +1,14 @@
-import { HalfFloatType, Matrix4, NearestFilter, Vector2, type Camera, type Object3D } from 'three';
+import { HalfFloatType, Matrix4, NearestFilter, Vector2, type Camera, type InstancedMesh, type Object3D } from 'three';
 import { NodeMaterial, NodeUpdateType, QuadMesh, RenderTarget, RendererUtils, TempNode, type Node, type NodeBuilder, type NodeFrame, type TextureNode } from 'three/webgpu';
 import {
+  buffer,
   cameraProjectionMatrix,
   clamp,
   float,
   Fn,
   fract,
   If,
+  instanceIndex,
   int,
   length,
   Loop,
@@ -112,9 +114,37 @@ export function createMotionBlurState(level: Node<'float'>) {
 type ObjectHistory = { previous: Matrix4; previousFrame: number; current: Matrix4; currentFrame: number };
 const histories = new WeakMap<Object3D, ObjectHistory>();
 
+/* three 0.185 refills its previous instance matrices with the current ones before every
+   draw, so instances that move by rewriting their matrices report no motion of their own.
+   The engine keeps its own history and, before each draw, the per-instance transform from
+   this frame's matrix back to last frame's; applied to three's `positionPrevious`, it keeps
+   any displacement that position carries. It lives in a uniform buffer, so an instanced
+   mesh above this count keeps three's behaviour. */
+const MAX_TRACKED_INSTANCES = 1024;
+type InstanceHistory = { previous: Float32Array; previousFrame: number; current: Float32Array; currentFrame: number; back: Float32Array };
+const instanceHistories = new WeakMap<InstancedMesh, InstanceHistory>();
+const _current = new Matrix4();
+const _previous = new Matrix4();
+
+function instanceHistory(mesh: InstancedMesh) {
+  let history = instanceHistories.get(mesh);
+  if (!history) {
+    const size = mesh.instanceMatrix.array.length;
+    const back = new Float32Array(size);
+    for (let i = 0; i < size; i += 16) back[i] = back[i + 5] = back[i + 10] = back[i + 15] = 1;
+    history = { previous: new Float32Array(size), previousFrame: -1, current: new Float32Array(size), currentFrame: -1, back };
+    instanceHistories.set(mesh, history);
+  }
+  return history;
+}
+
+function tracksInstances(object: Object3D | null | undefined): object is InstancedMesh {
+  return (object as InstancedMesh | undefined)?.isInstancedMesh === true && (object as InstancedMesh).instanceMatrix.count <= MAX_TRACKED_INSTANCES;
+}
+
 /* Screen motion of each vertex since the previous frame, as an NDC delta, for the scene
-   pass's `velocity` attachment. The attachment name is what three checks to supply the
-   previous instance matrices, skinning and `positionPrevious`. An object that was not
+   pass's `velocity` attachment. The attachment name is what three checks to supply
+   skinning and `positionPrevious`. An object that was not
    drawn last frame reports no motion of its own. Transparent materials write zero with
    zero alpha, which the attachment's material blending turns into "keep what is behind". */
 class MotionVectorNode extends TempNode {
@@ -140,6 +170,20 @@ class MotionVectorNode extends TempNode {
       else if (history.currentFrame === frame && history.previousFrame === frame - 1) previous = history.previous;
     }
     this.previousModelWorldMatrix.value.copy(previous);
+    if (tracksInstances(object)) {
+      const instances = instanceHistory(object);
+      const matrices = object.instanceMatrix.array as Float32Array;
+      const last =
+        instances.currentFrame === frame - 1 ? instances.current
+        : instances.currentFrame === frame && instances.previousFrame === frame - 1 ? instances.previous
+        : null;
+      for (let i = 0; i < object.count * 16; i += 16) {
+        if (last) _previous.fromArray(last, i);
+        else _previous.fromArray(matrices, i);
+        _current.fromArray(matrices, i).invert();
+        _previous.multiply(_current).toArray(instances.back, i);
+      }
+    }
   }
 
   updateAfter({ object }: NodeFrame): undefined {
@@ -156,13 +200,26 @@ class MotionVectorNode extends TempNode {
       history.currentFrame = frame;
     }
     history.current.copy(object.matrixWorld);
+    if (tracksInstances(object)) {
+      const instances = instanceHistory(object);
+      if (instances.currentFrame !== frame) {
+        instances.previous.set(instances.current);
+        instances.previousFrame = instances.currentFrame;
+        instances.currentFrame = frame;
+      }
+      instances.current.set(object.instanceMatrix.array);
+    }
   }
 
   setup(builder: NodeBuilder) {
     if (builder.material?.transparent) return vec4(0);
     // Clip positions interpolate correctly, so the matrices run per vertex and only the divide per fragment.
     const currentClip = cameraProjectionMatrix.mul(modelViewMatrix).mul(positionLocal).toVarying('motionCurrentClip');
-    const previousClip = this.state.previousViewProjection.mul(this.previousModelWorldMatrix).mul(positionPrevious).toVarying('motionPreviousClip');
+    const object = builder.object;
+    const previousLocal = tracksInstances(object)
+      ? (buffer(instanceHistory(object).back, 'mat4', Math.max(object.instanceMatrix.count, 1)) as unknown as { element(i: Node<'uint'>): Node<'mat4'> }).element(instanceIndex).mul(vec4(positionPrevious, 1))
+      : vec4(positionPrevious, 1);
+    const previousClip = this.state.previousViewProjection.mul(this.previousModelWorldMatrix).mul(previousLocal as Node<'vec4'>).toVarying('motionPreviousClip');
     const delta = currentClip.xy.div(currentClip.w).sub(previousClip.xy.div(previousClip.w));
     return vec4(delta, 0, 1);
   }
