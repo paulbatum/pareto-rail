@@ -1,0 +1,9 @@
+{
+  "id": "strandline-tmbx",
+  "title": "Strandline",
+  "contentImages": {
+    "overview": "/level-content/strandline-tmbx/overview.avif",
+    "start": "/level-content/strandline-tmbx/start.avif",
+    "hero": "/level-content/strandline-tmbx/hero.avif"
+  }
+}

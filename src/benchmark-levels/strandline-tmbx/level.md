@@ -1,0 +1,25 @@
+# Strandline
+
+Sixty seconds inside the trailing tentacles of a giant jellyfish, freeing it from a parasite colony. The rail winds up through a forest of glowing strands in sunlit water, swings wide on the bar-8 phrase so the bell fills the frame like a green moon, dives back in, and climbs to the crown where the parent organism is dug in behind its own webbing. Tear it loose and the camera pulls back, and back, until the whole animal is in frame for the first time — every strand glowing clean — and it drifts on.
+
+## Visual language
+Three lights in water and nothing else. The sea is sunlit blue-green overhead — Snell's window rippling at the zenith, slow sun shafts, marine snow — shading into deep blue with depth and distance. The jellyfish's own bioluminescence is green shading to gold: several hundred procedural strands with nematocyst bead-knots, gold pulses running down every strand on every beat, a translucent lathe-built bell with radial canals, a beaded margin, and a four-lobed gold gonad clover. The only sour colour is the parasites' sickly violet: glossy plated ticks, segmented creepers, spitting bladders, pulsing parasitic drifters, spiked hatchlings, and a bloated parent with claws clenched into the crown. Parasites are seated on real strands — the first wave is already asleep on them behind START — and each one killed sends a cleansing flash up its strand to the bell; host strands stay violet-mottled until cleansed. On the forest's section downbeats a wave of light runs from the bell down every strand, and the bell contracts on every downbeat. The player's light borrows the jelly's: a six-bead reticle that lights one bead per lock, sunlight-seed shots, and START/REPLAY letters strung as bioluminescent beads hanging from threads. Torn loose, the parent tumbles out of the crown while light floods every strand from the roots down and the water clears for the pull-back.
+
+## Musical language
+96 BPM in B minor walking to D major; 24 bars is exactly the run. The pulse is the animal's heartbeat — one soft sub thump and water-whoosh per bar, breathing the whole mix — under a dark pad, drips, and the parasite's sour quarter-tone drone. Each phrase adds light: glass plucks and a soft kick when the forest kindles, a wordless formant choir and falling chimes when the bell fills the frame, a full water-percussion groove with a flute counter-line on the climb upstream. At the crown the pulse doubles and the sour drone returns in three layers, one per web sector; each brood cleared silences a layer. Tearing the parent loose ducks the music, drops a sub onto D, and resolves into a serene half-time ending; missing the deadline leaves it unresolved in B minor under the drone. Locks are droplets climbing the live chord, shots are bubbles on its root, and every kill plays the next note of a per-section melody lane in that section's bell timbre; volleys land as a short slowing cascade so a full release plays as one phrase. Threading close past a strand is a soft whoosh panned to its side, and after the run the water keeps the ending's key.
+
+## Mechanical signature
+A 60-second run with a 3-point membrane. Ticks and creepers cling to strands ahead and kick off on the beat to arc, orbit, rise, or undulate across the frame; bladders stay rooted and spit interceptable spores; drifters jet on the beat in formations, including a six-ring around the bell's disc. At the crown the parent pumps three six-strong broods from its web; clear a brood completely and the sector that fed it withers, let any slip back and that sector pumps again. Bare, the parent takes two six-lock volleys to tear loose before bar 22½; the finale camera pull-back starts on the kill. Clean four-plus volleys score a bonus, and the summary reports strands cleansed, the parent's fate, spores shot down, and membrane left.
+
+## What to read
+- `src/benchmark-levels/strandline-tmbx/index.ts`
+- `src/benchmark-levels/strandline-tmbx/world.ts`
+- `src/benchmark-levels/strandline-tmbx/forest.ts`
+- `src/benchmark-levels/strandline-tmbx/gameplay.ts`
+- `src/benchmark-levels/strandline-tmbx/crown.ts`
+- `src/benchmark-levels/strandline-tmbx/audio.ts`
+- `src/benchmark-levels/strandline-tmbx/visuals/index.ts`
+- `src/benchmark-levels/strandline-tmbx/visuals/environment.ts`
+
+## Status & notes
+Built to the standing brief from the Strandline theme assignment. Inspection markers: `kindle` (bar 4), `greenMoon` (bar 9:2), `upstream` (bar 11), `crown` (bar 15), and `deadline` (bar 22:2); `--debug-value freed` rehearses the good ending for headless snapshots, and `visuals/inspect.ts` lines up every parasite for model snapshots. Verified headless: typecheck, build, benchmark scope, floor (simulation, occlusion, performance), audio trace, and a headless master-bus level meter. WSL2 cannot render WebGPU, so the real frame and the final mix need a human playtest — check first that the green-moon swing reads, that the strand forest stays legible against the water with bloom at zero, the brood-to-web link at the crown, and the balance of the heartbeat pulse under the player's notes.
