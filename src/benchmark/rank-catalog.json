@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T03:18:00.804Z",
+  "generatedAt": "2026-09-23T03:41:38.318Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -50,8 +50,7 @@
       "workflowName": "solo",
       "primaryModel": "gpt-6-astra",
       "effort": "high",
-      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
-      "featured": true
+      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "codex-gpt-6-astra-max",
@@ -59,8 +58,7 @@
       "workflowName": "solo",
       "primaryModel": "gpt-6-astra",
       "effort": "max",
-      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
-      "featured": true
+      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "codex-sol-terra-delegation",
@@ -917,7 +915,6 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-b993/hero.avif",
-      "featured": true,
       "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
       "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04"
     },
@@ -1266,7 +1263,6 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-63d6/hero.avif",
-      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
@@ -1706,7 +1702,6 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-e230/hero.avif",
-      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
@@ -2209,7 +2204,6 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-8839/hero.avif",
-      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
@@ -2243,7 +2237,6 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-b4d3/hero.avif",
-      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
@@ -2924,7 +2917,6 @@
         ]
       },
       "thumbnailPath": "/level-content/speedsolve-kv7m/hero.avif",
-      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "f5f4fdeb796b002ca29ef1d0d182b137342f3818"
     },
@@ -3737,7 +3729,6 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-034d/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },

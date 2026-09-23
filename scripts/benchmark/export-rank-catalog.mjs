@@ -60,7 +60,6 @@ export const configurationLabels = {
     primaryModel: 'gpt-6-astra',
     effort: 'high',
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
-    featured: true,
   },
   'codex-gpt-6-astra-max': {
     modelName: 'GPT-6 Astra',
@@ -68,7 +67,6 @@ export const configurationLabels = {
     primaryModel: 'gpt-6-astra',
     effort: 'max',
     workflowSummary: 'One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.',
-    featured: true,
   },
   'codex-sol-terra-delegation': {
     modelName: 'GPT-5.6 Sol',

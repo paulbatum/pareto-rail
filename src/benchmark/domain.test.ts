@@ -44,6 +44,7 @@ export async function runBenchmarkDomainTests(): Promise<void> {
   testStorageUndo();
   testSchedulerCoverage();
   testFeaturedFirstMatchup();
+  testLoneFeaturedConfiguration();
   testFeaturedThemePreference();
   testFeaturedThemeCoverage();
   testNewcomerAnchoring();
@@ -562,6 +563,15 @@ function testFeaturedFirstMatchup(): void {
   assert.ok(openerThemes.size > 1, 'the featured opener theme varies across participants');
 }
 
+function testLoneFeaturedConfiguration(): void {
+  const catalog = makeSchedulerCatalog(4, 3, false, [0]);
+  for (let index = 0; index < 20; index += 1) {
+    const opener = nextScheduledMatchup(catalog, `lone-featured-${index}`, { judged: [] });
+    const entrants = [opener!.levelIdA, opener!.levelIdB].map((levelId) => catalog.entrants.find((entrant) => entrant.levelId === levelId)!);
+    assert.equal(entrants.some((entrant) => entrant.featured === true), true, 'a lone featured configuration opens every session');
+  }
+}
+
 function testFeaturedThemePreference(): void {
   const base = makeSchedulerCatalog(4, 3, false, [0, 1]);
   const featured: SchedulingPool = { ...base, themes: base.themes.map((theme) => theme.id === 'theme-b' ? { ...theme, featured: true } : theme) };
@@ -966,8 +976,8 @@ function testFeaturedOpener(): void {
     'a fresh participant opens on the same featured pair every time',
   );
 
-  // Whatever theme hosts a participant's opener, it is always a featured pair and
-  // never migrates onto a retired theme.
+  // Whatever theme hosts a participant's opener, it always includes a featured
+  // configuration and never migrates onto a retired theme.
   const retiredThemes = new Set(['hull-run', 'mass-driver-detailed']);
   for (let index = 0; index < 60; index += 1) {
     const first = nextScheduledMatchup(pool, `opener-participant-${index}`, { judged: [] });
@@ -976,7 +986,7 @@ function testFeaturedOpener(): void {
     assert.equal(findCatalogTheme(rankCatalog, first!.themeId)?.featured === true, true, 'the featured opener comes from a featured theme');
     const ea = findCatalogEntrant(rankCatalog, first!.levelIdA);
     const eb = findCatalogEntrant(rankCatalog, first!.levelIdB);
-    assert.equal(ea?.featured === true && eb?.featured === true, true, 'the opener is a featured pairing');
+    assert.equal(ea?.featured === true || eb?.featured === true, true, 'the opener includes a featured configuration');
   }
 }
 
