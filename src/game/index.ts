@@ -205,7 +205,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     audio.setSfxVolume(1);
     audio.setMasterVolume(readStoredPercent('pareto-rail-volume', 50) / 100);
     setBloomLevel(readStoredPercent('pareto-rail-bloom', 100) / 100);
-    setMotionBlurLevel(readStoredPercent('pareto-rail-motion-blur', 100) / 100);
+    setMotionBlurLevel(readStoredPercent('pareto-rail-motion-blur', 50) / 100);
     audio.installGestureStart(() => hud.setSoundActive(true));
     const perfOverlay = perfEnabled
       ? (await import('../ui/perf-overlay')).createPerfOverlay({ renderer, scene, bus, levelId: level.id, knobs: diagnosticKnobs(urlParams) })

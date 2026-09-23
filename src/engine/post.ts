@@ -23,7 +23,7 @@ const MOTION_BLUR_TAPS = 8;
 const MOTION_BLUR_MAX_VELOCITY_UV = 0.045;
 const bloomRefs = new Map<ReturnType<typeof bloom>, number>();
 let bloomLevel = 1;
-let motionBlurLevel = 1;
+let motionBlurLevel = 0.5;
 
 // One knob for bloom intensity. 1.0 is the settings-menu maximum, scaled to
 // the previous 75% intensity; 0 disables bloom. Safe to call before createPost.
@@ -37,8 +37,9 @@ export function getBloomLevel() {
 }
 
 // Shared player preference for the engine-owned depth-reprojection blur. 1.0 is
-// the intended shutter; 0 disables the effect. The uniform is sampled in post.
-export const motionBlurLevelUniform = uniform(1);
+// the full shutter and the default is half of it; 0 disables the effect. The
+// uniform is sampled in post.
+export const motionBlurLevelUniform = uniform(0.5);
 
 export function setMotionBlurLevel(level: number) {
   motionBlurLevel = Math.min(1, Math.max(0, level));

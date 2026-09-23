@@ -101,7 +101,7 @@ export const GameRuntimeShell = forwardRef<HTMLDivElement>(function GameRuntimeS
               </label>
               <label>
                 <span>Motion Blur</span>
-                <input data-pause="motion-blur" type="range" min="0" max="100" defaultValue="100" />
+                <input data-pause="motion-blur" type="range" min="0" max="100" defaultValue="50" />
               </label>
             </div>
           </div>
