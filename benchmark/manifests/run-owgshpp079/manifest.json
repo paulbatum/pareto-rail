@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-owgshpp079",
+  "slotId": "azxp",
+  "configuration": {
+    "id": "claude-opus-5-5-high"
+  },
+  "theme": {
+    "id": "mass-driver",
+    "path": "benchmark/themes/mass-driver.md",
+    "sha256": "6d35ac7c7a4f5e278404992fd321df200679d7e6b8c939d393a7c4b72adad698"
+  },
+  "baseline": {
+    "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-cli.md",
+    "sha256": "2c0fb25bd878961cbd97776ca0a93fffd816fe452147e0811cc1cb7899c76667"
+  },
+  "controller": {
+    "commit": "3808fe3eccdd213c1cb6f42a37410eb72aaf6634"
+  },
+  "timing": {
+    "startedAt": "2026-09-23T09:05:53.389Z",
+    "finishedAt": "2026-09-23T10:14:09.922Z",
+    "wallTimeSeconds": 4096.533
+  },
+  "stages": [
+    {
+      "id": "claude-opus-5-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-5-5"
+      },
+      "promptSha256": "fd2d3e6b6ab6c11fb7a7c61f0a0d416870288bfc2d53a7cac1a609fa2c7a5a01",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.280 (Claude Code)"
+      },
+      "sessionId": "fa50e1ba-45d7-4d5b-9e0b-4197aabd746c",
+      "rolloutArtifactSha256": "4d2223f1ca583fe4df859596ec60a623353e78add610068abe5f5c4d897ef200",
+      "outputArtifactSha256": "a728d91b7e195a0179a9fe3cab53101669e8a8e6699218b20747c970e0215123",
+      "startedAt": "2026-09-23T09:05:56.177Z",
+      "finishedAt": "2026-09-23T10:13:56.891Z",
+      "wallTimeSeconds": 3863.152629446,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 340,
+        "outputTokens": 335644,
+        "cacheReadInputTokens": 73970488,
+        "cacheWriteInputTokens": 615059
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 26.4288096,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 26.4288096,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.24",
+      "view": "claude",
+      "command": "ccusage claude session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-opus-5-5",
+        "usageSource": "agreed",
+        "costUsd": 26.4288096,
+        "inputTokens": 340,
+        "outputTokens": 335644,
+        "cacheReadTokens": 73970488,
+        "cacheWriteTokens": 615059
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.154593848,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.7533650750000002,
+      "outputSha256": "3bd37e002b67dd023b5d2344d7ca0b944c1711137da7aae7cdda6be36efe8b24"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-azxp --base b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03517209899999989,
+      "outputSha256": "aea47b33aaaeb9e4c238a4513a0774788d4463ca3f26b5fe0f829678b8dfdb67"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level mass-driver-azxp",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 8.054054343,
+      "outputSha256": "aa9f7150f8832e4069a3e559c60d2524590d21d24a2b4aa1bd4f91fbd255ee12"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "mass-driver-azxp",
+    "title": "Mass Driver",
+    "evaluated": {
+      "commit": "22c4f7b28602e8e6fecd5ccda68d7c610f347782",
+      "branch": "benchmark-run-run-owgshpp079"
+    },
+    "payload": {
+      "commit": "bd2acbd1343ffaeb1080bc490709d63ac9617606",
+      "branch": "benchmark-payload-run-owgshpp079"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

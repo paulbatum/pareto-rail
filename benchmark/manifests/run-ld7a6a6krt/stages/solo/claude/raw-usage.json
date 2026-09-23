@@ -1,0 +1,134 @@
+{
+  "sessionId": "deeb4825-c349-4881-a700-9a7dfd23c6de",
+  "initResolvedModel": "claude-opus-5-5",
+  "finalMessage": "**Thermal Ink** is built and every gate passes. It lives in `src/benchmark-levels/thermal-ink-mv8r/`, with gallery images in `public/level-content/thermal-ink-mv8r/`. This environment can't run WebGPU, so I haven't seen it in the real renderer or heard any of the audio. All visual checks were done on SwiftShader snapshots.\n\n**What's built**\n- **The fight:** exactly 60 s (96 BPM, 24 bars) against one octopus wrapped on a capsized freighter. The rail approaches, dives low through the first ink, circles the creature past a crane that collapses across the path, then ends face to face. The octopus turns to track you the whole time. Four arms rise out of the water to reach for the rail; each has a two-stage node, and an arm you don't sever slams the rail. Then it rears up to show its core. After you break the core's first layer it seals itself until the final blackout, so the killing volley always lands in the dark. When it dies, its heat outline greys out and slumps, and the lamps relight from the creature outward.\n- **Thermal sight:** holding the trigger inside ink switches it on, and it stays on while your shots are in the air. Every material has a normal look and a heat look, switched on the GPU, so enemies you couldn't see appear white-hot with red weak points and steel turns dark grey. On top of that is a grainy display with a scan-line wipe on switch-on, a refresh line on each beat, and ink that stays as cold black wisps. Inside ink without it, enemies are black and lamps are dim smudges.\n- **Enemies:** crab-like crawlers that hop in from the edges on the beat, eel-like creatures swimming S-curves, bell buoys that pulse upward and spit ink barbs, the arm nodes, and the core. The octopus also spits barbs from its beak late in the fight.\n- **Score:** D minor with a heavy kick, a bass that ducks under it, sparse metal clanks and chain rattles, and a hum from the sodium lamps. One melody always plays in two voices, hazy and bright, and the thermal sight picks which you hear; it also pulls the noisy percussion back. Blind in ink, the whole score goes muffled. Locks, shots and kills are notes in the live chord, with written melody lines for kills. Big moments (arms surfacing, ink jets, the crane, the blackout) are timed to the music, and the ending resolves to D major as the lamps return.\n\n**Verified**\n- `npm run typecheck` and `npm run build` pass.\n- `npm run check:floor` passes everything: 6 enemy kinds, beat events, reject, spawn spread, no hidden targets across 72, performance, and the audio config. Along the way I fixed a real memory leak (a new material per enemy spawn) by sharing materials, so memory now stays flat.\n- The simulator: a player who never fires dies at 28 s, and the perfect-play simulation clears 60 of 64 and gets rank S. The only gap is the intended ~6 s after the kill.\n- The audio timing check confirms beats, sections and the timed cues. Correct timing isn't the same as a good mix, though.\n\n**Things to know**\n- `npm run check:benchmark-scope` can't run here because `scripts/benchmark/protocol.mjs` is missing from this baseline. I checked scope with git instead: only the two level directories are new, and no tracked file is modified.\n- Dotfiles such as `.bashrc` and `.claude/*` appeared untracked in the repo root. The sandbox environment created them, not me, so I left them alone.\n- Early on, one of my commands ran from the wrong directory and created a new `index.ts` inside `node_modules/three`. Nothing was overwritten, and I moved the file to the level folder.\n- I added dev-only inspection flags for snapshots (`--debug-value thermal`, `finale`, `clean`); they're documented in `level.md`.\n- Nothing is committed.\n\n**What to check first in a WebGPU playtest**\n1. **First ink (0:15):** does holding make the switch feel sharp, and is being blind until you hold clear enough from the \"HOLD FOR THERMAL\" message?\n2. **The mix:** does the melody's switch between voices come through, is the kick/bass too pumping, and are the kill notes loud enough to feel like you're soloing?\n3. **Unsevered arm slam (~0:14):** I toned down the node's glow, but check it's not too bright up close.\n4. **Final blackout (0:50–0:60):** the kill, the silhouette cooling, and the lamps relighting.\n5. **Frame rate on real GPUs:** the tentacles are rebuilt every frame, and there are about 250 draw calls at peak.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 3344686,
+    "stop_reason": "end_turn",
+    "session_id": "deeb4825-c349-4881-a700-9a7dfd23c6de",
+    "total_cost_usd": 27.941059200000016,
+    "usage": {
+      "input_tokens": 332,
+      "cache_creation_input_tokens": 721911,
+      "cache_read_input_tokens": 75039416,
+      "output_tokens": 357828,
+      "output_tokens_details": {
+        "thinking_tokens": 183054
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 721911,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1849,
+          "cache_read_input_tokens": 729341,
+          "cache_creation_input_tokens": 3051,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 3051
+          },
+          "type": "message",
+          "model": null
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-opus-5-5": {
+        "inputTokens": 332,
+        "outputTokens": 357828,
+        "cacheReadInputTokens": 75039416,
+        "cacheCreationInputTokens": 721911,
+        "webSearchRequests": 0,
+        "costUSD": 27.941059200000016,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 183054,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 172,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Thermal Ink** is built and every gate passes. It lives in `src/benchmark-levels/thermal-ink-mv8r/`, with gallery images in `public/level-content/thermal-ink-mv8r/`. This environment can't run WebGPU, so I haven't seen it in the real renderer or heard any of the audio. All visual checks were done on SwiftShader snapshots.\n\n**What's built**\n- **The fight:** exactly 60 s (96 BPM, 24 bars) against one octopus wrapped on a capsized freighter. The rail approaches, dives low through the first ink, circles the creature past a crane that collapses across the path, then ends face to face. The octopus turns to track you the whole time. Four arms rise out of the water to reach for the rail; each has a two-stage node, and an arm you don't sever slams the rail. Then it rears up to show its core. After you break the core's first layer it seals itself until the final blackout, so the killing volley always lands in the dark. When it dies, its heat outline greys out and slumps, and the lamps relight from the creature outward.\n- **Thermal sight:** holding the trigger inside ink switches it on, and it stays on while your shots are in the air. Every material has a normal look and a heat look, switched on the GPU, so enemies you couldn't see appear white-hot with red weak points and steel turns dark grey. On top of that is a grainy display with a scan-line wipe on switch-on, a refresh line on each beat, and ink that stays as cold black wisps. Inside ink without it, enemies are black and lamps are dim smudges.\n- **Enemies:** crab-like crawlers that hop in from the edges on the beat, eel-like creatures swimming S-curves, bell buoys that pulse upward and spit ink barbs, the arm nodes, and the core. The octopus also spits barbs from its beak late in the fight.\n- **Score:** D minor with a heavy kick, a bass that ducks under it, sparse metal clanks and chain rattles, and a hum from the sodium lamps. One melody always plays in two voices, hazy and bright, and the thermal sight picks which you hear; it also pulls the noisy percussion back. Blind in ink, the whole score goes muffled. Locks, shots and kills are notes in the live chord, with written melody lines for kills. Big moments (arms surfacing, ink jets, the crane, the blackout) are timed to the music, and the ending resolves to D major as the lamps return.\n\n**Verified**\n- `npm run typecheck` and `npm run build` pass.\n- `npm run check:floor` passes everything: 6 enemy kinds, beat events, reject, spawn spread, no hidden targets across 72, performance, and the audio config. Along the way I fixed a real memory leak (a new material per enemy spawn) by sharing materials, so memory now stays flat.\n- The simulator: a player who never fires dies at 28 s, and the perfect-play simulation clears 60 of 64 and gets rank S. The only gap is the intended ~6 s after the kill.\n- The audio timing check confirms beats, sections and the timed cues. Correct timing isn't the same as a good mix, though.\n\n**Things to know**\n- `npm run check:benchmark-scope` can't run here because `scripts/benchmark/protocol.mjs` is missing from this baseline. I checked scope with git instead: only the two level directories are new, and no tracked file is modified.\n- Dotfiles such as `.bashrc` and `.claude/*` appeared untracked in the repo root. The sandbox environment created them, not me, so I left them alone.\n- Early on, one of my commands ran from the wrong directory and created a new `index.ts` inside `node_modules/three`. Nothing was overwritten, and I moved the file to the level folder.\n- I added dev-only inspection flags for snapshots (`--debug-value thermal`, `finale`, `clean`); they're documented in `level.md`.\n- Nothing is committed.\n\n**What to check first in a WebGPU playtest**\n1. **First ink (0:15):** does holding make the switch feel sharp, and is being blind until you hold clear enough from the \"HOLD FOR THERMAL\" message?\n2. **The mix:** does the melody's switch between voices come through, is the kick/bass too pumping, and are the kill notes loud enough to feel like you're soloing?\n3. **Unsevered arm slam (~0:14):** I toned down the node's glow, but check it's not too bright up close.\n4. **Final blackout (0:50–0:60):** the kill, the silhouette cooling, and the lamps relighting.\n5. **Frame rate on real GPUs:** the tentacles are rebuilt every frame, and there are about 250 draw calls at peak.",
+    "ttft_ms": 1488,
+    "type": "result",
+    "duration_ms": 4276913,
+    "uuid": "25f3ddee-13dd-4796-a0ea-417c40819d8a",
+    "ttft_stream_ms": 1027,
+    "time_to_request_ms": 69,
+    "first_content_frame_ms": 1027,
+    "queued_turn_count": 0,
+    "result_index": 0
+  },
+  "normalized": {
+    "inputTokens": 75039748,
+    "outputTokens": 357828,
+    "cacheReadInputTokens": 75039416,
+    "cacheWriteInputTokens": 721911,
+    "vendorFields": {
+      "totalCostUsd": 27.941059200000016,
+      "durationMs": 4276913,
+      "durationApiMs": 3344686,
+      "numTurns": 172,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-opus-5-5": {
+          "inputTokens": 332,
+          "outputTokens": 357828,
+          "cacheReadInputTokens": 75039416,
+          "cacheCreationInputTokens": 721911,
+          "webSearchRequests": 0,
+          "costUSD": 27.941059200000016,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "thinkingTokens": 183054,
+          "canonicalModel": "claude-opus-5-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

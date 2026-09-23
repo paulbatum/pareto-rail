@@ -1080,6 +1080,24 @@
       ]
     },
     {
+      "runId": "run-ej8yy0a45o",
+      "levelId": "tinker-ball-hh5u",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-opus-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-ej8yy0a45o/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 12482748,
+          "sha256": "cd1dc999f2baeb774ae35ffa77771d0459704b61663c1d330411ec3eb41932d7"
+        },
+        {
+          "path": "runs/run-ej8yy0a45o/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 7434650,
+          "sha256": "5d07093023632e342206028b88228cd9605b4e5fde7b82b969d23950ffcc481b"
+        }
+      ]
+    },
+    {
       "runId": "run-eztdwig5twea",
       "levelId": "mass-driver-wo4m",
       "themeId": "mass-driver",
@@ -1131,6 +1149,24 @@
           "path": "runs/run-gucf476jvkqr/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 1607701,
           "sha256": "df8a8206446471ccd24b4c94be98d517c9645f7e14da60bd9fff6d31df022266"
+        }
+      ]
+    },
+    {
+      "runId": "run-hruluqkhla",
+      "levelId": "vespers-9qbs",
+      "themeId": "vespers",
+      "configurationId": "claude-opus-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-hruluqkhla/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 23874341,
+          "sha256": "efbc050edbdc047dffb0394f45d716eec08284b436faa22d1e394ac422ec389e"
+        },
+        {
+          "path": "runs/run-hruluqkhla/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 23443661,
+          "sha256": "4531609618eae2df81ff9657bbf8d2d3bdd4749933942492df5ceb0f1d2b56e1"
         }
       ]
     },
@@ -1208,6 +1244,42 @@
       ]
     },
     {
+      "runId": "run-ld7a6a6krt",
+      "levelId": "thermal-ink-mv8r",
+      "themeId": "thermal-ink",
+      "configurationId": "claude-opus-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-ld7a6a6krt/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 17137627,
+          "sha256": "d956ad98ce38bfe1502de05c3007122e0a12f82f84efbcbfe72dff10aeac9d94"
+        },
+        {
+          "path": "runs/run-ld7a6a6krt/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 16636926,
+          "sha256": "091a97b8a72439520ea67ceb406a63523c73e4abd6774aa304abda1c7bdab921"
+        }
+      ]
+    },
+    {
+      "runId": "run-mi6vupa5bn",
+      "levelId": "speedsolve-bnmf",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-mi6vupa5bn/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 20197727,
+          "sha256": "dadc8fded1a8eed4e579c94355cc68f38a8e16b3288ad093ab3c0f505cf8ad63"
+        },
+        {
+          "path": "runs/run-mi6vupa5bn/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 20012694,
+          "sha256": "23d310fc3388c5235ec52e6ea496ff4beb41cd3d52c68143be8daf361b92603f"
+        }
+      ]
+    },
+    {
       "runId": "run-n0i508zstz",
       "levelId": "tinker-ball-72pr",
       "themeId": "tinker-ball",
@@ -1259,6 +1331,24 @@
           "path": "runs/run-nqw47y4pzu/stages/solo/pi/events.jsonl.gz",
           "rawBytes": 28431067,
           "sha256": "b3f9b22371f2a9fe54dd8503cb3631884f9c0816784e827e9815a7746decfdb7"
+        }
+      ]
+    },
+    {
+      "runId": "run-owgshpp079",
+      "levelId": "mass-driver-azxp",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-owgshpp079/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 15447530,
+          "sha256": "4d2223f1ca583fe4df859596ec60a623353e78add610068abe5f5c4d897ef200"
+        },
+        {
+          "path": "runs/run-owgshpp079/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 15307194,
+          "sha256": "a728d91b7e195a0179a9fe3cab53101669e8a8e6699218b20747c970e0215123"
         }
       ]
     },

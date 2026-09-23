@@ -368,6 +368,12 @@
       "configurationId": "claude-fable-5-1-high"
     },
     {
+      "runId": "run-ej8yy0a45o",
+      "levelId": "tinker-ball-hh5u",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-opus-5-5-high"
+    },
+    {
       "runId": "run-eztdwig5twea",
       "levelId": "mass-driver-wo4m",
       "themeId": "mass-driver",
@@ -385,6 +391,12 @@
       "levelId": "mass-driver-esvz",
       "themeId": "mass-driver",
       "configurationId": "claude-fable-5-high-b20"
+    },
+    {
+      "runId": "run-hruluqkhla",
+      "levelId": "vespers-9qbs",
+      "themeId": "vespers",
+      "configurationId": "claude-opus-5-5-high"
     },
     {
       "runId": "run-iz2agir3l4",
@@ -412,6 +424,18 @@
       "configurationId": "claude-fable-5-1-high"
     },
     {
+      "runId": "run-ld7a6a6krt",
+      "levelId": "thermal-ink-mv8r",
+      "themeId": "thermal-ink",
+      "configurationId": "claude-opus-5-5-high"
+    },
+    {
+      "runId": "run-mi6vupa5bn",
+      "levelId": "speedsolve-bnmf",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-5-5-high"
+    },
+    {
       "runId": "run-n0i508zstz",
       "levelId": "tinker-ball-72pr",
       "themeId": "tinker-ball",
@@ -429,6 +453,12 @@
       "themeId": "thermal-ink",
       "configurationId": "pi-openrouter-union-alpha-high",
       "retired": true
+    },
+    {
+      "runId": "run-owgshpp079",
+      "levelId": "mass-driver-azxp",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-5-5-high"
     },
     {
       "runId": "run-pnpwjrxhz8uu",

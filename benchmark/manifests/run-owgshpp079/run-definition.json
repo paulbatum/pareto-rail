@@ -1,0 +1,21 @@
+{
+  "runId": "run-owgshpp079",
+  "slotId": "azxp",
+  "levelId": "mass-driver-azxp",
+  "themeId": "mass-driver",
+  "themePath": "benchmark/themes/mass-driver.md",
+  "configurationId": "claude-opus-5-5-high",
+  "recipePath": "benchmark/recipes/claude-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v1",
+  "baselinePolicy": "open",
+  "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119",
+  "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+  "levelTitle": "Mass Driver"
+}

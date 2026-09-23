@@ -171,21 +171,21 @@
       "continuationRounds": 1,
       "usage": {
         "inputTokens": 356,
-        "outputTokens": 562010,
+        "outputTokens": 361938,
         "cacheReadInputTokens": 80364594,
         "cacheWriteInputTokens": 1111658
       },
       "pricing": {
         "status": "measured",
-        "costUsd": 42.881474999999995,
-        "source": "harness-counter"
+        "costUsd": 32.20636679999999,
+        "source": "ccusage"
       }
     }
   ],
   "cost": {
     "currency": "USD",
     "status": "measured",
-    "totalUsd": 42.881474999999995,
+    "totalUsd": 32.20636679999999,
     "orchestrationTreatment": "none",
     "costSource": {
       "tool": "ccusage",
@@ -195,28 +195,18 @@
       "basis": "metered"
     },
     "reconciliation": {
-      "status": "adjusted",
-      "source": "harness result event modelUsage",
-      "adjustments": [
-        {
-          "modelName": "claude-opus-5-5",
-          "replayOutputTokens": 361938,
-          "counterOutputTokens": 562010,
-          "resolution": "took-counter",
-          "replayCostUsd": 32.20636679999999,
-          "counterCostUsd": 42.881474999999995
-        }
-      ]
+      "status": "agreed",
+      "source": "harness result event modelUsage"
     },
     "models": [
       {
         "modelName": "claude-opus-5-5",
-        "usageSource": "harness-counter",
-        "costUsd": 42.881474999999995,
+        "costUsd": 32.20636679999999,
         "inputTokens": 356,
-        "outputTokens": 562010,
+        "outputTokens": 361938,
         "cacheReadTokens": 80364594,
-        "cacheWriteTokens": 1111658
+        "cacheWriteTokens": 1111658,
+        "usageSource": "agreed"
       }
     ]
   },

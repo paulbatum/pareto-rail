@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-owgshpp079",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:24:05.355Z",
+      "data": {
+        "source": {
+          "runId": "run-owgshpp079",
+          "slotId": "azxp",
+          "themeId": "mass-driver",
+          "levelId": "mass-driver-azxp",
+          "title": "Mass Driver",
+          "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119",
+          "evaluatedCommit": "22c4f7b28602e8e6fecd5ccda68d7c610f347782",
+          "payloadCommit": "bd2acbd1343ffaeb1080bc490709d63ac9617606",
+          "manifestSha256": "c7c66f03f47fd478eccb83d14198faf0131bf13c3c3cb5b3fb835ef50027a4b7",
+          "definitionSha256": "8fc54e8ca35827530cb4a35ea9be7fc5d209b5fbb73f3c18269c4bc948f50a7e",
+          "evaluatedSha256": "265554b65241fe2a92746b3475bbe6674ab93a4c6b55b62b7f7ed6807aba82a8",
+          "payloadSha256": "655dcbaa4468ad3bf3c7ac205523daf767caccda884c0ec47aab620564b4fe46",
+          "payloadDiffSha256": "5db58ba3fe2e00e7df2d8c13f54a0825353d75dfc2a21bdba5f308c86cdfe7d8",
+          "sourcePath": "src/benchmark-levels/mass-driver-azxp/",
+          "destinationPath": "src/benchmark-levels/mass-driver-azxp/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/mass-driver-azxp",
+              "promotedPath": "src/benchmark-levels/mass-driver-azxp",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/mass-driver-azxp",
+              "promotedPath": "public/level-content/mass-driver-azxp",
+              "required": false,
+              "present": false
+            }
+          ],
+          "baseCommit": "14894fcc6cd49e3ba6d3ceb4664d97ddf6f42b8a"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:24:05.482Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/mass-driver-azxp/",
+            "files": 15,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:24:05.484Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:24:05.578Z",
+      "data": {
+        "destination": "src/benchmark-levels/mass-driver-azxp/",
+        "verifiedFiles": 15
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:26:57.552Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 5.480915908,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "816d7a8f43a5f7a89b66e77c2e948454e1b5f304e0ee8c96218dc9de93c35a8c",
+            "stderrSha256": "d29b19de2fdd345aa0a4c38c21cfa2fac318c0df070cc24c4b8c8d128a6d997c",
+            "wallTimeSeconds": 56.318684691,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level mass-driver-azxp --base 14894fcc6cd49e3ba6d3ceb4664d97ddf6f42b8a",
+            "exitCode": 0,
+            "stdoutSha256": "8dc23b0603dc9efec55cbcf849ed1dac6e61fe65fbad6be4c9f2d80c63437168",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.05670536600000196,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level mass-driver-azxp",
+            "exitCode": 0,
+            "stdoutSha256": "744fc25db89923c6aa37a82c234e95b8a121f2d2a2b2e9f4a92c40d1ab42016f",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 100.69065602500001,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:26:57.651Z",
+      "data": {
+        "promotionCommit": "95976af2cdbb8de1349554e3d0ec7ff606855ada",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-23T10:26:57.653Z",
+  "source": {
+    "runId": "run-owgshpp079",
+    "slotId": "azxp",
+    "themeId": "mass-driver",
+    "levelId": "mass-driver-azxp",
+    "title": "Mass Driver",
+    "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119",
+    "evaluatedCommit": "22c4f7b28602e8e6fecd5ccda68d7c610f347782",
+    "payloadCommit": "bd2acbd1343ffaeb1080bc490709d63ac9617606",
+    "manifestSha256": "c7c66f03f47fd478eccb83d14198faf0131bf13c3c3cb5b3fb835ef50027a4b7",
+    "definitionSha256": "8fc54e8ca35827530cb4a35ea9be7fc5d209b5fbb73f3c18269c4bc948f50a7e",
+    "evaluatedSha256": "265554b65241fe2a92746b3475bbe6674ab93a4c6b55b62b7f7ed6807aba82a8",
+    "payloadSha256": "655dcbaa4468ad3bf3c7ac205523daf767caccda884c0ec47aab620564b4fe46",
+    "payloadDiffSha256": "5db58ba3fe2e00e7df2d8c13f54a0825353d75dfc2a21bdba5f308c86cdfe7d8",
+    "sourcePath": "src/benchmark-levels/mass-driver-azxp/",
+    "destinationPath": "src/benchmark-levels/mass-driver-azxp/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/mass-driver-azxp",
+        "promotedPath": "src/benchmark-levels/mass-driver-azxp",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/mass-driver-azxp",
+        "promotedPath": "public/level-content/mass-driver-azxp",
+        "required": false,
+        "present": false
+      }
+    ],
+    "baseCommit": "14894fcc6cd49e3ba6d3ceb4664d97ddf6f42b8a"
+  },
+  "promotionCommit": "95976af2cdbb8de1349554e3d0ec7ff606855ada"
+}

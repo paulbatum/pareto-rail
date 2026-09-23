@@ -1,0 +1,134 @@
+{
+  "sessionId": "fa50e1ba-45d7-4d5b-9e0b-4197aabd746c",
+  "initResolvedModel": "claude-opus-5-5",
+  "finalMessage": "Mass Driver is built at `src/benchmark-levels/mass-driver-azxp/` and passes typecheck, build and `check:floor` (0 occlusion, performance, audio-config and centerness warnings). `check:scope` does not pass, because the script only knows `src/levels/<id>/`. This repo has no `main` branch, so I ran it against HEAD. It flags only the benchmark directory you told me to use; the only other change is the regenerated `docs/level-gallery.md`. Nothing is committed.\n\n**What it plays like**\n- **The ride:** a lattice tunnel of coils over a dark planet, 128 BPM, 32 bars = exactly 60 s. You cross one ring on every beat: ring *k* is beat *k*, and the 112th is the muzzle. Speed triples over the run, so the rings spread further apart while still landing on the beat. They heat from arc blue through violet to white.\n- **The hum:** the kick is the coil firing, tuned to a pumping bass hum. The hum only climbs: D through stage one, E through stage two, then a semitone every two bars in the final charge. A charge whine glides continuously above the melody.\n- **Enemies:** pickets (tri-blade spinners orbiting the bore), threaders (needles that dart across the bore on each beat), leeches (clamps that ride a coil in; a coil you cross with a live leech on it misfires), arc pylons that shoot interceptable bolts, and six safety interlocks.\n- **The boss:** the interlocks latch on in two waves and tether you with live arcs while a sealed iris glows at the end of the barrel. The verdict falls on the last beat before the peak. If you clear them, the iris opens, the drums drop out on the final beat, and the gun fires: whiteout, hyperspace streaks, then silence and a sunrise over the planet's edge. If you don't, the barrel blows and the run ends in death.\n- **Player sounds are notes:** locks climb the chord, kills play a melody line written per stage, and each interlock you blow strikes the chord higher. START/REPLAY are CHARGE/REFIRE.\n\n**A design constraint you should know about:** the engine's homing shots can't catch anything moving away from them faster than about 20 world units per second. At full scale, shots on the boss and on fast targets missed forever, and even perfect simulated play blew the barrel. I rebuilt the whole level at 1/3 scale (a `WORLD` constant in `gameplay.ts`). On screen nothing changes, but targets now stay under that speed. The camera still leaves the barrel at up to 20 world units per second before the launch spike. Simulated perfect play now kills 119/119, launches, and gets rank S.\n\n**Other simulator results:** the deliberately sloppy player launches with an A, and a player who never shoots dies to arc bolts around 24 s. All 100 targets stay lockable on screen for their intended time. Across four random seeds, the sloppy player cleared the boss in only one. I made it easier after that: 4 hull points, fewer bolts, 4 hits per interlock. After the change I re-ran only seed 1, which launched.\n\n**What I couldn't verify:** this machine can't render WebGPU, so I've seen the level only through the software-rendered snapshot tool. I ran the audio in headless Chrome: no runtime errors, beats fire, and loudness rises through the run and drops to near silence after the shot. I haven't heard it.\n\n**What a playtester should check first:**\n1. Whether ring crossings land on the kick. Ring positions are corrected against the measured audio beat, but device output latency isn't accounted for.\n2. The mix: whether kill melodies cut through the kick and hum, and whether the whine is too piercing.\n3. Bloom in the white-hot final charge, and how bright a bolt looks as it hits the camera.\n4. Whether the boss timing feels fair to a real first-time player.\n\nIn dev, `?safeties=clear` (or `--debug-value clear` in the snapshot tool) auto-clears the interlocks so you can see the launch ending.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 3030499,
+    "stop_reason": "end_turn",
+    "session_id": "fa50e1ba-45d7-4d5b-9e0b-4197aabd746c",
+    "total_cost_usd": 26.4288096,
+    "usage": {
+      "input_tokens": 340,
+      "cache_creation_input_tokens": 615059,
+      "cache_read_input_tokens": 73970488,
+      "output_tokens": 335644,
+      "output_tokens_details": {
+        "thinking_tokens": 171086
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 615059,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1618,
+          "cache_read_input_tokens": 624594,
+          "cache_creation_input_tokens": 808,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 808
+          },
+          "type": "message",
+          "model": null
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-opus-5-5": {
+        "inputTokens": 340,
+        "outputTokens": 335644,
+        "cacheReadInputTokens": 73970488,
+        "cacheCreationInputTokens": 615059,
+        "webSearchRequests": 0,
+        "costUSD": 26.4288096,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 171086,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 178,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "Mass Driver is built at `src/benchmark-levels/mass-driver-azxp/` and passes typecheck, build and `check:floor` (0 occlusion, performance, audio-config and centerness warnings). `check:scope` does not pass, because the script only knows `src/levels/<id>/`. This repo has no `main` branch, so I ran it against HEAD. It flags only the benchmark directory you told me to use; the only other change is the regenerated `docs/level-gallery.md`. Nothing is committed.\n\n**What it plays like**\n- **The ride:** a lattice tunnel of coils over a dark planet, 128 BPM, 32 bars = exactly 60 s. You cross one ring on every beat: ring *k* is beat *k*, and the 112th is the muzzle. Speed triples over the run, so the rings spread further apart while still landing on the beat. They heat from arc blue through violet to white.\n- **The hum:** the kick is the coil firing, tuned to a pumping bass hum. The hum only climbs: D through stage one, E through stage two, then a semitone every two bars in the final charge. A charge whine glides continuously above the melody.\n- **Enemies:** pickets (tri-blade spinners orbiting the bore), threaders (needles that dart across the bore on each beat), leeches (clamps that ride a coil in; a coil you cross with a live leech on it misfires), arc pylons that shoot interceptable bolts, and six safety interlocks.\n- **The boss:** the interlocks latch on in two waves and tether you with live arcs while a sealed iris glows at the end of the barrel. The verdict falls on the last beat before the peak. If you clear them, the iris opens, the drums drop out on the final beat, and the gun fires: whiteout, hyperspace streaks, then silence and a sunrise over the planet's edge. If you don't, the barrel blows and the run ends in death.\n- **Player sounds are notes:** locks climb the chord, kills play a melody line written per stage, and each interlock you blow strikes the chord higher. START/REPLAY are CHARGE/REFIRE.\n\n**A design constraint you should know about:** the engine's homing shots can't catch anything moving away from them faster than about 20 world units per second. At full scale, shots on the boss and on fast targets missed forever, and even perfect simulated play blew the barrel. I rebuilt the whole level at 1/3 scale (a `WORLD` constant in `gameplay.ts`). On screen nothing changes, but targets now stay under that speed. The camera still leaves the barrel at up to 20 world units per second before the launch spike. Simulated perfect play now kills 119/119, launches, and gets rank S.\n\n**Other simulator results:** the deliberately sloppy player launches with an A, and a player who never shoots dies to arc bolts around 24 s. All 100 targets stay lockable on screen for their intended time. Across four random seeds, the sloppy player cleared the boss in only one. I made it easier after that: 4 hull points, fewer bolts, 4 hits per interlock. After the change I re-ran only seed 1, which launched.\n\n**What I couldn't verify:** this machine can't render WebGPU, so I've seen the level only through the software-rendered snapshot tool. I ran the audio in headless Chrome: no runtime errors, beats fire, and loudness rises through the run and drops to near silence after the shot. I haven't heard it.\n\n**What a playtester should check first:**\n1. Whether ring crossings land on the kick. Ring positions are corrected against the measured audio beat, but device output latency isn't accounted for.\n2. The mix: whether kill melodies cut through the kick and hum, and whether the whine is too piercing.\n3. Bloom in the white-hot final charge, and how bright a bolt looks as it hits the camera.\n4. Whether the boss timing feels fair to a real first-time player.\n\nIn dev, `?safeties=clear` (or `--debug-value clear` in the snapshot tool) auto-clears the interlocks so you can see the launch ending.",
+    "ttft_ms": 1654,
+    "type": "result",
+    "duration_ms": 3862344,
+    "uuid": "5e8f177a-775d-4712-9390-c16fcf9c8a25",
+    "ttft_stream_ms": 1133,
+    "time_to_request_ms": 86,
+    "first_content_frame_ms": 1133,
+    "queued_turn_count": 0,
+    "result_index": 0
+  },
+  "normalized": {
+    "inputTokens": 73970828,
+    "outputTokens": 335644,
+    "cacheReadInputTokens": 73970488,
+    "cacheWriteInputTokens": 615059,
+    "vendorFields": {
+      "totalCostUsd": 26.4288096,
+      "durationMs": 3862344,
+      "durationApiMs": 3030499,
+      "numTurns": 178,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-opus-5-5": {
+          "inputTokens": 340,
+          "outputTokens": 335644,
+          "cacheReadInputTokens": 73970488,
+          "cacheCreationInputTokens": 615059,
+          "webSearchRequests": 0,
+          "costUSD": 26.4288096,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "thinkingTokens": 171086,
+          "canonicalModel": "claude-opus-5-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

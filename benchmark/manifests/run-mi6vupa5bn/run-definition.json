@@ -1,0 +1,21 @@
+{
+  "runId": "run-mi6vupa5bn",
+  "slotId": "bnmf",
+  "levelId": "speedsolve-bnmf",
+  "themeId": "speedsolve",
+  "themePath": "benchmark/themes/speedsolve.md",
+  "configurationId": "claude-opus-5-5-high",
+  "recipePath": "benchmark/recipes/claude-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "fc44547a2461702733fe683ba64b250f7679c318",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Speedsolve"
+}

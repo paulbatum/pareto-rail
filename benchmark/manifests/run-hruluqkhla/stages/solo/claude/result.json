@@ -1,0 +1,14 @@
+{
+  "result": "completed",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionId": "ca76604d-42ca-4dbf-baba-1d2fc70417dc",
+  "usageSha256": "9517490b2831e0aea9678795f490a7d4169e360752e3e3b5fc5b90ea034f58a4",
+  "eventLogSha256": "4531609618eae2df81ff9657bbf8d2d3bdd4749933942492df5ceb0f1d2b56e1",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "rollout": {
+    "captured": true,
+    "sourcePath": "/home/pbatum/vibes/raild/benchmark/private/runs/run-hruluqkhla/harness-home/projects/-tmp-pareto-rail-run-hruluqkhla/ca76604d-42ca-4dbf-baba-1d2fc70417dc.jsonl",
+    "sha256": "efbc050edbdc047dffb0394f45d716eec08284b436faa22d1e394ac422ec389e"
+  }
+}

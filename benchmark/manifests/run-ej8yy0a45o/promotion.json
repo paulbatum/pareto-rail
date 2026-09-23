@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-ej8yy0a45o",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:36:23.184Z",
+      "data": {
+        "source": {
+          "runId": "run-ej8yy0a45o",
+          "slotId": "hh5u",
+          "themeId": "tinker-ball",
+          "levelId": "tinker-ball-hh5u",
+          "title": "Tinker Ball",
+          "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+          "evaluatedCommit": "0af58134cac0bdff0e53e6129f79b5bc087f9875",
+          "payloadCommit": "a0a85cf81e40f95db9e1397f84706aa17efd1831",
+          "manifestSha256": "d4a4bac0e68ff6487e055e8451e11b80e75602aef591efa24817bb6e301a9a5e",
+          "definitionSha256": "9be208c56adc5a129ba8a810f02a4b9420d3a46658b88b574855f41d5297da44",
+          "evaluatedSha256": "498912f31f823bef2a39bd09619b3ea3544f0d7533d3a75ca20c988f5c430a2c",
+          "payloadSha256": "cd3198084111f43a4b9ac663d4c8c4426b084dba8a18c1d0c65ecb7d780b5318",
+          "payloadDiffSha256": "cccd7313fc83ce91fa6373b22a5ac2ea8d956e96043f51dabbbe8b9ae9b0b0e9",
+          "sourcePath": "src/benchmark-levels/tinker-ball-hh5u/",
+          "destinationPath": "src/benchmark-levels/tinker-ball-hh5u/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/tinker-ball-hh5u",
+              "promotedPath": "src/benchmark-levels/tinker-ball-hh5u",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/tinker-ball-hh5u",
+              "promotedPath": "public/level-content/tinker-ball-hh5u",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "66af0c92f3ca48e679c1a637ae277ab8b4e8948d"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:36:23.282Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/tinker-ball-hh5u/",
+            "files": 23,
+            "reused": true
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/tinker-ball-hh5u/",
+            "files": 3,
+            "reused": true
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:36:23.284Z",
+      "data": {
+        "images": [],
+        "descriptor": null
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:36:23.401Z",
+      "data": {
+        "destination": "src/benchmark-levels/tinker-ball-hh5u/",
+        "verifiedFiles": 26
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:39:19.210Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 4.368506686000001,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "aa6cb6ea91c20337076f686b8c8b42eaf1143f558e2cb57eae3536e78af32c59",
+            "stderrSha256": "d29b19de2fdd345aa0a4c38c21cfa2fac318c0df070cc24c4b8c8d128a6d997c",
+            "wallTimeSeconds": 55.657451278,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-hh5u --base 66af0c92f3ca48e679c1a637ae277ab8b4e8948d",
+            "exitCode": 0,
+            "stdoutSha256": "4ed23f762ffd86b8502105c203b5ddf827a5db194618d956521f6a3368505377",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.053122838000002955,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level tinker-ball-hh5u",
+            "exitCode": 0,
+            "stdoutSha256": "80c25ec35960c20e34ed0620540868e95be372079c52fe6b06259c2906164132",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 103.808873605,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-23T10:39:19.311Z",
+      "data": {
+        "promotionCommit": "39d326099615be13696eac4b25a64994fed7f6d3",
+        "reused": false
+      }
+    }
+  },
+  "failures": [
+    {
+      "failedAt": "2026-09-23T10:33:40.407Z",
+      "checkpoint": "catalog",
+      "message": "Promotion scope check failed: Out-of-scope files for benchmark level 'tinker-ball-hh5u':\npublic/level-content/vespers-9qbs/hero.avif\npublic/level-content/vespers-9qbs/overview.avif\npublic/level-content/vespers-9qbs/start.avif\n"
+    },
+    {
+      "failedAt": "2026-09-23T10:35:34.668Z",
+      "checkpoint": "catalog",
+      "message": "Promotion scope check failed: Out-of-scope files for benchmark level 'tinker-ball-hh5u':\npublic/level-content/vespers-9qbs/hero.avif\npublic/level-content/vespers-9qbs/overview.avif\npublic/level-content/vespers-9qbs/start.avif\n"
+    }
+  ],
+  "updatedAt": "2026-09-23T10:39:19.312Z",
+  "source": {
+    "runId": "run-ej8yy0a45o",
+    "slotId": "hh5u",
+    "themeId": "tinker-ball",
+    "levelId": "tinker-ball-hh5u",
+    "title": "Tinker Ball",
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "evaluatedCommit": "0af58134cac0bdff0e53e6129f79b5bc087f9875",
+    "payloadCommit": "a0a85cf81e40f95db9e1397f84706aa17efd1831",
+    "manifestSha256": "d4a4bac0e68ff6487e055e8451e11b80e75602aef591efa24817bb6e301a9a5e",
+    "definitionSha256": "9be208c56adc5a129ba8a810f02a4b9420d3a46658b88b574855f41d5297da44",
+    "evaluatedSha256": "498912f31f823bef2a39bd09619b3ea3544f0d7533d3a75ca20c988f5c430a2c",
+    "payloadSha256": "cd3198084111f43a4b9ac663d4c8c4426b084dba8a18c1d0c65ecb7d780b5318",
+    "payloadDiffSha256": "cccd7313fc83ce91fa6373b22a5ac2ea8d956e96043f51dabbbe8b9ae9b0b0e9",
+    "sourcePath": "src/benchmark-levels/tinker-ball-hh5u/",
+    "destinationPath": "src/benchmark-levels/tinker-ball-hh5u/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/tinker-ball-hh5u",
+        "promotedPath": "src/benchmark-levels/tinker-ball-hh5u",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/tinker-ball-hh5u",
+        "promotedPath": "public/level-content/tinker-ball-hh5u",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "66af0c92f3ca48e679c1a637ae277ab8b4e8948d"
+  },
+  "failure": {
+    "failedAt": "2026-09-23T10:35:34.668Z",
+    "checkpoint": "catalog",
+    "message": "Promotion scope check failed: Out-of-scope files for benchmark level 'tinker-ball-hh5u':\npublic/level-content/vespers-9qbs/hero.avif\npublic/level-content/vespers-9qbs/overview.avif\npublic/level-content/vespers-9qbs/start.avif\n"
+  },
+  "promotionCommit": "39d326099615be13696eac4b25a64994fed7f6d3"
+}

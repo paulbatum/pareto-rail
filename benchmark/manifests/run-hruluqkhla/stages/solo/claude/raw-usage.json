@@ -1,0 +1,134 @@
+{
+  "sessionId": "ca76604d-42ca-4dbf-baba-1d2fc70417dc",
+  "initResolvedModel": "claude-opus-5-5",
+  "finalMessage": "**Vespers** is built at `src/benchmark-levels/vespers-9qbs/`, with gallery images in `public/level-content/vespers-9qbs/`. Typecheck, build and the full `check:floor` all pass: 0 occlusion, performance, centerness or reticle warnings. I have not seen it in WebGPU or heard it. Headless Chrome here can't render WebGPU, and I have no way to listen.\n\n**What's in it**\n- **World:** a black stone nave with arcade, gallery and clerestory, ribbed vaults, a floor of candles far below and hanging candle chandeliers. The flight climbs into a lantern crossing on the swell, sinks toward the candles for the dark span, and hovers in front of the dead west rose.\n- **Light:** every creature peels off a specific window, drains it, and carries its colour in its chest. A kill sends that colour home along an arc; the window blazes, throws its colour onto the stone and down a soft shaft, and stays lit.\n- **Music:** a 96 BPM, 24-bar organ piece in D minor, exactly 60 s, with no percussion.\n  - A held pedal D opens alone, then alto, soprano and tenor enter with a fugue subject one at a time.\n  - The pedal takes the subject for the swell, with choir and bells. A tremulant flute plays it alone through the dark span, and it becomes a repeating bass line for the boss.\n- **Player sounds:** locks climb the current chord on a flute, shots are pipe chiff plus a pedal reed, and a full six-lock volley adds a big chord stab. Kills play a solo melody drawn from the harmony, echoed a beat later by a glass chime as the window relights.\n- **Boss:** eight claws, then a thorned heart with three six-hit shells. Killing it gives a beat of silence, then the rose ignites, a wave of light runs back down the nave, the music turns major, and the held-back Tuba plays the subject. If the heart survives to 55 s it sinks back into the glass and the piece ends on the lone pedal D.\n\n**How I checked it**\n- **Simulation:** the perfect policy clears 58/58 and burns the rose at about 47 s; every event type fires.\n- **Visuals (WebGL fallback snapshots):** I tuned stone contrast, shafts, the ignition and the finale with them. With post-processing off, every target stays legible as a black silhouette against its own halo.\n- **Audio:** I rendered the run offline in headless Chrome. There's no clipping, loudness follows the intended arc (pedal alone about −21 dB up to the finale about −14 dB), and player sounds sit 5–7 dB under the music. I used the spectrum to trim excess sub-bass. The actual timbres (organ, choir, bells) are unheard.\n- **Scope:** `npm run check:benchmark-scope` couldn't run because it imports `scripts/benchmark/protocol.mjs`, which isn't in this checkout. I checked with git instead: only the two directories above are new.\n\nI added debug previews because snapshots can't shoot: `?rose=autoplay` plays the whole run with perfect aim, and `burn`, `lit` and `heart` fake single moments. They're listed in `level.md`.\n\n**For the human playtest, in this order**\n1. **Organ tone and mix:** the choir might be buzzy and the high soprano runs in bars 17–22 might be shrill.\n2. **Ignition timing:** whether the rose's ignition lands on the same beat as the music's major-key chord.\n3. **Finale brightness:** the settled lit cathedral in real WebGPU bloom. The fallback renderer may differ.\n4. **Boss difficulty:** eight 2-hit claws plus an 18-hit heart before 55 s, while shooting down thrown glass shards.\n5. **Stone lighting cost:** the stone shader sums 16 window lights per pixel, so check it on a weaker GPU.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 3607374,
+    "stop_reason": "end_turn",
+    "session_id": "ca76604d-42ca-4dbf-baba-1d2fc70417dc",
+    "total_cost_usd": 34.73392400000002,
+    "usage": {
+      "input_tokens": 416,
+      "cache_creation_input_tokens": 742620,
+      "cache_read_input_tokens": 107132600,
+      "output_tokens": 368239,
+      "output_tokens_details": {
+        "thinking_tokens": 200687
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 742620,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1407,
+          "cache_read_input_tokens": 742030,
+          "cache_creation_input_tokens": 590,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 590
+          },
+          "type": "message",
+          "model": null
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-opus-5-5": {
+        "inputTokens": 416,
+        "outputTokens": 368239,
+        "cacheReadInputTokens": 107132600,
+        "cacheCreationInputTokens": 742620,
+        "webSearchRequests": 0,
+        "costUSD": 34.73392400000002,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 200687,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 222,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "**Vespers** is built at `src/benchmark-levels/vespers-9qbs/`, with gallery images in `public/level-content/vespers-9qbs/`. Typecheck, build and the full `check:floor` all pass: 0 occlusion, performance, centerness or reticle warnings. I have not seen it in WebGPU or heard it. Headless Chrome here can't render WebGPU, and I have no way to listen.\n\n**What's in it**\n- **World:** a black stone nave with arcade, gallery and clerestory, ribbed vaults, a floor of candles far below and hanging candle chandeliers. The flight climbs into a lantern crossing on the swell, sinks toward the candles for the dark span, and hovers in front of the dead west rose.\n- **Light:** every creature peels off a specific window, drains it, and carries its colour in its chest. A kill sends that colour home along an arc; the window blazes, throws its colour onto the stone and down a soft shaft, and stays lit.\n- **Music:** a 96 BPM, 24-bar organ piece in D minor, exactly 60 s, with no percussion.\n  - A held pedal D opens alone, then alto, soprano and tenor enter with a fugue subject one at a time.\n  - The pedal takes the subject for the swell, with choir and bells. A tremulant flute plays it alone through the dark span, and it becomes a repeating bass line for the boss.\n- **Player sounds:** locks climb the current chord on a flute, shots are pipe chiff plus a pedal reed, and a full six-lock volley adds a big chord stab. Kills play a solo melody drawn from the harmony, echoed a beat later by a glass chime as the window relights.\n- **Boss:** eight claws, then a thorned heart with three six-hit shells. Killing it gives a beat of silence, then the rose ignites, a wave of light runs back down the nave, the music turns major, and the held-back Tuba plays the subject. If the heart survives to 55 s it sinks back into the glass and the piece ends on the lone pedal D.\n\n**How I checked it**\n- **Simulation:** the perfect policy clears 58/58 and burns the rose at about 47 s; every event type fires.\n- **Visuals (WebGL fallback snapshots):** I tuned stone contrast, shafts, the ignition and the finale with them. With post-processing off, every target stays legible as a black silhouette against its own halo.\n- **Audio:** I rendered the run offline in headless Chrome. There's no clipping, loudness follows the intended arc (pedal alone about −21 dB up to the finale about −14 dB), and player sounds sit 5–7 dB under the music. I used the spectrum to trim excess sub-bass. The actual timbres (organ, choir, bells) are unheard.\n- **Scope:** `npm run check:benchmark-scope` couldn't run because it imports `scripts/benchmark/protocol.mjs`, which isn't in this checkout. I checked with git instead: only the two directories above are new.\n\nI added debug previews because snapshots can't shoot: `?rose=autoplay` plays the whole run with perfect aim, and `burn`, `lit` and `heart` fake single moments. They're listed in `level.md`.\n\n**For the human playtest, in this order**\n1. **Organ tone and mix:** the choir might be buzzy and the high soprano runs in bars 17–22 might be shrill.\n2. **Ignition timing:** whether the rose's ignition lands on the same beat as the music's major-key chord.\n3. **Finale brightness:** the settled lit cathedral in real WebGPU bloom. The fallback renderer may differ.\n4. **Boss difficulty:** eight 2-hit claws plus an 18-hit heart before 55 s, while shooting down thrown glass shards.\n5. **Stone lighting cost:** the stone shader sums 16 window lights per pixel, so check it on a weaker GPU.",
+    "ttft_ms": 1320,
+    "type": "result",
+    "duration_ms": 7267977,
+    "uuid": "5029b597-de30-45ad-bafa-3613b97c3744",
+    "ttft_stream_ms": 806,
+    "time_to_request_ms": 74,
+    "first_content_frame_ms": 806,
+    "queued_turn_count": 0,
+    "result_index": 0
+  },
+  "normalized": {
+    "inputTokens": 107133016,
+    "outputTokens": 368239,
+    "cacheReadInputTokens": 107132600,
+    "cacheWriteInputTokens": 742620,
+    "vendorFields": {
+      "totalCostUsd": 34.73392400000002,
+      "durationMs": 7267977,
+      "durationApiMs": 3607374,
+      "numTurns": 222,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-opus-5-5": {
+          "inputTokens": 416,
+          "outputTokens": 368239,
+          "cacheReadInputTokens": 107132600,
+          "cacheCreationInputTokens": 742620,
+          "webSearchRequests": 0,
+          "costUSD": 34.73392400000002,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "thinkingTokens": 200687,
+          "canonicalModel": "claude-opus-5-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

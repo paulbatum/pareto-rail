@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T03:41:38.318Z",
+  "generatedAt": "2026-09-23T11:02:22.732Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -417,6 +417,41 @@
       "thumbnailPath": "/level-content/mass-driver-9281/hero.avif",
       "entrantBaseline": "a7acfa7f253926dab38f6620167dda9644cfa0be",
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
+    },
+    {
+      "levelId": "mass-driver-azxp",
+      "themeId": "mass-driver",
+      "configurationId": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "generationCost": 26.4288096,
+      "linesOfCode": 4438,
+      "run": {
+        "generationWallTimeSeconds": 3863.153,
+        "totalWallTimeSeconds": 4096.533,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.280"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5-5",
+            "role": "solo",
+            "inputTokens": 340,
+            "outputTokens": 335644,
+            "cacheReadTokens": 73970488,
+            "cacheWriteTokens": 615059,
+            "usageSource": "agreed",
+            "costUsd": 26.4288096
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/mass-driver-azxp/hero.avif",
+      "featured": true,
+      "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119"
     },
     {
       "levelId": "mass-driver-bczy",
@@ -1745,7 +1780,7 @@
       "configurationId": "claude-opus-5-5-high",
       "modelName": "Claude Opus 5.5",
       "workflowName": "solo",
-      "generationCost": 42.881475,
+      "generationCost": 32.2063668,
       "linesOfCode": 5838,
       "run": {
         "generationWallTimeSeconds": 4338.155,
@@ -1761,11 +1796,11 @@
             "modelName": "claude-opus-5-5",
             "role": "solo",
             "inputTokens": 356,
-            "outputTokens": 562010,
+            "outputTokens": 361938,
             "cacheReadTokens": 80364594,
             "cacheWriteTokens": 1111658,
-            "usageSource": "harness-counter",
-            "costUsd": 42.881475
+            "usageSource": "agreed",
+            "costUsd": 32.2063668
           }
         ]
       },
@@ -2888,6 +2923,41 @@
       "materialsCommit": "7ab2988501cd03c91e6e8152c50bbd8731a85d3e"
     },
     {
+      "levelId": "speedsolve-bnmf",
+      "themeId": "speedsolve",
+      "configurationId": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "generationCost": 26.5281898,
+      "linesOfCode": 4240,
+      "run": {
+        "generationWallTimeSeconds": 4754.437,
+        "totalWallTimeSeconds": 5024.819,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.280"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5-5",
+            "role": "solo",
+            "inputTokens": 344,
+            "outputTokens": 346713,
+            "cacheReadTokens": 72928409,
+            "cacheWriteTokens": 625859,
+            "usageSource": "agreed",
+            "costUsd": 26.5281898
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/speedsolve-bnmf/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "fc44547a2461702733fe683ba64b250f7679c318"
+    },
+    {
       "levelId": "speedsolve-kv7m",
       "themeId": "speedsolve",
       "configurationId": "codex-gpt-6-astra-max",
@@ -3187,6 +3257,41 @@
         ]
       },
       "thumbnailPath": "/level-content/vespers-4797/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
+    },
+    {
+      "levelId": "vespers-9qbs",
+      "themeId": "vespers",
+      "configurationId": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "generationCost": 34.733924,
+      "linesOfCode": 4940,
+      "run": {
+        "generationWallTimeSeconds": 7268.545,
+        "totalWallTimeSeconds": 7567.702,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.280"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5-5",
+            "role": "solo",
+            "inputTokens": 416,
+            "outputTokens": 368239,
+            "cacheReadTokens": 107132600,
+            "cacheWriteTokens": 742620,
+            "usageSource": "agreed",
+            "costUsd": 34.733924
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/vespers-9qbs/hero.avif",
+      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -3561,6 +3666,41 @@
         ]
       },
       "thumbnailPath": "/level-content/thermal-ink-8448/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
+    },
+    {
+      "levelId": "thermal-ink-mv8r",
+      "themeId": "thermal-ink",
+      "configurationId": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "generationCost": 27.9410592,
+      "linesOfCode": 5451,
+      "run": {
+        "generationWallTimeSeconds": 4277.451,
+        "totalWallTimeSeconds": 4501.212,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.280"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5-5",
+            "role": "solo",
+            "inputTokens": 332,
+            "outputTokens": 357828,
+            "cacheReadTokens": 75039416,
+            "cacheWriteTokens": 721911,
+            "usageSource": "agreed",
+            "costUsd": 27.9410592
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/thermal-ink-mv8r/hero.avif",
+      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },
@@ -3942,6 +4082,41 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-gnff/hero.avif",
+      "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
+    },
+    {
+      "levelId": "tinker-ball-hh5u",
+      "themeId": "tinker-ball",
+      "configurationId": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "generationCost": 28.6678784,
+      "linesOfCode": 5556,
+      "run": {
+        "generationWallTimeSeconds": 3446.197,
+        "totalWallTimeSeconds": 12814.815,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.280"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5-5",
+            "role": "solo",
+            "inputTokens": 318,
+            "outputTokens": 321142,
+            "cacheReadTokens": 64860632,
+            "cacheWriteTokens": 1158955,
+            "usageSource": "agreed",
+            "costUsd": 28.6678784
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/tinker-ball-hh5u/hero.avif",
+      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074"
     },

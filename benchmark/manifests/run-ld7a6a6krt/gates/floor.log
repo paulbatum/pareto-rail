@@ -1,0 +1,23 @@
+
+> pareto-rail@0.0.0 check:floor
+> node scripts/check-floor.mjs --level thermal-ink-mv8r
+
+Thermal Ink floor check
+duration 60.0s; spawned kinds 6: barb, bellbuoy, core, eel, node, scrapper
+event coverage missing: none
+
+Engine defaults:
+  shot rhythm: [default] pattern=grid-ramp, gapThirtyseconds=2, releaseShare=0.75, gridRampGapGrowthThirtyseconds=2, maxGridSeconds=1.905
+  action SFX snap: [default] (enabled, 32nd grid)
+  lock radius: [default] 0.085 NDC; reticle visual 0.097 NDC = 1.14x lock radius, no reticle scaling
+  words: start "STRIKE" (6), replay "REPLAY" (6); MAX_LOCKS 6
+  identity hooks declared: scoreForHit, scoreForKill, scoreForVolley, rankForRun, easeRunProgress, updateCameraEffects, updateAttractCamera, playerHealth, detailsForRun
+  identity hooks [default]: validateRelease, allowLockUndo
+
+target occlusion warnings: 0
+performance gate failures: 0
+audio configuration failures: 0
+spawn centerness/distance warnings: 0
+reticle warnings: 0
+start/replay word warnings: 0
+All floor checks passed.

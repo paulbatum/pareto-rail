@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v3",
+  "runId": "run-ej8yy0a45o",
+  "slotId": "hh5u",
+  "configuration": {
+    "id": "claude-opus-5-5-high"
+  },
+  "theme": {
+    "id": "tinker-ball",
+    "path": "benchmark/themes/tinker-ball.md",
+    "sha256": "b9c846813d00dda166372ee7a298d6fa8bb5428e432a8988994126c1adcebc47"
+  },
+  "baseline": {
+    "materialsCommit": "52f7c023794e74b135341e67c5640dbcd3e7b074",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "77173b463dad124e56dcbecbb0ff740c6f3687e5"
+    },
+    "guard": {
+      "policy": "scrubbed",
+      "violations": []
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-cli.md",
+    "sha256": "2c0fb25bd878961cbd97776ca0a93fffd816fe452147e0811cc1cb7899c76667"
+  },
+  "controller": {
+    "commit": "95976af2cdbb8de1349554e3d0ec7ff606855ada"
+  },
+  "timing": {
+    "startedAt": "2026-09-23T06:55:40.494Z",
+    "finishedAt": "2026-09-23T10:29:15.309Z",
+    "wallTimeSeconds": 12814.815
+  },
+  "stages": [
+    {
+      "id": "claude-opus-5-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-opus-5-5"
+      },
+      "promptSha256": "33e9ff83fb121f0486c1dee2c2169174a9c6393e1711d883d1a8512d76f726ce",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.280 (Claude Code)"
+      },
+      "sessionId": "590861a6-8bb2-4294-8275-1405f76fb555",
+      "rolloutArtifactSha256": "cd1dc999f2baeb774ae35ffa77771d0459704b61663c1d330411ec3eb41932d7",
+      "outputArtifactSha256": "5d07093023632e342206028b88228cd9605b4e5fde7b82b969d23950ffcc481b",
+      "startedAt": "2026-09-23T06:55:52.450Z",
+      "finishedAt": "2026-09-23T10:28:52.953Z",
+      "wallTimeSeconds": 3446.197057667,
+      "result": "completed",
+      "entrantSandbox": true,
+      "continuationRounds": 1,
+      "usage": {
+        "inputTokens": 318,
+        "outputTokens": 321142,
+        "cacheReadInputTokens": 64860632,
+        "cacheWriteInputTokens": 1158955
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 28.667878400000003,
+        "source": "ccusage"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 28.667878400000003,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.24",
+      "view": "claude",
+      "command": "ccusage claude session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "agreed",
+      "source": "harness result event modelUsage"
+    },
+    "models": [
+      {
+        "modelName": "claude-opus-5-5",
+        "costUsd": 28.667878400000003,
+        "inputTokens": 318,
+        "outputTokens": 321142,
+        "cacheReadTokens": 64860632,
+        "cacheWriteTokens": 1158955,
+        "usageSource": "agreed"
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 1.7314867200000001,
+      "outputSha256": "c07486b7747bd61ae8893c31ebcfb868742cbf027a3752157179d26ed13e8657"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.38523568,
+      "outputSha256": "699bcc78524242cdaf30d3b83d79d685cec2878569f0a5a206166df5903112a9"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level tinker-ball-hh5u --base 77173b463dad124e56dcbecbb0ff740c6f3687e5",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.03752240400000028,
+      "outputSha256": "4ed23f762ffd86b8502105c203b5ddf827a5db194618d956521f6a3368505377"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level tinker-ball-hh5u",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 13.862451448000002,
+      "outputSha256": "2b9c4f71fe1baa083f57ae0feb6055c643985f4e7c92b13296bc142f54ebfd09"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "tinker-ball-hh5u",
+    "title": "Tinker Ball",
+    "evaluated": {
+      "commit": "0af58134cac0bdff0e53e6129f79b5bc087f9875",
+      "branch": "benchmark-run-run-ej8yy0a45o"
+    },
+    "payload": {
+      "commit": "a0a85cf81e40f95db9e1397f84706aa17efd1831",
+      "branch": "benchmark-payload-run-ej8yy0a45o"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

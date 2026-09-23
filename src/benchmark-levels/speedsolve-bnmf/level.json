@@ -1,4 +1,9 @@
 {
   "id": "speedsolve-bnmf",
-  "title": "Speedsolve"
+  "title": "Speedsolve",
+  "contentImages": {
+    "hero": "/level-content/speedsolve-bnmf/hero.avif",
+    "overview": "/level-content/speedsolve-bnmf/overview.avif",
+    "start": "/level-content/speedsolve-bnmf/start.avif"
+  }
 }
