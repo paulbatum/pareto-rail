@@ -1,0 +1,64 @@
+
+> pareto-rail@0.0.0 build
+> prisma generate && npm run validate:level-catalog && vite build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 59ms
+
+
+> pareto-rail@0.0.0 validate:level-catalog
+> node scripts/validate-level-catalog.mjs
+
+Validated 13 discovered benchmark level module(s).
+vite v8.1.3 building client environment for production...
+[2Ktransforming...✓ 271 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                3.88 kB │ gzip:   1.49 kB
+dist/assets/index-BrjXyBms.css                47.07 kB │ gzip:   9.65 kB
+dist/assets/rng-BkgXlSb5.js                    0.16 kB │ gzip:   0.14 kB
+dist/assets/events-C-SlUeJz.js                 0.20 kB │ gzip:   0.16 kB
+dist/assets/spawn-patterns-Cq7vLtQX.js         0.22 kB │ gzip:   0.16 kB
+dist/assets/audio-trace-GtutyGgA.js            0.40 kB │ gzip:   0.27 kB
+dist/assets/speed-profile-W-oLAii7.js          0.70 kB │ gzip:   0.43 kB
+dist/assets/client-tip-BCJRcgTc.js             0.82 kB │ gzip:   0.42 kB
+dist/assets/rail-pacer-SYPlsTqz.js             1.16 kB │ gzip:   0.49 kB
+dist/assets/arrangement-DbzrCudz.js            1.20 kB │ gzip:   0.61 kB
+dist/assets/visual-kit-0tzMM25S.js             1.60 kB │ gzip:   0.76 kB
+dist/assets/hostile-shot-Cn9P_IzH.js           1.68 kB │ gzip:   0.75 kB
+dist/assets/camera-feel-BYN6gc6o.js            1.86 kB │ gzip:   1.01 kB
+dist/assets/environment-kit-B9eK4URV.js        2.23 kB │ gzip:   1.06 kB
+dist/assets/audio-voices-BW6PDOoa.js           2.24 kB │ gzip:   0.91 kB
+dist/assets/glyphs-DALqayjc.js                 2.43 kB │ gzip:   0.53 kB
+dist/assets/BufferGeometryUtils-BSUwXweA.js    3.78 kB │ gzip:   1.10 kB
+dist/assets/perf-overlay-B13kqucl.js           5.76 kB │ gzip:   2.27 kB
+dist/assets/music-time-BtJYUXxX.js             5.99 kB │ gzip:   2.22 kB
+dist/assets/prism-F9OGNv4M.js                 14.65 kB │ gzip:   5.89 kB
+dist/assets/mass-driver-bczy-CSfDnotc.js      14.92 kB │ gzip:   6.00 kB
+dist/assets/rezdle-DJNtQQh-.js                17.56 kB │ gzip:   7.01 kB
+dist/assets/skyhook-9uib-g7yeKaUl.js          18.82 kB │ gzip:   7.61 kB
+dist/assets/mass-driver-7rkv-C2g-hjao.js      19.48 kB │ gzip:   8.32 kB
+dist/assets/hull-run-cvs3-C0NNz185.js         21.63 kB │ gzip:   8.69 kB
+dist/assets/skyhook-81u5-DAvoaHlj.js          22.44 kB │ gzip:   9.01 kB
+dist/assets/hull-run-ns5n-BvH2w6PB.js         22.55 kB │ gzip:   8.71 kB
+dist/assets/GameFrame-BhL35cgW.js             22.58 kB │ gzip:   7.37 kB
+dist/assets/rush-SWX-hfHe.js                  25.81 kB │ gzip:   9.43 kB
+dist/assets/mass-driver-9281-mwgAlnpH.js      29.83 kB │ gzip:  11.55 kB
+dist/assets/audio-kit-CuTfXtgw.js             30.53 kB │ gzip:  10.40 kB
+dist/assets/mass-driver-esvz-BMzYCYYE.js      50.15 kB │ gzip:  17.31 kB
+dist/assets/crystal-RWgcEsJk.js               52.38 kB │ gzip:  17.45 kB
+dist/assets/mass-driver-vyxj-CfO16t4Z.js      59.36 kB │ gzip:  20.48 kB
+dist/assets/mass-driver-wo4m-B_ggdwhC.js      63.05 kB │ gzip:  20.47 kB
+dist/assets/skyhook-snxd-yDrMHIQh.js          72.37 kB │ gzip:  24.43 kB
+dist/assets/helios-D9mSMhGH.js                73.44 kB │ gzip:  24.06 kB
+dist/assets/skyhook-lkor-CjHkEV_-.js          75.53 kB │ gzip:  24.96 kB
+dist/assets/broadside-hmvp-8hsNk1DA.js       109.55 kB │ gzip:  37.39 kB
+dist/assets/three.core-BkcZYOcV.js           238.14 kB │ gzip:  62.51 kB
+dist/assets/index-B_eNgHxN.js                298.19 kB │ gzip:  90.31 kB
+dist/assets/word-data-bEQzhfW8.js            622.40 kB │ gzip: 206.10 kB
+dist/assets/three.tsl-Dts0UlgY.js            649.24 kB │ gzip: 182.23 kB
+
+✓ built in 831ms

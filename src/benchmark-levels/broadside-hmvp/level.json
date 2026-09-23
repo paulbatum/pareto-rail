@@ -1,4 +1,9 @@
 {
   "id": "broadside-hmvp",
-  "title": "Broadside"
+  "title": "Broadside",
+  "contentImages": {
+    "hero": "/level-content/broadside-hmvp/hero.avif",
+    "overview": "/level-content/broadside-hmvp/overview.avif",
+    "start": "/level-content/broadside-hmvp/start.avif"
+  }
 }

@@ -1,0 +1,21 @@
+{
+  "runId": "run-xng2tj91ae",
+  "slotId": "tmbx",
+  "levelId": "strandline-tmbx",
+  "themeId": "strandline",
+  "themePath": "benchmark/themes/strandline.md",
+  "configurationId": "claude-opus-5-5-high",
+  "recipePath": "benchmark/recipes/claude-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v2",
+  "baselinePolicy": "open",
+  "materialsCommit": "c347fec9b4263f66e4cb58de15ac89b16d576849",
+  "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+  "levelTitle": "Strandline"
+}

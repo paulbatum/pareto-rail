@@ -1,4 +1,9 @@
 {
   "id": "skyhook-e34d",
-  "title": "Skyhook"
+  "title": "Skyhook",
+  "contentImages": {
+    "hero": "/level-content/skyhook-e34d/hero.avif",
+    "overview": "/level-content/skyhook-e34d/overview.avif",
+    "start": "/level-content/skyhook-e34d/start.avif"
+  }
 }

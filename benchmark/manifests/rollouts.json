@@ -650,6 +650,24 @@
       ]
     },
     {
+      "runId": "run-6bhq8xm2g8",
+      "levelId": "skyhook-e34d",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-6bhq8xm2g8/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 19410348,
+          "sha256": "ea9a0eccf119917226b1406fafd4fe1306aedcaee6408cfebfb10ef7d87ba232"
+        },
+        {
+          "path": "runs/run-6bhq8xm2g8/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 19307186,
+          "sha256": "e09d70a0a82a342da9a412559e21f7975475b7f7ddbe72478a95d9a92259d48e"
+        }
+      ]
+    },
+    {
       "runId": "run-6e06255f1b",
       "levelId": "broadside-806f",
       "themeId": "broadside",
@@ -1131,6 +1149,24 @@
           "path": "runs/run-iz2agir3l4/stages/solo/pi/events.jsonl.gz",
           "rawBytes": 23404411,
           "sha256": "2990c08f52aeb27547f04cf18543603869f2137cf4f78c8bd5036b5f511e0da6"
+        }
+      ]
+    },
+    {
+      "runId": "run-k4rrbbsj1r",
+      "levelId": "broadside-hmvp",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-k4rrbbsj1r/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 15260915,
+          "sha256": "54ed849991e0e1dd80434c41ff078014401028efeb1b6cb83274a0a85aa1b913"
+        },
+        {
+          "path": "runs/run-k4rrbbsj1r/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 2253061,
+          "sha256": "36c8920c26fca49983cf059559189942d5b0fa95a50b100d7d6220c14f6cec4f"
         }
       ]
     },
@@ -1747,6 +1783,24 @@
           "path": "runs/run-xixwfev1c60s/stages/solo/claude/events.jsonl.gz",
           "rawBytes": 11679491,
           "sha256": "9340488884bae795eafc4711451d9679baea8fecc492fe3666bd7116684bee27"
+        }
+      ]
+    },
+    {
+      "runId": "run-xng2tj91ae",
+      "levelId": "strandline-tmbx",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-xng2tj91ae/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 13060831,
+          "sha256": "2092aeb6f9082e038ee90474223dcf29e01be0da721fec44cea358fd1c66c023"
+        },
+        {
+          "path": "runs/run-xng2tj91ae/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 12716464,
+          "sha256": "58010ad8b5a072101f753a21002686429e0ed32a03e48c34863cbaca9f16c744"
         }
       ]
     },

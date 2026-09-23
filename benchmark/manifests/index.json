@@ -221,6 +221,12 @@
       "configurationId": "codex-luna-max"
     },
     {
+      "runId": "run-6bhq8xm2g8",
+      "levelId": "skyhook-e34d",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-5-5-high"
+    },
+    {
       "runId": "run-6e06255f1b",
       "levelId": "broadside-806f",
       "themeId": "broadside",
@@ -385,6 +391,12 @@
       "levelId": "thermal-ink-v1d2",
       "themeId": "thermal-ink",
       "configurationId": "pi-openrouter-ox-alpha-high"
+    },
+    {
+      "runId": "run-k4rrbbsj1r",
+      "levelId": "broadside-hmvp",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-5-5-high"
     },
     {
       "runId": "run-kk5bob0rfo",
@@ -593,6 +605,12 @@
       "levelId": "skyhook-snxd",
       "themeId": "skyhook",
       "configurationId": "claude-fable-5-high"
+    },
+    {
+      "runId": "run-xng2tj91ae",
+      "levelId": "strandline-tmbx",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-5-5-high"
     },
     {
       "runId": "run-y5zd577spu",

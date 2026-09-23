@@ -1,0 +1,133 @@
+{
+  "sessionId": "496bffdb-44ba-4a28-a600-20dc683e8623",
+  "initResolvedModel": "claude-opus-5-5",
+  "finalMessage": "Broadside is built in `src/benchmark-levels/broadside-hmvp/` and passes every gate. The one thing I couldn't check is a real WebGPU playthrough with sound: this WSL2 environment can't render WebGPU, so I only saw headless SwiftShader snapshots and never heard the orchestra play in context.\n\n**Checks run:**\n- `npm run typecheck` and `npm run build`: pass.\n- `npm run check:floor -- --level broadside-hmvp`: **ACCEPT**, with zero occlusion, performance, audio-config and distance/centerness warnings.\n- `npm run check:benchmark-scope -- --level broadside-hmvp --base HEAD`: valid. The only other change is the regenerated `docs/level-gallery.md`.\n- **Length:** exactly 60 s (34 bars at 136 BPM).\n- **Simulation:** 8 enemy kinds spawn, and every gameplay event fires. The \"perfect\" bot scores rank A, knocks out 4/4 shield generators and 3/3 power cores, and gets the victory ending. The weaker \"imperfect\" bot lived to the end in 4 of 5 seeds; the fifth died at 44 s.\n- **Audio trace:** the song structure and the unresolved ending you get if the flagship escapes both trace correctly. I also rendered all 22 synthesized instruments offline in headless Chrome: no errors or bad samples. I used those renders to raise the kill-note melody and the snare.\n- **Snapshots:** I went through the whole run with and without post-processing. That caught overexposure, hulls that should read black showing as pink-grey, and blasts filling the screen; all three are fixed.\n\n**What's in it:**\n- **The route:** the path is generated from authored speed, heading and climb per bar, so the ships sit exactly where the music puts you. You catapult off your carrier's deck on the bar-1 downbeat, corkscrew twice between two passing cruisers, and run down VALIANT's flank while her guns fire overhead on every beat. Then you drift through a quiet stretch of wreckage, crawl under an enemy warship's belly, pass close along the enemy flagship's side, bank hard around its stern and drop into its trench.\n- **The finish:** the camera pulls back past the breaking flagship with both fleets in frame. The REARM replay letters appear in that final view.\n- **Enemies:** darts that stream across the screen in lines, ring-shaped fighters that circle each other, lancers that overtake you from behind and fire interceptable shots on the beat, three-hit torpedo bombers going for VALIANT, belly turrets, four two-stage shield generators, and three two-stage power cores. A full six-target volley counts as a \"full broadside\", and the friendly fleet answers with a salvo.\n- **Music:** a synthesized orchestra in D minor with strings, horns, brass, timpani, choir and harp. Locks pluck up the current chord, each shot of a volley is a horn note, and kills play a melody line that changes per section. It goes near-silent in the wreckage, the shield breaks on an orchestral hit, and the ending plays a D-major victory theme if you win, or trails off unresolved if the flagship escapes.\n\n**Changes from your brief:**\n- Start and replay words are SORTIE and REARM, not START and REPLAY.\n- The player hull has 5 hit points.\n- Airspeeds are lower than a literal \"high-speed run\": the engine's shots fly at about 82 units/s, so at faster speeds shots chased targets for over a second and missed. Speed now comes from flying 20 units off the hulls.\n\n**What a playtester should check first:**\n1. **VALIANT's salvos.** They're timed to the audio beat and fall back to game time if audio isn't running. Snapshots never show them because the tool sends no beats, so they're entirely unseen.\n2. **Hull contrast with bloom at zero.** Ship bodies were tuned under SwiftShader; on real GPUs the dark enemy hulls or pale friendly hulls may need adjusting.\n3. **The mix.** Whether the kill melody rides clearly over a busy section, the balance of the cannons, and whether the victory theme lands as the camera pulls out.\n4. **Boss difficulty.** Whether an ordinary player can take out all four generators and all three cores in their windows; the simulator is a poor stand-in here.\n\nNothing is committed.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 3362055,
+    "stop_reason": "end_turn",
+    "session_id": "496bffdb-44ba-4a28-a600-20dc683e8623",
+    "total_cost_usd": 32.20636679999999,
+    "usage": {
+      "input_tokens": 208,
+      "cache_creation_input_tokens": 698751,
+      "cache_read_input_tokens": 63515493,
+      "output_tokens": 161866,
+      "output_tokens_details": {
+        "thinking_tokens": 61789
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 698751,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1556,
+          "cache_read_input_tokens": 708324,
+          "cache_creation_input_tokens": 770,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 770
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-opus-5-5": {
+        "inputTokens": 356,
+        "outputTokens": 361938,
+        "thinkingTokens": 169487,
+        "cacheReadInputTokens": 80364594,
+        "cacheCreationInputTokens": 1111658,
+        "webSearchRequests": 0,
+        "costUSD": 32.20636679999999,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 111,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "Broadside is built in `src/benchmark-levels/broadside-hmvp/` and passes every gate. The one thing I couldn't check is a real WebGPU playthrough with sound: this WSL2 environment can't render WebGPU, so I only saw headless SwiftShader snapshots and never heard the orchestra play in context.\n\n**Checks run:**\n- `npm run typecheck` and `npm run build`: pass.\n- `npm run check:floor -- --level broadside-hmvp`: **ACCEPT**, with zero occlusion, performance, audio-config and distance/centerness warnings.\n- `npm run check:benchmark-scope -- --level broadside-hmvp --base HEAD`: valid. The only other change is the regenerated `docs/level-gallery.md`.\n- **Length:** exactly 60 s (34 bars at 136 BPM).\n- **Simulation:** 8 enemy kinds spawn, and every gameplay event fires. The \"perfect\" bot scores rank A, knocks out 4/4 shield generators and 3/3 power cores, and gets the victory ending. The weaker \"imperfect\" bot lived to the end in 4 of 5 seeds; the fifth died at 44 s.\n- **Audio trace:** the song structure and the unresolved ending you get if the flagship escapes both trace correctly. I also rendered all 22 synthesized instruments offline in headless Chrome: no errors or bad samples. I used those renders to raise the kill-note melody and the snare.\n- **Snapshots:** I went through the whole run with and without post-processing. That caught overexposure, hulls that should read black showing as pink-grey, and blasts filling the screen; all three are fixed.\n\n**What's in it:**\n- **The route:** the path is generated from authored speed, heading and climb per bar, so the ships sit exactly where the music puts you. You catapult off your carrier's deck on the bar-1 downbeat, corkscrew twice between two passing cruisers, and run down VALIANT's flank while her guns fire overhead on every beat. Then you drift through a quiet stretch of wreckage, crawl under an enemy warship's belly, pass close along the enemy flagship's side, bank hard around its stern and drop into its trench.\n- **The finish:** the camera pulls back past the breaking flagship with both fleets in frame. The REARM replay letters appear in that final view.\n- **Enemies:** darts that stream across the screen in lines, ring-shaped fighters that circle each other, lancers that overtake you from behind and fire interceptable shots on the beat, three-hit torpedo bombers going for VALIANT, belly turrets, four two-stage shield generators, and three two-stage power cores. A full six-target volley counts as a \"full broadside\", and the friendly fleet answers with a salvo.\n- **Music:** a synthesized orchestra in D minor with strings, horns, brass, timpani, choir and harp. Locks pluck up the current chord, each shot of a volley is a horn note, and kills play a melody line that changes per section. It goes near-silent in the wreckage, the shield breaks on an orchestral hit, and the ending plays a D-major victory theme if you win, or trails off unresolved if the flagship escapes.\n\n**Changes from your brief:**\n- Start and replay words are SORTIE and REARM, not START and REPLAY.\n- The player hull has 5 hit points.\n- Airspeeds are lower than a literal \"high-speed run\": the engine's shots fly at about 82 units/s, so at faster speeds shots chased targets for over a second and missed. Speed now comes from flying 20 units off the hulls.\n\n**What a playtester should check first:**\n1. **VALIANT's salvos.** They're timed to the audio beat and fall back to game time if audio isn't running. Snapshots never show them because the tool sends no beats, so they're entirely unseen.\n2. **Hull contrast with bloom at zero.** Ship bodies were tuned under SwiftShader; on real GPUs the dark enemy hulls or pale friendly hulls may need adjusting.\n3. **The mix.** Whether the kill melody rides clearly over a busy section, the balance of the cannons, and whether the victory theme lands as the camera pulls out.\n4. **Boss difficulty.** Whether an ordinary player can take out all four generators and all three cores in their windows; the simulator is a poor stand-in here.\n\nNothing is committed.",
+    "ttft_ms": 6487,
+    "type": "result",
+    "duration_ms": 2489526,
+    "uuid": "9861683e-eec4-4a5f-8a45-9cc614faa59d",
+    "ttft_stream_ms": 5766,
+    "time_to_request_ms": 281,
+    "first_content_frame_ms": 5766,
+    "queued_turn_count": 0,
+    "result_index": 0
+  },
+  "normalized": {
+    "inputTokens": 63515701,
+    "outputTokens": 161866,
+    "cacheReadInputTokens": 63515493,
+    "cacheWriteInputTokens": 698751,
+    "vendorFields": {
+      "totalCostUsd": 32.20636679999999,
+      "durationMs": 2489526,
+      "durationApiMs": 3362055,
+      "numTurns": 111,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-opus-5-5": {
+          "inputTokens": 356,
+          "outputTokens": 361938,
+          "thinkingTokens": 169487,
+          "cacheReadInputTokens": 80364594,
+          "cacheCreationInputTokens": 1111658,
+          "webSearchRequests": 0,
+          "costUSD": 32.20636679999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "canonicalModel": "claude-opus-5-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

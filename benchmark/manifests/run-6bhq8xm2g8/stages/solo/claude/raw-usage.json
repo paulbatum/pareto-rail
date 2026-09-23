@@ -1,0 +1,134 @@
+{
+  "sessionId": "47d68d8c-1655-44a0-954b-4b382d7ebb60",
+  "initResolvedModel": "claude-opus-5-5",
+  "finalMessage": "Skyhook is built at `src/benchmark-levels/skyhook-e34d/`, and `docs/level-gallery.md` is regenerated. Typecheck, build, and `check:floor` all pass. I haven't played it: WebGPU doesn't render headless here, so what it looks like on real hardware and how it sounds still need a human run-through. Nothing is committed.\n\n**The level:** 128 BPM, 33 bars, about 62 s of play.\n- **Camera:** it rides the climber looking up the tether, so the ribbon rises from the car's drive head (bottom of frame) to a vanishing point where the station waits.\n- **The climb:** a rain-lashed launch pad with orange-and-white gantries falling away, a lightning storm, a whiteout punch through the cloud deck on the bar-8 downbeat, then sunlit blue over a cloud sea, indigo, and finally black with stars above and the planet's limb curving below. Everything is lit by the same sky-driven light.\n- **Enemies:**\n  - Kites: wind-riders that fly banking flocks along set paths.\n  - Grapplers: dive at the car with a violet warning line and a proximity alarm, then bite.\n  - Ticks: two-stage armor, crawl down the ribbon on the beat.\n  - Sentinels: rise past the car and fire bolts you can shoot down.\n- **Hull:** 5 points, shared by the car and the gunner.\n- **Boss (the Descender):** latches on at bar 20 and climbs down one grip per beat, visibly getting bigger. Each of its four claws you shoot makes it slip back. The maw opens once the claws are gone (or at bar 26), and at bar 28¾ it lunges. If it reaches the car, the drive head bursts and the run ends. If you kill it, the husk tumbles away, the car sprints for the station, the approach lights chase, the iris opens, and the bay clamps go green: \"DOCKED · 35,786 KM\".\n- **Score:** it follows the air. Wide, wet storm (pads, rain plucked from the chord, thunder on the same beats as the lightning), then a full band in the sunlight, dropping layers as the sky darkens. In vacuum it's a sub pulse, a thin drone, and the Descender's grip clanking down the tether as the only drum. The dock resolves to D major.\n- **Your sounds are in the music:** locks climb the chord, kills walk a written melody, and your sounds get drier as the air thins until they're just dry tones and a hull thump.\n\n**What I checked:**\n- **Simulator:** the no-fire policy dies at 31 s. The perfect and imperfect policies both survive to the dock at rank B.\n- **Floor gate:** zero occlusion warnings, performance within budget, spread and distance fine.\n- **Screenshots:** from the snapshot tool plus a throwaway auto-play harness in the ignored `tmp/` folder, which is how I saw locks, shots, and kill effects.\n- **Audio:** I metered the score bar by bar in headless Chrome. That found and fixed two real bugs: NaN pitches in the rain pattern and clipping in the boss finale. It now runs with no errors and peaks under 0 dBFS.\n\n**Things to know:**\n- **`check:scope` can't pass as written.** The script only knows `src/levels/<id>/`, so it lists every file in the assigned benchmark directory as out of scope. There's also no local `main` branch, so it needs `HEAD` as the base. Nothing outside the level directory changed except the gallery.\n- **The level controls the camera's tilt** through its camera hook, keeping the player's edge-look on top. It also raises the camera's far plane to 4000 while loaded and restores it on exit.\n- **After the Descender dies there's no more spawning** until the end, the \"last stretch is clear\" the theme asks for. The simulator reports it as a spawn gap from about 50–53 s to the end.\n\n**What a playtester should check first:**\n1. The overall mix. The deck-punch whoosh, the Descender's clanks getting louder, and the final chord matter most.\n2. Whether the cloud-deck whiteout (bars 7.5–8) is too bright with bloom on.\n3. Whether grappler bites feel fair, since the car and gunner share one hull.\n4. That the boss clearly grows and reads as distinct in front of the station.\n\n`?skyhookDebug=skip-descender` previews the dock without the boss.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 3254621,
+    "stop_reason": "end_turn",
+    "session_id": "47d68d8c-1655-44a0-954b-4b382d7ebb60",
+    "total_cost_usd": 25.73693479999999,
+    "usage": {
+      "input_tokens": 330,
+      "cache_creation_input_tokens": 637233,
+      "cache_read_input_tokens": 68272254,
+      "output_tokens": 349165,
+      "output_tokens_details": {
+        "thinking_tokens": 170371
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 637233,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1480,
+          "cache_read_input_tokens": 647265,
+          "cache_creation_input_tokens": 311,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 311
+          },
+          "type": "message",
+          "model": null
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-opus-5-5": {
+        "inputTokens": 330,
+        "outputTokens": 349165,
+        "cacheReadInputTokens": 68272254,
+        "cacheCreationInputTokens": 637233,
+        "webSearchRequests": 0,
+        "costUSD": 25.73693479999999,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 170371,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 176,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "Skyhook is built at `src/benchmark-levels/skyhook-e34d/`, and `docs/level-gallery.md` is regenerated. Typecheck, build, and `check:floor` all pass. I haven't played it: WebGPU doesn't render headless here, so what it looks like on real hardware and how it sounds still need a human run-through. Nothing is committed.\n\n**The level:** 128 BPM, 33 bars, about 62 s of play.\n- **Camera:** it rides the climber looking up the tether, so the ribbon rises from the car's drive head (bottom of frame) to a vanishing point where the station waits.\n- **The climb:** a rain-lashed launch pad with orange-and-white gantries falling away, a lightning storm, a whiteout punch through the cloud deck on the bar-8 downbeat, then sunlit blue over a cloud sea, indigo, and finally black with stars above and the planet's limb curving below. Everything is lit by the same sky-driven light.\n- **Enemies:**\n  - Kites: wind-riders that fly banking flocks along set paths.\n  - Grapplers: dive at the car with a violet warning line and a proximity alarm, then bite.\n  - Ticks: two-stage armor, crawl down the ribbon on the beat.\n  - Sentinels: rise past the car and fire bolts you can shoot down.\n- **Hull:** 5 points, shared by the car and the gunner.\n- **Boss (the Descender):** latches on at bar 20 and climbs down one grip per beat, visibly getting bigger. Each of its four claws you shoot makes it slip back. The maw opens once the claws are gone (or at bar 26), and at bar 28¾ it lunges. If it reaches the car, the drive head bursts and the run ends. If you kill it, the husk tumbles away, the car sprints for the station, the approach lights chase, the iris opens, and the bay clamps go green: \"DOCKED · 35,786 KM\".\n- **Score:** it follows the air. Wide, wet storm (pads, rain plucked from the chord, thunder on the same beats as the lightning), then a full band in the sunlight, dropping layers as the sky darkens. In vacuum it's a sub pulse, a thin drone, and the Descender's grip clanking down the tether as the only drum. The dock resolves to D major.\n- **Your sounds are in the music:** locks climb the chord, kills walk a written melody, and your sounds get drier as the air thins until they're just dry tones and a hull thump.\n\n**What I checked:**\n- **Simulator:** the no-fire policy dies at 31 s. The perfect and imperfect policies both survive to the dock at rank B.\n- **Floor gate:** zero occlusion warnings, performance within budget, spread and distance fine.\n- **Screenshots:** from the snapshot tool plus a throwaway auto-play harness in the ignored `tmp/` folder, which is how I saw locks, shots, and kill effects.\n- **Audio:** I metered the score bar by bar in headless Chrome. That found and fixed two real bugs: NaN pitches in the rain pattern and clipping in the boss finale. It now runs with no errors and peaks under 0 dBFS.\n\n**Things to know:**\n- **`check:scope` can't pass as written.** The script only knows `src/levels/<id>/`, so it lists every file in the assigned benchmark directory as out of scope. There's also no local `main` branch, so it needs `HEAD` as the base. Nothing outside the level directory changed except the gallery.\n- **The level controls the camera's tilt** through its camera hook, keeping the player's edge-look on top. It also raises the camera's far plane to 4000 while loaded and restores it on exit.\n- **After the Descender dies there's no more spawning** until the end, the \"last stretch is clear\" the theme asks for. The simulator reports it as a spawn gap from about 50–53 s to the end.\n\n**What a playtester should check first:**\n1. The overall mix. The deck-punch whoosh, the Descender's clanks getting louder, and the final chord matter most.\n2. Whether the cloud-deck whiteout (bars 7.5–8) is too bright with bloom on.\n3. Whether grappler bites feel fair, since the car and gunner share one hull.\n4. That the boss clearly grows and reads as distinct in front of the station.\n\n`?skyhookDebug=skip-descender` previews the dock without the boss.",
+    "ttft_ms": 1391,
+    "type": "result",
+    "duration_ms": 4187217,
+    "uuid": "03cc294d-3d3f-4130-9ae3-da82dd0da7d3",
+    "ttft_stream_ms": 930,
+    "time_to_request_ms": 118,
+    "first_content_frame_ms": 931,
+    "queued_turn_count": 0,
+    "result_index": 0
+  },
+  "normalized": {
+    "inputTokens": 68272584,
+    "outputTokens": 349165,
+    "cacheReadInputTokens": 68272254,
+    "cacheWriteInputTokens": 637233,
+    "vendorFields": {
+      "totalCostUsd": 25.73693479999999,
+      "durationMs": 4187217,
+      "durationApiMs": 3254621,
+      "numTurns": 176,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-opus-5-5": {
+          "inputTokens": 330,
+          "outputTokens": 349165,
+          "cacheReadInputTokens": 68272254,
+          "cacheCreationInputTokens": 637233,
+          "webSearchRequests": 0,
+          "costUSD": 25.73693479999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "thinkingTokens": 170371,
+          "canonicalModel": "claude-opus-5-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

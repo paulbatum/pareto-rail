@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T14:46:43.073Z",
+  "generatedAt": "2026-09-23T03:18:00.804Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -90,13 +90,21 @@
       "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
+      "id": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "primaryModel": "claude-opus-5-5",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
+      "featured": true
+    },
+    {
       "id": "claude-fable-5-1-high",
       "modelName": "Claude Fable 5.1",
       "workflowName": "solo",
       "primaryModel": "claude-fable-5-1",
       "effort": "high",
-      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
-      "featured": true
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "claude-fable-5-high-b20",
@@ -733,7 +741,6 @@
         ]
       },
       "thumbnailPath": "/level-content/skyhook-2j6o/hero.avif",
-      "featured": true,
       "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
       "materialsCommit": "fd8b118f2448cbb194e67ef9d5869c5b4a371656"
     },
@@ -913,6 +920,41 @@
       "featured": true,
       "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
       "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04"
+    },
+    {
+      "levelId": "skyhook-e34d",
+      "themeId": "skyhook",
+      "configurationId": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "generationCost": 25.7369348,
+      "linesOfCode": 5458,
+      "run": {
+        "generationWallTimeSeconds": 4188.058,
+        "totalWallTimeSeconds": 4313.177,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.280"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5-5",
+            "role": "solo",
+            "inputTokens": 330,
+            "outputTokens": 349165,
+            "cacheReadTokens": 68272254,
+            "cacheWriteTokens": 637233,
+            "usageSource": "agreed",
+            "costUsd": 25.7369348
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-e34d/hero.avif",
+      "featured": true,
+      "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119"
     },
     {
       "levelId": "skyhook-ggl2",
@@ -1259,7 +1301,6 @@
         ]
       },
       "thumbnailPath": "/level-content/broadside-6m7m/hero.avif",
-      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "f799e7b79a758bd95bc51804548acb6868139d8e"
     },
@@ -1702,6 +1743,41 @@
       "thumbnailPath": "/level-content/broadside-fkio/hero.avif",
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "93577d3a8c7f18d7c682676e3722a00e370b1924"
+    },
+    {
+      "levelId": "broadside-hmvp",
+      "themeId": "broadside",
+      "configurationId": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "generationCost": 42.881475,
+      "linesOfCode": 5838,
+      "run": {
+        "generationWallTimeSeconds": 4338.155,
+        "totalWallTimeSeconds": 8568.69,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.280"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5-5",
+            "role": "solo",
+            "inputTokens": 356,
+            "outputTokens": 562010,
+            "cacheReadTokens": 80364594,
+            "cacheWriteTokens": 1111658,
+            "usageSource": "harness-counter",
+            "costUsd": 42.881475
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-hmvp/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "c347fec9b4263f66e4cb58de15ac89b16d576849"
     },
     {
       "levelId": "broadside-ob3c",
@@ -2202,7 +2278,6 @@
         ]
       },
       "thumbnailPath": "/level-content/strandline-be4y/hero.avif",
-      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "f799e7b79a758bd95bc51804548acb6868139d8e"
     },
@@ -2580,6 +2655,41 @@
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
     {
+      "levelId": "strandline-tmbx",
+      "themeId": "strandline",
+      "configurationId": "claude-opus-5-5-high",
+      "modelName": "Claude Opus 5.5",
+      "workflowName": "solo",
+      "generationCost": 27.8209732,
+      "linesOfCode": 5677,
+      "run": {
+        "generationWallTimeSeconds": 3948.632,
+        "totalWallTimeSeconds": 4201.368,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.280"
+        },
+        "models": [
+          {
+            "modelName": "claude-opus-5-5",
+            "role": "solo",
+            "inputTokens": 328,
+            "outputTokens": 356191,
+            "cacheReadTokens": 75239526,
+            "cacheWriteTokens": 705992,
+            "usageSource": "agreed",
+            "costUsd": 27.8209732
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-tmbx/hero.avif",
+      "featured": true,
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "c347fec9b4263f66e4cb58de15ac89b16d576849"
+    },
+    {
       "levelId": "strandline-u4wm",
       "themeId": "strandline",
       "configurationId": "pi-openrouter-union-alpha-high",
@@ -2849,7 +2959,6 @@
         ]
       },
       "thumbnailPath": "/level-content/speedsolve-n4v0/hero.avif",
-      "featured": true,
       "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
       "materialsCommit": "e5541f86b66c38cf6446d41413243bc7aab12cc8"
     },
@@ -3358,7 +3467,6 @@
         ]
       },
       "thumbnailPath": "/level-content/vespers-xc1a/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
@@ -3664,7 +3772,6 @@
         ]
       },
       "thumbnailPath": "/level-content/tinker-ball-3ioa/hero.avif",
-      "featured": true,
       "entrantBaseline": "77173b463dad124e56dcbecbb0ff740c6f3687e5",
       "materialsCommit": "712404f9041571d41a30624f02ab8f374a7e5719"
     },
