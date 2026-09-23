@@ -69,7 +69,8 @@ async function reconcileRun(runId, write, recompute) {
   if (!stage) return { summary: 'no stage directory retained; left as measured', warnings: [], costDelta: 0 };
   const usages = await roundUsages(path.join(RUNS, runId, stage.directory));
   const before = manifest.cost.totalUsd;
-  const reconciled = reconcileCost({ totalUsd: before, models: manifest.cost.models }, harnessCountersForRounds(stage.adapter, usages));
+  const replay = replayFigures(manifest.cost);
+  const reconciled = reconcileCost(replay, harnessCountersForRounds(stage.adapter, usages));
   const costDelta = reconciled.totalUsd - before;
 
   manifest.cost.models = reconciled.models;
@@ -77,15 +78,35 @@ async function reconcileRun(runId, write, recompute) {
   manifest.cost.reconciliation = reconciled.reconciliation;
   for (const stage of manifest.stages ?? []) {
     const model = reconciled.models.find((candidate) => candidate.modelName === stage.id);
-    if (!model || model.usageSource !== 'harness-counter') continue;
+    if (!model) continue;
+    const source = model.usageSource === 'harness-counter' ? 'harness-counter' : 'ccusage';
+    if (source === 'ccusage' && stage.pricing?.source !== 'harness-counter') continue;
     stage.usage = { ...stage.usage, outputTokens: model.outputTokens };
-    stage.pricing = { ...stage.pricing, costUsd: model.costUsd, source: 'harness-counter' };
+    stage.pricing = { ...stage.pricing, costUsd: model.costUsd, source };
   }
   if (write) await writeJson(manifestPath, manifest);
 
   const status = reconciled.reconciliation.status;
   const money = costDelta ? ` (${costDelta > 0 ? '+' : ''}$${costDelta.toFixed(4)}, $${before.toFixed(4)} → $${reconciled.totalUsd.toFixed(4)})` : '';
   return { summary: `${status}${money}${write ? '' : ' [dry run]'}`, warnings: reconciliationWarnings(reconciled.reconciliation), costDelta };
+}
+
+// A recorded reconciliation that took the counter overwrote the replay's output and cost for that
+// model. Recomputing starts from the replay again, which each adjustment preserves.
+function replayFigures(cost) {
+  let totalUsd = cost.totalUsd;
+  const models = cost.models.map((model) => {
+    const adjustment = cost.reconciliation?.adjustments?.find((entry) => entry.modelName === model.modelName && entry.resolution === 'took-counter');
+    if (!adjustment) return model;
+    const { usageSource, ...rest } = model;
+    const restored = { ...rest, outputTokens: adjustment.replayOutputTokens };
+    if (typeof adjustment.replayCostUsd === 'number' && typeof adjustment.counterCostUsd === 'number') {
+      restored.costUsd = adjustment.replayCostUsd;
+      totalUsd -= adjustment.counterCostUsd - adjustment.replayCostUsd;
+    }
+    return restored;
+  });
+  return { totalUsd, models };
 }
 
 async function stageFor(runId) {

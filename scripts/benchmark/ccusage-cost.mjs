@@ -132,7 +132,10 @@ export function harnessCounters(usage) {
 // Claude and pi instead report only what their own invocation spent, so their rounds are summed before
 // being compared with ccusage's replay of the one appended session transcript. This is measured, not
 // assumed: on every multi-round run on record a Codex final round equals the replay, while summed
-// Claude and pi rounds do.
+// Claude and pi rounds do — until Claude Code 2.1.280, whose resumed invocation restates the whole
+// session in `modelUsage` like Codex. A restating round is recognized by a counter above the
+// invocation's own output count and at or above every model's total so far; it replaces the earlier
+// rounds rather than adding to them.
 const ACCUMULATING_ADAPTERS = new Set(['claude-cli', 'pi-cli', 'prime-agent-cli']);
 
 // Harnesses whose counter covers only the session that emitted it. Prime Agent delegates into full
@@ -154,9 +157,13 @@ export function harnessCountersForRounds(adapter, usages) {
   if (present.length === 0) return null;
   if (!ACCUMULATING_ADAPTERS.has(adapter)) return harnessCounters(present.at(-1));
 
-  const combined = new Map();
+  let combined = new Map();
   for (const usage of present) {
     const counters = harnessCounters(usage);
+    if (counters && restatesSession(usage, counters, combined)) {
+      combined = new Map([...counters].map(([name, counter]) => [name, { ...counter }]));
+      continue;
+    }
     for (const counter of counters?.values() ?? []) {
       const current = combined.get(counter.modelName) ?? { modelName: counter.modelName, outputTokens: 0, costUsd: null };
       current.outputTokens += counter.outputTokens;
@@ -165,6 +172,15 @@ export function harnessCountersForRounds(adapter, usages) {
     }
   }
   return combined.size > 0 ? combined : null;
+}
+
+function restatesSession(usage, counters, combined) {
+  if (combined.size === 0) return false;
+  const ownOutput = usage?.normalized?.outputTokens;
+  if (typeof ownOutput !== 'number') return false;
+  const counted = [...counters.values()].reduce((sum, counter) => sum + counter.outputTokens, 0);
+  if (counted <= ownOutput) return false;
+  return [...combined.values()].every((earlier) => (counters.get(earlier.modelName)?.outputTokens ?? 0) >= earlier.outputTokens);
 }
 
 // Cross-check the replayed transcripts against the harness's own counter and prefer whichever saw

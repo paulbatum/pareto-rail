@@ -647,6 +647,16 @@ for (const adapter of ['pi-cli', 'claude-cli']) {
 }
 assert.equal(harnessCountersForRounds('codex-cli', [roundOne, roundTwo]).get('gpt-5.6-luna').outputTokens, 36);
 
+// Claude Code 2.1.280 restates the whole session in a resumed invocation's counter, above that
+// invocation's own output count. The restating round replaces the earlier ones instead of adding to
+// them; a round whose counter matches its own output count is still summed.
+const claudeRound = (own, counted, costUSD) => ({ normalized: { outputTokens: own, vendorFields: { modelUsage: { 'claude-opus-5-5': { outputTokens: counted, costUSD } } } } });
+const restated = harnessCountersForRounds('claude-cli', [claudeRound(200072, 200072, 10.675), claudeRound(161866, 361938, 32.206)]);
+assert.equal(restated.get('claude-opus-5-5').outputTokens, 361938, 'a restating round replaces the earlier rounds');
+assert.equal(restated.get('claude-opus-5-5').costUsd, 32.206);
+const perRound = harnessCountersForRounds('claude-cli', [claudeRound(210011, 210011, 10), claudeRound(53796, 53796, 3)]);
+assert.equal(perRound.get('claude-opus-5-5').outputTokens, 263807, 'a per-invocation round is still summed');
+
 // Reconciling the replayed transcripts against the harness's own counter. Replay loses output when
 // an assistant message never finalized on disk, so a counter above replay wins; a counter below
 // replay cannot be explained that way, so replay stands and the run is flagged for a human.
