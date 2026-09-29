@@ -33,11 +33,11 @@ most at the top.
 Keep the page short: when a model's newer version arrives, unlist the versions it
 supersedes.
 
-- Claude Opus 5.5 (new)
+- GPT-6.1 Sol (new)
+- Claude Opus 5.5
 - Claude Sonnet 5.5 (new)
 - GPT-6 Astra
 - Claude Fable 5.1
-- GPT-5.6 Sol
 - Gemini 3.8 Flash
 - Kimi K3
 - Muse Spark 1.3
@@ -50,3 +50,4 @@ supersedes.
 - Inkling (unlisted)
 - Gemini 3.6 Flash (unlisted)
 - GPT-5.6 Luna (unlisted)
+- GPT-5.6 Sol (unlisted)
