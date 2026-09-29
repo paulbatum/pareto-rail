@@ -97,7 +97,10 @@ async function main() {
   // node or Chrome, hence the explicit read grants. `/tmp/.X11-unix` keeps Chrome's
   // GPU process from hanging forever on the WSLg X socket it probes when `DISPLAY` is
   // set. Network lives inside the profile: with it disabled the sandbox rejects even
-  // loopback binds, which the floor and snapshot tooling need.
+  // loopback binds, which the floor and snapshot tooling need. Codex runs its sandbox
+  // helper through a symlink under `$CODEX_HOME/tmp/arg0` and mounts that directory itself,
+  // but not the symlink's target, so the directory holding the real codex binary needs a
+  // read grant or bwrap cannot exec the helper.
   // With --network-access false the sandbox still needs loopback (Vite + browser capture),
   // so isolation comes from Codex's managed network_proxy mode instead of disabling network:
   // loopback binds and fetches work while external DNS, direct connections, and the proxy
@@ -115,6 +118,7 @@ async function main() {
     + `":minimal"="read", `
     + `${tomlPath(`${worktree}/**`)}="write", `
     + `${tomlPath(`${nodeToolchainRoot()}/**`)}="read", `
+    + `${tomlPath(`${await codexExecutableDirectory(codexBin)}/**`)}="read", `
     + `"/opt/google/**"="read", `
     + (headlessShell ? `${tomlPath(`${path.join(os.homedir(), '.cache', 'pareto-rail')}/**`)}="read", ` : '')
     + `"/tmp/.X11-unix"="read"`
@@ -306,6 +310,20 @@ function nodeToolchainRoot() {
   const nvmIndex = segments.indexOf('.nvm');
   if (nvmIndex !== -1) return segments.slice(0, nvmIndex + 1).join(path.sep);
   return path.dirname(path.dirname(process.execPath));
+}
+
+// Directory of the real codex binary behind `codexBin` (a path or a PATH command), with
+// symlinks resolved: the standalone installer's `codex` is a symlink into a versioned
+// release directory, and that release directory is what the sandbox helper execs from.
+async function codexExecutableDirectory(codexBin) {
+  const candidates = codexBin.includes(path.sep)
+    ? [path.resolve(codexBin)]
+    : (process.env.PATH ?? '').split(path.delimiter).filter(Boolean).map((entry) => path.join(entry, codexBin));
+  for (const candidate of candidates) {
+    const executable = await fs.access(candidate, fs.constants.X_OK).then(() => candidate, () => undefined);
+    if (executable) return path.dirname(await fs.realpath(executable));
+  }
+  fail(`Cannot locate the codex executable ${codexBin}.`);
 }
 
 // chrome-headless-shell install used by network-isolated runs. Installed once, outside the
