@@ -576,6 +576,24 @@
       ]
     },
     {
+      "runId": "run-3olaz2k576",
+      "levelId": "strandline-2jv4",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-1-sol-high",
+      "files": [
+        {
+          "path": "runs/run-3olaz2k576/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 12660322,
+          "sha256": "6bf0305a2154efc5ceb7ef1610e0a766f5b5333ec74229907b4e4a49e1e03151"
+        },
+        {
+          "path": "runs/run-3olaz2k576/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 546028,
+          "sha256": "7ba7de41042470630e217769e2a0cd295c293dcd412b9a1d621618ed084dcf6c"
+        }
+      ]
+    },
+    {
       "runId": "run-3wx1zsc87lp9",
       "levelId": "skyhook-p46c",
       "themeId": "skyhook",
@@ -827,6 +845,24 @@
           "path": "runs/run-7jg3l68bgi/stages/solo/pi/events.jsonl.gz",
           "rawBytes": 196248,
           "sha256": "4faf1f79b968eb64db717e7fb7ac8386b7c6467044803869970adf7a4d8eea0a"
+        }
+      ]
+    },
+    {
+      "runId": "run-8rcdmaxdyy",
+      "levelId": "skyhook-u9lg",
+      "themeId": "skyhook",
+      "configurationId": "codex-gpt-6-1-sol-high",
+      "files": [
+        {
+          "path": "runs/run-8rcdmaxdyy/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 4868921,
+          "sha256": "c810ccf28db291ed3132be2b484eacf4c95c9804850754838d05c3155571bad1"
+        },
+        {
+          "path": "runs/run-8rcdmaxdyy/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 527702,
+          "sha256": "2988854f35a990ff774188990d474980d4153977ed823e507a907abf4a65d155"
         }
       ]
     },
@@ -1258,6 +1294,24 @@
           "path": "runs/run-kk5bob0rfo/stages/solo/pi/events.jsonl.gz",
           "rawBytes": 7474165,
           "sha256": "43663d899a7ad3110bf10fe858ef4366d7aac1f21724e7817c48e059111a1ef7"
+        }
+      ]
+    },
+    {
+      "runId": "run-kuyz0nx746",
+      "levelId": "broadside-5qec",
+      "themeId": "broadside",
+      "configurationId": "codex-gpt-6-1-sol-high",
+      "files": [
+        {
+          "path": "runs/run-kuyz0nx746/stages/solo/codex/rollout.jsonl",
+          "rawBytes": 13546001,
+          "sha256": "21de4bfa0ac641ed2676dced2ba0485cc5b2a1f5376ea6604982ef2e365981e3"
+        },
+        {
+          "path": "runs/run-kuyz0nx746/stages/solo/codex/events.jsonl.gz",
+          "rawBytes": 1348257,
+          "sha256": "2e3507b67124ef2738f98b0d9de7081a734855de6e5af81c281af351e5688950"
         }
       ]
     },

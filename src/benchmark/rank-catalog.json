@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T01:17:59.222Z",
+  "generatedAt": "2026-09-29T22:58:32.182Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -49,6 +49,14 @@
       "modelName": "GPT-6 Astra",
       "workflowName": "solo",
       "primaryModel": "gpt-6-astra",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
+    },
+    {
+      "id": "codex-gpt-6-1-sol-high",
+      "modelName": "GPT-6.1 Sol",
+      "workflowName": "solo",
+      "primaryModel": "gpt-6.1-sol",
       "effort": "high",
       "workflowSummary": "One fresh unattended Codex session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
@@ -1245,6 +1253,39 @@
       "materialsCommit": "c832526d96c433744c1caf443293f1ee7ecdabe0"
     },
     {
+      "levelId": "skyhook-u9lg",
+      "themeId": "skyhook",
+      "configurationId": "codex-gpt-6-1-sol-high",
+      "modelName": "GPT-6.1 Sol",
+      "workflowName": "solo",
+      "generationCost": 1.0083072,
+      "linesOfCode": 729,
+      "run": {
+        "generationWallTimeSeconds": 1379.466,
+        "totalWallTimeSeconds": 1393.281,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.159.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6.1-sol",
+            "role": "solo",
+            "inputTokens": 133394,
+            "outputTokens": 39094,
+            "cacheReadTokens": 3505792,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 10813
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-u9lg/hero.avif",
+      "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119"
+    },
+    {
       "levelId": "skyhook-v01u",
       "themeId": "skyhook",
       "configurationId": "codex-luna-max",
@@ -1276,6 +1317,39 @@
       "thumbnailPath": "/level-content/skyhook-v01u/hero.avif",
       "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
       "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04"
+    },
+    {
+      "levelId": "broadside-5qec",
+      "themeId": "broadside",
+      "configurationId": "codex-gpt-6-1-sol-high",
+      "modelName": "GPT-6.1 Sol",
+      "workflowName": "solo",
+      "generationCost": 1.3689196,
+      "linesOfCode": 710,
+      "run": {
+        "generationWallTimeSeconds": 1737.631,
+        "totalWallTimeSeconds": 1770.331,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.159.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6.1-sol",
+            "role": "solo",
+            "inputTokens": 185382,
+            "outputTokens": 46885,
+            "cacheReadTokens": 5293056,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 15017
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-5qec/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
     {
       "levelId": "broadside-61z2",
@@ -2251,6 +2325,39 @@
       "thumbnailPath": "/level-content/mass-driver-detailed-uk78/hero.avif",
       "entrantBaseline": "4bc00a921882971dc6dbc8467b5dc35a0a18f3c1",
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
+    },
+    {
+      "levelId": "strandline-2jv4",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-1-sol-high",
+      "modelName": "GPT-6.1 Sol",
+      "workflowName": "solo",
+      "generationCost": 1.39622,
+      "linesOfCode": 512,
+      "run": {
+        "generationWallTimeSeconds": 1637.062,
+        "totalWallTimeSeconds": 1664.235,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Codex CLI",
+          "version": "0.159.0"
+        },
+        "models": [
+          {
+            "modelName": "gpt-6.1-sol",
+            "role": "solo",
+            "inputTokens": 177769,
+            "outputTokens": 45169,
+            "cacheReadTokens": 5889920,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 17540
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-2jv4/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "0cb8da5703e2969a72f02cdbf3d4a98a9a065ed0"
     },
     {
       "levelId": "strandline-2nqi",

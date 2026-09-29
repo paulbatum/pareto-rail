@@ -1,0 +1,21 @@
+{
+  "runId": "run-8rcdmaxdyy",
+  "slotId": "u9lg",
+  "levelId": "skyhook-u9lg",
+  "themeId": "skyhook",
+  "themePath": "benchmark/themes/skyhook.md",
+  "configurationId": "codex-gpt-6-1-sol-high",
+  "recipePath": "benchmark/recipes/codex-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "codex-cli",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v1",
+  "baselinePolicy": "open",
+  "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119",
+  "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+  "levelTitle": "Skyhook"
+}

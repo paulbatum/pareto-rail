@@ -1,0 +1,13 @@
+{
+  "slug": "gpt-6.1-sol",
+  "displayName": "GPT-6.1-Sol",
+  "supportedReasoningEfforts": [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra"
+  ],
+  "selectedReasoningEffort": "high"
+}

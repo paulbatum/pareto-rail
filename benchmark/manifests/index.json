@@ -195,6 +195,12 @@
       "configurationId": "claude-fable-5-1-high"
     },
     {
+      "runId": "run-3olaz2k576",
+      "levelId": "strandline-2jv4",
+      "themeId": "strandline",
+      "configurationId": "codex-gpt-6-1-sol-high"
+    },
+    {
       "runId": "run-3wx1zsc87lp9",
       "levelId": "skyhook-p46c",
       "themeId": "skyhook",
@@ -280,6 +286,12 @@
       "themeId": "speedsolve",
       "configurationId": "pi-openrouter-union-alpha-high",
       "retired": true
+    },
+    {
+      "runId": "run-8rcdmaxdyy",
+      "levelId": "skyhook-u9lg",
+      "themeId": "skyhook",
+      "configurationId": "codex-gpt-6-1-sol-high"
     },
     {
       "runId": "run-8swex50r9h",
@@ -428,6 +440,12 @@
       "themeId": "strandline",
       "configurationId": "pi-openrouter-union-alpha-high",
       "retired": true
+    },
+    {
+      "runId": "run-kuyz0nx746",
+      "levelId": "broadside-5qec",
+      "themeId": "broadside",
+      "configurationId": "codex-gpt-6-1-sol-high"
     },
     {
       "runId": "run-l0jnrvcba5",
