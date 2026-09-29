@@ -504,6 +504,24 @@
       ]
     },
     {
+      "runId": "run-1f3lwt4qo2",
+      "levelId": "broadside-tllu",
+      "themeId": "broadside",
+      "configurationId": "claude-sonnet-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-1f3lwt4qo2/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 38739992,
+          "sha256": "736e466c46affc90459dd3f792a884b20b89cad30a661a6e1e8a56d2afc53ab8"
+        },
+        {
+          "path": "runs/run-1f3lwt4qo2/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 39326069,
+          "sha256": "4e21761da5bac703fdffff9d59138dbf766ecc3811d1cbbebdabc8241d5241ff"
+        }
+      ]
+    },
+    {
       "runId": "run-2dzleoxfhatr",
       "levelId": "mass-driver-rqki",
       "themeId": "mass-driver",
@@ -918,6 +936,24 @@
           "path": "runs/run-aq1wyzsp3l/stages/solo/pi/events.jsonl.gz",
           "rawBytes": 19176213,
           "sha256": "7bf61ee19b4abaaf4542eadf81d72a9663bb3aff59081886110e869e1e9fe534"
+        }
+      ]
+    },
+    {
+      "runId": "run-awng13swmd",
+      "levelId": "skyhook-c64g",
+      "themeId": "skyhook",
+      "configurationId": "claude-sonnet-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-awng13swmd/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 38340226,
+          "sha256": "9fad2f7e762302f856cfa1b6f050220e5425fd70a8841eeb711e588520352738"
+        },
+        {
+          "path": "runs/run-awng13swmd/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 39375920,
+          "sha256": "528d4e32d2a1b7607a4ed1787f6adde7750c652d5123795b4bd7d6a1dfa7dbea"
         }
       ]
     },
@@ -1367,6 +1403,24 @@
           "path": "runs/run-pnpwjrxhz8uu/stages/solo/codex/events.jsonl.gz",
           "rawBytes": 447849,
           "sha256": "0ac44e75165c5994e7126b5981445f7a01d1f9643fe08dfd762406d63e2429c1"
+        }
+      ]
+    },
+    {
+      "runId": "run-q7ksvzz6fm",
+      "levelId": "strandline-2nqi",
+      "themeId": "strandline",
+      "configurationId": "claude-sonnet-5-5-high",
+      "files": [
+        {
+          "path": "runs/run-q7ksvzz6fm/stages/solo/claude/rollout.jsonl",
+          "rawBytes": 29076310,
+          "sha256": "d44c09c570a8f357295de23c710de82582a287684cfb5e11c24069ac0e0fa69a"
+        },
+        {
+          "path": "runs/run-q7ksvzz6fm/stages/solo/claude/events.jsonl.gz",
+          "rawBytes": 28623003,
+          "sha256": "1f135e64f89790bf09387df74b4dcd9f2acf5cfde83a61074948f4a7d1edb497"
         }
       ]
     },

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T11:02:22.732Z",
+  "generatedAt": "2026-09-29T01:17:59.222Z",
   "configurations": [
     {
       "id": "claude-fable-5-high",
@@ -95,6 +95,14 @@
       "effort": "high",
       "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback.",
       "featured": true
+    },
+    {
+      "id": "claude-sonnet-5-5-high",
+      "modelName": "Claude Sonnet 5.5",
+      "workflowName": "solo",
+      "primaryModel": "claude-sonnet-5-5",
+      "effort": "high",
+      "workflowSummary": "One fresh unattended Claude Code session. The model plans, implements, reviews, and verifies its own level without subagents or operator feedback."
     },
     {
       "id": "claude-fable-5-1-high",
@@ -952,6 +960,40 @@
       "thumbnailPath": "/level-content/skyhook-b993/hero.avif",
       "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
       "materialsCommit": "cef1a51f26b14a9e5b5b382fbc2db1ee07e23a04"
+    },
+    {
+      "levelId": "skyhook-c64g",
+      "themeId": "skyhook",
+      "configurationId": "claude-sonnet-5-5-high",
+      "modelName": "Claude Sonnet 5.5",
+      "workflowName": "solo",
+      "generationCost": 54.4264194,
+      "linesOfCode": 6345,
+      "run": {
+        "generationWallTimeSeconds": 6583.243,
+        "totalWallTimeSeconds": 6768.34,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.284"
+        },
+        "models": [
+          {
+            "modelName": "claude-sonnet-5-5",
+            "role": "solo",
+            "inputTokens": 776,
+            "outputTokens": 728886,
+            "cacheReadTokens": 210162105,
+            "cacheWriteTokens": 1365805,
+            "usageSource": "harness-counter",
+            "costUsd": 54.4264194
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/skyhook-c64g/hero.avif",
+      "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119"
     },
     {
       "levelId": "skyhook-e34d",
@@ -1878,6 +1920,40 @@
       "materialsCommit": "5305d890067cc4fab5063e27dfb3d424e3df1982"
     },
     {
+      "levelId": "broadside-tllu",
+      "themeId": "broadside",
+      "configurationId": "claude-sonnet-5-5-high",
+      "modelName": "Claude Sonnet 5.5",
+      "workflowName": "solo",
+      "generationCost": 52.7992612,
+      "linesOfCode": 5839,
+      "run": {
+        "generationWallTimeSeconds": 6752.687,
+        "totalWallTimeSeconds": 6794.284,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.284"
+        },
+        "models": [
+          {
+            "modelName": "claude-sonnet-5-5",
+            "role": "solo",
+            "inputTokens": 716,
+            "outputTokens": 670688,
+            "cacheReadTokens": 206212699,
+            "cacheWriteTokens": 1271654,
+            "usageSource": "harness-counter",
+            "costUsd": 52.7992612
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/broadside-tllu/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "c347fec9b4263f66e4cb58de15ac89b16d576849"
+    },
+    {
       "levelId": "mass-driver-detailed-k4wz",
       "themeId": "mass-driver-detailed",
       "configurationId": "claude-fable-5-high",
@@ -2175,6 +2251,40 @@
       "thumbnailPath": "/level-content/mass-driver-detailed-uk78/hero.avif",
       "entrantBaseline": "4bc00a921882971dc6dbc8467b5dc35a0a18f3c1",
       "materialsCommit": "7c06cadb8a6b86acee91aec63874833672bbf4af"
+    },
+    {
+      "levelId": "strandline-2nqi",
+      "themeId": "strandline",
+      "configurationId": "claude-sonnet-5-5-high",
+      "modelName": "Claude Sonnet 5.5",
+      "workflowName": "solo",
+      "generationCost": 29.5803566,
+      "linesOfCode": 5081,
+      "run": {
+        "generationWallTimeSeconds": 4723.185,
+        "totalWallTimeSeconds": 4855.572,
+        "result": "completed",
+        "orchestrationTreatment": "none",
+        "harness": {
+          "name": "Claude Code CLI",
+          "version": "2.1.284"
+        },
+        "models": [
+          {
+            "modelName": "claude-sonnet-5-5",
+            "role": "solo",
+            "inputTokens": 434,
+            "outputTokens": 457774,
+            "cacheReadTokens": 109668923,
+            "cacheWriteTokens": 766991,
+            "usageSource": "agreed",
+            "costUsd": 29.5803566
+          }
+        ]
+      },
+      "thumbnailPath": "/level-content/strandline-2nqi/hero.avif",
+      "entrantBaseline": "bce6a97aa046c8b675661966f55da2ff218ee30d",
+      "materialsCommit": "c347fec9b4263f66e4cb58de15ac89b16d576849"
     },
     {
       "levelId": "strandline-542f",

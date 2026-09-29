@@ -171,6 +171,12 @@
       "configurationId": "codex-gpt-6-astra-high"
     },
     {
+      "runId": "run-1f3lwt4qo2",
+      "levelId": "broadside-tllu",
+      "themeId": "broadside",
+      "configurationId": "claude-sonnet-5-5-high"
+    },
+    {
       "runId": "run-2dzleoxfhatr",
       "levelId": "mass-driver-rqki",
       "themeId": "mass-driver",
@@ -311,6 +317,12 @@
       "themeId": "vespers",
       "configurationId": "pi-openrouter-union-alpha-high",
       "retired": true
+    },
+    {
+      "runId": "run-awng13swmd",
+      "levelId": "skyhook-c64g",
+      "themeId": "skyhook",
+      "configurationId": "claude-sonnet-5-5-high"
     },
     {
       "runId": "run-b82b6e4a1b",
@@ -465,6 +477,12 @@
       "levelId": "skyhook-loyy",
       "themeId": "skyhook",
       "configurationId": "codex-sol-high-b20"
+    },
+    {
+      "runId": "run-q7ksvzz6fm",
+      "levelId": "strandline-2nqi",
+      "themeId": "strandline",
+      "configurationId": "claude-sonnet-5-5-high"
     },
     {
       "runId": "run-qlsus317qo",

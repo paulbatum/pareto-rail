@@ -1,0 +1,21 @@
+{
+  "runId": "run-awng13swmd",
+  "slotId": "c64g",
+  "levelId": "skyhook-c64g",
+  "themeId": "skyhook",
+  "themePath": "benchmark/themes/skyhook.md",
+  "configurationId": "claude-sonnet-5-5-high",
+  "recipePath": "benchmark/recipes/claude-cli.md",
+  "kind": "benchmark",
+  "stage": {
+    "adapter": "claude-cli",
+    "model": "claude-sonnet-5-5",
+    "effort": "high",
+    "timeoutSeconds": 43200
+  },
+  "benchmarkVersion": "v1",
+  "baselinePolicy": "open",
+  "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119",
+  "entrantBaseline": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+  "levelTitle": "Skyhook"
+}

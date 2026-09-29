@@ -1,4 +1,9 @@
 {
   "id": "skyhook-c64g",
-  "title": "Skyhook"
+  "title": "Skyhook",
+  "contentImages": {
+    "overview": "/level-content/skyhook-c64g/overview.avif",
+    "start": "/level-content/skyhook-c64g/start.avif",
+    "hero": "/level-content/skyhook-c64g/hero.avif"
+  }
 }

@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 2,
+  "benchmarkVersion": "v1",
+  "runId": "run-awng13swmd",
+  "slotId": "c64g",
+  "configuration": {
+    "id": "claude-sonnet-5-5-high"
+  },
+  "theme": {
+    "id": "skyhook",
+    "path": "benchmark/themes/skyhook.md",
+    "sha256": "13c81750545f54ff014f2ba56938a39efce81717ca7a78c42908712320071fa8"
+  },
+  "baseline": {
+    "materialsCommit": "8d1ffe738a2886b88c25563e454c197d0b05b119",
+    "entrantBaseline": {
+      "kind": "git-commit",
+      "identifier": "b8934c6691eb1a59040774e7ec0ab7c75c2011f2"
+    },
+    "guard": {
+      "policy": "open",
+      "violations": [
+        {
+          "path": "benchmark/",
+          "reason": "the tracked benchmark tree is present"
+        },
+        {
+          "path": "scripts/benchmark",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        },
+        {
+          "path": "src/benchmark/domain.test.ts",
+          "reason": "controller harness or corpus-enumerating suite is present, which names other entrants and the contamination audit"
+        }
+      ]
+    }
+  },
+  "recipe": {
+    "path": "benchmark/recipes/claude-cli.md",
+    "sha256": "2c0fb25bd878961cbd97776ca0a93fffd816fe452147e0811cc1cb7899c76667"
+  },
+  "controller": {
+    "commit": "86c194ed1e02cd82db30b4bbc0a9b1a0520c9814"
+  },
+  "timing": {
+    "startedAt": "2026-09-28T22:26:09.556Z",
+    "finishedAt": "2026-09-29T00:18:57.896Z",
+    "wallTimeSeconds": 6768.34
+  },
+  "stages": [
+    {
+      "id": "claude-sonnet-5-5",
+      "role": "solo",
+      "model": {
+        "provider": "Anthropic Claude Code subscription",
+        "snapshotId": "claude-sonnet-5-5"
+      },
+      "promptSha256": "6f125d061db8daf0e64c9977cdbaac50e6aa93708bca8ad00046f57fe470c516",
+      "harness": {
+        "name": "Claude Code CLI",
+        "version": "2.1.284 (Claude Code)"
+      },
+      "sessionId": "0bac3026-06d9-4f74-bc7f-f3d5f7bdeafe",
+      "rolloutArtifactSha256": "9fad2f7e762302f856cfa1b6f050220e5425fd70a8841eeb711e588520352738",
+      "outputArtifactSha256": "528d4e32d2a1b7607a4ed1787f6adde7750c652d5123795b4bd7d6a1dfa7dbea",
+      "startedAt": "2026-09-28T22:26:13.527Z",
+      "finishedAt": "2026-09-29T00:18:39.945Z",
+      "wallTimeSeconds": 6583.243460289,
+      "result": "completed",
+      "entrantSandbox": false,
+      "usage": {
+        "inputTokens": 776,
+        "outputTokens": 728886,
+        "cacheReadInputTokens": 210162105,
+        "cacheWriteInputTokens": 1365805
+      },
+      "pricing": {
+        "status": "measured",
+        "costUsd": 54.426419400000015,
+        "source": "harness-counter"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "status": "measured",
+    "totalUsd": 54.426419400000015,
+    "orchestrationTreatment": "none",
+    "costSource": {
+      "tool": "ccusage",
+      "version": "20.0.24",
+      "view": "claude",
+      "command": "ccusage claude session --json",
+      "basis": "metered"
+    },
+    "reconciliation": {
+      "status": "adjusted",
+      "source": "harness result event modelUsage",
+      "adjustments": [
+        {
+          "modelName": "claude-sonnet-5-5",
+          "replayOutputTokens": 721428,
+          "counterOutputTokens": 728886,
+          "resolution": "took-counter",
+          "replayCostUsd": 54.15408500000001,
+          "counterCostUsd": 54.426419400000015
+        }
+      ]
+    },
+    "models": [
+      {
+        "modelName": "claude-sonnet-5-5",
+        "usageSource": "harness-counter",
+        "costUsd": 54.426419400000015,
+        "inputTokens": 776,
+        "outputTokens": 728886,
+        "cacheReadTokens": 210162105,
+        "cacheWriteTokens": 1365805
+      }
+    ]
+  },
+  "gates": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 3.691966684,
+      "outputSha256": "6103a9e20d87ab7e45b50fc7c8f33e2faa92fc732d9eba8e5276ebdcc24608f0"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.755089493,
+      "outputSha256": "0d9a6f961c5617cdcdb67ee65fe473f93ae26310944f0ada0373a9bd5231849b"
+    },
+    {
+      "id": "scope",
+      "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level skyhook-c64g --base b8934c6691eb1a59040774e7ec0ab7c75c2011f2",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.04346052699999928,
+      "outputSha256": "4ed23f762ffd86b8502105c203b5ddf827a5db194618d956521f6a3368505377"
+    },
+    {
+      "id": "floor",
+      "command": "npm run check:floor -- --level skyhook-c64g",
+      "status": "passed",
+      "exitCode": 0,
+      "wallTimeSeconds": 11.974785652000003,
+      "outputSha256": "0943181908e264c3c6b8a733605e2db0309996a04159457444c14216aa2eef6e"
+    }
+  ],
+  "output": {
+    "sourceRoot": "src/benchmark-levels",
+    "levelId": "skyhook-c64g",
+    "title": "Skyhook",
+    "evaluated": {
+      "commit": "58f0b3fa83b3bff2600c7c34abf48c40de8047ce",
+      "branch": "benchmark-run-run-awng13swmd"
+    },
+    "payload": {
+      "commit": "451ed219dcedab5b61870192578a95e50e915e49",
+      "branch": "benchmark-payload-run-awng13swmd"
+    }
+  },
+  "disposition": {
+    "status": "playable"
+  }
+}

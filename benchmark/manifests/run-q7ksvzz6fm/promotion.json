@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "runId": "run-q7ksvzz6fm",
+  "status": "completed",
+  "currentCheckpoint": null,
+  "checkpoints": {
+    "validation": {
+      "status": "completed",
+      "finishedAt": "2026-09-29T00:32:40.649Z",
+      "data": {
+        "source": {
+          "runId": "run-q7ksvzz6fm",
+          "slotId": "2nqi",
+          "themeId": "strandline",
+          "levelId": "strandline-2nqi",
+          "title": "Strandline",
+          "materialsCommit": "c347fec9b4263f66e4cb58de15ac89b16d576849",
+          "evaluatedCommit": "949283c85c34655ffecc927be16eea251e01bc1f",
+          "payloadCommit": "9bb74d320ddc61d81f701f1ffdda2134b72a393c",
+          "manifestSha256": "e93dd98e05a5bb17f11b465850c1f8e5e3a8f655a0878e140b97e5f6701131bf",
+          "definitionSha256": "6f4f4f971f2a570850494a725b44da3d9e203a7bafb99357ff5279c9b878c46c",
+          "evaluatedSha256": "74eb1cf20ff8528a7cc4b37f898f0bebf5cd622d51e50219e4a43331b1c7e2ee",
+          "payloadSha256": "c884b685ae760c42531584e71e25f7b6429223a6b59b7f3f175f704965c53ffc",
+          "payloadDiffSha256": "bf542b4dd327e69dc02573c73821192a97db4666e4d083415bfd328f9ef0f76c",
+          "sourcePath": "src/benchmark-levels/strandline-2nqi/",
+          "destinationPath": "src/benchmark-levels/strandline-2nqi/",
+          "roots": [
+            {
+              "id": "source",
+              "path": "src/benchmark-levels/strandline-2nqi",
+              "promotedPath": "src/benchmark-levels/strandline-2nqi",
+              "required": true,
+              "present": true
+            },
+            {
+              "id": "content",
+              "path": "public/level-content/strandline-2nqi",
+              "promotedPath": "public/level-content/strandline-2nqi",
+              "required": false,
+              "present": true
+            }
+          ],
+          "baseCommit": "02e7177d574d026e8a32e73dace79fd2445d8597"
+        }
+      }
+    },
+    "extraction": {
+      "status": "completed",
+      "finishedAt": "2026-09-29T00:32:40.929Z",
+      "data": {
+        "roots": [
+          {
+            "id": "source",
+            "destination": "src/benchmark-levels/strandline-2nqi/",
+            "files": 23,
+            "reused": false
+          },
+          {
+            "id": "content",
+            "destination": "public/level-content/strandline-2nqi/",
+            "files": 3,
+            "reused": false
+          }
+        ]
+      }
+    },
+    "conversion": {
+      "status": "completed",
+      "finishedAt": "2026-09-29T00:33:09.073Z",
+      "data": {
+        "images": [
+          {
+            "path": "hero.png",
+            "avifPath": "hero.avif",
+            "pngSha256": "761436ea58cf54b3576b984a1bb6ad96fd411c02212162fcd25262dd09dd799a",
+            "avifSha256": "5e10609f98bd0257cb8b97e7fe33cd5556b41c4baa9cd427c7cc76eabfdc5068"
+          },
+          {
+            "path": "overview.png",
+            "avifPath": "overview.avif",
+            "pngSha256": "0ba40521392dd6b80d65c8e7bab1d651d40be5d2acb8e412d65e785c79ae5bed",
+            "avifSha256": "0a8681f539c88b44d226ba39ffd05391e2a2820f2e068a5ee8bef6a2154d2fab"
+          },
+          {
+            "path": "start.png",
+            "avifPath": "start.avif",
+            "pngSha256": "5b9034c3ab1fad731a55e3aacb0c69d9b4148e2a061b723d3ce1b0b5de35aa14",
+            "avifSha256": "503eb81195f731565182fc9ab27d626275145d373b56d1e0a2aa02d4f2124a9f"
+          }
+        ],
+        "descriptor": {
+          "path": "level.json",
+          "keys": [
+            "overview",
+            "start",
+            "hero"
+          ],
+          "sha256Before": "f498cf2fad2bee2e1466d9af4ed9c772f3aafbbd55f6c7da76c8d9cdef5b56e7",
+          "sha256After": "bd9b728622d0121af24d65f7c0544e4369779837f0a33fffc20e3ca9ebd9a5d7"
+        }
+      }
+    },
+    "application": {
+      "status": "completed",
+      "finishedAt": "2026-09-29T00:33:09.269Z",
+      "data": {
+        "destination": "src/benchmark-levels/strandline-2nqi/",
+        "verifiedFiles": 26
+      }
+    },
+    "catalog": {
+      "status": "completed",
+      "finishedAt": "2026-09-29T00:36:12.371Z",
+      "data": {
+        "checks": [
+          {
+            "id": "typecheck",
+            "command": "npm run typecheck",
+            "exitCode": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 6.490696885000001,
+            "status": "passed"
+          },
+          {
+            "id": "build",
+            "command": "npm run build",
+            "exitCode": 0,
+            "stdoutSha256": "3c19d893dcc1b7c87f40a35ac38a2ec3bead529b3feb88b192923d4d9a26601a",
+            "stderrSha256": "ff93c6152a91178241427670185176bc3a714b68933c78994f1c1a1768ab70b1",
+            "wallTimeSeconds": 61.311405367,
+            "status": "passed"
+          },
+          {
+            "id": "scope",
+            "command": "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node /home/pbatum/vibes/raild/scripts/check-benchmark-scope.mjs --level strandline-2nqi --base 02e7177d574d026e8a32e73dace79fd2445d8597",
+            "exitCode": 0,
+            "stdoutSha256": "4ed23f762ffd86b8502105c203b5ddf827a5db194618d956521f6a3368505377",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 0.0659592779999948,
+            "status": "passed"
+          },
+          {
+            "id": "floor",
+            "command": "npm run check:floor -- --level strandline-2nqi",
+            "exitCode": 0,
+            "stdoutSha256": "3f4d5081b279a5e0bee1002f5e0f324723b693b87cbf2ba476467e3ee1cb9afe",
+            "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "wallTimeSeconds": 112.73075239600001,
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "commit": {
+      "status": "completed",
+      "finishedAt": "2026-09-29T00:36:12.509Z",
+      "data": {
+        "promotionCommit": "e9b324c8e02ccfb6f9b9ab9f3e9294ae6f8fb81e",
+        "reused": false
+      }
+    }
+  },
+  "failures": [],
+  "updatedAt": "2026-09-29T00:36:12.510Z",
+  "source": {
+    "runId": "run-q7ksvzz6fm",
+    "slotId": "2nqi",
+    "themeId": "strandline",
+    "levelId": "strandline-2nqi",
+    "title": "Strandline",
+    "materialsCommit": "c347fec9b4263f66e4cb58de15ac89b16d576849",
+    "evaluatedCommit": "949283c85c34655ffecc927be16eea251e01bc1f",
+    "payloadCommit": "9bb74d320ddc61d81f701f1ffdda2134b72a393c",
+    "manifestSha256": "e93dd98e05a5bb17f11b465850c1f8e5e3a8f655a0878e140b97e5f6701131bf",
+    "definitionSha256": "6f4f4f971f2a570850494a725b44da3d9e203a7bafb99357ff5279c9b878c46c",
+    "evaluatedSha256": "74eb1cf20ff8528a7cc4b37f898f0bebf5cd622d51e50219e4a43331b1c7e2ee",
+    "payloadSha256": "c884b685ae760c42531584e71e25f7b6429223a6b59b7f3f175f704965c53ffc",
+    "payloadDiffSha256": "bf542b4dd327e69dc02573c73821192a97db4666e4d083415bfd328f9ef0f76c",
+    "sourcePath": "src/benchmark-levels/strandline-2nqi/",
+    "destinationPath": "src/benchmark-levels/strandline-2nqi/",
+    "roots": [
+      {
+        "id": "source",
+        "path": "src/benchmark-levels/strandline-2nqi",
+        "promotedPath": "src/benchmark-levels/strandline-2nqi",
+        "required": true,
+        "present": true
+      },
+      {
+        "id": "content",
+        "path": "public/level-content/strandline-2nqi",
+        "promotedPath": "public/level-content/strandline-2nqi",
+        "required": false,
+        "present": true
+      }
+    ],
+    "baseCommit": "02e7177d574d026e8a32e73dace79fd2445d8597"
+  },
+  "promotionCommit": "e9b324c8e02ccfb6f9b9ab9f3e9294ae6f8fb81e"
+}

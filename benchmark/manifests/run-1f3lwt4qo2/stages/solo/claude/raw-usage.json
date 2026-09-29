@@ -1,0 +1,135 @@
+{
+  "sessionId": "5425fc2b-05ce-444c-b81f-4e1e6d9374c3",
+  "initResolvedModel": "claude-sonnet-5-5",
+  "finalMessage": "`broadside-tllu` (\"Broadside\") is built and passes every automated gate. Nothing has been seen or heard on real WebGPU, so it still needs a human playtest.\n\nThe 60-second run covers launch, the crossfire corkscrews, the cruiser flank under its broadside, the quiet eye, the belly turrets, and the flagship's shield-generator pass. It then goes through the escort surge and the trench dive to the exposed core, and ends on the pull-out finale and the victory theme. The score is 32 bars at 128 BPM. It uses the shared lock-on runner with no engine changes and no registry edits.\n\n**Verified**\n- `tsc --noEmit` and `npm run build` pass.\n- `npm run check:floor -- --level broadside-tllu` returns ACCEPT: 0 occlusion warnings, and the perf and audio config gates pass.\n- The one perf warning is frame-time growth, from a few SwiftShader spikes (one measured 328 ms, against 3.9 ms early in the run). I treated it as a software-renderer artifact. I added pipeline prewarm to reduce first-use hitches on real hardware.\n- `npm run check:benchmark-scope -- --level broadside-tllu --base HEAD` passes (25 paths).\n- `docs/level-gallery.md` is regenerated, and `level.md` is filled in.\n- The simulator's perfect policy gets 109/141 kills and reaches FLEET ADMIRAL with no player hits. The no-input run ends with two player hits and no kills, well short of a loss. The imperfect run reaches WING LEADER.\n- An automated playtest of the flagship fight ran the intended sequence. All four generators break, the shield falls, escorts arrive, both cores go, and the heart dies before its deadline.\n- I reviewed SwiftShader frames of every section, including the trench, heart and finale.\n- A real-time audio capture showed no clipping, and the eye sits about 18 dB below the broadside.\n- Only three paths are touched: the level directory, `public/level-content/broadside-tllu/`, and the gallery doc. All scratch tooling is deleted.\n\n**Needs human eyes (WebGPU)**\n- Overall look and bloom, especially the contrast in the eye and the finale pull-out framing.\n- How the corkscrew banks feel.\n- The timing of the heart kill and the score landing on the victory theme.\n- The mix around the eye and the orchestral swells on real audio output.\n- Shader-compile hitches on first use, which SwiftShader can't show.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 5110226,
+    "stop_reason": "end_turn",
+    "session_id": "5425fc2b-05ce-444c-b81f-4e1e6d9374c3",
+    "total_cost_usd": 52.79926119999993,
+    "usage": {
+      "input_tokens": 648,
+      "cache_creation_input_tokens": 980003,
+      "cache_read_input_tokens": 199638908,
+      "output_tokens": 585442,
+      "output_tokens_details": {
+        "thinking_tokens": 322732
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 980003,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 847,
+          "cache_read_input_tokens": 36163,
+          "cache_creation_input_tokens": 656,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 656
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-sonnet-5-5": {
+        "inputTokens": 3223,
+        "outputTokens": 670688,
+        "cacheReadInputTokens": 207177391,
+        "cacheCreationInputTokens": 1272181,
+        "webSearchRequests": 0,
+        "costUSD": 52.79926119999993,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 387320,
+        "canonicalModel": "claude-sonnet-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 1,
+      "requested": {
+        "background": 1,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 1,
+      "max_depth": 1,
+      "spawned_by_subagents": 0,
+      "completed": 1,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {
+        "general-purpose": 1
+      }
+    },
+    "is_error": false,
+    "num_turns": 331,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "`broadside-tllu` (\"Broadside\") is built and passes every automated gate. Nothing has been seen or heard on real WebGPU, so it still needs a human playtest.\n\nThe 60-second run covers launch, the crossfire corkscrews, the cruiser flank under its broadside, the quiet eye, the belly turrets, and the flagship's shield-generator pass. It then goes through the escort surge and the trench dive to the exposed core, and ends on the pull-out finale and the victory theme. The score is 32 bars at 128 BPM. It uses the shared lock-on runner with no engine changes and no registry edits.\n\n**Verified**\n- `tsc --noEmit` and `npm run build` pass.\n- `npm run check:floor -- --level broadside-tllu` returns ACCEPT: 0 occlusion warnings, and the perf and audio config gates pass.\n- The one perf warning is frame-time growth, from a few SwiftShader spikes (one measured 328 ms, against 3.9 ms early in the run). I treated it as a software-renderer artifact. I added pipeline prewarm to reduce first-use hitches on real hardware.\n- `npm run check:benchmark-scope -- --level broadside-tllu --base HEAD` passes (25 paths).\n- `docs/level-gallery.md` is regenerated, and `level.md` is filled in.\n- The simulator's perfect policy gets 109/141 kills and reaches FLEET ADMIRAL with no player hits. The no-input run ends with two player hits and no kills, well short of a loss. The imperfect run reaches WING LEADER.\n- An automated playtest of the flagship fight ran the intended sequence. All four generators break, the shield falls, escorts arrive, both cores go, and the heart dies before its deadline.\n- I reviewed SwiftShader frames of every section, including the trench, heart and finale.\n- A real-time audio capture showed no clipping, and the eye sits about 18 dB below the broadside.\n- Only three paths are touched: the level directory, `public/level-content/broadside-tllu/`, and the gallery doc. All scratch tooling is deleted.\n\n**Needs human eyes (WebGPU)**\n- Overall look and bloom, especially the contrast in the eye and the finale pull-out framing.\n- How the corkscrew banks feel.\n- The timing of the heart kill and the score landing on the victory theme.\n- The mix around the eye and the orchestral swells on real audio output.\n- Shader-compile hitches on first use, which SwiftShader can't show.",
+    "ttft_ms": 786,
+    "type": "result",
+    "duration_ms": 6751756,
+    "uuid": "d7b111f5-1c34-4956-b6d8-ef0242e7baa2",
+    "ttft_stream_ms": 744,
+    "time_to_request_ms": 105,
+    "first_content_frame_ms": 744,
+    "queued_turn_count": 0,
+    "result_index": 0
+  },
+  "normalized": {
+    "inputTokens": 199639556,
+    "outputTokens": 585442,
+    "cacheReadInputTokens": 199638908,
+    "cacheWriteInputTokens": 980003,
+    "vendorFields": {
+      "totalCostUsd": 52.79926119999993,
+      "durationMs": 6751756,
+      "durationApiMs": 5110226,
+      "numTurns": 331,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-sonnet-5-5": {
+          "inputTokens": 3223,
+          "outputTokens": 670688,
+          "cacheReadInputTokens": 207177391,
+          "cacheCreationInputTokens": 1272181,
+          "webSearchRequests": 0,
+          "costUSD": 52.79926119999993,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "thinkingTokens": 387320,
+          "canonicalModel": "claude-sonnet-5-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "sessionId": "b07f3b3a-78af-4a71-93da-e04cabc0a780",
+  "initResolvedModel": "claude-sonnet-5-5",
+  "finalMessage": "Strandline is finished under `src/benchmark-levels/strandline-2nqi/`, but I never saw or heard it on WebGPU. `npm run typecheck`, `npm run build`, `npm run check:floor -- --level strandline-2nqi` (ACCEPT) and `check:benchmark-scope` all pass. Nothing is committed.\n\nFiles changed:\n- **Level directory:** `src/benchmark-levels/strandline-2nqi/`.\n- **Gallery images:** `public/level-content/strandline-2nqi/` (start, hero and overview), referenced from `level.json`.\n- **Gallery doc:** `docs/level-gallery.md`, regenerated.\n\n**What it plays like**\n- **Structure:** 96 BPM, 24 bars, exactly 60 s. It runs from a slow drift up the strands, to a swing wide under the bell (the \"green moon\" moment on the bloom chord at bar 8), a dive back into the strands, then the crown, then a slow pull-back that ends with the whole animal in frame.\n- **Enemies:** four parasite types plus the boss:\n  - clampers that peel off strands and pounce;\n  - leech schools that S-wave across the whole screen;\n  - plated brooders that spit homing spores you can shoot down;\n  - brood larvae hatched by the parent.\n- **Boss:** the webbing hides the parent and can't be locked. Each veil dies back when its brood is killed. Once both are gone the parent is bare and takes a four-lock stage and a six-lock finishing volley.\n- **Ending safeguard:** if the parent is still alive at 52.5 s, the bell throws it off, so the pull-back always plays.\n- **Music:** it starts as just a slow pulse and a pad, and layers in bells, bass, surf, a groove and the bloom chord. Locks climb the live chord, kills play a written lane per act, and the parent adds a sour undertow that thins as the webbing dies. When the parent lets go it resolves to slow D major.\n\n**What I checked**\n- **Simulation:** `npm run simulate` has the perfect bot clearing 54 of 57 targets and finishing the boss around 45 s. Kills spread across the whole screen, at an average of 38 m.\n- **Visuals:** headless snapshots (WebGL fallback) of the start screen, the moon vista, the boss, the ending and the REPLAY letters. I also drove a scripted perfect player to look at locks, kills and the boss stages.\n- **Audio:** I ran the actual synth in headless Chrome against a sim playthrough. That caught and fixed a scheduler crash: the serene bells fed a fractional index into the chord and threw on every twinkle. Loudness is in the same range as Skyhook.\n\n**Needs a human playtest**\n- The WebGPU look: the snapshots use a fallback renderer, so shader compilation and exact brightness are unconfirmed. Whether the crown chamber reads as dark, and the moon reveal, should be looked at first.\n- The mix, and whether the boss fight is winnable inside its window for an average player.\n\nThere is also a dev-only `?debugBoss=exposed|freed` switch that starts the parent bare or has it let go at once, for inspecting the ending without playing the fight.",
+  "eventType": "result",
+  "raw": {
+    "duration_api_ms": 3538195,
+    "stop_reason": "end_turn",
+    "session_id": "b07f3b3a-78af-4a71-93da-e04cabc0a780",
+    "total_cost_usd": 29.580356600000012,
+    "usage": {
+      "input_tokens": 10,
+      "cache_creation_input_tokens": 6889,
+      "cache_read_input_tokens": 3871790,
+      "output_tokens": 2453,
+      "output_tokens_details": {
+        "thinking_tokens": 173
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 6889,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1083,
+          "cache_read_input_tokens": 776875,
+          "cache_creation_input_tokens": 575,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 575
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-sonnet-5-5": {
+        "inputTokens": 434,
+        "outputTokens": 457774,
+        "thinkingTokens": 266988,
+        "cacheReadInputTokens": 109668923,
+        "cacheCreationInputTokens": 766991,
+        "webSearchRequests": 0,
+        "costUSD": 29.580356600000012,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "canonicalModel": "claude-sonnet-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "fast_mode_disabled_reason": "sdk_opt_in_required",
+    "subagent_stats": {
+      "spawned": 0,
+      "requested": {
+        "background": 0,
+        "foreground": 0,
+        "unset": 0
+      },
+      "started_in_background": 0,
+      "max_depth": 0,
+      "spawned_by_subagents": 0,
+      "completed": 0,
+      "failed": 0,
+      "killed": {
+        "parent": 0,
+        "user": 0,
+        "system": 0
+      },
+      "refused": {
+        "depth_limit": 0,
+        "concurrency_limit": 0,
+        "budget": 0
+      },
+      "by_type": {}
+    },
+    "is_error": false,
+    "num_turns": 6,
+    "subtype": "success",
+    "api_error_status": null,
+    "result": "Strandline is finished under `src/benchmark-levels/strandline-2nqi/`, but I never saw or heard it on WebGPU. `npm run typecheck`, `npm run build`, `npm run check:floor -- --level strandline-2nqi` (ACCEPT) and `check:benchmark-scope` all pass. Nothing is committed.\n\nFiles changed:\n- **Level directory:** `src/benchmark-levels/strandline-2nqi/`.\n- **Gallery images:** `public/level-content/strandline-2nqi/` (start, hero and overview), referenced from `level.json`.\n- **Gallery doc:** `docs/level-gallery.md`, regenerated.\n\n**What it plays like**\n- **Structure:** 96 BPM, 24 bars, exactly 60 s. It runs from a slow drift up the strands, to a swing wide under the bell (the \"green moon\" moment on the bloom chord at bar 8), a dive back into the strands, then the crown, then a slow pull-back that ends with the whole animal in frame.\n- **Enemies:** four parasite types plus the boss:\n  - clampers that peel off strands and pounce;\n  - leech schools that S-wave across the whole screen;\n  - plated brooders that spit homing spores you can shoot down;\n  - brood larvae hatched by the parent.\n- **Boss:** the webbing hides the parent and can't be locked. Each veil dies back when its brood is killed. Once both are gone the parent is bare and takes a four-lock stage and a six-lock finishing volley.\n- **Ending safeguard:** if the parent is still alive at 52.5 s, the bell throws it off, so the pull-back always plays.\n- **Music:** it starts as just a slow pulse and a pad, and layers in bells, bass, surf, a groove and the bloom chord. Locks climb the live chord, kills play a written lane per act, and the parent adds a sour undertow that thins as the webbing dies. When the parent lets go it resolves to slow D major.\n\n**What I checked**\n- **Simulation:** `npm run simulate` has the perfect bot clearing 54 of 57 targets and finishing the boss around 45 s. Kills spread across the whole screen, at an average of 38 m.\n- **Visuals:** headless snapshots (WebGL fallback) of the start screen, the moon vista, the boss, the ending and the REPLAY letters. I also drove a scripted perfect player to look at locks, kills and the boss stages.\n- **Audio:** I ran the actual synth in headless Chrome against a sim playthrough. That caught and fixed a scheduler crash: the serene bells fed a fractional index into the chord and threw on every twinkle. Loudness is in the same range as Skyhook.\n\n**Needs a human playtest**\n- The WebGPU look: the snapshots use a fallback renderer, so shader compilation and exact brightness are unconfirmed. Whether the crown chamber reads as dark, and the moon reveal, should be looked at first.\n- The mix, and whether the boss fight is winnable inside its window for an average player.\n\nThere is also a dev-only `?debugBoss=exposed|freed` switch that starts the parent bare or has it let go at once, for inspecting the ending without playing the fight.",
+    "ttft_ms": 5084,
+    "type": "result",
+    "duration_ms": 85132,
+    "uuid": "97d04cdc-008e-4180-9036-97b03fad8336",
+    "ttft_stream_ms": 4274,
+    "time_to_request_ms": 378,
+    "first_content_frame_ms": 4275,
+    "queued_turn_count": 0,
+    "result_index": 0
+  },
+  "normalized": {
+    "inputTokens": 3871800,
+    "outputTokens": 2453,
+    "cacheReadInputTokens": 3871790,
+    "cacheWriteInputTokens": 6889,
+    "vendorFields": {
+      "totalCostUsd": 29.580356600000012,
+      "durationMs": 85132,
+      "durationApiMs": 3538195,
+      "numTurns": 6,
+      "stopReason": "end_turn",
+      "subtype": "success",
+      "modelUsage": {
+        "claude-sonnet-5-5": {
+          "inputTokens": 434,
+          "outputTokens": 457774,
+          "thinkingTokens": 266988,
+          "cacheReadInputTokens": 109668923,
+          "cacheCreationInputTokens": 766991,
+          "webSearchRequests": 0,
+          "costUSD": 29.580356600000012,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "canonicalModel": "claude-sonnet-5-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  }
+}

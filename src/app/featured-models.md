@@ -34,6 +34,7 @@ Keep the page short: when a model's newer version arrives, unlist the versions i
 supersedes.
 
 - Claude Opus 5.5 (new)
+- Claude Sonnet 5.5 (new)
 - GPT-6 Astra
 - Claude Fable 5.1
 - GPT-5.6 Sol

@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/pbatum/.nvm/versions/node/v22.19.0/bin/node",
+    "/home/pbatum/vibes/raild/scripts/benchmark/claude-cli.mjs",
+    "--worktree",
+    "/tmp/pareto-rail-run-q7ksvzz6fm",
+    "--prompt",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-q7ksvzz6fm/rendered-assignment.md",
+    "--out",
+    "/home/pbatum/vibes/raild/benchmark/private/runs/run-q7ksvzz6fm/stages/solo/claude",
+    "--model",
+    "claude-sonnet-5-5",
+    "--effort",
+    "high",
+    "--timeout-seconds",
+    "43200",
+    "--sandbox",
+    "false",
+    "--resume-round",
+    "1"
+  ],
+  "exitCode": 0,
+  "startedAt": "2026-09-28T22:24:12.479Z",
+  "finishedAt": "2026-09-28T22:25:40.565Z",
+  "wallTimeSeconds": 86.39945782600002,
+  "stdoutSha256": "3d7709d2632b187bc0b7c6a7adc77580cfb33169cdf04b2449e4e85ab0a1ad9b",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "{\"sessionId\":\"b07f3b3a-78af-4a71-93da-e04cabc0a780\",\"usage\":{\"inputTokens\":3871800,\"outputTokens\":2453,\"cacheReadInputTokens\":3871790,\"cacheWriteInputTokens\":6889,\"vendorFields\":{\"totalCostUsd\":29.580356600000012,\"durationMs\":85132,\"durationApiMs\":3538195,\"numTurns\":6,\"stopReason\":\"end_turn\",\"subtype\":\"success\",\"modelUsage\":{\"claude-sonnet-5-5\":{\"inputTokens\":434,\"outputTokens\":457774,\"thinkingTokens\":266988,\"cacheReadInputTokens\":109668923,\"cacheCreationInputTokens\":766991,\"webSearchRequests\":0,\"costUSD\":29.580356600000012,\"contextWindow\":1000000,\"maxOutputTokens\":128000,\"canonicalModel\":\"claude-sonnet-5-5\",\"provider\":\"firstParty\",\"costBasis\":\"list\"}}}},\"wallTimeSeconds\":86.03347398700001}\n",
+  "stderr": ""
+}

@@ -1,0 +1,8 @@
+{
+  "requestedModel": "claude-sonnet-5-5",
+  "initResolvedModel": "claude-sonnet-5-5",
+  "modelUsageKeys": [
+    "claude-sonnet-5-5"
+  ],
+  "selectedReasoningEffort": "high"
+}
