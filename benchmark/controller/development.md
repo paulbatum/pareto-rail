@@ -195,7 +195,7 @@ Promotion is a separate checkpointed transaction over a completed run. `promote.
 1. validates the manifest, gates, refs, payload, and current repository state;
 2. materializes the recorded payload;
 3. converts entrant PNG content to AVIF and records every hash-changing conversion;
-4. runs promotion checks;
+4. runs typecheck, build, and scope against the current checkout, and verifies the recorded run-time floor gate (passed, bound to the evaluated commit, log hash intact) instead of rerunning the floor;
 5. verifies that only the expected level footprint changed; and
 6. commits the promoted output.
 

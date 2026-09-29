@@ -185,6 +185,31 @@ async function main() {
   {
     const fixture = await createFixture();
     try {
+      const result = await promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory });
+      const floor = result.checks.find((check) => check.id === 'floor');
+      assert.equal(floor.stdoutSha256, sha256('floor passed\n'), 'promotion accepts the recorded run-time floor gate instead of rerunning the current floor script');
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+
+  for (const [label, mutate] of [
+    ['a tampered floor log', async (fixture) => fs.writeFile(path.join(fixture.runDirectory, 'gates/floor.log'), 'floor rewritten\n')],
+    ['a missing floor log', async (fixture) => fs.rm(path.join(fixture.runDirectory, 'gates/floor.log'))],
+  ]) {
+    const fixture = await createFixture();
+    try {
+      await mutate(fixture);
+      await assert.rejects(() => promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory }), /Recorded floor gate log/, `${label} is rejected`);
+      assert.equal((await git(fixture.root, ['rev-list', '--count', `${fixture.base}..HEAD`])).trim(), '0', `${label} creates no commit`);
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+
+  {
+    const fixture = await createFixture();
+    try {
       await fs.writeFile(path.join(fixture.root, 'unrelated.txt'), 'do not overwrite\n');
       await assert.rejects(() => promoteRun({ root: fixture.root, runDirectory: fixture.runDirectory }), /unrelated local changes/);
       assert.equal(await exists(path.join(fixture.root, 'src/benchmark-levels/synthetic-a1b2')), false, 'preflight failure does not mutate application source');
@@ -267,7 +292,7 @@ async function createFixture({ payloadWorktree = false, rehearsal = false, paylo
   await fs.mkdir(path.join(root, 'docs'), { recursive: true });
   await fs.mkdir(path.join(root, 'scripts'), { recursive: true });
   await writeText(path.join(root, '.gitignore'), 'benchmark/private/\n');
-  await writeText(path.join(root, 'package.json'), JSON.stringify({ name: 'synthetic-promotion', scripts: { typecheck: 'node -e ""', build: 'node -e ""', 'check:floor': 'node -e "process.exit(0)" --' } }, null, 2) + '\n');
+  await writeText(path.join(root, 'package.json'), JSON.stringify({ name: 'synthetic-promotion', scripts: { typecheck: 'node -e ""', build: 'node -e ""', 'check:floor': 'node -e "process.exit(1)" --' } }, null, 2) + '\n');
   await writeText(path.join(root, 'src/levels/index.ts'), "export const levelMetadatas = [{ id: 'built-in-level', title: 'Built-in Level', aliases: ['built-in'], kind: 'playable' }];\n");
   await writeText(path.join(root, 'docs/level-gallery.md'), GALLERY);
   await fs.copyFile(path.join(HERE, 'scripts/check-benchmark-scope.mjs'), path.join(root, 'scripts/check-benchmark-scope.mjs'));
@@ -327,7 +352,8 @@ async function createFixture({ payloadWorktree = false, rehearsal = false, paylo
     kind: rehearsal ? 'rehearsal' : 'benchmark',
     stage: { adapter: 'codex-cli', model: 'synthetic', effort: 'high', timeoutSeconds: 60 },
   };
-  const gates = ['typecheck', 'build', 'scope', 'floor'].map((id) => ({ id, status: 'passed', command: id, wallTimeSeconds: 0 }));
+  const gateLogs = Object.fromEntries(['typecheck', 'build', 'scope', 'floor'].map((id) => [id, `${id} passed\n`]));
+  const gates = Object.entries(gateLogs).map(([id, log]) => ({ id, status: 'passed', exitCode: 0, command: id, wallTimeSeconds: 0, outputSha256: sha256(log) }));
   const manifest = {
     schemaVersion: 2,
     benchmarkVersion: definition.benchmarkVersion,
@@ -351,6 +377,7 @@ async function createFixture({ payloadWorktree = false, rehearsal = false, paylo
   await writeJson(path.join(runDirectory, 'evaluated.json'), { evaluatedCommit });
   await writeJson(path.join(runDirectory, 'payload.json'), payload);
   await writeJson(path.join(runDirectory, 'gates/gates.json'), { evaluatedCommit, gates });
+  for (const [id, log] of Object.entries(gateLogs)) await writeText(path.join(runDirectory, `gates/${id}.log`), log);
   return {
     root,
     base,

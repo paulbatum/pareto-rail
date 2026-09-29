@@ -419,10 +419,12 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
     ['typecheck', 'npm', ['run', 'typecheck']],
     ['build', 'npm', ['run', 'build']],
     ['scope', process.execPath, [path.join(root, 'scripts', 'check-benchmark-scope.mjs'), '--level', source.levelId, '--base', baseCommit]],
-    ['floor', 'npm', ['run', 'check:floor', '--', '--level', source.levelId]],
+    ['floor', 'verify-recorded-gate', ['gates/floor.log', '--evaluated', source.evaluatedCommit]],
   ];
   for (const [id, executable, args] of commands) {
-    const result = await runCommand(root, executable, args);
+    const result = id === 'floor'
+      ? await verifyRecordedFloorGate(runDirectory, context.preflight.manifest, source.evaluatedCommit)
+      : await runCommand(root, executable, args);
     await writeCommandLog(runDirectory, id, result);
     checks.push({
       id,
@@ -437,6 +439,29 @@ async function updateCatalogAndRunChecks(context, { completed = false, data: pre
   }
   await assertOnlyPromotionChanges(await gitText(root, ['status', '--porcelain=v1', '--untracked-files=all']), root, context.preflight.presentRoots.map((rootEntry) => rootEntry.destination), true);
   return { checks };
+}
+
+/**
+ * The floor is judged by the run-time gate, which ran the floor script pinned
+ * by the entrant baseline against the sealed evaluated commit. Promotion does
+ * not rerun the floor with the current checkout's script; it accepts the
+ * recorded result only when it passed and its log still matches the hash
+ * recorded for that evaluated commit.
+ */
+async function verifyRecordedFloorGate(runDirectory, manifest, evaluatedCommit) {
+  const started = performance.now();
+  const gatesRecord = await optionalJson(path.join(runDirectory, 'gates', 'gates.json'));
+  if (gatesRecord?.evaluatedCommit !== evaluatedCommit) throw new Error('Recorded floor gate is not bound to the evaluated commit.');
+  const recorded = gatesRecord.gates?.find((gate) => gate?.id === 'floor');
+  const manifestGate = manifest?.gates?.find((gate) => gate?.id === 'floor');
+  if (recorded?.status !== 'passed' || recorded.exitCode !== 0) throw new Error('Recorded floor gate did not pass.');
+  if (!/^[a-f0-9]{64}$/.test(recorded.outputSha256 ?? '')) throw new Error('Recorded floor gate has no output hash.');
+  if (manifestGate?.outputSha256 !== recorded.outputSha256) throw new Error('Recorded floor gate output hash does not agree with the manifest.');
+  let log;
+  try { log = await fs.readFile(path.join(runDirectory, 'gates', 'floor.log'), 'utf8'); }
+  catch (error) { if (error?.code === 'ENOENT') throw new Error('Recorded floor gate log is missing.'); throw error; }
+  if (sha256(log) !== recorded.outputSha256) throw new Error('Recorded floor gate log does not match its recorded hash.');
+  return { code: 0, stdout: log, stderr: '', wallTimeSeconds: (performance.now() - started) / 1000 };
 }
 
 async function commitPromotion(context) {

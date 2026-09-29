@@ -324,7 +324,7 @@ Promote an accepted run:
 npm run benchmark:promote -- --run <run-id>
 ```
 
-Promotion validates the recorded run and payload, materializes the entrant under `src/benchmark-levels/<level-id>/`, converts entrant PNG content to AVIF when needed, runs the four checks, and commits the promoted output. Progress is checkpointed in `promotion.json`; rerun the same command after an interruption.
+Promotion validates the recorded run and payload, materializes the entrant under `src/benchmark-levels/<level-id>/`, converts entrant PNG content to AVIF when needed, runs the promotion checks, and commits the promoted output. Typecheck, build, and scope run against the current checkout. The floor is not rerun: promotion accepts the run-time floor gate, which used the floor script pinned by the entrant baseline, only if it passed for the evaluated commit and its log still matches the recorded hash. A later change to the floor script or engine on the current checkout does not reject an already-gated run. Progress is checkpointed in `promotion.json`; rerun the same command after an interruption.
 
 Promotion does not create the public showcase images. Run the `level-content-images` workflow for each promoted level before catalog export. The export rejects a descriptor without `contentImages.hero`.
 
