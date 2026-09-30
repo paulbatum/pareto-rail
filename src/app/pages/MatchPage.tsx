@@ -11,6 +11,7 @@ import { CompareCard, RevealCards, VersusGrid, VoteButtons } from '../components
 import type { AppRoute } from '../router';
 import { matchableThemeIds, matchupForModel, modelPickerEntries } from '../model-match';
 import { GameFrame } from '../components/LazyGameFrame';
+import { LoadingPanel } from '../components/LoadingPanel';
 import { loadRankLevel } from '../rank-level';
 
 type MatchRoute = Extract<AppRoute, { kind: 'match' }>;
@@ -410,7 +411,7 @@ function MatchGame({ launch, backPath, onNavigate, onRunEnd }: { launch: MatchLa
       </div>
     </section>
   );
-  if (!level) return <section className="page-panel"><p className="eyebrow">Custom match</p><h1>Loading level…</h1></section>;
+  if (!level) return <LoadingPanel />;
   return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} launchContext={{ source: 'match', levelId: launch.levelId, mode: 'benchmark' }} onRunEnd={onRunEnd} runEndContent={<MatchInvitation side={launch.side} backPath={backPath} onNavigate={onNavigate} />} />;
 }
 

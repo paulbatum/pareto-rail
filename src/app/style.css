@@ -511,6 +511,13 @@ html:fullscreen .perf-overlay { display: none; }
 .game-frame { position: fixed; inset: var(--nav-h, 0px) 0 0 0; background: #02040a; transform: translateZ(0); touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .game-mount { position: absolute; inset: 0; }
 .app-shell .game-frame { font-family: var(--mono); }
+/* Until the level's first complete frame, the frame keeps its size for the renderer but
+   stays out of sight behind the page's loading panel. */
+.game-frame.loading { visibility: hidden; }
+body.game-active:has(.game-frame.loading) { cursor: auto; }
+.game-loading-bar { width: min(420px, 100%); height: 3px; overflow: hidden; background: var(--hairline); }
+.game-loading-bar span { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform 160ms ease-out; }
+.game-loading-stage { margin: 12px 0 0; color: var(--muted); font: 11px var(--mono); letter-spacing: .08em; font-variant-numeric: tabular-nums; }
 
 /* ---------- Motion / responsive ---------- */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

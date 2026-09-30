@@ -19,11 +19,23 @@ export type GameLaunchContext = {
   mode?: 'reference' | 'benchmark';
 };
 
+/**
+ * How far a mount has got before its first frame. `shaders` counts one scene object per
+ * material and geometry layout as it compiles, out of a total known when the stage starts;
+ * `effects` is one hidden frame that compiles the post chain. `mountGame` resolves once the
+ * level can show a complete frame.
+ */
+export type GameLoadProgress =
+  | { stage: 'scene' }
+  | { stage: 'shaders'; done: number; total: number }
+  | { stage: 'effects' };
+
 export type GameMountOptions = {
   host: HTMLElement;
   level: LevelDefinition;
   launchContext?: GameLaunchContext;
   onRunEnd?: (summary: RunSummary, context?: GameLaunchContext) => void;
+  onProgress?: (progress: GameLoadProgress) => void;
   signal?: AbortSignal;
 };
 
@@ -81,7 +93,7 @@ function createDisposerStack() {
 }
 
 // StrictMode, route changes, and hot updates may invalidate a mount before async initialization settles; cancellation and cleanup must remain idempotent.
-export async function mountGame({ host, level, launchContext, onRunEnd, signal }: GameMountOptions): Promise<GameMount> {
+export async function mountGame({ host, level, launchContext, onRunEnd, onProgress, signal }: GameMountOptions): Promise<GameMount> {
   await Promise.resolve();
   if (signal?.aborted) return inertGameMount;
 
@@ -245,6 +257,10 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       last = performance.now();
     };
 
+    /* A paint before each blocking step, so the loading screen shows the stage it is on. */
+    onProgress?.({ stage: 'scene' });
+    await nextFrame();
+    if (signal?.aborted) return abort();
     const runtime = level.createRuntime({ scene, camera, renderer, canvas: renderer.domElement, bus, hud, onPause: togglePause, onFullscreen: toggleFullscreen, startTip: getStartScreenTip(), debugValue });
     stack.add(() => runtime.dispose());
     /* `?hide=a,b` takes named scene objects out of the frame, so a capture can price
@@ -264,7 +280,7 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       stack.add(() => post.dispose());
       perfOverlay?.setSceneSamples(() => (postEnabled ? post.sceneSamples() : renderer.samples));
       /* Compile every scene shader before the first frame, in parallel and off the main thread. */
-      await post.compileAsync();
+      await post.compileAsync((done, total) => onProgress?.({ stage: 'shaders', done, total }));
     } else {
       await renderer.compileAsync(scene, camera);
     }
@@ -331,6 +347,17 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(app);
     stack.add(() => resizeObserver.disconnect());
+    /* The post chain's passes compile on the frame that first draws them. Draw one frame
+       while the loading screen still covers the canvas and wait for the GPU to finish it,
+       so the first frame the player sees does not stall. */
+    onProgress?.({ stage: 'effects' });
+    await nextFrame();
+    if (signal?.aborted) return abort();
+    if (post) post.render({ advanceMotionBlur: false });
+    else renderer.render(scene, camera);
+    await (renderer.backend as { device?: GPUDevice }).device?.queue.onSubmittedWorkDone();
+    if (signal?.aborted) return abort();
+    last = performance.now();
     renderer.setAnimationLoop(() => {
       if (disposed) return;
       const now = performance.now(); const dtMs = now - last; const dt = Math.min(0.05, dtMs / 1000); last = now;
@@ -353,6 +380,10 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     if (signal?.aborted) return inertGameMount;
     throw error;
   }
+}
+
+function nextFrame() {
+  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 }
 
 function acquireGameActivity() {

@@ -166,8 +166,10 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
        off, with async pipeline creation so the driver compiles in parallel off the main
        thread. three's compileAsync awaits each pipeline in turn, so each object gets its own
        call; one object per material and geometry layout goes first, because objects sharing
-       a material would otherwise each build its node graph while the first build is pending. */
-    async compileAsync() {
+       a material would otherwise each build its node graph while the first build is pending.
+       `onProgress` counts those first objects as they finish; the rest mostly reuse their
+       shaders and finish in a moment. */
+    async compileAsync(onProgress?: (done: number, total: number) => void) {
       const pass = scenePass as unknown as { renderTarget: RenderTarget; _mrt: MRTNode | null };
       pass.renderTarget.samples = sceneSamples;
       pass.renderTarget.texture.type = renderer.getOutputBufferType();
@@ -186,13 +188,31 @@ export function createPost(renderer: WebGPURenderer, scene: Scene, camera: Camer
         if (firsts.has(key)) rest.push(object);
         else firsts.set(key, object);
       });
+      const total = firsts.size;
+      let done = 0;
+      onProgress?.(done, total);
+      /* three keys each object's render state on the call depth it renders at, and the scene
+         pass renders one call deep, inside the post chain's own render. compileAsync always
+         looks up depth 0, so the first frame would build every object a second time, and
+         recompile each InstancedMesh, whose shader names its own matrix buffer. compileAsync
+         makes that lookup before it first yields, so the override covers only these calls. */
+      const contexts = (renderer as unknown as { _renderContexts: { get(target: RenderTarget | null, mrt: MRTNode | null, depth?: number): unknown } })._renderContexts;
+      const get = contexts.get;
+      const compile = (objects: Object3D[], onCompiled?: () => void) => {
+        contexts.get = (target, mrt) => get.call(contexts, target, mrt, 1);
+        try {
+          return Promise.all(objects.map((object) => renderer.compileAsync(object, camera, scene).then(onCompiled)));
+        } finally {
+          delete (contexts as { get?: unknown }).get;
+        }
+      };
       const previousTarget = renderer.getRenderTarget();
       const previousMrt = renderer.getMRT();
       renderer.setRenderTarget(pass.renderTarget);
       renderer.setMRT(pass._mrt);
       try {
-        await Promise.all([...firsts.values()].map((object) => renderer.compileAsync(object, camera, scene)));
-        await Promise.all(rest.map((object) => renderer.compileAsync(object, camera, scene)));
+        await compile([...firsts.values()], () => onProgress?.(++done, total));
+        await compile(rest);
       } finally {
         renderer.setRenderTarget(previousTarget);
         renderer.setMRT(previousMrt);

@@ -2,9 +2,10 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { LevelDefinition } from '../../engine/types';
 import type { RunSummary } from '../../engine/scoring';
-import type { GameMount, GameLaunchContext } from '../../game';
+import type { GameMount, GameLaunchContext, GameLoadProgress } from '../../game';
 import { mountGame } from '../../game';
 import { GameRuntimeShell } from '../../game/GameRuntimeShell';
+import { LoadingPanel } from './LoadingPanel';
 
 export type GameFrameProps = {
   level: LevelDefinition;
@@ -18,6 +19,9 @@ export function GameFrame({ level, title = level.title, launchContext, onRunEnd,
   const frameRef = useRef<HTMLElement>(null);
   const runtimeRef = useRef<HTMLDivElement>(null);
   const [endPanel, setEndPanel] = useState<HTMLElement | null>(null);
+  /* The frame stays hidden behind the loading panel until the mount settles. */
+  const [loaded, setLoaded] = useState(false);
+  const [progress, setProgress] = useState<GameLoadProgress | null>(null);
 
   useEffect(() => {
     const runtimeRoot = runtimeRef.current;
@@ -26,6 +30,8 @@ export function GameFrame({ level, title = level.title, launchContext, onRunEnd,
     const controller = new AbortController();
     let game: GameMount | null = null;
     setEndPanel(null);
+    setLoaded(false);
+    setProgress(null);
     document.title = `Pareto Rail — ${title}`;
 
     void mountGame({
@@ -33,6 +39,9 @@ export function GameFrame({ level, title = level.title, launchContext, onRunEnd,
       level,
       signal: controller.signal,
       launchContext,
+      onProgress: (progress) => {
+        if (!controller.signal.aborted) setProgress(progress);
+      },
       onRunEnd: (summary, context) => {
         if (controller.signal.aborted) return;
         setEndPanel(frame.querySelector<HTMLElement>('.end-panel'));
@@ -43,6 +52,8 @@ export function GameFrame({ level, title = level.title, launchContext, onRunEnd,
       else game = mounted;
     }).catch((error: unknown) => {
       console.error(error);
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoaded(true);
     });
 
     return () => {
@@ -52,7 +63,8 @@ export function GameFrame({ level, title = level.title, launchContext, onRunEnd,
   }, [level, title, launchContext?.source, launchContext?.levelId, launchContext?.mode, onRunEnd]);
 
   return <>
-    <section className="game-frame" aria-label={`${title} game`} ref={frameRef}>
+    {!loaded && <LoadingPanel progress={progress} />}
+    <section className={loaded ? 'game-frame' : 'game-frame loading'} aria-label={`${title} game`} ref={frameRef}>
       <div className="game-mount">
         <GameRuntimeShell ref={runtimeRef} />
       </div>

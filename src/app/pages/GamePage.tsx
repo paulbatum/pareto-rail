@@ -4,6 +4,7 @@ import { getLevelEntryById } from '../../levels';
 import { levelsViewPath, type AppRoute, type LevelsView } from '../router';
 import { RouteLink } from '../components/RouteLink';
 import { GameFrame } from '../components/LazyGameFrame';
+import { LoadingPanel } from '../components/LoadingPanel';
 
 export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { kind: 'play' }>; onNavigate: (path: string) => void }) {
   const [level, setLevel] = useState<LevelDefinition | null>(null);
@@ -22,7 +23,7 @@ export function PlayRoute({ route, onNavigate }: { route: Extract<AppRoute, { ki
   }, [route.levelId]);
 
   if (error) return <section className="page-panel"><p className="eyebrow">Play</p><h1>Level unavailable</h1><p className="lede">{error}</p><RouteLink className="button" href="/levels" onNavigate={onNavigate}>Back to levels</RouteLink></section>;
-  if (!level) return <section className="page-panel"><p className="eyebrow">Loading</p><h1>Preparing level…</h1></section>;
+  if (!level) return <LoadingPanel />;
   return <GameFrame level={level} runEndContent={<PlayInvitation levelId={level.id} from={route.from} onNavigate={onNavigate} />} />;
 }
 

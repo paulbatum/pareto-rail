@@ -15,6 +15,7 @@ import { RouteLink } from '../components/RouteLink';
 import { CompareCard, GenerationDetails, RevealStage, VersusGrid, VoteButtons } from '../components/matchup';
 import type { AppRoute } from '../router';
 import { GameFrame } from '../components/LazyGameFrame';
+import { LoadingPanel } from '../components/LoadingPanel';
 import { loadRankLevel } from '../rank-level';
 import { builtInLevelCatalog, getBuiltInLevelById } from '../../levels';
 import type { LevelDefinition } from '../../engine/types';
@@ -372,7 +373,7 @@ function RankGame({ launch, onNavigate, onRunEnd }: { launch: RankLaunch; onNavi
       </div>
     </section>
   );
-  if (!level) return <section className="page-panel"><p className="eyebrow">Rank</p><h1>Loading anonymous level…</h1></section>;
+  if (!level) return <LoadingPanel />;
   return <GameFrame level={level} title={`Level ${launch.side.toUpperCase()}`} launchContext={{ source: 'rank', levelId: launch.levelId, mode: 'benchmark' }} onRunEnd={onRunEnd} runEndContent={<BenchmarkInvitation side={launch.side} onNavigate={onNavigate} />} />;
 }
 

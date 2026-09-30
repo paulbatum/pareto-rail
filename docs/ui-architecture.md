@@ -52,6 +52,8 @@ A development-build-only checkbox re-fetches with the owner's participant-hash p
 
 `GameFrame` bridges React pages to the imperative game runtime and is loaded lazily (via `LazyGameFrame`) so the three.js/WebGPU runtime stays out of the shell bundle. Content pages and the level/matchup pickers must not statically import it.
 
+From a play link to the level's first frame the player sees one screen, `LoadingPanel`: the page shows it while the level module loads, `LazyGameFrame` while the runtime chunk loads, and `GameFrame` while `mountGame` builds the scene and compiles shaders. `mountGame` reports those stages through `onProgress` and resolves once a complete frame is ready; until then `GameFrame` keeps the canvas and HUD hidden.
+
 ## SEO / indexing
 
 The site is a single-page app, so crawlers need help discovering its routes.
