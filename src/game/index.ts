@@ -7,7 +7,6 @@ import { createPost, getBloomLevel, getMotionBlurLevel, setBloomLevel, setMotion
 import { withoutShadowDependentStages } from '../engine/post-stages';
 import { applyInitializedRenderConfig, applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
 import { installColdShaders } from './cold-shaders';
-import { compileInBackground } from '../engine/shader-cache';
 import { getStartScreenTip } from '../ui/client-tip';
 import { installDevErrorOverlay } from '../ui/dev-error-overlay';
 import { createHud, showUnsupported } from '../ui/hud';
@@ -256,11 +255,6 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
       if (!object) throw new Error(`hide: no scene object named "${name}"`);
       object.visible = false;
     }
-    /* Until the warm-up frame below settles, shaders compile in the background and a frame
-       draws only what is ready, so the page never waits on the driver: a level the shader
-       caches have not seen takes seconds to compile. Set before the post chain, whose
-       stages render while they are built. */
-    const backgroundCompiles = compileInBackground(renderer);
     /* Built after the runtime so post stages can find the level's scene objects, such as a god-rays light. */
     /* `?post=0` renders the scene straight to the canvas, so a playtest capture can
        separate what the level's materials cost from what the post chain costs. */
@@ -269,6 +263,10 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     if (post) {
       stack.add(() => post.dispose());
       perfOverlay?.setSceneSamples(() => (postEnabled ? post.sceneSamples() : renderer.samples));
+      /* Compile every scene shader before the first frame, in parallel and off the main thread. */
+      await post.compileAsync();
+    } else {
+      await renderer.compileAsync(scene, camera);
     }
     if (perfOverlay) {
       const { buildSweepConfigs } = await import('./perf-sweep');
@@ -333,29 +331,14 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(app);
     stack.add(() => resizeObserver.disconnect());
-    let frameDt = 0;
-    const renderFrame = () => {
-      if (post && postEnabled) post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()), dt: frameDt });
-      else renderer.render(scene, camera);
-    };
-    let framesRendered = 0;
     renderer.setAnimationLoop(() => {
       if (disposed) return;
       const now = performance.now(); const dtMs = now - last; const dt = Math.min(0.05, dtMs / 1000); last = now;
       if (!paused) runtime.update(dt, now / 1000);
       /* Outside the pause gate so the debug camera still flies over a stopped game. */
       freecam?.update(dt);
-      frameDt = dt;
-      /* The second frame asks for every shader the scene can draw, off screen too, to compile
-         while the start screen is up. The first frame asks first, so what the start screen
-         shows compiles first. */
-      if (framesRendered === 1) {
-        void backgroundCompiles.warmUp(scene, renderFrame)
-          .catch((error: unknown) => { if (!disposed) console.error('Shader warm-up failed', error); });
-      } else {
-        renderFrame();
-      }
-      framesRendered += 1;
+      if (post && postEnabled) post.render({ advanceMotionBlur: !paused || Boolean(freecam?.isActive()), dt });
+      else renderer.render(scene, camera);
       perfOverlay?.recordFrame(dtMs, now);
     });
     stack.add(() => renderer.setAnimationLoop(null));
