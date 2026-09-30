@@ -2,6 +2,7 @@
    cache (Chrome's or the GPU driver's) has seen it, and the level compiles as it would for a
    first-time visitor. A comment would be stripped before hashing; a dead branch on a new
    builtin input survives into the compiled output without changing what is drawn. */
+/* The vertex literal is 4e9 + seed and must stay a valid u32 (seed < 2^28). */
 export function nonceShader(code: string, seed: number): string {
   const edits: Array<[number, number, string, number, string]> = [];
   const re = /@(vertex|fragment)\s*\n?\s*fn\s+\w+\s*\(/g;
@@ -36,7 +37,7 @@ export function installColdShaders(): void {
   if (!proto) return;
   const original = proto.createShaderModule;
   if ((original as { cold?: boolean }).cold) return;
-  const seed = Math.floor(Math.random() * 1_000_000_000);
+  const seed = Math.floor(Math.random() * 2 ** 28);
   const patched = function (this: GPUDevice, descriptor: GPUShaderModuleDescriptor) {
     return original.call(this, { ...descriptor, code: nonceShader(descriptor.code, seed) });
   };
