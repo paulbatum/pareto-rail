@@ -6,6 +6,7 @@ import { createEventBus } from '../events';
 import { createPost, getBloomLevel, getMotionBlurLevel, setBloomLevel, setMotionBlurLevel } from '../engine/post';
 import { withoutShadowDependentStages } from '../engine/post-stages';
 import { applyInitializedRenderConfig, applyRenderConfig, CAMERA_NEAR, resolveCameraFar } from '../engine/render-config';
+import { installColdShaders } from './cold-shaders';
 import { compileInBackground } from '../engine/shader-cache';
 import { getStartScreenTip } from '../ui/client-tip';
 import { installDevErrorOverlay } from '../ui/dev-error-overlay';
@@ -145,6 +146,8 @@ export async function mountGame({ host, level, launchContext, onRunEnd, signal }
     const renderScale = clampScale(urlParams.get('scale'));
     const multisample = urlParams.get('msaa') !== '0';
     const pixelRatio = () => Math.min(window.devicePixelRatio, 2) * renderScale;
+    /* `?coldshaders=1` must be in place before the renderer creates its device. */
+    if (urlParams.get('coldshaders') === '1') installColdShaders();
     /* Without a preference the browser picks the adapter, and on a laptop with two GPUs
        that is usually the integrated one. */
     const renderer = new WebGPURenderer({ antialias: multisample, alpha: false, trackTimestamp: perfEnabled, powerPreference: 'high-performance' });
@@ -403,7 +406,7 @@ function canUseFullscreen() { return Boolean(document.fullscreenEnabled && docum
 async function setFullscreen(enabled: boolean) { try { if (enabled) await document.documentElement.requestFullscreen(); else if (document.fullscreenElement) await document.exitFullscreen(); } catch (error) { console.warn('Fullscreen request failed', error); } }
 /* What a capture was measuring. Without this a saved report is just a number, and a
    run with the post chain off is indistinguishable from the shipping frame. */
-const DIAGNOSTIC_PARAMS = ['scale', 'msaa', 'post', 'shadows', 'hide', 'lowpoly'];
+const DIAGNOSTIC_PARAMS = ['scale', 'msaa', 'post', 'shadows', 'hide', 'lowpoly', 'coldshaders'];
 function diagnosticKnobs(urlParams: URLSearchParams) {
   const knobs: Record<string, string> = {};
   for (const name of DIAGNOSTIC_PARAMS) {

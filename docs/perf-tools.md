@@ -187,6 +187,7 @@ These query parameters change what the GPU is asked to draw, so a playtest on sl
 | `post=0` | renders the scene straight to the canvas, with no post chain |
 | `shadows=0` | drops the shadow pass, and any god-ray stage that marches it |
 | `hide=<names>` | takes named scene objects out of the frame; an unknown name is an error |
+| `coldshaders=1` | makes every shader miss Chrome's and the driver's shader caches for this page load, to reproduce a first-time level load |
 
 ```text
 https://<deployed>/?level=spillway&perf=1&scale=0.5
