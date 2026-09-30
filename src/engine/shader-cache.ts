@@ -124,3 +124,139 @@ export function warmUpShaders(scene: Scene, objects: Object3D[]): ShaderWarmUp {
     },
   };
 }
+
+type RenderPipelines = {
+  updateForRender?: (renderObject: unknown) => void;
+  getForRender?: (renderObject: unknown, promises: Promise<void>[] | null) => unknown;
+};
+
+/* Chrome on D3D12 compiles a burst of pipelines no faster than it compiles them two at a
+   time, and simple ones up to twice as slowly. A burst also holds up the browser's own
+   drawing, which freezes the whole page until it drains. */
+const PIPELINE_COMPILES_IN_FLIGHT = 2;
+
+export type BackgroundCompiles = {
+  /**
+   * Renders one frame through `render` with frustum culling off for every visible object
+   * in `scene`, so the frame asks for every shader the scene can draw, not just the ones
+   * in view. Those compile after anything an ordinary frame asks for. Resolves once
+   * every shader asked for so far has compiled, and from then on the renderer compiles
+   * on first draw again.
+   */
+  warmUp(scene: Scene, render: () => void): Promise<void>;
+};
+
+/**
+ * Has the renderer compile each new render pipeline in the background, with the async
+ * API `compileAsync` uses, until `warmUp` resolves. three skips drawing an object whose
+ * pipeline is still compiling, so frames keep coming and each object appears once its
+ * shader is ready. The default blocks instead: a frame that draws a new pipeline waits
+ * for the driver to compile it, which for a level the shader caches have not seen is
+ * seconds, and nothing reaches the screen meanwhile.
+ *
+ * The warm-up renders a real frame rather than calling `compileAsync`, because three
+ * builds a shader from the renderer's render target and MRT at the time it builds, and
+ * `compileAsync` builds after it yields, when the frames in between have moved both.
+ *
+ * Compiles are queued and run a couple at a time. `updateForRender` is the render path's
+ * call into the private `_pipelines` cache. When a three upgrade changes that field the
+ * hook warns once and does nothing, which restores compiling on first draw.
+ */
+export function compileInBackground(renderer: WebGPURenderer): BackgroundCompiles {
+  const pipelines = (renderer as unknown as { _pipelines?: RenderPipelines })._pipelines;
+  const { updateForRender, getForRender } = pipelines ?? {};
+  const device = (renderer.backend as { device?: GPUDevice }).device;
+  if (!pipelines || typeof updateForRender !== 'function' || typeof getForRender !== 'function' || !device) {
+    console.warn('compileInBackground: the renderer does not expose the pipeline cache this hook expects; shaders will compile on first draw.');
+    return {
+      async warmUp(_scene, render) {
+        render();
+      },
+    };
+  }
+  const pending: Promise<void>[] = [];
+  const createAsync = device.createRenderPipelineAsync;
+  type Compile = () => void;
+  const inView: Compile[] = [];
+  const outOfView: Compile[] = [];
+  /* Warm-up compiles not started yet, by the pipeline they build, so a frame that comes to
+     draw one can move it up. */
+  const waiting = new Map<unknown, Compile>();
+  let inFlight = 0;
+  const next = () => {
+    while (inFlight < PIPELINE_COMPILES_IN_FLIGHT) {
+      const compile = inView.shift() ?? outOfView.shift();
+      if (!compile) return;
+      compile();
+    }
+  };
+  /* three asks the device for a pipeline while it draws, so a request made during the
+     warm-up frame comes from that frame. */
+  let warmingUp = false;
+  let requested: Compile | null = null;
+  device.createRenderPipelineAsync = (descriptor) => {
+    /* three reuses one descriptor object and clears it as soon as this call returns. Every
+       field it clears is replaced rather than mutated, except the multisample state. */
+    const copy = { ...descriptor, multisample: descriptor.multisample && { ...descriptor.multisample } };
+    return new Promise((resolve, reject) => {
+      const compile: Compile = () => {
+        inFlight += 1;
+        createAsync.call(device, copy).then(resolve, reject).finally(() => {
+          inFlight -= 1;
+          next();
+        });
+      };
+      (warmingUp ? outOfView : inView).push(compile);
+      requested = compile;
+      next();
+    });
+  };
+  pipelines.updateForRender = (renderObject) => {
+    requested = null;
+    const pipeline = getForRender.call(pipelines, renderObject, pending);
+    if (requested) {
+      if (warmingUp) {
+        waiting.set(pipeline, requested);
+      } else if ((renderObject as { object?: { isQuadMesh?: boolean } }).object?.isQuadMesh && inView.at(-1) === requested) {
+        /* Nothing reaches the screen until the post chain's full-screen passes have
+           compiled, and they are the last draws of a frame, so they go first. */
+        inView.unshift(inView.pop()!);
+      }
+      return;
+    }
+    if (warmingUp || waiting.size === 0) return;
+    const compile = waiting.get(pipeline);
+    if (compile === undefined) return;
+    waiting.delete(pipeline);
+    const index = outOfView.indexOf(compile);
+    if (index < 0) return;
+    outOfView.splice(index, 1);
+    inView.push(compile);
+  };
+
+  return {
+    async warmUp(scene, render) {
+      const culled: Object3D[] = [];
+      scene.traverseVisible((object) => {
+        if (!object.frustumCulled) return;
+        object.frustumCulled = false;
+        culled.push(object);
+      });
+      warmingUp = true;
+      try {
+        render();
+      } finally {
+        warmingUp = false;
+        for (const object of culled) object.frustumCulled = true;
+      }
+      while (pending.length > 0) await Promise.all(pending.splice(0));
+      delete pipelines.updateForRender;
+      delete (device as Partial<GPUDevice>).createRenderPipelineAsync;
+      /* A shadow map rendered once may have skipped casters whose shaders were still compiling. */
+      scene.traverse((object) => {
+        const shadow = (object as { shadow?: { autoUpdate: boolean; needsUpdate: boolean } }).shadow;
+        if (shadow && !shadow.autoUpdate) shadow.needsUpdate = true;
+      });
+    },
+  };
+}
